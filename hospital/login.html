@@ -3,28 +3,189 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pclinic Login</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<title>PClinic — Login</title>
+<meta name="description" content="Sign in to your PClinic dashboard." />
+<link rel="icon" type="image/png" href="logo.png" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
-    .hero-bg {
-        background-image: url('your-hospital-image.png');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+        --ac: #34d399;
+        --ac2: #60a5fa;
+        --gradient: linear-gradient(135deg, #34d399, #22c55e);
+        --f: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html, body {
+        height: 100%;
+        width: 100%;
+    }
+
+    body {
+        font-family: var(--f);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        min-height: 100dvh;
+        width: 100%;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    /* ── BACKGROUND ── */
+    .bg-wrapper {
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background-image: url('login-hero-bg.jpg');
         background-size: cover;
         background-position: center;
+        background-repeat: no-repeat;
     }
-    .glass-input {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: border-color 0.25s, box-shadow 0.25s;
+    .bg-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(160deg, rgba(5,10,20,0.75), rgba(5,10,20,0.88));
     }
-    .glass-input:focus {
-        border-color: #34d399;
-        box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+
+    /* ── PAGE-LEVEL LOADING (checking existing session) ── */
+    #sessionCheck {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        background: #0b0f1a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 14px;
+        transition: opacity 0.3s ease;
+    }
+    #sessionCheck .ring {
+        width: 34px;
+        height: 34px;
+        border: 3px solid rgba(255,255,255,0.15);
+        border-top-color: var(--ac);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    #sessionCheck .txt {
+        font-size: 12px;
+        color: rgba(255,255,255,0.5);
+        letter-spacing: 0.3px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── PAGE CONTAINER ── */
+    .page {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+    }
+
+    /* ── LOGIN CARD ── */
+    .card {
+        width: 100%;
+        max-width: 380px;
+        background: rgba(255,255,255,0.07);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 20px;
+        padding: 34px 32px 28px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        animation: cardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes cardIn {
+        from { opacity: 0; transform: translateY(16px) scale(0.97); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .brand {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 22px;
+    }
+    .brand img {
+        height: 46px;
+        width: 46px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        object-fit: cover;
+    }
+    .brand .fallback-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        margin-bottom: 10px;
+        color: #06281c;
+    }
+    .brand .name {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        color: #fff;
+    }
+    .brand .tagline {
+        font-size: 12px;
+        color: rgba(255,255,255,0.55);
+        margin-top: 3px;
+    }
+
+    label {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        color: rgba(255,255,255,0.55);
+        margin-bottom: 6px;
+    }
+    .field { margin-bottom: 16px; }
+    .input-wrap { position: relative; }
+    .input-wrap .icon-left {
+        position: absolute;
+        left: 13px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255,255,255,0.4);
+        font-size: 15px;
+        pointer-events: none;
+    }
+    .input-wrap input {
+        width: 100%;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 11px;
+        padding: 11px 14px 11px 38px;
+        font-size: 14px;
+        color: #fff;
+        font-family: var(--f);
+        transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .input-wrap input::placeholder { color: rgba(255,255,255,0.32); }
+    .input-wrap input:focus {
         outline: none;
+        border-color: var(--ac);
+        background: rgba(255,255,255,0.09);
+        box-shadow: 0 0 0 3px rgba(52,211,153,0.18);
     }
-    .glass-input.error {
+    .input-wrap input.error {
         border-color: #f87171;
-        box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
+        box-shadow: 0 0 0 3px rgba(248,113,113,0.18);
     }
     .pw-toggle {
         position: absolute;
@@ -33,106 +194,174 @@
         transform: translateY(-50%);
         background: transparent;
         border: none;
-        color: rgba(255, 255, 255, 0.5);
+        color: rgba(255,255,255,0.45);
         cursor: pointer;
+        font-size: 16px;
         padding: 4px;
+        display: flex;
         transition: color 0.2s;
-        font-size: 18px;
+    }
+    .pw-toggle:hover { color: rgba(255,255,255,0.9); }
+
+    .row-between {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        font-size: 12.5px;
+    }
+    .remember-check {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: rgba(255,255,255,0.6);
+        cursor: pointer;
+    }
+    .remember-check input {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--ac);
+        cursor: pointer;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 12px;
+        border-radius: 11px;
+        border: none;
+        font-family: var(--f);
+        font-size: 14px;
+        font-weight: 700;
+        color: #06281c;
+        background: var(--gradient);
+        cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 10px;
+        box-shadow: 0 8px 24px rgba(52,211,153,0.3);
+        transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
     }
-    .pw-toggle:hover { color: rgba(255, 255, 255, 0.85); }
-    .msg-toast { animation: fadeSlide 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    @keyframes fadeSlide {
-        0% { opacity: 0; transform: translateY(6px) scale(0.96); }
-        100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(52,211,153,0.4); }
+    .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
     .spinner {
         display: none;
-        width: 18px;
-        height: 18px;
-        border: 2.5px solid rgba(255, 255, 255, 0.25);
-        border-top-color: #fff;
+        width: 16px;
+        height: 16px;
+        border: 2.5px solid rgba(6,40,28,0.3);
+        border-top-color: #06281c;
         border-radius: 50%;
         animation: spin 0.7s linear infinite;
-        margin: 0 auto;
     }
     .spinner.active { display: block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .message {
+        margin-top: 16px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 12.5px;
+        display: none;
+        animation: msgIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .message.show { display: block; }
+    .message.success { background: rgba(52,211,153,0.15); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.25); }
+    .message.error { background: rgba(248,113,113,0.15); color: #fca5a5; border: 1px solid rgba(248,113,113,0.25); }
+    @keyframes msgIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 22px;
+        font-size: 12px;
+        color: rgba(255,255,255,0.4);
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .back-link:hover { color: rgba(255,255,255,0.8); }
+
+    @media (max-width: 420px) {
+        .card { padding: 28px 22px 24px; border-radius: 16px; }
+        .brand .name { font-size: 19px; }
+    }
 </style>
 </head>
 
-<body class="h-screen flex items-center justify-center hero-bg bg-black/70 bg-blend-multiply text-white font-sans">
+<body>
 
-    <!-- ═══ LOGIN CARD ═══ -->
-    <div class="bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-2xl w-full max-w-sm shadow-2xl">
+    <!-- ═══ CHECKING EXISTING SESSION ═══ -->
+    <div id="sessionCheck">
+        <div class="ring"></div>
+        <div class="txt">Checking your session…</div>
+    </div>
 
-        <div class="text-center mb-6">
-            <div class="flex justify-center items-center gap-2 mb-2">
-                <i class="ti ti-building-hospital text-3xl text-green-400"></i>
-                <span class="text-2xl font-bold">PClinic</span>
+    <div class="bg-wrapper"></div>
+    <div class="bg-overlay"></div>
+
+    <div class="page" id="pageContent" style="visibility:hidden;">
+        <div class="card">
+            <div class="brand">
+                <img src="logo.png" alt="PClinic" onerror="this.style.display='none'; document.getElementById('fallbackIcon').style.display='flex';"/>
+                <div class="fallback-icon" id="fallbackIcon" style="display:none;"><i class="ti ti-building-hospital"></i></div>
+                <div class="name">PClinic</div>
+                <div class="tagline">Sign in to your dashboard</div>
             </div>
-            <p class="text-gray-300 text-sm">Sign in to your dashboard</p>
-        </div>
 
-        <form id="loginForm" class="space-y-4" autocomplete="off" novalidate>
-            <div>
-                <label class="block text-xs font-semibold mb-1 text-gray-300">STAFF ID</label>
-                <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <i class="ti ti-id-badge-2"></i>
-                    </span>
-                    <input
-                        type="text"
-                        inputmode="numeric"
-                        pattern="[0-9]*"
-                        id="staffId"
-                        required
-                        autocomplete="off"
-                        class="glass-input w-full bg-white/5 border border-white/10 rounded-lg p-2.5 pl-9 text-sm text-white placeholder-gray-400 focus:border-green-400 transition"
-                        placeholder="e.g. 41054"
-                    />
+            <form id="loginForm" autocomplete="off" novalidate>
+                <div class="field">
+                    <label>STAFF ID</label>
+                    <div class="input-wrap">
+                        <span class="icon-left"><i class="ti ti-id-badge-2"></i></span>
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            id="staffId"
+                            required
+                            autocomplete="off"
+                            placeholder="e.g. 41054"
+                        />
+                    </div>
                 </div>
-            </div>
 
-            <div>
-                <label class="block text-xs font-semibold mb-1 text-gray-300">PASSWORD</label>
-                <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <i class="ti ti-lock"></i>
-                    </span>
-                    <input
-                        type="password"
-                        id="password"
-                        required
-                        autocomplete="current-password"
-                        class="glass-input w-full bg-white/5 border border-white/10 rounded-lg p-2.5 pl-9 text-sm text-white placeholder-gray-400 focus:border-green-400 transition pr-10"
-                        placeholder="••••••••"
-                    />
-                    <button type="button" class="pw-toggle" id="togglePassword" aria-label="Toggle password visibility">
-                        <i class="ti ti-eye"></i>
-                    </button>
+                <div class="field">
+                    <label>PASSWORD</label>
+                    <div class="input-wrap">
+                        <span class="icon-left"><i class="ti ti-lock"></i></span>
+                        <input
+                            type="password"
+                            id="password"
+                            required
+                            autocomplete="current-password"
+                            placeholder="••••••••"
+                            style="padding-right:40px;"
+                        />
+                        <button type="button" class="pw-toggle" id="togglePassword" aria-label="Toggle password visibility">
+                            <i class="ti ti-eye"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="flex items-center justify-between text-sm">
-                <label class="flex items-center gap-2 text-gray-300 cursor-pointer">
-                    <input type="checkbox" id="remember" class="w-4 h-4 rounded border-white/20 bg-white/5 accent-green-400 cursor-pointer" />
-                    <span>Remember my Staff ID</span>
-                </label>
-            </div>
+                <div class="row-between">
+                    <label class="remember-check">
+                        <input type="checkbox" id="remember" />
+                        <span>Remember my Staff ID</span>
+                    </label>
+                </div>
 
-            <button type="submit" class="w-full bg-green-500 hover:bg-green-600 py-2.5 rounded-lg font-bold transition flex items-center justify-center gap-3 mt-2 disabled:opacity-70 disabled:cursor-not-allowed" id="submitBtn">
-                <span id="btnText">Login</span>
-                <span class="spinner" id="spinner"></span>
-            </button>
-        </form>
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span id="btnText">Sign In</span>
+                    <span class="spinner" id="spinner"></span>
+                </button>
+            </form>
 
-        <p id="message" class="text-center text-xs mt-4 hidden p-2 rounded msg-toast"></p>
+            <div class="message" id="message"></div>
 
-        <div class="text-center mt-6">
-            <a href="index.html" class="text-gray-400 hover:text-white text-xs underline transition">Back to Home</a>
+            <a href="index.html" class="back-link">← Back to Home</a>
         </div>
     </div>
 
@@ -144,6 +373,8 @@
         (function() {
             'use strict';
 
+            const sessionCheck = document.getElementById('sessionCheck');
+            const pageContent = document.getElementById('pageContent');
             const form = document.getElementById('loginForm');
             const staffIdInput = document.getElementById('staffId');
             const passwordInput = document.getElementById('password');
@@ -153,6 +384,12 @@
             const btnText = document.getElementById('btnText');
             const spinner = document.getElementById('spinner');
             const rememberCheck = document.getElementById('remember');
+
+            function revealForm() {
+                sessionCheck.style.opacity = '0';
+                setTimeout(() => { sessionCheck.style.display = 'none'; }, 300);
+                pageContent.style.visibility = 'visible';
+            }
 
             // ─── TOGGLE PASSWORD ───
             toggleBtn.addEventListener('click', function() {
@@ -168,18 +405,15 @@
 
             function showMessage(text, type) {
                 messageEl.textContent = text;
-                messageEl.className = 'mt-4 p-2 rounded text-center text-xs msg-toast block';
-                messageEl.className += (type === 'success')
-                    ? ' bg-green-500/20 text-green-400'
-                    : ' bg-red-500/20 text-red-400';
+                messageEl.className = 'message show ' + (type === 'success' ? 'success' : 'error');
             }
             function hideMessage() {
-                messageEl.className = 'text-center text-xs mt-4 hidden p-2 rounded msg-toast';
+                messageEl.className = 'message';
                 messageEl.textContent = '';
             }
             function setLoading(loading) {
                 submitBtn.disabled = loading;
-                btnText.textContent = loading ? 'Logging in…' : 'Login';
+                btnText.textContent = loading ? 'Signing in…' : 'Sign In';
                 spinner.classList.toggle('active', loading);
             }
 
@@ -190,12 +424,8 @@
                 rememberCheck.checked = true;
             }
 
-            // If a previous page redirected us here with a reason, show it.
+            // If a previous page redirected us here with a reason, show it once the form is visible.
             const authMsg = sessionStorage.getItem('pclinic_auth_message');
-            if (authMsg) {
-                showMessage(authMsg, 'error');
-                sessionStorage.removeItem('pclinic_auth_message');
-            }
 
             function friendlyAuthError(err) {
                 const code = err && err.code ? err.code : '';
@@ -222,6 +452,41 @@
                     setTimeout(() => resolve(!!window.firebaseAuth), 8000);
                 });
             }
+
+            // ─── ON LOAD: IF ALREADY LOGGED IN & ACTIVE, SKIP STRAIGHT TO HUB ───
+            // No artificial delay here — as soon as Firebase confirms an
+            // existing valid session, we redirect immediately. If there's
+            // no session (the normal case for a fresh visit), the login
+            // form is revealed right away instead of waiting.
+            (async function checkExistingSession() {
+                const ready = await waitForFirebase();
+                if (!ready) { revealForm(); if (authMsg) { showMessage(authMsg, 'error'); sessionStorage.removeItem('pclinic_auth_message'); } return; }
+
+                const { onAuthStateChanged, signOut } = window.firebaseAuthFunctions;
+                onAuthStateChanged(window.firebaseAuth, async function(user) {
+                    if (!user) {
+                        revealForm();
+                        if (authMsg) {
+                            showMessage(authMsg, 'error');
+                            sessionStorage.removeItem('pclinic_auth_message');
+                        }
+                        return;
+                    }
+                    try {
+                        const { doc, getDoc } = window.firebaseFunctions;
+                        const snap = await getDoc(doc(window.firebaseDB, 'users', user.uid));
+                        if (snap.exists() && snap.data().active !== false) {
+                            window.location.replace('hub.html');
+                            return;
+                        }
+                        // Stale/invalid session — sign out and show the form.
+                        await signOut(window.firebaseAuth);
+                        revealForm();
+                    } catch (e) {
+                        revealForm();
+                    }
+                });
+            })();
 
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -260,7 +525,6 @@
                     const email = window.pclinicStaffIdToEmail(staffId);
                     const cred = await signInWithEmailAndPassword(window.firebaseAuth, email, password);
 
-                    // Look up role/profile to make sure the account is active.
                     const { doc, getDoc } = window.firebaseFunctions;
                     const userSnap = await getDoc(doc(window.firebaseDB, 'users', cred.user.uid));
 
@@ -284,10 +548,9 @@
                         localStorage.removeItem('pclinic_remember_staffid');
                     }
 
-                    showMessage(`✅ Welcome, ${profile.name || staffId}! Redirecting…`, 'success');
-                    setTimeout(() => {
-                        window.location.href = 'hub.html';
-                    }, 700);
+                    showMessage(`✅ Welcome, ${profile.name || staffId}!`, 'success');
+                    // Redirect right away — no artificial waiting.
+                    window.location.replace('hub.html');
 
                 } catch (err) {
                     console.error('Login error:', err);
