@@ -462,8 +462,23 @@
                 const ready = await waitForFirebase();
                 if (!ready) { revealForm(); if (authMsg) { showMessage(authMsg, 'error'); sessionStorage.removeItem('pclinic_auth_message'); } return; }
 
+                // Wait for Firebase to FULLY settle its initial auth check
+                // (important right after a page refresh) before deciding
+                // whether a session exists — otherwise a refresh can
+                // briefly look "logged out" and flash the form.
+                try {
+                    if (typeof window.firebaseAuth.authStateReady === 'function') {
+                        await window.firebaseAuth.authStateReady();
+                    }
+                } catch (e) {}
+
+                let settled = false;
                 const { onAuthStateChanged, signOut } = window.firebaseAuthFunctions;
-                onAuthStateChanged(window.firebaseAuth, async function(user) {
+                const unsubscribe = onAuthStateChanged(window.firebaseAuth, async function(user) {
+                    if (settled) return;
+                    settled = true;
+                    if (typeof unsubscribe === 'function') unsubscribe();
+
                     if (!user) {
                         revealForm();
                         if (authMsg) {

@@ -49,15 +49,34 @@
     window.requireAuth = function (allowedRoles) {
         allowedRoles = allowedRoles || [];
 
-        return waitForFirebase().then(function (ready) {
+        return waitForFirebase().then(async function (ready) {
             if (!ready) {
                 goToLogin('⚠️ Could not connect. Please log in again.');
                 return Promise.reject(new Error('firebase-not-ready'));
             }
 
+            // Wait for Firebase to FULLY settle its initial auth check
+            // (e.g. restoring a session after a page refresh) before we
+            // make any decision. Without this, a refresh can briefly
+            // report "no user yet" and incorrectly bounce a logged-in
+            // person back to the login page.
+            try {
+                if (typeof window.firebaseAuth.authStateReady === 'function') {
+                    await window.firebaseAuth.authStateReady();
+                }
+            } catch (e) {
+                // If this isn't supported for some reason, fall through
+                // to the onAuthStateChanged-based check below.
+            }
+
             return new Promise(function (resolve, reject) {
+                let settled = false;
                 const { onAuthStateChanged } = window.firebaseAuthFunctions;
-                onAuthStateChanged(window.firebaseAuth, async function (user) {
+                const unsubscribe = onAuthStateChanged(window.firebaseAuth, async function (user) {
+                    if (settled) return; // ignore any later firings once we've already decided
+                    settled = true;
+                    if (typeof unsubscribe === 'function') unsubscribe();
+
                     if (!user) {
                         goToLogin();
                         reject(new Error('not-authenticated'));
