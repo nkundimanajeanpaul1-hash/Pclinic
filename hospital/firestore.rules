@@ -1,0 +1,70 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ────────────────────────────────────────────────────────
+    // Helper functions
+    // ────────────────────────────────────────────────────────
+
+    // Is the request coming from a logged-in Firebase Auth user?
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Look up the caller's staff profile document.
+    function myProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Is the caller an active (not disabled) staff member?
+    function isActiveStaff() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && myProfile().active != false;
+    }
+
+    // Does the caller have one of the given roles? Admin always passes.
+    function hasRole(roles) {
+      return isActiveStaff()
+        && (myProfile().role == 'admin' || myProfile().role in roles);
+    }
+
+    function isAdmin() {
+      return isActiveStaff() && myProfile().role == 'admin';
+    }
+
+    // ────────────────────────────────────────────────────────
+    // /users/{uid} — staff accounts & roles
+    // Only admins may create/edit/deactivate staff accounts.
+    // A signed-in user may always read their OWN profile (so the
+    // login page and every dashboard's auth-guard can check it),
+    // but may not read the whole staff directory unless admin.
+    // ────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow get: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ────────────────────────────────────────────────────────
+    // /patients/{patientId} — core patient records
+    // Any active, logged-in staff member may read and write
+    // patient data. Adjust the role list below if you want to
+    // restrict certain fields/actions further (e.g. only
+    // clinical staff can edit clinicalNotes) — Firestore rules
+    // apply per-document, not per-field, so field-level control
+    // would require splitting sub-collections.
+    // ────────────────────────────────────────────────────────
+    match /patients/{patientId} {
+      allow read, write: if isActiveStaff();
+    }
+
+    // ────────────────────────────────────────────────────────
+    // Everything else — locked by default.
+    // ────────────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

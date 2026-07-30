@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventory & Stores • PClinic</title>
+
+    <!-- ─── SHARED POLISH (CSS & JS) ─── -->
+    <link rel="stylesheet" href="styles.css" />
+    
+    <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
+    <script type="module" src="firebase-config.js"></script>
+    <script src="auth-guard.js"></script>
+<script src="shared.js" defer></script>
+
+    <!-- ─── PATIENT DATA SYSTEM ─── -->          
+<script src="patient-data.js" defer></script> 
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" />
+
+    <style>
+        /* ─── RESET & VARIABLES ─── */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --bg: #f2f4f8;
+            --s0: #f5f5f7;
+            --s1: #ffffff;
+            --s2: #ffffff;
+            --s3: #f2f2f4;
+            --bd: rgba(0, 0, 0, 0.06);
+            --bds: rgba(0, 0, 0, 0.08);
+            --tp: #1c1c1e;
+            --ts: #3a3a3c;
+            --tm: #8e8e93;
+            --ac: #007a85;
+            --ach: #004a52;
+            --acb: #e6f6f8;
+            --acl: rgba(0, 122, 133, 0.15);
+            --green: #34c759;
+            --greenb: #e9f9ee;
+            --greend: #1a7a32;
+            --orange: #ff9500;
+            --orangeb: #fff4e0;
+            --oranged: #7a4500;
+            --red: #ff3b30;
+            --redb: #ffebe9;
+            --redd: #8a1f1a;
+            --purple: #af52de;
+            --purpleb: #f5eaff;
+            --purpled: #5c2475;
+            --teal: #007080;
+            --tealbg: #e6f6f8;
+            --tealt: #004a52;
+            --amber: #8a6200;
+            --amberb: #fdf7e6;
+            --ambert: #5a3f00;
+            --r: 10px;
+            --r2: 14px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 4px 12px rgba(0, 0, 0, .04);
+            --shadow2: 0 2px 12px rgba(0, 0, 0, .10), 0 8px 32px rgba(0, 0, 0, .06);
+            --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+            --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        body {
+            font-family: var(--f);
+            background: var(--bg);
+            color: var(--tp);
+            font-size: 13px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            background-image: radial-gradient(circle at 20% 30%, rgba(0, 122, 133, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(52, 199, 89, 0.03) 0%, transparent 50%);
+        }
+
+        /* ─── SCROLLBAR ─── */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--bd);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--bds);
+        }
+
+        /* ─── TOPBAR ─── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: saturate(180%) blur(24px);
+            -webkit-backdrop-filter: saturate(180%) blur(24px);
+            border-bottom: 0.5px solid var(--bd);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+        }
+        .tl {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #007a85, #004a52);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s var(--spring);
+        }
+        .logo-box:hover {
+            transform: scale(1.05);
+        }
+        .logo-box svg {
+            width: 16px;
+            height: 16px;
+            stroke: #fff;
+            fill: none;
+            stroke-width: 2.2;
+        }
+        .appname {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--tp);
+            letter-spacing: -0.3px;
+        }
+        .appname span {
+            color: var(--ac);
+        }
+        .appsub {
+            font-size: 10px;
+            color: var(--tm);
+            font-weight: 500;
+            background: rgba(0, 0, 0, 0.04);
+            padding: 2px 10px;
+            border-radius: 30px;
+            border: 0.5px solid var(--bd);
+        }
+
+        /* ─── POLISH: TOPBAR BUTTONS ─── */
+        .tr {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+        .tb-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 0.5px solid var(--bd);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s var(--spring);
+            color: var(--tm);
+        }
+        .tb-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.05);
+        }
+        .tb-btn:active {
+            transform: scale(0.92);
+        }
+        .tb-btn i {
+            font-size: 15px;
+        }
+        .notif-dot {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 7px;
+            height: 7px;
+            background: var(--red);
+            border-radius: 50%;
+            border: 1.5px solid rgba(255, 255, 255, 0.8);
+        }
+
+        /* ─── POLISH: REAL-TIME CLOCK ─── */
+        .realtime-clock {
+            font-size: 12px;
+            color: var(--tm);
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: 0.5px solid var(--bd);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        /* ─── POLISH: TOPBAR EXTRA BUTTONS ─── */
+        .topbar-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 0.5px solid var(--bd);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s var(--spring);
+            color: var(--tm);
+            font-size: 15px;
+            font-family: inherit;
+        }
+        .topbar-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.05);
+        }
+        .topbar-btn:active {
+            transform: scale(0.92);
+        }
+        .topbar-btn .notif-count {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: var(--red);
+            color: #fff;
+            font-size: 0.55rem;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 30px;
+            border: 2px solid #fff;
+        }
+        .theme-toggle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 0.5px solid var(--bd);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s var(--spring);
+            color: var(--tm);
+            font-size: 16px;
+            font-family: inherit;
+        }
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.05);
+        }
+        .theme-toggle:active {
+            transform: scale(0.92);
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px 4px 5px;
+            border: 0.5px solid var(--bd);
+            border-radius: 20px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            transition: all 0.2s var(--spring);
+        }
+        .user-chip:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.02);
+        }
+        .user-chip:active {
+            transform: scale(0.95);
+        }
+        .ua {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--ac);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .uname {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--tp);
+        }
+
+        /* ─── BREADCRUMB ─── */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--tm);
+            padding: 8px 24px 4px 24px;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a {
+            color: var(--ac);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        .breadcrumb .separator {
+            color: var(--tm);
+            font-size: 10px;
+        }
+        .breadcrumb .current {
+            color: var(--ts);
+            font-weight: 500;
+        }
+
+        /* ─── NAV TABS ─── */
+        .nav-tabs {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 24px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: saturate(180%) blur(16px);
+            -webkit-backdrop-filter: saturate(180%) blur(16px);
+            border-bottom: 0.5px solid var(--bd);
+            overflow-x: auto;
+            flex-wrap: nowrap;
+        }
+        .nav-tab {
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--tm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: all 0.2s var(--spring);
+            font-family: inherit;
+        }
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--tp);
+            transform: translateY(-1px);
+        }
+        .nav-tab:active {
+            transform: scale(0.95);
+        }
+        .nav-tab.active {
+            background: var(--acb);
+            color: var(--ac);
+        }
+        .nav-tab i {
+            font-size: 14px;
+        }
+        .nav-tab .ncnt {
+            background: var(--red);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 99px;
+            min-width: 16px;
+            text-align: center;
+        }
+
+        /* ─── SEARCH ROW ─── */
+        .search-row {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 0.5px solid var(--bd);
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .search-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+        }
+        .search-wrap .sw {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 0.5px solid var(--bd);
+            border-radius: 20px;
+            padding: 6px 14px;
+            transition: all 0.2s;
+        }
+        .search-wrap .sw:focus-within {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--ac);
+            box-shadow: 0 0 0 3px var(--acl);
+        }
+        .search-wrap .sw i {
+            font-size: 14px;
+            color: var(--tm);
+        }
+        .search-wrap .sw input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 13px;
+            color: var(--tp);
+            width: 100%;
+            font-family: inherit;
+        }
+        .search-wrap .sw input::placeholder {
+            color: var(--tm);
+        }
+        .kpis {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .kpi {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border: 0.5px solid var(--bd);
+            border-radius: 20px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s var(--spring);
+        }
+        .kpi:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .kpi:active {
+            transform: scale(0.95);
+        }
+        .kpi i {
+            font-size: 14px;
+        }
+        .kpi-teal {
+            color: var(--ac);
+        }
+        .kpi-org {
+            color: var(--orange);
+        }
+        .kpi-red {
+            color: var(--red);
+        }
+        .kpi-grn {
+            color: var(--green);
+        }
+        .kpi-pur {
+            color: var(--purple);
+        }
+        .kpi-num {
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        /* ─── CONTENT AREA ─── */
+        .content-area {
+            flex: 1;
+            padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ─── STATS ROW ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 0.5px solid var(--bd);
+            border-radius: var(--r2);
+            padding: 14px 16px;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow2);
+        }
+        .stat-card .sc-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .stat-card .sc-lbl {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--tm);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 4px;
+        }
+        .stat-card .sc-val {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--tp);
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+        .stat-card .sc-sub {
+            font-size: 10px;
+            color: var(--tm);
+            margin-top: 3px;
+        }
+        .stat-card .sc-ic {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .stat-card .sc-ic i {
+            font-size: 15px;
+        }
+        .stat-card .trend {
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 1px 10px;
+            border-radius: 20px;
+        }
+        .trend.up {
+            background: var(--greenb);
+            color: var(--greend);
+        }
+        .trend.down {
+            background: var(--redb);
+            color: var(--redd);
+        }
+        .trend.neutral {
+            background: var(--s3);
+            color: var(--tm);
+        }
+
+        /* ─── MAIN PANEL ─── */
+        .main-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 0.5px solid var(--bd);
+            border-radius: var(--r2);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.2s ease;
+        }
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 0.5px solid var(--bd);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--tp);
+            letter-spacing: -0.2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .panel-body {
+            padding: 16px;
+            display: none;
+            animation: fadeSlide 0.3s var(--spring);
+        }
+        .panel-body.show {
+            display: block;
+        }
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── BUTTONS ─── */
+        .btn-p {
+            padding: 7px 18px;
+            background: var(--ac);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s var(--spring);
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 8px rgba(0, 122, 133, 0.25);
+        }
+        .btn-p:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 122, 133, 0.35);
+        }
+        .btn-p:active {
+            transform: scale(0.95);
+        }
+        .btn-s {
+            padding: 7px 14px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 0.5px solid var(--bd);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            color: var(--ts);
+            transition: all 0.2s var(--spring);
+        }
+        .btn-s:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.02);
+        }
+        .btn-s:active {
+            transform: scale(0.95);
+        }
+        .btn-export {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 14px;
+            border: 0.5px solid var(--bd);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--ts);
+            font-family: inherit;
+            transition: all 0.2s var(--spring);
+        }
+        .btn-export:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.02);
+        }
+        .btn-export:active {
+            transform: scale(0.95);
+        }
+        .btn-export i {
+            font-size: 14px;
+        }
+
+        /* ─── BADGES ─── */
+        .badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(0, 0, 0, 0.04);
+        }
+        .b-red {
+            background: var(--redb);
+            color: var(--redd);
+        }
+        .b-org {
+            background: var(--orangeb);
+            color: var(--oranged);
+        }
+        .b-grn {
+            background: var(--greenb);
+            color: var(--greend);
+        }
+        .b-blue {
+            background: var(--acb);
+            color: var(--ach);
+        }
+        .b-teal {
+            background: var(--tealbg);
+            color: var(--tealt);
+        }
+        .b-purple {
+            background: var(--purpleb);
+            color: var(--purpled);
+        }
+        .b-amber {
+            background: var(--amberb);
+            color: var(--ambert);
+        }
+
+        /* ─── TABLES ─── */
+        .wtbl {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .wtbl th {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--tm);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            padding: 6px 10px;
+            text-align: left;
+            border-bottom: 0.5px solid var(--bd);
+            background: rgba(0, 0, 0, 0.02);
+        }
+        .wtbl td {
+            padding: 8px 10px;
+            border-bottom: 0.5px solid var(--bd);
+            color: var(--tp);
+            vertical-align: middle;
+        }
+        .wtbl tr:last-child td {
+            border-bottom: none;
+        }
+        .wtbl tr:hover td {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        /* ─── STOCK LEVEL BAR ─── */
+        .stock-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--s3);
+            border-radius: 10px;
+            overflow: hidden;
+            max-width: 100px;
+        }
+        .stock-bar .fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.6s var(--spring);
+        }
+
+        /* ─── MODAL ─── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 200;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 60px;
+        }
+        .modal-overlay.show {
+            display: flex;
+            animation: overlayFade 0.3s ease;
+        }
+        @keyframes overlayFade {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .modal {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: saturate(180%) blur(32px);
+            -webkit-backdrop-filter: saturate(180%) blur(32px);
+            border-radius: 18px;
+            border: 0.5px solid rgba(255, 255, 255, 0.3);
+            width: 520px;
+            max-width: 94%;
+            max-height: 85vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+            animation: modalSpring 0.4s var(--spring);
+        }
+        @keyframes modalSpring {
+            from {
+                opacity: 0;
+                transform: scale(0.92) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .modal-header {
+            padding: 14px 18px;
+            border-bottom: 0.5px solid var(--bd);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .modal-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--tp);
+        }
+        .modal-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: var(--tm);
+            transition: all 0.2s var(--spring);
+        }
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.08);
+            transform: scale(1.1);
+        }
+        .modal-close:active {
+            transform: scale(0.9);
+        }
+        .modal-body {
+            padding: 18px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* ─── FORMS ─── */
+        .fg {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .ff {
+            grid-column: 1/-1;
+        }
+        .fgl {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .lbl {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--tm);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .fi {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 0.5px solid var(--bd);
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 12px;
+            color: var(--tp);
+            outline: none;
+            font-family: inherit;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .fi:focus {
+            border-color: var(--ac);
+            box-shadow: 0 0 0 3px var(--acl);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        select.fi {
+            cursor: pointer;
+        }
+        .ta {
+            resize: vertical;
+            min-height: 60px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 0.5px solid var(--bd);
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 12px;
+            color: var(--tp);
+            outline: none;
+            font-family: inherit;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .ta:focus {
+            border-color: var(--ac);
+            box-shadow: 0 0 0 3px var(--acl);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--ts);
+            padding-bottom: 5px;
+            border-bottom: 0.5px solid var(--bd);
+            margin-bottom: 6px;
+            grid-column: 1/-1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .section-title i {
+            font-size: 14px;
+            color: var(--ac);
+        }
+        .fa {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (max-width: 960px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .fg {
+                grid-template-columns: 1fr;
+            }
+            .breadcrumb {
+                padding: 6px 16px 4px 16px;
+                font-size: 11px;
+            }
+            .realtime-clock {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .theme-toggle,
+            .topbar-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 13px;
+            }
+        }
+        @media (max-width: 640px) {
+            .topbar {
+                padding: 0 12px;
+                flex-wrap: wrap;
+                height: auto;
+                padding-top: 8px;
+                padding-bottom: 8px;
+                gap: 4px;
+            }
+            .tr {
+                margin-left: auto;
+            }
+            .nav-tabs {
+                padding: 6px 12px;
+                gap: 0;
+                overflow-x: auto;
+            }
+            .nav-tab {
+                font-size: 10px;
+                padding: 4px 10px;
+            }
+            .search-row {
+                padding: 8px 12px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-wrap {
+                min-width: unset;
+            }
+            .kpis {
+                justify-content: center;
+            }
+            .content-area {
+                padding: 12px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .stat-card .sc-val {
+                font-size: 18px;
+            }
+            .panel-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .panel-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .btn-export {
+                margin-left: 0;
+            }
+            .wtbl {
+                font-size: 11px;
+            }
+            .wtbl th,
+            .wtbl td {
+                padding: 4px 6px;
+            }
+            .modal {
+                width: 96%;
+                max-height: 90vh;
+                margin-top: 20px;
+            }
+            .breadcrumb {
+                padding: 4px 12px 4px 12px;
+                font-size: 10px;
+            }
+            .realtime-clock {
+                font-size: 9px;
+                padding: 2px 8px;
+            }
+            .theme-toggle,
+            .topbar-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 11px;
+            }
+            .stock-bar {
+                max-width: 60px;
+            }
+        }
+        @media (max-width: 480px) {
+            .topbar {
+                padding: 4px 8px;
+            }
+            .appname {
+                font-size: 13px;
+            }
+            .appsub {
+                font-size: 9px;
+                padding: 1px 6px;
+            }
+            .uname {
+                font-size: 10px;
+            }
+            .ua {
+                width: 20px;
+                height: 20px;
+                font-size: 8px;
+            }
+            .nav-tab {
+                font-size: 9px;
+                padding: 3px 6px;
+            }
+            .nav-tab i {
+                font-size: 11px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 4px;
+            }
+            .stat-card {
+                padding: 10px 12px;
+            }
+            .stat-card .sc-val {
+                font-size: 16px;
+            }
+            .stat-card .sc-lbl {
+                font-size: 9px;
+            }
+            .kpi {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+            .kpi i {
+                font-size: 12px;
+            }
+            .kpi-num {
+                font-size: 11px;
+            }
+            .btn-p,
+            .btn-s,
+            .btn-export {
+                font-size: 10px;
+                padding: 5px 12px;
+            }
+            .fi {
+                font-size: 11px;
+                padding: 5px 8px;
+            }
+            .stock-bar {
+                max-width: 60px;
+            }
+            .breadcrumb {
+                font-size: 9px;
+                padding: 4px 8px 4px 8px;
+            }
+            .realtime-clock {
+                font-size: 8px;
+                padding: 2px 6px;
+            }
+            .theme-toggle,
+            .topbar-btn {
+                width: 22px;
+                height: 22px;
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══ TOPBAR ═══ -->
+    <div class="topbar">
+        <div class="tl">
+            <div class="logo-box">
+                <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <span class="appname">P<span>clinic</span></span>
+            <span class="appsub">Inventory</span>
+        </div>
+        <div class="tr">
+            <!-- ─── POLISH: REAL-TIME CLOCK ─── -->
+            <div class="realtime-clock" id="realtimeClock">Loading...</div>
+
+            <!-- ─── POLISH: DARK MODE TOGGLE ─── -->
+            <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode (Ctrl+D)">
+                <i class="ti ti-sun"></i>
+            </button>
+
+            <!-- ─── POLISH: KEYBOARD SHORTCUTS ─── -->
+            <button class="topbar-btn" onclick="showShortcuts()" title="Keyboard shortcuts (Ctrl+/)">
+                <i class="ti ti-keyboard"></i>
+            </button>
+
+            <div class="tb-btn" onclick="showToast('🔔 2 new notifications', 'info')"><i class="ti ti-bell"></i><div class="notif-dot"></div></div>
+            <div class="tb-btn" onclick="showToast('⚙️ Settings', 'info')"><i class="ti ti-settings"></i></div>
+            <div class="user-chip" onclick="showToast('👤 Store Manager', 'info')">
+                <div class="ua">SM</div>
+                <span class="uname">Store Manager</span>
+            </div>
+            <div class="tb-btn" onclick="showToast('🚪 Logout', 'warning')"><i class="ti ti-logout"></i></div>
+        </div>
+    </div>
+
+    <!-- ─── POLISH: BREADCRUMB ─── -->
+    <div class="breadcrumb" id="breadcrumb">
+        <a href="hub.html">🏥 Hub</a>
+        <span class="separator">›</span>
+        <span class="current">Inventory & Stores</span>
+    </div>
+
+    <!-- ═══ NAV TABS ═══ -->
+    <div class="nav-tabs" id="navTabs">
+        <button class="nav-tab active" data-tab="overview" onclick="switchTab('overview',this)"><i class="ti ti-layout-dashboard"></i> Overview</button>
+        <button class="nav-tab" data-tab="items" onclick="switchTab('items',this)"><i class="ti ti-box"></i> Inventory List</button>
+        <button class="nav-tab" data-tab="movements" onclick="switchTab('movements',this)"><i class="ti ti-arrows-up-down"></i> Stock Movements</button>
+        <button class="nav-tab" data-tab="suppliers" onclick="switchTab('suppliers',this)"><i class="ti ti-truck"></i> Suppliers</button>
+        <button class="nav-tab" data-tab="reorder" onclick="switchTab('reorder',this)"><i class="ti ti-alert-triangle"></i> Reorder Alerts <span class="ncnt">8</span></button>
+    </div>
+
+    <!-- ═══ SEARCH ROW ═══ -->
+    <div class="search-row">
+        <div class="search-wrap">
+            <div class="sw">
+                <i class="ti ti-search"></i>
+                <input id="searchInput" placeholder="Search inventory items..." oninput="handleSearch(this.value)" />
+            </div>
+        </div>
+        <div class="kpis">
+            <div class="kpi kpi-teal" onclick="filterItems('all')"><i class="ti ti-apps"></i> <span class="kpi-num">All</span></div>
+            <div class="kpi kpi-org" onclick="filterItems('low')"><i class="ti ti-box-off"></i> <span class="kpi-num">12</span> low stock</div>
+            <div class="kpi kpi-red" onclick="filterItems('critical')"><i class="ti ti-alert-circle"></i> <span class="kpi-num">6</span> critical</div>
+            <div class="kpi kpi-grn" onclick="filterItems('adequate')"><i class="ti ti-circle-check"></i> <span class="kpi-num">48</span> adequate</div>
+        </div>
+    </div>
+
+    <!-- ═══ CONTENT AREA ═══ -->
+    <div class="content-area">
+
+        <!-- ─── VIEW: OVERVIEW ─── -->
+        <div id="view-overview">
+            <!-- Stats -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="sc-top">
+                        <div><div class="sc-lbl">Total Items</div><div class="sc-val" id="statTotal">66</div></div>
+                        <div class="sc-ic" style="background:var(--acb)"><i class="ti ti-box" style="color:var(--ac)"></i></div>
+                    </div>
+                    <div class="sc-sub">+4 this month</div>
+                    <span class="trend up">↑ 6.5%</span>
+                </div>
+                <div class="stat-card">
+                    <div class="sc-top">
+                        <div><div class="sc-lbl">Low Stock</div><div class="sc-val" id="statLow">12</div></div>
+                        <div class="sc-ic" style="background:var(--orangeb)"><i class="ti ti-box-off" style="color:var(--orange)"></i></div>
+                    </div>
+                    <div class="sc-sub">8 need reordering</div>
+                    <span class="trend down">↑ 3 from last month</span>
+                </div>
+                <div class="stat-card">
+                    <div class="sc-top">
+                        <div><div class="sc-lbl">Expiring Soon</div><div class="sc-val" id="statExpiring">5</div></div>
+                        <div class="sc-ic" style="background:var(--redb)"><i class="ti ti-calendar-x" style="color:var(--red)"></i></div>
+                    </div>
+                    <div class="sc-sub">≤30 days</div>
+                    <span class="trend down">↑ 2 from last month</span>
+                </div>
+                <div class="stat-card">
+                    <div class="sc-top">
+                        <div><div class="sc-lbl">Categories</div><div class="sc-val">8</div></div>
+                        <div class="sc-ic" style="background:var(--purpleb)"><i class="ti ti-tag" style="color:var(--purple)"></i></div>
+                    </div>
+                    <div class="sc-sub">Medications, Consumables, Equipment...</div>
+                    <span class="trend neutral">—</span>
+                </div>
+                <div class="stat-card">
+                    <div class="sc-top">
+                        <div><div class="sc-lbl">Total Value</div><div class="sc-val">KES 4.2M</div></div>
+                        <div class="sc-ic" style="background:var(--tealbg)"><i class="ti ti-currency-dollar" style="color:var(--teal)"></i></div>
+                    </div>
+                    <div class="sc-sub">+2.8% from last month</div>
+                    <span class="trend up">↑ 2.8%</span>
+                </div>
+            </div>
+
+            <!-- Charts: Category Breakdown & Stock Status -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                <div class="main-panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="ti ti-pie-chart" style="color:var(--ac)"></i> Category Breakdown</span>
+                    </div>
+                    <div class="panel-body show" style="padding-top:8px;">
+                        <div id="categoryChart" style="margin-top:4px;"></div>
+                    </div>
+                </div>
+                <div class="main-panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="ti ti-chart-bar" style="color:var(--ac)"></i> Stock Status</span>
+                    </div>
+                    <div class="panel-body show" style="padding-top:8px;">
+                        <div id="statusChart" style="margin-top:4px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Movements -->
+            <div class="main-panel">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="ti ti-activity" style="color:var(--ac)"></i> Recent Stock Movements</span>
+                    <div class="panel-actions">
+                        <button class="btn-export" onclick="showToast('📊 Exporting movements...', 'info')"><i class="ti ti-download"></i> Export</button>
+                    </div>
+                </div>
+                <div class="panel-body show">
+                    <table class="wtbl" id="recentTable">
+                        <thead><tr><th>Item</th><th>Type</th><th>Qty</th><th>User</th><th>Department</th><th>Date</th><th>Status</th></tr></thead>
+                        <tbody id="recentBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── VIEW: INVENTORY LIST ─── -->
+        <div id="view-items" style="display:none;">
+            <div class="main-panel">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="ti ti-box" style="color:var(--ac)"></i> Inventory List</span>
+                    <div class="panel-actions">
+                        <select class="fi" style="width:auto;font-size:11px;padding:5px 10px;" id="itemFilterCategory" onchange="renderItems()">
+                            <option value="all">All Categories</option>
+                            <option value="Medication">Medication</option>
+                            <option value="Consumable">Consumable</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="Surgical">Surgical</option>
+                            <option value="Diagnostic">Diagnostic</option>
+                            <option value="PPE">PPE</option>
+                            <option value="Cleaning">Cleaning</option>
+                        </select>
+                        <select class="fi" style="width:auto;font-size:11px;padding:5px 10px;" id="itemFilterStatus" onchange="renderItems()">
+                            <option value="all">All Status</option>
+                            <option value="adequate">Adequate</option>
+                            <option value="low">Low Stock</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                        <button class="btn-p" onclick="openAddItemModal()"><i class="ti ti-plus"></i> Add Item</button>
+                        <button class="btn-export" onclick="exportInventoryCSV()"><i class="ti ti-download"></i> Export</button>
+                    </div>
+                </div>
+                <div class="panel-body show">
+                    <table class="wtbl" id="itemsTable">
+                        <thead><tr><th>Item</th><th>Category</th><th>Unit</th><th>Qty</th><th>Stock Level</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="itemsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── VIEW: STOCK MOVEMENTS ─── -->
+        <div id="view-movements" style="display:none;">
+            <div class="main-panel">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="ti ti-arrows-up-down" style="color:var(--ac)"></i> Stock Movements</span>
+                    <div class="panel-actions">
+                        <select class="fi" style="width:auto;font-size:11px;padding:5px 10px;" id="movementFilterType" onchange="renderMovements()">
+                            <option value="all">All Types</option>
+                            <option value="in">Stock In</option>
+                            <option value="out">Stock Out</option>
+                            <option value="transfer">Transfer</option>
+                            <option value="adjustment">Adjustment</option>
+                        </select>
+                        <button class="btn-p" onclick="showToast('📦 Opening stock movement form...', 'info')"><i class="ti ti-plus"></i> Record Movement</button>
+                        <button class="btn-export" onclick="showToast('📊 Exporting movements...', 'info')"><i class="ti ti-download"></i> Export</button>
+                    </div>
+                </div>
+                <div class="panel-body show">
+                    <table class="wtbl" id="movementsTable">
+                        <thead><tr><th>Item</th><th>Type</th><th>Qty</th><th>From/To</th><th>User</th><th>Date</th><th>Reference</th><th>Status</th></tr></thead>
+                        <tbody id="movementsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── VIEW: SUPPLIERS ─── -->
+        <div id="view-suppliers" style="display:none;">
+            <div class="main-panel">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="ti ti-truck" style="color:var(--ac)"></i> Suppliers</span>
+                    <div class="panel-actions">
+                        <button class="btn-p" onclick="showToast('📝 Opening supplier form...', 'info')"><i class="ti ti-plus"></i> Add Supplier</button>
+                        <button class="btn-export" onclick="showToast('📊 Exporting suppliers...', 'info')"><i class="ti ti-download"></i> Export</button>
+                    </div>
+                </div>
+                <div class="panel-body show">
+                    <table class="wtbl" id="suppliersTable">
+                        <thead><tr><th>Supplier</th><th>Contact Person</th><th>Phone</th><th>Email</th><th>Items Supplied</th><th>Status</th></tr></thead>
+                        <tbody id="suppliersBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── VIEW: REORDER ALERTS ─── -->
+        <div id="view-reorder" style="display:none;">
+            <div class="main-panel">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="ti ti-alert-triangle" style="color:var(--ac)"></i> Reorder Alerts</span>
+                    <div class="panel-actions">
+                        <button class="btn-export" onclick="generateReorderReport()"><i class="ti ti-file-type-pdf"></i> Generate Report</button>
+                    </div>
+                </div>
+                <div class="panel-body show">
+                    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px;">
+                        <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
+                            <div style="font-size:20px; font-weight:700; color:var(--red);">6</div>
+                            <div style="font-size:10px; color:var(--tm);">Critical</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
+                            <div style="font-size:20px; font-weight:700; color:var(--orange);">8</div>
+                            <div style="font-size:10px; color:var(--tm);">Low Stock</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
+                            <div style="font-size:20px; font-weight:700; color:var(--ac);">14</div>
+                            <div style="font-size:10px; color:var(--tm);">To Reorder</div>
+                        </div>
+                    </div>
+                    <table class="wtbl" id="reorderTable">
+                        <thead><tr><th>Item</th><th>Category</th><th>Current Qty</th><th>Reorder Level</th><th>Priority</th><th>Actions</th></tr></thead>
+                        <tbody id="reorderBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /content-area -->
+
+    <!-- ═══ MODAL: ADD ITEM ═══ -->
+    <div class="modal-overlay" id="addItemModal" onclick="if(event.target===this)closeAddItemModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Add Inventory Item</span>
+                <button class="modal-close" onclick="closeAddItemModal()"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="fg">
+                    <div class="fgl"><div class="lbl">Item Name *</div><input class="fi" id="itemName" placeholder="e.g. Paracetamol 500mg" /></div>
+                    <div class="fgl"><div class="lbl">Category *</div>
+                        <select class="fi" id="itemCategory">
+                            <option>Medication</option>
+                            <option>Consumable</option>
+                            <option>Equipment</option>
+                            <option>Surgical</option>
+                            <option>Diagnostic</option>
+                            <option>PPE</option>
+                            <option>Cleaning</option>
+                        </select>
+                    </div>
+                    <div class="fgl"><div class="lbl">Unit *</div>
+                        <select class="fi" id="itemUnit">
+                            <option>Tablet</option>
+                            <option>Capsule</option>
+                            <option>Vial</option>
+                            <option>Ampoule</option>
+                            <option>Bottle</option>
+                            <option>Bag</option>
+                            <option>Box</option>
+                            <option>Pair</option>
+                            <option>Roll</option>
+                            <option>Each</option>
+                            <option>Tube</option>
+                            <option>Sachet</option>
+                        </select>
+                    </div>
+                    <div class="fgl"><div class="lbl">Quantity *</div><input class="fi" type="number" id="itemQty" placeholder="e.g. 100" /></div>
+                    <div class="fgl"><div class="lbl">Reorder Level *</div><input class="fi" type="number" id="itemReorder" placeholder="e.g. 20" /></div>
+                    <div class="fgl"><div class="lbl">Expiry Date</div><input class="fi" type="date" id="itemExpiry" /></div>
+                    <div class="fgl"><div class="lbl">Supplier</div>
+                        <select class="fi" id="itemSupplier">
+                            <option>KEMSA</option>
+                            <option>Surgipharm Ltd</option>
+                            <option>Beta Healthcare</option>
+                            <option>Universal Corporation</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="fgl"><div class="lbl">Location / Store</div>
+                        <select class="fi" id="itemLocation">
+                            <option>Main Store</option>
+                            <option>Ward 4B</option>
+                            <option>ICU</option>
+                            <option>Pharmacy</option>
+                            <option>Lab</option>
+                            <option>Radiology</option>
+                        </select>
+                    </div>
+                    <div class="fgl ff"><div class="lbl">Notes</div><textarea class="ta" id="itemNotes" style="min-height:50px;" placeholder="Storage conditions, special handling, batch number…"></textarea></div>
+                </div>
+                <div class="fa">
+                    <button class="btn-p" onclick="submitAddItem()"><i class="ti ti-plus"></i> Add Item</button>
+                    <button class="btn-s" onclick="closeAddItemModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: VIEW ITEM DETAILS ═══ -->
+    <div class="modal-overlay" id="itemDetailModal" onclick="if(event.target===this)closeItemDetailModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title" id="detailModalTitle">Item Details</span>
+                <button class="modal-close" onclick="closeItemDetailModal()"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="modal-body" id="detailModalBody"></div>
+        </div>
+    </div>
+
+    <!-- ─── POLISH: TOAST CONTAINER ─── -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ─── POLISH: PAGE LOADING OVERLAY ─── -->
+    <div class="loading-overlay" id="pageLoadingOverlay">
+        <div class="spinner-large"></div>
+        <div class="loading-text">Loading...</div>
+    </div>
+
+    <!-- ─── POLISH: SHORTCUTS MODAL ─── -->
+    <div class="shortcuts-modal" id="shortcutsModal"></div>
+
+    <!-- ═══ JAVASCRIPT ═══ -->
+    <script>
+        // ─── UPDATE BREADCRUMB ───
+        if (typeof updateBreadcrumb !== 'undefined') {
+            updateBreadcrumb('Inventory & Stores');
+        }
+
+        // ─── DATA ───
+        const inventoryItems = [
+            { id: 1, name: 'Paracetamol 500mg', category: 'Medication', unit: 'Tablet', qty: 1240, reorder: 300,
+                expiry: '2027-04-30', supplier: 'KEMSA', location: 'Main Store', notes: 'Store in cool dry place',
+                status: 'adequate' },
+            { id: 2, name: 'IV Cannula 18G', category: 'Consumable', unit: 'Each', qty: 240, reorder: 100,
+                expiry: '2027-12-31', supplier: 'Surgipharm Ltd', location: 'Ward 4B', notes: '',
+                status: 'adequate' },
+            { id: 3, name: 'Surgical Gloves (Pair)', category: 'PPE', unit: 'Pair', qty: 45, reorder: 200,
+                expiry: '2027-10-15', supplier: 'Beta Healthcare', location: 'Main Store', notes: 'Size M',
+                status: 'critical' },
+            { id: 4, name: 'Normal Saline 500mL', category: 'Medication', unit: 'Bag', qty: 340, reorder: 150,
+                expiry: '2028-05-20', supplier: 'KEMSA', location: 'Main Store', notes: '', status: 'adequate' },
+            { id: 5, name: 'IV Giving Set', category: 'Consumable', unit: 'Each', qty: 180, reorder: 100,
+                expiry: '2027-11-30', supplier: 'Surgipharm Ltd', location: 'ICU', notes: '', status: 'adequate' },
+            { id: 6, name: 'N95 Respirator Mask', category: 'PPE', unit: 'Each', qty: 200, reorder: 100,
+                expiry: '2028-01-15', supplier: 'Beta Healthcare', location: 'Main Store', notes: '',
+                status: 'adequate' },
+            { id: 7, name: 'Ceftriaxone 1g Injection', category: 'Medication', unit: 'Vial', qty: 15, reorder: 50,
+                expiry: '2026-07-31', supplier: 'KEMSA', location: 'Pharmacy', notes: 'Refrigerate',
+                status: 'critical' },
+            { id: 8, name: 'Alcohol Swabs (Box 100)', category: 'Consumable', unit: 'Box', qty: 160, reorder: 80,
+                expiry: '2027-09-30', supplier: 'Universal Corporation', location: 'Main Store', notes: '',
+                status: 'adequate' },
+            { id: 9, name: 'Syringe 5mL', category: 'Consumable', unit: 'Each', qty: 520, reorder: 250,
+                expiry: '2028-02-28', supplier: 'Surgipharm Ltd', location: 'Ward 4B', notes: '', status: 'adequate' },
+            { id: 10, name: 'Tramadol 50mg', category: 'Medication', unit: 'Tablet', qty: 22, reorder: 40,
+                expiry: '2027-01-15', supplier: 'KEMSA', location: 'Pharmacy', notes: 'Controlled substance',
+                status: 'critical' },
+            { id: 11, name: 'Surgical Mask (Box 50)', category: 'PPE', unit: 'Box', qty: 120, reorder: 60,
+                expiry: '2028-03-30', supplier: 'Beta Healthcare', location: 'Main Store', notes: '',
+                status: 'adequate' },
+            { id: 12, name: 'Gauze Swab 10×10cm (Pack 100)', category: 'Consumable', unit: 'Pack', qty: 90,
+                reorder: 50, expiry: '2027-12-15', supplier: 'Universal Corporation', location: 'ICU',
+                notes: '', status: 'adequate' },
+            { id: 13, name: 'Insulin (Actrapid) Vial', category: 'Medication', unit: 'Vial', qty: 3, reorder: 30,
+                expiry: '2026-09-30', supplier: 'KEMSA', location: 'Pharmacy', notes: 'Refrigerate',
+                status: 'critical' },
+            { id: 14, name: 'Syringe 10mL', category: 'Consumable', unit: 'Each', qty: 340, reorder: 200,
+                expiry: '2028-04-30', supplier: 'Surgipharm Ltd', location: 'Main Store', notes: '',
+                status: 'adequate' },
+            { id: 15, name: 'Face Shield', category: 'PPE', unit: 'Each', qty: 50, reorder: 30, expiry: '2028-06-15',
+                supplier: 'Beta Healthcare', location: 'Main Store', notes: '', status: 'adequate' },
+            { id: 16, name: 'Amoxicillin 500mg Capsule', category: 'Medication', unit: 'Capsule', qty: 1180,
+                reorder: 300, expiry: '2027-08-31', supplier: 'KEMSA', location: 'Pharmacy', notes: '',
+                status: 'adequate' },
+            { id: 17, name: 'Betadine 500mL', category: 'Consumable', unit: 'Bottle', qty: 35, reorder: 25,
+                expiry: '2027-04-30', supplier: 'Universal Corporation', location: 'Ward 4B', notes: '',
+                status: 'low' },
+            { id: 18, name: 'Suture Silk 2-0', category: 'Surgical', unit: 'Each', qty: 120, reorder: 60,
+                expiry: '2027-08-15', supplier: 'Surgipharm Ltd', location: 'Surgical Suite', notes: '',
+                status: 'adequate' },
+            { id: 19, name: 'Oxygen Mask Adult', category: 'Equipment', unit: 'Each', qty: 80, reorder: 50,
+                expiry: '2028-01-31', supplier: 'Beta Healthcare', location: 'ICU', notes: '', status: 'adequate' },
+            { id: 20, name: 'Urine Dipstick Test Strips', category: 'Diagnostic', unit: 'Box', qty: 70, reorder: 40,
+                expiry: '2027-12-31', supplier: 'Universal Corporation', location: 'Lab', notes: '',
+                status: 'adequate' },
+            { id: 21, name: 'Sodium Chloride 0.9% 1L', category: 'Medication', unit: 'Bag', qty: 210, reorder: 100,
+                expiry: '2028-05-15', supplier: 'KEMSA', location: 'Main Store', notes: '', status: 'adequate' },
+            { id: 22, name: 'Surgical Drape Sterile', category: 'Surgical', unit: 'Each', qty: 60, reorder: 40,
+                expiry: '2027-11-30', supplier: 'Surgipharm Ltd', location: 'Surgical Suite', notes: '',
+                status: 'adequate' },
+            { id: 23, name: 'Endotracheal Tube 7.5mm', category: 'Equipment', unit: 'Each', qty: 35, reorder: 20,
+                expiry: '2028-02-15', supplier: 'Beta Healthcare', location: 'ICU', notes: '', status: 'adequate' },
+            { id: 24, name: 'Rapid Malaria Test Kit', category: 'Diagnostic', unit: 'Each', qty: 200, reorder: 100,
+                expiry: '2027-03-31', supplier: 'Universal Corporation', location: 'Lab', notes: '',
+                status: 'adequate' },
+            { id: 25, name: 'Crepe Bandage 10cm', category: 'Consumable', unit: 'Roll', qty: 140, reorder: 80,
+                expiry: '2027-12-31', supplier: 'Surgipharm Ltd', location: 'Ward 4B', notes: '',
+                status: 'adequate' },
+            { id: 26, name: 'Morphine Sulphate 10mg/mL', category: 'Medication', unit: 'Ampoule', qty: 17,
+                reorder: 30, expiry: '2027-02-28', supplier: 'KEMSA', location: 'Pharmacy',
+                notes: 'Controlled substance', status: 'critical' },
+            { id: 27, name: 'Examination Gloves (Box 100)', category: 'PPE', unit: 'Box', qty: 60, reorder: 40,
+                expiry: '2028-04-30', supplier: 'Beta Healthcare', location: 'Main Store', notes: '',
+                status: 'adequate' },
+            { id: 28, name: 'HIV Rapid Test Kit', category: 'Diagnostic', unit: 'Each', qty: 180, reorder: 100,
+                expiry: '2027-08-31', supplier: 'Universal Corporation', location: 'Lab', notes: '',
+                status: 'adequate' },
+            { id: 29, name: 'Adrenaline 1mg/mL Injection', category: 'Medication', unit: 'Ampoule', qty: 65,
+                reorder: 50, expiry: '2027-03-31', supplier: 'KEMSA', location: 'ICU', notes: 'Emergency use',
+                status: 'low' },
+            { id: 30, name: 'Suction Catheter 12Fr', category: 'Consumable', unit: 'Each', qty: 90, reorder: 50,
+                expiry: '2027-10-31', supplier: 'Surgipharm Ltd', location: 'ICU', notes: '', status: 'adequate' }
+        ];
+
+        const stockMovements = [
+            { item: 'Paracetamol 500mg', type: 'in', qty: 500, fromTo: 'KEMSA', user: 'Store Manager',
+                date: '2026-06-29 09:30', ref: 'PO-2026-001', status: 'completed' },
+            { item: 'IV Cannula 18G', type: 'out', qty: 50, fromTo: 'Ward 4B', user: 'Nurse Alice',
+                date: '2026-06-29 08:45', ref: 'REQ-2026-023', status: 'completed' },
+            { item: 'Surgical Gloves', type: 'in', qty: 200, fromTo: 'Beta Healthcare', user: 'Store Manager',
+                date: '2026-06-28 16:20', ref: 'PO-2026-002', status: 'completed' },
+            { item: 'Ceftriaxone 1g', type: 'out', qty: 10, fromTo: 'Pharmacy', user: 'Pharmacist Susan',
+                date: '2026-06-28 14:00', ref: 'RX-2026-045', status: 'completed' },
+            { item: 'N95 Mask', type: 'transfer', qty: 50, fromTo: 'Main Store → ICU', user: 'Store Manager',
+                date: '2026-06-27 11:30', ref: 'TR-2026-012', status: 'completed' },
+            { item: 'Tramadol 50mg', type: 'out', qty: 12, fromTo: 'Pharmacy', user: 'Pharmacist Susan',
+                date: '2026-06-27 10:00', ref: 'RX-2026-044', status: 'completed' },
+            { item: 'Normal Saline', type: 'in', qty: 100, fromTo: 'KEMSA', user: 'Store Manager',
+                date: '2026-06-26 15:00', ref: 'PO-2026-003', status: 'pending' },
+            { item: 'Surgical Gloves', type: 'out', qty: 30, fromTo: 'Main Store', user: 'Nurse Mary',
+                date: '2026-06-26 09:00', ref: 'REQ-2026-022', status: 'completed' },
+            { item: 'IV Giving Set', type: 'out', qty: 20, fromTo: 'ICU', user: 'Nurse John',
+                date: '2026-06-25 14:30', ref: 'REQ-2026-021', status: 'completed' },
+            { item: 'Paracetamol 500mg', type: 'adjustment', qty: -10, fromTo: 'Stock take', user: 'Store Manager',
+                date: '2026-06-25 09:00', ref: 'ADJ-2026-005', status: 'completed' }
+        ];
+
+        const suppliers = [
+            { name: 'KEMSA', contact: 'John Maina', phone: '+254 722 123 456', email: 'info@kemsa.go.ke',
+                items: 'Medications, IV fluids, Vaccines', status: 'active' },
+            { name: 'Surgipharm Ltd', contact: 'Mary Wanjiru', phone: '+254 733 456 789', email: 'sales@surgipharm.co.ke',
+                items: 'Surgical supplies, Consumables', status: 'active' },
+            { name: 'Beta Healthcare', contact: 'Peter Omondi', phone: '+254 710 987 654',
+                email: 'info@betahealthcare.co.ke', items: 'PPE, Equipment', status: 'active' },
+            { name: 'Universal Corporation', contact: 'Grace Ineza', phone: '+254 788 555 666',
+                email: 'sales@universalcorp.co.ke', items: 'Diagnostics, Lab consumables', status: 'active' }
+        ];
+
+        const categories = ['Medication', 'Consumable', 'Equipment', 'Surgical', 'Diagnostic', 'PPE', 'Cleaning'];
+        let currentFilter = 'all';
+
+        // ─── RENDER FUNCTIONS ───
+        function renderItems() {
+            const catFilter = document.getElementById('itemFilterCategory').value;
+            const statusFilter = document.getElementById('itemFilterStatus').value;
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            const filtered = inventoryItems.filter(item => {
+                const matchCat = catFilter === 'all' || item.category === catFilter;
+                const matchStatus = statusFilter === 'all' || item.status === statusFilter;
+                const matchSearch = !searchVal || item.name.toLowerCase().includes(searchVal);
+                return matchCat && matchStatus && matchSearch;
+            });
+
+            const tbody = document.getElementById('itemsBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML =
+                    '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--tm)">No items found matching filters.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(item => {
+                const pct = Math.min(100, Math.round((item.qty / item.reorder) * 100));
+                const statusColor = item.status === 'critical' ? 'var(--red)' : item.status === 'low' ? 'var(--orange)' :
+                    'var(--green)';
+                const statusBadge = item.status === 'critical' ? 'b-red' : item.status === 'low' ? 'b-org' : 'b-grn';
+                const statusLabel = item.status.charAt(0).toUpperCase() + item.status.slice(1);
+                const isExpiring = item.expiry && new Date(item.expiry) < new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+                const expBadge = isExpiring ? ' <span class="badge b-red">Expiring soon</span>' : '';
+
+                return `
+                    <tr>
+                        <td style="font-weight:600;color:var(--ac)">${item.name}</td>
+                        <td>${item.category}</td>
+                        <td>${item.unit}</td>
+                        <td style="font-weight:600;">${item.qty}</td>
+                        <td><div class="stock-bar"><div class="fill" style="width:${Math.min(pct,100)}%;background:${statusColor};"></div></div></td>
+                        <td style="font-size:11px;color:${isExpiring?'var(--red)':'var(--tm)'};">${item.expiry || '—'} ${expBadge}</td>
+                        <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
+                        <td>
+                            <button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="viewItem(${item.id})">View</button>
+                            <button class="btn-s" style="padding:2px 8px;font-size:10px;background:var(--acb);color:var(--ach);" onclick="showToast('✏️ Editing ${item.name}','info')">Edit</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderMovements() {
+            const typeFilter = document.getElementById('movementFilterType').value;
+            const filtered = stockMovements.filter(m => typeFilter === 'all' || m.type === typeFilter);
+            const tbody = document.getElementById('movementsBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML =
+                    '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--tm)">No movements found.</td></tr>';
+                return;
+            }
+            const typeLabels = { 'in': 'Stock In', 'out': 'Stock Out', 'transfer': 'Transfer',
+                'adjustment': 'Adjustment' };
+            const typeColors = { 'in': 'b-grn', 'out': 'b-org', 'transfer': 'b-blue', 'adjustment': 'b-purple' };
+            const statusColors = { 'completed': 'b-grn', 'pending': 'b-org', 'cancelled': 'b-red' };
+
+            tbody.innerHTML = filtered.map(m => `
+                <tr>
+                    <td style="font-weight:500;">${m.item}</td>
+                    <td><span class="badge ${typeColors[m.type]||'b-grn'}">${typeLabels[m.type]||m.type}</span></td>
+                    <td style="font-weight:600;">${m.qty}</td>
+                    <td>${m.fromTo}</td>
+                    <td>${m.user}</td>
+                    <td style="font-size:11px;color:var(--tm)">${m.date}</td>
+                    <td style="font-size:11px;color:var(--ac)">${m.ref}</td>
+                    <td><span class="badge ${statusColors[m.status]||'b-grn'}">${m.status.charAt(0).toUpperCase()+m.status.slice(1)}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderSuppliers() {
+            const tbody = document.getElementById('suppliersBody');
+            tbody.innerHTML = suppliers.map(s => `
+                <tr>
+                    <td style="font-weight:600;color:var(--ac)">${s.name}</td>
+                    <td>${s.contact}</td>
+                    <td>${s.phone}</td>
+                    <td style="font-size:11px;color:var(--tm)">${s.email}</td>
+                    <td style="font-size:11px;">${s.items}</td>
+                    <td><span class="badge b-grn">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderReorder() {
+            const critical = inventoryItems.filter(i => i.status === 'critical');
+            const low = inventoryItems.filter(i => i.status === 'low');
+            const reorderItems = [...critical, ...low];
+
+            const tbody = document.getElementById('reorderBody');
+            if (reorderItems.length === 0) {
+                tbody.innerHTML =
+                    '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--tm)">All items are adequately stocked. 🎉</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = reorderItems.map(item => {
+                const priority = item.status === 'critical' ? 'Critical' : 'Low';
+                const priBadge = item.status === 'critical' ? 'b-red' : 'b-org';
+                return `
+                    <tr>
+                        <td style="font-weight:600;color:var(--ac)">${item.name}</td>
+                        <td>${item.category}</td>
+                        <td style="font-weight:600;color:${item.status==='critical'?'var(--red)':'var(--orange)'}">${item.qty}</td>
+                        <td style="font-weight:600;">${item.reorder}</td>
+                        <td><span class="badge ${priBadge}">${priority}</span></td>
+                        <td>
+                            <button class="btn-p" style="padding:2px 10px;font-size:10px;" onclick="showToast('📦 Creating purchase order for ${item.name}','info')">Order Now</button>
+                            <button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="showToast('🔔 Alert sent for ${item.name}','info')">Alert</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderRecent() {
+            const tbody = document.getElementById('recentBody');
+            const typeLabels = { 'in': 'Stock In', 'out': 'Stock Out', 'transfer': 'Transfer',
+                'adjustment': 'Adjustment' };
+            const typeColors = { 'in': 'b-grn', 'out': 'b-org', 'transfer': 'b-blue', 'adjustment': 'b-purple' };
+            const statusColors = { 'completed': 'b-grn', 'pending': 'b-org', 'cancelled': 'b-red' };
+
+            const recent = stockMovements.slice(0, 6);
+            tbody.innerHTML = recent.map(m => `
+                <tr>
+                    <td style="font-weight:500;">${m.item}</td>
+                    <td><span class="badge ${typeColors[m.type]||'b-grn'}">${typeLabels[m.type]||m.type}</span></td>
+                    <td style="font-weight:600;">${m.qty}</td>
+                    <td>${m.user}</td>
+                    <td>${m.fromTo}</td>
+                    <td style="font-size:11px;color:var(--tm)">${m.date}</td>
+                    <td><span class="badge ${statusColors[m.status]||'b-grn'}">${m.status.charAt(0).toUpperCase()+m.status.slice(1)}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderCategoryChart() {
+            const container = document.getElementById('categoryChart');
+            const catCounts = {};
+            inventoryItems.forEach(item => {
+                catCounts[item.category] = (catCounts[item.category] || 0) + 1;
+            });
+            const entries = Object.entries(catCounts).sort((a, b) => b[1] - a[1]);
+            const max = Math.max(...entries.map(e => e[1]));
+
+            const colors = ['#007a85', '#34c759', '#ff9500', '#af52de', '#ff3b30', '#0071e3', '#b5006e', '#8a6200'];
+            container.innerHTML = `
+                <div style="display:flex;align-items:flex-end;gap:8px;height:100px;padding:4px 0;flex-wrap:wrap;">
+                    ${entries.map(([cat, count], i) => `
+                        <div style="flex:1;min-width:40px;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            <div style="font-size:9px;font-weight:600;color:var(--tm);">${count}</div>
+                            <div style="width:100%;max-width:40px;height:${(count/max)*80+4}px;min-height:6px;border-radius:4px 4px 0 0;background:${colors[i%colors.length]};"></div>
+                            <div style="font-size:8px;color:var(--tm);text-align:center;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;">${cat.slice(0,6)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderStatusChart() {
+            const container = document.getElementById('statusChart');
+            const adequate = inventoryItems.filter(i => i.status === 'adequate').length;
+            const low = inventoryItems.filter(i => i.status === 'low').length;
+            const critical = inventoryItems.filter(i => i.status === 'critical').length;
+            const total = inventoryItems.length;
+            const pctAdequate = Math.round((adequate / total) * 100);
+            const pctLow = Math.round((low / total) * 100);
+            const pctCritical = Math.round((critical / total) * 100);
+
+            container.innerHTML = `
+                <div style="padding:8px 0;">
+                    <div style="display:flex;height:20px;border-radius:10px;overflow:hidden;background:var(--s3);">
+                        <div style="width:${pctAdequate}%;background:var(--green);transition:width 0.6s var(--spring);"></div>
+                        <div style="width:${pctLow}%;background:var(--orange);transition:width 0.6s var(--spring);"></div>
+                        <div style="width:${pctCritical}%;background:var(--red);transition:width 0.6s var(--spring);"></div>
+                    </div>
+                    <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">
+                        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--tm);">
+                            <span style="width:10px;height:10px;border-radius:3px;background:var(--green);"></span>
+                            Adequate: ${adequate} (${pctAdequate}%)
+                        </span>
+                        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--tm);">
+                            <span style="width:10px;height:10px;border-radius:3px;background:var(--orange);"></span>
+                            Low: ${low} (${pctLow}%)
+                        </span>
+                        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--tm);">
+                            <span style="width:10px;height:10px;border-radius:3px;background:var(--red);"></span>
+                            Critical: ${critical} (${pctCritical}%)
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ─── VIEW ITEM DETAILS ───
+        function viewItem(id) {
+            const item = inventoryItems.find(i => i.id === id);
+            if (!item) return;
+            const isExpiring = item.expiry && new Date(item.expiry) < new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+            const statusColor = item.status === 'critical' ? 'var(--red)' : item.status === 'low' ? 'var(--orange)' :
+                'var(--green)';
+            const statusBadge = item.status === 'critical' ? 'b-red' : item.status === 'low' ? 'b-org' : 'b-grn';
+
+            document.getElementById('detailModalTitle').textContent = `📦 ${item.name}`;
+            document.getElementById('detailModalBody').innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Category</div>
+                        <div style="font-size:14px;font-weight:600;">${item.category}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Unit</div>
+                        <div style="font-size:14px;font-weight:600;">${item.unit}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Quantity</div>
+                        <div style="font-size:14px;font-weight:600;color:${statusColor};">${item.qty}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Reorder Level</div>
+                        <div style="font-size:14px;font-weight:600;">${item.reorder}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Expiry</div>
+                        <div style="font-size:14px;font-weight:600;color:${isExpiring?'var(--red)':'var(--tm)'};">${item.expiry || 'N/A'} ${isExpiring?'⚠️':''}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Status</div>
+                        <div><span class="badge ${statusBadge}">${item.status.charAt(0).toUpperCase()+item.status.slice(1)}</span></div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Supplier</div>
+                        <div style="font-size:14px;font-weight:600;">${item.supplier}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Location</div>
+                        <div style="font-size:14px;font-weight:600;">${item.location}</div>
+                    </div>
+                    <div style="grid-column:1/-1;background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Notes</div>
+                        <div style="font-size:13px;">${item.notes || 'No notes.'}</div>
+                    </div>
+                </div>
+                <div class="fa" style="margin-top:4px;">
+                    <button class="btn-p" onclick="showToast('✏️ Editing ${item.name}','info');closeItemDetailModal();"><i class="ti ti-edit"></i> Edit Item</button>
+                    <button class="btn-s" onclick="showToast('📊 Stock history for ${item.name}','info')"><i class="ti ti-history"></i> History</button>
+                    <button class="btn-export" onclick="closeItemDetailModal(); showToast('🖨️ Printing details...','info')"><i class="ti ti-printer"></i> Print</button>
+                </div>
+            `;
+            document.getElementById('itemDetailModal').classList.add('show');
+        }
+
+        function closeItemDetailModal() {
+            document.getElementById('itemDetailModal').classList.remove('show');
+        }
+
+        // ─── ADD ITEM MODAL ───
+        function openAddItemModal() {
+            document.getElementById('addItemModal').classList.add('show');
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemQty').value = '';
+            document.getElementById('itemReorder').value = '';
+            document.getElementById('itemExpiry').value = '';
+            document.getElementById('itemNotes').value = '';
+        }
+
+        function closeAddItemModal() {
+            document.getElementById('addItemModal').classList.remove('show');
+        }
+
+        function submitAddItem() {
+            const name = document.getElementById('itemName').value.trim();
+            const category = document.getElementById('itemCategory').value;
+            const unit = document.getElementById('itemUnit').value;
+            const qty = parseInt(document.getElementById('itemQty').value) || 0;
+            const reorder = parseInt(document.getElementById('itemReorder').value) || 0;
+            const expiry = document.getElementById('itemExpiry').value;
+            const supplier = document.getElementById('itemSupplier').value;
+            const location = document.getElementById('itemLocation').value;
+            const notes = document.getElementById('itemNotes').value.trim();
+
+            if (!name || qty <= 0 || reorder <= 0) {
+                if (typeof showToast === 'function') {
+                    showToast('⚠️ Please fill in all required fields.', 'warning');
+                }
+                return;
+            }
+
+            const status = qty < reorder ? 'critical' : qty < reorder * 2 ? 'low' : 'adequate';
+            const newItem = {
+                id: inventoryItems.length + 1,
+                name,
+                category,
+                unit,
+                qty,
+                reorder,
+                expiry: expiry || '—',
+                supplier,
+                location,
+                notes,
+                status
+            };
+
+            inventoryItems.push(newItem);
+            closeAddItemModal();
+            renderItems();
+            renderReorder();
+            renderCategoryChart();
+            renderStatusChart();
+            updateStats();
+            if (typeof showToast === 'function') {
+                showToast(`✅ "${name}" added to inventory with ${qty} units.`, 'success');
+            }
+        }
+
+        // ─── UPDATE STATS ───
+        function updateStats() {
+            document.getElementById('statTotal').textContent = inventoryItems.length;
+            const low = inventoryItems.filter(i => i.status === 'low').length;
+            const critical = inventoryItems.filter(i => i.status === 'critical').length;
+            document.getElementById('statLow').textContent = low + critical;
+            const expiring = inventoryItems.filter(i => i.expiry && new Date(i.expiry) < new Date(Date.now() + 60 * 24 * 60 *
+                60 * 1000)).length;
+            document.getElementById('statExpiring').textContent = expiring;
+        }
+
+        // ─── SEARCH ───
+        function handleSearch(query) {
+            renderItems();
+        }
+
+        // ─── FILTER ITEMS ───
+        function filterItems(status) {
+            currentFilter = status;
+            document.getElementById('itemFilterStatus').value = status;
+            renderItems();
+            switchTab('items', document.querySelector('[data-tab="items"]'));
+        }
+
+        // ─── TAB SWITCHING ───
+        function switchTab(name, btn) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            document.querySelectorAll('[id^="view-"]').forEach(v => v.style.display = 'none');
+            const target = document.getElementById('view-' + name);
+            if (target) target.style.display = 'block';
+            if (typeof showToast === 'function') {
+                showToast('📂 Switched to ' + name.charAt(0).toUpperCase() + name.slice(1), 'info');
+            }
+            if (name === 'items') renderItems();
+            if (name === 'movements') renderMovements();
+            if (name === 'suppliers') renderSuppliers();
+            if (name === 'reorder') renderReorder();
+        }
+
+        // ─── EXPORT INVENTORY CSV ───
+        function exportInventoryCSV() {
+            let csv = 'Name,Category,Unit,Quantity,Reorder Level,Expiry,Supplier,Location,Status\n';
+            inventoryItems.forEach(item => {
+                csv +=
+                    `${item.name},${item.category},${item.unit},${item.qty},${item.reorder},${item.expiry},${item.supplier},${item.location},${item.status}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `inventory_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            if (typeof showToast === 'function') {
+                showToast('📥 Inventory CSV exported', 'success');
+            }
+        }
+
+        function generateReorderReport() {
+            if (typeof showToast === 'function') {
+                showToast('📄 Reorder report generated successfully!', 'success');
+            }
+        }
+
+        // ─── TOAST WRAPPER ───
+        function showToast(msg, type) {
+            if (typeof window.showToast === 'function') {
+                window.showToast(msg, type || 'info');
+            } else {
+                const container = document.getElementById('toastContainer');
+                if (container) {
+                    const toast = document.createElement('div');
+                    toast.className = 'toast ' + (type || 'info');
+                    const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+                    toast.textContent = (icons[type] || 'ℹ️') + ' ' + msg;
+                    container.appendChild(toast);
+                    setTimeout(() => toast.classList.add('show'), 10);
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                        setTimeout(() => toast.remove(), 400);
+                    }, 3500);
+                } else {
+                    alert(msg);
+                }
+            }
+        }
+
+        // ─── KEYBOARD SHORTCUTS ───
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key >= '1' && e.key <= '5') {
+                e.preventDefault();
+                const tabs = document.querySelectorAll('.nav-tab');
+                const idx = parseInt(e.key) - 1;
+                if (tabs[idx]) tabs[idx].click();
+            }
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            if (e.key === 'Escape') {
+                closeAddItemModal();
+                closeItemDetailModal();
+            }
+        });
+
+        // ─── HAPTIC FEEDBACK ───
+        document.addEventListener('click', function(e) {
+            if (navigator.vibrate) {
+                const target = e.target.closest('.nav-tab, .btn-p, .btn-s, .btn-export, .kpi, .tb-btn, .user-chip');
+                if (target) navigator.vibrate(8);
+            }
+        });
+
+        // ─── INIT ───
+        console.log('📦 PClinic Inventory & Stores Dashboard — Apple-Style Enhanced');
+        console.log('📌 Shortcuts: Ctrl+D (Dark Mode), Ctrl+/ (Help), Ctrl+L (Logout)');
+        renderItems();
+        renderMovements();
+        renderSuppliers();
+        renderReorder();
+        renderRecent();
+        renderCategoryChart();
+        renderStatusChart();
+        updateStats();
+    </script>
+
+
+    <script>
+        requireAuth(['inventory']).then(function(staff) {
+            window.currentStaff = staff;
+            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
+        }).catch(function(err) {
+            console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+</body>
+</html>

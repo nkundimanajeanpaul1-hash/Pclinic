@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
+    <script type="module" src="firebase-config.js"></script>
+    <script src="auth-guard.js"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PClinic — Hub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" />
+    <style>
+        /* ============================================================
+           PCLINIC HUB — Complete Styles
+           ============================================================ */
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f0f2f5;
+            --s1: #ffffff;
+            --s2: #f8f9fa;
+            --s3: #f1f3f6;
+            --bd: #e4e7ec;
+            --tp: #1a1a2e;
+            --ts: #2d2d44;
+            --tm: #6b7280;
+            --ac: #2563eb;
+            --ach: #1d4ed8;
+            --acb: #eff6ff;
+            --acl: #dbeafe;
+            --green: #10b981;
+            --greenb: #ecfdf5;
+            --orange: #f59e0b;
+            --orangeb: #fffbeb;
+            --red: #ef4444;
+            --redb: #fef2f2;
+            --purple: #7c3aed;
+            --purpleb: #f5f3ff;
+            --pink: #ec4899;
+            --pinkb: #fdf2f8;
+            --teal: #14b8a6;
+            --tealb: #f0fdfa;
+            --gradient: linear-gradient(135deg, #2563eb, #7c3aed);
+            --shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 4px 12px rgba(0, 0, 0, .04);
+            --shadow2: 0 4px 20px rgba(0, 0, 0, .08), 0 12px 40px rgba(0, 0, 0, .06);
+            --r: 10px;
+            --r2: 14px;
+            --f: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            --transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --s1: #1a1d27;
+            --s2: #14171f;
+            --s3: #222533;
+            --bd: #2d3040;
+            --tp: #f0f2f5;
+            --ts: #d1d5db;
+            --tm: #9ca3af;
+            --ac: #3b82f6;
+            --ach: #60a5fa;
+            --acb: #1e293b;
+            --acl: #1e3a5f;
+            --green: #34d399;
+            --greenb: #1a3a2a;
+            --orange: #fbbf24;
+            --orangeb: #3a2a1a;
+            --red: #f87171;
+            --redb: #3a1a1a;
+            --purple: #a78bfa;
+            --purpleb: #2a1a3a;
+            --pink: #f472b6;
+            --pinkb: #3a1a2a;
+            --teal: #2dd4bf;
+            --tealb: #1a2a3a;
+            --shadow: 0 1px 3px rgba(0, 0, 0, .3), 0 4px 12px rgba(0, 0, 0, .2);
+            --shadow2: 0 4px 20px rgba(0, 0, 0, .4), 0 12px 40px rgba(0, 0, 0, .3);
+        }
+
+        body {
+            font-family: var(--f);
+            background: var(--bg);
+            color: var(--tp);
+            font-size: 13px;
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background 0.4s, color 0.4s;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--s2);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--bd);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--tm);
+        }
+
+        /* ── SELECTION ── */
+        ::selection {
+            background: var(--ac);
+            color: #fff;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           TOPBAR
+           ════════════════════════════════════════════════════════════ */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 24px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 0.5px solid var(--bd);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: background 0.4s;
+            height: 56px;
+        }
+        [data-theme="dark"] .topbar {
+            background: rgba(26, 29, 39, 0.85);
+        }
+
+        .tl {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        }
+        .logo-box svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .appname {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--tp);
+        }
+        .appname span {
+            color: var(--ac);
+        }
+        .appsub {
+            font-size: 11px;
+            color: var(--tm);
+            font-weight: 500;
+            margin-left: 2px;
+        }
+
+        .tr {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .realtime-clock {
+            font-size: 12px;
+            color: var(--tm);
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 0.5px solid var(--bd);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        [data-theme="dark"] .realtime-clock {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tb-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 0.5px solid var(--bd);
+            background: var(--s1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--tm);
+            font-size: 15px;
+            position: relative;
+        }
+        .tb-btn:hover {
+            background: var(--s3);
+            transform: scale(1.05);
+            color: var(--tp);
+        }
+        .tb-btn:active {
+            transform: scale(0.92);
+        }
+        .notif-dot {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--red);
+            border: 1.5px solid var(--s1);
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.4);
+                opacity: 0.6;
+            }
+        }
+
+        .theme-toggle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 0.5px solid var(--bd);
+            background: var(--s1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--tm);
+            font-size: 16px;
+        }
+        .theme-toggle:hover {
+            background: var(--s3);
+            transform: scale(1.05);
+            color: var(--tp);
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px 3px 3px;
+            border-radius: 20px;
+            border: 0.5px solid var(--bd);
+            background: var(--s1);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .user-chip:hover {
+            background: var(--s3);
+            transform: scale(1.02);
+        }
+        .ua {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .uname {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--tp);
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           BREADCRUMB
+           ════════════════════════════════════════════════════════════ */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--tm);
+            padding: 10px 24px 6px 24px;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a {
+            color: var(--ac);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        .breadcrumb .separator {
+            color: var(--bd);
+            font-size: 10px;
+        }
+        .breadcrumb .current {
+            color: var(--ts);
+            font-weight: 500;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           GREETING
+           ════════════════════════════════════════════════════════════ */
+        .greeting {
+            padding: 12px 24px 6px 24px;
+        }
+        .greeting h1 {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--tp);
+            letter-spacing: -0.5px;
+        }
+        .greeting h1 .highlight {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .greeting p {
+            font-size: 14px;
+            color: var(--tm);
+            margin-top: 2px;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           STATS GRID
+           ════════════════════════════════════════════════════════════ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            padding: 12px 24px 8px 24px;
+        }
+        .stat-card {
+            background: var(--s1);
+            border: 0.5px solid var(--bd);
+            border-radius: var(--r2);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .stat-card:hover {
+            box-shadow: var(--shadow2);
+            transform: translateY(-2px);
+        }
+        .stat-card .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .stat-card .icon.blue {
+            background: var(--acb);
+            color: var(--ac);
+        }
+        .stat-card .icon.green {
+            background: var(--greenb);
+            color: var(--green);
+        }
+        .stat-card .icon.orange {
+            background: var(--orangeb);
+            color: var(--orange);
+        }
+        .stat-card .icon.purple {
+            background: var(--purpleb);
+            color: var(--purple);
+        }
+        .stat-card .stat-info .number {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--tp);
+            letter-spacing: -0.5px;
+        }
+        .stat-card .stat-info .label {
+            font-size: 12px;
+            color: var(--tm);
+            font-weight: 500;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           MODULE GRID
+           ════════════════════════════════════════════════════════════ */
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px;
+            padding: 12px 24px 16px 24px;
+        }
+        .module-card {
+            background: var(--s1);
+            border: 0.5px solid var(--bd);
+            border-radius: var(--r2);
+            padding: 18px 16px;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .module-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient);
+            opacity: 0;
+            transition: var(--transition);
+        }
+        .module-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow2);
+        }
+        .module-card:hover::before {
+            opacity: 0.03;
+        }
+        .module-card .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .module-card .card-icon.blue {
+            background: var(--acb);
+            color: var(--ac);
+        }
+        .module-card .card-icon.green {
+            background: var(--greenb);
+            color: var(--green);
+        }
+        .module-card .card-icon.orange {
+            background: var(--orangeb);
+            color: var(--orange);
+        }
+        .module-card .card-icon.red {
+            background: var(--redb);
+            color: var(--red);
+        }
+        .module-card .card-icon.purple {
+            background: var(--purpleb);
+            color: var(--purple);
+        }
+        .module-card .card-icon.pink {
+            background: var(--pinkb);
+            color: var(--pink);
+        }
+        .module-card .card-icon.teal {
+            background: var(--tealb);
+            color: var(--teal);
+        }
+        .module-card .card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--tp);
+            letter-spacing: -0.2px;
+        }
+        .module-card .card-desc {
+            font-size: 11px;
+            color: var(--tm);
+            line-height: 1.4;
+        }
+        .module-card .card-badge {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 10px;
+            background: var(--acb);
+            color: var(--ac);
+            margin-top: 2px;
+        }
+        .module-card .card-arrow {
+            position: absolute;
+            right: 14px;
+            top: 14px;
+            color: var(--bd);
+            font-size: 13px;
+            transition: var(--transition);
+        }
+        .module-card:hover .card-arrow {
+            color: var(--ac);
+            transform: translateX(3px);
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           ACTIVITY PANEL
+           ════════════════════════════════════════════════════════════ */
+        .activity-panel {
+            padding: 8px 24px 24px 24px;
+        }
+        .activity-panel .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--tm);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: var(--s1);
+            border: 0.5px solid var(--bd);
+            border-radius: var(--r);
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+        .activity-item:hover {
+            box-shadow: var(--shadow2);
+        }
+        .activity-item .act-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .activity-item .act-icon.blue {
+            background: var(--acb);
+            color: var(--ac);
+        }
+        .activity-item .act-icon.green {
+            background: var(--greenb);
+            color: var(--green);
+        }
+        .activity-item .act-icon.orange {
+            background: var(--orangeb);
+            color: var(--orange);
+        }
+        .activity-item .act-icon.purple {
+            background: var(--purpleb);
+            color: var(--purple);
+        }
+        .activity-item .act-icon.red {
+            background: var(--redb);
+            color: var(--red);
+        }
+        .activity-item .act-text {
+            flex: 1;
+            font-size: 12px;
+            color: var(--ts);
+        }
+        .activity-item .act-text strong {
+            color: var(--tp);
+            font-weight: 600;
+        }
+        .activity-item .act-time {
+            font-size: 10px;
+            color: var(--tm);
+            white-space: nowrap;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           TOAST
+           ════════════════════════════════════════════════════════════ */
+        #toastContainer {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: rgba(28, 28, 30, 0.92);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            color: #fff;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            animation: toastPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        [data-theme="dark"] .toast {
+            background: rgba(44, 44, 46, 0.95);
+        }
+        .toast.success {
+            background: var(--green);
+            color: #fff;
+        }
+        .toast.error {
+            background: var(--red);
+            color: #fff;
+        }
+        .toast.info {
+            background: var(--ac);
+            color: #fff;
+        }
+        @keyframes toastPop {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.9);
+            }
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           LOADING OVERLAY
+           ════════════════════════════════════════════════════════════ */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .loading-overlay.active {
+            display: flex;
+        }
+        .spinner-large {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.15);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .loading-text {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           RESPONSIVE
+           ════════════════════════════════════════════════════════════ */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .topbar {
+                padding: 6px 16px;
+                flex-wrap: wrap;
+                height: auto;
+                gap: 6px;
+            }
+            .tl {
+                flex: 1;
+            }
+            .tr {
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+            .realtime-clock {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+            .greeting {
+                padding: 8px 16px 4px 16px;
+            }
+            .greeting h1 {
+                font-size: 20px;
+            }
+            .stats-grid {
+                padding: 8px 16px;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 10px 14px;
+            }
+            .stat-card .stat-info .number {
+                font-size: 18px;
+            }
+            .module-grid {
+                padding: 8px 16px 12px 16px;
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 10px;
+            }
+            .module-card {
+                padding: 14px 12px;
+            }
+            .module-card .card-icon {
+                width: 34px;
+                height: 34px;
+                font-size: 15px;
+            }
+            .module-card .card-title {
+                font-size: 12px;
+            }
+            .module-card .card-desc {
+                font-size: 10px;
+            }
+            .activity-panel {
+                padding: 4px 16px 16px 16px;
+            }
+            .breadcrumb {
+                padding: 6px 16px 4px 16px;
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .stat-card .icon {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            .stat-card .stat-info .number {
+                font-size: 16px;
+            }
+            .stat-card .stat-info .label {
+                font-size: 10px;
+            }
+            .module-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .module-card .card-icon {
+                width: 30px;
+                height: 30px;
+                font-size: 13px;
+            }
+            .module-card .card-title {
+                font-size: 11px;
+            }
+            .module-card .card-desc {
+                display: none;
+            }
+            .module-card .card-badge {
+                font-size: 8px;
+                padding: 1px 8px;
+            }
+            .appsub {
+                display: none;
+            }
+            .uname {
+                display: none;
+            }
+            .user-chip {
+                padding: 3px;
+            }
+            .greeting h1 {
+                font-size: 17px;
+            }
+            .greeting p {
+                font-size: 12px;
+            }
+            .activity-item .act-text {
+                font-size: 11px;
+            }
+            .activity-item .act-time {
+                font-size: 9px;
+            }
+            .tb-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 13px;
+            }
+            .theme-toggle {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══ TOPBAR ═══ -->
+    <div class="topbar">
+        <div class="tl">
+            <div class="logo-box">
+                <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <span class="appname">P<span>clinic</span></span>
+            <span class="appsub">Hub</span>
+        </div>
+        <div class="tr">
+            <div class="realtime-clock" id="realtimeClock">
+                <i class="ti ti-clock"></i>
+                <span id="clockDisplay">--:--:--</span>
+            </div>
+            <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode (Ctrl+D)">
+                <i class="ti ti-moon" id="themeIcon"></i>
+            </button>
+            <button class="tb-btn" onclick="showShortcuts()" title="Keyboard shortcuts (Ctrl+/)">
+                <i class="ti ti-keyboard"></i>
+            </button>
+            <div class="tb-btn" onclick="showToast('🔔 3 new notifications', 'info')">
+                <i class="ti ti-bell"></i>
+                <div class="notif-dot"></div>
+            </div>
+            <div class="user-chip" onclick="showToast('👤 Admin', 'info')">
+                <div class="ua" id="userAvatar">AD</div>
+                <span class="uname" id="userName">Admin</span>
+            </div>
+            <div class="tb-btn" onclick="logout()" title="Logout (Ctrl+L)">
+                <i class="ti ti-logout"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ BREADCRUMB ═══ -->
+    <div class="breadcrumb" id="breadcrumb">
+        <a href="hub.html">🏥 Hub</a>
+        <span class="separator">›</span>
+        <span class="current">Dashboard</span>
+    </div>
+
+    <!-- ═══ GREETING ═══ -->
+    <div class="greeting">
+        <h1 id="greetingText">Good morning, <span class="highlight">Admin</span> 👋</h1>
+        <p>Welcome to PClinic Hospital Management System — Central Hub</p>
+    </div>
+
+    <!-- ═══ STATS ═══ -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card" onclick="window.location.href='reception-dashboard.html'">
+            <div class="icon blue"><i class="ti ti-users"></i></div>
+            <div class="stat-info">
+                <div class="number" id="totalPatients">0</div>
+                <div class="label">Total Patients</div>
+            </div>
+        </div>
+        <div class="stat-card" onclick="window.location.href='doctor-dashboard.html'">
+            <div class="icon green"><i class="ti ti-user-md"></i></div>
+            <div class="stat-info">
+                <div class="number" id="totalDoctors">0</div>
+                <div class="label">Doctors</div>
+            </div>
+        </div>
+        <div class="stat-card" onclick="window.location.href='appointments.html'">
+            <div class="icon orange"><i class="ti ti-calendar"></i></div>
+            <div class="stat-info">
+                <div class="number" id="todayAppointments">0</div>
+                <div class="label">Today's Appointments</div>
+            </div>
+        </div>
+        <div class="stat-card" onclick="window.location.href='queue.html'">
+            <div class="icon purple"><i class="ti ti-list-numbers"></i></div>
+            <div class="stat-info">
+                <div class="number" id="queueCount">0</div>
+                <div class="label">In Queue</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODULE GRID ═══ -->
+    <div class="module-grid" id="moduleGrid">
+        <!-- Reception -->
+        <a href="reception-dashboard.html" class="module-card" data-role="reception">
+            <div class="card-icon blue"><i class="ti ti-file-invoice"></i></div>
+            <div class="card-title">Reception</div>
+            <div class="card-desc">Patient registration, appointments, queue</div>
+            <span class="card-badge">Front Desk</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Doctor -->
+        <a href="doctor-dashboard.html" class="module-card" data-role="doctor">
+            <div class="card-icon green"><i class="ti ti-user-md"></i></div>
+            <div class="card-title">Doctor Portal</div>
+            <div class="card-desc">Clinical notes, diagnosis, patient care</div>
+            <span class="card-badge">Clinical</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Nurse -->
+        <a href="nurse-dashboard.html" class="module-card" data-role="nurse">
+            <div class="card-icon teal"><i class="ti ti-nurse"></i></div>
+            <div class="card-title">Nurse Portal</div>
+            <div class="card-desc">Vitals, patient care, triage</div>
+            <span class="card-badge">Clinical</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Lab -->
+        <a href="lab-dashboard.html" class="module-card" data-role="lab">
+            <div class="card-icon purple"><i class="ti ti-test-pipe"></i></div>
+            <div class="card-title">Laboratory</div>
+            <div class="card-desc">Lab requests, results, diagnostics</div>
+            <span class="card-badge">Diagnostic</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Pharmacy -->
+        <a href="pharmacy-dashboard.html" class="module-card" data-role="pharmacy">
+            <div class="card-icon pink"><i class="ti ti-pill"></i></div>
+            <div class="card-title">Pharmacy</div>
+            <div class="card-desc">Prescriptions, drug inventory</div>
+            <span class="card-badge">Pharmacy</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Radiology -->
+        <a href="radio-dashboard.html" class="module-card" data-role="radio">
+            <div class="card-icon orange"><i class="ti ti-radio"></i></div>
+            <div class="card-title">Radiology</div>
+            <div class="card-desc">Imaging, X-rays, scans</div>
+            <span class="card-badge">Diagnostic</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Theatre -->
+        <a href="theater-dashboard.html" class="module-card" data-role="theater">
+            <div class="card-icon red"><i class="ti ti-surgical-scissors"></i></div>
+            <div class="card-title">Theatre</div>
+            <div class="card-desc">Surgery, operating room</div>
+            <span class="card-badge">Surgical</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Physiotherapy -->
+        <a href="physio-dashboard.html" class="module-card" data-role="physio">
+            <div class="card-icon green"><i class="ti ti-accessible"></i></div>
+            <div class="card-title">Physiotherapy</div>
+            <div class="card-desc">Rehabilitation, therapy</div>
+            <span class="card-badge">Therapy</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Cashier -->
+        <a href="cashier-dashboard.html" class="module-card" data-role="cashier">
+            <div class="card-icon teal"><i class="ti ti-currency-dollar"></i></div>
+            <div class="card-title">Cashier</div>
+            <div class="card-desc">Payments, invoices, billing</div>
+            <span class="card-badge">Finance</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Finance -->
+        <a href="finance-dashboard.html" class="module-card" data-role="finance">
+            <div class="card-icon blue"><i class="ti ti-credit-card"></i></div>
+            <div class="card-title">Finance</div>
+            <div class="card-desc">Accounting, reports, management</div>
+            <span class="card-badge">Finance</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- HR -->
+        <a href="hr-dashboard.html" class="module-card" data-role="hr">
+            <div class="card-icon purple"><i class="ti ti-users"></i></div>
+            <div class="card-title">Human Resources</div>
+            <div class="card-desc">Staff, payroll, attendance</div>
+            <span class="card-badge">Admin</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Inventory -->
+        <a href="inventory-dashboard.html" class="module-card" data-role="inventory">
+            <div class="card-icon orange"><i class="ti ti-package"></i></div>
+            <div class="card-title">Inventory</div>
+            <div class="card-desc">Supplies, equipment, stock</div>
+            <span class="card-badge">Admin</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Admin -->
+        <a href="admin-dashboard.html" class="module-card" data-role="admin">
+            <div class="card-icon red"><i class="ti ti-settings"></i></div>
+            <div class="card-title">Administration</div>
+            <div class="card-desc">System settings, user management</div>
+            <span class="card-badge">Admin</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+
+        <!-- Bed Management -->
+        <a href="beds-dashboard.html" class="module-card" data-role="beds">
+            <div class="card-icon pink"><i class="ti ti-bed"></i></div>
+            <div class="card-title">Bed Management</div>
+            <div class="card-desc">Ward occupancy, allocation</div>
+            <span class="card-badge">Operations</span>
+            <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
+        </a>
+    </div>
+
+    <!-- ═══ ACTIVITY PANEL ═══ -->
+    <div class="activity-panel">
+        <div class="panel-title">📋 Recent Activity</div>
+        <div class="activity-list" id="activityList">
+            <div class="activity-item">
+                <div class="act-icon blue"><i class="ti ti-user-plus"></i></div>
+                <div class="act-text"><strong>John Smith</strong> was registered as a new patient</div>
+                <div class="act-time">5 min ago</div>
+            </div>
+            <div class="activity-item">
+                <div class="act-icon green"><i class="ti ti-stethoscope"></i></div>
+                <div class="act-text"><strong>Dr. Sarah</strong> added clinical notes for <strong>Alice Mutoni</strong></div>
+                <div class="act-time">18 min ago</div>
+            </div>
+            <div class="activity-item">
+                <div class="act-icon orange"><i class="ti ti-calendar-plus"></i></div>
+                <div class="act-text"><strong>Appointment</strong> booked for <strong>Peter T.</strong> with Dr. Amina</div>
+                <div class="act-time">42 min ago</div>
+            </div>
+            <div class="activity-item">
+                <div class="act-icon purple"><i class="ti ti-test-pipe"></i></div>
+                <div class="act-text">Lab results for <strong>Bernard H.</strong> are ready for review</div>
+                <div class="act-time">1h ago</div>
+            </div>
+            <div class="activity-item">
+                <div class="act-icon red"><i class="ti ti-alert-circle"></i></div>
+                <div class="act-text"><strong>⚠️ Critical</strong> patient <strong>Francois K.</strong> admitted to ICU</div>
+                <div class="act-time">2h ago</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ TOAST CONTAINER ═══ -->
+    <div id="toastContainer"></div>
+
+    <!-- ═══ LOADING OVERLAY ═══ -->
+    <div class="loading-overlay" id="pageLoadingOverlay">
+        <div class="spinner-large"></div>
+        <div class="loading-text">Loading...</div>
+    </div>
+
+    <!-- ═══ JAVASCRIPT ═══ -->
+    <script>
+        // ============================================================
+        // PCLINIC HUB — Complete JavaScript
+        // ============================================================
+
+        (function() {
+            'use strict';
+
+            // ─── ELEMENTS ───
+            const greetingText = document.getElementById('greetingText');
+            const userName = document.getElementById('userName');
+            const userAvatar = document.getElementById('userAvatar');
+
+            // ─── REAL-TIME CLOCK ───
+            function updateClock() {
+                const now = new Date();
+                document.getElementById('clockDisplay').textContent = now.toLocaleTimeString('en-GB');
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // ─── LOAD SAMPLE STATS ───
+            function updateStats() {
+                // Try to get real data from localStorage
+                let patients = [];
+                try {
+                    const data = localStorage.getItem('pclinic_patients');
+                    if (data) patients = JSON.parse(data);
+                } catch (e) {}
+
+                const totalPatients = patients.length || 42;
+                const doctors = 12;
+                const todayAppts = 28;
+                const queueCount = 7;
+
+                document.getElementById('totalPatients').textContent = totalPatients;
+                document.getElementById('totalDoctors').textContent = doctors;
+                document.getElementById('todayAppointments').textContent = todayAppts;
+                document.getElementById('queueCount').textContent = queueCount;
+            }
+            updateStats();
+
+            // ─── APPLY REAL STAFF PROFILE (from auth-guard.js) ───
+            // Runs once requireAuth() has confirmed a logged-in, active staff
+            // member. See the requireAuth(...) call near the end of this file.
+            window.addEventListener('pclinicStaffReady', function(e) {
+                const staff = e.detail;
+                const userRole = (staff.role || 'admin').toLowerCase();
+
+                const hour = new Date().getHours();
+                let timeGreeting = 'Good morning';
+                if (hour >= 12 && hour < 17) timeGreeting = 'Good afternoon';
+                else if (hour >= 17) timeGreeting = 'Good evening';
+
+                const displayName = staff.name || (userRole.charAt(0).toUpperCase() + userRole.slice(1));
+                greetingText.innerHTML = `${timeGreeting}, <span class="highlight">${displayName}</span> 👋`;
+                userName.textContent = displayName;
+                userAvatar.textContent = displayName.substring(0, 2).toUpperCase();
+
+                // ─── SHOW ONLY MODULES RELEVANT TO THIS STAFF MEMBER'S ROLE ───
+                // Admins see every module. Everyone else sees just their own
+                // department's dashboard (this only controls what's shown here;
+                // actual access to each page is still enforced by that page's
+                // own requireAuth() call and by Firestore security rules).
+                const moduleCards = document.querySelectorAll('.module-card');
+                moduleCards.forEach(card => {
+                    const role = card.dataset.role;
+                    const visible = (userRole === 'admin') || (role === userRole);
+                    card.style.display = visible ? '' : 'none';
+                });
+
+                console.log('🏥 PClinic Hub — Fully Loaded');
+                console.log(`👤 Logged in as: ${displayName} (${userRole})`);
+            });
+
+            // ─── UPDATE BREADCRUMB ───
+            document.querySelector('.breadcrumb .current').textContent = 'Dashboard';
+
+            // ─── TOAST SYSTEM ───
+            window.showToast = function(msg, type) {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = 'toast' + (type ? ' ' + type : '');
+                const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'info' ? 'ℹ️' : '📢';
+                toast.innerHTML = `<span>${icon}</span> ${msg}`;
+                container.appendChild(toast);
+
+                setTimeout(function() {
+                    toast.style.animation = 'toastOut 0.3s ease forwards';
+                    setTimeout(function() { toast.remove(); }, 300);
+                }, 3000);
+            };
+
+            // ─── DARK MODE ───
+            window.toggleDarkMode = function() {
+                const html = document.documentElement;
+                const current = html.getAttribute('data-theme');
+                const next = current === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('pclinic_theme', next);
+                document.getElementById('themeIcon').className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
+                showToast(next === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled', 'info');
+            };
+
+            // Load saved theme
+            (function() {
+                const saved = localStorage.getItem('pclinic_theme') || 'light';
+                document.documentElement.setAttribute('data-theme', saved);
+                document.getElementById('themeIcon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
+            })();
+
+            // ─── SHORTCUTS ───
+            window.showShortcuts = function() {
+                const shortcuts = [
+                    { key: 'Ctrl+D', desc: 'Toggle Dark Mode' },
+                    { key: 'Ctrl+/', desc: 'Show Shortcuts' },
+                    { key: 'Ctrl+L', desc: 'Logout' },
+                    { key: 'Ctrl+F', desc: 'Focus Search' },
+                    { key: 'Esc', desc: 'Close Modals' }
+                ];
+                let msg = '⌨️ Keyboard Shortcuts:\n' + shortcuts.map(s => `  ${s.key} → ${s.desc}`).join('\n');
+                alert(msg);
+            };
+
+            // ─── KEYBOARD SHORTCUTS ───
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                    e.preventDefault();
+                    toggleDarkMode();
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                    e.preventDefault();
+                    showShortcuts();
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                    e.preventDefault();
+                    logout();
+                }
+            });
+
+            // ─── LOGOUT ───
+            window.logout = function() {
+                if (confirm('Are you sure you want to sign out?')) {
+                    showToast('👋 Logging out...', 'info');
+                    setTimeout(function() {
+                        window.pclinicLogout();
+                    }, 500);
+                }
+            };
+
+            console.log('📌 Shortcuts: Ctrl+D (Dark Mode), Ctrl+/ (Help), Ctrl+L (Logout)');
+
+        })();
+    </script>
+
+
+    <script>
+        requireAuth([]).then(function(staff) {
+            window.currentStaff = staff;
+            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
+        }).catch(function(err) {
+            console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+</body>
+</html>

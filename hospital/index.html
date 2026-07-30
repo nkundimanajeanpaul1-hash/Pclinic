@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>PCLINIC — Hospital Management System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <style>
+        /* ============================================================
+           PCLINIC LANDING PAGE — Stats same size as buttons
+           ============================================================ */
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f0f2f5;
+            --s1: #ffffff;
+            --s2: rgba(255,255,255,0.15);
+            --bd: rgba(255,255,255,0.2);
+            --tp: #ffffff;
+            --ts: rgba(255,255,255,0.85);
+            --tm: rgba(255,255,255,0.65);
+            --ac: #60a5fa;
+            --ach: #3b82f6;
+            --acb: rgba(96,165,250,0.15);
+            --acl: rgba(96,165,250,0.3);
+            --green: #34d399;
+            --orange: #fbbf24;
+            --red: #f87171;
+            --purple: #a78bfa;
+            --pink: #f472b6;
+            --teal: #2dd4bf;
+            --gradient: linear-gradient(135deg, #60a5fa, #a78bfa);
+            --shadow: 0 1px 3px rgba(0,0,0,.2), 0 4px 12px rgba(0,0,0,.1);
+            --shadow2: 0 4px 20px rgba(0,0,0,.25), 0 12px 40px rgba(0,0,0,.15);
+            --r: 8px;
+            --r2: 12px;
+            --f: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            --transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: var(--f);
+            color: var(--tp);
+            font-size: 13px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+        }
+
+        /* ── SELECTION ── */
+        ::selection {
+            background: var(--ac);
+            color: #fff;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           FULL BACKGROUND IMAGE
+           ════════════════════════════════════════════════════════════ */
+        .background-wrapper {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image: url('your-hospital-image.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .background-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            background: rgba(0, 0, 0, 0.45);
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           NAVBAR — Glass effect
+           ════════════════════════════════════════════════════════════ */
+        .navbar {
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0;
+            padding: 10px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            transition: var(--transition);
+            height: 56px;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .nav-brand img {
+            height: 30px;
+            width: auto;
+            filter: brightness(0) invert(1);
+        }
+        .nav-brand .brand-text .name {
+            font-size: 17px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+        .nav-brand .brand-text .sub {
+            font-size: 8px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        .nav-links a {
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: var(--transition);
+            position: relative;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--ac);
+            transition: var(--transition);
+        }
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+        .nav-links a:hover {
+            color: #fff;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .theme-toggle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+            color: #fff;
+        }
+
+        .btn-nav {
+            padding: 6px 18px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--f);
+        }
+        .btn-nav-primary {
+            background: var(--gradient);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(96,165,250,0.3);
+        }
+        .btn-nav-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(96,165,250,0.4);
+        }
+        .btn-nav-outline {
+            background: transparent;
+            color: rgba(255,255,255,0.8);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-nav-outline:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .menu-toggle {
+            display: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            cursor: pointer;
+            color: rgba(255,255,255,0.6);
+            font-size: 18px;
+            transition: var(--transition);
+        }
+        .menu-toggle:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           MAIN CONTENT
+           ════════════════════════════════════════════════════════════ */
+        .main-content {
+            position: relative;
+            z-index: 5;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 8px 32px 12px;
+        }
+
+        .content-wrapper {
+            display: flex;
+            gap: 30px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* ── LEFT COLUMN ── */
+        .left-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .hero-text .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--ac);
+            background: rgba(96,165,250,0.15);
+            border: 1px solid rgba(96,165,250,0.2);
+            margin-bottom: 6px;
+            backdrop-filter: blur(8px);
+        }
+        .hero-text .badge .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.7; }
+        }
+
+        .hero-text .label-top {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--ac);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 3px;
+        }
+
+        .hero-text h1 {
+            font-size: 40px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            line-height: 1.05;
+            color: #fff;
+            margin-bottom: 3px;
+        }
+        .hero-text h1 .highlight {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-text .sub-headline {
+            font-size: 15px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.85);
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+        .hero-text p {
+            font-size: 12px;
+            color: rgba(255,255,255,0.65);
+            max-width: 460px;
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        /* ── BUTTONS ROW ── */
+        .hero-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .btn-primary {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            background: var(--gradient);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(96,165,250,0.3);
+            transition: var(--transition);
+            font-family: var(--f);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(96,165,250,0.4);
+        }
+        .btn-secondary {
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.85);
+            transition: var(--transition);
+            font-family: var(--f);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(8px);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        /* ── STATS — SAME SIZE AS BUTTONS ── */
+        .hero-stats {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .stat-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: var(--transition);
+        }
+        .stat-box:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(0, 0, 0, 0.35);
+        }
+        .stat-box .number {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.3px;
+            white-space: nowrap;
+        }
+        .stat-box .number .accent {
+            color: var(--ac);
+        }
+        .stat-box .label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .stat-box .divider {
+            width: 1px;
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* ── RIGHT COLUMN — REMOVED ── */
+        .right-column {
+            display: none;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           PORTALS BAR — LARGER BOXES
+           ════════════════════════════════════════════════════════════ */
+        .portals-bar {
+            flex-shrink: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            padding: 10px 0 8px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .portal-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--r2);
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+        }
+        .portal-item:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow2);
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(0, 0, 0, 0.45);
+        }
+
+        .portal-item .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            color: #fff;
+            transition: var(--transition);
+        }
+        .portal-item:hover .icon {
+            transform: scale(1.08) rotate(-5deg);
+        }
+
+        /* Individual icon colors */
+        .portal-item:nth-child(1) .icon {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+        }
+        .portal-item:nth-child(2) .icon {
+            background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+        }
+        .portal-item:nth-child(3) .icon {
+            background: linear-gradient(135deg, #ec4899, #f472b6);
+        }
+        .portal-item:nth-child(4) .icon {
+            background: linear-gradient(135deg, #14b8a6, #2dd4bf);
+        }
+
+        .portal-item .info h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.2;
+            margin-bottom: 2px;
+        }
+        .portal-item .info p {
+            font-size: 12px;
+            color: rgba(255,255,255,0.55);
+            line-height: 1.3;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           SECURITY BAR
+           ════════════════════════════════════════════════════════════ */
+        .security-bar {
+            flex-shrink: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 4px 0 0;
+            position: relative;
+            z-index: 5;
+        }
+        .security-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 5px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--r);
+            font-size: 11px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.7);
+            transition: var(--transition);
+        }
+        .security-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: rgba(255,255,255,0.15);
+            color: #fff;
+            background: rgba(0, 0, 0, 0.35);
+        }
+        .security-item .icon {
+            font-size: 15px;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           RESPONSIVE
+           ════════════════════════════════════════════════════════════ */
+        @media (max-width: 1024px) {
+            .hero-text h1 {
+                font-size: 32px;
+            }
+            .portal-item {
+                padding: 14px 16px;
+            }
+            .portal-item .icon {
+                width: 42px;
+                height: 42px;
+                font-size: 20px;
+            }
+            .portal-item .info h4 {
+                font-size: 13px;
+            }
+            .portal-item .info p {
+                font-size: 11px;
+            }
+            .stat-box {
+                padding: 6px 12px;
+            }
+            .stat-box .number {
+                font-size: 13px;
+            }
+            .stat-box .label {
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 820px) {
+            .content-wrapper {
+                flex-direction: column;
+                overflow-y: auto;
+                padding-bottom: 4px;
+            }
+            .portals-bar {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            .security-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .main-content {
+                padding: 6px 16px 10px;
+                overflow-y: auto;
+            }
+            .left-column {
+                justify-content: flex-start;
+                padding-top: 4px;
+            }
+            .hero-text h1 {
+                font-size: 26px;
+            }
+            .hero-stats {
+                gap: 8px;
+            }
+            .stat-box {
+                padding: 6px 10px;
+            }
+            .stat-box .number {
+                font-size: 12px;
+            }
+            .stat-box .label {
+                font-size: 10px;
+            }
+            .portal-item {
+                padding: 12px 14px;
+            }
+            .portal-item .icon {
+                width: 38px;
+                height: 38px;
+                font-size: 18px;
+            }
+            .portal-item .info h4 {
+                font-size: 12px;
+            }
+            .portal-item .info p {
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .navbar {
+                padding: 6px 16px;
+                height: 48px;
+            }
+            .nav-brand .brand-text .sub {
+                display: none;
+            }
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 48px;
+                left: 0;
+                right: 0;
+                background: rgba(0,0,0,0.9);
+                backdrop-filter: blur(20px);
+                padding: 16px;
+                gap: 12px;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+            }
+            .nav-links.open {
+                display: flex;
+            }
+            .menu-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .nav-links a {
+                font-size: 13px;
+                color: rgba(255,255,255,0.8);
+            }
+            .main-content {
+                padding: 4px 12px 6px;
+            }
+            .hero-text h1 {
+                font-size: 22px;
+            }
+            .hero-text .sub-headline {
+                font-size: 12px;
+            }
+            .hero-text p {
+                font-size: 11px;
+            }
+            .hero-buttons .btn-primary,
+            .hero-buttons .btn-secondary {
+                font-size: 11px;
+                padding: 6px 14px;
+            }
+            .hero-stats {
+                gap: 6px;
+            }
+            .stat-box {
+                padding: 5px 8px;
+                gap: 4px;
+            }
+            .stat-box .number {
+                font-size: 11px;
+            }
+            .stat-box .label {
+                font-size: 9px;
+            }
+            .portals-bar {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                padding: 6px 0 4px;
+            }
+            .portal-item {
+                padding: 8px 12px;
+                gap: 10px;
+            }
+            .portal-item .icon {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+            .portal-item .info h4 {
+                font-size: 11px;
+            }
+            .portal-item .info p {
+                font-size: 9px;
+            }
+            .security-bar {
+                grid-template-columns: 1fr 1fr;
+                gap: 4px;
+                padding: 2px 0 0;
+            }
+            .security-item {
+                font-size: 9px;
+                padding: 3px 8px;
+            }
+            .security-item .icon {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .nav-brand .brand-text .name {
+                font-size: 14px;
+            }
+            .nav-brand img {
+                height: 24px;
+            }
+            .hero-text h1 {
+                font-size: 18px;
+            }
+            .hero-text .sub-headline {
+                font-size: 11px;
+            }
+            .portals-bar {
+                grid-template-columns: 1fr;
+            }
+            .security-bar {
+                grid-template-columns: 1fr 1fr;
+            }
+            .btn-nav {
+                padding: 4px 10px;
+                font-size: 10px;
+            }
+            .theme-toggle {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+            .hero-stats {
+                flex-wrap: wrap;
+            }
+            .stat-box {
+                padding: 4px 8px;
+            }
+            .stat-box .number {
+                font-size: 10px;
+            }
+            .stat-box .label {
+                font-size: 8px;
+            }
+            .portal-item {
+                padding: 6px 10px;
+                gap: 8px;
+            }
+            .portal-item .icon {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+            .portal-item .info h4 {
+                font-size: 10px;
+            }
+            .portal-item .info p {
+                font-size: 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ════════════════════════════════════════════════════════════
+    FULL BACKGROUND IMAGE
+    ════════════════════════════════════════════════════════════ -->
+    <div class="background-wrapper"></div>
+    <div class="background-overlay"></div>
+
+    <!-- ════════════════════════════════════════════════════════════
+    NAVBAR
+    ════════════════════════════════════════════════════════════ -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="nav-brand">
+            <img src="logo.png" alt="PCLINIC Logo" id="navLogo"/>
+            <div class="brand-text">
+                <span class="name">PCLINIC</span>
+                <span class="sub">HOSPITAL SYSTEM</span>
+            </div>
+        </a>
+
+        <div class="nav-links" id="navLinks">
+            <a href="#">Home</a>
+            <a href="#">About</a>
+            <a href="#">Features</a>
+            <a href="#">Modules</a>
+            <a href="#">Security</a>
+            <a href="#">Contact</a>
+        </div>
+
+        <div class="nav-actions">
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+                <i class="ti ti-moon" id="themeIcon"></i>
+            </button>
+            <button class="btn-nav btn-nav-outline" onclick="window.location.href='login.html'">Login</button>
+            <button class="btn-nav btn-nav-primary" onclick="window.location.href='login.html'">Get Started</button>
+            <button class="menu-toggle" onclick="toggleMenu()" aria-label="Toggle menu">
+                <i class="ti ti-menu-2"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ════════════════════════════════════════════════════════════
+    MAIN CONTENT
+    ════════════════════════════════════════════════════════════ -->
+    <div class="main-content">
+
+        <div class="content-wrapper">
+            <!-- LEFT COLUMN -->
+            <div class="left-column">
+                <div class="hero-text">
+                    <div class="badge">
+                        <span class="dot"></span>
+                        Next-Generation EMR Platform
+                    </div>
+                    <div class="label-top">SMARTER CARE. BETTER OUTCOMES.</div>
+                    <h1>
+                        Advanced Care.<br>
+                        <span class="highlight">Better Outcomes.</span>
+                    </h1>
+                    <div class="sub-headline">PCLINIC is a next-generation Electronic Medical Record (EMR) platform</div>
+                    <p>
+                        Built for hospitals and healthcare professionals. Streamline workflows,
+                        enhance patient care, and improve clinical outcomes.
+                    </p>
+                    <div class="hero-buttons">
+                        <button class="btn-primary" onclick="window.location.href='login.html'">
+                            <i class="ti ti-rocket"></i> Get Started
+                        </button>
+                        <button class="btn-secondary" onclick="window.location.href='#features'">
+                            <i class="ti ti-play"></i> Learn More
+                        </button>
+                    </div>
+
+                    <!-- ── STATS — SAME SIZE AS BUTTONS ── -->
+                    <div class="hero-stats">
+                        <div class="stat-box">
+                            <span class="number">1,200<span class="accent">+</span></span>
+                            <span class="label">Patients Managed</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="number">12<span class="accent">+</span></span>
+                            <span class="label">Clinical Modules</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="number">100<span class="accent">%</span></span>
+                            <span class="label">Data Security</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN — REMOVED -->
+            <div class="right-column"></div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════
+        PORTALS BAR — LARGER BOXES
+        ════════════════════════════════════════════════════════════ -->
+        <div class="portals-bar">
+            <div class="portal-item">
+                <div class="icon"><i class="ti ti-user"></i></div>
+                <div class="info">
+                    <h4>Patient Registry</h4>
+                    <p>Search &amp; manage records</p>
+                </div>
+            </div>
+            <div class="portal-item">
+                <div class="icon"><i class="ti ti-stethoscope"></i></div>
+                <div class="info">
+                    <h4>Doctor Portal</h4>
+                    <p>Diagnosis &amp; clinical notes</p>
+                </div>
+            </div>
+            <div class="portal-item">
+                <div class="icon"><i class="ti ti-heart-pulse"></i></div>
+                <div class="info">
+                    <h4>Nurse Portal</h4>
+                    <p>Vitals &amp; patient tracking</p>
+                </div>
+            </div>
+            <div class="portal-item">
+                <div class="icon"><i class="ti ti-lock"></i></div>
+                <div class="info">
+                    <h4>Secure Login</h4>
+                    <p>Role-based access control</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════
+        SECURITY BAR
+        ════════════════════════════════════════════════════════════ -->
+        <div class="security-bar">
+            <div class="security-item">
+                <span class="icon">🔒</span> HIPAA Compliant
+            </div>
+            <div class="security-item">
+                <span class="icon">🔄</span> Real-time Sync
+            </div>
+            <div class="security-item">
+                <span class="icon">📊</span> Advanced Analytics
+            </div>
+            <div class="security-item">
+                <span class="icon">⚡</span> Reliable &amp; Scalable
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+    SCRIPTS
+    ════════════════════════════════════════════════════════════ -->
+    <script>
+        // ─── THEME TOGGLE ───
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('pclinic_theme', next);
+            document.getElementById('themeIcon').className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
+        }
+
+        // Load saved theme
+        (function() {
+            const saved = localStorage.getItem('pclinic_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('themeIcon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
+        })();
+
+        // ─── MOBILE MENU ───
+        function toggleMenu() {
+            const nav = document.getElementById('navLinks');
+            nav.classList.toggle('open');
+        }
+
+        // Close menu on link click
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('navLinks').classList.remove('open');
+            });
+        });
+
+        console.log('🏥 PCLINIC Landing Page loaded! (Stats same size as buttons)');
+    </script>
+
+</body>
+</html>

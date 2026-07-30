@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pclinic Login</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+    .hero-bg {
+        background-image: url('your-hospital-image.png');
+        background-size: cover;
+        background-position: center;
+    }
+    .glass-input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .glass-input:focus {
+        border-color: #34d399;
+        box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+        outline: none;
+    }
+    .glass-input.error {
+        border-color: #f87171;
+        box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
+    }
+    .pw-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        padding: 4px;
+        transition: color 0.2s;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .pw-toggle:hover { color: rgba(255, 255, 255, 0.85); }
+    .msg-toast { animation: fadeSlide 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes fadeSlide {
+        0% { opacity: 0; transform: translateY(6px) scale(0.96); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .spinner {
+        display: none;
+        width: 18px;
+        height: 18px;
+        border: 2.5px solid rgba(255, 255, 255, 0.25);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin: 0 auto;
+    }
+    .spinner.active { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+
+<body class="h-screen flex items-center justify-center hero-bg bg-black/70 bg-blend-multiply text-white font-sans">
+
+    <!-- ═══ LOGIN CARD ═══ -->
+    <div class="bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-2xl w-full max-w-sm shadow-2xl">
+
+        <div class="text-center mb-6">
+            <div class="flex justify-center items-center gap-2 mb-2">
+                <i class="ti ti-building-hospital text-3xl text-green-400"></i>
+                <span class="text-2xl font-bold">PClinic</span>
+            </div>
+            <p class="text-gray-300 text-sm">Sign in to your dashboard</p>
+        </div>
+
+        <form id="loginForm" class="space-y-4" autocomplete="off" novalidate>
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-gray-300">STAFF ID</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <i class="ti ti-id-badge-2"></i>
+                    </span>
+                    <input
+                        type="text"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        id="staffId"
+                        required
+                        autocomplete="off"
+                        class="glass-input w-full bg-white/5 border border-white/10 rounded-lg p-2.5 pl-9 text-sm text-white placeholder-gray-400 focus:border-green-400 transition"
+                        placeholder="e.g. 41054"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-gray-300">PASSWORD</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <i class="ti ti-lock"></i>
+                    </span>
+                    <input
+                        type="password"
+                        id="password"
+                        required
+                        autocomplete="current-password"
+                        class="glass-input w-full bg-white/5 border border-white/10 rounded-lg p-2.5 pl-9 text-sm text-white placeholder-gray-400 focus:border-green-400 transition pr-10"
+                        placeholder="••••••••"
+                    />
+                    <button type="button" class="pw-toggle" id="togglePassword" aria-label="Toggle password visibility">
+                        <i class="ti ti-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between text-sm">
+                <label class="flex items-center gap-2 text-gray-300 cursor-pointer">
+                    <input type="checkbox" id="remember" class="w-4 h-4 rounded border-white/20 bg-white/5 accent-green-400 cursor-pointer" />
+                    <span>Remember my Staff ID</span>
+                </label>
+            </div>
+
+            <button type="submit" class="w-full bg-green-500 hover:bg-green-600 py-2.5 rounded-lg font-bold transition flex items-center justify-center gap-3 mt-2 disabled:opacity-70 disabled:cursor-not-allowed" id="submitBtn">
+                <span id="btnText">Login</span>
+                <span class="spinner" id="spinner"></span>
+            </button>
+        </form>
+
+        <p id="message" class="text-center text-xs mt-4 hidden p-2 rounded msg-toast"></p>
+
+        <div class="text-center mt-6">
+            <a href="index.html" class="text-gray-400 hover:text-white text-xs underline transition">Back to Home</a>
+        </div>
+    </div>
+
+    <!-- ═══ FIREBASE (must load first) ═══ -->
+    <script type="module" src="firebase-config.js"></script>
+
+    <!-- ═══ LOGIN LOGIC ═══ -->
+    <script>
+        (function() {
+            'use strict';
+
+            const form = document.getElementById('loginForm');
+            const staffIdInput = document.getElementById('staffId');
+            const passwordInput = document.getElementById('password');
+            const messageEl = document.getElementById('message');
+            const toggleBtn = document.getElementById('togglePassword');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('spinner');
+            const rememberCheck = document.getElementById('remember');
+
+            // ─── TOGGLE PASSWORD ───
+            toggleBtn.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.className = 'ti ti-eye-off';
+                } else {
+                    passwordInput.type = 'password';
+                    icon.className = 'ti ti-eye';
+                }
+            });
+
+            function showMessage(text, type) {
+                messageEl.textContent = text;
+                messageEl.className = 'mt-4 p-2 rounded text-center text-xs msg-toast block';
+                messageEl.className += (type === 'success')
+                    ? ' bg-green-500/20 text-green-400'
+                    : ' bg-red-500/20 text-red-400';
+            }
+            function hideMessage() {
+                messageEl.className = 'text-center text-xs mt-4 hidden p-2 rounded msg-toast';
+                messageEl.textContent = '';
+            }
+            function setLoading(loading) {
+                submitBtn.disabled = loading;
+                btnText.textContent = loading ? 'Logging in…' : 'Login';
+                spinner.classList.toggle('active', loading);
+            }
+
+            // ─── REMEMBERED STAFF ID ───
+            const savedId = localStorage.getItem('pclinic_remember_staffid');
+            if (savedId) {
+                staffIdInput.value = savedId;
+                rememberCheck.checked = true;
+            }
+
+            // If a previous page redirected us here with a reason, show it.
+            const authMsg = sessionStorage.getItem('pclinic_auth_message');
+            if (authMsg) {
+                showMessage(authMsg, 'error');
+                sessionStorage.removeItem('pclinic_auth_message');
+            }
+
+            function friendlyAuthError(err) {
+                const code = err && err.code ? err.code : '';
+                switch (code) {
+                    case 'auth/invalid-credential':
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        return '❌ Incorrect Staff ID or password.';
+                    case 'auth/too-many-requests':
+                        return '⚠️ Too many attempts. Please wait a moment and try again.';
+                    case 'auth/network-request-failed':
+                        return '⚠️ Network error. Check your connection and try again.';
+                    case 'auth/invalid-email':
+                        return '⚠️ Staff ID must be numeric only.';
+                    default:
+                        return '❌ Login failed. Please try again.';
+                }
+            }
+
+            async function waitForFirebase() {
+                if (window.firebaseReady && window.firebaseAuth) return true;
+                return new Promise((resolve) => {
+                    window.addEventListener('firebaseReady', () => resolve(true), { once: true });
+                    setTimeout(() => resolve(!!window.firebaseAuth), 8000);
+                });
+            }
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideMessage();
+
+                const staffId = staffIdInput.value.trim();
+                const password = passwordInput.value;
+
+                if (!/^[0-9]+$/.test(staffId)) {
+                    staffIdInput.classList.add('error');
+                    showMessage('⚠️ Staff ID must contain numbers only.', 'error');
+                    staffIdInput.focus();
+                    return;
+                }
+                staffIdInput.classList.remove('error');
+
+                if (!password) {
+                    passwordInput.classList.add('error');
+                    showMessage('⚠️ Please enter your password.', 'error');
+                    passwordInput.focus();
+                    return;
+                }
+                passwordInput.classList.remove('error');
+
+                setLoading(true);
+
+                const ready = await waitForFirebase();
+                if (!ready) {
+                    setLoading(false);
+                    showMessage('❌ Could not connect. Please check your internet and try again.', 'error');
+                    return;
+                }
+
+                try {
+                    const { signInWithEmailAndPassword } = window.firebaseAuthFunctions;
+                    const email = window.pclinicStaffIdToEmail(staffId);
+                    const cred = await signInWithEmailAndPassword(window.firebaseAuth, email, password);
+
+                    // Look up role/profile to make sure the account is active.
+                    const { doc, getDoc } = window.firebaseFunctions;
+                    const userSnap = await getDoc(doc(window.firebaseDB, 'users', cred.user.uid));
+
+                    if (!userSnap.exists()) {
+                        await window.firebaseAuthFunctions.signOut(window.firebaseAuth);
+                        showMessage('❌ Account not set up. Contact your administrator.', 'error');
+                        setLoading(false);
+                        return;
+                    }
+                    const profile = userSnap.data();
+                    if (profile.active === false) {
+                        await window.firebaseAuthFunctions.signOut(window.firebaseAuth);
+                        showMessage('❌ This account has been disabled. Contact your administrator.', 'error');
+                        setLoading(false);
+                        return;
+                    }
+
+                    if (rememberCheck.checked) {
+                        localStorage.setItem('pclinic_remember_staffid', staffId);
+                    } else {
+                        localStorage.removeItem('pclinic_remember_staffid');
+                    }
+
+                    showMessage(`✅ Welcome, ${profile.name || staffId}! Redirecting…`, 'success');
+                    setTimeout(() => {
+                        window.location.href = 'hub.html';
+                    }, 700);
+
+                } catch (err) {
+                    console.error('Login error:', err);
+                    showMessage(friendlyAuthError(err), 'error');
+                    setLoading(false);
+                }
+            });
+
+            staffIdInput.addEventListener('input', function() {
+                this.classList.remove('error');
+                hideMessage();
+            });
+            passwordInput.addEventListener('input', function() {
+                this.classList.remove('error');
+                hideMessage();
+            });
+
+            console.log('🏥 PClinic Login — Firebase Auth (numeric Staff ID)');
+        })();
+    </script>
+
+</body>
+</html>

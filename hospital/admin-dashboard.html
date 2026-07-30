@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Control Center • PClinic</title>
+
+    <!-- ─── SHARED STYLES ─── -->
+    <link rel="stylesheet" href="styles.css" />
+    
+    <!-- ─── SHARED JAVASCRIPT ─── -->
+    
+    <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
+    <script type="module" src="firebase-config.js"></script>
+    <script src="auth-guard.js"></script>
+<script src="shared.js" defer></script>
+
+    <!-- ─── PATIENT DATA SYSTEM ─── -->      
+<script src="patient-data.js" defer></script> 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+
+    <style>
+        /* ─── RESET & BASE ─── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f2f4f8;
+            color: #1d1d1f;
+            padding-top: 56px;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f2f4f8;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c7d0;
+            border-radius: 10px;
+        }
+
+        /* ─── TOP NAV ─── */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: saturate(180%) blur(24px);
+            -webkit-backdrop-filter: saturate(180%) blur(24px);
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            z-index: 1000;
+            box-shadow: 0 1px 8px rgba(0, 0, 0, 0.02);
+        }
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .nav-left .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0a2a44;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+        }
+        .nav-left .logo span {
+            color: #2a7faa;
+        }
+        .nav-left .logo .tag {
+            font-size: 0.5rem;
+            font-weight: 600;
+            color: #fff;
+            background: #2a7faa;
+            padding: 2px 10px;
+            border-radius: 30px;
+            margin-left: 4px;
+            letter-spacing: 0.3px;
+            vertical-align: middle;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        /* ─── TOPBAR ICON BUTTONS ─── */
+        .topbar-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: #6b6b70;
+            font-size: 16px;
+            font-family: inherit;
+            position: relative;
+        }
+        .topbar-btn:hover {
+            background: #f0f2f5;
+            transform: scale(1.05);
+        }
+        .topbar-btn:active {
+            transform: scale(0.92);
+        }
+        .topbar-btn .notif-count {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.5rem;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 30px;
+            border: 2px solid #fff;
+            min-width: 16px;
+            text-align: center;
+        }
+        .topbar-btn .dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #ef4444;
+            border: 2px solid #fff;
+        }
+
+        .theme-toggle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: #6b6b70;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        .theme-toggle:hover {
+            background: #f0f2f5;
+            transform: scale(1.05);
+        }
+        .theme-toggle:active {
+            transform: scale(0.92);
+        }
+
+        /* ─── REAL-TIME CLOCK ─── */
+        .realtime-clock {
+            font-size: 11px;
+            color: #6b6b70;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 16px;
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            height: 30px;
+        }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0a2a44, #2a7faa);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            flex-shrink: 0;
+        }
+        .avatar:hover {
+            border-color: #2a7faa;
+            transform: scale(1.05);
+        }
+        .avatar:active {
+            transform: scale(0.95);
+        }
+
+        /* ─── SECONDARY NAV BAR ─── */
+        .nav-secondary {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: saturate(180%) blur(16px);
+            -webkit-backdrop-filter: saturate(180%) blur(16px);
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            padding: 0 32px;
+            gap: 2px;
+            z-index: 999;
+            overflow-x: auto;
+        }
+        .nav-secondary a {
+            padding: 5px 14px;
+            border-radius: 18px;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #6b6b70;
+            transition: all 0.2s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .nav-secondary a:hover {
+            background: #f0f2f5;
+            color: #1d1d1f;
+        }
+        .nav-secondary a.active {
+            background: #0a2a44;
+            color: #fff;
+        }
+        .nav-secondary a .badge-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #ef4444;
+            border-radius: 50%;
+            margin-left: 2px;
+        }
+        .nav-secondary .spacer {
+            flex: 1;
+        }
+
+        /* ─── BREADCRUMB ─── */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #8e8e93;
+            padding: 10px 32px 4px 32px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+        .breadcrumb a {
+            color: #2a7faa;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        .breadcrumb .separator {
+            color: #8e8e93;
+            font-size: 10px;
+        }
+        .breadcrumb .current {
+            color: #3a3a3c;
+            font-weight: 500;
+        }
+
+        /* ─── MAIN ─── */
+        .main {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 12px 32px 60px;
+        }
+
+        /* ─── GREETING ─── */
+        .greeting {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .greeting h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .greeting h1 small {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: #6b6b70;
+        }
+        .greeting .date-badge {
+            background: #fff;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            color: #6b6b70;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ─── SEARCH BAR (moved from topbar) ─── */
+        .search-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .search-section .search-box {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 8px 16px;
+            gap: 10px;
+            transition: all 0.3s;
+            flex: 1;
+            max-width: 480px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+        .search-section .search-box:focus-within {
+            border-color: #2a7faa;
+            box-shadow: 0 0 0 3px rgba(42, 127, 170, 0.1);
+        }
+        .search-section .search-box input {
+            border: none;
+            background: transparent;
+            padding: 4px 0;
+            font-size: 0.85rem;
+            outline: none;
+            width: 100%;
+            color: #1d1d1f;
+        }
+        .search-section .search-box input::placeholder {
+            color: #8e8e93;
+        }
+        .search-section .search-box .s-icon {
+            color: #8e8e93;
+            font-size: 16px;
+        }
+        .search-section .search-hint {
+            font-size: 0.7rem;
+            color: #8e8e93;
+            padding: 6px 12px;
+            background: #f0f2f5;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .search-section .search-hint kbd {
+            background: #e5e7eb;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-family: monospace;
+            color: #3a3a3c;
+        }
+
+        /* ─── STATS ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: #fff;
+            padding: 16px 18px;
+            border-radius: 14px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 8px 32px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.07);
+        }
+        .stat-card .num {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #0a2a44;
+        }
+        .stat-card .label {
+            font-size: 0.7rem;
+            color: #6b6b70;
+            margin-top: 2px;
+            font-weight: 500;
+        }
+        .stat-card .icon-wrap {
+            float: right;
+            font-size: 1.2rem;
+            opacity: 0.5;
+        }
+
+        /* ─── CARDS ─── */
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 8px 32px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .card-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-header .actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        /* ─── BUTTONS ─── */
+        .btn {
+            padding: 6px 18px;
+            border: none;
+            border-radius: 30px;
+            background: #0a2a44;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            border: 1.5px solid transparent;
+            font-family: inherit;
+        }
+        .btn:hover {
+            background: #1e3a5f;
+            transform: scale(1.02);
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn-outline {
+            background: transparent;
+            border-color: #d1d9e6;
+            color: #1d1d1f;
+        }
+        .btn-outline:hover {
+            background: #f0f2f5;
+            border-color: #0a2a44;
+        }
+        .btn-green {
+            background: #16a34a;
+        }
+        .btn-green:hover {
+            background: #15803d;
+        }
+        .btn-red {
+            background: #ef4444;
+        }
+        .btn-red:hover {
+            background: #dc2626;
+        }
+        .btn-sm {
+            padding: 3px 12px;
+            font-size: 0.65rem;
+        }
+        .btn-warning {
+            background: #eab308;
+            color: #1d1d1f;
+        }
+        .btn-warning:hover {
+            background: #ca8a04;
+        }
+
+        /* ─── TABLES ─── */
+        .table-wrap {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        th {
+            text-align: left;
+            padding: 8px 8px 8px 0;
+            color: #6b6b70;
+            font-weight: 500;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1.5px solid #f0f2f5;
+        }
+        td {
+            padding: 10px 8px 10px 0;
+            border-bottom: 1px solid #f5f7fa;
+            vertical-align: middle;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        td .actions-cell {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 2px 10px;
+            border-radius: 30px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge.green {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge.yellow {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge.red {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .badge.blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .badge.gray {
+            background: #f0f2f5;
+            color: #6b6b70;
+        }
+        .badge.purple {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
+        /* ─── FORMS INLINE ─── */
+        .inline-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .inline-form input,
+        .inline-form select {
+            padding: 6px 12px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            background: #fafbfc;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 120px;
+            font-family: inherit;
+        }
+        .inline-form input:focus,
+        .inline-form select:focus {
+            border-color: #2a7faa;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(42, 127, 170, 0.1);
+        }
+        .inline-form .btn {
+            flex-shrink: 0;
+        }
+
+        /* ─── TOGGLE SWITCH ─── */
+        .toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .toggle {
+            width: 40px;
+            height: 24px;
+            background: #e5e7eb;
+            border-radius: 30px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .toggle.active {
+            background: #16a34a;
+        }
+        .toggle .thumb {
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+        }
+        .toggle.active .thumb {
+            left: 19px;
+        }
+        .toggle-label {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #6b6b70;
+        }
+
+        /* ─── TOAST CONTAINER ─── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+            max-width: 90%;
+        }
+        .toast {
+            background: rgba(28, 28, 30, 0.92);
+            backdrop-filter: saturate(180%) blur(24px);
+            -webkit-backdrop-filter: saturate(180%) blur(24px);
+            color: #fff;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            pointer-events: auto;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        .toast.success {
+            background: #065f46;
+        }
+        .toast.error {
+            background: #991b1b;
+        }
+        .toast.warning {
+            background: #92400e;
+        }
+        .toast.info {
+            background: #1e40af;
+        }
+
+        /* ═══ LOADING OVERLAY ═══ */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .loading-overlay.show { display: flex; }
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #2a7faa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            font-size: 13px;
+            color: #6b6b70;
+            font-weight: 500;
+        }
+
+        /* ═══ SHORTCUTS MODAL ═══ */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(8px);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+        }
+        .overlay.show { display: flex; }
+        .modal {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            max-width: 95vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 0.5px solid #e5e7eb;
+        }
+        .modal-ic {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: #dbeafe;
+            color: #1e40af;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        .modal-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1d1d1f;
+            flex: 1;
+        }
+        .modal-x {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            background: #f0f2f5;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #6b6b70;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-x:hover {
+            background: #e5e7eb;
+        }
+        .modal-body {
+            padding: 16px 20px;
+        }
+
+        .shortcuts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 4px 0;
+        }
+        .shortcut-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 0.5px solid #f0f2f5;
+        }
+        .shortcut-key {
+            background: #f0f2f5;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            font-family: monospace;
+            color: #3a3a3c;
+        }
+        .shortcut-desc {
+            font-size: 11px;
+            color: #3a3a3c;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 992px) {
+            .top-nav {
+                padding: 0 16px;
+                height: 50px;
+            }
+            .nav-secondary {
+                padding: 0 16px;
+                height: 38px;
+                top: 50px;
+            }
+            .main {
+                padding: 10px 16px 40px;
+            }
+            .breadcrumb {
+                padding: 8px 16px 4px 16px;
+                margin-top: 38px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .search-section .search-box {
+                max-width: 100%;
+            }
+            .search-section .search-hint {
+                display: none;
+            }
+        }
+        @media (max-width: 768px) {
+            .realtime-clock {
+                font-size: 10px;
+                padding: 2px 8px;
+                height: 26px;
+            }
+            .topbar-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 14px;
+            }
+            .theme-toggle {
+                width: 30px;
+                height: 30px;
+                font-size: 14px;
+            }
+            .avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 0.7rem;
+            }
+            .nav-secondary a {
+                font-size: 0.7rem;
+                padding: 4px 10px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 12px 14px;
+            }
+            .stat-card .num {
+                font-size: 1.4rem;
+            }
+            .greeting h1 {
+                font-size: 1.3rem;
+            }
+            .greeting h1 small {
+                font-size: 0.75rem;
+            }
+            .inline-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .inline-form input,
+            .inline-form select {
+                min-width: auto;
+            }
+            .card {
+                padding: 14px 16px;
+            }
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .shortcuts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 480px) {
+            .top-nav {
+                padding: 0 10px;
+                height: 46px;
+            }
+            .nav-secondary {
+                padding: 0 10px;
+                height: 34px;
+                top: 46px;
+            }
+            .nav-left .logo {
+                font-size: 1rem;
+            }
+            .realtime-clock {
+                font-size: 9px;
+                padding: 2px 6px;
+                height: 22px;
+            }
+            .topbar-btn {
+                width: 26px;
+                height: 26px;
+                font-size: 12px;
+            }
+            .theme-toggle {
+                width: 26px;
+                height: 26px;
+                font-size: 12px;
+            }
+            .avatar {
+                width: 26px;
+                height: 26px;
+                font-size: 0.6rem;
+            }
+            .main {
+                padding: 8px 10px 30px;
+            }
+            .breadcrumb {
+                padding: 4px 10px 4px 10px;
+                font-size: 9px;
+                margin-top: 34px;
+            }
+            .search-section .search-box {
+                padding: 6px 12px;
+            }
+            .search-section .search-box input {
+                font-size: 0.75rem;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .stat-card {
+                padding: 10px 12px;
+            }
+            .stat-card .num {
+                font-size: 1.1rem;
+            }
+            .stat-card .label {
+                font-size: 0.6rem;
+            }
+            .stat-card .icon-wrap {
+                font-size: 0.9rem;
+            }
+            .greeting .date-badge {
+                font-size: 0.65rem;
+                padding: 4px 10px;
+            }
+            .greeting h1 {
+                font-size: 1.1rem;
+            }
+            table {
+                font-size: 0.7rem;
+            }
+            td, th {
+                padding: 4px 4px;
+            }
+            .btn {
+                font-size: 0.65rem;
+                padding: 4px 12px;
+            }
+            .btn-sm {
+                font-size: 0.55rem;
+                padding: 2px 8px;
+            }
+            .badge {
+                font-size: 0.5rem;
+                padding: 1px 6px;
+            }
+            .toast {
+                font-size: 11px;
+                padding: 6px 14px;
+            }
+            .modal {
+                width: 98vw;
+            }
+            .search-section .search-hint {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══ LOADING OVERLAY ═══ -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading admin dashboard…</div>
+    </div>
+
+    <!-- ═══ TOP NAV ─── -->
+    <nav class="top-nav">
+        <div class="nav-left">
+            <a href="hub.html" class="logo">
+                <span>🏥 P<span>Clinic</span></span>
+                <span class="tag">Teaching</span>
+            </a>
+        </div>
+
+        <div class="nav-right">
+            <!-- ─── REAL-TIME CLOCK ─── -->
+            <div class="realtime-clock" id="liveClock">
+                <i class="ti ti-clock"></i> --:--
+            </div>
+
+            <!-- ─── DARK MODE TOGGLE ─── -->
+            <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode (Ctrl+D)">
+                <i class="ti ti-moon" id="darkModeIcon"></i>
+            </button>
+
+            <!-- ─── KEYBOARD SHORTCUTS ─── -->
+            <button class="topbar-btn" onclick="openShortcuts()" title="Keyboard shortcuts (Ctrl+/)">
+                <i class="ti ti-help"></i>
+            </button>
+
+            <!-- ─── NOTIFICATIONS ─── -->
+            <button class="topbar-btn" onclick="showToast('🔔 12 new notifications', 'info')" title="Notifications">
+                <i class="ti ti-bell"></i>
+                <span class="notif-count">12</span>
+            </button>
+
+            <!-- ─── MESSAGES ─── -->
+            <button class="topbar-btn" onclick="showToast('💬 5 new messages', 'info')" title="Messages">
+                <i class="ti ti-message"></i>
+                <span class="dot"></span>
+            </button>
+
+            <!-- ─── AVATAR ─── -->
+            <div class="avatar" onclick="toggleLogoutModal()" title="User menu">DA</div>
+        </div>
+    </nav>
+
+    <!-- ═══ SECONDARY NAV ─── -->
+    <nav class="nav-secondary">
+        <a href="#" class="active"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
+        <a href="#patients"><i class="ti ti-users"></i> Patients <span class="badge-dot"></span></a>
+        <a href="#pharmacy"><i class="ti ti-pill"></i> Pharmacy</a>
+        <a href="#billing"><i class="ti ti-credit-card"></i> Billing</a>
+        <a href="#lab"><i class="ti ti-test-pipe"></i> Lab</a>
+        <a href="#staff"><i class="ti ti-user-cog"></i> Staff</a>
+        <a href="#settings"><i class="ti ti-settings"></i> Settings</a>
+        <div class="spacer"></div>
+    </nav>
+
+    <!-- ─── BREADCRUMB ─── -->
+    <div class="breadcrumb">
+        <a href="hub.html"><i class="ti ti-home"></i> Hub</a>
+        <span class="separator">›</span>
+        <span class="current">Admin Control Center</span>
+    </div>
+
+    <!-- ═══ MAIN ═══ -->
+    <div class="main">
+
+        <!-- ─── GREETING ─── -->
+        <div class="greeting">
+            <h1>
+                Admin Control Center 👋
+                <br><small>Full system management • PClinic Teaching Hospital</small>
+            </h1>
+            <span class="date-badge"><i class="ti ti-calendar"></i> June 30, 2026 • Q2 2026</span>
+        </div>
+
+        <!-- ─── SEARCH BAR (moved from topbar) ─── -->
+        <div class="search-section">
+            <div class="search-box">
+                <span class="s-icon">🔍</span>
+                <input type="text" placeholder="Search patients, doctors, invoices, exams..." id="globalSearch">
+            </div>
+            <span class="search-hint">
+                <kbd>⌘F</kbd> or <kbd>Ctrl+F</kbd>
+            </span>
+        </div>
+
+        <!-- ─── STATS ─── -->
+        <div class="stats-grid">
+            <div class="stat-card"><span class="icon-wrap"><i class="ti ti-users"></i></span><div class="num">12,847</div><div class="label">Total Patients</div></div>
+            <div class="stat-card"><span class="icon-wrap"><i class="ti ti-pill"></i></span><div class="num">342</div><div class="label">Pharmacy Items</div></div>
+            <div class="stat-card"><span class="icon-wrap"><i class="ti ti-test-pipe"></i></span><div class="num">28</div><div class="label">Lab Exams</div></div>
+            <div class="stat-card"><span class="icon-wrap"><i class="ti ti-user-cog"></i></span><div class="num">156</div><div class="label">Staff Members</div></div>
+            <div class="stat-card"><span class="icon-wrap"><i class="ti ti-coin"></i></span><div class="num">$284K</div><div class="label">Revenue This Month</div></div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- SECTION 1: PHARMACY MANAGEMENT                       -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <div class="card" id="pharmacy">
+            <div class="card-header">
+                <h3><i class="ti ti-pill"></i> Pharmacy Inventory Management</h3>
+                <div class="actions">
+                    <button class="btn btn-green" onclick="addPharmacyItem()"><i class="ti ti-plus"></i> Add Item</button>
+                    <button class="btn btn-outline" onclick="refreshTable('pharmacy-table')"><i class="ti ti-refresh"></i> Refresh</button>
+                </div>
+            </div>
+            <div class="inline-form">
+                <input type="text" id="pharm-name" placeholder="Item name (e.g., Paracetamol)">
+                <input type="text" id="pharm-qty" placeholder="Quantity (e.g., 500)">
+                <input type="text" id="pharm-price" placeholder="Price (e.g., 2.50)">
+                <select id="pharm-category">
+                    <option value="Tablet">Tablet</option>
+                    <option value="Syrup">Syrup</option>
+                    <option value="Injection">Injection</option>
+                    <option value="Cream">Cream</option>
+                    <option value="Other">Other</option>
+                </select>
+                <button class="btn btn-green" onclick="addPharmacyItem()"><i class="ti ti-plus"></i> Add</button>
+            </div>
+            <div class="table-wrap" style="margin-top:14px;">
+                <table id="pharmacy-table">
+                    <thead>
+                        <tr><th>Item</th><th>Category</th><th>Qty</th><th>Price</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="pharmacy-body">
+                        <tr><td>Paracetamol 500mg</td><td>Tablet</td><td>450</td><td>$2.50</td><td><span class="badge green">In Stock</span></td>
+                            <td><div class="actions-cell"><button class="btn btn-sm btn-red" onclick="deleteRow(this)"><i class="ti ti-trash"></i></button><button class="btn btn-sm btn-outline" onclick="showToast('✏️ Editing item','info')"><i class="ti ti-edit"></i></button></div></td></tr>
+                        <tr><td>Amoxicillin Syrup</td><td>Syrup</td><td>120</td><td>$8.00</td><td><span class="badge yellow">Low Stock</span></td>
+                            <td><div class="actions-cell"><button class="btn btn-sm btn-red" onclick="deleteRow(this)"><i class="ti ti-trash"></i></button><button class="btn btn-sm btn-outline" onclick="showToast('✏️ Editing item','info')"><i class="ti ti-edit"></i></button></div></td></tr>
+                        <tr><td>Insulin Glargine</td><td>Injection</td><td>45</td><td>$45.00</td><td><span class="badge green">In Stock</span></td>
+                            <td><div class="actions-cell"><button class="btn btn-sm btn-red" onclick="deleteRow(this)"><i class="ti ti-trash"></i></button><button class="btn btn-sm btn-outline" onclick="showToast('✏️ Editing item','info')"><i class="ti ti-edit"></i></button></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- SECTION 2: PATIENT RECORDS                          -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <div class="card" id="patients">
+            <div class="card-header">
+                <h3><i class="ti ti-users"></i> Patient Records</h3>
+                <div class="actions">
+                    <button class="btn btn-green" onclick="showToast('📋 Opening patient registration form...', 'info')"><i class="ti ti-plus"></i> New Patient</button>
+                    <button class="btn btn-outline" onclick="showToast('🔍 Search dialog opened', 'info')"><i class="ti ti-search"></i> Search</button>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>Name</th><th>Department</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>P-10234</td><td>John Doe</td><td>Orthopedics</td><td><span class="badge blue">Active</span></td>
+                            <td><div class="actions-cell"><button class="btn btn-sm btn-outline" onclick="showToast('📋 Viewing patient record', 'info')"><i class="ti ti-eye"></i> View</button><button class="btn btn-sm btn-red" onclick="if(confirm('Delete this patient?')) deleteRow(this)"><i class="ti ti-trash"></i> Delete</button></div></td></tr>
+                        <tr><td>P-10235</td><td>Jane Smith</td><td>Neurology</td><td><span class="badge green">Discharged</span></td>
+                            <td><div class="actions-cell"><button class="btn btn-sm btn-outline" onclick="showToast('📋 Viewing patient record', 'info')"><i class="ti ti-eye"></i> View</button><button class="btn btn-sm btn-red" onclick="if(confirm('Delete this patient?')) deleteRow(this)"><i class="ti ti-trash"></i> Delete</button></div></td></tr>
+                        <tr><td>P-10236</td><td>Peter M.</td><td>Cardiology</td><td><span class="badge red">Urgent</span></td>
+                            <td><div class="actions-cell"><button class="btn btn-sm btn-outline" onclick="showToast('📋 Viewing patient record', 'info')"><i class="ti ti-eye"></i> View</button><button class="btn btn-sm btn-red" onclick="if(confirm('Delete this patient?')) deleteRow(this)"><i class="ti ti-trash"></i> Delete</button></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- SECTION 3: BILLING SYSTEM                           -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <div class="card" id="billing">
+            <div class="card-header">
+                <h3><i class="ti ti-credit-card"></i> Billing & Payments</h3>
+                <div class="actions">
+                    <button class="btn btn-green" onclick="showToast('📄 Opening new invoice form...', 'info')"><i class="ti ti-plus"></i> New Invoice</button>
+                    <button class="btn btn-outline" onclick="showToast('📊 Generating reports...', 'info')"><i class="ti ti-chart-bar"></i> Reports</button>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Invoice #</th><th>Patient</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>INV-2026-001</td><td>John Doe</td><td>$450.00</td><td><span class="badge green">Paid</span></td>
+                            <td><div class="actions-cell"><button class="btn btn-sm btn-outline" onclick="showToast('📄 Viewing invoice', 'info')"><i class="ti ti-file-text"></i> View</button><button class="btn btn-sm btn-warning" onclick="showToast('⛔ Invoice cancellation requested', 'warning')"><i class="ti ti-x"></i> Cancel</button></div></td></tr>
+                        <tr><td>INV-2026-002</td><td>Jane Smith</td><td>$1,200.00</td><td><span class="badge yellow">Pending</span></td>
+                            <td><div class="actions-cell"><button class="btn btn-sm btn-outline" onclick="showToast('📄 Viewing invoice', 'info')"><i class="ti ti-file-text"></i> View</button><button class="btn btn-sm btn-green" onclick="showToast('✅ Invoice marked as paid', 'success')"><i class="ti ti-check"></i> Pay</button><button class="btn btn-sm btn-warning" onclick="showToast('⛔ Invoice cancellation requested', 'warning')"><i class="ti ti-x"></i> Cancel</button></div></td></tr>
+                        <tr><td>INV-2026-003</td><td>Peter M.</td><td>$2,800.00</td><td><span class="badge red">Overdue</span></td>
+                            <td><div class="actions-cell"><button class="btn btn-sm btn-outline" onclick="showToast('📄 Viewing invoice', 'info')"><i class="ti ti-file-text"></i> View</button><button class="btn btn-sm btn-warning" onclick="showToast('⛔ Invoice cancellation requested', 'warning')"><i class="ti ti-x"></i> Cancel</button></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- SECTION 4: LAB MANAGEMENT                          -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <div class="card" id="lab">
+            <div class="card-header">
+                <h3><i class="ti ti-test-pipe"></i> Laboratory Exam Management</h3>
+                <div class="actions">
+                    <button class="btn btn-green" onclick="addLabExam()"><i class="ti ti-plus"></i> Add Exam</button>
+                </div>
+            </div>
+            <div class="inline-form">
+                <input type="text" id="lab-name" placeholder="Exam name (e.g., CBC)">
+                <input type="text" id="lab-desc" placeholder="Description (e.g., Complete Blood Count)">
+                <select id="lab-dept">
+                    <option value="Hematology">Hematology</option>
+                    <option value="Microbiology">Microbiology</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Pathology">Pathology</option>
+                </select>
+                <button class="btn btn-green" onclick="addLabExam()"><i class="ti ti-plus"></i> Add Exam</button>
+            </div>
+            <div class="table-wrap" style="margin-top:14px;">
+                <table>
+                    <thead>
+                        <tr><th>Exam</th><th>Description</th><th>Department</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="lab-body">
+                        <tr><td>CBC</td><td>Complete Blood Count</td><td>Hematology</td><td><span class="badge green">Active</span></td>
+                            <td><div class="actions-cell"><button class="btn btn-sm btn-red" onclick="deleteRow(this)"><i class="ti ti-trash"></i></button><button class="btn btn-sm btn-outline" onclick="showToast('✏️ Editing exam','info')"><i class="ti ti-edit"></i></button></div></td></tr>
+                        <tr><td>Blood Culture</td><td>Bacterial infection test</td><td>Microbiology</td><td><span class="badge green">Active</span></td>
+                            <td><div class="actions-cell"><button class="btn btn-sm btn-red" onclick="deleteRow(this)"><i class="ti ti-trash"></i></button><button class="btn btn-sm btn-outline" onclick="showToast('✏️ Editing exam','info')"><i class="ti ti-edit"></i></button></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top:10px; padding:10px 14px; background:#f0f7ff; border-radius:10px; font-size:0.8rem; color:#1e40af;">
+                <i class="ti ti-info-circle"></i> Exams added here automatically appear in Doctor and Laboratory dashboards.
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- SECTION 5: STAFF MANAGEMENT                        -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <div class="card" id="staff">
+            <div class="card-header">
+                <h3><i class="ti ti-user-cog"></i> Staff & User Management</h3>
+                <div class="actions">
+                    <button class="btn btn-green" onclick="addStaff()"><i class="ti ti-plus"></i> New Staff Login</button>
+                    <button class="btn btn-outline" onclick="showToast('📋 Exporting staff data...', 'info')"><i class="ti ti-download"></i> Export</button>
+                </div>
+            </div>
+            <div class="inline-form" style="margin-bottom:10px; flex-wrap:wrap;">
+                <input type="text" id="staff-name" placeholder="Full Name">
+                <input type="text" id="staff-id" placeholder="Staff ID (numbers only, e.g. 41054)" inputmode="numeric" pattern="[0-9]*">
+                <input type="password" id="staff-password" placeholder="Temporary Password (min 6 chars)">
+                <select id="staff-role">
+                    <option value="doctor">Doctor</option>
+                    <option value="nurse">Nurse</option>
+                    <option value="admin">Admin</option>
+                    <option value="reception">Reception</option>
+                    <option value="lab">Lab</option>
+                    <option value="pharmacy">Pharmacy</option>
+                    <option value="radio">Radiology</option>
+                    <option value="physio">Physio</option>
+                    <option value="cashier">Cashier</option>
+                    <option value="finance">Finance</option>
+                    <option value="hr">HR</option>
+                    <option value="inventory">Inventory</option>
+                    <option value="theater">Theater</option>
+                </select>
+                <button class="btn btn-green" id="staff-create-btn" onclick="addStaff()"><i class="ti ti-plus"></i> Create Login</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Name</th><th>Staff ID</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="staff-body">
+                        <tr><td colspan="5" style="text-align:center; color:#888;">Loading staff…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top:10px; padding:10px 14px; background:#f0fdf4; border-radius:10px; font-size:0.75rem; color:#065f46;">
+                <i class="ti ti-key"></i> Staff sign in with their Staff ID and password on the login page — no email needed. Deactivated accounts lose system access immediately.
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- SECTION 6: SYSTEM SETTINGS                         -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <div class="card" id="settings">
+            <div class="card-header">
+                <h3><i class="ti ti-settings"></i> System Settings</h3>
+                <span class="badge gray">Admin Only</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                <div>
+                    <h4 style="font-size:0.8rem; margin-bottom:6px; color:#6b6b70;">Hospital Info</h4>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <div><label style="font-weight:500; font-size:0.75rem;">Clinic Name:</label> <span>PClinic Teaching Hospital</span></div>
+                        <div><label style="font-weight:500; font-size:0.75rem;">Logo:</label> <span>logo.png (in VS Code)</span></div>
+                        <div><label style="font-weight:500; font-size:0.75rem;">Default Currency:</label> <span>USD ($)</span></div>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="font-size:0.8rem; margin-bottom:6px; color:#6b6b70;">Security & Access</h4>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div class="toggle-wrap"><div class="toggle active" onclick="this.classList.toggle('active')"><div class="thumb"></div></div><span class="toggle-label">Require 2FA for Admin</span></div>
+                        <div class="toggle-wrap"><div class="toggle" onclick="this.classList.toggle('active')"><div class="thumb"></div></div><span class="toggle-label">Enable Staff Self-Registration</span></div>
+                        <div class="toggle-wrap"><div class="toggle active" onclick="this.classList.toggle('active')"><div class="thumb"></div></div><span class="toggle-label">Auto-Backup Every 24h</span></div>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn" onclick="showToast('💾 Settings saved successfully!', 'success')"><i class="ti ti-device-floppy"></i> Save Settings</button>
+                <button class="btn btn-red" onclick="if(confirm('Reset all settings to default?')) showToast('↻ Settings reset to defaults', 'warning')"><i class="ti ti-refresh"></i> Reset Defaults</button>
+                <button class="btn btn-outline" onclick="showToast('📦 Backup initiated...', 'info')"><i class="ti ti-archive"></i> Backup Now</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ═══ LOGOUT MODAL ═══ -->
+    <div class="overlay" id="logout-modal" onclick="if(event.target===this)closeLogoutModal()">
+        <div class="modal" style="width:400px; max-width:95vw;">
+            <div class="modal-head">
+                <div class="modal-ic" style="background:#fee2e2; color:#991b1b;"><i class="ti ti-logout"></i></div>
+                <div class="modal-title">Sign out</div>
+                <button class="modal-x" onclick="closeLogoutModal()"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:14px; color:#3a3a3c; margin-bottom:16px;">Are you sure you want to sign out?</p>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn" style="background:#ef4444; flex:1; justify-content:center;" onclick="performLogout()"><i class="ti ti-logout"></i> Yes, sign out</button>
+                    <button class="btn btn-outline" onclick="closeLogoutModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ SHORTCUTS MODAL ═══ -->
+    <div class="overlay" id="shortcutsModal" onclick="if(event.target===this)closeShortcuts()">
+        <div class="modal" style="max-width:440px; width:95%;">
+            <div class="modal-head">
+                <div class="modal-ic" style="background:#dbeafe; color:#1e40af;"><i class="ti ti-help"></i></div>
+                <div class="modal-title">Keyboard shortcuts</div>
+                <button class="modal-x" onclick="closeShortcuts()"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item"><span class="shortcut-desc">Search</span><span class="shortcut-key">⌘F / Ctrl+F</span></div>
+                    <div class="shortcut-item"><span class="shortcut-desc">Close modal</span><span class="shortcut-key">ESC</span></div>
+                    <div class="shortcut-item"><span class="shortcut-desc">Dark mode</span><span class="shortcut-key">⌘D / Ctrl+D</span></div>
+                    <div class="shortcut-item"><span class="shortcut-desc">Refresh data</span><span class="shortcut-key">⌘R / Ctrl+R</span></div>
+                </div>
+                <p style="font-size:11px;color:#6b6b70;margin-top:12px;text-align:center;">Press <kbd>?</kbd> to reopen this modal</p>
+            </div>
+        </div>
+    </div>
+
+<!-- ═══ VIEW PATIENT MODAL ═══ -->
+<div class="overlay" id="viewPatientModal" onclick="if(event.target===this)closeViewPatient()">
+    <div class="modal" style="max-width:480px; width:95%;">
+        <div class="modal-head">
+            <div class="modal-ic" style="background:#dbeafe; color:#1e40af;"><i class="ti ti-user"></i></div>
+            <div class="modal-title" id="vp-title">Patient Record</div>
+            <button class="modal-x" onclick="closeViewPatient()"><i class="ti ti-x"></i></button>
+        </div>
+        <div class="modal-body" id="vp-body" style="font-size:0.85rem; line-height:1.8;">
+            <!-- filled by JS -->
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+    <!-- ─── SHARED TOAST CONTAINER ─── -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ═══ JAVASCRIPT ═══ -->
+    <script>
+        // ─── ADD PHARMACY ITEM ───
+        function addPharmacyItem() {
+            const name = document.getElementById('pharm-name').value.trim();
+            const qty = document.getElementById('pharm-qty').value.trim();
+            const price = document.getElementById('pharm-price').value.trim();
+            const category = document.getElementById('pharm-category').value;
+            if (!name || !qty || !price) {
+                showToast('⚠️ Please fill in all fields.', 'warning');
+                return;
+            }
+            const tbody = document.getElementById('pharmacy-body');
+            const row = document.createElement('tr');
+            const status = parseInt(qty) > 100 ? '<span class="badge green">In Stock</span>' :
+                parseInt(qty) > 20 ? '<span class="badge yellow">Low Stock</span>' :
+                '<span class="badge red">Critical</span>';
+            row.innerHTML = `
+                <td>${name}</td>
+                <td>${category}</td>
+                <td>${qty}</td>
+                <td>$${parseFloat(price).toFixed(2)}</td>
+                <td>${status}</td>
+                <td><div class="actions-cell"><button class="btn btn-sm btn-red" onclick="deleteRow(this)"><i class="ti ti-trash"></i></button><button class="btn btn-sm btn-outline" onclick="showToast('✏️ Editing item','info')"><i class="ti ti-edit"></i></button></div></td>
+            `;
+            tbody.appendChild(row);
+            document.getElementById('pharm-name').value = '';
+            document.getElementById('pharm-qty').value = '';
+            document.getElementById('pharm-price').value = '';
+            showToast('✅ Pharmacy item added successfully!', 'success');
+        }
+
+        // ─── ADD LAB EXAM ───
+        function addLabExam() {
+            const name = document.getElementById('lab-name').value.trim();
+            const desc = document.getElementById('lab-desc').value.trim();
+            const dept = document.getElementById('lab-dept').value;
+            if (!name || !desc) {
+                showToast('⚠️ Please fill in all fields.', 'warning');
+                return;
+            }
+            const tbody = document.getElementById('lab-body');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${name}</td>
+                <td>${desc}</td>
+                <td>${dept}</td>
+                <td><span class="badge green">Active</span></td>
+                <td><div class="actions-cell"><button class="btn btn-sm btn-red" onclick="deleteRow(this)"><i class="ti ti-trash"></i></button><button class="btn btn-sm btn-outline" onclick="showToast('✏️ Editing exam','info')"><i class="ti ti-edit"></i></button></div></td>
+            `;
+            tbody.appendChild(row);
+            document.getElementById('lab-name').value = '';
+            document.getElementById('lab-desc').value = '';
+            showToast('✅ Lab exam added! It will now appear in Doctor and Lab dashboards.', 'success');
+        }
+
+        // ============================================================
+        // STAFF MANAGEMENT — real Firebase Auth + Firestore
+        // ============================================================
+
+        function roleLabel(role) {
+            const labels = {
+                doctor: 'Doctor', nurse: 'Nurse', admin: 'Admin', reception: 'Reception',
+                lab: 'Lab', pharmacy: 'Pharmacy', radio: 'Radiology', physio: 'Physio',
+                cashier: 'Cashier', finance: 'Finance', hr: 'HR', inventory: 'Inventory',
+                theater: 'Theater'
+            };
+            return labels[role] || role;
+        }
+
+        function renderStaffRow(uid, profile) {
+            const active = profile.active !== false;
+            const statusBadge = active
+                ? '<span class="badge green">Active</span>'
+                : '<span class="badge red">Inactive</span>';
+            const toggleBtnLabel = active
+                ? '<i class="ti ti-user-x"></i> Deactivate'
+                : '<i class="ti ti-user-check"></i> Reactivate';
+            const toggleBtnClass = active ? 'btn btn-sm btn-red' : 'btn btn-sm btn-green';
+
+            const row = document.createElement('tr');
+            row.dataset.uid = uid;
+            row.innerHTML = `
+                <td>${profile.name || ''}</td>
+                <td>${profile.staffId || ''}</td>
+                <td>${roleLabel(profile.role || '')}</td>
+                <td class="staff-status-cell">${statusBadge}</td>
+                <td><div class="actions-cell">
+                    <button class="${toggleBtnClass} staff-toggle-btn" onclick="toggleStaff('${uid}', ${active})">${toggleBtnLabel}</button>
+                </div></td>
+            `;
+            return row;
+        }
+
+        // ─── LOAD STAFF LIST FROM FIRESTORE ───
+        async function loadStaffList() {
+            const tbody = document.getElementById('staff-body');
+            if (!tbody) return;
+            try {
+                await (window.firebaseReady ? Promise.resolve() : new Promise(res => {
+                    window.addEventListener('firebaseReady', () => res(), { once: true });
+                    setTimeout(res, 5000);
+                }));
+                const { collection, getDocs } = window.firebaseFunctions;
+                const snap = await getDocs(collection(window.firebaseDB, 'users'));
+                tbody.innerHTML = '';
+                if (snap.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">No staff accounts yet. Create one above.</td></tr>';
+                    return;
+                }
+                snap.forEach(docSnap => {
+                    tbody.appendChild(renderStaffRow(docSnap.id, docSnap.data()));
+                });
+            } catch (e) {
+                console.error('Failed to load staff list:', e);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#c0392b;">Could not load staff list.</td></tr>';
+            }
+        }
+
+        // ─── ADD STAFF (creates a real Firebase Auth login) ───
+        async function addStaff() {
+            const name = document.getElementById('staff-name').value.trim();
+            const staffId = document.getElementById('staff-id').value.trim();
+            const password = document.getElementById('staff-password').value;
+            const role = document.getElementById('staff-role').value;
+            const createBtn = document.getElementById('staff-create-btn');
+
+            if (!name || !staffId || !password || !role) {
+                showToast('⚠️ Please fill in all fields.', 'warning');
+                return;
+            }
+            if (!/^[0-9]+$/.test(staffId)) {
+                showToast('⚠️ Staff ID must contain numbers only.', 'warning');
+                return;
+            }
+            if (password.length < 6) {
+                showToast('⚠️ Password must be at least 6 characters.', 'warning');
+                return;
+            }
+
+            createBtn.disabled = true;
+            showToast('⏳ Creating staff login…', 'info');
+
+            try {
+                if (!window.firebaseAppFactory || !window.firebaseAuthFunctions) {
+                    throw new Error('Firebase not ready. Please reload the page.');
+                }
+
+                // Check for duplicate staff ID first
+                const { collection, query, where, getDocs } = window.firebaseFunctions;
+                let dupSnap;
+                try {
+                    dupSnap = await getDocs(query(collection(window.firebaseDB, 'users'), where('staffId', '==', staffId)));
+                } catch (e) {
+                    dupSnap = { empty: true }; // fall back; Auth create will still catch true dupes
+                }
+                if (dupSnap && !dupSnap.empty) {
+                    showToast('❌ That Staff ID is already in use.', 'error');
+                    createBtn.disabled = false;
+                    return;
+                }
+
+                // Create the account using a SECONDARY, throwaway Firebase app
+                // instance so the admin's own session doesn't get replaced
+                // by the newly created user's session.
+                const { initializeApp: initApp2, deleteApp, getAuth: getAuth2, firebaseConfig } = window.firebaseAppFactory;
+                const secondaryApp = initApp2(firebaseConfig, 'staff-creation-' + Date.now());
+                const secondaryAuth = getAuth2(secondaryApp);
+
+                const email = window.pclinicStaffIdToEmail(staffId);
+                const { createUserWithEmailAndPassword } = window.firebaseAuthFunctions;
+                const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+                const newUid = cred.user.uid;
+
+                // Save the profile in Firestore under /users/{uid}
+                const { doc, setDoc, serverTimestamp } = window.firebaseFunctions;
+                await setDoc(doc(window.firebaseDB, 'users', newUid), {
+                    staffId: staffId,
+                    name: name,
+                    role: role,
+                    active: true,
+                    createdAt: serverTimestamp ? serverTimestamp() : new Date().toISOString(),
+                    createdBy: (window.currentStaff && window.currentStaff.staffId) || 'admin'
+                });
+
+                // Sign out and clean up the secondary app instance
+                await window.firebaseAuthFunctions.signOut(secondaryAuth);
+                await deleteApp(secondaryApp);
+
+                document.getElementById('staff-name').value = '';
+                document.getElementById('staff-id').value = '';
+                document.getElementById('staff-password').value = '';
+
+                showToast(`✅ Staff login created for ${name} (ID: ${staffId})`, 'success');
+                loadStaffList();
+
+            } catch (err) {
+                console.error('Add staff error:', err);
+                let msg = '❌ Could not create staff login.';
+                if (err.code === 'auth/email-already-in-use') msg = '❌ That Staff ID is already in use.';
+                else if (err.code === 'auth/weak-password') msg = '⚠️ Password is too weak (min 6 characters).';
+                showToast(msg, 'error');
+            } finally {
+                createBtn.disabled = false;
+            }
+        }
+
+        // ─── TOGGLE STAFF ACTIVE/INACTIVE (Firestore flag) ───
+        // Note: this flips the 'active' flag that auth-guard.js and login.html
+        // check on every login/page load. It does not delete the underlying
+        // Firebase Auth account (that requires the Admin SDK / a backend),
+        // but a deactivated account is fully blocked from using the app.
+        async function toggleStaff(uid, currentlyActive) {
+            const label = currentlyActive ? 'deactivate' : 'reactivate';
+            if (!confirm(`Are you sure you want to ${label} this staff account?`)) return;
+            try {
+                const { doc, updateDoc } = window.firebaseFunctions;
+                await updateDoc(doc(window.firebaseDB, 'users', uid), { active: !currentlyActive });
+                showToast(currentlyActive ? '⛔ Staff deactivated' : '🔄 Staff reactivated', currentlyActive ? 'warning' : 'success');
+                loadStaffList();
+            } catch (err) {
+                console.error('Toggle staff error:', err);
+                showToast('❌ Could not update staff status.', 'error');
+            }
+        }
+
+        // ─── REFRESH TABLE ───
+        function refreshTable(id) {
+            showToast('🔄 Refreshed ' + id, 'info');
+        }
+
+        // ─── SEARCH ───
+        document.getElementById('globalSearch').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase();
+            const allTables = document.querySelectorAll('table tbody');
+            allTables.forEach(tbody => {
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+        });
+
+        // ─── TOAST WRAPPER ───
+        function showToast(message, type) {
+            if (typeof window.showToast === 'function') {
+                window.showToast(message, type || 'info');
+            } else {
+                const container = document.getElementById('toastContainer');
+                if (container) {
+                    const toast = document.createElement('div');
+                    toast.className = 'toast ' + (type || 'info');
+                    const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+                    toast.textContent = (icons[type] || 'ℹ️') + ' ' + message;
+                    container.appendChild(toast);
+                    setTimeout(() => toast.classList.add('show'), 10);
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                        setTimeout(() => toast.remove(), 400);
+                    }, 3500);
+                } else {
+                    alert(message);
+                }
+            }
+        }
+
+        // ─── DARK MODE TOGGLE ───
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('darkModeIcon');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.className = 'ti ti-sun';
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                icon.className = 'ti ti-moon';
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        }
+
+        // ─── SHORTCUTS MODAL ───
+        function openShortcuts() {
+            document.getElementById('shortcutsModal').classList.add('show');
+        }
+
+        function closeShortcuts() {
+            document.getElementById('shortcutsModal').classList.remove('show');
+        }
+
+        // ─── LIVE CLOCK ───
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('liveClock').innerHTML = '<i class="ti ti-clock"></i> ' + h + ':' + m;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ─── LOGOUT ───
+        function toggleLogoutModal() {
+            document.getElementById('logout-modal').classList.toggle('show');
+        }
+
+        function closeLogoutModal() {
+            document.getElementById('logout-modal').classList.remove('show');
+        }
+
+        function performLogout() {
+            showToast('🚪 Logging out...', 'info');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+
+// ─── VIEW PATIENT DETAILS ───
+function viewPatient(id) {
+    let patient = null;
+
+    if (typeof getPatient === 'function') {
+        patient = getPatient(id);
+    } else {
+        try {
+            const stored = localStorage.getItem('pclinic_patients');
+            if (stored) {
+                const patients = JSON.parse(stored);
+                patient = patients.find(p => p.id === id);
+            }
+        } catch (e) {
+            console.error('Error reading patient:', e);
+        }
+    }
+
+    if (!patient) {
+        showToast('❌ Patient not found', 'error');
+        return;
+    }
+
+    const fullName = patient.name || ((patient.firstName || '') + ' ' + (patient.lastName || '')).trim();
+    const ec = patient.emergencyContact || {};
+    const lastVital = patient.vitals && patient.vitals.length ? patient.vitals[patient.vitals.length - 1] : null;
+
+    document.getElementById('vp-title').textContent = fullName || 'Patient Record';
+
+    document.getElementById('vp-body').innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 16px;">
+            <div><b>MRN:</b> ${patient.mrn || 'N/A'}</div>
+            <div><b>Status:</b> ${patient.status || 'active'}</div>
+            <div><b>DOB:</b> ${patient.dob || 'N/A'}</div>
+            <div><b>Gender:</b> ${patient.gender || 'N/A'}</div>
+            <div><b>Phone:</b> ${patient.phone || 'N/A'}</div>
+            <div><b>Email:</b> ${patient.email || 'N/A'}</div>
+            <div><b>Department:</b> ${patient.department || 'General'}</div>
+            <div><b>Registered:</b> ${patient.registered || 'N/A'}</div>
+        </div>
+        <hr style="margin:12px 0; border:none; border-top:1px solid #f0f2f5;">
+        <div><b>Address:</b> ${patient.address || 'N/A'}</div>
+        <div style="margin-top:6px;"><b>Emergency Contact:</b> ${ec.name ? `${ec.name} (${ec.relationship || ''}) — ${ec.phone || ''}` : 'N/A'}</div>
+        <hr style="margin:12px 0; border:none; border-top:1px solid #f0f2f5;">
+        <div><b>Last Vitals:</b> ${lastVital
+            ? `Temp ${lastVital.temperature || '-'}°C, Pulse ${lastVital.pulse || '-'}, BP ${lastVital.bpSystolic || '-'}/${lastVital.bpDiastolic || '-'}, SpO2 ${lastVital.spo2 || '-'}%`
+            : 'No vitals recorded yet'}</div>
+        <div style="margin-top:6px;"><b>Prescriptions:</b> ${(patient.prescriptions || []).length}</div>
+        <div style="margin-top:6px;"><b>Clinical Notes:</b> ${(patient.clinicalNotes || []).length}</div>
+        <div style="margin-top:6px;"><b>Lab Results:</b> ${(patient.labResults || []).length}</div>
+    `;
+
+    document.getElementById('viewPatientModal').classList.add('show');
+}
+
+function closeViewPatient() {
+    document.getElementById('viewPatientModal').classList.remove('show');
+}
+
+
+
+
+        // ─── KEYBOARD SHORTCUTS ───
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('globalSearch').focus();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                toggleDarkMode();
+            }
+            if (e.key === 'Escape') {
+    closeLogoutModal();
+    closeShortcuts();
+    closeViewPatient();
+}
+
+
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                openShortcuts();
+            }
+        });
+
+        // ─── CHECK DARK MODE PREFERENCE ───
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkModeIcon').className = 'ti ti-sun';
+        }
+
+       // ─── HAPTIC FEEDBACK ───
+        document.addEventListener('click', function(e) {
+            if (navigator.vibrate) {
+                const target = e.target.closest('.btn, .theme-toggle, .topbar-btn, .avatar, .toggle, .stat-card');
+                if (target) navigator.vibrate(8);
+            }
+        });
+
+      // ─── LOAD PATIENTS FROM patient-data.js ───
+function loadPatientsFromData() {
+    const patientsBody = document.querySelector('#patients tbody');
+    if (!patientsBody) {
+        console.error('❌ Patient tbody not found!');
+        return;
+    }
+
+    let patients = [];
+
+    // Try to get patients from shared data using the correct key
+    if (typeof getPatients === 'function') {
+        patients = getPatients();
+        console.log('📊 Patients from getPatients():', patients.length);
+    } else {
+        // Fallback: read directly from localStorage with the correct key
+        try {
+            const stored = localStorage.getItem('pclinic_patients');
+            if (stored) {
+                patients = JSON.parse(stored);
+                console.log('📊 Patients from localStorage (pclinic_patients):', patients.length);
+            }
+        } catch (e) {
+            console.error('❌ Error reading localStorage:', e);
+        }
+    }
+
+    // Clear table
+    patientsBody.innerHTML = '';
+
+    // If no patients found
+    if (!patients || patients.length === 0) {
+        console.warn('⚠️ No patients found in database');
+        patientsBody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align:center;padding:2rem;color:#999;">
+                    <i class="ti ti-users" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;"></i>
+                    No patients registered yet
+                </td>
+            </tr>
+        `;
+        
+        // Update stats
+        const statCards = document.querySelectorAll('.stat-card .num');
+        if (statCards.length > 0) {
+            statCards[0].textContent = '0';
+        }
+        return;
+    }
+
+    // Build table rows
+    patients.forEach(p => {
+        // Get patient name (supports different naming conventions)
+        const firstName = p.firstName || p.name || 'Unknown';
+        const lastName = p.lastName || '';
+        const fullName = p.name || (firstName + ' ' + lastName).trim();
+        const mrn = p.mrn || 'MRN-' + p.id || 'N/A';
+        const department = p.department || p.ward || 'General';
+        const status = (p.status || 'active').toLowerCase();
+
+        // Determine status badge
+        let statusClass = 'blue';
+        let statusLabel = 'Active';
+        if (status === 'discharged' || status === 'completed') { 
+            statusClass = 'green'; 
+            statusLabel = 'Discharged'; 
+        }
+        else if (status === 'urgent' || status === 'critical' || status === 'emergency') { 
+            statusClass = 'red'; 
+            statusLabel = 'Urgent'; 
+        }
+        else if (status === 'inactive' || status === 'inactive') { 
+            statusClass = 'gray'; 
+            statusLabel = 'Inactive'; 
+        }
+        else if (status === 'pending') { 
+            statusClass = 'yellow'; 
+            statusLabel = 'Pending'; 
+        }
+
+        // Create row
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${mrn}</td>
+            <td>${fullName}</td>
+            <td>${department}</td>
+            <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+            <td>
+                <div class="actions-cell">
+                   <button class="btn btn-sm btn-outline" onclick="viewPatient(${p.id})">
+    <i class="ti ti-eye"></i> View
+</button>
+                    <button class="btn btn-sm btn-red" onclick="if(confirm('Delete patient ${fullName}?')) deletePatientFromAdmin(${p.id})">
+                        <i class="ti ti-trash"></i> Delete
+                    </button>
+                </div>
+            </td>
+        `;
+        patientsBody.appendChild(tr);
+    });
+
+    // Update patient count in stats
+    const statCards = document.querySelectorAll('.stat-card .num');
+    if (statCards.length > 0) {
+        statCards[0].textContent = patients.length.toLocaleString();
+    }
+
+    console.log(`✅ Successfully loaded ${patients.length} patients into table`);
+    return patients;
+}
+
+// ─── DELETE PATIENT FROM ADMIN ───
+function deletePatientFromAdmin(id) {
+    console.log('🗑️ Attempting to delete patient:', id);
+    
+    let deleted = false;
+    
+    if (typeof deletePatient === 'function') {
+        try {
+            deleted = deletePatient(id);
+            if (deleted) {
+                console.log('✅ Patient deleted via deletePatient()');
+            }
+        } catch (e) {
+            console.error('Error using deletePatient:', e);
+        }
+    }
+    
+    if (!deleted) {
+        try {
+            const stored = localStorage.getItem('pclinic_patients');
+            if (stored) {
+                let patients = JSON.parse(stored);
+                const initialLength = patients.length;
+                patients = patients.filter(p => p.id !== id);
+                if (patients.length < initialLength) {
+                    localStorage.setItem('pclinic_patients', JSON.stringify(patients));
+                    deleted = true;
+                    console.log('✅ Patient deleted from localStorage directly');
+                } else {
+                    console.warn('⚠️ Patient not found in localStorage');
+                }
+            }
+        } catch (e) {
+            console.error('Error deleting from localStorage:', e);
+        }
+    }
+    
+    if (deleted) {
+        showToast('🗑️ Patient deleted successfully', 'success');
+        loadPatientsFromData();
+    } else {
+        showToast('❌ Could not delete patient', 'error');
+    }
+}
+
+// ─── RUN ON PAGE LOAD ───
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Admin page loaded, loading patients...');
+    setTimeout(function() {
+        loadPatientsFromData();
+    }, 100);
+    loadStaffList();
+    updateClock();
+});
+
+console.log('🏥 PClinic Admin Dashboard — Search moved to content area');
+console.log('📌 Shortcuts: Ctrl+F (Search), Ctrl+D (Dark), ? (Help), ESC (Close)');
+
+    </script>
+
+
+    <script>
+        requireAuth(['admin']).then(function(staff) {
+            window.currentStaff = staff;
+            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
+        }).catch(function(err) {
+            console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+</body>
+</html>
