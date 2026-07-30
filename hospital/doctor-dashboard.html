@@ -4351,7 +4351,7 @@ function clearImagingForm() {
 
 // ─── IMAGE RESULT ─────────────────────────────────────────────
 // The inline list/entry modal previously here has been migrated to a
-// full standalone page: button/imaging-results.html
+// full standalone page: imaging-results.html
 // Open it via openImagingResultsPage(patient) (defined further down).
 // All buttons that used to call openImageResultsModal now call it.
 window.closeImageResultEntry = closeImageResultEntry;
@@ -8019,7 +8019,7 @@ function openLabResultsPage(patient) {
     }
     
     container.innerHTML = `
-       <iframe id="labResultsIframe" src="button/lab-results.html?t=${Date.now()}" style="
+       <iframe id="labResultsIframe" src="lab-results.html?t=${Date.now()}" style="
             width: 100%;
             height: 700px;
             border: none;
@@ -8110,7 +8110,7 @@ window.addEventListener('message', function(event) {
 
 // ─────────────────────────────────────────────────────────────
 // IMAGING RESULTS PAGE (iframe opener + handlers)
-// Opens button/imaging-results.html for the selected patient.
+// Opens imaging-results.html for the selected patient.
 // Mirrors openLabResultsPage (Pattern A: iframe + localStorage
 // snapshot + postMessage after onload).
 // ─────────────────────────────────────────────────────────────
@@ -8166,7 +8166,7 @@ function openImagingResultsPage(patient) {
     }
 
     container.innerHTML = `
-       <iframe id="imagingResultsIframe" src="button/imaging-results.html?t=${Date.now()}" style="
+       <iframe id="imagingResultsIframe" src="imaging-results.html?t=${Date.now()}" style="
             width: 100%;
             height: 760px;
             border: none;
@@ -8381,7 +8381,7 @@ function openLabRequestPage(patient) {
     }
     
     container.innerHTML = `
-        <iframe id="labRequestIframe" src="button/lab-request.html" style="
+        <iframe id="labRequestIframe" src="lab-request.html" style="
             width: 100%;
             height: 800px;
             border: none;
@@ -10591,7 +10591,7 @@ function openAdmissionFormFromDashboard(patient) {
     modal.style.display = 'flex';
     
     // Load the admission form via fetch
-    fetch('button/admission-form.html')
+    fetch('admission-form.html')
         .then(response => {
             if (!response.ok) {
                 throw new Error(`Failed to load admission form (Status: ${response.status})`);
@@ -10710,7 +10710,7 @@ function openPrescriptionModal(patient) {
     }
     
     modal.style.display = 'flex';
-    modal.innerHTML = '<iframe id="prescriptionFrame" src="button/prescription.html" style="width:min(900px,95vw);height:90vh;border:none;border-radius:16px;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,0.3);"></iframe>';
+    modal.innerHTML = '<iframe id="prescriptionFrame" src="prescription.html" style="width:min(900px,95vw);height:90vh;border:none;border-radius:16px;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,0.3);"></iframe>';
     
     const frame = document.getElementById('prescriptionFrame');
     frame.onload = function() {
@@ -10775,7 +10775,7 @@ function openWardRoundModal(patient) {
     `;
     
     // Load the HTML
-    fetch('button/ward-round.html')
+    fetch('ward-round.html')
         .then(response => {
             if (!response.ok) throw new Error(`Failed to load (Status: ${response.status})`);
             return response.text();
@@ -10917,7 +10917,7 @@ function openOpdFileModal(patient) {
     
     // ─── USE SIMPLE IFRAME (NO URL PARAMETERS) ───
     container.innerHTML = `
-        <iframe id="opdIframe" src="button/opd_file.html" style="
+        <iframe id="opdIframe" src="opd_file.html" style="
             width: 100%;
             height: 800px;
             border: none;
@@ -11015,7 +11015,7 @@ function openImagingPageModal(patient) {
     
     modal.style.display = 'flex';
     
-    fetch('button/imaging-request.html')
+    fetch('imaging-request.html')
         .then(response => {
             if (!response.ok) throw new Error('Failed to load imaging request page');
             return response.text();
