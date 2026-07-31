@@ -326,6 +326,10 @@
     function addBarButtons() {
         var bar = $('#dcBar');
         if (!bar || $('#dpBarExtra')) return;
+        // doctor-actionbar.js rebuilds the bar and already provides
+        // Patient / Note / History. Adding them here too produced
+        // visible duplicates.
+        if (bar.dataset.rebuilt || window.pcActionBar) return;
         var slot = document.createElement('span');
         slot.id = 'dpBarExtra';
         slot.style.cssText = 'display:flex;gap:8px;align-items:center';

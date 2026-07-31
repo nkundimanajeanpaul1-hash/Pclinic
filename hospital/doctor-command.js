@@ -457,6 +457,11 @@
                    noun:'procedures', sent:'Procedure order' });
     };
     window.dcRx = prescribe;
+    // Kept reachable for the safety-gate tests and as a quick inline
+    // alternative; the bar itself now opens the full forms.
+    window.__composerRx  = prescribe;
+    window.__composerLab = function(){ composer({dept:'lab',type:'lab',title:'Lab Request',icon:'ti-test-pipe',noun:'tests',sent:'Lab request'}); };
+    window.__composerImg = function(){ composer({dept:'radiology',type:'imaging',title:'Imaging Request',icon:'ti-radioactive',noun:'studies',sent:'Imaging request'}); };
     window.dcMyOrders = myOrders;
     window.dcBill = function () {
         var p = patient();
