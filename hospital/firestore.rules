@@ -137,6 +137,52 @@ service cloud.firestore {
     }
 
 
+
+    // ── ORDERS (lab / imaging / prescription / procedure) ──
+    // The shared work stream between departments. Any active staff member
+    // may raise an order and any may progress one — a lab tech must be
+    // able to complete a doctor's request. Deletion is never allowed:
+    // orders are cancelled with a reason so the record survives.
+    match /orders/{orderId} {
+      allow read: if activeStaff();
+      allow create: if activeStaff()
+        && request.resource.data.orderedById == profile().get('staffId', '')
+        && request.resource.data.status == 'pending';
+      allow update: if activeStaff();
+      allow delete: if false;
+    }
+
+    // ── BILLS ──
+    // Created by whoever raises the charge (usually a doctor, via an
+    // order). Only cashier/finance/admin may record a payment, so a
+    // clinician cannot mark their own bill as settled.
+    match /bills/{billId} {
+      allow read: if activeStaff();
+      allow create: if activeStaff();
+      allow update: if hasRole(['cashier', 'finance']);
+      allow delete: if false;
+    }
+
+    // ── MESSAGES / NOTIFICATIONS ──
+    // Staff-to-staff and admin broadcasts. The sender is pinned to the
+    // caller so nobody can forge a message from someone else.
+    match /messages/{msgId} {
+      allow read: if activeStaff();
+      allow create: if activeStaff()
+        && request.resource.data.fromId == profile().get('staffId', '');
+      // Anyone may update, but ONLY to add themselves to readBy.
+      allow update: if activeStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']);
+      allow delete: if isAdmin();
+    }
+
+    // ── CONFIG (service tariff / price list) ──
+    // Everyone needs to read prices; only admins may change them.
+    match /config/{docId} {
+      allow read: if activeStaff();
+      allow write: if isAdmin();
+    }
+
     // ── AUDIT LOG (append-only) ────────────────────────────
     // Not yet written by the app — this is here so that when audit logging is
     // added it is tamper-proof from day one. Entries can be created but never

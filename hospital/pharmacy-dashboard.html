@@ -14,6 +14,8 @@
     <script type="module" src="firebase-config.js"></script>
     <script src="auth-guard.js"></script>
 <script src="pclinic-state.js"></script>
+<script src="pclinic-orders.js" defer></script>
+<script src="pclinic-worklist.js" defer></script>
 <script src="patient-data.js" defer></script>  
     
     <!-- Tabler Icons -->
@@ -894,6 +896,7 @@
                         <span style="font-size:11px;color:var(--tm);" id="rxCount">0 prescriptions</span>
                     </div>
                 </div>
+                <div id="pcRxIncoming" style="margin-bottom:14px"></div>
                 <div id="pharmacyRxList">
                     <p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">No pending prescriptions.</p>
                 </div>
@@ -1801,5 +1804,13 @@
             console.warn('Auth guard redirect:', err && err.message);
         });
     </script>
+
+<script>
+// Live order queue from doctors — replaces the hardcoded demo rows.
+window.addEventListener('DOMContentLoaded', function () {
+    if (!window.pcWorklist) return;
+    pcWorklist.mount({ dept: 'pharmacy', target: '#pcRxIncoming', mode: 'cards', cols: 0 });
+});
+</script>
 </body>
 </html>

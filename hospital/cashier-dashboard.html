@@ -14,6 +14,8 @@
     <script type="module" src="firebase-config.js"></script>
     <script src="auth-guard.js"></script>
 <script src="pclinic-state.js"></script>
+<script src="pclinic-orders.js" defer></script>
+<script src="pclinic-cashier.js" defer></script>
 <script src="shared.js" defer></script>
 
     <!-- ─── PATIENT DATA SYSTEM ─── -->          
@@ -1860,6 +1862,7 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
+                <tbody id="pcLiveBills"></tbody>
                 <tbody id="cashierBillBody">
                     <tr><td colspan="8"><div class="empty-state"><i class="ti ti-receipt"></i>No bills found</div></td></tr>
                 </tbody>
@@ -2766,5 +2769,10 @@
             console.warn('Auth guard redirect:', err && err.message);
         });
     </script>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+    if (window.pcBillFeed) pcBillFeed.mountCashier('#pcLiveBills');
+});
+</script>
 </body>
 </html>

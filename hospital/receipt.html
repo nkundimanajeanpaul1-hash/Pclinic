@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PClinic — Receipt</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="stylesheet" href="pclinic-ui.css">
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
+<script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');}catch(e){}})();</script>
+<style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--f);background:var(--bg);color:var(--tp);font-size:13px;min-height:100vh;-webkit-font-smoothing:antialiased}
+    body::before{content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
+        background:radial-gradient(circle at 20% 30%,rgba(0,113,227,.05) 0,transparent 50%),
+                   radial-gradient(circle at 80% 70%,rgba(52,199,89,.05) 0,transparent 50%)}
+    .wrap{max-width:1080px;margin:0 auto;padding:0 18px 26px}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:start}
+    .panel{background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+        border:.5px solid var(--glass-brd);border-radius:var(--r2);box-shadow:var(--sh-2),var(--glass-spec);padding:16px}
+    .panel h2{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .panel h2 i{color:var(--ac)}
+    label{display:block;font-size:11px;font-weight:600;color:var(--tm);margin:10px 0 5px;text-transform:uppercase}
+    input,select{width:100%;height:34px;padding:0 11px;border-radius:9px;border:.5px solid var(--bd);
+        background:var(--s1);color:var(--tp);font-family:var(--f);font-size:13px;outline:none}
+    input:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 4px var(--acl)}
+
+    /* ── The printable document ── */
+    #doc{background:#fff;color:#111;border-radius:var(--r2);padding:30px 32px;box-shadow:var(--sh-2)}
+    .rhead{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;
+        padding-bottom:16px;border-bottom:2px solid #111}
+    .rhead .org{font-size:21px;font-weight:800;letter-spacing:-.4px}
+    .rhead .sub{font-size:11px;color:#666;margin-top:3px;line-height:1.5}
+    .rhead .meta{text-align:right;font-size:11.5px;color:#444;line-height:1.7}
+    .rhead .meta b{color:#111}
+    .rtitle{font-size:15px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;margin:18px 0 4px}
+    .paidmark{display:inline-block;padding:4px 14px;border-radius:5px;font-size:11px;font-weight:800;
+        letter-spacing:.09em;border:2px solid;margin-left:10px;vertical-align:middle}
+    .pm-paid{color:#1a7a32;border-color:#1a7a32}
+    .pm-partial{color:#7a4500;border-color:#7a4500}
+    .pm-pending{color:#8a1f1a;border-color:#8a1f1a}
+    .pinfo{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin:14px 0 18px;font-size:12.5px}
+    .pinfo div span{color:#666;display:inline-block;min-width:78px}
+    table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+    th{text-align:left;background:#f4f4f5;padding:9px 10px;font-size:10.5px;text-transform:uppercase;
+       letter-spacing:.05em;color:#555;border-bottom:1px solid #ddd}
+    td{padding:9px 10px;border-bottom:1px solid #eee}
+    .num{text-align:right;white-space:nowrap}
+    .sum{margin-top:14px;margin-left:auto;width:290px;font-size:13px}
+    .sum .r{display:flex;justify-content:space-between;padding:5px 0}
+    .sum .r.big{font-size:17px;font-weight:800;border-top:2px solid #111;margin-top:7px;padding-top:9px}
+    .sum .r.bal{color:#8a1f1a;font-weight:700}
+    .pays{margin-top:20px;padding-top:12px;border-top:1px dashed #ccc}
+    .pays h4{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:7px}
+    .foot{margin-top:26px;padding-top:14px;border-top:1px solid #eee;display:flex;
+        justify-content:space-between;font-size:10.5px;color:#777;gap:20px}
+    .sig{margin-top:30px;display:flex;justify-content:space-between;gap:40px}
+    .sig div{flex:1;border-top:1px solid #999;padding-top:6px;font-size:10.5px;color:#666;text-align:center}
+
+    @media print{
+        @page{size:A4;margin:14mm}
+        body{background:#fff!important}
+        body::before,.pc-topbar,.pc-headerbar,.noprint,.pc-toasts{display:none!important}
+        .wrap{max-width:none;padding:0}
+        .grid{display:block}
+        #doc{box-shadow:none;border-radius:0;padding:0}
+    }
+    @media(max-width:860px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="pc-topbar noprint">
+    <div class="pc-brand">
+        <img class="pc-logo" src="logo-wide.png" alt="PClinic" width="118" height="30">
+        <span class="pc-appsub">Receipt</span>
+    </div>
+    <div class="pc-tr">
+        <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
+        <div class="pc-chip"><span class="pc-avatar" id="userAvatar">··</span><span id="userName">…</span></div>
+        <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
+    </div>
+</div>
+
+<div class="pc-headerbar noprint">
+    <nav class="pc-crumb"><a href="hub.html">🏥 Hub</a><span class="sep">›</span>
+        <a href="cashier-dashboard.html">Cashier</a><span class="sep">›</span><span>Receipt</span></nav>
+    <span class="pc-spacer"></span>
+    <button class="pc-btn" onclick="history.back()"><i class="ti ti-arrow-left"></i> Back</button>
+    <button class="pc-btn pc-btn-primary" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
+</div>
+
+<div class="wrap">
+<div class="grid">
+    <div id="doc"><div style="padding:40px;text-align:center;color:#888">Loading…</div></div>
+
+    <!-- Take payment -->
+    <div class="panel noprint" id="payPanel" style="display:none">
+        <h2><i class="ti ti-cash"></i> Take Payment</h2>
+        <div id="balBox" style="padding:11px 13px;border-radius:10px;background:var(--orangeb);
+             color:var(--oranged);font-weight:700;font-size:14px;text-align:center;margin-bottom:4px"></div>
+        <label for="payAmt">Amount received</label>
+        <input type="number" id="payAmt" min="0" placeholder="0">
+        <label for="payMethod">Method</label>
+        <select id="payMethod">
+            <option value="cash">Cash</option>
+            <option value="mobile">Mobile Money</option>
+            <option value="card">Card</option>
+            <option value="insurance">Insurance</option>
+        </select>
+        <label for="payRef">Reference <span style="text-transform:none;font-weight:400">(optional)</span></label>
+        <input type="text" id="payRef" placeholder="MoMo txn / card slip">
+        <button class="pc-btn pc-btn-primary" style="width:100%;margin-top:14px" onclick="takePayment()">
+            <i class="ti ti-check"></i> Record Payment
+        </button>
+        <button class="pc-btn" style="width:100%;margin-top:7px" onclick="payFull()">
+            <i class="ti ti-wallet"></i> Pay Full Balance
+        </button>
+    </div>
+</div>
+</div>
+
+<div class="pc-toasts noprint"></div>
+
+<script type="module" src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+<script src="patient-data.js"></script>
+<script src="pclinic-orders.js"></script>
+
+<script>
+(function(){
+'use strict';
+var bill=null;
+function money(n){ return 'RWF ' + (Number(n)||0).toLocaleString('en-US'); }
+function esc(s){ var d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
+
+function load(){
+    var id=new URLSearchParams(location.search).get('bill');
+    var all=pcBilling.list();
+    bill = id ? all.filter(function(b){return b.id===id;})[0] : all[0];
+    if(!bill){
+        document.getElementById('doc').innerHTML=
+            '<div style="padding:48px;text-align:center;color:#888">'+
+            '<i class="ti ti-receipt-off" style="font-size:40px;opacity:.4"></i>'+
+            '<p style="margin-top:12px">No bill found.</p>'+
+            '<p style="font-size:12px;margin-top:6px">Create one from the Billing page.</p></div>';
+        return;
+    }
+    render(); renderPay();
+}
+
+function render(){
+    var paidLabel = bill.status==='paid' ? 'PAID' : bill.status==='partial' ? 'PART PAID' : bill.status==='cancelled' ? 'CANCELLED' : 'UNPAID';
+    var cls = bill.status==='paid' ? 'pm-paid' : bill.status==='partial' ? 'pm-partial' : 'pm-pending';
+    var rows = bill.items.map(function(i){
+        return '<tr><td>'+esc(i.name)+'</td><td style="color:#888;font-size:11px">'+esc(i.code)+'</td>'+
+               '<td class="num">'+i.qty+'</td><td class="num">'+money(i.price)+'</td>'+
+               '<td class="num" style="font-weight:600">'+money(i.price*i.qty)+'</td></tr>';
+    }).join('');
+    var pays = (bill.payments||[]).map(function(p){
+        return '<tr><td>'+new Date(p.at).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</td>'+
+               '<td style="text-transform:capitalize">'+esc(p.method)+'</td>'+
+               '<td style="color:#888;font-size:11px">'+esc(p.ref||'—')+'</td>'+
+               '<td>'+esc(p.by)+'</td><td class="num" style="font-weight:600">'+money(p.amount)+'</td></tr>';
+    }).join('');
+
+    document.getElementById('doc').innerHTML =
+    '<div class="rhead">'+
+      '<div><div class="org">PClinic</div>'+
+      '<div class="sub">Hospital Management System<br>Kigali, Rwanda<br>+250 784 446 481</div></div>'+
+      '<div class="meta">'+
+        '<div><b>'+esc(bill.number)+'</b></div>'+
+        '<div>'+new Date(bill.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'</div>'+
+        '<div>'+new Date(bill.createdAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="rtitle">'+(bill.status==='paid'?'Receipt':'Invoice')+
+      '<span class="paidmark '+cls+'">'+paidLabel+'</span></div>'+
+    '<div class="pinfo">'+
+      '<div><span>Patient</span><b>'+esc(bill.patientName||'—')+'</b></div>'+
+      '<div><span>Patient ID</span>'+esc(bill.patientId)+'</div>'+
+      '<div><span>Issued by</span>'+esc(bill.createdBy||'—')+'</div>'+
+      '<div><span>Source</span>'+esc(bill.source||'—')+'</div>'+
+    '</div>'+
+    '<table><thead><tr><th>Service</th><th>Code</th><th class="num">Qty</th>'+
+      '<th class="num">Unit</th><th class="num">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="sum">'+
+      '<div class="r"><span>Subtotal</span><span>'+money(bill.subtotal)+'</span></div>'+
+      (bill.discount?'<div class="r"><span>Discount</span><span>− '+money(bill.discount)+'</span></div>':'')+
+      '<div class="r big"><span>Total</span><span>'+money(bill.total)+'</span></div>'+
+      '<div class="r"><span>Paid</span><span>'+money(bill.paid)+'</span></div>'+
+      (bill.balance>0?'<div class="r bal"><span>Balance due</span><span>'+money(bill.balance)+'</span></div>':'')+
+    '</div>'+
+    (pays?'<div class="pays"><h4>Payments received</h4><table><thead><tr><th>Date</th><th>Method</th>'+
+      '<th>Ref</th><th>Received by</th><th class="num">Amount</th></tr></thead><tbody>'+pays+'</tbody></table></div>':'')+
+    '<div class="sig"><div>Patient signature</div><div>Cashier signature</div></div>'+
+    '<div class="foot"><span>Thank you for choosing PClinic.</span>'+
+      '<span>Printed '+new Date().toLocaleString('en-GB')+'</span></div>';
+}
+
+function renderPay(){
+    var can = window.currentStaff &&
+              ['cashier','finance','admin'].indexOf((window.currentStaff.role||'').toLowerCase())!==-1;
+    var panel=document.getElementById('payPanel');
+    if(!can || !bill || bill.balance<=0 || bill.status==='cancelled'){ panel.style.display='none'; return; }
+    panel.style.display='';
+    document.getElementById('balBox').textContent='Balance due  ·  '+money(bill.balance);
+    document.getElementById('payAmt').placeholder=bill.balance;
+}
+
+window.takePayment=function(){
+    var amt=parseInt(document.getElementById('payAmt').value,10);
+    if(!amt||amt<=0){ pcToast('Enter an amount','error'); return; }
+    if(amt>bill.balance){ pcToast('Amount exceeds the balance due','error'); return; }
+    var r=pcBilling.pay(bill.id,{
+        amount:amt,
+        method:document.getElementById('payMethod').value,
+        ref:document.getElementById('payRef').value.trim()
+    });
+    if(!r){ pcToast('Payment failed','error'); return; }
+    bill=pcBilling.list().filter(function(b){return b.id===bill.id;})[0];
+    document.getElementById('payAmt').value=''; document.getElementById('payRef').value='';
+    render(); renderPay();
+    pcToast('Receipt '+r.receiptNo+' — '+money(amt)+' received','success');
+};
+
+window.payFull=function(){
+    document.getElementById('payAmt').value=bill.balance;
+    takePayment();
+};
+
+requireAuth([]).then(function(staff){
+    window.currentStaff=staff;
+    document.getElementById('userName').textContent=staff.name;
+    document.getElementById('userAvatar').textContent=(staff.name||'??').substring(0,2).toUpperCase();
+    load();
+}).catch(function(){});
+})();
+</script>
+</body>
+</html>
