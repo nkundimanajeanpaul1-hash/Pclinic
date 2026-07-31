@@ -19,7 +19,10 @@
     var $ = function (s, r) { return (r || document).querySelector(s); };
     function esc(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
     function money(n) { return 'RWF ' + (Number(n) || 0).toLocaleString('en-US'); }
-    function patient() { return window.currentPatient || null; }
+    function patient() {
+        return (window.pcPatient && window.pcPatient.get())
+            || window.currentPatient || null;
+    }
 
     function needPatient() {
         if (!patient()) {
@@ -354,6 +357,10 @@
 
     /* ══════════════ PATIENT CONTEXT STRIP ══════════════ */
     function renderCtx() {
+        // doctor-patient.js owns a richer version of this strip (age,
+        // phone, pulse, weight, clear button). If it is loaded, let it
+        // render and do not fight over the same element.
+        if (window.pcPatient && window.dpPick) return;
         var el = $('#dcCtx'); if (!el) return;
         var p = patient();
         if (!p) {
