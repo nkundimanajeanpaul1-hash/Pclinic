@@ -222,11 +222,11 @@
                 const html = document.documentElement;
                 const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
                 html.setAttribute('data-theme', next);
-                localStorage.setItem('pclinic_theme', next);
+                localStorage.setItem('pclinic-theme', next);
                 document.getElementById('themeIcon').className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
             };
             (function() {
-                const saved = localStorage.getItem('pclinic_theme') || 'light';
+                const saved = (localStorage.getItem('pclinic-theme') || localStorage.getItem('pclinic_theme')) || 'light';
                 document.documentElement.setAttribute('data-theme', saved);
                 document.getElementById('themeIcon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
             })();

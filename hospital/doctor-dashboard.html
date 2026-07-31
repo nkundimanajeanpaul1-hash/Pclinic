@@ -9992,7 +9992,7 @@ function closeHistoryModal() {
                 if (icon) icon.className = 'ti ti-sun';
                 if (breadcrumbIcon) breadcrumbIcon.className = 'ti ti-sun';
                 
-                localStorage.setItem('darkMode', 'enabled');
+                localStorage.setItem('pclinic-theme', 'dark');
                 document.documentElement.style.setProperty('--bg', '#0a0a0f');
                 document.documentElement.style.setProperty('--s1', '#1c1c1e');
                 document.documentElement.style.setProperty('--s3', '#2c2c2e');
@@ -10005,7 +10005,7 @@ function closeHistoryModal() {
                 if (icon) icon.className = 'ti ti-moon';
                 if (breadcrumbIcon) breadcrumbIcon.className = 'ti ti-moon';
                 
-                localStorage.setItem('darkMode', 'disabled');
+                localStorage.setItem('pclinic-theme', 'light');
                 document.documentElement.style.setProperty('--bg', '#f2f4f8');
                 document.documentElement.style.setProperty('--s1', '#ffffff');
                 document.documentElement.style.setProperty('--s3', '#f2f2f4');
@@ -10111,7 +10111,7 @@ setInterval(function() {
 
 
         // ─── LOAD DARK MODE PREFERENCE ───
-        if (localStorage.getItem('darkMode') === 'enabled') {
+        if ((localStorage.getItem('pclinic-theme') === 'dark' || localStorage.getItem('darkMode') === 'enabled')) {
             document.body.classList.add('dark-mode');
             document.querySelector('.theme-toggle i').className = 'ti ti-sun';
             const breadcrumbIcon = document.getElementById('breadcrumbThemeIcon');

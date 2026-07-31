@@ -1442,7 +1442,7 @@
         function toggleDarkMode() {
             isDarkMode = !isDarkMode;
             document.body.classList.toggle('dark-mode', isDarkMode);
-            localStorage.setItem('opd_dark_mode', isDarkMode ? 'enabled' : 'disabled');
+            localStorage.setItem('pclinic-theme', isDarkMode ? 'dark' : 'light');
             
             const icon = document.querySelector('.dark-mode-toggle-btn i');
             if (icon) {
@@ -1452,7 +1452,7 @@
         }
 
         function loadDarkModePreference() {
-            const saved = localStorage.getItem('opd_dark_mode');
+            const saved = (localStorage.getItem('pclinic-theme') === 'dark' ? 'enabled' : localStorage.getItem('pclinic-theme') === 'light' ? 'disabled' : localStorage.getItem('opd_dark_mode'));
             if (saved === 'enabled') {
                 isDarkMode = true;
                 document.body.classList.add('dark-mode');

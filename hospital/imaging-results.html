@@ -594,14 +594,14 @@
     function toggleDarkMode() {
         isDarkMode = !isDarkMode;
         document.body.classList.toggle('dark-mode', isDarkMode);
-        localStorage.setItem('imaging_results_dark_mode', isDarkMode ? 'enabled' : 'disabled');
+        localStorage.setItem('pclinic-theme', isDarkMode ? 'dark' : 'light');
         var icon = document.getElementById('darkModeIcon');
         if (icon) icon.className = isDarkMode ? 'ti ti-sun' : 'ti ti-moon';
         showToast(isDarkMode ? '🌙 Dark mode enabled' : '☀️ Light mode enabled', 'info');
     }
 
     function loadDarkModePreference() {
-        if (localStorage.getItem('imaging_results_dark_mode') === 'enabled') {
+        if ((localStorage.getItem('pclinic-theme') === 'dark' || localStorage.getItem('imaging_results_dark_mode') === 'enabled')) {
             isDarkMode = true;
             document.body.classList.add('dark-mode');
             var icon = document.getElementById('darkModeIcon');

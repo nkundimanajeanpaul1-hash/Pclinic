@@ -21,6 +21,14 @@ function waitForFirebase() {
     return new Promise((resolve) => {
         if (window.firebaseReady && window.firebaseDB) {
             isFirebaseReady = true;
+            // BUGFIX: this early-return path previously resolved WITHOUT ever
+            // calling startRealtimeSync(). It is taken whenever Firebase
+            // finishes initialising before this file runs — common on a warm
+            // cache, and guaranteed on pages that load patient-data.js without
+            // `defer`. The result was a page that silently fell back to
+            // localStorage: no live updates, no cross-device sync, no error.
+            console.log('✅ Firebase already ready! Starting real-time sync...');
+            startRealtimeSync();
             resolve(true);
             return;
         }
@@ -48,7 +56,15 @@ function waitForFirebase() {
 
 function startRealtimeSync() {
     if (!window.firebaseDB || !window.firebaseFunctions) return;
-    
+
+    // Guard against subscribing twice. startRealtimeSync() is now reachable
+    // from both branches of waitForFirebase(), and a duplicate onSnapshot
+    // listener would double every sync callback and leak the first one.
+    if (realtimeUnsubscribe) {
+        console.log('🔄 Real-time sync already active — skipping duplicate listener');
+        return;
+    }
+
     const { collection, onSnapshot, query, orderBy } = window.firebaseFunctions;
     
     try {

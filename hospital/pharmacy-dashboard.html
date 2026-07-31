@@ -1695,10 +1695,10 @@
             var icon = document.getElementById('darkModeIcon');
             if (document.body.classList.contains('dark-mode')) {
                 if (icon) icon.className = 'ti ti-sun';
-                localStorage.setItem('darkMode', 'enabled');
+                localStorage.setItem('pclinic-theme', 'dark');
             } else {
                 if (icon) icon.className = 'ti ti-moon';
-                localStorage.setItem('darkMode', 'disabled');
+                localStorage.setItem('pclinic-theme', 'light');
             }
         }
 
@@ -1770,7 +1770,7 @@
         });
 
         // ─── CHECK DARK MODE PREFERENCE ───
-        if (localStorage.getItem('darkMode') === 'enabled') {
+        if ((localStorage.getItem('pclinic-theme') === 'dark' || localStorage.getItem('darkMode') === 'enabled')) {
             document.body.classList.add('dark-mode');
             var icon = document.getElementById('darkModeIcon');
             if (icon) icon.className = 'ti ti-sun';

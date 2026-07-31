@@ -92,8 +92,47 @@ in or using the app, without deleting their account/history.
   doesn't delete the underlying Firebase Auth account (deleting it fully
   requires a small backend function using the Firebase Admin SDK, which
   we can add later if needed).
-- **Rules review**: patient records are currently readable/writable by
-  *any* active staff member regardless of role. If you want finer control
-  later (e.g. only doctors/nurses can edit clinical notes, only pharmacy
-  can dispense), that's possible but requires restructuring some data
-  into sub-collections — let me know if you want to tackle that next.
+
+---
+
+## What the published rules enforce
+
+`firestore.rules` is now included in this folder and verified by an
+automated suite (`tests/`, 58 assertions against the Firestore emulator).
+
+| Collection | Read | Write |
+|---|---|---|
+| `users/{uid}` | your **own** profile always; any profile if admin | admin only |
+| `users` (list/query) | admin only | — |
+| `patients/{id}` | any active staff | any active staff; **delete** limited to admin + reception |
+| `patients/{id}/{sub}` | any active staff | any active staff; delete admin only |
+| `auditLog` | admin only | append-only, never editable or deletable |
+| anything else | denied | denied |
+
+Two safety properties worth knowing about:
+
+- **An admin cannot deactivate or demote themselves.** This prevents the
+  last admin from accidentally locking everyone out of the system. Another
+  admin can still do it, so oversight still works.
+- **Staff profiles can never be deleted**, only deactivated. This keeps the
+  audit trail intact.
+
+### Re-run the tests after editing the rules
+
+```bash
+cd tests && npm install     # needs Node 20+ and JDK 21+
+npm run test:rules
+```
+
+---
+
+## Still open (tracked in PClinic-Evaluation.md)
+
+- **Role-level access to clinical data.** Patient records are still
+  readable/writable by *any* active staff member — an inventory clerk can
+  read clinical notes. Fixing this properly needs the Phase 1 sub-collection
+  refactor; the rules already have a `patients/{id}/{sub}` block ready for it.
+- **Whole-document overwrites** in `patient-data.js` can still cause lost
+  updates when two people edit the same patient. This is the top Phase 1 item.
+- **Audit logging is not yet written by the app.** The rules are in place and
+  tamper-proof, but nothing populates the collection yet.

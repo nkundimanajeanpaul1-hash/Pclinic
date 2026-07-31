@@ -1056,7 +1056,7 @@
         </a>
 
         <!-- Bed Management -->
-        <a href="beds-dashboard.html" class="module-card" data-role="beds">
+        <a href="beds-dashboard.html" class="module-card" data-role="beds nurse reception">
             <div class="card-icon pink"><i class="ti ti-bed"></i></div>
             <div class="card-title">Bed Management</div>
             <div class="card-desc">Ward occupancy, allocation</div>
@@ -1171,12 +1171,29 @@
                 // department's dashboard (this only controls what's shown here;
                 // actual access to each page is still enforced by that page's
                 // own requireAuth() call and by Firestore security rules).
+                // data-role may list SEVERAL roles, space-separated, so a
+                // shared module can be surfaced to everyone who needs it.
+                // BUGFIX: previously this was an exact string match, which
+                // meant the Bed Management card (data-role="beds") was
+                // visible only to admins — no other role could ever see it,
+                // and "beds" wasn't even an option when creating a login.
                 const moduleCards = document.querySelectorAll('.module-card');
+                let visibleCount = 0;
                 moduleCards.forEach(card => {
-                    const role = card.dataset.role;
-                    const visible = (userRole === 'admin') || (role === userRole);
+                    const roles = (card.dataset.role || '').split(/\s+/).filter(Boolean);
+                    const visible = (userRole === 'admin') || roles.indexOf(userRole) !== -1;
                     card.style.display = visible ? '' : 'none';
+                    if (visible) visibleCount++;
                 });
+
+                // Never strand someone on a blank hub. If their role matches
+                // no module (e.g. a new role added to Firestore before its
+                // dashboard exists), show everything and let each page's own
+                // requireAuth() do the real gatekeeping.
+                if (visibleCount === 0) {
+                    moduleCards.forEach(card => { card.style.display = ''; });
+                    console.warn('No modules matched role "' + userRole + '" — showing all.');
+                }
 
                 console.log('🏥 PClinic Hub — Fully Loaded');
                 console.log(`👤 Logged in as: ${displayName} (${userRole})`);
@@ -1206,14 +1223,14 @@
                 const current = html.getAttribute('data-theme');
                 const next = current === 'dark' ? 'light' : 'dark';
                 html.setAttribute('data-theme', next);
-                localStorage.setItem('pclinic_theme', next);
+                localStorage.setItem('pclinic-theme', next);
                 document.getElementById('themeIcon').className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
                 showToast(next === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled', 'info');
             };
 
             // Load saved theme
             (function() {
-                const saved = localStorage.getItem('pclinic_theme') || 'light';
+                const saved = (localStorage.getItem('pclinic-theme') || localStorage.getItem('pclinic_theme')) || 'light';
                 document.documentElement.setAttribute('data-theme', saved);
                 document.getElementById('themeIcon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
             })();

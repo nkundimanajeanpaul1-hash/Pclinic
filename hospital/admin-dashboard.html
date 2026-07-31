@@ -1277,6 +1277,7 @@
                     <option value="hr">HR</option>
                     <option value="inventory">Inventory</option>
                     <option value="theater">Theater</option>
+                    <option value="beds">Bed Management</option>
                 </select>
                 <button class="btn btn-green" id="staff-create-btn" onclick="addStaff()"><i class="ti ti-plus"></i> Create Login</button>
             </div>
@@ -1621,6 +1622,43 @@
             showToast('🔄 Refreshed ' + id, 'info');
         }
 
+        // ─── DELETE A TABLE ROW ───
+        // BUGFIX: this function was referenced by 10 delete buttons across the
+        // admin dashboard but was never defined, so every click threw an
+        // uncaught ReferenceError. Worst case, the patient table's
+        // "Delete this patient?" confirm appeared, the user clicked OK, and
+        // nothing happened — leaving them to believe the record was gone.
+        //
+        // These buttons live in the STATIC placeholder tables (mock inventory
+        // items, imaging exams, and sample patient rows). Removing the row
+        // from the DOM is therefore the correct and complete behaviour here.
+        // The live, Firestore-backed patient table uses a different handler,
+        // deletePatientFromAdmin(), which does persist the deletion.
+        function deleteRow(btn) {
+            const row = btn && btn.closest('tr');
+            if (!row) return;
+
+            const label = (row.cells && row.cells[0] ? row.cells[0].textContent.trim() : '') || 'Row';
+            const tbody = row.parentElement;
+
+            row.remove();
+            showToast('🗑️ ' + label + ' removed', 'info');
+
+            // If that was the last row, leave the table in a readable state
+            // rather than an empty white box.
+            if (tbody && tbody.tagName === 'TBODY' && tbody.querySelectorAll('tr').length === 0) {
+                const cols = (tbody.closest('table').querySelectorAll('thead th') || []).length || 1;
+                const empty = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = cols;
+                td.style.cssText = 'text-align:center; color:#888; padding:18px;';
+                td.textContent = 'No records';
+                empty.appendChild(td);
+                tbody.appendChild(empty);
+            }
+        }
+        window.deleteRow = deleteRow;
+
         // ─── SEARCH ───
         document.getElementById('globalSearch').addEventListener('input', function(e) {
             const query = e.target.value.toLowerCase();
@@ -1663,10 +1701,10 @@
             const icon = document.getElementById('darkModeIcon');
             if (document.body.classList.contains('dark-mode')) {
                 icon.className = 'ti ti-sun';
-                localStorage.setItem('darkMode', 'enabled');
+                localStorage.setItem('pclinic-theme', 'dark');
             } else {
                 icon.className = 'ti ti-moon';
-                localStorage.setItem('darkMode', 'disabled');
+                localStorage.setItem('pclinic-theme', 'light');
             }
         }
 
@@ -1791,7 +1829,7 @@ function closeViewPatient() {
         });
 
         // ─── CHECK DARK MODE PREFERENCE ───
-        if (localStorage.getItem('darkMode') === 'enabled') {
+        if ((localStorage.getItem('pclinic-theme') === 'dark' || localStorage.getItem('darkMode') === 'enabled')) {
             document.body.classList.add('dark-mode');
             document.getElementById('darkModeIcon').className = 'ti ti-sun';
         }

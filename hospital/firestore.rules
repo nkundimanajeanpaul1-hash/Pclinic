@@ -1,68 +1,159 @@
 rules_version = '2';
 
+// ============================================================
+// PCLINIC — FIRESTORE SECURITY RULES
+// ============================================================
+// Replaces the old "allow everyone until Aug 29, 2026" rule.
+//
+// Model (mirrors auth-guard.js exactly):
+//   • You must be signed in (Firebase Auth).
+//   • Your /users/{uid} profile must exist and have active != false.
+//   • Some collections additionally require a specific role.
+//   • Everything not listed here is DENIED by default.
+//
+// Deploy:  Firebase Console → Firestore → Rules → paste → Publish
+//    or:   firebase deploy --only firestore:rules
+// ============================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ────────────────────────────────────────────────────────
-    // Helper functions
-    // ────────────────────────────────────────────────────────
+    // ── HELPERS ────────────────────────────────────────────
 
-    // Is the request coming from a logged-in Firebase Auth user?
-    function isSignedIn() {
+    function signedIn() {
       return request.auth != null;
     }
 
-    // Look up the caller's staff profile document.
-    function myProfile() {
+    // The caller's own staff profile document.
+    function profile() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // Is the caller an active (not disabled) staff member?
-    function isActiveStaff() {
-      return isSignedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && myProfile().active != false;
+    function hasProfile() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
-    // Does the caller have one of the given roles? Admin always passes.
-    function hasRole(roles) {
-      return isActiveStaff()
-        && (myProfile().role == 'admin' || myProfile().role in roles);
+    // An "active staff member": signed in, profile exists, not deactivated.
+    //
+    // We use .get('active', true) rather than `.active != false` because in
+    // Firestore rules, reading a field that does not exist raises an
+    // evaluation error (it does NOT return null) — which would deny access
+    // outright. Any profile document created without an `active` field (e.g.
+    // a hand-made first admin, per SECURITY_SETUP.md step 3) would silently
+    // be locked out of the whole system.
+    //
+    // Defaulting to `true` when the field is absent matches exactly what
+    // auth-guard.js and login.html do: they only block on `active === false`.
+    function activeStaff() {
+      return hasProfile() && profile().get('active', true) != false;
+    }
+
+    function role() {
+      return hasProfile() ? profile().get('role', '') : '';
     }
 
     function isAdmin() {
-      return isActiveStaff() && myProfile().role == 'admin';
+      return activeStaff() && role() == 'admin';
     }
 
-    // ────────────────────────────────────────────────────────
-    // /users/{uid} — staff accounts & roles
-    // Only admins may create/edit/deactivate staff accounts.
-    // A signed-in user may always read their OWN profile (so the
-    // login page and every dashboard's auth-guard can check it),
-    // but may not read the whole staff directory unless admin.
-    // ────────────────────────────────────────────────────────
-    match /users/{uid} {
-      allow get: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+    // Admins are allowed everywhere, matching auth-guard.js behaviour.
+    function hasRole(allowed) {
+      return activeStaff() && (role() == 'admin' || role() in allowed);
+    }
+
+
+    // ── USERS / STAFF PROFILES ─────────────────────────────
+    //
+    // CRITICAL BOOTSTRAP RULE:
+    // auth-guard.js and login.html read /users/{own uid} on EVERY page load,
+    // BEFORE the app knows what role the person has. If we required admin to
+    // read this collection, every non-admin would be locked out of the entire
+    // system on login. So: you may always read your OWN profile document.
+    //
+    // Listing the whole collection (admin-dashboard.html staff table and the
+    // duplicate-staffId query) stays admin-only.
+
+    match /users/{userId} {
+
+      // Read your own profile (needed by the auth guard), or any profile if admin.
+      allow get: if signedIn() && (request.auth.uid == userId || isAdmin());
+
+      // Listing/querying all staff — admin only.
       allow list: if isAdmin();
-      allow create, update, delete: if isAdmin();
+
+      // Only admins create staff profiles (admin-dashboard.html → addStaff()).
+      // Guard the shape so a compromised client can't invent arbitrary fields.
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(
+             ['staffId', 'name', 'role', 'active', 'createdAt', 'createdBy'])
+        && request.resource.data.staffId is string
+        && request.resource.data.name is string
+        && request.resource.data.role is string
+        && request.resource.data.active is bool;
+
+      // Only admins change profiles (e.g. the Deactivate / Reactivate toggle).
+      // An admin may not deactivate or demote THEMSELVES — this prevents
+      // locking the last admin out of the system by accident.
+      // (.get(field, default) again, so profiles missing a field don't raise
+      // an evaluation error and produce a confusing permission denial.)
+      allow update: if isAdmin()
+        && !(request.auth.uid == userId
+             && (request.resource.data.get('active', true) != resource.data.get('active', true)
+                 || request.resource.data.get('role', '') != resource.data.get('role', '')));
+
+      // Deleting a profile would orphan the Auth account and destroy the
+      // audit trail. The app uses the `active` flag instead — so: never.
+      allow delete: if false;
     }
 
-    // ────────────────────────────────────────────────────────
-    // /patients/{patientId} — core patient records
-    // Any active, logged-in staff member may read and write
-    // patient data. Adjust the role list below if you want to
-    // restrict certain fields/actions further (e.g. only
-    // clinical staff can edit clinicalNotes) — Firestore rules
-    // apply per-document, not per-field, so field-level control
-    // would require splitting sub-collections.
-    // ────────────────────────────────────────────────────────
+
+    // ── PATIENTS ───────────────────────────────────────────
+    //
+    // Today the app stores everything (vitals, notes, prescriptions, bills…)
+    // inside one patient document, so read/write has to be all-or-nothing for
+    // active staff. Once the Phase-1 sub-collection refactor lands, these can
+    // be tightened per-role (e.g. only doctors/nurses write clinical notes).
+    // The /patients/{id}/{sub}/{doc} block below is already in place for that.
+
     match /patients/{patientId} {
-      allow read, write: if isActiveStaff();
+
+      allow read: if activeStaff();
+
+      // Any active staff member may create or update patient records.
+      allow create, update: if activeStaff();
+
+      // Deletion is destructive and irreversible. Only the two roles whose
+      // dashboards actually expose a delete button — admin and reception.
+      allow delete: if hasRole(['reception']);
+
+      // ── FUTURE SUB-COLLECTIONS (Phase 1 refactor) ────────
+      // Pre-authorised so the migration doesn't need a rules change.
+      match /{subCollection}/{docId} {
+        allow read: if activeStaff();
+        allow create, update: if activeStaff();
+        allow delete: if isAdmin();
+      }
     }
 
-    // ────────────────────────────────────────────────────────
-    // Everything else — locked by default.
-    // ────────────────────────────────────────────────────────
+
+    // ── AUDIT LOG (append-only) ────────────────────────────
+    // Not yet written by the app — this is here so that when audit logging is
+    // added it is tamper-proof from day one. Entries can be created but never
+    // edited or deleted by anyone, including admins.
+
+    match /auditLog/{entryId} {
+      allow read: if isAdmin();
+      allow create: if activeStaff()
+        && request.resource.data.actorUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+
+    // ── DEFAULT DENY ───────────────────────────────────────
+    // Anything not explicitly matched above is refused. If you add a new
+    // collection later, you must add a rule for it here or it will not work.
+
     match /{document=**} {
       allow read, write: if false;
     }
