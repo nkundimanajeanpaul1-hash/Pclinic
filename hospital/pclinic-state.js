@@ -276,12 +276,92 @@
 
 
     /* ══════════════════════════════════════════
-       6. INIT
+       6. APPLE INTERACTIONS
+       ══════════════════════════════════════════ */
+
+    // Pointer-tracked tilt. Any .pc-tilt element leans slightly toward the
+    // cursor and carries a highlight that follows it. Values are written as
+    // CSS custom properties so the animation stays on the compositor.
+    function initTilt() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (!window.matchMedia('(hover: hover)').matches) return;   // skip touch
+
+        var MAX = 4;               // degrees — subtle; more feels gimmicky
+        var frame = null;
+
+        document.addEventListener('pointermove', function (e) {
+            var el = e.target.closest && e.target.closest('.pc-tilt');
+            if (!el) return;
+            if (frame) return;
+            frame = requestAnimationFrame(function () {
+                frame = null;
+                var r = el.getBoundingClientRect();
+                var px = (e.clientX - r.left) / r.width;
+                var py = (e.clientY - r.top) / r.height;
+                el.style.setProperty('--mx', (px * 100).toFixed(1) + '%');
+                el.style.setProperty('--my', (py * 100).toFixed(1) + '%');
+                el.style.setProperty('--ry', ((px - 0.5) * MAX * 2).toFixed(2) + 'deg');
+                el.style.setProperty('--rx', ((0.5 - py) * MAX * 2).toFixed(2) + 'deg');
+            });
+        }, { passive: true });
+
+        document.addEventListener('pointerleave', function (e) {
+            var el = e.target.closest && e.target.closest('.pc-tilt');
+            if (!el) return;
+            el.style.setProperty('--rx', '0deg');
+            el.style.setProperty('--ry', '0deg');
+        }, true);
+    }
+
+    // iOS-style ripple from the exact tap point.
+    function initRipple() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        document.addEventListener('pointerdown', function (e) {
+            var el = e.target.closest &&
+                     e.target.closest('.pc-btn, .pc-iconbtn, .pc-chip, .pc-seg button');
+            if (!el) return;
+            var r = el.getBoundingClientRect();
+            var d = Math.max(r.width, r.height) * 2;
+            var sp = document.createElement('span');
+            sp.style.cssText =
+                'position:absolute;border-radius:50%;pointer-events:none;' +
+                'width:' + d + 'px;height:' + d + 'px;' +
+                'left:' + (e.clientX - r.left - d / 2) + 'px;' +
+                'top:'  + (e.clientY - r.top  - d / 2) + 'px;' +
+                'background:radial-gradient(circle,rgba(255,255,255,.6),transparent 62%);' +
+                'transform:scale(0);opacity:.9;' +
+                'transition:transform .55s cubic-bezier(.2,.7,.3,1),opacity .55s ease';
+            if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+            el.appendChild(sp);
+            requestAnimationFrame(function () {
+                sp.style.transform = 'scale(1)';
+                sp.style.opacity = '0';
+            });
+            setTimeout(function () { sp.remove(); }, 620);
+        }, { passive: true });
+    }
+
+    // Light haptic on supported devices — the iOS tap feel.
+    function initHaptics() {
+        if (!navigator.vibrate) return;
+        document.addEventListener('pointerdown', function (e) {
+            if (e.target.closest &&
+                e.target.closest('.pc-btn,.pc-iconbtn,.pc-chip,.pc-card,.module-card,.stat-card')) {
+                navigator.vibrate(7);
+            }
+        }, { passive: true });
+    }
+
+    /* ══════════════════════════════════════════
+       7. INIT
        ══════════════════════════════════════════ */
     function init() {
         applyTheme(localStorage.getItem('pclinic-theme') || 'light');
         restoreMarkedFields();
         restoreScroll();
+        initTilt();
+        initRipple();
+        initHaptics();
 
         // Ctrl+L → fast logout
         document.addEventListener('keydown', function (e) {

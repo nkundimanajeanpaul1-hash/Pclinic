@@ -14,6 +14,12 @@
 
 <link rel="stylesheet" href="pclinic-ui.css">
 
+<!-- Icon font, non-blocking: page paints first, glyphs fill in after -->
+<link rel="preload" as="style"
+      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"
+      onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
+
 <!-- Theme applied before first paint so dark mode never flashes white -->
 <script>
 (function(){try{var t=localStorage.getItem('pclinic-theme')||'light';
@@ -47,10 +53,18 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
         background-image: url('hub-texture.jpg');
         background-size: cover;
         background-position: center;
-        opacity: 0.10;
-        filter: blur(2px) saturate(0.85);
+        opacity: 0.42;
+        filter: saturate(0.92);
     }
-    [data-theme="dark"] body::after { opacity: 0.05; }
+    /* Soften it behind the cards so text keeps its contrast, while the
+       edges of the page still show the hospital clearly. */
+    body::after {
+        -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 42%,
+                            rgba(0,0,0,0.34) 0%, rgba(0,0,0,0.72) 55%, #000 100%);
+        mask-image: radial-gradient(ellipse 78% 62% at 50% 42%,
+                            rgba(0,0,0,0.34) 0%, rgba(0,0,0,0.72) 55%, #000 100%);
+    }
+    [data-theme="dark"] body::after { opacity: 0.20; }
 
     /* ── SEARCH ── */
     .hub-search {
@@ -61,18 +75,22 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
     }
     .hub-search input {
         width: 100%;
-        height: 32px;
+        height: 34px;
         padding: 0 12px 0 32px;
-        border-radius: 9px;
-        border: 0.5px solid var(--bd);
-        background: var(--s1);
+        border-radius: 10px;
+        border: 0.5px solid var(--glass-brd);
+        background: var(--glass-bg);
+        -webkit-backdrop-filter: var(--glass-blur);
+        backdrop-filter: var(--glass-blur);
+        box-shadow: var(--glass-inner);
         color: var(--tp);
         font-family: var(--f);
         font-size: 12.5px;
         outline: none;
         transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
     }
-    .hub-search input:focus { border-color: var(--ac); box-shadow: 0 0 0 3px var(--acl); }
+    .hub-search input:focus { border-color: var(--ac); background: var(--glass-bg-hover);
+        box-shadow: 0 0 0 4px var(--acl), var(--sh-1); }
     .hub-search input::placeholder { color: var(--tm); }
     .hub-search i {
         position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
@@ -90,19 +108,27 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
         margin-bottom: 16px;
     }
     .stat-card {
+        position: relative;
         display: flex; align-items: center; gap: 13px;
         padding: 15px 17px;
-        background: var(--s1);
-        border: 0.5px solid var(--bd);
+        background: var(--glass-bg);
+        -webkit-backdrop-filter: var(--glass-blur);
+        backdrop-filter: var(--glass-blur);
+        border: 0.5px solid var(--glass-brd);
         border-radius: var(--r2);
-        box-shadow: var(--shadow);
+        box-shadow: var(--sh-2), var(--glass-spec), var(--glass-inner);
         cursor: pointer;
         text-decoration: none;
         color: inherit;
-        transition: transform 0.28s var(--spring), box-shadow 0.28s var(--ease);
+        overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
+        transition: transform 0.4s var(--spring), box-shadow 0.38s var(--ease),
+                    background 0.3s var(--ease);
     }
-    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow2); }
-    .stat-card:active { animation: pcAppleBounce 0.32s var(--ease); }
+    .stat-card:hover {
+        background: var(--glass-bg-hover);
+        box-shadow: var(--sh-4), var(--glass-spec);
+    }
     .stat-card .ic {
         width: 40px; height: 40px; border-radius: 11px;
         display: grid; place-items: center; font-size: 19px; flex-shrink: 0;
@@ -142,16 +168,21 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
         position: relative;
         display: block;
         padding: 17px 17px 15px;
-        background: var(--s1);
-        border: 0.5px solid var(--bd);
+        background: var(--glass-bg);
+        -webkit-backdrop-filter: var(--glass-blur);
+        backdrop-filter: var(--glass-blur);
+        border: 0.5px solid var(--glass-brd);
         border-radius: var(--r2);
-        box-shadow: var(--shadow);
+        box-shadow: var(--sh-2), var(--glass-spec), var(--glass-inner);
         text-decoration: none;
         color: inherit;
         overflow: hidden;
-        transition: transform 0.28s var(--spring),
-                    box-shadow 0.28s var(--ease),
-                    border-color 0.28s var(--ease);
+        -webkit-tap-highlight-color: transparent;
+        transform-style: preserve-3d;
+        transition: transform 0.42s var(--spring),
+                    box-shadow 0.4s var(--ease),
+                    background 0.3s var(--ease),
+                    border-color 0.3s var(--ease);
     }
     .module-card::before {
         content: '';
@@ -162,12 +193,12 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
         pointer-events: none;
     }
     .module-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow2);
-        border-color: var(--bds);
+        background: var(--glass-bg-hover);
+        box-shadow: var(--sh-4), var(--glass-spec);
+        border-color: rgba(255,255,255,0.85);
     }
     .module-card:hover::before { opacity: 1; }
-    .module-card:active { animation: pcAppleBounce 0.32s var(--ease); }
+    [data-theme="dark"] .module-card:hover { border-color: rgba(255,255,255,0.2); }
 
     .card-icon {
         width: 38px; height: 38px; border-radius: 11px;
@@ -263,19 +294,19 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
 
     <!-- ═══ STATS ═══ -->
     <div class="stats pc-stagger" id="statsGrid">
-        <a class="stat-card" href="reception-dashboard.html">
+        <a class="stat-card pc-tilt" href="reception-dashboard.html">
             <span class="ic blue"><i class="ti ti-users"></i></span>
             <span class="txt"><span class="num" id="totalPatients">0</span><span class="lab">Total Patients</span></span>
         </a>
-        <a class="stat-card" href="doctor-dashboard.html">
+        <a class="stat-card pc-tilt" href="doctor-dashboard.html">
             <span class="ic green"><i class="ti ti-stethoscope"></i></span>
             <span class="txt"><span class="num" id="totalDoctors">0</span><span class="lab">Doctors</span></span>
         </a>
-        <a class="stat-card" href="appointments.html">
+        <a class="stat-card pc-tilt" href="appointments.html">
             <span class="ic orange"><i class="ti ti-calendar"></i></span>
             <span class="txt"><span class="num" id="todayAppointments">0</span><span class="lab">Today's Appointments</span></span>
         </a>
-        <a class="stat-card" href="queue.html">
+        <a class="stat-card pc-tilt" href="queue.html">
             <span class="ic purple"><i class="ti ti-list-numbers"></i></span>
             <span class="txt"><span class="num" id="queueCount">0</span><span class="lab">In Queue</span></span>
         </a>
@@ -285,98 +316,98 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
 
     <!-- ═══ MODULES ═══ -->
     <div class="modules pc-stagger" id="moduleGrid">
-        <a href="reception-dashboard.html" class="module-card" data-role="reception">
+        <a href="reception-dashboard.html" class="module-card pc-tilt" data-role="reception">
             <div class="card-icon ic blue"><i class="ti ti-file-invoice"></i></div>
             <div class="card-title">Reception</div>
             <div class="card-desc">Patient registration, appointments, queue</div>
             <span class="card-badge">Front Desk</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="doctor-dashboard.html" class="module-card" data-role="doctor">
+        <a href="doctor-dashboard.html" class="module-card pc-tilt" data-role="doctor">
             <div class="card-icon ic green"><i class="ti ti-stethoscope"></i></div>
             <div class="card-title">Doctor Portal</div>
             <div class="card-desc">Clinical notes, diagnosis, patient care</div>
             <span class="card-badge">Clinical</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="nurse-dashboard.html" class="module-card" data-role="nurse">
+        <a href="nurse-dashboard.html" class="module-card pc-tilt" data-role="nurse">
             <div class="card-icon ic teal"><i class="ti ti-heart-rate-monitor"></i></div>
             <div class="card-title">Nurse Portal</div>
             <div class="card-desc">Vitals, patient care, triage</div>
             <span class="card-badge">Clinical</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="lab-dashboard.html" class="module-card" data-role="lab">
+        <a href="lab-dashboard.html" class="module-card pc-tilt" data-role="lab">
             <div class="card-icon ic purple"><i class="ti ti-test-pipe"></i></div>
             <div class="card-title">Laboratory</div>
             <div class="card-desc">Lab requests, results, diagnostics</div>
             <span class="card-badge">Diagnostic</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="pharmacy-dashboard.html" class="module-card" data-role="pharmacy">
+        <a href="pharmacy-dashboard.html" class="module-card pc-tilt" data-role="pharmacy">
             <div class="card-icon ic pink"><i class="ti ti-pill"></i></div>
             <div class="card-title">Pharmacy</div>
             <div class="card-desc">Prescriptions, drug inventory</div>
             <span class="card-badge">Pharmacy</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="radio-dashboard.html" class="module-card" data-role="radio">
+        <a href="radio-dashboard.html" class="module-card pc-tilt" data-role="radio">
             <div class="card-icon ic orange"><i class="ti ti-radioactive"></i></div>
             <div class="card-title">Radiology</div>
             <div class="card-desc">Imaging, X-rays, scans</div>
             <span class="card-badge">Diagnostic</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="theater-dashboard.html" class="module-card" data-role="theater">
+        <a href="theater-dashboard.html" class="module-card pc-tilt" data-role="theater">
             <div class="card-icon ic red"><i class="ti ti-scissors"></i></div>
             <div class="card-title">Theatre</div>
             <div class="card-desc">Surgery, operating room</div>
             <span class="card-badge">Surgical</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="physio-dashboard.html" class="module-card" data-role="physio">
+        <a href="physio-dashboard.html" class="module-card pc-tilt" data-role="physio">
             <div class="card-icon ic green"><i class="ti ti-accessible"></i></div>
             <div class="card-title">Physiotherapy</div>
             <div class="card-desc">Rehabilitation, therapy</div>
             <span class="card-badge">Therapy</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="cashier-dashboard.html" class="module-card" data-role="cashier">
+        <a href="cashier-dashboard.html" class="module-card pc-tilt" data-role="cashier">
             <div class="card-icon ic teal"><i class="ti ti-currency-dollar"></i></div>
             <div class="card-title">Cashier</div>
             <div class="card-desc">Payments, invoices, billing</div>
             <span class="card-badge">Finance</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="Finance-dashboard.html" class="module-card" data-role="finance">
+        <a href="Finance-dashboard.html" class="module-card pc-tilt" data-role="finance">
             <div class="card-icon ic blue"><i class="ti ti-credit-card"></i></div>
             <div class="card-title">Finance</div>
             <div class="card-desc">Accounting, reports, management</div>
             <span class="card-badge">Finance</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="hr-dashboard.html" class="module-card" data-role="hr">
+        <a href="hr-dashboard.html" class="module-card pc-tilt" data-role="hr">
             <div class="card-icon ic purple"><i class="ti ti-users"></i></div>
             <div class="card-title">Human Resources</div>
             <div class="card-desc">Staff, payroll, attendance</div>
             <span class="card-badge">Admin</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="inventory-dashboard.html" class="module-card" data-role="inventory">
+        <a href="inventory-dashboard.html" class="module-card pc-tilt" data-role="inventory">
             <div class="card-icon ic orange"><i class="ti ti-package"></i></div>
             <div class="card-title">Inventory</div>
             <div class="card-desc">Supplies, equipment, stock</div>
             <span class="card-badge">Admin</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="admin-dashboard.html" class="module-card" data-role="admin">
+        <a href="admin-dashboard.html" class="module-card pc-tilt" data-role="admin">
             <div class="card-icon ic red"><i class="ti ti-settings"></i></div>
             <div class="card-title">Administration</div>
             <div class="card-desc">System settings, user management</div>
             <span class="card-badge">Admin</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-        <a href="beds-dashboard.html" class="module-card" data-role="beds nurse reception">
+        <a href="beds-dashboard.html" class="module-card pc-tilt" data-role="beds nurse reception">
             <div class="card-icon ic pink"><i class="ti ti-bed"></i></div>
             <div class="card-title">Bed Management</div>
             <div class="card-desc">Ward occupancy, allocation</div>
@@ -390,12 +421,6 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
 </div>
 
 <div class="pc-toasts" id="toastContainer"></div>
-
-<!-- Icon font loads non-blocking: the page renders first, icons fill in -->
-<link rel="preload" as="style"
-      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"
-      onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
 
 <script type="module" src="firebase-config.js"></script>
 <script src="auth-guard.js"></script>
