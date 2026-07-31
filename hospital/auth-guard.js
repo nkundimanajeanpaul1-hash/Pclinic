@@ -42,7 +42,24 @@
         if (reason) {
             try { sessionStorage.setItem('pclinic_auth_message', reason); } catch (e) {}
         }
-        window.location.href = 'login.html';
+        // replace() not href: a signed-out user pressing Back must not be
+        // able to re-enter a protected page from the bfcache.
+        window.location.replace('login.html');
+    }
+
+    // "Hub first": if someone opens a dashboard URL directly but isn't
+    // allowed on it, send them to the hub rather than bouncing them out
+    // to login. They ARE authenticated - they just picked the wrong door.
+    function goToHub(reason) {
+        if (reason) {
+            try { sessionStorage.setItem('pclinic_auth_message', reason); } catch (e) {}
+        }
+        var here = window.location.pathname.split('/').pop();
+        if (here === 'hub.html') {           // never redirect hub to itself
+            window.location.replace('login.html');
+            return;
+        }
+        window.location.replace('hub.html');
     }
 
     // ─── MAIN GUARD ───
@@ -107,7 +124,7 @@
                         const isAdmin = role === 'admin';
 
                         if (allowedRoles.length > 0 && !isAdmin && allowedRoles.indexOf(role) === -1) {
-                            goToLogin('⛔ You do not have access to that page.');
+                            goToHub('⛔ That page is not available for your role.');
                             reject(new Error('forbidden'));
                             return;
                         }
@@ -133,17 +150,18 @@
     };
 
     // ─── LOGOUT HELPER ───
-    window.pclinicLogout = async function () {
-        try {
-            if (window.firebaseAuth && window.firebaseAuthFunctions) {
-                await window.firebaseAuthFunctions.signOut(window.firebaseAuth);
-            }
-        } catch (e) {
-            console.warn('Logout error:', e);
-        } finally {
-            localStorage.removeItem('pclinic_remember_user');
-            window.location.href = 'login.html';
-        }
-    };
+    // pclinic-state.js installs a faster implementation (it does not await
+    // the network round trip). Only define a fallback if that isn't loaded.
+    if (typeof window.pclinicLogout !== 'function') {
+        window.pclinicLogout = function () {
+            try {
+                localStorage.removeItem('pclinic_remember_user');
+                if (window.firebaseAuth && window.firebaseAuthFunctions) {
+                    window.firebaseAuthFunctions.signOut(window.firebaseAuth).catch(function () {});
+                }
+            } catch (e) {}
+            window.location.replace('login.html');
+        };
+    }
 
 })();

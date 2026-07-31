@@ -6,16 +6,30 @@
 <title>PClinic — Login</title>
 <meta name="description" content="Sign in to your PClinic dashboard." />
 <link rel="icon" type="image/png" href="logo.png" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<!-- Start the TLS handshake to Firebase immediately, in parallel with
+     parsing, so the auth SDK isn't waiting on DNS+TLS when it's requested. -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="image" href="login-bg.jpg">
+<!-- Fonts load non-blocking: the page renders in a system font first,
+     then upgrades to Inter when it arrives. -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"></noscript>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Inline SVG icons — replaces a 713 KB webfont that was loaded for 5 glyphs */
+    .ic { width: 1em; height: 1em; display: block; }
+    .icon-left .ic, .pw-toggle .ic { width: 18px; height: 18px; }
+    .fallback-icon .ic { width: 32px; height: 32px; }
 
     :root {
         --ac: #34d399;
         --ac2: #60a5fa;
         --gradient: linear-gradient(135deg, #34d399, #22c55e);
-        --f: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        --f: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
 
     html, body {
@@ -41,7 +55,7 @@
         position: fixed;
         inset: 0;
         z-index: -2;
-        background-image: url('login-hero-bg.jpg');
+        background-image: url('login-bg.jpg');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -54,30 +68,43 @@
     }
 
     /* ── PAGE-LEVEL LOADING (checking existing session) ── */
+    /* Small, non-blocking status chip. The login form is usable the whole
+       time this is on screen — it only reports that we're double-checking
+       for an existing session in the background. */
     #sessionCheck {
         position: fixed;
-        inset: 0;
+        top: 14px;
+        right: 14px;
         z-index: 50;
-        background: #0b0f1a;
         display: flex;
         align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        gap: 14px;
+        gap: 9px;
+        padding: 9px 15px;
+        border-radius: 999px;
+        background: rgba(11, 15, 26, 0.82);
+        border: 1px solid rgba(255,255,255,0.12);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        opacity: 0;
+        animation: chipIn 0.25s ease forwards;
         transition: opacity 0.3s ease;
     }
+    #sessionCheck[hidden] { display: none; }
+    @keyframes chipIn { to { opacity: 1; } }
     #sessionCheck .ring {
-        width: 34px;
-        height: 34px;
-        border: 3px solid rgba(255,255,255,0.15);
+        width: 15px;
+        height: 15px;
+        border: 2px solid rgba(255,255,255,0.2);
         border-top-color: var(--ac);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
+        flex-shrink: 0;
     }
     #sessionCheck .txt {
-        font-size: 12px;
-        color: rgba(255,255,255,0.5);
-        letter-spacing: 0.3px;
+        font-size: 11.5px;
+        color: rgba(255,255,255,0.72);
+        letter-spacing: 0.2px;
+        white-space: nowrap;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -115,12 +142,20 @@
         text-align: center;
         margin-bottom: 22px;
     }
+    /* The logo is a WIDE lockup in dark navy, so it needs its natural
+       aspect ratio (not a 46x46 crop) and a light chip behind it —
+       on the dark card the navy "Clinic" text was invisible. */
     .brand img {
-        height: 46px;
-        width: 46px;
-        border-radius: 12px;
-        margin-bottom: 10px;
-        object-fit: cover;
+        height: 40px;
+        width: auto;
+        max-width: 190px;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto 12px;
+        padding: 9px 15px;
+        border-radius: 11px;
+        background: #fff;
+        box-shadow: 0 3px 14px rgba(0,0,0,0.28);
     }
     .brand .fallback-icon {
         width: 46px;
@@ -294,7 +329,7 @@
 <body>
 
     <!-- ═══ CHECKING EXISTING SESSION ═══ -->
-    <div id="sessionCheck">
+    <div id="sessionCheck" hidden>
         <div class="ring"></div>
         <div class="txt">Checking your session…</div>
     </div>
@@ -302,11 +337,11 @@
     <div class="bg-wrapper"></div>
     <div class="bg-overlay"></div>
 
-    <div class="page" id="pageContent" style="visibility:hidden;">
+    <div class="page" id="pageContent">
         <div class="card">
             <div class="brand">
-                <img src="logo.png" alt="PClinic" onerror="this.style.display='none'; document.getElementById('fallbackIcon').style.display='flex';"/>
-                <div class="fallback-icon" id="fallbackIcon" style="display:none;"><i class="ti ti-building-hospital"></i></div>
+                <img src="logo-login.png" alt="PClinic" width="181" height="64" fetchpriority="high" onerror="this.style.display='none'; document.getElementById('fallbackIcon').style.display='flex';"/>
+                <div class="fallback-icon" id="fallbackIcon" style="display:none;"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M9 8h1m-1 4h1m-1 4h1m4-8h1m-1 4h1m-1 4h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg></div>
                 <div class="name">PClinic</div>
                 <div class="tagline">Sign in to your dashboard</div>
             </div>
@@ -315,7 +350,7 @@
                 <div class="field">
                     <label>STAFF ID</label>
                     <div class="input-wrap">
-                        <span class="icon-left"><i class="ti ti-id-badge-2"></i></span>
+                        <span class="icon-left"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/><path d="M10 7h4M9 13a2 2 0 1 0 4 0 2 2 0 1 0-4 0M8 17a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg></span>
                         <input
                             type="text"
                             inputmode="numeric"
@@ -331,7 +366,7 @@
                 <div class="field">
                     <label>PASSWORD</label>
                     <div class="input-wrap">
-                        <span class="icon-left"><i class="ti ti-lock"></i></span>
+                        <span class="icon-left"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M12 16v.01M8 11V7a4 4 0 1 1 8 0v4"/></svg></span>
                         <input
                             type="password"
                             id="password"
@@ -341,7 +376,7 @@
                             style="padding-right:40px;"
                         />
                         <button type="button" class="pw-toggle" id="togglePassword" aria-label="Toggle password visibility">
-                            <i class="ti ti-eye"></i>
+                            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0 2 2 0 1 0-4 0"/><path d="M21 12c-2.4 4-5.4 6-9 6s-6.6-2-9-6c2.4-4 5.4-6 9-6s6.6 2 9 6"/></svg>
                         </button>
                     </div>
                 </div>
@@ -385,22 +420,35 @@
             const spinner = document.getElementById('spinner');
             const rememberCheck = document.getElementById('remember');
 
-            function revealForm() {
+            // The form is already painted and usable. These just manage the
+            // small background-check chip in the corner.
+            function revealForm() { hideSessionChip(); }
+
+            function hideSessionChip() {
+                if (!sessionCheck || sessionCheck.hidden) return;
                 sessionCheck.style.opacity = '0';
-                setTimeout(() => { sessionCheck.style.display = 'none'; }, 300);
-                pageContent.style.visibility = 'visible';
+                setTimeout(function () { sessionCheck.hidden = true; }, 300);
+            }
+
+            // Only show the chip if the session check is actually taking a
+            // moment. Below this threshold it resolves before a user would
+            // ever notice, and a flash of spinner is worse than none.
+            let sessionChipTimer = setTimeout(function () {
+                if (sessionCheck) sessionCheck.hidden = false;
+            }, 450);
+            function cancelSessionChip() {
+                clearTimeout(sessionChipTimer);
+                hideSessionChip();
             }
 
             // ─── TOGGLE PASSWORD ───
             toggleBtn.addEventListener('click', function() {
-                const icon = this.querySelector('i');
-                if (passwordInput.type === 'password') {
-                    passwordInput.type = 'text';
-                    icon.className = 'ti ti-eye-off';
-                } else {
-                    passwordInput.type = 'password';
-                    icon.className = 'ti ti-eye';
-                }
+                const svg = this.querySelector('svg');
+                const shown = passwordInput.type === 'text';
+                passwordInput.type = shown ? 'password' : 'text';
+                svg.innerHTML = shown
+                    ? '<path d="M10 12a2 2 0 1 0 4 0 2 2 0 1 0-4 0"/><path d="M21 12c-2.4 4-5.4 6-9 6s-6.6-2-9-6c2.4-4 5.4-6 9-6s6.6 2 9 6"/>'
+                    : '<path d="m3 3 18 18"/><path d="M10.585 10.587a2 2 0 0 0 2.829 2.828"/><path d="M16.681 16.673A8.717 8.717 0 0 1 12 18c-3.6 0-6.6-2-9-6 1.272-2.12 2.712-3.678 4.32-4.674m2.86-1.146A9.055 9.055 0 0 1 12 6c3.6 0 6.6 2 9 6-.666 1.11-1.379 2.067-2.138 2.87"/>';
             });
 
             function showMessage(text, type) {
@@ -460,7 +508,7 @@
             // form is revealed right away instead of waiting.
             (async function checkExistingSession() {
                 const ready = await waitForFirebase();
-                if (!ready) { revealForm(); if (authMsg) { showMessage(authMsg, 'error'); sessionStorage.removeItem('pclinic_auth_message'); } return; }
+                if (!ready) { cancelSessionChip(); if (authMsg) { showMessage(authMsg, 'error'); sessionStorage.removeItem('pclinic_auth_message'); } return; }
 
                 // Wait for Firebase to FULLY settle its initial auth check
                 // (important right after a page refresh) before deciding
@@ -480,7 +528,7 @@
                     if (typeof unsubscribe === 'function') unsubscribe();
 
                     if (!user) {
-                        revealForm();
+                        cancelSessionChip();
                         if (authMsg) {
                             showMessage(authMsg, 'error');
                             sessionStorage.removeItem('pclinic_auth_message');
@@ -496,9 +544,9 @@
                         }
                         // Stale/invalid session — sign out and show the form.
                         await signOut(window.firebaseAuth);
-                        revealForm();
+                        cancelSessionChip();
                     } catch (e) {
-                        revealForm();
+                        cancelSessionChip();
                     }
                 });
             })();

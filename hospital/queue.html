@@ -4,6 +4,7 @@
     <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
     <script type="module" src="firebase-config.js"></script>
     <script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -216,9 +217,7 @@
                 document.documentElement.setAttribute('data-theme', saved);
                 document.getElementById('themeIcon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
             })();
-            window.logout = function() {
-                if (confirm('Are you sure you want to sign out?')) { window.pclinicLogout(); }
-            };
+            window.logout = function() { window.pclinicLogout(); };
 
             console.log('🏥 PClinic Queue page loaded');
         })();

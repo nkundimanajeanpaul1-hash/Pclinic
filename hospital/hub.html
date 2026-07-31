@@ -1,1292 +1,536 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-    <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
-    <script type="module" src="firebase-config.js"></script>
-    <script src="auth-guard.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PClinic — Hub</title>
+<link rel="icon" type="image/png" href="logo.png">
 
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PClinic — Hub</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" />
-    <style>
-        /* ============================================================
-           PCLINIC HUB — Complete Styles
-           ============================================================ */
+<!-- Warm connections + pull the texture early -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+<link rel="preload" as="image" href="hub-texture.jpg">
+<link rel="preload" as="image" href="logo-wide.png">
 
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+<link rel="stylesheet" href="pclinic-ui.css">
 
-        :root {
-            --bg: #f0f2f5;
-            --s1: #ffffff;
-            --s2: #f8f9fa;
-            --s3: #f1f3f6;
-            --bd: #e4e7ec;
-            --tp: #1a1a2e;
-            --ts: #2d2d44;
-            --tm: #6b7280;
-            --ac: #2563eb;
-            --ach: #1d4ed8;
-            --acb: #eff6ff;
-            --acl: #dbeafe;
-            --green: #10b981;
-            --greenb: #ecfdf5;
-            --orange: #f59e0b;
-            --orangeb: #fffbeb;
-            --red: #ef4444;
-            --redb: #fef2f2;
-            --purple: #7c3aed;
-            --purpleb: #f5f3ff;
-            --pink: #ec4899;
-            --pinkb: #fdf2f8;
-            --teal: #14b8a6;
-            --tealb: #f0fdfa;
-            --gradient: linear-gradient(135deg, #2563eb, #7c3aed);
-            --shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 4px 12px rgba(0, 0, 0, .04);
-            --shadow2: 0 4px 20px rgba(0, 0, 0, .08), 0 12px 40px rgba(0, 0, 0, .06);
-            --r: 10px;
-            --r2: 14px;
-            --f: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-            --transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
+<!-- Theme applied before first paint so dark mode never flashes white -->
+<script>
+(function(){try{var t=localStorage.getItem('pclinic-theme')||'light';
+document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
 
-        [data-theme="dark"] {
-            --bg: #0f1117;
-            --s1: #1a1d27;
-            --s2: #14171f;
-            --s3: #222533;
-            --bd: #2d3040;
-            --tp: #f0f2f5;
-            --ts: #d1d5db;
-            --tm: #9ca3af;
-            --ac: #3b82f6;
-            --ach: #60a5fa;
-            --acb: #1e293b;
-            --acl: #1e3a5f;
-            --green: #34d399;
-            --greenb: #1a3a2a;
-            --orange: #fbbf24;
-            --orangeb: #3a2a1a;
-            --red: #f87171;
-            --redb: #3a1a1a;
-            --purple: #a78bfa;
-            --purpleb: #2a1a3a;
-            --pink: #f472b6;
-            --pinkb: #3a1a2a;
-            --teal: #2dd4bf;
-            --tealb: #1a2a3a;
-            --shadow: 0 1px 3px rgba(0, 0, 0, .3), 0 4px 12px rgba(0, 0, 0, .2);
-            --shadow2: 0 4px 20px rgba(0, 0, 0, .4), 0 12px 40px rgba(0, 0, 0, .3);
-        }
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: var(--f);
-            background: var(--bg);
-            color: var(--tp);
-            font-size: 13px;
-            line-height: 1.6;
-            min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            transition: background 0.4s, color 0.4s;
-        }
+    body {
+        font-family: var(--f);
+        background: var(--bg);
+        color: var(--tp);
+        font-size: 13px;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+    }
 
-        /* ── SCROLLBAR ── */
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--s2);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--bd);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--tm);
-        }
+    /* Faint hospital texture — deliberately subtle. This page is a
+       working tool; a legible card matters more than a pretty backdrop. */
+    body::before {
+        content: '';
+        position: fixed; inset: 0; z-index: -2; pointer-events: none;
+        background:
+            radial-gradient(circle at 20% 30%, rgba(0,113,227,0.05) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(52,199,89,0.05) 0%, transparent 50%);
+    }
+    body::after {
+        content: '';
+        position: fixed; inset: 0; z-index: -1; pointer-events: none;
+        background-image: url('hub-texture.jpg');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.10;
+        filter: blur(2px) saturate(0.85);
+    }
+    [data-theme="dark"] body::after { opacity: 0.05; }
 
-        /* ── SELECTION ── */
-        ::selection {
-            background: var(--ac);
-            color: #fff;
-        }
+    /* ── SEARCH ── */
+    .hub-search {
+        position: relative;
+        flex: 1 1 190px;
+        max-width: 260px;
+        min-width: 130px;
+    }
+    .hub-search input {
+        width: 100%;
+        height: 32px;
+        padding: 0 12px 0 32px;
+        border-radius: 9px;
+        border: 0.5px solid var(--bd);
+        background: var(--s1);
+        color: var(--tp);
+        font-family: var(--f);
+        font-size: 12.5px;
+        outline: none;
+        transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    }
+    .hub-search input:focus { border-color: var(--ac); box-shadow: 0 0 0 3px var(--acl); }
+    .hub-search input::placeholder { color: var(--tm); }
+    .hub-search i {
+        position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+        color: var(--tm); font-size: 14px; pointer-events: none;
+    }
 
-        /* ════════════════════════════════════════════════════════════
-           TOPBAR
-           ════════════════════════════════════════════════════════════ */
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 24px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            border-bottom: 0.5px solid var(--bd);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            transition: background 0.4s;
-            height: 56px;
-        }
-        [data-theme="dark"] .topbar {
-            background: rgba(26, 29, 39, 0.85);
-        }
+    /* ── LAYOUT ── */
+    .wrap { padding: 0 20px 28px; max-width: 1600px; margin: 0 auto; }
 
-        .tl {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .logo-box {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: var(--gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 16px;
-            font-weight: 700;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
-        }
-        .logo-box svg {
-            width: 20px;
-            height: 20px;
-            fill: none;
-            stroke: #fff;
-            stroke-width: 2.5;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-        .appname {
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            color: var(--tp);
-        }
-        .appname span {
-            color: var(--ac);
-        }
-        .appsub {
-            font-size: 11px;
-            color: var(--tm);
-            font-weight: 500;
-            margin-left: 2px;
-        }
+    /* ── STATS ── */
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .stat-card {
+        display: flex; align-items: center; gap: 13px;
+        padding: 15px 17px;
+        background: var(--s1);
+        border: 0.5px solid var(--bd);
+        border-radius: var(--r2);
+        box-shadow: var(--shadow);
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.28s var(--spring), box-shadow 0.28s var(--ease);
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow2); }
+    .stat-card:active { animation: pcAppleBounce 0.32s var(--ease); }
+    .stat-card .ic {
+        width: 40px; height: 40px; border-radius: 11px;
+        display: grid; place-items: center; font-size: 19px; flex-shrink: 0;
+        transition: transform 0.28s var(--spring);
+    }
+    .stat-card:hover .ic { transform: scale(1.08) rotate(-5deg); }
+    .stat-card .txt { display: flex; flex-direction: column; min-width: 0; }
+    .stat-card .num { display: block; font-size: 22px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.15; }
+    .stat-card .lab { display: block; font-size: 11.5px; color: var(--tm); margin-top: 2px; }
 
-        .tr {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .realtime-clock {
-            font-size: 12px;
-            color: var(--tm);
-            font-weight: 500;
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(4px);
-            padding: 4px 12px;
-            border-radius: 20px;
-            border: 0.5px solid var(--bd);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        [data-theme="dark"] .realtime-clock {
-            background: rgba(255, 255, 255, 0.05);
-        }
+    .ic.blue   { background: var(--acb);     color: var(--ac); }
+    .ic.green  { background: var(--greenb);  color: var(--greend); }
+    .ic.orange { background: var(--orangeb); color: var(--oranged); }
+    .ic.purple { background: var(--purpleb); color: var(--purpled); }
+    .ic.red    { background: var(--redb);    color: var(--redd); }
+    .ic.teal   { background: #e0f7f5;        color: #0f766e; }
+    .ic.pink   { background: #fde8f3;        color: #9d174d; }
+    [data-theme="dark"] .ic.teal { background: rgba(20,184,166,0.16); color: #5eead4; }
+    [data-theme="dark"] .ic.pink { background: rgba(236,72,153,0.16); color: #f9a8d4; }
 
-        .tb-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 0.5px solid var(--bd);
-            background: var(--s1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-            color: var(--tm);
-            font-size: 15px;
-            position: relative;
-        }
-        .tb-btn:hover {
-            background: var(--s3);
-            transform: scale(1.05);
-            color: var(--tp);
-        }
-        .tb-btn:active {
-            transform: scale(0.92);
-        }
-        .notif-dot {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: var(--red);
-            border: 1.5px solid var(--s1);
-            animation: pulse-dot 2s infinite;
-        }
-        @keyframes pulse-dot {
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.4);
-                opacity: 0.6;
-            }
-        }
+    /* ── SECTION LABEL ── */
+    .sec {
+        display: flex; align-items: center; gap: 9px;
+        font-size: 10.5px; font-weight: 700; letter-spacing: 0.09em;
+        text-transform: uppercase; color: var(--tm);
+        margin: 20px 0 11px;
+    }
+    .sec::after { content: ''; flex: 1; height: 0.5px; background: var(--bd); }
 
-        .theme-toggle {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 0.5px solid var(--bd);
-            background: var(--s1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-            color: var(--tm);
-            font-size: 16px;
-        }
-        .theme-toggle:hover {
-            background: var(--s3);
-            transform: scale(1.05);
-            color: var(--tp);
-        }
+    /* ── MODULE CARDS ── */
+    .modules {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+        gap: 13px;
+    }
+    .module-card {
+        position: relative;
+        display: block;
+        padding: 17px 17px 15px;
+        background: var(--s1);
+        border: 0.5px solid var(--bd);
+        border-radius: var(--r2);
+        box-shadow: var(--shadow);
+        text-decoration: none;
+        color: inherit;
+        overflow: hidden;
+        transition: transform 0.28s var(--spring),
+                    box-shadow 0.28s var(--ease),
+                    border-color 0.28s var(--ease);
+    }
+    .module-card::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(135deg, rgba(0,113,227,0.05), transparent 62%);
+        opacity: 0;
+        transition: opacity 0.3s var(--ease);
+        pointer-events: none;
+    }
+    .module-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow2);
+        border-color: var(--bds);
+    }
+    .module-card:hover::before { opacity: 1; }
+    .module-card:active { animation: pcAppleBounce 0.32s var(--ease); }
 
-        .user-chip {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 3px 10px 3px 3px;
-            border-radius: 20px;
-            border: 0.5px solid var(--bd);
-            background: var(--s1);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .user-chip:hover {
-            background: var(--s3);
-            transform: scale(1.02);
-        }
-        .ua {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background: var(--gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 10px;
-            font-weight: 700;
-        }
-        .uname {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--tp);
-        }
+    .card-icon {
+        width: 38px; height: 38px; border-radius: 11px;
+        display: grid; place-items: center; font-size: 18px;
+        margin-bottom: 11px;
+        transition: transform 0.3s var(--spring);
+    }
+    .module-card:hover .card-icon { transform: scale(1.1) rotate(-6deg); }
 
-        /* ════════════════════════════════════════════════════════════
-           BREADCRUMB
-           ════════════════════════════════════════════════════════════ */
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            color: var(--tm);
-            padding: 10px 24px 6px 24px;
-            flex-wrap: wrap;
-        }
-        .breadcrumb a {
-            color: var(--ac);
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-        .breadcrumb .separator {
-            color: var(--bd);
-            font-size: 10px;
-        }
-        .breadcrumb .current {
-            color: var(--ts);
-            font-weight: 500;
-        }
+    .card-title { font-size: 14px; font-weight: 700; letter-spacing: -0.25px; margin-bottom: 3px; }
+    .card-desc  { font-size: 11.5px; color: var(--tm); line-height: 1.45; margin-bottom: 9px; min-height: 32px; }
+    .card-badge {
+        display: inline-block;
+        font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
+        padding: 3px 9px; border-radius: 30px;
+        background: var(--s3); color: var(--ts);
+        border: 0.5px solid var(--bd);
+    }
+    .card-arrow {
+        position: absolute; bottom: 15px; right: 15px;
+        color: var(--tm); font-size: 15px; line-height: 1;
+        opacity: 0.35; transform: translateX(-4px);
+        transition: opacity 0.28s var(--ease), transform 0.28s var(--spring), color 0.28s var(--ease);
+    }
+    .module-card:hover .card-arrow { opacity: 1; transform: translateX(0); color: var(--ac); }
 
-        /* ════════════════════════════════════════════════════════════
-           GREETING
-           ════════════════════════════════════════════════════════════ */
-        .greeting {
-            padding: 12px 24px 6px 24px;
-        }
-        .greeting h1 {
-            font-size: 26px;
-            font-weight: 800;
-            color: var(--tp);
-            letter-spacing: -0.5px;
-        }
-        .greeting h1 .highlight {
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .greeting p {
-            font-size: 14px;
-            color: var(--tm);
-            margin-top: 2px;
-        }
+    .no-results {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--tm);
+        font-size: 13px;
+    }
 
-        /* ════════════════════════════════════════════════════════════
-           STATS GRID
-           ════════════════════════════════════════════════════════════ */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
-            padding: 12px 24px 8px 24px;
-        }
-        .stat-card {
-            background: var(--s1);
-            border: 0.5px solid var(--bd);
-            border-radius: var(--r2);
-            padding: 14px 18px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-            cursor: pointer;
-        }
-        .stat-card:hover {
-            box-shadow: var(--shadow2);
-            transform: translateY(-2px);
-        }
-        .stat-card .icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-        .stat-card .icon.blue {
-            background: var(--acb);
-            color: var(--ac);
-        }
-        .stat-card .icon.green {
-            background: var(--greenb);
-            color: var(--green);
-        }
-        .stat-card .icon.orange {
-            background: var(--orangeb);
-            color: var(--orange);
-        }
-        .stat-card .icon.purple {
-            background: var(--purpleb);
-            color: var(--purple);
-        }
-        .stat-card .stat-info .number {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--tp);
-            letter-spacing: -0.5px;
-        }
-        .stat-card .stat-info .label {
-            font-size: 12px;
-            color: var(--tm);
-            font-weight: 500;
-        }
-
-        /* ════════════════════════════════════════════════════════════
-           MODULE GRID
-           ════════════════════════════════════════════════════════════ */
-        .module-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 14px;
-            padding: 12px 24px 16px 24px;
-        }
-        .module-card {
-            background: var(--s1);
-            border: 0.5px solid var(--bd);
-            border-radius: var(--r2);
-            padding: 18px 16px;
-            transition: var(--transition);
-            box-shadow: var(--shadow);
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-            position: relative;
-            overflow: hidden;
-        }
-        .module-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: var(--gradient);
-            opacity: 0;
-            transition: var(--transition);
-        }
-        .module-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow2);
-        }
-        .module-card:hover::before {
-            opacity: 0.03;
-        }
-        .module-card .card-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-        .module-card .card-icon.blue {
-            background: var(--acb);
-            color: var(--ac);
-        }
-        .module-card .card-icon.green {
-            background: var(--greenb);
-            color: var(--green);
-        }
-        .module-card .card-icon.orange {
-            background: var(--orangeb);
-            color: var(--orange);
-        }
-        .module-card .card-icon.red {
-            background: var(--redb);
-            color: var(--red);
-        }
-        .module-card .card-icon.purple {
-            background: var(--purpleb);
-            color: var(--purple);
-        }
-        .module-card .card-icon.pink {
-            background: var(--pinkb);
-            color: var(--pink);
-        }
-        .module-card .card-icon.teal {
-            background: var(--tealb);
-            color: var(--teal);
-        }
-        .module-card .card-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--tp);
-            letter-spacing: -0.2px;
-        }
-        .module-card .card-desc {
-            font-size: 11px;
-            color: var(--tm);
-            line-height: 1.4;
-        }
-        .module-card .card-badge {
-            font-size: 9px;
-            font-weight: 600;
-            padding: 2px 10px;
-            border-radius: 10px;
-            background: var(--acb);
-            color: var(--ac);
-            margin-top: 2px;
-        }
-        .module-card .card-arrow {
-            position: absolute;
-            right: 14px;
-            top: 14px;
-            color: var(--bd);
-            font-size: 13px;
-            transition: var(--transition);
-        }
-        .module-card:hover .card-arrow {
-            color: var(--ac);
-            transform: translateX(3px);
-        }
-
-        /* ════════════════════════════════════════════════════════════
-           ACTIVITY PANEL
-           ════════════════════════════════════════════════════════════ */
-        .activity-panel {
-            padding: 8px 24px 24px 24px;
-        }
-        .activity-panel .panel-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--tm);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 10px;
-        }
-        .activity-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            background: var(--s1);
-            border: 0.5px solid var(--bd);
-            border-radius: var(--r);
-            transition: var(--transition);
-            box-shadow: var(--shadow);
-        }
-        .activity-item:hover {
-            box-shadow: var(--shadow2);
-        }
-        .activity-item .act-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-        .activity-item .act-icon.blue {
-            background: var(--acb);
-            color: var(--ac);
-        }
-        .activity-item .act-icon.green {
-            background: var(--greenb);
-            color: var(--green);
-        }
-        .activity-item .act-icon.orange {
-            background: var(--orangeb);
-            color: var(--orange);
-        }
-        .activity-item .act-icon.purple {
-            background: var(--purpleb);
-            color: var(--purple);
-        }
-        .activity-item .act-icon.red {
-            background: var(--redb);
-            color: var(--red);
-        }
-        .activity-item .act-text {
-            flex: 1;
-            font-size: 12px;
-            color: var(--ts);
-        }
-        .activity-item .act-text strong {
-            color: var(--tp);
-            font-weight: 600;
-        }
-        .activity-item .act-time {
-            font-size: 10px;
-            color: var(--tm);
-            white-space: nowrap;
-        }
-
-        /* ════════════════════════════════════════════════════════════
-           TOAST
-           ════════════════════════════════════════════════════════════ */
-        #toastContainer {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            pointer-events: none;
-        }
-        .toast {
-            background: rgba(28, 28, 30, 0.92);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            color: #fff;
-            border-radius: 12px;
-            padding: 10px 20px;
-            font-size: 13px;
-            font-weight: 500;
-            pointer-events: none;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            animation: toastPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        [data-theme="dark"] .toast {
-            background: rgba(44, 44, 46, 0.95);
-        }
-        .toast.success {
-            background: var(--green);
-            color: #fff;
-        }
-        .toast.error {
-            background: var(--red);
-            color: #fff;
-        }
-        .toast.info {
-            background: var(--ac);
-            color: #fff;
-        }
-        @keyframes toastPop {
-            from {
-                opacity: 0;
-                transform: translateY(20px) scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-        @keyframes toastOut {
-            from {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-            to {
-                opacity: 0;
-                transform: translateY(-20px) scale(0.9);
-            }
-        }
-
-        /* ════════════════════════════════════════════════════════════
-           LOADING OVERLAY
-           ════════════════════════════════════════════════════════════ */
-        .loading-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .loading-overlay.active {
-            display: flex;
-        }
-        .spinner-large {
-            width: 48px;
-            height: 48px;
-            border: 4px solid rgba(255, 255, 255, 0.15);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        .loading-text {
-            color: #fff;
-            font-size: 15px;
-            font-weight: 500;
-        }
-
-        /* ════════════════════════════════════════════════════════════
-           RESPONSIVE
-           ════════════════════════════════════════════════════════════ */
-        @media (max-width: 1024px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .topbar {
-                padding: 6px 16px;
-                flex-wrap: wrap;
-                height: auto;
-                gap: 6px;
-            }
-            .tl {
-                flex: 1;
-            }
-            .tr {
-                flex-wrap: wrap;
-                justify-content: flex-end;
-            }
-            .realtime-clock {
-                font-size: 10px;
-                padding: 2px 8px;
-            }
-            .greeting {
-                padding: 8px 16px 4px 16px;
-            }
-            .greeting h1 {
-                font-size: 20px;
-            }
-            .stats-grid {
-                padding: 8px 16px;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-            }
-            .stat-card {
-                padding: 10px 14px;
-            }
-            .stat-card .stat-info .number {
-                font-size: 18px;
-            }
-            .module-grid {
-                padding: 8px 16px 12px 16px;
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                gap: 10px;
-            }
-            .module-card {
-                padding: 14px 12px;
-            }
-            .module-card .card-icon {
-                width: 34px;
-                height: 34px;
-                font-size: 15px;
-            }
-            .module-card .card-title {
-                font-size: 12px;
-            }
-            .module-card .card-desc {
-                font-size: 10px;
-            }
-            .activity-panel {
-                padding: 4px 16px 16px 16px;
-            }
-            .breadcrumb {
-                padding: 6px 16px 4px 16px;
-                font-size: 11px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-            }
-            .stat-card .icon {
-                width: 32px;
-                height: 32px;
-                font-size: 14px;
-            }
-            .stat-card .stat-info .number {
-                font-size: 16px;
-            }
-            .stat-card .stat-info .label {
-                font-size: 10px;
-            }
-            .module-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-            }
-            .module-card .card-icon {
-                width: 30px;
-                height: 30px;
-                font-size: 13px;
-            }
-            .module-card .card-title {
-                font-size: 11px;
-            }
-            .module-card .card-desc {
-                display: none;
-            }
-            .module-card .card-badge {
-                font-size: 8px;
-                padding: 1px 8px;
-            }
-            .appsub {
-                display: none;
-            }
-            .uname {
-                display: none;
-            }
-            .user-chip {
-                padding: 3px;
-            }
-            .greeting h1 {
-                font-size: 17px;
-            }
-            .greeting p {
-                font-size: 12px;
-            }
-            .activity-item .act-text {
-                font-size: 11px;
-            }
-            .activity-item .act-time {
-                font-size: 9px;
-            }
-            .tb-btn {
-                width: 28px;
-                height: 28px;
-                font-size: 13px;
-            }
-            .theme-toggle {
-                width: 28px;
-                height: 28px;
-                font-size: 14px;
-            }
-        }
-    </style>
+    @media (max-width: 820px) {
+        .wrap { padding: 0 14px 22px; }
+        .modules { grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 10px; }
+        .card-desc { display: none; }
+        .card-icon { width: 34px; height: 34px; font-size: 16px; margin-bottom: 9px; }
+        .stats { grid-template-columns: repeat(2, 1fr); gap: 9px; }
+        .stat-card { padding: 12px 13px; gap: 10px; }
+        .stat-card .num { font-size: 18px; }
+        .hub-search { max-width: none; order: 5; flex-basis: 100%; }
+    }
+</style>
 </head>
 <body>
 
-    <!-- ═══ TOPBAR ═══ -->
-    <div class="topbar">
-        <div class="tl">
-            <div class="logo-box"><img src="logo.png" alt="PClinic" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.outerHTML=\'<svg viewBox=&quot;0 0 24 24&quot; style=&quot;width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2&quot;><path d=&quot;M22 12h-4l-3 9L9 3l-3 9H2&quot;/></svg>\'" /></div>
-            <span class="appname">P<span>clinic</span></span>
-            <span class="appsub">Hub</span>
-        </div>
-        <div class="tr">
-            <div class="realtime-clock" id="realtimeClock">
-                <i class="ti ti-clock"></i>
-                <span id="clockDisplay">--:--:--</span>
-            </div>
-            <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode (Ctrl+D)">
-                <i class="ti ti-moon" id="themeIcon"></i>
-            </button>
-            <button class="tb-btn" onclick="showShortcuts()" title="Keyboard shortcuts (Ctrl+/)">
-                <i class="ti ti-keyboard"></i>
-            </button>
-            <div class="tb-btn" onclick="showToast('🔔 3 new notifications', 'info')">
-                <i class="ti ti-bell"></i>
-                <div class="notif-dot"></div>
-            </div>
-            <div class="user-chip" onclick="showToast('👤 Admin', 'info')">
-                <div class="ua" id="userAvatar">AD</div>
-                <span class="uname" id="userName">Admin</span>
-            </div>
-            <div class="tb-btn" onclick="logout()" title="Logout (Ctrl+L)">
-                <i class="ti ti-logout"></i>
-            </div>
-        </div>
+<!-- ═══ TOPBAR ═══ -->
+<div class="pc-topbar">
+    <div class="pc-brand">
+        <img class="pc-logo" src="logo-wide.png" alt="PClinic" width="118" height="30">
+        <span class="pc-appsub">Hub</span>
     </div>
 
-    <!-- ═══ BREADCRUMB ═══ -->
-    <div class="breadcrumb" id="breadcrumb">
+    <div class="pc-tr">
+        <div class="hub-search">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="text" id="moduleSearch" placeholder="Search modules…"
+                   aria-label="Search modules" autocomplete="off">
+        </div>
+        <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode (Ctrl+D)" aria-label="Toggle dark mode">
+            <i class="ti ti-moon" id="themeIcon"></i>
+        </button>
+        <button class="pc-iconbtn" onclick="pcToast('🔔 3 new notifications','info')" title="Notifications" aria-label="Notifications">
+            <i class="ti ti-bell"></i><span class="pc-dot"></span>
+        </button>
+        <div class="pc-chip" onclick="pcToast('👤 ' + (window.currentStaff ? window.currentStaff.name : 'Staff'),'info')">
+            <span class="pc-avatar" id="userAvatar">··</span>
+            <span id="userName">Loading…</span>
+        </div>
+        <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out (Ctrl+L)" aria-label="Sign out">
+            <i class="ti ti-logout"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ═══ ONE-LINE HEADER ═══ -->
+<div class="pc-headerbar">
+    <nav class="pc-crumb" aria-label="Breadcrumb">
         <a href="hub.html">🏥 Hub</a>
-        <span class="separator">›</span>
-        <span class="current">Dashboard</span>
-    </div>
+        <span class="sep">›</span>
+        <span>Dashboard</span>
+    </nav>
+    <span class="pc-divider"></span>
+    <span class="pc-greet" id="greetingText">Good morning, <span class="hl">…</span></span>
+    <span class="pc-date" id="todayDate"></span>
+    <span class="pc-spacer"></span>
+    <span class="pc-quickstat"><i class="ti ti-users"></i> <span id="qsPatients">0</span> patients today</span>
+</div>
 
-    <!-- ═══ GREETING ═══ -->
-    <div class="greeting">
-        <h1 id="greetingText">Good morning, <span class="highlight">Admin</span></h1>
-        <p>Welcome to PClinic Hospital Management System — Central Hub</p>
-    </div>
+<div class="wrap">
 
     <!-- ═══ STATS ═══ -->
-    <div class="stats-grid" id="statsGrid">
-        <div class="stat-card" onclick="window.location.href='reception-dashboard.html'">
-            <div class="icon blue"><i class="ti ti-users"></i></div>
-            <div class="stat-info">
-                <div class="number" id="totalPatients">0</div>
-                <div class="label">Total Patients</div>
-            </div>
-        </div>
-        <div class="stat-card" onclick="window.location.href='doctor-dashboard.html'">
-            <div class="icon green"><i class="ti ti-user-md"></i></div>
-            <div class="stat-info">
-                <div class="number" id="totalDoctors">0</div>
-                <div class="label">Doctors</div>
-            </div>
-        </div>
-        <div class="stat-card" onclick="window.location.href='appointments.html'">
-            <div class="icon orange"><i class="ti ti-calendar"></i></div>
-            <div class="stat-info">
-                <div class="number" id="todayAppointments">0</div>
-                <div class="label">Today's Appointments</div>
-            </div>
-        </div>
-        <div class="stat-card" onclick="window.location.href='queue.html'">
-            <div class="icon purple"><i class="ti ti-list-numbers"></i></div>
-            <div class="stat-info">
-                <div class="number" id="queueCount">0</div>
-                <div class="label">In Queue</div>
-            </div>
-        </div>
+    <div class="stats pc-stagger" id="statsGrid">
+        <a class="stat-card" href="reception-dashboard.html">
+            <span class="ic blue"><i class="ti ti-users"></i></span>
+            <span class="txt"><span class="num" id="totalPatients">0</span><span class="lab">Total Patients</span></span>
+        </a>
+        <a class="stat-card" href="doctor-dashboard.html">
+            <span class="ic green"><i class="ti ti-stethoscope"></i></span>
+            <span class="txt"><span class="num" id="totalDoctors">0</span><span class="lab">Doctors</span></span>
+        </a>
+        <a class="stat-card" href="appointments.html">
+            <span class="ic orange"><i class="ti ti-calendar"></i></span>
+            <span class="txt"><span class="num" id="todayAppointments">0</span><span class="lab">Today's Appointments</span></span>
+        </a>
+        <a class="stat-card" href="queue.html">
+            <span class="ic purple"><i class="ti ti-list-numbers"></i></span>
+            <span class="txt"><span class="num" id="queueCount">0</span><span class="lab">In Queue</span></span>
+        </a>
     </div>
 
-    <!-- ═══ MODULE GRID ═══ -->
-    <div class="module-grid" id="moduleGrid">
-        <!-- Reception -->
+    <div class="sec">Departments</div>
+
+    <!-- ═══ MODULES ═══ -->
+    <div class="modules pc-stagger" id="moduleGrid">
         <a href="reception-dashboard.html" class="module-card" data-role="reception">
-            <div class="card-icon blue"><i class="ti ti-file-invoice"></i></div>
+            <div class="card-icon ic blue"><i class="ti ti-file-invoice"></i></div>
             <div class="card-title">Reception</div>
             <div class="card-desc">Patient registration, appointments, queue</div>
             <span class="card-badge">Front Desk</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Doctor -->
         <a href="doctor-dashboard.html" class="module-card" data-role="doctor">
-            <div class="card-icon green"><i class="ti ti-user-md"></i></div>
+            <div class="card-icon ic green"><i class="ti ti-stethoscope"></i></div>
             <div class="card-title">Doctor Portal</div>
             <div class="card-desc">Clinical notes, diagnosis, patient care</div>
             <span class="card-badge">Clinical</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Nurse -->
         <a href="nurse-dashboard.html" class="module-card" data-role="nurse">
-            <div class="card-icon teal"><i class="ti ti-nurse"></i></div>
+            <div class="card-icon ic teal"><i class="ti ti-heart-rate-monitor"></i></div>
             <div class="card-title">Nurse Portal</div>
             <div class="card-desc">Vitals, patient care, triage</div>
             <span class="card-badge">Clinical</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Lab -->
         <a href="lab-dashboard.html" class="module-card" data-role="lab">
-            <div class="card-icon purple"><i class="ti ti-test-pipe"></i></div>
+            <div class="card-icon ic purple"><i class="ti ti-test-pipe"></i></div>
             <div class="card-title">Laboratory</div>
             <div class="card-desc">Lab requests, results, diagnostics</div>
             <span class="card-badge">Diagnostic</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Pharmacy -->
         <a href="pharmacy-dashboard.html" class="module-card" data-role="pharmacy">
-            <div class="card-icon pink"><i class="ti ti-pill"></i></div>
+            <div class="card-icon ic pink"><i class="ti ti-pill"></i></div>
             <div class="card-title">Pharmacy</div>
             <div class="card-desc">Prescriptions, drug inventory</div>
             <span class="card-badge">Pharmacy</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Radiology -->
         <a href="radio-dashboard.html" class="module-card" data-role="radio">
-            <div class="card-icon orange"><i class="ti ti-radio"></i></div>
+            <div class="card-icon ic orange"><i class="ti ti-radioactive"></i></div>
             <div class="card-title">Radiology</div>
             <div class="card-desc">Imaging, X-rays, scans</div>
             <span class="card-badge">Diagnostic</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Theatre -->
         <a href="theater-dashboard.html" class="module-card" data-role="theater">
-            <div class="card-icon red"><i class="ti ti-surgical-scissors"></i></div>
+            <div class="card-icon ic red"><i class="ti ti-scissors"></i></div>
             <div class="card-title">Theatre</div>
             <div class="card-desc">Surgery, operating room</div>
             <span class="card-badge">Surgical</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Physiotherapy -->
         <a href="physio-dashboard.html" class="module-card" data-role="physio">
-            <div class="card-icon green"><i class="ti ti-accessible"></i></div>
+            <div class="card-icon ic green"><i class="ti ti-accessible"></i></div>
             <div class="card-title">Physiotherapy</div>
             <div class="card-desc">Rehabilitation, therapy</div>
             <span class="card-badge">Therapy</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Cashier -->
         <a href="cashier-dashboard.html" class="module-card" data-role="cashier">
-            <div class="card-icon teal"><i class="ti ti-currency-dollar"></i></div>
+            <div class="card-icon ic teal"><i class="ti ti-currency-dollar"></i></div>
             <div class="card-title">Cashier</div>
             <div class="card-desc">Payments, invoices, billing</div>
             <span class="card-badge">Finance</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Finance -->
         <a href="Finance-dashboard.html" class="module-card" data-role="finance">
-            <div class="card-icon blue"><i class="ti ti-credit-card"></i></div>
+            <div class="card-icon ic blue"><i class="ti ti-credit-card"></i></div>
             <div class="card-title">Finance</div>
             <div class="card-desc">Accounting, reports, management</div>
             <span class="card-badge">Finance</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- HR -->
         <a href="hr-dashboard.html" class="module-card" data-role="hr">
-            <div class="card-icon purple"><i class="ti ti-users"></i></div>
+            <div class="card-icon ic purple"><i class="ti ti-users"></i></div>
             <div class="card-title">Human Resources</div>
             <div class="card-desc">Staff, payroll, attendance</div>
             <span class="card-badge">Admin</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Inventory -->
         <a href="inventory-dashboard.html" class="module-card" data-role="inventory">
-            <div class="card-icon orange"><i class="ti ti-package"></i></div>
+            <div class="card-icon ic orange"><i class="ti ti-package"></i></div>
             <div class="card-title">Inventory</div>
             <div class="card-desc">Supplies, equipment, stock</div>
             <span class="card-badge">Admin</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Admin -->
         <a href="admin-dashboard.html" class="module-card" data-role="admin">
-            <div class="card-icon red"><i class="ti ti-settings"></i></div>
+            <div class="card-icon ic red"><i class="ti ti-settings"></i></div>
             <div class="card-title">Administration</div>
             <div class="card-desc">System settings, user management</div>
             <span class="card-badge">Admin</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-
-        <!-- Bed Management -->
         <a href="beds-dashboard.html" class="module-card" data-role="beds nurse reception">
-            <div class="card-icon pink"><i class="ti ti-bed"></i></div>
+            <div class="card-icon ic pink"><i class="ti ti-bed"></i></div>
             <div class="card-title">Bed Management</div>
             <div class="card-desc">Ward occupancy, allocation</div>
             <span class="card-badge">Operations</span>
             <span class="card-arrow"><i class="ti ti-chevron-right"></i></span>
         </a>
-    </div>
-
-    <!-- ═══ ACTIVITY PANEL ═══ -->
-    <div class="activity-panel">
-        <div class="panel-title">📋 Recent Activity</div>
-        <div class="activity-list" id="activityList">
-            <div class="activity-item">
-                <div class="act-icon blue"><i class="ti ti-user-plus"></i></div>
-                <div class="act-text"><strong>John Smith</strong> was registered as a new patient</div>
-                <div class="act-time">5 min ago</div>
-            </div>
-            <div class="activity-item">
-                <div class="act-icon green"><i class="ti ti-stethoscope"></i></div>
-                <div class="act-text"><strong>Dr. Sarah</strong> added clinical notes for <strong>Alice Mutoni</strong></div>
-                <div class="act-time">18 min ago</div>
-            </div>
-            <div class="activity-item">
-                <div class="act-icon orange"><i class="ti ti-calendar-plus"></i></div>
-                <div class="act-text"><strong>Appointment</strong> booked for <strong>Peter T.</strong> with Dr. Amina</div>
-                <div class="act-time">42 min ago</div>
-            </div>
-            <div class="activity-item">
-                <div class="act-icon purple"><i class="ti ti-test-pipe"></i></div>
-                <div class="act-text">Lab results for <strong>Bernard H.</strong> are ready for review</div>
-                <div class="act-time">1h ago</div>
-            </div>
-            <div class="activity-item">
-                <div class="act-icon red"><i class="ti ti-alert-circle"></i></div>
-                <div class="act-text"><strong>⚠️ Critical</strong> patient <strong>Francois K.</strong> admitted to ICU</div>
-                <div class="act-time">2h ago</div>
-            </div>
+        <div class="no-results" id="noResults" style="display:none;">
+            No modules match that search.
         </div>
     </div>
+</div>
 
-    <!-- ═══ TOAST CONTAINER ═══ -->
-    <div id="toastContainer"></div>
+<div class="pc-toasts" id="toastContainer"></div>
 
-    <!-- ═══ LOADING OVERLAY ═══ -->
-    <div class="loading-overlay" id="pageLoadingOverlay">
-        <div class="spinner-large"></div>
-        <div class="loading-text">Loading...</div>
-    </div>
+<!-- Icon font loads non-blocking: the page renders first, icons fill in -->
+<link rel="preload" as="style"
+      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"
+      onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
 
-    <!-- ═══ JAVASCRIPT ═══ -->
-    <script>
-        // ============================================================
-        // PCLINIC HUB — Complete JavaScript
-        // ============================================================
+<script type="module" src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+<script src="patient-data.js" defer></script>
 
-        (function() {
-            'use strict';
+<script>
+(function () {
+    'use strict';
 
-            // ─── ELEMENTS ───
-            const greetingText = document.getElementById('greetingText');
-            const userName = document.getElementById('userName');
-            const userAvatar = document.getElementById('userAvatar');
+    // ── Date in the header line ──
+    var d = new Date();
+    document.getElementById('todayDate').textContent =
+        '· ' + d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
 
-            // ─── REAL-TIME CLOCK ───
-            function updateClock() {
-                const now = new Date();
-                document.getElementById('clockDisplay').textContent = now.toLocaleTimeString('en-GB');
-            }
-            updateClock();
-            setInterval(updateClock, 1000);
+    // ── Stats ──
+    function refreshStats() {
+        var patients = [];
+        try { if (typeof getPatients === 'function') patients = getPatients() || []; } catch (e) {}
+        var total = patients.length;
+        var today = d.toISOString().slice(0, 10);
+        var todayCount = patients.filter(function (p) { return p && p.registered === today; }).length;
+        var queued = patients.filter(function (p) { return p && p.queueStatus === 'waiting'; }).length;
 
-            // ─── LOAD SAMPLE STATS ───
-            function updateStats() {
-                // Try to get real data from localStorage
-                let patients = [];
-                try {
-                    const data = localStorage.getItem('pclinic_patients');
-                    if (data) patients = JSON.parse(data);
-                } catch (e) {}
+        countTo('totalPatients', total);
+        countTo('totalDoctors', 12);
+        countTo('todayAppointments', todayCount);
+        countTo('queueCount', queued);
+        document.getElementById('qsPatients').textContent = todayCount;
+    }
 
-                const totalPatients = patients.length || 42;
-                const doctors = 12;
-                const todayAppts = 28;
-                const queueCount = 7;
-
-                document.getElementById('totalPatients').textContent = totalPatients;
-                document.getElementById('totalDoctors').textContent = doctors;
-                document.getElementById('todayAppointments').textContent = todayAppts;
-                document.getElementById('queueCount').textContent = queueCount;
-            }
-            updateStats();
-
-            // ─── APPLY REAL STAFF PROFILE (from auth-guard.js) ───
-            // Runs once requireAuth() has confirmed a logged-in, active staff
-            // member. See the requireAuth(...) call near the end of this file.
-            window.addEventListener('pclinicStaffReady', function(e) {
-                const staff = e.detail;
-                const userRole = (staff.role || 'admin').toLowerCase();
-
-                const hour = new Date().getHours();
-                let timeGreeting = 'Good morning';
-                if (hour >= 12 && hour < 17) timeGreeting = 'Good afternoon';
-                else if (hour >= 17) timeGreeting = 'Good evening';
-
-                const displayName = staff.name || (userRole.charAt(0).toUpperCase() + userRole.slice(1));
-                greetingText.innerHTML = `${timeGreeting}, <span class="highlight">${displayName}</span>`;
-                userName.textContent = displayName;
-                userAvatar.textContent = displayName.substring(0, 2).toUpperCase();
-
-                // ─── SHOW ONLY MODULES RELEVANT TO THIS STAFF MEMBER'S ROLE ───
-                // Admins see every module. Everyone else sees just their own
-                // department's dashboard (this only controls what's shown here;
-                // actual access to each page is still enforced by that page's
-                // own requireAuth() call and by Firestore security rules).
-                // data-role may list SEVERAL roles, space-separated, so a
-                // shared module can be surfaced to everyone who needs it.
-                // BUGFIX: previously this was an exact string match, which
-                // meant the Bed Management card (data-role="beds") was
-                // visible only to admins — no other role could ever see it,
-                // and "beds" wasn't even an option when creating a login.
-                const moduleCards = document.querySelectorAll('.module-card');
-                let visibleCount = 0;
-                moduleCards.forEach(card => {
-                    const roles = (card.dataset.role || '').split(/\s+/).filter(Boolean);
-                    const visible = (userRole === 'admin') || roles.indexOf(userRole) !== -1;
-                    card.style.display = visible ? '' : 'none';
-                    if (visible) visibleCount++;
-                });
-
-                // Never strand someone on a blank hub. If their role matches
-                // no module (e.g. a new role added to Firestore before its
-                // dashboard exists), show everything and let each page's own
-                // requireAuth() do the real gatekeeping.
-                if (visibleCount === 0) {
-                    moduleCards.forEach(card => { card.style.display = ''; });
-                    console.warn('No modules matched role "' + userRole + '" — showing all.');
-                }
-
-                console.log('🏥 PClinic Hub — Fully Loaded');
-                console.log(`👤 Logged in as: ${displayName} (${userRole})`);
-            });
-
-            // ─── UPDATE BREADCRUMB ───
-            document.querySelector('.breadcrumb .current').textContent = 'Dashboard';
-
-            // ─── TOAST SYSTEM ───
-            window.showToast = function(msg, type) {
-                const container = document.getElementById('toastContainer');
-                const toast = document.createElement('div');
-                toast.className = 'toast' + (type ? ' ' + type : '');
-                const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'info' ? 'ℹ️' : '📢';
-                toast.innerHTML = `<span>${icon}</span> ${msg}`;
-                container.appendChild(toast);
-
-                setTimeout(function() {
-                    toast.style.animation = 'toastOut 0.3s ease forwards';
-                    setTimeout(function() { toast.remove(); }, 300);
-                }, 3000);
-            };
-
-            // ─── DARK MODE ───
-            window.toggleDarkMode = function() {
-                const html = document.documentElement;
-                const current = html.getAttribute('data-theme');
-                const next = current === 'dark' ? 'light' : 'dark';
-                html.setAttribute('data-theme', next);
-                localStorage.setItem('pclinic-theme', next);
-                document.getElementById('themeIcon').className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
-                showToast(next === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled', 'info');
-            };
-
-            // Load saved theme
-            (function() {
-                const saved = (localStorage.getItem('pclinic-theme') || localStorage.getItem('pclinic_theme')) || 'light';
-                document.documentElement.setAttribute('data-theme', saved);
-                document.getElementById('themeIcon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
-            })();
-
-            // ─── SHORTCUTS ───
-            window.showShortcuts = function() {
-                const shortcuts = [
-                    { key: 'Ctrl+D', desc: 'Toggle Dark Mode' },
-                    { key: 'Ctrl+/', desc: 'Show Shortcuts' },
-                    { key: 'Ctrl+L', desc: 'Logout' },
-                    { key: 'Ctrl+F', desc: 'Focus Search' },
-                    { key: 'Esc', desc: 'Close Modals' }
-                ];
-                let msg = '⌨️ Keyboard Shortcuts:\n' + shortcuts.map(s => `  ${s.key} → ${s.desc}`).join('\n');
-                alert(msg);
-            };
-
-            // ─── KEYBOARD SHORTCUTS ───
-            document.addEventListener('keydown', function(e) {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-                    e.preventDefault();
-                    toggleDarkMode();
-                }
-                if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-                    e.preventDefault();
-                    showShortcuts();
-                }
-                if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
-                    e.preventDefault();
-                    logout();
-                }
-            });
-
-            // ─── LOGOUT ───
-            window.logout = function() {
-                if (confirm('Are you sure you want to sign out?')) {
-                    showToast('👋 Logging out...', 'info');
-                    setTimeout(function() {
-                        window.pclinicLogout();
-                    }, 500);
-                }
-            };
-
-            console.log('📌 Shortcuts: Ctrl+D (Dark Mode), Ctrl+/ (Help), Ctrl+L (Logout)');
-
+    function countTo(id, target) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            el.textContent = target; return;
+        }
+        var start = 0, step = Math.max(1, Math.ceil(target / 26));
+        (function tick() {
+            start += step;
+            if (start >= target) { el.textContent = target; }
+            else { el.textContent = start; setTimeout(tick, 26); }
         })();
-    </script>
+    }
 
+    refreshStats();
+    window.addEventListener('patientsUpdated', refreshStats);
 
-    <script>
-        requireAuth([]).then(function(staff) {
-            window.currentStaff = staff;
-            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
-        }).catch(function(err) {
-            console.warn('Auth guard redirect:', err && err.message);
+    // ── Search ── (declared before the auth listener uses it)
+    var search = document.getElementById('moduleSearch');
+    pcRemember('moduleSearch', search);
+    function applySearch() {
+        var q = search.value.trim().toLowerCase();
+        var shown = 0;
+        document.querySelectorAll('.module-card').forEach(function (c) {
+            if (c.dataset.visible === '0') return;
+            var hit = !q || c.textContent.toLowerCase().indexOf(q) !== -1;
+            c.style.display = hit ? '' : 'none';
+            if (hit) shown++;
         });
-    </script>
+        document.getElementById('noResults').style.display = shown ? 'none' : '';
+    }
+    search.addEventListener('input', applySearch);
+    if (search.value) applySearch();
+
+    // ── Role-based module visibility ──
+    window.addEventListener('pclinicStaffReady', function (e) {
+        var staff = e.detail;
+        var role = (staff.role || '').toLowerCase();
+        var name = staff.name || 'Staff';
+
+        var h = new Date().getHours();
+        var greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+        document.getElementById('greetingText').innerHTML =
+            greet + ', <span class="hl"></span>';
+        document.querySelector('#greetingText .hl').textContent = name;
+
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userAvatar').textContent =
+            name.trim().substring(0, 2).toUpperCase();
+
+        var cards = document.querySelectorAll('.module-card');
+        var visible = 0;
+        cards.forEach(function (c) {
+            var roles = (c.dataset.role || '').split(/\s+/).filter(Boolean);
+            var ok = role === 'admin' || roles.indexOf(role) !== -1;
+            c.dataset.visible = ok ? '1' : '0';
+            c.style.display = ok ? '' : 'none';
+            if (ok) visible++;
+        });
+        if (visible === 0) {
+            cards.forEach(function (c) { c.dataset.visible = '1'; c.style.display = ''; });
+        }
+
+        applySearch();      // re-apply any restored search once roles are known
+        prefetchVisible();
+    });
+
+
+    // ── Prefetch the dashboards this user can actually reach, so
+    //    clicking a card is near-instant. Idle time only, so it never
+    //    competes with the initial render. ──
+    function prefetchVisible() {
+        var run = window.requestIdleCallback || function (f) { setTimeout(f, 1200); };
+        run(function () {
+            var seen = {};
+            document.querySelectorAll('.module-card[data-visible="1"]').forEach(function (c) {
+                var href = c.getAttribute('href');
+                if (!href || seen[href]) return;
+                seen[href] = 1;
+                var l = document.createElement('link');
+                l.rel = 'prefetch';
+                l.href = href;
+                l.as = 'document';
+                document.head.appendChild(l);
+            });
+        });
+    }
+
+    // ── Shortcuts ──
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'd') { e.preventDefault(); pcToggleTheme(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); search.focus(); }
+        if (e.key === 'Escape' && document.activeElement === search) {
+            search.value = ''; applySearch(); search.blur();
+        }
+    });
+
+    // ── Auth ──
+    requireAuth([]).then(function (staff) {
+        window.currentStaff = staff;
+    }).catch(function (err) {
+        console.warn('Auth guard:', err && err.message);
+    });
+})();
+</script>
 </body>
 </html>
