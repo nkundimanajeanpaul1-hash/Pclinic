@@ -78,6 +78,11 @@
                 .filter(function (k) { return k.indexOf(NS) === 0; })
                 .forEach(function (k) { localStorage.removeItem(k); });
             localStorage.removeItem('pclinic_remember_user');
+            // The selected patient is per-session clinical context. Leaving
+            // it behind meant the NEXT person to sign in inherited whoever
+            // the previous user had open.
+            localStorage.removeItem('pclinic_active_patient');
+            localStorage.removeItem('pclinic_handoff');
             Object.keys(sessionStorage).forEach(function (k) {
                 if (keep.indexOf(k) === -1) sessionStorage.removeItem(k);
             });

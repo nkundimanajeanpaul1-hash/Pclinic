@@ -21,7 +21,8 @@
     <script src="doctor-command.js" defer></script>
     <script src="doctor-patient.js" defer></script>
     <script src="doctor-actionbar.js" defer></script>
-    <script src="doctor-move.js" defer></script> 
+    <script src="doctor-move.js" defer></script>
+    <script src="doctor-fixes.js" defer></script> 
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 
@@ -669,7 +670,9 @@
             box-shadow: var(--shadow2);
             display: none;
             overflow: hidden;
-            z-index: 50;
+            /* Was 50 — below the command bar (60) and topbar (100), so
+               results rendered behind them. Kept under the dialogs (9000+). */
+            z-index: 900;
             padding: 4px 0;
         }
         .search-suggestions.show { display: block; }
