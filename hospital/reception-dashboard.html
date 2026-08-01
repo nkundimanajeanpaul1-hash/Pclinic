@@ -1924,7 +1924,24 @@ table.apple-table tbody tr:hover {
             <div class="form-group"><label>Gender <span class="required">*</span></label>
               <select id="bGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
             </div>
-            <div class="form-group form-grid-full"><label>Address</label><input type="text" id="bAddress" placeholder="Street, City, District"></div>
+            <div class="form-group form-grid-full"><label>Address</label><input type="text" id="bAddress" placeholder="Street / village">
+        </div>
+        <div class="fg">
+          <label>District</label>
+          <input type="text" id="bDistrict" list="rwDistricts" placeholder="e.g. Gasabo">
+          <datalist id="rwDistricts"><option value="Bugesera"><option value="Burera"><option value="Gakenke"><option value="Gasabo"><option value="Gatsibo"><option value="Gicumbi"><option value="Gisagara"><option value="Huye"><option value="Kamonyi"><option value="Karongi"><option value="Kayonza"><option value="Kicukiro"><option value="Kirehe"><option value="Muhanga"><option value="Musanze"><option value="Ngoma"><option value="Ngororero"><option value="Nyabihu"><option value="Nyagatare"><option value="Nyamagabe"><option value="Nyamasheke"><option value="Nyanza"><option value="Nyarugenge"><option value="Nyaruguru"><option value="Rubavu"><option value="Ruhango"><option value="Rulindo"><option value="Rusizi"><option value="Rutsiro"><option value="Rwamagana"></datalist>
+        </div>
+        <div class="fg">
+          <label>Sector</label>
+          <input type="text" id="bSector" placeholder="e.g. Remera">
+        </div>
+        <div class="fg">
+          <label>Cell</label>
+          <input type="text" id="bCell" placeholder="e.g. Rukiri I">
+        </div>
+        <div class="fg">
+          <label>National ID</label>
+          <input type="text" id="bNid" inputmode="numeric" placeholder="1 1990 8 001234 5 67"></div>
             <div class="form-group form-grid-full"><label>Emergency contact</label><input type="text" id="bEmergency" placeholder="Name - Relationship - Phone"></div>
             
             <!-- ─── INSURANCE SECTION INSIDE PATIENT INFORMATION ─── -->
@@ -2499,7 +2516,7 @@ function closeMo(){
 }
 
 // ─── REGISTER PATIENT ───
-function registerPatient(){
+async function registerPatient(){
   var firstName = document.getElementById('bFirstName').value.trim();
   var lastName = document.getElementById('bLastName').value.trim();
   var dob = document.getElementById('bDob').value;
@@ -2532,8 +2549,15 @@ function registerPatient(){
     phone: phone,
     email: email,
     address: address,
+    district: document.getElementById('bDistrict') ? document.getElementById('bDistrict').value.trim() : '',
+    sector: document.getElementById('bSector') ? document.getElementById('bSector').value.trim() : '',
+    cell: document.getElementById('bCell') ? document.getElementById('bCell').value.trim() : '',
+    nationalId: document.getElementById('bNid') ? document.getElementById('bNid').value.trim() : '',
     emergencyContact: emergency,
     department: department || 'General',
+    // Where the patient physically is right now. Registration starts them
+    // at OPD unless a specific department was chosen.
+    location: (department && department !== 'General') ? department : 'OPD',
     priority: priority || 'medium',
     queueStatus: 'waiting',
     queueAdded: Date.now(),
@@ -2547,23 +2571,22 @@ function registerPatient(){
     photo: pendingPtPhoto
   };
   try {
-    var newPatient = addPatient(patientData);
-    
+    // BUG FIX: addPatient() is async and returns a Promise. The old code
+    // treated the Promise as the patient object - `if (newPatient)` was
+    // always true, the id lookup always failed, and the fallback then
+    // pushed the PROMISE ITSELF into the patient array. Every registration
+    // silently created a second, empty record.
+    var newPatient = await addPatient(patientData);
+
     if(newPatient){
-      // ─── FORCE VERIFY PATIENT WAS SAVED ───
-      // Get fresh data from localStorage
       var allPatients = getPatients();
-      
-      // Find the newly added patient by ID
-      var savedPatient = allPatients.find(function(p) { 
-        return p.id === newPatient.id; 
+      var savedPatient = allPatients.find(function(p) {
+        return p.id === newPatient.id;
       });
-      
-      // If not found in localStorage, manually add it
+
       if (!savedPatient) {
-        // Force save the patient
         allPatients.push(newPatient);
-        savePatients(allPatients);
+        await savePatients(allPatients);
         savedPatient = newPatient;
         console.log('💾 Manually saved patient to localStorage:', savedPatient.mrn);
       } else {
