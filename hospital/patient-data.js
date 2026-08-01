@@ -209,17 +209,70 @@ function getPatientByMRN(mrn) {
 }
 
 // ─── SEARCH PATIENTS ───
-function searchPatients(query) {
+function searchPatients(query, opts) {
     const patients = getPatients();
-    const q = query.toLowerCase().trim();
+    const q = String(query || '').toLowerCase().trim();
+    opts = opts || {};
+
+    // Field-scoped search: searchPatients('doe', {field:'lastName'})
+    // lets the UI offer separate First name / Family name boxes instead
+    // of one blob that matches anything.
+    if (opts.field) {
+        if (!q) return patients;
+        return patients.filter(p => String(p[opts.field] || '').toLowerCase().includes(q));
+    }
+
     if (!q) return patients;
-    return patients.filter(p => 
-        p.name.toLowerCase().includes(q) ||
-        (p.firstName && p.firstName.toLowerCase().includes(q)) ||
-        (p.lastName && p.lastName.toLowerCase().includes(q)) ||
-        p.mrn.toLowerCase().includes(q) ||
-        (p.phone && p.phone.includes(q))
-    );
+
+    // Multi-word queries match across first AND family name in either
+    // order, so "doe john" finds the same person as "john doe".
+    const words = q.split(/\s+/).filter(Boolean);
+    return patients.filter(p => {
+        const first = String(p.firstName || '').toLowerCase();
+        const last  = String(p.lastName  || '').toLowerCase();
+        const full  = String(p.name || (first + ' ' + last)).toLowerCase();
+        const hay   = [full, first, last,
+                       String(p.mrn || '').toLowerCase(),
+                       String(p.phone || ''),
+                       String(p.district || '').toLowerCase(),
+                       String(p.location || '').toLowerCase()].join(' ');
+        return words.every(w => hay.includes(w));
+    });
+}
+
+// ─── FILTER BY LOCATION (OPD / Ward / Theatre / …) ───
+function getPatientsByLocation(loc) {
+    const all = getPatients();
+    if (!loc || loc === 'all') return all;
+    const want = String(loc).toLowerCase();
+    return all.filter(p =>
+        String(p.location || p.department || '').toLowerCase() === want
+    ).sort((a, b) => {
+        // newest arrival at that location first
+        const ad = a.locationSince || a.registered || '';
+        const bd = b.locationSince || b.registered || '';
+        return String(bd).localeCompare(String(ad));
+    });
+}
+
+// ─── MOVE A PATIENT TO A LOCATION (records when, and by whom) ───
+async function setPatientLocation(id, location, note) {
+    const p = getPatient(id);
+    if (!p) return null;
+    const staff = (window.currentStaff || {}).name || 'Unknown';
+    const history = p.locationHistory || [];
+    history.push({
+        from: p.location || p.department || '',
+        to: location,
+        at: new Date().toISOString(),
+        by: staff,
+        note: note || ''
+    });
+    return await updatePatient(id, {
+        location: location,
+        locationSince: new Date().toISOString(),
+        locationHistory: history
+    });
 }
 
 // ─── ADD NEW PATIENT ───
@@ -264,6 +317,13 @@ async function addPatient(patientData) {
         phone: patientData.phone || '',
         email: patientData.email || '',
         address: patientData.address || '',
+        district: patientData.district || '',
+        sector: patientData.sector || '',
+        cell: patientData.cell || '',
+        nationalId: patientData.nationalId || '',
+        location: patientData.location || patientData.department || 'OPD',
+        locationSince: new Date().toISOString(),
+        locationHistory: [],
         registered: new Date().toISOString().slice(0, 10),
         status: 'active',
         department: patientData.department || 'General',
@@ -881,6 +941,8 @@ window.getNextPatientId = getNextPatientId;
 window.getPatient = getPatient;
 window.getPatientByMRN = getPatientByMRN;
 window.searchPatients = searchPatients;
+window.getPatientsByLocation = getPatientsByLocation;
+window.setPatientLocation = setPatientLocation;
 window.addPatient = addPatient;
 window.updatePatient = updatePatient;
 window.deletePatient = deletePatient;
