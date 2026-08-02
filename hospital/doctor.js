@@ -1458,6 +1458,7 @@ function displayPatientFile(patient) {
                         <button class="btn-apple" data-color="vitals"     onclick="event.stopPropagation();viewAllVitals();"><i class="ti ti-heart"></i> Vitals</button>
                         <button class="btn-apple" data-color="surgery"    onclick="event.stopPropagation();switchTab('surgery', document.querySelector('[data-tab=&quot;surgery&quot;]'))"><i class="ti ti-scalpel"></i> Surgery</button>
                         <button class="btn-apple" data-color="prescription" onclick="event.stopPropagation();openPrescriptionModal(currentPatient)"><i class="ti ti-pill"></i> Prescription</button>
+                        <button class="btn-apple" data-color="physio"       onclick="event.stopPropagation();openPhysioRequestModal(currentPatient)"><i class="ti ti-accessible"></i> Physio Request</button>
                         <button class="btn-apple" data-color="ward"       onclick="event.stopPropagation();openWardRoundModal(currentPatient)"><i class="ti ti-bed"></i> Ward Round</button>
                         <button class="btn-apple" data-color="photos"     onclick="document.getElementById('patientPhotoInput').click()"><i class="ti ti-photo"></i> Photos</button>
                         <button class="btn-apple" data-color="video"      onclick="document.getElementById('patientVideoInput').click()"><i class="ti ti-video"></i> Video</button>
@@ -6251,6 +6252,22 @@ window.addEventListener('message', function(event) {
     }
 });
 
+
+// ─── OPEN PHYSIO REQUEST MODAL ───
+function openPhysioRequestModal(patient) {
+    if (!patient && !currentPatient) {
+        showToast('⚠️ Please select a patient first', 'warning');
+        return;
+    }
+    const p = patient || currentPatient;
+    try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
+    if (window.pcPatient && typeof window.pcPatient.open === 'function') {
+        window.pcPatient.open('physio-request.html');
+    } else {
+        window.location.href = 'physio-request.html?patient=' + encodeURIComponent(p.id);
+    }
+}
+window.openPhysioRequestModal = openPhysioRequestModal;
 
 // ─── OPEN PRESCRIPTION MODAL ───
 function openPrescriptionModal(patient) {

@@ -97,6 +97,7 @@
             { label:'Imaging Results', icon:'ti-photo-scan',  run:function(){ go('imaging-results.html'); } }
         ]},
         { id:'rx',       label:'Prescription',    icon:'ti-pill',           grp:'order', run:function(){ go('prescription.html'); } },
+        { id:'physio',   label:'Physio Request',  icon:'ti-accessible',     grp:'order', run:function(){ go('physio-request.html'); } },
         { id:'proc',     label:'Procedure',       icon:'ti-stethoscope',    grp:'order', run:function(){ if (window.dcProc) dcProc(); } },
         { id:'vitals',   label:'Vitals',          icon:'ti-heartbeat',      grp:'clin',  run:function(){ if (window.pcVitals) pcVitals.open(); else legacy('viewAllVitals'); } },
         { id:'media',    label:'Media',           icon:'ti-photo',          grp:'media', menu:[

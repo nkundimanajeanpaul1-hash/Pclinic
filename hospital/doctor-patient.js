@@ -313,7 +313,8 @@
             openAdmissionFormFromDashboard: 'admission-form.html',
             openWardRoundModal:     'ward-round.html',
             openAddPatientFile:     'opd-file.html',
-            openOpdFileModal:       'opd-file.html'
+            openOpdFileModal:       'opd-file.html',
+            openPhysioRequestModal: 'physio-request.html'
         };
         Object.keys(map).forEach(function (fn) {
             window[fn] = function (patient) {
