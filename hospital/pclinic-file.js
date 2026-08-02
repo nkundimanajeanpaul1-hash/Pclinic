@@ -446,8 +446,17 @@
             'html,body{background:#f2f2f7;margin:0;padding:0;' +
               'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif}' +
             '.sheetwrap{max-width:820px;margin:22px auto;padding:0 16px}' +
+            /* The on-screen preview is deliberately shrunk to fit beside the
+               form. The printed sheet must NOT be — restore full size here,
+               after the copied stylesheet, so these win. */
             '.pcf-doc{background:#fff;color:#111;border-radius:14px;padding:34px 38px;' +
-              'box-shadow:0 8px 30px rgba(0,0,0,.14)}' +
+              'box-shadow:0 8px 30px rgba(0,0,0,.14);font-size:12.5px}' +
+            '.pcf-doc .org{font-size:19px}.pcf-doc .dtitle{font-size:14.5px;margin:18px 0 15px}' +
+            '.pcf-doc .pinfo{font-size:12px;padding:12px 14px;gap:6px 22px}' +
+            '.pcf-doc .sec{margin-bottom:14px}' +
+            '.pcf-doc .sec p{font-size:12.5px;line-height:1.75}' +
+            '.pcf-doc .sec h4{font-size:10px}' +
+            '.pcf-doc .sig{margin-top:34px}' +
             '.pbar{position:sticky;top:0;z-index:5;display:flex;gap:8px;justify-content:center;' +
               'padding:11px;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);' +
               'border-bottom:.5px solid rgba(0,0,0,.1)}' +

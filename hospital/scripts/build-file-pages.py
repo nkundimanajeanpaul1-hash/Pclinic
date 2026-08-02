@@ -39,13 +39,20 @@ PAGES = {
     docTitle='Out-Patient Consultation', icon='ti-folder-open',
     histTitle='OPD visit history', histUnit='visit',
     newLabel='New OPD File for Today',
-    dx=True, rdv=True, att=True, vitals=True, rx=False,
+    # rx=True: medication is picked from the shared formulary and each
+    # drug bills itself through to the cashier, rather than being typed
+    # as free text that nobody could charge for.
+    dx=True, rdv=True, att=True, vitals=True, rx=True,
     fields=[
-        f('complaint', 'Presenting complaint', T, 'e.g. Fever and headache for 3 days',
-          'Consultation', 'ti-stethoscope'),
+        # Chief complaint and the history of it are one dictated paragraph in
+        # practice — the doctor writes "fever 3 days, gradual onset, with
+        # chills" in one breath. Two boxes forced an artificial split and
+        # meant tabbing mid-sentence, so they are now a single field.
+        f('complaint', 'Chief complaint & history of presenting illness', A,
+          'e.g. Fever and headache for 3 days. Gradual onset, associated chills, '
+          'worse at night, no relief with paracetamol…',
+          'Consultation', 'ti-stethoscope', rows=5),
         f('duration', 'Duration', T, '3 days', 'Consultation'),
-        f('history', 'History of presenting illness', A,
-          'Onset, duration, character, aggravating and relieving factors…', 'Consultation'),
         f('past', 'Past medical / surgical history', A,
           'Previous illnesses, operations, chronic medication…', 'Consultation'),
         f('exam', 'Examination findings', A, 'General condition, systemic examination…',
@@ -245,7 +252,9 @@ TEMPLATE = """<!DOCTYPE html>
 <script src="pclinic-state.js"></script>
 <script src="patient-data.js"></script>
 <script src="pclinic-orders.js"></script>
+<script src="pclinic-catalog.js"></script>
 <script src="pclinic-file.js"></script>
+<script src="pclinic-vitals.js"></script>
 <script src="pclinic-filepage.js"></script>
 <script>
 pcFilePage.init({config});

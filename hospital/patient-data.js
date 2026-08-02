@@ -450,17 +450,33 @@ async function addVitals(patientId, vitalsData) {
         return null;
     }
     
+    // BUG (found by testing): callers pass BP as one string ("128/82"),
+    // which this function silently dropped — it only stored bpSystolic /
+    // bpDiastolic, so the reading vanished. Accept both shapes and keep
+    // them in sync, and store a combined `bp` that readers can use.
+    let sys = vitalsData.bpSystolic || vitalsData.systolic || null;
+    let dia = vitalsData.bpDiastolic || vitalsData.diastolic || null;
+    const bpRaw = vitalsData.bp || vitalsData.bloodPressure || '';
+    if ((!sys || !dia) && bpRaw) {
+        const m = String(bpRaw).match(/(\d+)\s*\/\s*(\d+)/);
+        if (m) { sys = sys || m[1]; dia = dia || m[2]; }
+    }
+
     const vitalsEntry = {
         id: Date.now(),
         date: new Date().toISOString(),
+        at: new Date().toISOString(),
         temperature: vitalsData.temperature || vitalsData.temp || null,
+        temp: vitalsData.temp || vitalsData.temperature || null,
         pulse: vitalsData.pulse || null,
-        bpSystolic: vitalsData.bpSystolic || vitalsData.systolic || null,
-        bpDiastolic: vitalsData.bpDiastolic || vitalsData.diastolic || null,
+        bpSystolic: sys,
+        bpDiastolic: dia,
+        bp: bpRaw || ((sys && dia) ? (sys + '/' + dia) : ''),
         spo2: vitalsData.spo2 || vitalsData.spO2 || null,
         weight: vitalsData.weight || null,
         height: vitalsData.height || null,
-        respiratoryRate: vitalsData.respiratoryRate || vitalsData.resp || null,
+        respiratoryRate: vitalsData.respiratoryRate || vitalsData.resp || vitalsData.rr || null,
+        rr: vitalsData.rr || vitalsData.respiratoryRate || vitalsData.resp || null,
         bloodGlucose: vitalsData.bloodGlucose || vitalsData.glucose || null,
         painScore: vitalsData.painScore || vitalsData.pain || 0,
         recordedBy: vitalsData.recordedBy || 'Nurse',

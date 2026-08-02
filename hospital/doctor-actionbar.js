@@ -90,11 +90,15 @@
         ]},
         { id:'labreq',   label:'Lab Request',     icon:'ti-test-pipe',      grp:'order', run:function(){ go('lab-request.html'); } },
         { id:'labres',   label:'Lab Result',      icon:'ti-chart-bar',      grp:'order', run:function(){ go('lab-results.html'); } },
-        { id:'imgreq',   label:'Imaging Request', icon:'ti-radioactive',    grp:'order', run:function(){ go('imaging-request.html'); } },
-        { id:'imgres',   label:'Image Result',    icon:'ti-photo-scan',     grp:'order', run:function(){ go('imaging-results.html'); } },
+        /* One Imaging button that asks which you want, instead of two
+           buttons the doctor had to tell apart at a glance. */
+        { id:'imaging',  label:'Imaging',         icon:'ti-radioactive',    grp:'order', menu:[
+            { label:'Imaging Request', icon:'ti-radioactive', run:function(){ go('imaging-request.html'); } },
+            { label:'Imaging Results', icon:'ti-photo-scan',  run:function(){ go('imaging-results.html'); } }
+        ]},
         { id:'rx',       label:'Prescription',    icon:'ti-pill',           grp:'order', run:function(){ go('prescription.html'); } },
         { id:'proc',     label:'Procedure',       icon:'ti-stethoscope',    grp:'order', run:function(){ if (window.dcProc) dcProc(); } },
-        { id:'vitals',   label:'Vitals',          icon:'ti-heartbeat',      grp:'clin',  run:function(){ legacy('viewAllVitals'); } },
+        { id:'vitals',   label:'Vitals',          icon:'ti-heartbeat',      grp:'clin',  run:function(){ if (window.pcVitals) pcVitals.open(); else legacy('viewAllVitals'); } },
         { id:'media',    label:'Media',           icon:'ti-photo',          grp:'media', menu:[
             { label:'Photos', icon:'ti-photo', run:function(){ media('photo'); } },
             { label:'Video',  icon:'ti-video', run:function(){ media('video'); } }

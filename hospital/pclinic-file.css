@@ -67,7 +67,11 @@ body.pcf::before {
     gap: 13px;
     align-items: stretch;
 }
-.pcf-grid.wide   { grid-template-columns: 1.05fr 1fr; }
+/* The document pane is a PREVIEW of the printout, not the workspace.
+   At 1.05fr it took roughly half the screen and squeezed the form the
+   doctor is actually typing into. The work pane now gets the room and
+   the preview is scaled down to suit — it is still exact, just smaller. */
+.pcf-grid.wide   { grid-template-columns: 1.62fr 1fr; }
 .pcf-grid.single { grid-template-columns: minmax(0, 900px); justify-content: center; }
 .pcf-grid > * { min-height: 0; min-width: 0; }
 /* each pane scrolls on its own */
@@ -193,7 +197,10 @@ body.pcf::before {
 .pcf-hrow .date .d { font-size: 16px; font-weight: 800; line-height: 1; }
 .pcf-hrow .date .m { font-size: 9px; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
 .pcf-hrow .meat { flex: 1; min-width: 0; }
-.pcf-hrow .meat b { font-size: 12.5px; display: block; margin-bottom: 2px; }
+/* Belt and braces: the headline is truncated in JS, but clamp it here
+   too so no saved record can ever stretch a history row. */
+.pcf-hrow .meat b { font-size: 12.5px; display: block; margin-bottom: 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pcf-hrow .meat span { font-size: 11px; color: var(--tm); display: block;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pcf-hrow .by { font-size: 10px; color: var(--tm); white-space: nowrap; text-align: right; }
@@ -260,14 +267,14 @@ body.pcf::before {
     max-height: 210px; overflow-y: auto; border: .5px solid rgba(0,0,0,.09);
     border-radius: 10px; background: var(--s1); margin-top: 6px;
 }
-.pcf-dx-item {
+.pcf-dx-item, .pcf-rx-item {
     padding: 8px 12px; cursor: pointer; font-size: 12.5px;
     border-bottom: .5px solid rgba(0,0,0,.05); transition: background .16s;
 }
-.pcf-dx-item:last-child { border-bottom: 0; }
-.pcf-dx-item:hover { background: var(--acb); }
-.pcf-dx-item .code { font-size: 10.5px; color: var(--tm); margin-right: 8px; font-weight: 700; }
-.pcf-dx-item.add { color: var(--green); font-weight: 700; }
+.pcf-dx-item:last-child, .pcf-rx-item:last-child { border-bottom: 0; }
+.pcf-dx-item:hover, .pcf-rx-item:hover { background: var(--acb); }
+.pcf-dx-item .code, .pcf-rx-item .code { font-size: 10.5px; color: var(--tm); margin-right: 8px; font-weight: 700; }
+.pcf-dx-item.add, .pcf-rx-item.add { color: var(--green); font-weight: 700; }
 
 /* ── Attachments ── */
 .pcf-drop {
@@ -305,39 +312,45 @@ body.pcf::before {
 /* ══════════════ PRINTABLE DOCUMENT ══════════════ */
 .pcf-doc {
     background: #fff; color: #111; border-radius: var(--r2);
-    padding: 28px 32px; box-shadow: var(--sh-2);
+    padding: 20px 22px; box-shadow: var(--sh-2);
+    /* Preview type is a notch smaller than the printed sheet so a whole
+       document is visible without scrolling. Printing uses its own
+       window (pcFile.print), which renders at full size. */
+    font-size: 11px;
 }
+/* When it IS the main view (read-only), give it full size again. */
+.pcf-grid.single .pcf-doc { padding: 28px 32px; font-size: 12px; }
 .pcf-doc .dh {
     display: flex; justify-content: space-between; align-items: flex-start;
     gap: 18px; padding-bottom: 13px; border-bottom: 2px solid #111;
 }
-.pcf-doc .org { font-size: 18px; font-weight: 800; letter-spacing: -.4px; }
+.pcf-doc .org { font-size: 16px; font-weight: 800; letter-spacing: -.4px; }
 .pcf-doc .sub { font-size: 10px; color: #666; margin-top: 3px; line-height: 1.5; }
 .pcf-doc .meta { text-align: right; font-size: 10px; color: #444; line-height: 1.6; }
 .pcf-doc .meta b { color: #111; }
 .pcf-doc .dtitle {
-    text-align: center; font-size: 14px; font-weight: 800; letter-spacing: .12em;
+    text-align: center; font-size: 12.5px; font-weight: 800; letter-spacing: .12em;
     text-transform: uppercase; margin: 15px 0 13px;
 }
 .pcf-doc .pinfo {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 5px 20px;
-    font-size: 11.5px; padding: 11px 13px; background: #f7f7f9;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px;
+    font-size: 10.5px; padding: 9px 11px; background: #f7f7f9;
     border-radius: 9px; margin-bottom: 14px;
 }
 .pcf-doc .pinfo span { color: #666; display: inline-block; min-width: 82px; }
-.pcf-doc .sec { margin-bottom: 12px; }
+.pcf-doc .sec { margin-bottom: 10px; }
 .pcf-doc .sec h4 {
     font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em;
     color: #0071e3; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #e8e8ea;
 }
-.pcf-doc .sec p { font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+.pcf-doc .sec p { font-size: 11px; line-height: 1.6; white-space: pre-wrap; }
 .pcf-doc .sec .none { color: #aaa; font-style: italic; }
 .pcf-doc .dxrow { display: flex; flex-wrap: wrap; gap: 6px; }
 .pcf-doc .dxrow span {
     background: #f5eaff; color: #5c2475; padding: 3px 10px;
     border-radius: 20px; font-size: 11.5px; font-weight: 600;
 }
-.pcf-doc .sig { margin-top: 30px; display: flex; justify-content: space-between; gap: 44px; }
+.pcf-doc .sig { margin-top: 22px; display: flex; justify-content: space-between; gap: 44px; }
 .pcf-doc .sig div {
     flex: 1; border-top: 1px solid #999; padding-top: 6px;
     font-size: 10.5px; color: #666; text-align: center;
@@ -377,3 +390,9 @@ body.pcf::before {
     .pcf-doc { padding: 20px 16px; }
     .pcf-doc .pinfo { grid-template-columns: 1fr; }
 }
+
+/* Full size when the document is the whole view, or in the print window. */
+.pcf-grid.single .pcf-doc .org { font-size: 19px; }
+.pcf-grid.single .pcf-doc .dtitle { font-size: 14.5px; }
+.pcf-grid.single .pcf-doc .pinfo { font-size: 12px; padding: 12px 14px; gap: 6px 22px; }
+.pcf-grid.single .pcf-doc .sec p { font-size: 12.5px; line-height: 1.75; }

@@ -87,19 +87,20 @@
               '<div><label class="pcf-lbl" for="v_weight">Weight</label><input class="pcf-in" id="v_weight" placeholder="70kg"></div>' +
             '</div></div>';
 
+        /* Medication is CHOSEN from the shared formulary, not typed blind.
+           Each drug carries its own price, so every line bills itself and
+           reaches the cashier with the money attached. Free text is still
+           allowed — a doctor can add a drug the pharmacy stocks. */
         var rxPanel = !c.rx ? '' :
-            '<div class="pcf-panel"><h2><i class="ti ti-pill"></i> Medication</h2>' +
-            '<div class="pcf-row tight">' +
-              '<div style="flex:1.6"><label class="pcf-lbl" for="rxDrug">Drug</label><input class="pcf-in" id="rxDrug" placeholder="Amoxicillin 500mg"></div>' +
-              '<div><label class="pcf-lbl" for="rxDose">Dose</label><input class="pcf-in" id="rxDose" placeholder="1 tab TDS"></div>' +
-            '</div>' +
-            '<div class="pcf-row tight">' +
-              '<div><label class="pcf-lbl" for="rxDur">Duration</label><input class="pcf-in" id="rxDur" placeholder="5 days"></div>' +
-              '<div><label class="pcf-lbl" for="rxQty">Qty</label><input class="pcf-in" type="number" id="rxQty" value="1" min="1"></div>' +
-              '<div style="flex:0 0 auto;display:flex;align-items:flex-end">' +
-                '<button class="pcf-btn primary" type="button" id="rxAddBtn"><i class="ti ti-plus"></i> Add</button></div>' +
-            '</div>' +
-            '<div class="pcf-files" id="rxList" style="margin-top:10px"></div><div id="rxSafety"></div></div>';
+            '<div class="pcf-panel"><h2><i class="ti ti-pill"></i> Medication' +
+              '<span class="count" id="rxCount">0</span></h2>' +
+            '<input class="pcf-in" id="rxSearch" placeholder="Search the formulary — e.g. amoxi, para…" autocomplete="off">' +
+            '<div class="pcf-dx-list pcf-rx-list" id="rxPick" style="max-height:180px"></div>' +
+            '<div class="pcf-files" id="rxList" style="margin-top:10px"></div>' +
+            '<div id="rxSafety"></div>' +
+            '<div class="tot" id="rxTot" style="display:none;margin-top:9px">' +
+              '<span class="l">Medication total</span><span class="v" id="rxTotVal">RWF 0</span></div>' +
+            '</div>';
 
         /* tool chips — the sheets */
         var chips = '';
@@ -144,7 +145,10 @@
         if (c.dx)  $('#toolDx').onclick  = openDxSheet;
         if (c.rdv) $('#toolRdv').onclick = openRdvSheet;
         if (c.att) $('#toolAtt').onclick = openAttSheet;
-        if (c.rx)  $('#rxAddBtn').onclick = rxAdd;
+        if (c.rx) {
+            $('#rxSearch').addEventListener('input', function () { paintPick(this.value); });
+            paintPick('');
+        }
     }
 
     /* ══════════ SHEETS ══════════ */
@@ -213,26 +217,120 @@
         });
     }
 
-    /* ══════════ PRESCRIPTION ══════════ */
-    function rxAdd() {
-        var n = val('rxDrug');
-        if (!n) { pcToast('Enter a medication', 'error'); return; }
-        meds.push({ name: n, dose: val('rxDose') || '—', duration: val('rxDur') || '—',
-                    qty: parseInt(val('rxQty'), 10) || 1 });
-        ['rxDrug', 'rxDose', 'rxDur'].forEach(function (i) { setVal(i, ''); });
-        setVal('rxQty', 1);
-        renderMeds(); paintDoc();
+    /* ══════════ PRESCRIPTION — PICK, DON'T TYPE ══════════ */
+    function money(n) { return 'RWF ' + (Number(n) || 0).toLocaleString('en-US'); }
+
+    function paintPick(q) {
+        var host = $('#rxPick'); if (!host || !window.pcCatalog) return;
+        q = (q || '').toLowerCase().trim();
+        var all = pcCatalog.drugs();
+        var list = all.filter(function (d) {
+            return !q || (d.name + ' ' + d.strength + ' ' + d.form).toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 40);
+        var html = list.map(function (d) {
+            return '<div class="pcf-rx-item" data-c="' + esc(d.code) + '">' +
+                esc(pcCatalog.drugLabel(d)) +
+                ' <span style="font-size:10.5px;color:var(--tm)">· ' + esc(d.form) + '</span>' +
+                (d.custom ? ' <span style="font-size:9.5px;color:#34c759">·added</span>' : '') +
+                '<span style="float:right;font-size:10.5px;font-weight:700;color:var(--tm)">' +
+                money(d.price) + '</span></div>';
+        }).join('');
+        if (q && !list.some(function (d) { return pcCatalog.drugLabel(d).toLowerCase() === q; })) {
+            html += '<div class="pcf-rx-item add" data-add="1"><i class="ti ti-plus"></i> ' +
+                    'Add “' + esc(val('rxSearch')) + '” to the shared formulary</div>';
+        }
+        host.innerHTML = html || '<div class="pcf-empty" style="padding:16px">No match</div>';
+        host.querySelectorAll('.pcf-rx-item').forEach(function (it) {
+            it.onclick = function () {
+                if (it.dataset.add) return addCustomDrug(val('rxSearch'));
+                var d = pcCatalog.drugs().filter(function (x) { return x.code === it.dataset.c; })[0];
+                if (d) doseSheet(d);
+            };
+        });
     }
+
+    function addCustomDrug(raw) {
+        if (!raw) return;
+        pcFile.sheet({
+            title: 'Add “' + raw + '” to the formulary', icon: 'ti-pill', done: 'Add drug',
+            build: function (body) {
+                body.innerHTML =
+                    '<div style="font-size:11.5px;color:var(--tm);margin-bottom:10px">' +
+                    'Every doctor will see this afterwards. The price is what the cashier will charge.</div>' +
+                    '<div class="pcf-two">' +
+                    '<div><label class="pcf-lbl" for="nd_name">Drug</label>' +
+                      '<input class="pcf-in" id="nd_name" value="' + esc(raw) + '"></div>' +
+                    '<div><label class="pcf-lbl" for="nd_str">Strength</label>' +
+                      '<input class="pcf-in" id="nd_str" placeholder="500mg"></div>' +
+                    '<div><label class="pcf-lbl" for="nd_form">Form</label>' +
+                      '<input class="pcf-in" id="nd_form" placeholder="tablet"></div>' +
+                    '<div><label class="pcf-lbl" for="nd_price">Unit price (RWF)</label>' +
+                      '<input class="pcf-in" type="number" id="nd_price" value="0" min="0"></div>' +
+                    '</div>';
+            },
+            onClose: function () {
+                var name = val('nd_name'); if (!name) return;
+                var e = pcCatalog.addDrug({ name: name, strength: val('nd_str'),
+                    form: val('nd_form') || 'tablet', price: parseInt(val('nd_price'), 10) || 0 });
+                if (e) { pcToast('“' + name + '” added to the formulary', 'success'); doseSheet(e); }
+                setVal('rxSearch', ''); paintPick('');
+            }
+        });
+    }
+
+    /* Chosen a drug — now say how much and for how long. Quantity drives
+       the price, so the cashier's figure matches what is dispensed. */
+    function doseSheet(d) {
+        pcFile.sheet({
+            title: pcCatalog.drugLabel(d), icon: 'ti-pill', done: 'Add to prescription',
+            build: function (body) {
+                body.innerHTML =
+                    '<div style="font-size:11.5px;color:var(--tm);margin-bottom:10px">' +
+                    esc(d.form) + ' · ' + money(d.price) + ' each</div>' +
+                    '<div class="pcf-two">' +
+                    '<div><label class="pcf-lbl" for="dz_dose">Dose &amp; frequency</label>' +
+                      '<input class="pcf-in" id="dz_dose" value="' + esc(d.dose || '') + '"></div>' +
+                    '<div><label class="pcf-lbl" for="dz_dur">Duration</label>' +
+                      '<input class="pcf-in" id="dz_dur" placeholder="5 days"></div>' +
+                    '<div><label class="pcf-lbl" for="dz_qty">Quantity to dispense</label>' +
+                      '<input class="pcf-in" type="number" id="dz_qty" value="1" min="1"></div>' +
+                    '<div><label class="pcf-lbl" for="dz_note">Note to pharmacist</label>' +
+                      '<input class="pcf-in" id="dz_note" placeholder="After food"></div>' +
+                    '</div>' +
+                    '<div class="tot" style="margin-top:11px"><span class="l">Line total</span>' +
+                    '<span class="v" id="dz_tot">' + money(d.price) + '</span></div>';
+                var q = $('#dz_qty', body);
+                q.addEventListener('input', function () {
+                    $('#dz_tot', body).textContent = money(d.price * (parseInt(this.value, 10) || 0));
+                });
+            },
+            onClose: function () {
+                var qty = parseInt(val('dz_qty'), 10) || 1;
+                meds.push({ code: d.code, name: pcCatalog.drugLabel(d), form: d.form,
+                    dose: val('dz_dose') || d.dose || '—', duration: val('dz_dur') || '—',
+                    note: val('dz_note') || '', qty: qty, price: d.price });
+                setVal('rxSearch', ''); paintPick('');
+                renderMeds(); paintDoc();
+            }
+        });
+    }
+
     function renderMeds() {
         var box = $('#rxList'); if (!box) return;
         box.innerHTML = meds.map(function (m, i) {
             return '<div class="pcf-file"><i class="ti ti-pill"></i><span class="nm"><b>' + esc(m.name) +
-                '</b> · ' + esc(m.dose) + ' · ' + esc(m.duration) + '</span><span class="sz">×' + m.qty +
-                '</span><button data-i="' + i + '">&times;</button></div>';
+                '</b> · ' + esc(m.dose) + ' · ' + esc(m.duration) +
+                (m.note ? ' · ' + esc(m.note) : '') + '</span>' +
+                '<span class="sz">×' + m.qty + ' · ' + money((m.price || 0) * m.qty) + '</span>' +
+                '<button data-i="' + i + '">&times;</button></div>';
         }).join('');
         box.querySelectorAll('button').forEach(function (b) {
             b.onclick = function () { meds.splice(+b.dataset.i, 1); renderMeds(); paintDoc(); };
         });
+        var cnt = $('#rxCount'); if (cnt) cnt.textContent = meds.length;
+        var tot = meds.reduce(function (s, m) { return s + (m.price || 0) * m.qty; }, 0);
+        var tb = $('#rxTot');
+        if (tb) { tb.style.display = meds.length ? 'flex' : 'none'; $('#rxTotVal').textContent = money(tot); }
         safety();
     }
     function safety() {
@@ -357,7 +455,18 @@
         CFG.fields.forEach(function (f) { o.fields[f.id] = val('f_' + f.id); });
         if (CFG.vitals) o.vitals = { bp: val('v_bp'), temp: val('v_temp'), pulse: val('v_pulse'), weight: val('v_weight') };
         var first = CFG.fields[0];
+        /* The history row shows this as a one-line headline. Now that the
+           first field can be a whole dictated paragraph (OPD merged the
+           chief complaint and the HPI), take just the first sentence or
+           ~90 chars so a long entry cannot stretch the row. */
         o.summary = first ? (o.fields[first.id] || '') : '';
+        if (o.summary) {
+            var flat = o.summary.replace(/\s+/g, ' ').trim();
+            var stop = flat.search(/[.!?](\s|$)/);
+            if (stop > 0 && stop < 90) flat = flat.slice(0, stop);
+            else if (flat.length > 90) flat = flat.slice(0, 90).replace(/\s\S*$/, '') + '…';
+            o.summary = flat;
+        }
         if (!o.summary && o.diagnoses.length) o.summary = o.diagnoses[0].name;
         return o;
     }
@@ -383,12 +492,23 @@
                   return '<span>' + (x.code ? esc(x.code) + ' · ' : '') + esc(x.name) + '</span>'; }).join('') +
               '</div></div>' : '';
 
-        var rxb = (f.medications || []).length
-            ? '<div class="sec"><h4>Medication</h4><p>' +
-              f.medications.map(function (m, i) {
-                  return (i + 1) + '. ' + esc(m.name) + '  —  ' + esc(m.dose) +
-                         '  ×  ' + esc(m.duration) + '   (qty ' + m.qty + ')'; }).join('<br>') +
-              '</p></div>' : '';
+        var rxb = '';
+        if ((f.medications || []).length) {
+            var mt = f.medications.reduce(function (s, m) { return s + (m.price || 0) * m.qty; }, 0);
+            rxb = '<div class="sec"><h4>Medication</h4>' +
+                '<table style="width:100%;font-size:12px;border-collapse:collapse">' +
+                f.medications.map(function (m, i) {
+                    return '<tr><td style="padding:3px 0">' + (i + 1) + '. <b>' + esc(m.name) + '</b> — ' +
+                        esc(m.dose) + (m.duration && m.duration !== '—' ? ' × ' + esc(m.duration) : '') +
+                        (m.note ? ' (' + esc(m.note) + ')' : '') + '</td>' +
+                        '<td style="text-align:right;padding:3px 0;white-space:nowrap">×' + m.qty +
+                        (m.price ? ' · ' + money(m.price * m.qty) : '') + '</td></tr>';
+                }).join('') +
+                (mt ? '<tr><td style="padding-top:6px;border-top:1px solid #ddd;font-weight:800">Total</td>' +
+                      '<td style="padding-top:6px;border-top:1px solid #ddd;text-align:right;font-weight:800">' +
+                      money(mt) + '</td></tr>' : '') +
+                '</table></div>';
+        }
 
         var rdvb = f.rdv
             ? '<div class="sec"><h4>Next appointment (RDV)</h4><p><b>' + longDate(f.rdv.date) +
@@ -445,10 +565,23 @@
             } catch (e) {}
         }
         if (rec.rdv) pcFile.saveRdv(P, rec.rdv.date, rec.rdv.reason);
+        /* Each drug bills itself: the order carries the real unit price and
+           quantity, so pcOrders raises a bill and the cashier sees the
+           medication with the money in front of them. Previously every
+           line went out at price 0 and bill:false — the pharmacy got the
+           script but nobody was ever charged. */
         if (CFG.rx && rec.medications.length && window.pcOrders) {
-            pcOrders.create({ patientId: P.id, patientName: pcFile.nameOf(P), type: 'prescription', bill: false,
+            var rxOrder = pcOrders.create({
+                patientId: P.id, patientName: pcFile.nameOf(P), type: 'prescription',
                 items: rec.medications.map(function (m) {
-                    return { name: m.name + '  ' + m.dose + '  ×' + m.duration, qty: m.qty, price: 0 }; }) });
+                    return { code: m.code || '', name: m.name + '  ' + m.dose +
+                             (m.duration && m.duration !== '—' ? '  ×' + m.duration : ''),
+                             qty: m.qty, price: m.price || 0 };
+                })
+            });
+            if (rxOrder) { rec.orderId = rxOrder.id; rec.billId = rxOrder.billId; }
+            rec.medTotal = rec.medications.reduce(function (s, m) {
+                return s + (m.price || 0) * m.qty; }, 0);
         }
         pcFile.save(rec);
         pcToast(CFG.title + ' saved' + (rec.rdv ? ' · RDV sent to reception' : '') +
