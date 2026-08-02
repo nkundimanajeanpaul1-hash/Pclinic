@@ -20,7 +20,7 @@
 (function () {
     'use strict';
 
-    var CFG = null, P = null, viewing = null;
+    var CFG = null, P = null, viewing = null, editingId = null;
     var chosenDx = [], files = [], meds = [], rdv = null;
 
     function esc(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
@@ -128,6 +128,7 @@
             '<b class="mode" id="fileMode"></b>' +
             '<span class="spacer"></span>' + chips +
             '<button class="pcf-btn sm" id="btnPrint"><i class="ti ti-printer"></i> Print</button>' +
+            '<button class="pcf-btn sm" id="editBtn" style="display:none;background:#fff3cd;color:#856404;border-color:#ffeeba;font-weight:600;"><i class="ti ti-pencil"></i> Edit Visit</button>' +
             '<button class="pcf-btn sm primary" id="saveBtn"><i class="ti ti-device-floppy"></i> Save</button>' +
           '</div>' +
           '<div class="pcf-grid wide" id="fileGrid">' +
@@ -477,6 +478,8 @@
         showFileView(true);
         $('#fileMode').textContent = 'Viewing ' + longDate(f.at);
         $('#saveBtn').style.display = 'none';
+        $('#editBtn').style.display = '';
+        $('#editBtn').onclick = function() { editFile(f); };
         $('#workPane').style.display = 'none';
         $('#fileGrid').classList.remove('wide');
         $('#fileGrid').classList.add('single');
@@ -484,11 +487,48 @@
         paintDoc(f);
     }
 
+    function editFile(f) {
+        if (!f) return;
+        viewing = null;
+        editingId = f.id;
+        chosenDx = (f.diagnoses || []).slice();
+        files = (f.attachments || []).slice();
+        meds = (f.medications || []).slice();
+        rdv = f.rdv || null;
+
+        showFileView(true);
+        $('#fileMode').textContent = 'Editing ' + CFG.title + ' — ' + longDate(f.at);
+        $('#saveBtn').style.display = '';
+        $('#editBtn').style.display = 'none';
+        $('#workPane').style.display = '';
+        $('#fileGrid').classList.add('wide');
+        $('#fileGrid').classList.remove('single');
+        ['#toolDx', '#toolRdv', '#toolAtt'].forEach(function (s) { var e = $(s); if (e) e.style.display = ''; });
+
+        chipCount('#toolDx', chosenDx.length);
+        chipCount('#toolAtt', files.length);
+
+        CFG.fields.forEach(function (fd) {
+            setVal('f_' + fd.id, (f.fields || {})[fd.id] || '');
+        });
+
+        if (CFG.vitals && f.vitals) {
+            setVal('v_bp', f.vitals.bp || '');
+            setVal('v_temp', f.vitals.temp || '');
+            setVal('v_pulse', f.vitals.pulse || '');
+            setVal('v_weight', f.vitals.weight || '');
+        }
+        if (CFG.rx) renderMeds();
+        paintDoc();
+        pcToast('Editing ' + CFG.title + '. Make changes and click Save.', 'info');
+    }
+
     function newFile() {
-        viewing = null; chosenDx = []; files = []; meds = []; rdv = null;
+        viewing = null; editingId = null; chosenDx = []; files = []; meds = []; rdv = null;
         showFileView(true);
         $('#fileMode').textContent = 'New ' + CFG.title + ' — ' + longDate(new Date());
         $('#saveBtn').style.display = '';
+        $('#editBtn').style.display = 'none';
         $('#workPane').style.display = '';
         $('#fileGrid').classList.add('wide');
         $('#fileGrid').classList.remove('single');
@@ -513,7 +553,7 @@
     }
 
     function backToHistory() {
-        viewing = null;
+        viewing = null; editingId = null;
         showFileView(false);
         renderHistory();
     }
@@ -522,6 +562,7 @@
     function gather() {
         if (viewing) return viewing;
         var o = {
+            id: editingId || null,
             type: CFG.type, patientId: P.id, patientName: pcFile.nameOf(P), title: CFG.title,
             at: new Date().toISOString(), by: pcFile.staff().name || '',
             diagnoses: chosenDx.slice(), medications: meds.slice(),

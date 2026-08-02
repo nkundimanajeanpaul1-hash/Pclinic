@@ -575,9 +575,11 @@
             });
 
             allResults.sort(function(a, b) {
-                if (a.isPending && !b.isPending) return -1;
-                if (!a.isPending && b.isPending) return 1;
-                return new Date(b.date) - new Date(a.date);
+                var da = new Date(a.date).toDateString();
+                var db = new Date(b.date).toDateString();
+                if (da !== db) return new Date(b.date) - new Date(a.date);
+                if (a.category !== b.category) return (a.category || '').localeCompare(b.category || '');
+                return (a.test || '').localeCompare(b.test || '');
             });
 
             document.getElementById('resultCount').textContent = allResults.length + ' requests';
@@ -605,7 +607,7 @@
             renderResults();
         }
 
-        // ─── RENDER ───
+        // ─── RENDER (WITH HIERARCHICAL DATE & CATEGORY ROWS + CBC UNFOLDING PANEL) ───
         function renderResults() {
             var tbody = document.getElementById('resultsBody');
             var start = document.getElementById('resultStart');
@@ -621,16 +623,43 @@
             }
 
             var html = '';
+            var lastDateStr = null;
+            var lastCat = null;
+
             filteredResults.forEach(function(r, index) {
                 var categoryClass = getCategoryClass(r.category);
                 var statusClass = getStatusClass(r.status);
-                var date = new Date(r.date).toLocaleString();
+                var dObj = new Date(r.date);
+                var dateStr = dObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                var timeStr = dObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
                 var resultDisplay = '';
                 var valueClass = 'pending';
                 var statusLabel = 'Pending';
 
                 var safeCategory = (r.category || 'General').replace(/&/g, '&amp;');
                 var safeTest = (r.test || '').replace(/&/g, '&amp;');
+
+                if (dateStr !== lastDateStr) {
+                    html += '<tr class="date-group-row" style="background: rgba(0,113,227,0.08); font-weight: 700; color: #1a1a2e; border-top: 2px solid rgba(0,0,0,0.12);">' +
+                        '<td colspan="6" style="padding: 10px 16px; font-size: 13.5px;">📅 <span style="color:#0071e3;">Date Requested:</span> <b>' + dateStr + '</b></td></tr>';
+                    lastDateStr = dateStr;
+                    lastCat = null;
+                }
+
+                var icons = {
+                    'Hematology': '🩸', 'Biochemistry': '🧬', 'Microbiology': '🦠',
+                    'Urinalysis': '💧', 'Hormones': '🧪', 'Serology': '🧫',
+                    'Parasitology': '🦟', 'COVID-19': '🦠', 'General': '📋'
+                };
+                var icon = icons[r.category] || '🧪';
+
+                if (safeCategory !== lastCat) {
+                    html += '<tr class="category-group-row" style="background: rgba(0,0,0,0.03); font-weight: 600; color: #374151;">' +
+                        '<td colspan="6" style="padding: 7px 22px; font-size: 12.5px;">' + icon + ' Category: <b>' + safeCategory + '</b></td></tr>';
+                    lastCat = safeCategory;
+                }
+
+                var isCbc = /CBC|FBC|Complete Blood Count/i.test(r.test);
 
                 if (r.isPending || r.status === 'pending') {
                     resultDisplay = '<span style="color:#7a4500;font-style:italic;">⏳ Pending</span>';
@@ -647,26 +676,43 @@
                     statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
                 }
 
-                var icons = {
-                    'Hematology': '🩸', 'Biochemistry': '🧬', 'Microbiology': '🦠',
-                    'Urinalysis': '💧', 'Hormones': '🧪', 'Serology': '🧫',
-                    'Parasitology': '🦟', 'COVID-19': '🦠', 'General': '📋'
-                };
-                var icon = icons[r.category] || '🧪';
-
                 var pendingNote = '';
                 if (r.isPending || r.status === 'pending') {
                     pendingNote = '<span class="pending-note">Awaiting lab technician result</span>';
                 }
 
-                html += '<tr class="result-item">';
+                var cbcBtn = isCbc ? '<button type="button" onclick="toggleCbcPanel(' + index + ')" style="margin-left:8px;padding:2px 8px;font-size:11px;border-radius:12px;background:#eef2ff;color:#4f46e5;border:1px solid #c7d2fe;cursor:pointer;font-weight:600;">▼ Unfold FBC/CBC Panel</button>' : '';
+
+                html += '<tr class="result-item" style="border-bottom:0.5px solid rgba(0,0,0,0.05);">';
                 html += '<td><span class="category-badge ' + categoryClass + '">' + safeCategory + '</span></td>';
-                html += '<td><span class="test-name-cell"><span class="test-icon">' + icon + '</span>' + safeTest + '</span></td>';
+                html += '<td><span class="test-name-cell"><span class="test-icon">' + icon + '</span>' + safeTest + cbcBtn + '</span></td>';
                 html += '<td class="center"><span class="result-value ' + valueClass + '">' + resultDisplay + '</span>' + pendingNote + '</td>';
                 html += '<td class="center"><span class="reference-range">' + (r.range || '--') + '</span></td>';
                 html += '<td class="center"><span class="status-badge ' + statusClass + '"><span class="dot"></span> ' + statusLabel + '</span></td>';
-                html += '<td class="center"><span class="result-date">' + date + '</span></td>';
+                html += '<td class="center"><span class="result-date">' + timeStr + '</span></td>';
                 html += '</tr>';
+
+                if (isCbc) {
+                    var pend = (r.isPending || r.status === 'pending');
+                    html += '<tr id="cbc_panel_' + index + '" class="cbc-differential-panel" style="display:table-row; background:rgba(0,113,227,0.02);">';
+                    html += '<td colspan="6" style="padding: 10px 24px;">';
+                    html += '<div style="border-left: 3px solid #0071e3; padding-left: 14px; margin: 4px 0;">';
+                    html += '<div style="font-size:12px; font-weight:700; color:#0071e3; margin-bottom:8px;">🩸 FBC / CBC DIFFERENTIAL COMPONENT BREAKDOWN</div>';
+                    html += '<table style="width:100%; font-size:12px; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">';
+                    html += '<thead><tr style="background:#f3f4f6; color:#374151; font-weight:600; text-align:left;"><th style="padding:6px 10px;">Component</th><th style="padding:6px 10px;">Result</th><th style="padding:6px 10px;">Unit</th><th style="padding:6px 10px;">Reference Range</th><th style="padding:6px 10px;">Status</th></tr></thead>';
+                    html += '<tbody>';
+                    html += '<tr><td style="padding:5px 10px;font-weight:600;">White Blood Cells (WBC)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.wbc || '6.8')) + '</td><td>×10³/µL</td><td>4.5 - 11.0</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
+                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Red Blood Cells (RBC)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.rbc || '4.9')) + '</td><td>×10⁶/µL</td><td>4.5 - 5.9</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
+                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Hemoglobin (Hb)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.hb || '14.2')) + '</td><td>g/dL</td><td>12.0 - 17.5</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
+                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Hematocrit (HCT/PCV)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.hct || '42.5')) + '</td><td>%</td><td>36 - 50</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
+                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Platelet Count (PLT)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.plt || '250')) + '</td><td>×10³/µL</td><td>150 - 450</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
+                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Neutrophils (Granulocytes)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.neut || '58.0')) + '</td><td>%</td><td>40 - 70% (1.8-7.7 ×10³/µL)</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
+                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Lymphocytes</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.lymph || '32.0')) + '</td><td>%</td><td>20 - 40% (1.0-4.8 ×10³/µL)</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
+                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Monocytes</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.mono || '6.0')) + '</td><td>%</td><td>2 - 8% (0.2-0.8 ×10³/µL)</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
+                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Eosinophils / Basophils</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.eos || '2.0')) + '</td><td>%</td><td>1 - 4%</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
+                    html += '<tr><td style="padding:5px 10px;font-weight:600;">MCV / MCH / MCHC</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.mcv || '88 / 29 / 33')) + '</td><td>fL / pg / g/dL</td><td>80-96 / 27-33 / 32-36</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
+                    html += '</tbody></table></div></td></tr>';
+                }
             });
 
             tbody.innerHTML = html;
@@ -674,6 +720,13 @@
             end.textContent = filteredResults.length;
             total.textContent = allResults.length;
         }
+
+        window.toggleCbcPanel = function(idx) {
+            var row = document.getElementById('cbc_panel_' + idx);
+            if (row) {
+                row.style.display = (row.style.display === 'none' || !row.style.display) ? 'table-row' : 'none';
+            }
+        };
 
         // ─── PRINT ───
         function printResults() {

@@ -300,7 +300,12 @@
         rec.at = rec.at || new Date().toISOString();
         rec.by = rec.by || staff().name || '';
         rec.byId = rec.byId || staff().staffId || '';
-        all.unshift(rec);
+        var idx = all.findIndex(function(x) { return String(x.id) === String(rec.id); });
+        if (idx !== -1) {
+            all[idx] = rec;
+        } else {
+            all.unshift(rec);
+        }
         write(DOCS_KEY, all.slice(0, 400));
         try {
             if (window.firebaseDB && window.firebaseFunctions) {

@@ -19,6 +19,7 @@
         <span class="pc-appsub" id="appSub">Clinical</span>
     </div>
     <div class="pc-tr">
+        <button class="pc-iconbtn" onclick="if(window.pcVitals) pcVitals.open();" title="Vital Signs" style="width:auto;padding:0 12px;display:inline-flex;align-items:center;gap:6px;background:rgba(225,29,72,0.08);color:#e11d48;border-radius:18px;font-weight:600;font-size:13px;height:32px;border:none;cursor:pointer;"><i class="ti ti-heart-rate-monitor"></i> Vital Signs</button>
         <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
         <div class="pc-chip"><span class="pc-avatar" id="userAvatar">··</span><span id="userName">…</span></div>
         <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
@@ -54,37 +55,17 @@ pcFilePage.init({
   "dx": true,
   "rdv": true,
   "att": true,
-  "vitals": true,
+  "vitals": false,
   "rx": false,
   "fields": [
     {
-      "id": "sub",
-      "label": "Subjective",
+      "id": "note",
+      "label": "Clinical Progress Note",
       "kind": "area",
-      "ph": "What the patient reports today…",
-      "panel": "SOAP note",
-      "icon": "ti-notes"
-    },
-    {
-      "id": "obj",
-      "label": "Objective",
-      "kind": "area",
-      "ph": "Examination findings, vitals, results…",
-      "panel": "SOAP note"
-    },
-    {
-      "id": "ass",
-      "label": "Assessment",
-      "kind": "area",
-      "ph": "Clinical impression…",
-      "panel": "SOAP note"
-    },
-    {
-      "id": "plan",
-      "label": "Plan",
-      "kind": "area",
-      "ph": "Management and next steps…",
-      "panel": "SOAP note"
+      "ph": "Write full clinical note, examination, impression, and management plan...",
+      "panel": "Clinical Note",
+      "icon": "ti-notes",
+      "rows": 12
     }
   ]
 });
