@@ -457,6 +457,11 @@
         // ─── LOAD PATIENT ───
         function loadPatientData(patient) {
             if (patient && patient.id) {
+                try {
+                    var pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                    var fresh = pts.find(function(p) { return String(p.id) === String(patient.id); });
+                    if (fresh) patient = fresh;
+                } catch(e){}
                 currentPatient = patient;
                 updatePatientUI(patient);
                 loadResults(patient);
@@ -520,8 +525,9 @@
             allResults = [];
 
             requests.forEach(function(req) {
-                var tests = req.tests || ['Unknown Test'];
-                tests.forEach(function(testName) {
+                var tests = req.tests || req.items || ['Unknown Test'];
+                tests.forEach(function(item) {
+                    var testName = typeof item === 'object' ? (item.name || item.code || 'Test') : String(item);
                     var status = 'pending';
                     var value = '--';
                     var unit = '';
@@ -737,7 +743,17 @@
 
         // ─── CLOSE ───
         function closeLabResultsPage() {
-            window.parent.postMessage({ type: 'CLOSE_LAB_RESULTS' }, '*');
+            try {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: 'CLOSE_LAB_RESULTS' }, '*');
+                    return;
+                }
+            } catch (e) {}
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'doctor-dashboard.html';
+            }
         }
 
         // ─── ESCAPE HELPER ───
@@ -854,7 +870,25 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadDarkModePreference();
 
-            // 1. Try URL param
+            // 0. Try active patient from URL ?patient=ID or localStorage
+            try {
+                var urlParams = new URLSearchParams(window.location.search);
+                var pid = urlParams.get('patient') || localStorage.getItem('pclinic_active_patient');
+                if (!pid) {
+                    var h = JSON.parse(localStorage.getItem('pclinic_handoff') || 'null');
+                    if (h && h.id) pid = h.id;
+                }
+                if (pid) {
+                    var patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                    var found = patients.find(function(p) { return String(p.id) === String(pid); });
+                    if (found) {
+                        loadPatientData(found);
+                        return;
+                    }
+                }
+            } catch(e) {}
+
+            // 1. Try URL param data
             var urlParams = new URLSearchParams(window.location.search);
             var encoded = urlParams.get('data');
             if (encoded) {
