@@ -1635,6 +1635,10 @@ function loadPatients() {
 
         // ─── QUICK ACTION HELPER ───
 function quickAction(tabName, subTabId) {
+    if (tabName === 'physio' || subTabId === 'tab-physio') {
+        openPhysioRequestModal(currentPatient);
+        return;
+    }
     // 1. Find the nav tab by data-tab attribute
     const navTab = document.querySelector(`[data-tab="${tabName}"]`);
     
@@ -2549,6 +2553,12 @@ function switchTab(name, btn) {
             showToast('⚠️ Please select a patient first', 'warning');
         }
         return; // Exit early, don't try to show a tab
+    }
+
+    // ─── SPECIAL HANDLING FOR PHYSIO (BILLING-STYLE REQUEST PAGE) ───
+    if (name === 'physio') {
+        openPhysioRequestModal(currentPatient);
+        return; // Exit early, launch billing-style Physio Request page
     }
 
     // ─── HIDE/SHOW PATIENT CARD BASED ON TAB ───

@@ -4211,26 +4211,13 @@ input.fi:focus,
                 </div>
 
                 <!-- ─── TAB: PHYSIOTHERAPY ─── -->
-                <div class="mp-body" id="tab-physio">
-                    <div class="fg">
-                        <div class="ff"><div class="section-title">🏃 Physiotherapy Order</div></div>
-                        <div class="fgl"><label class="lbl">Patient</label><input class="fi" id="physioPatient" readonly/></div>
-                        <div class="fgl"><label class="lbl">Therapy Type *</label>
-                            <select class="fi" id="physioType">
-                                <option>General Rehab</option><option>Post-OP Rehab</option>
-                                <option>Neurological</option><option>Sports Injury</option>
-                                <option>Orthopedic</option>
-                            </select>
-                        </div>
-                        <div class="fgl"><label class="lbl">Frequency</label>
-                            <select class="fi" id="physioFreq">
-                                <option>Daily</option><option>2x/week</option>
-                                <option>3x/week</option><option>Weekly</option>
-                            </select>
-                        </div>
-                        <div class="ff"><label class="lbl">Goals / Notes</label><textarea class="ta" id="physioGoals" rows="2"></textarea></div>
-                        <div class="ff"><div class="fa"><button class="btn-p" onclick="submitPhysio()"><i class="ti ti-check"></i> Order Physiotherapy</button></div></div>
-                    </div>
+                <div class="mp-body" id="tab-physio" style="padding: 36px 20px; text-align: center;">
+                    <div style="font-size: 42px; margin-bottom: 12px;">💪</div>
+                    <h3 style="font-size: 17px; font-weight: 700; color: var(--tp); margin-bottom: 6px;">Physiotherapy Request &amp; Cashier Billing Portal</h3>
+                    <p style="font-size: 13px; color: var(--tm); max-width: 500px; margin: 0 auto 18px;">Request physiotherapy modalities with automatic RWF billing to Cashier and live department notifications.</p>
+                    <button class="btn-apple primary" onclick="openPhysioRequestModal(currentPatient)" style="padding: 10px 24px; font-size: 13.5px;">
+                        <i class="ti ti-accessible"></i> Open Physiotherapy Request Form
+                    </button>
                 </div>
 
 <!-- Clinical Notes tab removed: clinical-note.html is the real page.
