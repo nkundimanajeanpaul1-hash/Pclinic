@@ -306,7 +306,10 @@
         }
 
         .lab-test-item.selected {
-            background: rgba(0,113,227,0.06);
+            background: rgba(0,113,227,0.15) !important;
+            border: 1px solid var(--ac);
+            font-weight: 600;
+            color: var(--ac);
         }
 
         .lab-test-item input[type="checkbox"] {
@@ -862,6 +865,18 @@
                                     <input type="checkbox" value="Reticulocyte Count">
                                     <span class="test-name">Reticulocyte</span>
                                 </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="Coagulation Profile (PT/INR/PTT)">
+                                    <span class="test-name">Coagulation (PT/INR)</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="Peripheral Blood Smear">
+                                    <span class="test-name">Blood Smear</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="Sickling Test / Electrophoresis">
+                                    <span class="test-name">Sickling Test</span>
+                                </div>
                             </div>
                         </div>
 
@@ -917,6 +932,30 @@
                                 <div class="lab-test-item" onclick="toggleLabTest(this)">
                                     <input type="checkbox" value="Lipase">
                                     <span class="test-name">Lipase</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="Cardiac Enzymes (Troponin I/T)">
+                                    <span class="test-name">Troponin I/T</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="Serum Bilirubin (Total & Direct)">
+                                    <span class="test-name">Bilirubin (T&D)</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="SGOT / AST & SGPT / ALT">
+                                    <span class="test-name">AST / ALT</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="Alkaline Phosphatase (ALP)">
+                                    <span class="test-name">ALP</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="Serum Albumin & Total Protein">
+                                    <span class="test-name">Albumin & Protein</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="Serum Calcium & Magnesium">
+                                    <span class="test-name">Calcium & Mg</span>
                                 </div>
                             </div>
                         </div>
@@ -1072,6 +1111,30 @@
                                     <input type="checkbox" value="ASO - Anti-Streptolysin O">
                                     <span class="test-name">ASO</span>
                                 </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="H. pylori Ag / Ab">
+                                    <span class="test-name">H. pylori</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="Widal Test (Salmonella)">
+                                    <span class="test-name">Widal Test</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="Brucella Agglutination">
+                                    <span class="test-name">Brucella</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="Beta-HCG (Quantitative)">
+                                    <span class="test-name">Beta-HCG</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="PSA - Prostate Specific Antigen">
+                                    <span class="test-name">PSA</span>
+                                </div>
+                                <div class="lab-test-item" onclick="toggleLabTest(this)">
+                                    <input type="checkbox" value="D-Dimer">
+                                    <span class="test-name">D-Dimer</span>
+                                </div>
                             </div>
 
                             <!-- COVID-19 - Dark Red -->
@@ -1187,14 +1250,34 @@
             }, 3000);
         }
 
-        // ─── TOGGLE LAB TEST ───
-        function toggleLabTest(element) {
+        const LAB_PRICES = {
+            'CBC - Complete Blood Count': 6000, 'Hemoglobin (Hb)': 2500, 'WBC - White Blood Cell Count': 3000,
+            'Platelet Count': 3000, 'ESR - Erythrocyte Sedimentation Rate': 2500, 'Blood Group & Rh Typing': 3500,
+            'Reticulocyte Count': 4000, 'Coagulation Profile (PT/INR/PTT)': 8000, 'Peripheral Blood Smear': 5000,
+            'Sickling Test / Electrophoresis': 6000, 'Fasting Blood Sugar (FBS)': 2500, 'Random Blood Sugar (RBS)': 2500,
+            'HbA1c - Glycated Hemoglobin': 10000, 'Lipid Profile': 12000, 'Liver Function Test (LFT)': 12000,
+            'Renal Function Test (RFT)': 12000, 'Electrolytes - Na, K, Cl': 8000, 'Serum Creatinine': 4000,
+            'Blood Urea Nitrogen (BUN)': 4000, 'Uric Acid': 5000, 'Amylase': 6000, 'Lipase': 7000,
+            'Cardiac Enzymes (Troponin I/T)': 15000, 'Serum Bilirubin (Total & Direct)': 5000,
+            'SGOT / AST & SGPT / ALT': 8000, 'Alkaline Phosphatase (ALP)': 5000,
+            'Serum Albumin & Total Protein': 6000, 'Serum Calcium & Magnesium': 6000,
+            'Malaria Parasite (MP / Blood Smear)': 3000, 'Stool Ova & Parasites (O&P)': 2500,
+            'HIV Test': 3000, 'Hepatitis B Surface Antigen (HBsAg)': 4000, 'Hepatitis C Antibody': 5000,
+            'Syphilis Test (RPR/VDRL)': 3500, 'H. pylori Ag / Ab': 5000, 'Widal Test (Salmonella)': 4000,
+            'Brucella Agglutination': 5000, 'Beta-HCG (Quantitative)': 8000, 'PSA - Prostate Specific Antigen': 12000,
+            'D-Dimer': 20000, 'CRP - C-Reactive Protein': 6000, 'ASO - Anti-Streptolysin O': 5000,
+            'Rheumatoid Factor (RF)': 5000, 'COVID-19 Antigen Test': 5000, 'COVID-19 PCR Test': 25000
+        };
+
+        // ─── TOGGLE LAB TEST (FIXED FOR CHECKBOX CLICK BUBBLING) ───
+        function toggleLabTest(element, event) {
             const checkbox = element.querySelector('input[type="checkbox"]');
-            if (checkbox) {
+            if (!checkbox) return;
+            if (!event || !event.target || (event.target.tagName !== 'INPUT' && event.target.type !== 'checkbox')) {
                 checkbox.checked = !checkbox.checked;
-                element.classList.toggle('selected', checkbox.checked);
-                updateSelectedTests();
             }
+            element.classList.toggle('selected', checkbox.checked);
+            updateSelectedTests();
         }
 
         // ─── UPDATE SELECTED TESTS ───
@@ -1283,6 +1366,20 @@
         
    // ─── LOAD PATIENT DATA ───
 function loadPatientData(patient) {
+    let success = false;
+    // 0. Try active patient from localStorage first (for modular page opening)
+    if (!patient || !patient.id) {
+        try {
+            const activeId = localStorage.getItem('pclinic_active_patient');
+            if (activeId) {
+                const patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                const found = patients.find(p => String(p.id) === String(activeId));
+                if (found) {
+                    patient = found;
+                }
+            }
+        } catch(e){}
+    }
     // If patient is provided directly, use it
     if (patient && patient.id) {
         currentPatient = patient;
@@ -1290,78 +1387,132 @@ function loadPatientData(patient) {
         const mrn = patient.mrn || 'N/A';
         document.getElementById('labPatient').value = name + ' — ' + mrn;
         console.log('✅ Patient loaded from direct data:', name);
-        return true;
-    }
-    
-    // Try to get from parent window
-    try {
-        if (window.parent && window.parent.currentPatient) {
-            const parentPatient = window.parent.currentPatient;
-            if (parentPatient && parentPatient.id) {
-                currentPatient = parentPatient;
-                const name = (parentPatient.firstName || '') + ' ' + (parentPatient.lastName || '');
-                const mrn = parentPatient.mrn || 'N/A';
-                document.getElementById('labPatient').value = name + ' — ' + mrn;
-                console.log('✅ Patient loaded from parent:', name);
-                return true;
-            }
-        }
-    } catch (e) {
-        console.log('Could not access parent patient data');
-    }
-    
-    // ─── FALLBACK: Try to load from localStorage ───
-    try {
-        const storedData = localStorage.getItem('pclinic_lab_patient_data');
-        if (storedData) {
-            const patientData = JSON.parse(storedData);
-            if (patientData && patientData.id) {
-                currentPatient = patientData;
-                const name = (patientData.firstName || '') + ' ' + (patientData.lastName || '');
-                const mrn = patientData.mrn || 'N/A';
-                document.getElementById('labPatient').value = name + ' — ' + mrn;
-                console.log('✅ Patient loaded from localStorage:', name);
-                return true;
-            }
-        }
-    } catch (e) {
-        console.log('Error loading from localStorage:', e);
-    }
-    
-    // ─── FINAL FALLBACK: Try to find any patient in localStorage ───
-    try {
-        const patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
-        if (patients.length > 0) {
-            // Try to find the last viewed patient
-            const lastViewed = localStorage.getItem('pclinic_last_patient_id');
-            if (lastViewed) {
-                const found = patients.find(p => String(p.id) === String(lastViewed));
-                if (found) {
-                    currentPatient = found;
-                    const name = (found.firstName || '') + ' ' + (found.lastName || '');
-                    const mrn = found.mrn || 'N/A';
+        success = true;
+    } else {
+        // Try to get from parent window
+        try {
+            if (window.parent && window.parent.currentPatient) {
+                const parentPatient = window.parent.currentPatient;
+                if (parentPatient && parentPatient.id) {
+                    currentPatient = parentPatient;
+                    const name = (parentPatient.firstName || '') + ' ' + (parentPatient.lastName || '');
+                    const mrn = parentPatient.mrn || 'N/A';
                     document.getElementById('labPatient').value = name + ' — ' + mrn;
-                    console.log('✅ Patient loaded from last viewed ID:', name);
-                    return true;
+                    console.log('✅ Patient loaded from parent:', name);
+                    success = true;
                 }
             }
-            // If still not found, take the first patient
-            if (patients.length > 0) {
-                currentPatient = patients[0];
-                const name = (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '');
-                const mrn = currentPatient.mrn || 'N/A';
-                document.getElementById('labPatient').value = name + ' — ' + mrn;
-                console.log('✅ Defaulted to first patient:', name);
-                return true;
+        } catch (e) {
+            console.log('Could not access parent patient data');
+        }
+        
+        if (!success) {
+            // ─── FALLBACK: Try to load from localStorage ───
+            try {
+                const storedData = localStorage.getItem('pclinic_lab_patient_data');
+                if (storedData) {
+                    const patientData = JSON.parse(storedData);
+                    if (patientData && patientData.id) {
+                        currentPatient = patientData;
+                        const name = (patientData.firstName || '') + ' ' + (patientData.lastName || '');
+                        const mrn = patientData.mrn || 'N/A';
+                        document.getElementById('labPatient').value = name + ' — ' + mrn;
+                        console.log('✅ Patient loaded from localStorage:', name);
+                        success = true;
+                    }
+                }
+            } catch (e) {
+                console.log('Error loading from localStorage:', e);
             }
         }
-    } catch (e) {
-        console.log('Error loading from patients list:', e);
+        
+        if (!success) {
+            // ─── FINAL FALLBACK: Try to find any patient in localStorage ───
+            try {
+                const patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                if (patients.length > 0) {
+                    // Try to find the last viewed patient
+                    const lastViewed = localStorage.getItem('pclinic_last_patient_id');
+                    if (lastViewed) {
+                        const found = patients.find(p => String(p.id) === String(lastViewed));
+                        if (found) {
+                            currentPatient = found;
+                            const name = (found.firstName || '') + ' ' + (found.lastName || '');
+                            const mrn = found.mrn || 'N/A';
+                            document.getElementById('labPatient').value = name + ' — ' + mrn;
+                            console.log('✅ Patient loaded from last viewed ID:', name);
+                            success = true;
+                        }
+                    }
+                    // If still not found, take the first patient
+                    if (!success && patients.length > 0) {
+                        currentPatient = patients[0];
+                        const name = (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '');
+                        const mrn = currentPatient.mrn || 'N/A';
+                        document.getElementById('labPatient').value = name + ' — ' + mrn;
+                        console.log('✅ Defaulted to first patient:', name);
+                        success = true;
+                    }
+                }
+            } catch (e) {
+                console.log('Error loading from patients list:', e);
+            }
+        }
+    }
+    
+    if (success) {
+        autoTickRecentLabRequests();
+        return true;
     }
     
     document.getElementById('labPatient').value = 'No patient selected';
     console.log('❌ No patient found from any source');
     return false;
+}
+
+// ─── AUTO-TICK RECENT LAB REQUESTS (WITHIN 10 MINS OR PENDING) ───
+function autoTickRecentLabRequests() {
+    if (!currentPatient) return;
+    try {
+        const now = Date.now();
+        const tenMins = 10 * 60 * 1000;
+        let recentTests = new Set();
+
+        // 1. Check patient labRequests
+        const reqs = getPatientLabRequests();
+        reqs.forEach(req => {
+            const isRecent = req.timestamp && (now - new Date(req.timestamp).getTime() <= tenMins);
+            const isPending = req.status === 'Pending' || req.status === 'pending';
+            if ((isRecent || isPending) && Array.isArray(req.tests)) {
+                req.tests.forEach(t => recentTests.add(t));
+            }
+        });
+
+        // 2. Check pclinic_orders for this patient
+        const orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
+        orders.forEach(o => {
+            if (String(o.patientId) === String(currentPatient.id) && o.type === 'lab') {
+                const isRecent = o.orderedAt && (now - new Date(o.orderedAt).getTime() <= tenMins);
+                const isPending = !o.status || o.status.toLowerCase() === 'pending';
+                if ((isRecent || isPending) && Array.isArray(o.items)) {
+                    o.items.forEach(it => recentTests.add(it.name));
+                }
+            }
+        });
+
+        if (recentTests.size > 0) {
+            document.querySelectorAll('.lab-test-item input[type="checkbox"]').forEach(cb => {
+                if (recentTests.has(cb.value)) {
+                    cb.checked = true;
+                    cb.closest('.lab-test-item').classList.add('selected');
+                }
+            });
+            updateSelectedTests();
+            showToast(`⏳ ${recentTests.size} requested test(s) within 10 mins kept ticked (Control/Pending)`, 'info');
+        }
+    } catch(e) {
+        console.warn('autoTickRecentLabRequests error:', e);
+    }
 }     
 
 
@@ -1437,6 +1588,32 @@ function submitLabRequest() {
             }
         } catch (e) {}
 
+        // ─── CREATE REAL LAB ORDER WITH AUTOMATIC BILLING FOR CASHIER ───
+        try {
+            if (window.pcOrders) {
+                const items = selectedLabTests.map(testName => {
+                    return {
+                        code: 'LAB-' + testName.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8),
+                        name: testName,
+                        qty: 1,
+                        price: LAB_PRICES[testName] || 5000
+                    };
+                });
+                const totalCash = items.reduce((sum, it) => sum + it.price, 0);
+                const order = window.pcOrders.create({
+                    patientId: currentPatient.id,
+                    patientName: (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || ''),
+                    type: 'lab',
+                    priority: document.getElementById('labPriority').value || 'routine',
+                    notes: 'Sample: ' + (document.getElementById('labSampleType').value || 'Blood') + ' · Requested by: ' + (document.getElementById('labDoctor').value || 'Dr. Unknown'),
+                    items: items
+                });
+                console.log('✅ Created pcOrder with automatic billing for Cashier:', order, 'Total RWF:', totalCash);
+            }
+        } catch (err) {
+            console.warn('Error creating pcOrder:', err);
+        }
+
         // ─── NOTIFY PARENT THAT LAB REQUEST WAS SUBMITTED ───
         window.parent.postMessage({ 
             type: 'LAB_REQUEST_SUBMITTED', 
@@ -1444,7 +1621,8 @@ function submitLabRequest() {
         }, '*');
         console.log('📨 Notified parent about lab request submission for patient:', currentPatient.id);
 
-        showToast(`✅ Lab request submitted! ${selectedLabTests.length} test(s) requested.`, 'success');
+        const totalPrice = selectedLabTests.reduce((sum, t) => sum + (LAB_PRICES[t] || 5000), 0);
+        showToast(`✅ Lab request saved & sent to Lab! Billed ${totalPrice.toLocaleString()} RWF to Cashier.`, 'success');
         clearLabSelection();
         
 
@@ -1479,18 +1657,38 @@ function escapeHtml(str) {
 // ─── GET LATEST LAB REQUESTS FOR CURRENT PATIENT ───
 function getPatientLabRequests() {
     if (!currentPatient) return [];
-
-    // Prefer the freshest copy from localStorage (in case another
-    // tab/page updated the patient's requests since this page loaded)
+    let list = [];
     try {
         const patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
         const found = patients.find(p => String(p.id) === String(currentPatient.id));
         if (found && Array.isArray(found.labRequests)) {
-            return found.labRequests;
+            list = found.labRequests.slice();
+        } else if (Array.isArray(currentPatient.labRequests)) {
+            list = currentPatient.labRequests.slice();
         }
+    } catch (e) {
+        if (Array.isArray(currentPatient.labRequests)) list = currentPatient.labRequests.slice();
+    }
+    try {
+        const orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
+        orders.forEach(o => {
+            if (String(o.patientId) === String(currentPatient.id) && o.type === 'lab') {
+                const exists = list.some(r => String(r.id) === String(o.id));
+                if (!exists) {
+                    list.push({
+                        id: o.id,
+                        tests: (o.items || []).map(i => i.name),
+                        status: (o.status === 'completed' || o.status === 'Completed') ? 'Completed' : ((o.status === 'cancelled' || o.status === 'Cancelled') ? 'Cancelled' : 'Pending'),
+                        timestamp: o.orderedAt || new Date().toISOString(),
+                        requestedBy: o.orderedBy || 'Dr. Unknown',
+                        priority: o.priority || 'routine',
+                        sampleType: o.notes || '--'
+                    });
+                }
+            }
+        });
     } catch (e) {}
-
-    return Array.isArray(currentPatient.labRequests) ? currentPatient.labRequests : [];
+    return list;
 }
 
 // ─── OPEN REQUEST HISTORY ───
@@ -1653,6 +1851,8 @@ function toggleHistoryDetails(idx) {
             console.warn('Auth guard redirect:', err && err.message);
         });
     </script>
+<script src="pclinic-catalog.js"></script>
+<script src="pclinic-orders.js"></script>
 <script src="pclinic-file.js"></script>
 <script src="pclinic-handoff.js"></script>
 </body>

@@ -497,7 +497,25 @@
 
         // ─── LOAD RESULTS ───
         function loadResults(patient) {
-            var requests = patient.labRequests || [];
+            var requests = (patient.labRequests || []).slice();
+            try {
+                var orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
+                orders.forEach(function(o) {
+                    if (String(o.patientId) === String(patient.id) && o.type === 'lab') {
+                        var exists = requests.some(function(r) { return String(r.id) === String(o.id); });
+                        if (!exists) {
+                            requests.push({
+                                id: o.id,
+                                tests: (o.items || []).map(function(i) { return i.name; }),
+                                status: (o.status === 'completed' || o.status === 'Completed') ? 'Completed' : ((o.status === 'cancelled' || o.status === 'Cancelled') ? 'Cancelled' : 'Pending'),
+                                timestamp: o.orderedAt || new Date().toISOString(),
+                                requestedBy: o.orderedBy || 'Dr. Unknown',
+                                priority: o.priority || 'routine'
+                            });
+                        }
+                    }
+                });
+            } catch(e){}
             var completed = patient.labResults || [];
             allResults = [];
 
