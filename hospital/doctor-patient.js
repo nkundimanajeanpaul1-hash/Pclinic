@@ -295,7 +295,7 @@
     window.dpPrescription  = function () { openPage('prescription.html'); };
     window.dpAdmission     = function () { openPage('admission-form.html'); };
     window.dpWardRound     = function () { openPage('ward-round.html'); };
-    window.dpOpdFile       = function () { openPage('opd_file.html'); };
+    window.dpOpdFile       = function () { openPage('opd-file.html'); };
     window.dpBill          = function () { openPage('billing.html'); };
 
     /* ══════════════ OVERRIDE THE LEGACY ENTRY POINTS ══════════════ */
@@ -312,7 +312,7 @@
             openPrescriptionModal:  'prescription.html',
             openAdmissionFormFromDashboard: 'admission-form.html',
             openWardRoundModal:     'ward-round.html',
-            openAddPatientFile:     'opd_file.html'
+            openAddPatientFile:     'opd-file.html'
         };
         Object.keys(map).forEach(function (fn) {
             window[fn] = function (patient) {
@@ -350,12 +350,12 @@
         var p = requirePatient('add a note'); if (!p) return;
         if (typeof window.addNoteForPatient === 'function') return window.addNoteForPatient(p.id);
         var tab = document.querySelector('[data-tab="notes"]');
-        if (tab) tab.click(); else openPage('opd_file.html');
+        if (tab) tab.click(); else openPage('opd-file.html');
     };
     window.dpOpenHistory = function () {
         var p = requirePatient('view history'); if (!p) return;
         if (typeof window.openPatientHistory === 'function') return window.openPatientHistory(p.id);
-        openPage('opd_file.html');
+        openPage('opd-file.html');
     };
 
     /* ══════════════ INIT ══════════════ */

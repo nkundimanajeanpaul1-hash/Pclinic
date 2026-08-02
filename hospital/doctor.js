@@ -6483,7 +6483,7 @@ function openOpdFileModal(patient) {
     
     // ─── USE SIMPLE IFRAME (NO URL PARAMETERS) ───
     container.innerHTML = `
-        <iframe id="opdIframe" src="opd_file.html" style="
+        <iframe id="opdIframe" src="opd-file.html" style="
             width: 100%;
             height: 800px;
             border: none;

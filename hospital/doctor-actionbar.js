@@ -44,7 +44,7 @@
         if (!need()) return;
         var i = document.getElementById(kind === 'video' ? 'videoInput' : 'photoInput');
         if (i) return i.click();
-        go('opd_file.html');
+        go('opd-file.html');
     }
 
     window.dcLab     = function () { go('lab-request.html'); };
@@ -75,15 +75,18 @@
             { label:'Medical Report',           icon:'ti-report-medical',    run:function(){ go('medical-report.html'); } },
             { label:'Hospitalisation Cert.',    icon:'ti-building-hospital', run:function(){ go('hospitalization-certificate.html'); } },
             { label:'Transfer Form',            icon:'ti-arrows-exchange',   run:function(){ legacy('openTransferModal'); } },
-            { label:'Referral Letter',          icon:'ti-send',              run:function(){ go('medical-report.html'); } }
+            { label:'Referral Letter',          icon:'ti-send',              run:function(){ go('referral.html'); } },
+            { label:'Discharge Summary',        icon:'ti-door-exit',         run:function(){ go('discharge-summary.html'); } }
         ]},
         { id:'notes',    label:'Notes',     icon:'ti-notes',       grp:'file',  menu:[
-            { label:'OPD File',        icon:'ti-folder-open', run:function(){ go('opd_file.html'); } },
-            { label:'Clinical Notes',  icon:'ti-notes',       run:function(){ tab('notes'); } },
-            { label:'Surgical Notes',  icon:'ti-scissors',    run:function(){ tab('surgery'); } },
-            { label:'Nursing Notes',   icon:'ti-heart-rate-monitor', run:function(){ tab('notes'); } },
-            { label:'Ward Round',      icon:'ti-bed',         run:function(){ go('ward-round.html'); } },
-            { label:'Patient History', icon:'ti-history',     run:function(){ if (window.dpOpenHistory) dpOpenHistory(); } }
+            { label:'OPD File',        icon:'ti-folder-open',        run:function(){ go('opd-file.html'); } },
+            { label:'Clinical Note',   icon:'ti-notes',              run:function(){ go('clinical-note.html'); } },
+            { label:'Surgical Note',   icon:'ti-scissors',           run:function(){ go('surgical-note.html'); } },
+            { label:'Nursing Note',    icon:'ti-heart-rate-monitor', run:function(){ go('nursing-note.html'); } },
+            { label:'Procedure Note',  icon:'ti-stethoscope',        run:function(){ go('procedure-note.html'); } },
+            { label:'Ward Round',      icon:'ti-bed',                run:function(){ go('ward-round.html'); } },
+            { label:'Admission Form',  icon:'ti-file-plus',          run:function(){ go('admission-form.html'); } },
+            { label:'Patient History', icon:'ti-history',            run:function(){ if (window.dpOpenHistory) dpOpenHistory(); } }
         ]},
         { id:'labreq',   label:'Lab Request',     icon:'ti-test-pipe',      grp:'order', run:function(){ go('lab-request.html'); } },
         { id:'labres',   label:'Lab Result',      icon:'ti-chart-bar',      grp:'order', run:function(){ go('lab-results.html'); } },
@@ -92,7 +95,6 @@
         { id:'rx',       label:'Prescription',    icon:'ti-pill',           grp:'order', run:function(){ go('prescription.html'); } },
         { id:'proc',     label:'Procedure',       icon:'ti-stethoscope',    grp:'order', run:function(){ if (window.dcProc) dcProc(); } },
         { id:'vitals',   label:'Vitals',          icon:'ti-heartbeat',      grp:'clin',  run:function(){ legacy('viewAllVitals'); } },
-        { id:'admit',    label:'Admission',       icon:'ti-file-plus',      grp:'clin',  run:function(){ go('admission-form.html'); } },
         { id:'media',    label:'Media',           icon:'ti-photo',          grp:'media', menu:[
             { label:'Photos', icon:'ti-photo', run:function(){ media('photo'); } },
             { label:'Video',  icon:'ti-video', run:function(){ media('video'); } }

@@ -1,671 +1,301 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-    <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
-    <script type="module" src="firebase-config.js"></script>
-    <script src="auth-guard.js"></script>
-<script src="pclinic-state.js"></script>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prescription • PClinic</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
-    <link rel="stylesheet" href="pclinic-ui.css">
-<style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;background:#c3c4ca;color:#1a1a2e;font-size:13px;padding:20px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-text-size-adjust:100%}
-        .container{max-width:1400px;margin:0 auto;animation:fadeIn .5s cubic-bezier(0.23,1,0.32,1)}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(12px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-        .card{background:rgba(255,255,255,0.6);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:16px;border:0.5px solid rgba(255,255,255,0.3);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.04),0 4px 20px rgba(0,0,0,0.03)}
-        .header{padding:16px 24px;border-bottom:0.5px solid rgba(0,0,0,0.04);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:rgba(255,255,255,0.3)}
-        .header-title{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
-        .header-title i{color:#0071e3;font-size:20px}
-        .header-title span{font-size:12px;font-weight:400;color:#6b7280;margin-left:8px}
-        .header-actions{display:flex;gap:8px;flex-wrap:wrap}
-        .btn{padding:6px 14px;font-size:11px;font-weight:500;border-radius:10px;border:0.5px solid rgba(0,0,0,0.04);cursor:pointer;font-family:inherit;transition:all .2s ease;display:inline-flex;align-items:center;gap:4px}
-        .btn:hover{transform:scale(1.04)}.btn:active{transform:scale(0.94)}
-        .btn-close{background:rgba(255,59,48,0.06);color:#991b1b;border-color:rgba(255,59,48,0.1)}
-        .btn-close:hover{background:rgba(255,59,48,0.1)}
-        .btn-dark{background:rgba(255,255,255,0.4);color:#1a1a2e}
-        .btn-dark:hover{background:rgba(255,255,255,0.7)}
-        .btn-print{background:rgba(0,113,227,0.06);color:#0071e3;border-color:rgba(0,113,227,0.1)}
-        .btn-print:hover{background:rgba(0,113,227,0.1)}
-        .btn-history{background:rgba(175,82,222,0.08);color:#6a1b9a;border-color:rgba(175,82,222,0.15)}
-        .btn-history:hover{background:rgba(175,82,222,0.14)}
-        .patient-banner{padding:12px 20px;background:rgba(255,255,255,0.2);border-bottom:0.5px solid rgba(0,0,0,0.03);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-        .patient-name{font-size:15px;font-weight:700;color:#1a1a2e}
-        .patient-mrn{font-size:12px;color:#6b7280;font-weight:500}
-        .rx-count{font-size:12px;color:#6b7280;background:rgba(0,0,0,0.03);padding:2px 12px;border-radius:12px}
-        .body{padding:20px 24px;background:rgba(255,255,255,0.2)}
-        .patient-card{background:rgba(0,113,227,0.05);border-radius:12px;padding:14px 18px;margin-bottom:20px;border-left:4px solid #0071e3;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;position:relative;overflow:hidden}
-        .patient-card::before{content:'';position:absolute;top:-50%;right:-15%;width:140px;height:140px;background:radial-gradient(circle,rgba(0,113,227,0.04),transparent 70%);border-radius:50%;pointer-events:none}
-        .patient-card .p-name{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
-        .patient-card .p-dot{width:8px;height:8px;border-radius:50%;background:#34c759;display:inline-block;animation:pDot 2s ease-in-out infinite}
-        @keyframes pDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
-        .patient-card .p-meta{font-size:12px;color:#6b7280;display:flex;gap:16px;flex-wrap:wrap}
-        .patient-card .p-meta span{display:flex;align-items:center;gap:4px}
-        .patient-card .p-meta i{font-size:14px;color:#0071e3}
-        .patient-card .p-time{font-size:11px;color:#6b7280;background:rgba(0,0,0,0.03);padding:2px 12px;border-radius:12px}
-        .tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:0.5px solid rgba(0,0,0,0.06);padding-bottom:2px;flex-wrap:wrap}
-        .tab{padding:8px 16px;font-size:13px;font-weight:600;color:#6b7280;border:none;background:transparent;cursor:pointer;border-radius:10px 10px 0 0;transition:all .2s ease;font-family:inherit;position:relative}
-        .tab:hover{color:#1a1a2e;background:rgba(0,0,0,0.03)}
-        .tab.active{color:#0071e3}
-        .tab.active::after{content:'';position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);width:60%;height:2.5px;background:#0071e3;border-radius:2px}
-        .tab .tbadge{font-size:10px;font-weight:600;background:rgba(0,0,0,0.06);padding:1px 8px;border-radius:9999px;margin-left:4px;color:#6b7280}
-        .tab.active .tbadge{background:rgba(0,113,227,0.08);color:#0071e3}
-        .tc{display:none}.tc.active{display:block;animation:tcFade .3s ease}
-        @keyframes tcFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        .stl{font-size:13px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-        .stl i{font-size:16px;color:#0071e3}
-        .form{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-        .form .fw{grid-column:1/-1}
-        .grp{display:flex;flex-direction:column;gap:6px}
-        .grp label{font-size:12px;font-weight:600;color:#2d2d44;letter-spacing:0.2px;display:flex;align-items:center;gap:4px}
-        .grp label .req{color:#ff3b30;font-weight:700}
-        .grp label i{font-size:14px;color:#0071e3}
-        .inp{padding:10px 14px;border:0.5px solid rgba(0,0,0,0.04);border-radius:12px;font-size:13px;font-family:inherit;color:#1a1a2e;background:rgba(255,255,255,0.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transition:all .2s ease;width:100%;appearance:none;-webkit-appearance:none}
-        .inp:focus{border-color:#0071e3;background:rgba(255,255,255,0.7);outline:none;box-shadow:0 0 0 3px rgba(0,113,227,0.06)}
-        .inp::placeholder{color:#6b7280;opacity:.6}
-        select.inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-        textarea.inp{resize:vertical;min-height:60px}
-        .sw{position:relative}.sw .inp{padding-left:36px}
-        .sw .si{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#6b7280;font-size:16px;pointer-events:none}
-        .sugs{position:absolute;top:calc(100% + 4px);left:0;right:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:12px;border:0.5px solid rgba(0,0,0,0.04);box-shadow:0 2px 12px rgba(0,0,0,0.08),0 8px 32px rgba(0,0,0,0.04);display:none;max-height:200px;overflow-y:auto;z-index:10}
-        .sugs .si-i{padding:8px 14px;cursor:pointer;transition:background .15s;font-size:13px;display:flex;align-items:center;gap:10px}
-        .sugs .si-i:hover{background:rgba(0,113,227,0.06)}
-        .sugs .si-i i{color:#0071e3;font-size:14px}
-        .sugs .si-e{padding:10px 14px;color:#6b7280;font-size:13px;text-align:center}
-        .lw{margin-top:16px;border-top:0.5px solid rgba(0,0,0,0.06);padding-top:16px}
-        .lh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
-        .cnt{font-size:11px;font-weight:600;color:#6b7280;background:rgba(0,0,0,0.03);padding:2px 12px;border-radius:12px}
-        .ri{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(255,255,255,0.3);border-radius:12px;border:0.5px solid rgba(0,0,0,0.04);margin-bottom:8px;transition:all .2s ease;animation:riSlide .4s cubic-bezier(0.34,1.56,0.64,1)}
-        @keyframes riSlide{from{opacity:0;transform:translateX(-20px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}
-        .ri:hover{background:rgba(255,255,255,0.6);box-shadow:0 1px 4px rgba(0,0,0,0.04),0 4px 20px rgba(0,0,0,0.03);transform:translateX(4px) scale(1.01)}
-        .ri .mi{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
-        .ri .mn{font-size:14px;font-weight:600;color:#1a1a2e;word-break:break-word}
-        .ri .md{font-size:12px;color:#6b7280;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-        .ri .md .b{font-size:10px;font-weight:600;padding:1px 10px;border-radius:9999px;white-space:nowrap}
-        .b-bl{background:rgba(0,113,227,0.08);color:#0071e3}.b-gr{background:rgba(52,199,89,0.08);color:#1a7a32}.b-or{background:rgba(255,149,0,0.08);color:#7a4500}.b-pr{background:rgba(175,82,222,0.08);color:#6a1b9a}
-        .ri .ma{display:flex;gap:6px;flex-shrink:0}
-        .ri .ma button{width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .2s ease;background:transparent;color:#6b7280}
-        .ri .ma .be:hover{background:rgba(0,113,227,0.08);color:#0071e3;transform:scale(1.1) rotate(-15deg)}
-        .ri .ma .bd:hover{background:rgba(255,59,48,0.08);color:#8a1f1a;transform:scale(1.1) rotate(15deg)}
-        .ri .ma button:active{transform:scale(.85)}
-        .empty{text-align:center;padding:32px 20px;color:#6b7280}
-        .empty i{font-size:48px;color:rgba(0,0,0,0.06);display:block;margin-bottom:12px}
-        .empty p{font-size:14px;font-weight:500}.empty .sub{font-size:12px;font-weight:400;opacity:.7;margin-top:4px}
-        .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;padding-top:20px;border-top:0.5px solid rgba(0,0,0,0.06)}
-        .btn-p{padding:8px 24px;background:#0071e3;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s ease;font-family:inherit;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,113,227,0.15)}
-        .btn-p:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(0,113,227,0.25)}.btn-p:active{transform:scale(.94)}
-        .btn-g{padding:8px 24px;background:#34c759;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s ease;font-family:inherit;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(52,199,89,0.15);position:relative}
-        .btn-g:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(52,199,89,0.25)}.btn-g:active{transform:scale(.94)}
-        .btn-g:disabled{opacity:.6;cursor:not-allowed;transform:none}
-        .btn-g.ld{opacity:.7;pointer-events:none}.btn-g.ld .bt{visibility:hidden}
-        .btn-g.ld::after{content:'';position:absolute;width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .btn-v{padding:8px 24px;background:#af52de;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s ease;font-family:inherit;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(175,82,222,0.15)}
-        .btn-v:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(175,82,222,0.25)}.btn-v:active{transform:scale(.94)}
-        .btn-s{padding:8px 20px;background:rgba(255,255,255,0.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border:0.5px solid rgba(0,0,0,0.04);border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;color:#2d2d44;transition:all .2s ease}
-        .btn-s:hover{background:rgba(255,255,255,0.8);transform:scale(1.04)}.btn-s:active{transform:scale(.94)}
-        .toast-container{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;max-width:90%}
-        .toast{background:rgba(28,28,30,0.9);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);color:#fff;border-radius:14px;padding:10px 20px;font-size:13px;font-weight:500;pointer-events:auto;opacity:0;transform:translateY(20px) scale(0.95);transition:all .4s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 4px 20px rgba(0,0,0,0.12);text-align:center}
-        .toast.show{opacity:1;transform:translateY(0) scale(1)}
-        .toast.success{background:#065f46}.toast.error{background:#991b1b}.toast.warning{background:#92400e}.toast.info{background:#1e40af}
-        .history-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:20px}
-        .history-modal{background:rgba(255,255,255,0.9);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:18px;border:0.5px solid rgba(255,255,255,0.4);box-shadow:0 2px 12px rgba(0,0,0,0.04),0 8px 40px rgba(0,0,0,0.04);width:100%;max-width:640px;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;animation:fadeIn .3s cubic-bezier(0.23,1,0.32,1)}
-        .history-modal-header{padding:16px 20px;border-bottom:0.5px solid rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.3)}
-        .history-modal-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:#1a1a2e}
-        .history-modal-title i{color:#af52de;font-size:18px}
-        .history-modal-body{padding:16px 20px;overflow-y:auto;max-height:60vh}
-        .history-empty{text-align:center;padding:40px 20px;color:#6b7280;font-size:13px}
-        .history-empty .icon{font-size:40px;display:block;margin-bottom:10px;opacity:.5}
-        .history-item{border:0.5px solid rgba(0,0,0,0.05);border-radius:12px;margin-bottom:10px;overflow:hidden;background:rgba(255,255,255,0.3)}
-        .history-row{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px;flex-wrap:wrap;transition:background .2s}
-        .history-row:hover{background:rgba(0,0,0,0.02)}
-        .history-date{font-size:12px;font-weight:600;color:#1a1a2e;display:flex;align-items:center;gap:6px}
-        .history-date i{color:#6b7280;font-size:14px}
-        .history-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-        .history-badge{font-size:10px;font-weight:600;padding:3px 10px;border-radius:10px;white-space:nowrap}
-        .history-badge.active{background:rgba(52,199,89,0.08);color:#1a7a32}
-        .history-badge.completed{background:rgba(0,0,0,0.04);color:#6b7280}
-        .history-badge.discontinued{background:rgba(255,59,48,0.08);color:#8a1f1a}
-        .history-count{font-size:11px;color:#6b7280}
-        .history-chevron{font-size:14px;color:#6b7280;transition:transform .3s ease}
-        .history-details{padding:0 14px 14px;border-top:0.5px solid rgba(0,0,0,0.04);font-size:12px;color:#2d2d44}
-        .history-detail-row{padding:6px 0 0}
-        .history-test-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
-        .history-test-list li{background:rgba(0,113,227,0.06);color:#0071e3;font-size:11px;font-weight:500;padding:3px 10px;border-radius:8px}
-        @media(max-width:768px){.form{grid-template-columns:1fr}.body{padding:14px 16px}.header{flex-direction:column;align-items:flex-start}.header-actions{width:100%;justify-content:flex-start}.acts{flex-direction:column}.btn-p,.btn-g,.btn-v,.btn-s{width:100%;justify-content:center}}
-        @media(max-width:480px){body{padding:8px}.header-title{font-size:14px}.header-title span{display:none}.btn{font-size:10px;padding:4px 10px}.ri{flex-wrap:wrap;gap:8px}.ri .ma{margin-left:auto}}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PClinic — Prescription</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="stylesheet" href="pclinic-ui.css">
+<link rel="stylesheet" href="pclinic-file.css">
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
+<script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');}catch(e){}})();</script>
 </head>
-<body>
+<body class="pcf">
 
-<div class="toast-container" id="toastContainer"></div>
+<div class="pc-topbar noprint">
+    <div class="pc-brand">
+        <img class="pc-logo" src="logo-wide.png" alt="PClinic" width="118" height="30">
+        <span class="pc-appsub">Rx</span>
+    </div>
+    <div class="pc-tr">
+        <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
+        <div class="pc-chip"><span class="pc-avatar" id="userAvatar">··</span><span id="userName">…</span></div>
+        <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
+    </div>
+</div>
 
-<div class="container">
-    <div class="card">
-        <div class="header">
-            <div class="header-title">
-                <i class="ti ti-pill"></i> Prescription
-                <span>Write and manage prescriptions</span>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-history" onclick="openRxHistory()" title="View prescription history">
-                    <i class="ti ti-history"></i> History
-                </button>
-                <button class="btn btn-print" onclick="printPrescription()" title="Print prescription">
-                    <i class="ti ti-printer"></i> Print
-                </button>
-                <button class="btn btn-close" onclick="closePrescriptionPage()">
-                    <i class="ti ti-x"></i> Close
-                </button>
-            </div>
+<div class="pcf-wrap" style="padding-top:14px">
+
+    <!-- HISTORY -->
+    <div id="viewHistory">
+        <div class="pcf-panel">
+            <h2><i class="ti ti-history"></i> Previous Prescriptions
+                <span class="count" id="histCount">0</span></h2>
+            <div class="pcf-hist" id="histList"></div>
+            <button class="pcf-btn primary full" style="margin-top:14px" onclick="newFile()">
+                <i class="ti ti-pill"></i> New Prescription
+            </button>
+        </div>
+    </div>
+
+    <!-- FILE -->
+    <div id="viewFile" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px" class="noprint">
+            <button class="pcf-btn sm" onclick="backToHistory()"><i class="ti ti-arrow-left"></i> History</button>
+            <b id="fileMode" style="font-size:13px"></b>
+            <span style="flex:1"></span>
+            <button class="pcf-btn sm" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
+            <button class="pcf-btn sm primary" id="saveBtn" onclick="saveFile()"><i class="ti ti-device-floppy"></i> Save</button>
         </div>
 
-        <div class="patient-banner" id="patientBanner">
-            <div>
-                <span class="patient-name" id="patientName">Loading patient...</span>
-                <span class="patient-mrn" id="patientMrn">MRN: --</span>
-            </div>
-            <span class="rx-count" id="rxCountBanner">0 items</span>
-        </div>
-
-        <div class="body">
-            <!-- Patient Info Card -->
-            <div class="patient-card">
-                <div>
-                    <div class="p-name"><span id="rxPName">--</span><span class="p-dot"></span></div>
-                    <div class="p-meta">
-                        <span><i class="ti ti-id"></i> <span id="rxPMRN">--</span></span>
-                        <span><i class="ti ti-calendar"></i> <span id="rxPAge">--</span></span>
-                        <span><i class="ti ti-building-hospital"></i> <span id="rxPDept">--</span></span>
+        <div class="pcf-grid wide">
+            <div class="noprint">
+                <div class="pcf-panel">
+                    <h2><i class="ti ti-pill"></i> Prescription</h2>
+                    
+                </div>
+                
+                <div class="pcf-panel">
+                    <h2><i class="ti ti-pill"></i> Medications</h2>
+                    <div class="pcf-row tight">
+                        <div style="flex:2"><label class="pcf-lbl" for="rxDrug">Drug</label>
+                            <input class="pcf-in" id="rxDrug" placeholder="Amoxicillin 500mg"></div>
+                        <div><label class="pcf-lbl" for="rxDose">Dose</label>
+                            <input class="pcf-in" id="rxDose" placeholder="1 tab TDS"></div>
+                        <div><label class="pcf-lbl" for="rxDur">Duration</label>
+                            <input class="pcf-in" id="rxDur" placeholder="7 days"></div>
+                        <div style="max-width:78px"><label class="pcf-lbl" for="rxQty">Qty</label>
+                            <input class="pcf-in" id="rxQty" type="number" min="1" value="21"></div>
                     </div>
+                    <button class="pcf-btn full" style="margin-top:10px" onclick="rxAdd()">
+                        <i class="ti ti-plus"></i> Add medication</button>
+                    <div id="rxList" style="margin-top:10px"></div>
+                    <div id="rxSafety"></div>
                 </div>
-                <span class="p-time"><i class="ti ti-clock"></i> <span id="rxPTime"></span></span>
+                
+                
+                
             </div>
-
-            <!-- Tabs -->
-            <div class="tabs">
-                <button class="tab active" data-rxtab="current" onclick="rxTab('current')"><i class="ti ti-pill"></i> Current <span class="tbadge" id="rxCTab">0</span></button>
-                <button class="tab" data-rxtab="history" onclick="rxTab('history')"><i class="ti ti-history"></i> History <span class="tbadge" id="rxHTab">0</span></button>
-            </div>
-
-            <!-- CURRENT TAB -->
-            <div class="tc active" id="rxTCurrent">
-                <div class="stl"><i class="ti ti-list"></i> Add Medication</div>
-                <div class="form" id="rxForm">
-                    <div class="fw sw"><i class="ti ti-search si"></i><input type="text" class="inp" id="rxMSearch" placeholder="Search or type medication name..." autocomplete="off" oninput="rxSearch(this.value)"><div class="sugs" id="rxSugs"></div></div>
-                    <div class="grp"><label><i class="ti ti-pill"></i> Medication <span class="req">*</span></label><input type="text" class="inp" id="rxMName" placeholder="e.g. Paracetamol"></div>
-                    <div class="grp"><label><i class="ti ti-ruler-2"></i> Dosage <span class="req">*</span></label><input type="text" class="inp" id="rxMDose" placeholder="e.g. 500mg"></div>
-                    <div class="grp"><label><i class="ti ti-clock"></i> Frequency</label><select class="inp" id="rxMFreq"><option value="OD">OD (Once daily)</option><option value="BD">BD (Twice daily)</option><option value="TDS">TDS (Three times)</option><option value="QDS">QDS (Four times)</option><option value="PRN">PRN (As needed)</option><option value="Stat">Stat (Immediately)</option></select></div>
-                    <div class="grp"><label><i class="ti ti-calendar"></i> Duration</label><input type="text" class="inp" id="rxMDur" placeholder="e.g. 7 days"></div>
-                    <div class="grp"><label><i class="ti ti-box"></i> Quantity</label><input type="number" class="inp" id="rxMQty" placeholder="e.g. 30" min="0" max="9999"></div>
-                    <div class="grp"><label><i class="ti ti-notes"></i> Instructions</label><textarea class="inp" id="rxMInstr" rows="1" placeholder="Take with meals..."></textarea></div>
-                    <div class="fw acts" style="border:none;padding:0;margin:0"><button class="btn-p" onclick="rxAdd()" style="flex:1;justify-content:center"><i class="ti ti-plus"></i> Add to List</button><button class="btn-s" onclick="rxClearF()"><i class="ti ti-x"></i> Clear</button></div>
-                </div>
-
-                <div class="lw">
-                    <div class="lh"><span style="font-size:13px;font-weight:600"><i class="ti ti-pill"></i> Prescription List</span><span class="cnt" id="rxCBadge">0 items</span></div>
-                    <div id="rxList"><div class="empty"><i class="ti ti-pill"></i><p>No medications added yet</p><div class="sub">Search and add medications above</div></div></div>
-                </div>
-
-                <div class="acts">
-                    <button class="btn-g" id="rxSaveBtn" onclick="rxSave()"><i class="ti ti-check"></i> <span class="bt">Save Prescription</span></button>
-                    <button class="btn-v" onclick="rxPharm()"><i class="ti ti-send"></i> Send to Pharmacy</button>
-                    <button class="btn-s" onclick="closePrescriptionPage()"><i class="ti ti-arrow-left"></i> Cancel</button>
-                </div>
-            </div>
-
-            <!-- HISTORY TAB -->
-            <div class="tc" id="rxTHistory">
-                <div class="stl"><i class="ti ti-clock"></i> Prescription History</div>
-                <div id="rxHist"><div class="empty"><i class="ti ti-clock"></i><p>No prescription history</p><div class="sub">Saved prescriptions will appear here</div></div></div>
-                <div class="acts" style="margin-top:16px"><button class="btn-s" onclick="rxClearH()" style="color:#8a1f1a"><i class="ti ti-trash"></i> Clear History</button><button class="btn-s" onclick="rxExport()"><i class="ti ti-download"></i> Export History</button></div>
-            </div>
+            <div class="pcf-doc" id="doc"></div>
         </div>
     </div>
 </div>
 
-<!-- History Modal -->
-<div class="history-overlay" id="historyOverlay" onclick="if(event.target===this)closeRxHistory()">
-    <div class="history-modal">
-        <div class="history-modal-header">
-            <div class="history-modal-title"><i class="ti ti-history"></i> Prescription History</div>
-            <button class="btn btn-close" onclick="closeRxHistory()"><i class="ti ti-x"></i> Close</button>
-        </div>
-        <div class="history-modal-body" id="historyModalBody"></div>
-    </div>
-</div>
+<div class="pc-toasts noprint"></div>
+
+<script type="module" src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+<script src="patient-data.js"></script>
+<script src="pclinic-orders.js"></script>
+<script src="pclinic-file.js"></script>
 
 <script>
-// ============================================================
-// PRESCRIPTION - Standalone Page
-// ============================================================
-var _rxP = null;
-var _rxI = [];
-var _rxA = [];
-var _rxTT = null;
+(function () {
+'use strict';
+var TYPE='prescription', REF='RX', DOCTITLE='Prescription', TITLE='Prescription';
+var FIELDS=[], LABELS=[];
+var HAS_DX=false, HAS_RDV=false, HAS_ATT=false, HAS_RX=true;
+var P=null, viewing=null, chosenDx=[], files=[], meds=[];
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function g(id){var e=document.getElementById(id);return e?e.value.trim():'';}
 
-var _rxMeds = ['Paracetamol','Amoxicillin','Ceftriaxone','Metformin','Salbutamol','Omeprazole','Losartan','Atorvastatin','Ibuprofen','Azithromycin','Doxycycline','Fluconazole','Acyclovir','Captopril','Furosemide','Prednisolone','Levothyroxine','Insulin','Diazepam','Sertraline','Aspirin','Clopidogrel','Warfarin','Heparin','Enoxaparin','Digoxin','Amiodarone','Metoprolol','Bisoprolol','Ramipril','Enalapril','Lisinopril','Amlodipine','Nifedipine','Verapamil','Simvastatin','Rosuvastatin','Fenofibrate','Ezetimibe','Colchicine','Allopurinol','Febuxostat','Sulfasalazine','Hydroxychloroquine','Methotrexate','Tramadol','Morphine','Diclofenac','Naproxen','Celecoxib','Etoricoxib','Metronidazole','Clarithromycin','Ciprofloxacin','Levofloxacin','Gentamicin','Vancomycin','Meropenem','Clindamycin','Rifampicin','Isoniazid','Dexamethasone','Hydrocortisone','Betamethasone','Methylprednisolone','Insulin Glargine','Gliclazide','Glipizide','Sitagliptin','Empagliflozin','Vitamin B12','Vitamin D','Folic Acid','Iron Supplement','Calcium Carbonate','Lactulose','Ondansetron','Metoclopramide','Domperidone','Albuterol','Budesonide','Fluticasone','Salmeterol','Cetirizine','Loratadine','Fexofenadine','Desloratadine','Levocetirizine','Carbamazepine','Lamotrigine','Levetiracetam','Valproic Acid','Phenytoin','Gabapentin','Pregabalin','Topiramate','Clonazepam','Lorazepam','Alprazolam','Zolpidem','Zopiclone','Melatonin','Fluoxetine','Paroxetine','Citalopram','Escitalopram','Duloxetine','Venlafaxine','Bupropion','Mirtazapine','Amitriptyline','Risperidone','Olanzapine','Quetiapine','Aripiprazole','Haloperidol','Donepezil','Rivastigmine','Memantine','Levodopa','Carbidopa','Selegiline'];
-
-// ── Toast ──
-function showToast(message, type) {
-    var container = document.getElementById('toastContainer');
-    if (!container) return;
-    var toast = document.createElement('div');
-    toast.className = 'toast ' + (type || 'info');
-    var icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-    toast.textContent = (icons[type] || 'ℹ️') + ' ' + message;
-    container.appendChild(toast);
-    setTimeout(function() { toast.classList.add('show'); }, 10);
-    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 400); }, 3000);
+/* ── HISTORY ── */
+function renderHistory(){
+    var list=pcFile.list(P.id,TYPE);
+    document.getElementById('histCount').textContent=list.length;
+    var box=document.getElementById('histList');
+    if(!list.length){
+        box.innerHTML='<div class="pcf-empty"><i class="ti ti-pill"></i>'+
+            'No '+TITLE.toLowerCase()+' recorded yet.</div>';
+        return;
+    }
+    box.innerHTML=list.map(function(f,i){
+        var d=new Date(f.at);
+        var sub=f.summary||(f.diagnoses||[]).map(function(x){return x.name;}).join(', ')||'—';
+        return '<div class="pcf-hrow" data-i="'+i+'">'+
+            '<div class="date"><div class="d">'+d.getDate()+'</div>'+
+            '<div class="m">'+d.toLocaleDateString('en-GB',{month:'short'})+'</div></div>'+
+            '<div class="meat"><b>'+esc(f.title||TITLE)+'</b><span>'+esc(sub)+'</span></div>'+
+            '<div class="by">'+esc(f.by||'')+'<br>'+
+            d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</div>'+
+            '<i class="ti ti-chevron-right" style="color:#c7c7cc"></i></div>';
+    }).join('');
+    box.querySelectorAll('.pcf-hrow').forEach(function(r){
+        r.onclick=function(){openFile(list[+r.dataset.i]);};
+    });
 }
 
-
-
-
-
-// ── Load Patient ──
-function loadPatientData(patient) {
-    console.log('📥 loadPatientData called with:', patient);
-    
-    // If patient is provided directly, use it
-    if (patient && patient.id) {
-        _rxP = patient;
-        rxUpdateUI(patient);
-        rxLoadHistory(patient);
-        try {
-            localStorage.setItem('pclinic_rx_patient_data', JSON.stringify(patient));
-        } catch (e) {}
-        showToast('✅ Loaded prescription for ' + (patient.firstName || '') + ' ' + (patient.lastName || ''), 'success');
-        return true;
-    }
-    
-    // Try to get from parent window (dashboard)
-    try {
-        if (window.parent && window.parent.currentPatient) {
-            var p = window.parent.currentPatient;
-            if (p && p.id) {
-                _rxP = p;
-                rxUpdateUI(p);
-                rxLoadHistory(p);
-                return true;
-            }
-        }
-    } catch (e) {
-        console.log('Could not access parent.currentPatient');
-    }
-    
-    // Try to get from localStorage
-    try {
-        var stored = localStorage.getItem('pclinic_rx_patient_data');
-        if (stored) {
-            var p = JSON.parse(stored);
-            if (p && p.id) {
-                _rxP = p;
-                rxUpdateUI(p);
-                rxLoadHistory(p);
-                return true;
-            }
-        }
-    } catch (e) {
-        console.log('Could not load from localStorage');
-    }
-    
-    // Try to get from URL params (if passed via query string)
-    try {
-        var urlParams = new URLSearchParams(window.location.search);
-        var data = urlParams.get('data');
-        if (data) {
-            var p = JSON.parse(decodeURIComponent(data));
-            if (p && p.id) {
-                _rxP = p;
-                rxUpdateUI(p);
-                rxLoadHistory(p);
-                return true;
-            }
-        }
-    } catch (e) {
-        console.log('Could not load from URL params');
-    }
-    
-    // Request patient data from parent
-    try {
-        if (window.parent) {
-            window.parent.postMessage({ type: 'REQUEST_PATIENT_DATA' }, '*');
-            console.log('📤 Requested patient data from parent');
-        }
-    } catch (e) {
-        console.log('Could not request data from parent');
-    }
-    
-    // If we get here, no patient data found
-    console.log('❌ No patient data found from any source');
-    return false;
+function openFile(f){
+    viewing=f;
+    document.getElementById('viewHistory').style.display='none';
+    document.getElementById('viewFile').style.display='';
+    document.getElementById('fileMode').textContent='Viewing '+new Date(f.at).toLocaleDateString('en-GB',
+        {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('saveBtn').style.display='none';
+    document.querySelectorAll('#viewFile .noprint .pcf-panel').forEach(function(p){p.style.display='none';});
+    var grid=document.querySelector('#viewFile .pcf-grid');
+    if(grid){grid.classList.add('single');grid.style.maxWidth='860px';grid.style.margin='0 auto';}
+    paintDoc(f);
 }
 
+window.newFile=function(){
+    viewing=null;chosenDx=[];files=[];meds=[];
+    document.getElementById('viewHistory').style.display='none';
+    document.getElementById('viewFile').style.display='';
+    document.getElementById('fileMode').textContent='New '+TITLE+' — '+
+        new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('saveBtn').style.display='';
+    document.querySelectorAll('#viewFile .noprint .pcf-panel').forEach(function(p){p.style.display='';});
+    var grid=document.querySelector('#viewFile .pcf-grid');
+    if(grid){grid.classList.remove('single');grid.style.maxWidth='';grid.style.margin='';}
+    if(HAS_DX)  pcFile.dxPicker(document.getElementById('dxHost'),chosenDx,function(c){chosenDx=c;paintDoc();});
+    if(HAS_ATT) pcFile.attachments(document.getElementById('atHost'),files,function(f){files=f;paintDoc();});
+    if(HAS_RX)  renderMeds();
+    paintDoc();
+};
 
+window.backToHistory=function(){
+    document.getElementById('viewFile').style.display='none';
+    document.getElementById('viewHistory').style.display='';
+    renderHistory();
+};
 
-
-
-
-
-
-
-// ── Update UI with patient data ──
-function rxUpdateUI(p) {
-    console.log('🔄 Updating UI with patient:', p);
-    
-    var f = p.firstName || p.first_name || p.fname || p.givenName || '';
-    var l = p.lastName || p.last_name || p.lname || p.familyName || p.surname || '';
-    var full = p.fullName || p.full_name || p.patientName || p.name || (f + ' ' + l).trim() || 'Unknown';
-    var mrn = p.mrn || p.patientId || p.patient_id || p.id || 'N/A';
-    var dob = p.dob || p.DOB || p.dateOfBirth || p.date_of_birth || null;
-    var dept = p.department || p.dept || p.ward || p.unit || 'General';
-    var g = p.gender || p.sex || '';
-    var ageS = 'N/A';
-    
-    if (dob) {
-        var b = new Date(dob), t = new Date(), a = t.getFullYear() - b.getFullYear();
-        if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) a--;
-        ageS = a + ' yrs';
-        if (g) ageS += ', ' + g.charAt(0).toUpperCase() + g.slice(1).toLowerCase();
-    } else if (p.age) {
-        ageS = p.age + (g ? ', ' + g.charAt(0).toUpperCase() + g.slice(1).toLowerCase() : '');
-    }
-    
-    document.getElementById('patientName').textContent = full;
-    document.getElementById('patientMrn').textContent = 'MRN: ' + mrn;
-    document.getElementById('rxPName').textContent = full;
-    document.getElementById('rxPMRN').textContent = mrn;
-    document.getElementById('rxPAge').textContent = ageS;
-    document.getElementById('rxPDept').textContent = dept;
-    
-    var n = new Date();
-    document.getElementById('rxPTime').textContent = n.toLocaleDateString() + ' ' + n.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+/* ── PRESCRIPTION ── */
+window.rxAdd=function(){
+    var n=g('rxDrug');
+    if(!n){pcToast('Enter a medication','error');return;}
+    meds.push({name:n,dose:g('rxDose')||'—',duration:g('rxDur')||'—',qty:parseInt(g('rxQty'),10)||1});
+    ['rxDrug','rxDose','rxDur'].forEach(function(i){document.getElementById(i).value='';});
+    renderMeds();paintDoc();
+};
+function renderMeds(){
+    var box=document.getElementById('rxList');
+    if(!box)return;
+    box.innerHTML=meds.map(function(m,i){
+        return '<div class="pcf-file"><i class="ti ti-pill"></i><span class="nm"><b>'+esc(m.name)+
+            '</b> · '+esc(m.dose)+' · '+esc(m.duration)+'</span><span class="sz">×'+m.qty+
+            '</span><button data-i="'+i+'">&times;</button></div>';
+    }).join('');
+    box.querySelectorAll('button').forEach(function(b){
+        b.onclick=function(){meds.splice(+b.dataset.i,1);renderMeds();paintDoc();};});
+    safety();
+}
+function safety(){
+    var box=document.getElementById('rxSafety');
+    if(!box||!window.pcSafety||!meds.length){if(box)box.innerHTML='';return;}
+    var w=pcSafety.check(P,meds.map(function(m){return m.name;}));
+    if(!w.length){box.innerHTML='<div style="margin-top:10px;padding:9px 12px;border-radius:10px;'+
+        'background:#e9f9ee;color:#1a7a32;font-size:12.5px;font-weight:600">'+
+        '<i class="ti ti-shield-check"></i> No allergy or interaction warnings.</div>';return;}
+    box.innerHTML='<div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:#ffebe9;'+
+        'border:1px solid #ff3b30"><b style="font-size:12px;color:#8a1f1a">⛔ '+w.length+
+        ' warning'+(w.length>1?'s':'')+'</b><ul style="list-style:none;margin-top:6px">'+
+        w.map(function(x){return '<li style="font-size:12px;padding:2px 0">'+esc(x.text)+'</li>';}).join('')+
+        '</ul></div>';
 }
 
-// ── Load prescription history ──
-function rxLoadHistory(p) {
-    var mrn = p.mrn || p.patientId || p.id || 'unknown';
-    try {
-        var raw = localStorage.getItem('rx_h_' + mrn);
-        _rxA = raw ? (JSON.parse(raw).prescriptions || []) : [];
-    } catch (e) { _rxA = []; }
-    document.getElementById('rxHTab').textContent = _rxA.length;
-    _rxI = [];
-    rxUC();
-    rxRL();
+/* ── DOCUMENT ── */
+function gather(){
+    if(viewing)return viewing;
+    var o={type:TYPE,patientId:P.id,patientName:pcFile.nameOf(P),title:TITLE,
+        at:new Date().toISOString(),by:pcFile.staff().name||'',
+        diagnoses:chosenDx.slice(),medications:meds.slice(),
+        attachments:files.map(function(f){return {name:f.name,type:f.type,size:f.size,data:f.data};}),
+        rdv:(HAS_RDV&&g('rdvDate'))?{date:g('rdvDate'),reason:g('rdvReason')||'Follow-up'}:null,
+        fields:{}};
+    FIELDS.forEach(function(f){o.fields[f]=g('f_'+f);});
+    o.summary=FIELDS.length?(o.fields[FIELDS[0]]||''):'';
+    return o;
+}
+function paintDoc(f){
+    f=f||gather();
+    var d=new Date(f.at);
+    var body=FIELDS.map(function(fid,i){
+        var v=(f.fields||{})[fid];
+        if(!v)return '';
+        return '<div class="sec"><h4>'+esc(LABELS[i])+'</h4><p>'+esc(v)+'</p></div>';
+    }).join('');
+    var dxb=(f.diagnoses||[]).length?'<div class="sec"><h4>Diagnosis</h4><div class="dxrow">'+
+        f.diagnoses.map(function(x){return '<span>'+(x.code?esc(x.code)+' · ':'')+esc(x.name)+'</span>';}).join('')+
+        '</div></div>':'';
+    var rxb=(f.medications||[]).length?'<div class="sec"><h4>Medications</h4><p>'+
+        f.medications.map(function(m,i){return (i+1)+'. '+esc(m.name)+'  —  '+esc(m.dose)+
+        '  ×  '+esc(m.duration)+'   (qty '+m.qty+')';}).join('<br>')+'</p></div>':'';
+    var rdvb=f.rdv?'<div class="sec"><h4>Next appointment (RDV)</h4><p><b>'+
+        new Date(f.rdv.date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+
+        '</b> — '+esc(f.rdv.reason)+'</p></div>':'';
+    var atb=(f.attachments||[]).length?'<div class="sec"><h4>Attachments</h4><p>'+
+        f.attachments.map(function(a){return '• '+esc(a.name);}).join('<br>')+'</p></div>':'';
+
+    document.getElementById('doc').innerHTML=
+    '<div class="dh"><div><div class="org">PClinic</div>'+
+      '<div class="sub">Hospital Management System<br>Kigali, Rwanda<br>+250 784 446 481</div></div>'+
+      '<div class="meta"><div><b>'+REF+'-'+esc(P.id)+'-'+d.getFullYear()+'</b></div>'+
+      '<div>'+d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'</div>'+
+      '<div>'+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</div></div></div>'+
+    '<div class="dtitle">'+DOCTITLE+'</div>'+
+    '<div class="pinfo">'+
+      '<div><span>Patient</span><b>'+esc(pcFile.nameOf(P))+'</b></div>'+
+      '<div><span>File no.</span>'+esc(P.mrn||('ID '+P.id))+'</div>'+
+      '<div><span>Age / Sex</span>'+esc(pcFile.age(P.dob))+(P.gender?' · '+esc(P.gender):'')+'</div>'+
+      '<div><span>District</span>'+esc(P.district||'—')+'</div>'+
+      (P.insurance&&P.insurance.provider?'<div><span>Insurance</span>'+esc(P.insurance.provider)+'</div>':'')+
+      '<div><span>Recorded by</span>'+esc(f.by||pcFile.staff().name||'')+'</div>'+
+    '</div>'+
+    (body||'<div class="sec"><p class="none">Nothing recorded yet.</p></div>')+
+    dxb+rxb+rdvb+atb+
+    '<div class="sig"><div>Patient signature</div><div>'+esc(f.by||pcFile.staff().name||'')+
+      '<br>'+(TYPE==='nursing'?'Nurse on duty':'Attending Physician')+'</div></div>'+
+    '<div class="stamp">PClinic · generated '+new Date().toLocaleString('en-GB')+'</div>';
 }
 
-// ── Close (sends message to parent) ──
-function closePrescriptionPage() {
-    console.log('🔚 Closing prescription page');
-    window.parent.postMessage({ type: 'CLOSE_PRESCRIPTION' }, '*');
-}
-
-
-
-
-
-
-
-// ── Listen for messages from parent ──
-window.addEventListener('message', function(event) {
-    console.log('📨 Prescription received message:', event.data);
-    
-    if (!event.data || !event.data.type) return;
-    
-    if (event.data.type === 'LOAD_PATIENT') {
-        var patient = event.data.patient;
-        console.log('👤 Patient data received via postMessage:', patient);
-        if (patient && patient.id) {
-            loadPatientData(patient);
-        } else {
-            console.log('❌ Invalid patient data received');
-        }
+/* ── SAVE ── */
+window.saveFile=function(){
+    var rec=gather();
+    var any=FIELDS.some(function(f){return rec.fields[f];})||rec.diagnoses.length||rec.medications.length;
+    if(!any){pcToast('Fill in at least one section','error');return;}
+    if(HAS_RX&&rec.medications.length&&window.pcSafety){
+        var w=pcSafety.check(P,rec.medications.map(function(m){return m.name;}))
+              .filter(function(x){return x.level==='danger';});
+        if(w.length&&!confirm('⛔ '+w.length+' SERIOUS WARNING'+(w.length>1?'S':'')+':\n\n'+
+            w.map(function(x){return '• '+x.text;}).join('\n')+'\n\nPrescribe anyway?'))return;
+        if(w.length)rec.overrideWarnings=w.map(function(x){return x.text;});
     }
-    
-    if (event.data.type === 'PATIENT_DATA_RESPONSE') {
-        var patient = event.data.patient;
-        console.log('👤 Patient data received via response:', patient);
-        if (patient && patient.id) {
-            loadPatientData(patient);
-        }
+    if(rec.rdv)pcFile.saveRdv(P,rec.rdv.date,rec.rdv.reason);
+    if(HAS_RX&&rec.medications.length&&window.pcOrders){
+        pcOrders.create({patientId:P.id,patientName:pcFile.nameOf(P),type:'prescription',bill:false,
+            items:rec.medications.map(function(m){return {name:m.name+'  '+m.dose+'  ×'+m.duration,qty:m.qty,price:0};})});
     }
+    pcFile.save(rec);
+    pcToast(TITLE+' saved'+(rec.rdv?' · RDV sent to reception':'')+
+        (HAS_RX&&rec.medications.length?' · sent to pharmacy':''),'success');
+    setTimeout(backToHistory,500);
+};
+
+document.addEventListener('input',function(e){
+    if(e.target.closest('#viewFile')&&!viewing)paintDoc();
 });
 
-
-
-
-
-
-
-
-
-
-
-// ── Tab ──
-function rxTab(name) {
-    var ts = document.querySelectorAll('.tab');
-    for (var i = 0; i < ts.length; i++) ts[i].classList.toggle('active', ts[i].dataset.rxtab === name);
-    var cs = document.querySelectorAll('.tc');
-    for (var j = 0; j < cs.length; j++) cs[j].classList.toggle('active', cs[j].id === 'rxT' + name.charAt(0).toUpperCase() + name.slice(1));
-    if (name === 'history') rxRenderHistModal();
-}
-
-// ── Search ──
-function rxSearch(q) {
-    var c = document.getElementById('rxSugs');
-    if (!q || q.length < 1) { c.style.display = 'none'; return; }
-    var ql = q.toLowerCase(), m = [];
-    for (var i = 0; i < _rxMeds.length && m.length < 8; i++) if (_rxMeds[i].toLowerCase().indexOf(ql) !== -1) m.push(_rxMeds[i]);
-    if (!m.length) c.innerHTML = '<div class="si-e">No matches — type to add custom</div>';
-    else { var h = ''; for (var j = 0; j < m.length; j++) h += '<div class="si-i" onclick="rxPick(\'' + m[j].replace(/'/g, "\\'") + '\')"><i class="ti ti-pill"></i> ' + m[j] + '</div>'; c.innerHTML = h; }
-    c.style.display = 'block';
-}
-function rxPick(n) { document.getElementById('rxMName').value = n; document.getElementById('rxSugs').style.display = 'none'; document.getElementById('rxMDose').focus(); }
-document.addEventListener('click', function(e) { var c = document.getElementById('rxSugs'), s = document.getElementById('rxMSearch'); if (c && s && !s.contains(e.target) && !c.contains(e.target)) c.style.display = 'none'; });
-
-function rxDupe(n) { var nl = n.toLowerCase().trim(); for (var i = 0; i < _rxI.length; i++) if (_rxI[i].medication.toLowerCase().trim() === nl) return true; return false; }
-
-function rxAdd() {
-    var med = document.getElementById('rxMName').value.trim(), dose = document.getElementById('rxMDose').value.trim(), freq = document.getElementById('rxMFreq').value, dur = document.getElementById('rxMDur').value.trim(), qty = document.getElementById('rxMQty').value, instr = document.getElementById('rxMInstr').value.trim();
-    if (!med) { showToast('⚠️ Please enter a medication name', 'warning'); document.getElementById('rxMName').focus(); return; }
-    if (!dose) { showToast('⚠️ Please enter a dosage', 'warning'); document.getElementById('rxMDose').focus(); return; }
-    if (rxDupe(med)) showToast('⚠️ "' + med + '" is already in the list — added again', 'warning');
-    _rxI.push({ id: Date.now() + Math.random(), medication: med, dosage: dose, frequency: freq, duration: dur || 'As directed', quantity: qty || '', instructions: instr });
-    rxUC(); rxRL(); rxClearF();
-    if (!rxDupe(med)) showToast('✅ ' + med + ' added', 'success');
-    document.getElementById('rxMSearch').focus();
-}
-
-function rxClearF() { document.getElementById('rxMName').value = ''; document.getElementById('rxMDose').value = ''; document.getElementById('rxMFreq').value = 'OD'; document.getElementById('rxMDur').value = ''; document.getElementById('rxMQty').value = ''; document.getElementById('rxMInstr').value = ''; document.getElementById('rxMSearch').value = ''; document.getElementById('rxSugs').style.display = 'none'; }
-
-function rxUC() { var c = _rxI.length; document.getElementById('rxCTab').textContent = c; document.getElementById('rxCBadge').textContent = c + ' item' + (c !== 1 ? 's' : ''); document.getElementById('rxCountBanner').textContent = c + ' items'; }
-
-function rxRL() {
-    var el = document.getElementById('rxList');
-    if (!_rxI.length) { el.innerHTML = '<div class="empty"><i class="ti ti-pill"></i><p>No medications added yet</p><div class="sub">Search and add medications above</div></div>'; return; }
-    var fl = { OD: 'Once daily', BD: 'Twice daily', TDS: '3x daily', QDS: '4x daily', PRN: 'As needed', Stat: 'Immediately' }, h = '';
-    for (var i = 0; i < _rxI.length; i++) {
-        var m = _rxI[i];
-        h += '<div class="ri"><div class="mi"><div class="mn">' + m.medication + '</div><div class="md"><span class="b b-bl">' + m.dosage + '</span><span class="b b-gr">' + (fl[m.frequency] || m.frequency) + '</span><span class="b b-or">' + m.duration + '</span>' + (m.quantity ? '<span class="b b-pr">Qty: ' + m.quantity + '</span>' : '') + (m.instructions ? '<span style="color:#6b7280;font-size:11px">' + m.instructions + '</span>' : '') + '</div></div><div class="ma"><button class="be" onclick="rxEdit(' + m.id + ')" title="Edit"><i class="ti ti-pencil"></i></button><button class="bd" onclick="rxDel(' + m.id + ')" title="Delete"><i class="ti ti-trash"></i></button></div></div>';
-    }
-    el.innerHTML = h;
-}
-
-function rxEdit(id) {
-    var item = null; for (var i = 0; i < _rxI.length; i++) if (_rxI[i].id === id) { item = _rxI[i]; break; } if (!item) return;
-    document.getElementById('rxMName').value = item.medication; document.getElementById('rxMDose').value = item.dosage; document.getElementById('rxMFreq').value = item.frequency; document.getElementById('rxMDur').value = item.duration === 'As directed' ? '' : item.duration; document.getElementById('rxMQty').value = item.quantity; document.getElementById('rxMInstr').value = item.instructions || '';
-    var f = []; for (var j = 0; j < _rxI.length; j++) if (_rxI[j].id !== id) f.push(_rxI[j]); _rxI = f; rxUC(); rxRL(); document.getElementById('rxMName').focus(); showToast('✏️ Editing — modify and re-add', 'info');
-}
-
-function rxDel(id) { var item = null, f = []; for (var i = 0; i < _rxI.length; i++) { if (_rxI[i].id === id) item = _rxI[i]; else f.push(_rxI[i]); } _rxI = f; rxUC(); rxRL(); if (item) showToast('🗑️ ' + item.medication + ' removed', 'error'); }
-
-function rxSave() {
-    if (!_rxI.length) { showToast('⚠️ No medications to save', 'warning'); return; }
-    if (!_rxP) { showToast('⚠️ No patient selected', 'error'); return; }
-    var btn = document.getElementById('rxSaveBtn'); btn.classList.add('ld'); btn.disabled = true;
-    setTimeout(function () {
-        var mrn = _rxP.mrn || _rxP.patientId || _rxP.id || 'unknown';
-        _rxA.push({ id: 'RX-' + Date.now(), date: new Date().toISOString(), patientId: mrn, patientName: document.getElementById('rxPName').textContent, medications: JSON.parse(JSON.stringify(_rxI)), status: 'active' });
-        try { localStorage.setItem('rx_h_' + mrn, JSON.stringify({ patientId: mrn, prescriptions: _rxA, lastUpdated: new Date().toISOString() })); } catch (e) {}
-        document.getElementById('rxHTab').textContent = _rxA.length;
-        _rxI = []; rxUC(); rxRL();
-        btn.classList.remove('ld'); btn.disabled = false;
-        showToast('✅ Prescription saved successfully', 'success');
-    }, 1200);
-}
-
-function rxPharm() { if (!_rxI.length) { showToast('⚠️ No medications to send', 'warning'); return; } showToast('📤 Sent to pharmacy (' + _rxI.length + ' items)', 'success'); }
-
-// ── History Modal ──
-function openRxHistory() {
-    if (!_rxP) { 
-        try { if (window.parent && window.parent.currentPatient) _rxP = window.parent.currentPatient; } catch (e) {} 
-    }
-    if (!_rxP) { showToast('⚠️ Please select a patient first', 'warning'); return; }
-    rxRenderHistModal();
-    document.getElementById('historyOverlay').style.display = 'flex';
-}
-function closeRxHistory() { document.getElementById('historyOverlay').style.display = 'none'; }
-
-function rxRenderHistModal() {
-    var el = document.getElementById('historyModalBody');
-    if (!_rxA.length) { el.innerHTML = '<div class="history-empty"><span class="icon">📋</span><p>No prescription history</p></div>'; return; }
-    var g = {}, h = '', ds;
-    for (var i = 0; i < _rxA.length; i++) { var d = new Date(_rxA[i].date).toLocaleDateString(); if (!g[d]) g[d] = []; g[d].push(_rxA[i]); }
-    ds = Object.keys(g);
-    for (var j = 0; j < ds.length; j++) {
-        h += '<div class="hg">' + ds[j] + '</div>';
-        var items = g[ds[j]];
-        for (var k = 0; k < items.length; k++) {
-            var rx = items[k], names = [];
-            for (var m = 0; m < rx.medications.length; m++) names.push(rx.medications[m].medication);
-            var statusRaw = rx.status || 'active', statusCls = statusRaw === 'active' ? 'active' : statusRaw === 'discontinued' ? 'discontinued' : 'completed';
-            var idx = k + j * 100;
-            h += '<div class="history-item"><div class="history-row" onclick="toggleHxD(' + idx + ')"><div class="history-date"><i class="ti ti-calendar-event"></i> ' + new Date(rx.date).toLocaleString() + '</div><div class="history-meta"><span class="history-badge ' + statusCls + '">' + statusRaw + '</span><span class="history-count">' + rx.medications.length + ' med' + (rx.medications.length !== 1 ? 's' : '') + '</span><i class="ti ti-chevron-down history-chevron" id="hxChev' + idx + '"></i></div></div><div class="history-details" id="hxDet' + idx + '" style="display:none"><div class="history-detail-row"><strong>Medications:</strong></div><ul class="history-test-list">' + names.map(function(n) { return '<li>' + n + '</li>'; }).join('') + '</ul></div></div>';
-        }
-    }
-    el.innerHTML = h;
-}
-
-function toggleHxD(idx) {
-    var d = document.getElementById('hxDet' + idx), c = document.getElementById('hxChev' + idx);
-    if (!d) return;
-    var isOpen = d.style.display === 'block';
-    d.style.display = isOpen ? 'none' : 'block';
-    if (c) c.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
-}
-
-function rxClearH() { if (!_rxP) return; if (!_rxA.length) { showToast('ℹ️ History is already empty', 'info'); return; } var mrn = _rxP.mrn || _rxP.patientId || _rxP.id || 'unknown'; _rxA = []; try { localStorage.removeItem('rx_h_' + mrn); } catch (e) {} document.getElementById('rxHTab').textContent = '0'; rxRenderHistModal(); showToast('🗑️ History cleared', 'warning'); }
-
-function rxExport() { if (!_rxA.length) { showToast('⚠️ No history to export', 'warning'); return; } var b = new Blob([JSON.stringify(_rxA, null, 2)], { type: 'application/json' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'rx_history_' + new Date().toISOString().slice(0, 10) + '.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast('📤 Exported as JSON', 'success'); }
-
-// ── Print ──
-function printPrescription() {
-    if (!_rxI.length) { showToast('⚠️ No medications to print', 'warning'); return; }
-    var pName = _rxP ? ((_rxP.firstName || '') + ' ' + (_rxP.lastName || '')) : 'Unknown';
-    var pMrn = _rxP ? (_rxP.mrn || 'N/A') : 'N/A';
-    var fl = { OD: 'Once daily', BD: 'Twice daily', TDS: '3x daily', QDS: '4x daily', PRN: 'As needed', Stat: 'Immediately' };
-    var c = '<div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:40px;max-width:800px;margin:0 auto">';
-    c += '<div style="text-align:center;margin-bottom:30px;border-bottom:2px solid #333;padding-bottom:20px"><h1 style="font-size:22px;font-weight:700">PClinic Prescription</h1><p style="font-size:14px;color:#6b7280;margin-top:4px">Patient: <strong>' + pName + '</strong> | MRN: ' + pMrn + '</p><p style="font-size:12px;color:#6b7280">Date: ' + new Date().toLocaleString() + ' | Doctor: Dr. James Mitchell</p></div>';
-    c += '<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f3f4f6;border-bottom:2px solid #e5e7eb"><th style="padding:10px 12px;text-align:left;font-weight:600;color:#374151">#</th><th style="padding:10px 12px;text-align:left;font-weight:600;color:#374151">Medicine</th><th style="padding:10px 12px;text-align:left;font-weight:600;color:#374151">Dosage</th><th style="padding:10px 12px;text-align:left;font-weight:600;color:#374151">Frequency</th><th style="padding:10px 12px;text-align:left;font-weight:600;color:#374151">Duration</th><th style="padding:10px 12px;text-align:left;font-weight:600;color:#374151">Route</th><th style="padding:10px 12px;text-align:left;font-weight:600;color:#374151">Instructions</th></tr></thead><tbody>';
-    for (var i = 0; i < _rxI.length; i++) { var m = _rxI[i]; c += '<tr style="border-bottom:0.5px solid #e5e7eb"><td>' + (i + 1) + '</td><td style="font-weight:500">' + m.medication + '</td><td>' + m.dosage + '</td><td>' + (fl[m.frequency] || m.frequency) + '</td><td>' + m.duration + '</td><td>Oral</td><td>' + (m.instructions || '—') + '</td></tr>'; }
-    c += '</tbody></table>';
-    c += '<div style="text-align:center;margin-top:30px;padding-top:20px;border-top:2px solid #e5e7eb;font-size:12px;color:#6b7280"><p>PClinic — Quality Healthcare</p><p style="margin-top:4px">This prescription does not replace clinical judgment.</p></div></div>';
-    var w = window.open('', '_blank', 'width=800,height=600');
-    if (w) { w.document.write('<html><head><title>Prescription</title></head><body>' + c + '</body></html>'); w.document.close(); w.print(); showToast('🖨️ Sent to printer', 'success'); }
-    else showToast('❌ Please allow pop-ups to print', 'error');
-}
-
-// ── Init ──
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('💊 Prescription Page Loaded');
-    
-    // 1. Try localStorage first
-    try { 
-        var stored = localStorage.getItem('pclinic_rx_patient_data'); 
-        if (stored) { 
-            var p = JSON.parse(stored); 
-            if (p && p.id) { 
-                loadPatientData(p); 
-                return; 
-            } 
-        } 
-    } catch (e) {}
-    
-    // 2. Try parent
-    try { 
-        if (window.parent && window.parent.currentPatient) { 
-            loadPatientData(window.parent.currentPatient); 
-            return; 
-        } 
-    } catch (e) {}
-    
-    // 3. Try URL param
-    try {
-        var urlParams = new URLSearchParams(window.location.search);
-        var encoded = urlParams.get('data');
-        if (encoded) { 
-            var p = JSON.parse(decodeURIComponent(encoded)); 
-            if (p && p.id) { 
-                loadPatientData(p); 
-                return; 
-            } 
-        } 
-    } catch (e) {}
-    
-    // 4. No patient - show message and request from parent
-    document.getElementById('patientName').textContent = 'No patient selected';
-    document.getElementById('patientMrn').textContent = 'Please select a patient from the dashboard';
-    document.getElementById('rxPName').textContent = '--';
-    document.getElementById('rxPMRN').textContent = '--';
-    document.getElementById('rxPAge').textContent = '--';
-    document.getElementById('rxPDept').textContent = '--';
-    
-    // Request patient data from parent
-    try {
-        if (window.parent) {
-            window.parent.postMessage({ type: 'REQUEST_PATIENT_DATA' }, '*');
-            console.log('📤 Requested patient data from parent (init)');
-        }
-    } catch (e) {}
-});
-
-// ── Keyboard ──
-document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePrescriptionPage(); });
-document.getElementById('rxForm').addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); rxAdd(); } });
-
-// ── Expose ──
-window.loadPatientData = loadPatientData;
-window.closePrescriptionPage = closePrescriptionPage;
-window.showToast = showToast;
-window.rxAdd = rxAdd;
-window.rxSave = rxSave;
-window.rxClearF = rxClearF;
-window.rxTab = rxTab;
-window.rxSearch = rxSearch;
-window.rxPick = rxPick;
-window.rxEdit = rxEdit;
-window.rxDel = rxDel;
-window.rxPharm = rxPharm;
-window.openRxHistory = openRxHistory;
-window.closeRxHistory = closeRxHistory;
-window.rxClearH = rxClearH;
-window.rxExport = rxExport;
-window.printPrescription = printPrescription;
+requireAuth([]).then(function(s){
+    window.currentStaff=s;
+    document.getElementById('userName').textContent=s.name;
+    document.getElementById('userAvatar').textContent=(s.name||'??').substring(0,2).toUpperCase();
+    var tries=0;
+    (function wait(){
+        P=pcFile.patient();
+        if(P){renderHistory();return;}
+        if(++tries<20)return setTimeout(wait,220);
+        document.getElementById('histList').innerHTML=
+            '<div class="pcf-empty"><i class="ti ti-user-off"></i>No patient selected.<br>'+
+            '<span style="font-size:11px">Open this from the doctor dashboard with a patient active.</span></div>';
+        var btn=document.querySelector('#viewHistory .pcf-btn');
+        if(btn)btn.style.display='none';
+    })();
+}).catch(function(){});
+})();
 </script>
-    <script>
-        requireAuth([]).then(function(staff) {
-            window.currentStaff = staff;
-            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
-        }).catch(function(err) {
-            console.warn('Auth guard redirect:', err && err.message);
-        });
-    </script>
 <script src="pclinic-handoff.js"></script>
 </body>
 </html>
