@@ -339,7 +339,9 @@
             ['messages.html',         'Messages',        'ti-mail',        '#8a1f1a', '#ffebe9']
         ];
         var here = location.pathname.split('/').pop();
-        bar.innerHTML = A.map(function (a) {
+        bar.innerHTML =
+        '<button type="button" onclick="if(window.pcVitals) window.pcVitals.open();" class="fb-btn" style="--c:#e11d48;--b:#ffe4e6;cursor:pointer;border:none;" title="Open Vital Signs"><i class="ti ti-heart-rate-monitor"></i><span>Vital Signs</span></button>' +
+        A.map(function (a) {
             var on = a[0] === here;
             return '<a href="' + a[0] + (p ? '?patient=' + p.id : '') + '" class="fb-btn' +
                    (on ? ' cur' : '') + '" style="--c:' + a[3] + ';--b:' + a[4] + '" title="' + a[1] + '">' +

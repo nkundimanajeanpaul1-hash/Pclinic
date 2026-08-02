@@ -6488,11 +6488,12 @@ function openOpdFileModal(patient) {
         }
     }
     
+    try { localStorage.setItem('pclinic_active_patient', String(selectedPatient.id)); } catch(e){}
     container.style.display = 'block';
     
-    // ─── USE SIMPLE IFRAME (NO URL PARAMETERS) ───
+    // ─── USE SIMPLE IFRAME WITH PATIENT ID PARAM ───
     container.innerHTML = `
-        <iframe id="opdIframe" src="opd-file.html" style="
+        <iframe id="opdIframe" src="opd-file.html?patient=${encodeURIComponent(selectedPatient.id)}" style="
             width: 100%;
             height: 800px;
             border: none;

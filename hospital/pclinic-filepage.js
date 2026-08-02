@@ -281,33 +281,111 @@
     /* Chosen a drug — now say how much and for how long. Quantity drives
        the price, so the cashier's figure matches what is dispensed. */
     function doseSheet(d) {
+        var detMg = 500;
+        var strMatch = (String(d.strength || '') + ' ' + String(d.name || '')).match(/(\d+)\s*(?:mg|g|gr|ml)/i);
+        if (strMatch) {
+            var valStr = parseInt(strMatch[1], 10);
+            if (/g|gr/i.test(strMatch[0]) && !/mg/i.test(strMatch[0])) {
+                detMg = valStr * 1000;
+            } else {
+                detMg = valStr;
+            }
+        }
+
         pcFile.sheet({
             title: pcCatalog.drugLabel(d), icon: 'ti-pill', done: 'Add to prescription',
             build: function (body) {
                 body.innerHTML =
-                    '<div style="font-size:11.5px;color:var(--tm);margin-bottom:10px">' +
-                    esc(d.form) + ' · ' + money(d.price) + ' each</div>' +
-                    '<div class="pcf-two">' +
-                    '<div><label class="pcf-lbl" for="dz_dose">Dose &amp; frequency</label>' +
-                      '<input class="pcf-in" id="dz_dose" value="' + esc(d.dose || '') + '"></div>' +
-                    '<div><label class="pcf-lbl" for="dz_dur">Duration</label>' +
-                      '<input class="pcf-in" id="dz_dur" placeholder="5 days"></div>' +
-                    '<div><label class="pcf-lbl" for="dz_qty">Quantity to dispense</label>' +
-                      '<input class="pcf-in" type="number" id="dz_qty" value="1" min="1"></div>' +
-                    '<div><label class="pcf-lbl" for="dz_note">Note to pharmacist</label>' +
-                      '<input class="pcf-in" id="dz_note" placeholder="After food"></div>' +
+                    '<div style="font-size:12px;color:var(--tm);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">' +
+                    '<span><b>' + esc(d.form || 'tablet') + '</b> · Unit strength: <b>' + detMg + ' mg</b></span>' +
+                    '<span><b>' + money(d.price) + '</b> / unit</span>' +
                     '</div>' +
-                    '<div class="tot" style="margin-top:11px"><span class="l">Line total</span>' +
+                    '<div class="pcf-two" style="gap:10px;margin-bottom:10px;">' +
+                      '<div><label class="pcf-lbl" for="dz_dose_num">Dose per intake</label>' +
+                        '<div style="display:flex;gap:6px;">' +
+                          '<input class="pcf-in" type="number" id="dz_dose_num" value="' + detMg + '" min="0" style="flex:1;">' +
+                          '<select class="pcf-in" id="dz_dose_unit" style="width:75px;">' +
+                            '<option value="mg">mg</option>' +
+                            '<option value="g">g/gr</option>' +
+                            '<option value="pills">pills</option>' +
+                          '</select>' +
+                        '</div></div>' +
+                      '<div><label class="pcf-lbl" for="dz_freq">Frequency</label>' +
+                        '<select class="pcf-in" id="dz_freq">' +
+                          '<option value="1">OD (Once daily)</option>' +
+                          '<option value="2">BID / BD (2× daily)</option>' +
+                          '<option value="3" selected>TDS / TID (3× daily)</option>' +
+                          '<option value="4">QID / QDS (4× daily)</option>' +
+                          '<option value="6">Q4H (6× daily)</option>' +
+                          '<option value="4">Q6H (4× daily)</option>' +
+                          '<option value="3">Q8H (3× daily)</option>' +
+                          '<option value="2">PRN (As needed)</option>' +
+                          '<option value="1">STAT (Single dose)</option>' +
+                        '</select></div>' +
+                      '<div><label class="pcf-lbl" for="dz_dur_days">Duration (days)</label>' +
+                        '<input class="pcf-in" type="number" id="dz_dur_days" value="5" min="1"></div>' +
+                      '<div><label class="pcf-lbl" for="dz_qty">Quantity to dispense (pills)</label>' +
+                        '<input class="pcf-in" type="number" id="dz_qty" value="1" min="1" style="font-weight:700;color:var(--ac);"></div>' +
+                    '</div>' +
+                    '<div style="margin-bottom:10px;">' +
+                      '<label class="pcf-lbl" for="dz_note">Note to pharmacist</label>' +
+                      '<input class="pcf-in" id="dz_note" placeholder="After food, substitutions allowed...">' +
+                    '</div>' +
+                    '<div id="dz_calc_banner" style="margin: 10px 0; padding: 10px 12px; background: var(--acb); border: 1px solid rgba(0,113,227,0.2); border-radius: 8px; font-size: 12.5px; color: var(--ac);"></div>' +
+                    '<div class="tot" style="margin-top:11px"><span class="l">Total cash for cashier</span>' +
                     '<span class="v" id="dz_tot">' + money(d.price) + '</span></div>';
-                var q = $('#dz_qty', body);
-                q.addEventListener('input', function () {
-                    $('#dz_tot', body).textContent = money(d.price * (parseInt(this.value, 10) || 0));
+
+                function calc() {
+                    var num = parseFloat($('#dz_dose_num', body).value) || 0;
+                    var unit = $('#dz_dose_unit', body).value;
+                    var freq = parseInt($('#dz_freq', body).value, 10) || 1;
+                    var days = parseInt($('#dz_dur_days', body).value, 10) || 1;
+
+                    var pillsPerDose = 1;
+                    if (unit === 'mg') {
+                        pillsPerDose = Math.ceil(num / (detMg || 500)) || 1;
+                    } else if (unit === 'g') {
+                        pillsPerDose = Math.ceil((num * 1000) / (detMg || 500)) || 1;
+                    } else {
+                        pillsPerDose = Math.ceil(num) || 1;
+                    }
+                    var totalPills = pillsPerDose * freq * days;
+                    $('#dz_qty', body).value = totalPills;
+                    var totPrice = (d.price || 0) * totalPills;
+                    $('#dz_tot', body).textContent = money(totPrice);
+
+                    var freqEl = $('#dz_freq', body);
+                    var freqText = freqEl ? freqEl.options[freqEl.selectedIndex].text.split(' ')[0] : 'OD';
+                    $('#dz_calc_banner', body).innerHTML =
+                        '<b>💡 Auto-calculated:</b> ' + pillsPerDose + ' pill(s)/dose × ' + freqText + ' × ' + days + ' day(s) = <b>' + totalPills + ' pill(s) total</b> · ' + money(totPrice);
+                }
+
+                $('#dz_dose_num', body).addEventListener('input', calc);
+                $('#dz_dose_unit', body).addEventListener('change', calc);
+                $('#dz_freq', body).addEventListener('change', calc);
+                $('#dz_dur_days', body).addEventListener('input', calc);
+
+                $('#dz_qty', body).addEventListener('input', function () {
+                    var customQty = parseInt(this.value, 10) || 0;
+                    $('#dz_tot', body).textContent = money((d.price || 0) * customQty);
+                    $('#dz_calc_banner', body).innerHTML =
+                        '<b>✏️ Custom quantity:</b> ' + customQty + ' pill(s) · <b>' + money((d.price || 0) * customQty) + '</b> for cashier';
                 });
+
+                calc();
             },
             onClose: function () {
                 var qty = parseInt(val('dz_qty'), 10) || 1;
+                var doseVal = val('dz_dose_num') || '1';
+                var doseUnit = val('dz_dose_unit') || 'mg';
+                var freqEl = $('#dz_freq');
+                var freqText = freqEl ? freqEl.options[freqEl.selectedIndex].text.split(' ')[0] : 'OD';
+                var durDays = val('dz_dur_days') || '1';
+                var fullDose = doseVal + ' ' + doseUnit + ' (' + freqText + ')';
+                var fullDur = durDays + ' days';
+
                 meds.push({ code: d.code, name: pcCatalog.drugLabel(d), form: d.form,
-                    dose: val('dz_dose') || d.dose || '—', duration: val('dz_dur') || '—',
+                    dose: fullDose, duration: fullDur,
                     note: val('dz_note') || '', qty: qty, price: d.price });
                 setVal('rxSearch', ''); paintPick('');
                 renderMeds(); paintDoc();
@@ -611,6 +689,15 @@
             var un = $('#userName'), ua = $('#userAvatar');
             if (un) un.textContent = s.name;
             if (ua) ua.textContent = (s.name || '??').substring(0, 2).toUpperCase();
+
+            window.addEventListener('message', function (e) {
+                if (e.data && e.data.type === 'LOAD_PATIENT' && e.data.patient && e.data.patient.id) {
+                    try { localStorage.setItem('pclinic_active_patient', String(e.data.patient.id)); } catch (err) {}
+                    P = e.data.patient;
+                    shell();
+                    renderHistory();
+                }
+            });
 
             var tries = 0;
             (function wait() {
