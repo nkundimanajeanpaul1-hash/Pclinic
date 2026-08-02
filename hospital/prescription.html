@@ -16,7 +16,7 @@
 <div class="pc-topbar noprint">
     <div class="pc-brand">
         <img class="pc-logo" src="logo-wide.png" alt="PClinic" width="118" height="30">
-        <span class="pc-appsub">Rx</span>
+        <span class="pc-appsub" id="appSub">Prescription</span>
     </div>
     <div class="pc-tr">
         <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
@@ -25,61 +25,8 @@
     </div>
 </div>
 
-<div class="pcf-wrap" style="padding-top:14px">
-
-    <!-- HISTORY -->
-    <div id="viewHistory">
-        <div class="pcf-panel">
-            <h2><i class="ti ti-history"></i> Previous Prescriptions
-                <span class="count" id="histCount">0</span></h2>
-            <div class="pcf-hist" id="histList"></div>
-            <button class="pcf-btn primary full" style="margin-top:14px" onclick="newFile()">
-                <i class="ti ti-pill"></i> New Prescription
-            </button>
-        </div>
-    </div>
-
-    <!-- FILE -->
-    <div id="viewFile" style="display:none">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px" class="noprint">
-            <button class="pcf-btn sm" onclick="backToHistory()"><i class="ti ti-arrow-left"></i> History</button>
-            <b id="fileMode" style="font-size:13px"></b>
-            <span style="flex:1"></span>
-            <button class="pcf-btn sm" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
-            <button class="pcf-btn sm primary" id="saveBtn" onclick="saveFile()"><i class="ti ti-device-floppy"></i> Save</button>
-        </div>
-
-        <div class="pcf-grid wide">
-            <div class="noprint">
-                <div class="pcf-panel">
-                    <h2><i class="ti ti-pill"></i> Prescription</h2>
-                    
-                </div>
-                
-                <div class="pcf-panel">
-                    <h2><i class="ti ti-pill"></i> Medications</h2>
-                    <div class="pcf-row tight">
-                        <div style="flex:2"><label class="pcf-lbl" for="rxDrug">Drug</label>
-                            <input class="pcf-in" id="rxDrug" placeholder="Amoxicillin 500mg"></div>
-                        <div><label class="pcf-lbl" for="rxDose">Dose</label>
-                            <input class="pcf-in" id="rxDose" placeholder="1 tab TDS"></div>
-                        <div><label class="pcf-lbl" for="rxDur">Duration</label>
-                            <input class="pcf-in" id="rxDur" placeholder="7 days"></div>
-                        <div style="max-width:78px"><label class="pcf-lbl" for="rxQty">Qty</label>
-                            <input class="pcf-in" id="rxQty" type="number" min="1" value="21"></div>
-                    </div>
-                    <button class="pcf-btn full" style="margin-top:10px" onclick="rxAdd()">
-                        <i class="ti ti-plus"></i> Add medication</button>
-                    <div id="rxList" style="margin-top:10px"></div>
-                    <div id="rxSafety"></div>
-                </div>
-                
-                
-                
-            </div>
-            <div class="pcf-doc" id="doc"></div>
-        </div>
-    </div>
+<div class="pcf-wrap">
+    <div id="pcfRoot" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
 </div>
 
 <div class="pc-toasts noprint"></div>
@@ -90,211 +37,34 @@
 <script src="patient-data.js"></script>
 <script src="pclinic-orders.js"></script>
 <script src="pclinic-file.js"></script>
-
+<script src="pclinic-filepage.js"></script>
 <script>
-(function () {
-'use strict';
-var TYPE='prescription', REF='RX', DOCTITLE='Prescription', TITLE='Prescription';
-var FIELDS=[], LABELS=[];
-var HAS_DX=false, HAS_RDV=false, HAS_ATT=false, HAS_RX=true;
-var P=null, viewing=null, chosenDx=[], files=[], meds=[];
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
-function g(id){var e=document.getElementById(id);return e?e.value.trim():'';}
-
-/* ── HISTORY ── */
-function renderHistory(){
-    var list=pcFile.list(P.id,TYPE);
-    document.getElementById('histCount').textContent=list.length;
-    var box=document.getElementById('histList');
-    if(!list.length){
-        box.innerHTML='<div class="pcf-empty"><i class="ti ti-pill"></i>'+
-            'No '+TITLE.toLowerCase()+' recorded yet.</div>';
-        return;
+pcFilePage.init({
+  "type": "prescription",
+  "ref": "RX",
+  "title": "Prescription",
+  "sub": "Prescription",
+  "docTitle": "Prescription",
+  "icon": "ti-pill",
+  "histTitle": "Previous prescriptions",
+  "histUnit": "prescription",
+  "newLabel": "New Prescription",
+  "dx": true,
+  "rdv": false,
+  "att": false,
+  "vitals": false,
+  "rx": true,
+  "fields": [
+    {
+      "id": "notes",
+      "label": "Notes to the pharmacist",
+      "kind": "area",
+      "ph": "Substitutions allowed, counselling points…",
+      "panel": "Prescription",
+      "icon": "ti-pill"
     }
-    box.innerHTML=list.map(function(f,i){
-        var d=new Date(f.at);
-        var sub=f.summary||(f.diagnoses||[]).map(function(x){return x.name;}).join(', ')||'—';
-        return '<div class="pcf-hrow" data-i="'+i+'">'+
-            '<div class="date"><div class="d">'+d.getDate()+'</div>'+
-            '<div class="m">'+d.toLocaleDateString('en-GB',{month:'short'})+'</div></div>'+
-            '<div class="meat"><b>'+esc(f.title||TITLE)+'</b><span>'+esc(sub)+'</span></div>'+
-            '<div class="by">'+esc(f.by||'')+'<br>'+
-            d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</div>'+
-            '<i class="ti ti-chevron-right" style="color:#c7c7cc"></i></div>';
-    }).join('');
-    box.querySelectorAll('.pcf-hrow').forEach(function(r){
-        r.onclick=function(){openFile(list[+r.dataset.i]);};
-    });
-}
-
-function openFile(f){
-    viewing=f;
-    document.getElementById('viewHistory').style.display='none';
-    document.getElementById('viewFile').style.display='';
-    document.getElementById('fileMode').textContent='Viewing '+new Date(f.at).toLocaleDateString('en-GB',
-        {weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    document.getElementById('saveBtn').style.display='none';
-    document.querySelectorAll('#viewFile .noprint .pcf-panel').forEach(function(p){p.style.display='none';});
-    var grid=document.querySelector('#viewFile .pcf-grid');
-    if(grid){grid.classList.add('single');grid.style.maxWidth='860px';grid.style.margin='0 auto';}
-    paintDoc(f);
-}
-
-window.newFile=function(){
-    viewing=null;chosenDx=[];files=[];meds=[];
-    document.getElementById('viewHistory').style.display='none';
-    document.getElementById('viewFile').style.display='';
-    document.getElementById('fileMode').textContent='New '+TITLE+' — '+
-        new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    document.getElementById('saveBtn').style.display='';
-    document.querySelectorAll('#viewFile .noprint .pcf-panel').forEach(function(p){p.style.display='';});
-    var grid=document.querySelector('#viewFile .pcf-grid');
-    if(grid){grid.classList.remove('single');grid.style.maxWidth='';grid.style.margin='';}
-    if(HAS_DX)  pcFile.dxPicker(document.getElementById('dxHost'),chosenDx,function(c){chosenDx=c;paintDoc();});
-    if(HAS_ATT) pcFile.attachments(document.getElementById('atHost'),files,function(f){files=f;paintDoc();});
-    if(HAS_RX)  renderMeds();
-    paintDoc();
-};
-
-window.backToHistory=function(){
-    document.getElementById('viewFile').style.display='none';
-    document.getElementById('viewHistory').style.display='';
-    renderHistory();
-};
-
-/* ── PRESCRIPTION ── */
-window.rxAdd=function(){
-    var n=g('rxDrug');
-    if(!n){pcToast('Enter a medication','error');return;}
-    meds.push({name:n,dose:g('rxDose')||'—',duration:g('rxDur')||'—',qty:parseInt(g('rxQty'),10)||1});
-    ['rxDrug','rxDose','rxDur'].forEach(function(i){document.getElementById(i).value='';});
-    renderMeds();paintDoc();
-};
-function renderMeds(){
-    var box=document.getElementById('rxList');
-    if(!box)return;
-    box.innerHTML=meds.map(function(m,i){
-        return '<div class="pcf-file"><i class="ti ti-pill"></i><span class="nm"><b>'+esc(m.name)+
-            '</b> · '+esc(m.dose)+' · '+esc(m.duration)+'</span><span class="sz">×'+m.qty+
-            '</span><button data-i="'+i+'">&times;</button></div>';
-    }).join('');
-    box.querySelectorAll('button').forEach(function(b){
-        b.onclick=function(){meds.splice(+b.dataset.i,1);renderMeds();paintDoc();};});
-    safety();
-}
-function safety(){
-    var box=document.getElementById('rxSafety');
-    if(!box||!window.pcSafety||!meds.length){if(box)box.innerHTML='';return;}
-    var w=pcSafety.check(P,meds.map(function(m){return m.name;}));
-    if(!w.length){box.innerHTML='<div style="margin-top:10px;padding:9px 12px;border-radius:10px;'+
-        'background:#e9f9ee;color:#1a7a32;font-size:12.5px;font-weight:600">'+
-        '<i class="ti ti-shield-check"></i> No allergy or interaction warnings.</div>';return;}
-    box.innerHTML='<div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:#ffebe9;'+
-        'border:1px solid #ff3b30"><b style="font-size:12px;color:#8a1f1a">⛔ '+w.length+
-        ' warning'+(w.length>1?'s':'')+'</b><ul style="list-style:none;margin-top:6px">'+
-        w.map(function(x){return '<li style="font-size:12px;padding:2px 0">'+esc(x.text)+'</li>';}).join('')+
-        '</ul></div>';
-}
-
-/* ── DOCUMENT ── */
-function gather(){
-    if(viewing)return viewing;
-    var o={type:TYPE,patientId:P.id,patientName:pcFile.nameOf(P),title:TITLE,
-        at:new Date().toISOString(),by:pcFile.staff().name||'',
-        diagnoses:chosenDx.slice(),medications:meds.slice(),
-        attachments:files.map(function(f){return {name:f.name,type:f.type,size:f.size,data:f.data};}),
-        rdv:(HAS_RDV&&g('rdvDate'))?{date:g('rdvDate'),reason:g('rdvReason')||'Follow-up'}:null,
-        fields:{}};
-    FIELDS.forEach(function(f){o.fields[f]=g('f_'+f);});
-    o.summary=FIELDS.length?(o.fields[FIELDS[0]]||''):'';
-    return o;
-}
-function paintDoc(f){
-    f=f||gather();
-    var d=new Date(f.at);
-    var body=FIELDS.map(function(fid,i){
-        var v=(f.fields||{})[fid];
-        if(!v)return '';
-        return '<div class="sec"><h4>'+esc(LABELS[i])+'</h4><p>'+esc(v)+'</p></div>';
-    }).join('');
-    var dxb=(f.diagnoses||[]).length?'<div class="sec"><h4>Diagnosis</h4><div class="dxrow">'+
-        f.diagnoses.map(function(x){return '<span>'+(x.code?esc(x.code)+' · ':'')+esc(x.name)+'</span>';}).join('')+
-        '</div></div>':'';
-    var rxb=(f.medications||[]).length?'<div class="sec"><h4>Medications</h4><p>'+
-        f.medications.map(function(m,i){return (i+1)+'. '+esc(m.name)+'  —  '+esc(m.dose)+
-        '  ×  '+esc(m.duration)+'   (qty '+m.qty+')';}).join('<br>')+'</p></div>':'';
-    var rdvb=f.rdv?'<div class="sec"><h4>Next appointment (RDV)</h4><p><b>'+
-        new Date(f.rdv.date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+
-        '</b> — '+esc(f.rdv.reason)+'</p></div>':'';
-    var atb=(f.attachments||[]).length?'<div class="sec"><h4>Attachments</h4><p>'+
-        f.attachments.map(function(a){return '• '+esc(a.name);}).join('<br>')+'</p></div>':'';
-
-    document.getElementById('doc').innerHTML=
-    '<div class="dh"><div><div class="org">PClinic</div>'+
-      '<div class="sub">Hospital Management System<br>Kigali, Rwanda<br>+250 784 446 481</div></div>'+
-      '<div class="meta"><div><b>'+REF+'-'+esc(P.id)+'-'+d.getFullYear()+'</b></div>'+
-      '<div>'+d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'</div>'+
-      '<div>'+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</div></div></div>'+
-    '<div class="dtitle">'+DOCTITLE+'</div>'+
-    '<div class="pinfo">'+
-      '<div><span>Patient</span><b>'+esc(pcFile.nameOf(P))+'</b></div>'+
-      '<div><span>File no.</span>'+esc(P.mrn||('ID '+P.id))+'</div>'+
-      '<div><span>Age / Sex</span>'+esc(pcFile.age(P.dob))+(P.gender?' · '+esc(P.gender):'')+'</div>'+
-      '<div><span>District</span>'+esc(P.district||'—')+'</div>'+
-      (P.insurance&&P.insurance.provider?'<div><span>Insurance</span>'+esc(P.insurance.provider)+'</div>':'')+
-      '<div><span>Recorded by</span>'+esc(f.by||pcFile.staff().name||'')+'</div>'+
-    '</div>'+
-    (body||'<div class="sec"><p class="none">Nothing recorded yet.</p></div>')+
-    dxb+rxb+rdvb+atb+
-    '<div class="sig"><div>Patient signature</div><div>'+esc(f.by||pcFile.staff().name||'')+
-      '<br>'+(TYPE==='nursing'?'Nurse on duty':'Attending Physician')+'</div></div>'+
-    '<div class="stamp">PClinic · generated '+new Date().toLocaleString('en-GB')+'</div>';
-}
-
-/* ── SAVE ── */
-window.saveFile=function(){
-    var rec=gather();
-    var any=FIELDS.some(function(f){return rec.fields[f];})||rec.diagnoses.length||rec.medications.length;
-    if(!any){pcToast('Fill in at least one section','error');return;}
-    if(HAS_RX&&rec.medications.length&&window.pcSafety){
-        var w=pcSafety.check(P,rec.medications.map(function(m){return m.name;}))
-              .filter(function(x){return x.level==='danger';});
-        if(w.length&&!confirm('⛔ '+w.length+' SERIOUS WARNING'+(w.length>1?'S':'')+':\n\n'+
-            w.map(function(x){return '• '+x.text;}).join('\n')+'\n\nPrescribe anyway?'))return;
-        if(w.length)rec.overrideWarnings=w.map(function(x){return x.text;});
-    }
-    if(rec.rdv)pcFile.saveRdv(P,rec.rdv.date,rec.rdv.reason);
-    if(HAS_RX&&rec.medications.length&&window.pcOrders){
-        pcOrders.create({patientId:P.id,patientName:pcFile.nameOf(P),type:'prescription',bill:false,
-            items:rec.medications.map(function(m){return {name:m.name+'  '+m.dose+'  ×'+m.duration,qty:m.qty,price:0};})});
-    }
-    pcFile.save(rec);
-    pcToast(TITLE+' saved'+(rec.rdv?' · RDV sent to reception':'')+
-        (HAS_RX&&rec.medications.length?' · sent to pharmacy':''),'success');
-    setTimeout(backToHistory,500);
-};
-
-document.addEventListener('input',function(e){
-    if(e.target.closest('#viewFile')&&!viewing)paintDoc();
+  ]
 });
-
-requireAuth([]).then(function(s){
-    window.currentStaff=s;
-    document.getElementById('userName').textContent=s.name;
-    document.getElementById('userAvatar').textContent=(s.name||'??').substring(0,2).toUpperCase();
-    var tries=0;
-    (function wait(){
-        P=pcFile.patient();
-        if(P){renderHistory();return;}
-        if(++tries<20)return setTimeout(wait,220);
-        document.getElementById('histList').innerHTML=
-            '<div class="pcf-empty"><i class="ti ti-user-off"></i>No patient selected.<br>'+
-            '<span style="font-size:11px">Open this from the doctor dashboard with a patient active.</span></div>';
-        var btn=document.querySelector('#viewHistory .pcf-btn');
-        if(btn)btn.style.display='none';
-    })();
-}).catch(function(){});
-})();
 </script>
 <script src="pclinic-handoff.js"></script>
 </body>

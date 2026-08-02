@@ -3965,15 +3965,12 @@ input.fi:focus,
                 <div class="section-title" style="border-bottom: none; padding-bottom: 0; margin-bottom: 10px; font-size: 11px; text-align: center; border: none;">⚡ Quick Actions</div>
                 
                 <!-- Clinical Notes -->
-                <div class="qa-card" onclick="quickAction('notes', 'tab-notes')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                <div class="qa-card" onclick="pcQuick('clinical-note.html')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--acb); color:var(--ac);"><i class="ti ti-notes"></i></div>
                     <div class="qa-label" style="font-size: 10px;">Clinical note</div>
                 </div>
 
 
-                <button class="nav-tab" data-tab="notes" onclick="switchTab('notes',this)">
-    <i class="ti ti-notes"></i> Notes
-</button>
 
              <!-- Prescription (Apple Style) -->
 <div class="qa-card" onclick="openPrescriptionModal(currentPatient)" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
@@ -3982,13 +3979,13 @@ input.fi:focus,
 </div>
                 
                 <!-- Lab -->
-                <div class="qa-card" onclick="quickAction('lab', 'tab-lab')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                <div class="qa-card" onclick="pcQuick('lab-request.html')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--orangeb); color:var(--oranged);"><i class="ti ti-test-pipe"></i></div>
                     <div class="qa-label" style="font-size: 10px;">Lab request</div>
                 </div>
                 
                 <!-- Imaging Request -->
-                <div class="qa-card" onclick="quickAction('imaging', 'tab-imaging')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                <div class="qa-card" onclick="pcQuick('imaging-request.html')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--purpleb); color:var(--purpled);"><i class="ti ti-radio"></i></div>
                     <div class="qa-label" style="font-size: 10px;">Imaging request</div>
                 </div>
@@ -4000,7 +3997,7 @@ input.fi:focus,
                 </div>
                 
                 <!-- Surgical Notes -->
-                <div class="qa-card" onclick="quickAction('surgery', 'tab-surgery')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                <div class="qa-card" onclick="pcQuick('surgical-note.html')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--redb); color:var(--redd);"><i class="ti ti-scalpel"></i></div>
                     <div class="qa-label" style="font-size: 10px;">Surgery</div>
                 </div>
@@ -4012,7 +4009,7 @@ input.fi:focus,
                 </div>
                 
                 <!-- Ward Round -->
-                <div class="qa-card" onclick="quickAction('ward', 'tab-ward')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                <div class="qa-card" onclick="pcQuick('ward-round.html')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--purpleb); color:var(--purpled);"><i class="ti ti-clipboard-list"></i></div>
                     <div class="qa-label" style="font-size: 10px;">Ward round</div>
                 </div>
@@ -4128,43 +4125,8 @@ input.fi:focus,
                     </div>
                 </div>
 
-<!-- ─── TAB: CLINICAL NOTES ─── -->    <!-- ✅ ADD THIS -->
-<div class="mp-body" id="tab-notes">
-    <div class="fg">
-        <div class="ff"><div class="section-title">📝 Clinical Notes</div></div>
-        <div class="fgl"><label class="lbl">Patient</label><input class="fi" id="notesPatient" readonly/></div>
-        <div class="fgl"><label class="lbl">Note Type</label>
-            <select class="fi" id="notesType">
-                <option>Consultation</option>
-                <option>Follow-up</option>
-                <option>Progress</option>
-                <option>Discharge Summary</option>
-                <option>Procedure Note</option>
-            </select>
-        </div>
-        <div class="fgl"><label class="lbl">Subjective (Symptoms)</label><textarea class="ta" id="notesSubjective" rows="2" placeholder="Patient reported symptoms..."></textarea></div>
-        <div class="fgl"><label class="lbl">Objective (Findings)</label><textarea class="ta" id="notesObjective" rows="2" placeholder="Physical exam, test results..."></textarea></div>
-        <div class="ff"><label class="lbl">Plan</label><textarea class="ta" id="notesPlan" rows="2" placeholder="Treatment plan, medications, follow-up..."></textarea></div>
-        <div class="ff">
-            <div class="fa">
-                <button class="btn-p" onclick="submitNote()"><i class="ti ti-check"></i> Save Note</button>
-                <button class="btn-s" onclick="document.getElementById('notesSubjective').value='';document.getElementById('notesObjective').value='';document.getElementById('notesPlan').value='';"><i class="ti ti-x"></i> Clear</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ─── NOTES HISTORY ─── -->
-    <div style="margin-top:20px; border-top:0.5px solid var(--bd); padding-top:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <span style="font-size:13px; font-weight:600;"><i class="ti ti-history"></i> Note History</span>
-            <span class="badge b-purple" id="notesHistoryCount">0 notes</span>
-        </div>
-        <div id="notesHistoryList">
-            <p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">No notes recorded yet.</p>
-        </div>
-    </div>
-</div>
-
+<!-- Clinical Notes tab removed: clinical-note.html is the real page.
+     The tab was a second, poorer copy of the same form. -->
 <!-- ─── TAB: PRESCRIPTION HISTORY ─── -->
 <div class="mp-body" id="tab-rx">
     <div class="fg">

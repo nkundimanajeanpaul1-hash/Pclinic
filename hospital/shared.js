@@ -219,6 +219,9 @@
     }
 
     // ─── EXPOSE TO GLOBAL ───
+    // Kept under its own name too, so a later page-level showToast can
+    // delegate here without accidentally recursing into itself.
+    window.sharedShowToast = showToast;
     window.showToast = showToast;
     window.toggleDarkMode = toggleDarkMode;
     window.initTheme = initTheme;

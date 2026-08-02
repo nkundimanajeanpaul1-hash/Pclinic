@@ -373,13 +373,109 @@
         else document.body.insertBefore(bar, document.body.firstChild);
     }
 
+    /* ══════════ MODAL SHEET ══════════
+       Diagnosis, RDV and attachments used to sit stacked in the left
+       column. Measured: that made opd-file 1660px tall in a 900px
+       viewport, so the doctor had to scroll away from Save to reach
+       them. They are now buttons that open a sheet over the page.   */
+    function sheet(opts) {
+        var scrim = document.createElement('div');
+        scrim.className = 'pcf-scrim noprint';
+        scrim.innerHTML =
+            '<div class="pcf-sheet" role="dialog" aria-modal="true" aria-label="' + esc(opts.title) + '">' +
+              '<div class="sh-h"><i class="ti ' + (opts.icon || 'ti-file') + '"></i>' +
+                '<span>' + esc(opts.title) + '</span>' +
+                '<button type="button" aria-label="Close">&times;</button></div>' +
+              '<div class="sh-b"></div>' +
+              '<div class="sh-f"><button class="pcf-btn primary" type="button">' +
+                esc(opts.done || 'Done') + '</button></div>' +
+            '</div>';
+        document.body.appendChild(scrim);
+        var body = $('.sh-b', scrim);
+
+        function close() {
+            // BUG (found by testing): onClose used to run *after* scrim.remove(),
+            // so a sheet that reads its own inputs on close — the RDV sheet —
+            // queried fields that were already detached and always got ''.
+            // The appointment was silently dropped: no RDV on the record, no
+            // message to reception. Read first, then animate out and remove.
+            if (opts.onClose) { try { opts.onClose(body); } catch (e) {} }
+            scrim.classList.remove('open');
+            document.removeEventListener('keydown', onKey);
+            setTimeout(function () { scrim.remove(); }, 240);
+        }
+        function onKey(e) { if (e.key === 'Escape') close(); }
+        $('.sh-h button', scrim).onclick = close;
+        $('.sh-f .pcf-btn', scrim).onclick = close;
+        scrim.addEventListener('click', function (e) { if (e.target === scrim) close(); });
+        document.addEventListener('keydown', onKey);
+
+        if (opts.build) opts.build(body, close);
+        requestAnimationFrame(function () { scrim.classList.add('open'); });
+        var f = body.querySelector('input, textarea, select');
+        if (f) setTimeout(function () { try { f.focus(); } catch (e) {} }, 260);
+        return { close: close, body: body };
+    }
+
+    /* ══════════ PRINT IN ITS OWN WINDOW ══════════
+       "i need that the printing page to open when clicked" — before,
+       Print called window.print() on the app page and relied on a
+       @media print block to hide the chrome, so nothing visibly
+       "opened". Now we build a real sheet of paper in a new window.  */
+    function printDoc(node, title) {
+        var el = typeof node === 'string' ? $(node) : node;
+        if (!el) { if (window.pcToast) pcToast('Nothing to print yet', 'error'); return; }
+
+        var css = '';
+        [].forEach.call(document.styleSheets, function (s) {
+            if (!s.href || s.href.indexOf('pclinic-file.css') === -1) return;
+            try { [].forEach.call(s.cssRules, function (r) { css += r.cssText + '\n'; }); } catch (e) {}
+        });
+
+        var w = window.open('', 'pclinic-print', 'width=880,height=1000');
+        if (!w) { if (window.pcToast) pcToast('Allow pop-ups to print', 'error'); return; }
+
+        // Written in parts so no closing tag appears literally in this file.
+        var S = 'scr' + 'ipt';
+        w.document.open();
+        w.document.write(
+            '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+            '<title>' + esc(title || 'PClinic document') + '</title>' +
+            '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">' +
+            '<style>' + css +
+            'html,body{background:#f2f2f7;margin:0;padding:0;' +
+              'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif}' +
+            '.sheetwrap{max-width:820px;margin:22px auto;padding:0 16px}' +
+            '.pcf-doc{background:#fff;color:#111;border-radius:14px;padding:34px 38px;' +
+              'box-shadow:0 8px 30px rgba(0,0,0,.14)}' +
+            '.pbar{position:sticky;top:0;z-index:5;display:flex;gap:8px;justify-content:center;' +
+              'padding:11px;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);' +
+              'border-bottom:.5px solid rgba(0,0,0,.1)}' +
+            '.pbar button{height:34px;padding:0 18px;border-radius:9px;border:0;cursor:pointer;' +
+              'font-size:13px;font-weight:600;font-family:inherit}' +
+            '.pbar .go{background:#0071e3;color:#fff}' +
+            '.pbar .cl{background:#e8e8ed;color:#1c1c1e}' +
+            '@media print{.pbar{display:none}.sheetwrap{margin:0;padding:0;max-width:none}' +
+              '.pcf-doc{box-shadow:none;border-radius:0;padding:0}' +
+              'html,body{background:#fff}@page{size:A4;margin:14mm}}' +
+            '</style></head><body>' +
+            '<div class="pbar"><button class="go" onclick="window.print()">Print</button>' +
+            '<button class="cl" onclick="window.close()">Close</button></div>' +
+            '<div class="sheetwrap"><div class="pcf-doc">' + el.innerHTML + '</div></div>' +
+            '<' + S + '>window.onload=function(){setTimeout(function(){window.focus();window.print();},350);};</' + S + '>' +
+            '</body></html>'
+        );
+        w.document.close();
+        return w;
+    }
+
     /* ══════════ EXPORTS ══════════ */
     window.pcFile = {
         patient: patient, nameOf: nameOf, age: age, esc: esc, uid: uid, staff: staff,
         allDx: allDx, addDx: addDx, dxPicker: dxPicker,
         attachments: attachments, saveRdv: saveRdv,
         save: saveFile, list: listFiles,
-        actionBar: actionBar,
+        actionBar: actionBar, sheet: sheet, print: printDoc,
         read: read, write: write
     };
 

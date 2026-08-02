@@ -5526,9 +5526,18 @@ function closeHistoryModal() {
         }
 
         // ─── TOAST WRAPPER ───
+        // BUG (found by testing): line ~6671 does `window.showToast = showToast`,
+        // so `window.showToast` IS this function. The old guard
+        // `if (typeof window.showToast === 'function') window.showToast(...)`
+        // therefore called itself forever — "Maximum call stack size exceeded"
+        // the first time anything toasted. Delegate to the real shared.js /
+        // pclinic-state.js implementation instead, never to ourselves.
         function showToast(message, type) {
-            if (typeof window.showToast === 'function') {
-                window.showToast(message, type || 'info');
+            var real = (typeof window.pcToast === 'function' && window.pcToast) ||
+                       (typeof window.sharedShowToast === 'function' && window.sharedShowToast) ||
+                       null;
+            if (real) {
+                real(message, type || 'info');
             } else {
                 const container = document.getElementById('toastContainer');
                 if (container) {

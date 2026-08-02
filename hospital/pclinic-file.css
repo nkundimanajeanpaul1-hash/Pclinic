@@ -1,10 +1,17 @@
 /* ============================================================
-   PCLINIC — CLINICAL FILE PAGES
-   One stylesheet for every file/note page, so they all match the
-   billing page (the agreed minimum look) or better.
+   PCLINIC — CLINICAL FILE PAGES  (v2 — single screen)
+   One stylesheet for every file/note page.
 
-   Layout: work panel on the left, live printable document on the
-   right. Print strips the app chrome and leaves a clean A4 sheet.
+   v2 changes, driven by what the browser actually measured:
+     • The page no longer scrolls. Before: opd-file was 1660px tall
+       in a 900px viewport. Now the stage is locked to the viewport
+       and only the two panes scroll internally, so the action bar,
+       the save button and the document stay on screen.
+     • Diagnosis / RDV / Attachments moved out of the column and into
+       modal sheets opened by a button, because they were what made
+       the column 1660px long.
+     • Printing opens its own window, so we no longer fight the app
+       chrome with @media print.
    ============================================================ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -14,8 +21,12 @@ body.pcf {
     background: var(--bg);
     color: var(--tp);
     font-size: 13px;
-    min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    /* single screen: the body itself never scrolls */
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 body.pcf::before {
     content: '';
@@ -25,10 +36,45 @@ body.pcf::before {
         radial-gradient(circle at 80% 70%, rgba(52,199,89,.05) 0, transparent 50%);
 }
 
-.pcf-wrap { max-width: 1320px; margin: 0 auto; padding: 0 18px 30px; }
-.pcf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
-.pcf-grid.wide { grid-template-columns: 1.25fr 1fr; }
-.pcf-grid.single { grid-template-columns: 1fr; }
+/* The chrome (topbar, patient strip, action bar) sits above; the wrap
+   takes whatever height is left and never spills past it. */
+.pcf-wrap {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 10px 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+/* ── Command row: mode + tool chips + save/print ── */
+.pcf-cmd {
+    display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+    flex-shrink: 0;
+}
+.pcf-cmd .mode { font-size: 12.5px; font-weight: 700; letter-spacing: -.2px; }
+.pcf-cmd .spacer { flex: 1 1 auto; }
+
+/* ── The two-pane stage: fills the rest, panes scroll, page doesn't ── */
+.pcf-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 13px;
+    align-items: stretch;
+}
+.pcf-grid.wide   { grid-template-columns: 1.05fr 1fr; }
+.pcf-grid.single { grid-template-columns: minmax(0, 900px); justify-content: center; }
+.pcf-grid > * { min-height: 0; min-width: 0; }
+/* each pane scrolls on its own */
+.pcf-pane { overflow: auto; overscroll-behavior: contain; padding-right: 3px; }
+.pcf-pane::-webkit-scrollbar { width: 7px; }
+.pcf-pane::-webkit-scrollbar-thumb { background: rgba(0,0,0,.16); border-radius: 7px; }
+.pcf-pane::-webkit-scrollbar-track { background: transparent; }
 
 /* ── Panels ── */
 .pcf-panel {
@@ -38,13 +84,13 @@ body.pcf::before {
     border: .5px solid var(--glass-brd);
     border-radius: var(--r2);
     box-shadow: var(--sh-2), var(--glass-spec);
-    padding: 16px 17px;
-    margin-bottom: 13px;
+    padding: 13px 15px;
+    margin-bottom: 11px;
 }
 .pcf-panel:last-child { margin-bottom: 0; }
 .pcf-panel h2 {
-    font-size: 14px; font-weight: 700; letter-spacing: -.2px;
-    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 700; letter-spacing: -.2px;
+    margin-bottom: 9px; display: flex; align-items: center; gap: 7px;
 }
 .pcf-panel h2 i { color: var(--ac); }
 .pcf-panel h2 .count {
@@ -54,31 +100,35 @@ body.pcf::before {
 
 /* ── Form controls ── */
 .pcf-lbl {
-    display: block; font-size: 10.5px; font-weight: 700; color: var(--tm);
-    text-transform: uppercase; letter-spacing: .04em; margin: 12px 0 5px;
+    display: block; font-size: 10px; font-weight: 700; color: var(--tm);
+    text-transform: uppercase; letter-spacing: .04em; margin: 9px 0 4px;
 }
 .pcf-lbl:first-child { margin-top: 0; }
-.pcf-in, .pcf-panel input, .pcf-panel select, .pcf-panel textarea {
-    width: 100%; padding: 9px 11px; border-radius: 9px;
+.pcf-in, .pcf-panel input, .pcf-panel select, .pcf-panel textarea,
+.pcf-sheet input, .pcf-sheet select, .pcf-sheet textarea {
+    width: 100%; padding: 8px 10px; border-radius: 9px;
     border: .5px solid rgba(0,0,0,.1); background: var(--s1); color: var(--tp);
-    font-family: var(--f); font-size: 13px; outline: none;
+    font-family: var(--f); font-size: 12.5px; outline: none;
     transition: border-color .2s, box-shadow .2s;
 }
 .pcf-panel input[type=checkbox], .pcf-panel input[type=radio] { width: auto; }
-.pcf-panel textarea { min-height: 84px; resize: vertical; line-height: 1.6; }
-.pcf-in:focus, .pcf-panel input:focus, .pcf-panel select:focus, .pcf-panel textarea:focus {
+.pcf-panel textarea { min-height: 62px; resize: vertical; line-height: 1.55; }
+.pcf-in:focus, .pcf-panel input:focus, .pcf-panel select:focus,
+.pcf-panel textarea:focus, .pcf-sheet input:focus, .pcf-sheet textarea:focus {
     border-color: var(--ac); box-shadow: 0 0 0 4px var(--acl);
 }
-.pcf-row { display: flex; gap: 10px; }
+.pcf-row { display: flex; gap: 9px; }
 .pcf-row > * { flex: 1; min-width: 0; }
-.pcf-row.tight { gap: 7px; }
+.pcf-row.tight { gap: 6px; }
+/* two fields side by side inside a panel — halves the column height */
+.pcf-two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
 
 /* ── Buttons ── */
 .pcf-btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-    height: 36px; padding: 0 16px; border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    height: 33px; padding: 0 14px; border-radius: 10px;
     border: .5px solid rgba(0,0,0,.09); background: var(--s1); color: var(--tp);
-    font-family: var(--f); font-size: 12.5px; font-weight: 600; cursor: pointer;
+    font-family: var(--f); font-size: 12px; font-weight: 600; cursor: pointer;
     white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,.06);
     transition: transform .26s var(--spring), box-shadow .26s, background .2s;
 }
@@ -96,12 +146,39 @@ body.pcf::before {
 }
 .pcf-btn.ghost { background: transparent; box-shadow: none; }
 .pcf-btn.full { width: 100%; }
-.pcf-btn.sm { height: 30px; padding: 0 12px; font-size: 11.5px; }
+.pcf-btn.sm { height: 29px; padding: 0 11px; font-size: 11.5px; }
+
+/* ── Tool chips (Diagnosis / RDV / Attachments open as sheets) ── */
+.pcf-tool {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 31px; padding: 0 12px; border-radius: 9px; cursor: pointer;
+    border: .5px solid rgba(0,0,0,.08);
+    background: var(--b, var(--s1)); color: var(--c, var(--tp));
+    font-family: var(--f); font-size: 11.5px; font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05), inset 0 1px 0 rgba(255,255,255,.7);
+    transition: transform .26s var(--spring), box-shadow .26s;
+}
+.pcf-tool:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.14); }
+.pcf-tool:active { transform: scale(.94); transition-duration: .08s; }
+.pcf-tool i { font-size: 14px; }
+.pcf-tool .n {
+    min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px;
+    background: currentColor; display: none;
+    align-items: center; justify-content: center;
+}
+.pcf-tool .n::after {
+    content: attr(data-n); color: #fff; font-size: 9.5px; font-weight: 800;
+    /* the pill is currentColor, so the numeral needs its own light fill */
+    mix-blend-mode: normal;
+}
+[data-theme="dark"] .pcf-tool .n::after { color: #1c1c1e; }
+.pcf-tool.has .n { display: inline-flex; }
 
 /* ── History list (visit / note timeline) ── */
-.pcf-hist { display: flex; flex-direction: column; gap: 8px; }
+.pcf-hist { display: flex; flex-direction: column; gap: 7px; }
 .pcf-hrow {
-    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 11px; padding: 10px 13px;
     border-radius: 12px; border: .5px solid rgba(0,0,0,.07); background: var(--s1);
     cursor: pointer; transition: all .25s var(--spring);
 }
@@ -110,21 +187,62 @@ body.pcf::before {
     box-shadow: 0 4px 14px rgba(0,113,227,.14);
 }
 .pcf-hrow .date {
-    width: 54px; flex-shrink: 0; text-align: center; padding: 6px 0;
+    width: 50px; flex-shrink: 0; text-align: center; padding: 5px 0;
     border-radius: 9px; background: var(--acb); color: var(--ac);
 }
-.pcf-hrow .date .d { font-size: 17px; font-weight: 800; line-height: 1; }
-.pcf-hrow .date .m { font-size: 9.5px; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
+.pcf-hrow .date .d { font-size: 16px; font-weight: 800; line-height: 1; }
+.pcf-hrow .date .m { font-size: 9px; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
 .pcf-hrow .meat { flex: 1; min-width: 0; }
-.pcf-hrow .meat b { font-size: 13px; display: block; margin-bottom: 2px; }
-.pcf-hrow .meat span { font-size: 11.5px; color: var(--tm); display: block;
+.pcf-hrow .meat b { font-size: 12.5px; display: block; margin-bottom: 2px; }
+.pcf-hrow .meat span { font-size: 11px; color: var(--tm); display: block;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pcf-hrow .by { font-size: 10.5px; color: var(--tm); white-space: nowrap; text-align: right; }
+.pcf-hrow .by { font-size: 10px; color: var(--tm); white-space: nowrap; text-align: right; }
 
 .pcf-empty {
-    text-align: center; padding: 34px 18px; color: var(--tm); font-size: 12.5px;
+    text-align: center; padding: 28px 18px; color: var(--tm); font-size: 12.5px;
 }
-.pcf-empty i { font-size: 34px; opacity: .3; display: block; margin-bottom: 10px; }
+.pcf-empty i { font-size: 32px; opacity: .3; display: block; margin-bottom: 9px; }
+
+/* ══════════════ MODAL SHEET ══════════════
+   Attachments, diagnosis and RDV live here instead of stretching
+   the page. iOS-style: scrim + spring-in card, Escape closes.      */
+.pcf-scrim {
+    position: fixed; inset: 0; z-index: 9200;
+    background: rgba(0,0,0,.34);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+    display: grid; place-items: center; padding: 22px;
+    opacity: 0; transition: opacity .22s var(--ease);
+}
+.pcf-scrim.open { opacity: 1; }
+.pcf-sheet {
+    width: min(560px, 100%);
+    max-height: min(76vh, 640px);
+    display: flex; flex-direction: column;
+    background: var(--s0, #fff); color: var(--tp);
+    border: .5px solid var(--glass-brd);
+    border-radius: 20px;
+    box-shadow: var(--sh-4);
+    overflow: hidden;
+    translate: 0 14px; scale: .96;
+    transition: translate .34s var(--spring), scale .34s var(--spring);
+}
+.pcf-scrim.open .pcf-sheet { translate: 0 0; scale: 1; }
+.pcf-sheet .sh-h {
+    display: flex; align-items: center; gap: 9px;
+    padding: 14px 17px; border-bottom: .5px solid var(--bd);
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
+}
+.pcf-sheet .sh-h i { color: var(--ac); }
+.pcf-sheet .sh-h button {
+    margin-left: auto; width: 28px; height: 28px; border-radius: 50%;
+    border: .5px solid var(--bd); background: var(--s2); color: var(--tp);
+    cursor: pointer; font-size: 15px; line-height: 1;
+}
+.pcf-sheet .sh-b { padding: 15px 17px; overflow: auto; flex: 1; min-height: 0; }
+.pcf-sheet .sh-f {
+    padding: 11px 17px; border-top: .5px solid var(--bd);
+    display: flex; gap: 8px; justify-content: flex-end; flex-shrink: 0;
+}
 
 /* ── Diagnosis picker ── */
 .pcf-dx-chosen { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 4px; }
@@ -139,7 +257,7 @@ body.pcf::before {
 }
 .pcf-dx-tag button:hover { opacity: 1; }
 .pcf-dx-list {
-    max-height: 190px; overflow-y: auto; border: .5px solid rgba(0,0,0,.09);
+    max-height: 210px; overflow-y: auto; border: .5px solid rgba(0,0,0,.09);
     border-radius: 10px; background: var(--s1); margin-top: 6px;
 }
 .pcf-dx-item {
@@ -154,13 +272,13 @@ body.pcf::before {
 /* ── Attachments ── */
 .pcf-drop {
     border: 1.5px dashed rgba(0,113,227,.35); border-radius: 12px;
-    padding: 20px 16px; text-align: center; cursor: pointer;
+    padding: 18px 16px; text-align: center; cursor: pointer;
     background: rgba(0,113,227,.03); transition: all .24s;
 }
 .pcf-drop:hover, .pcf-drop.over {
     background: var(--acb); border-color: var(--ac); transform: translateY(-1px);
 }
-.pcf-drop i { font-size: 26px; color: var(--ac); display: block; margin-bottom: 7px; }
+.pcf-drop i { font-size: 25px; color: var(--ac); display: block; margin-bottom: 6px; }
 .pcf-drop b { font-size: 12.5px; display: block; }
 .pcf-drop span { font-size: 11px; color: var(--tm); }
 .pcf-files { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
@@ -174,10 +292,11 @@ body.pcf::before {
 .pcf-file button {
     border: 0; background: none; color: var(--red); cursor: pointer; font-size: 15px; padding: 2px;
 }
+.pcf-file button[data-v] { color: var(--ac); }
 
 /* ── RDV ── */
 .pcf-rdv {
-    padding: 13px 15px; border-radius: 12px;
+    padding: 12px 14px; border-radius: 12px;
     background: var(--greenb); border: .5px solid rgba(52,199,89,.28);
 }
 .pcf-rdv .when { font-size: 15px; font-weight: 800; color: var(--greend); }
@@ -186,68 +305,75 @@ body.pcf::before {
 /* ══════════════ PRINTABLE DOCUMENT ══════════════ */
 .pcf-doc {
     background: #fff; color: #111; border-radius: var(--r2);
-    padding: 32px 36px; box-shadow: var(--sh-2); min-height: 460px;
-    position: sticky; top: 96px;
+    padding: 28px 32px; box-shadow: var(--sh-2);
 }
 .pcf-doc .dh {
     display: flex; justify-content: space-between; align-items: flex-start;
-    gap: 18px; padding-bottom: 14px; border-bottom: 2px solid #111;
+    gap: 18px; padding-bottom: 13px; border-bottom: 2px solid #111;
 }
-.pcf-doc .org { font-size: 19px; font-weight: 800; letter-spacing: -.4px; }
-.pcf-doc .sub { font-size: 10.5px; color: #666; margin-top: 3px; line-height: 1.55; }
-.pcf-doc .meta { text-align: right; font-size: 10.5px; color: #444; line-height: 1.65; }
+.pcf-doc .org { font-size: 18px; font-weight: 800; letter-spacing: -.4px; }
+.pcf-doc .sub { font-size: 10px; color: #666; margin-top: 3px; line-height: 1.5; }
+.pcf-doc .meta { text-align: right; font-size: 10px; color: #444; line-height: 1.6; }
 .pcf-doc .meta b { color: #111; }
 .pcf-doc .dtitle {
-    text-align: center; font-size: 14.5px; font-weight: 800; letter-spacing: .12em;
-    text-transform: uppercase; margin: 18px 0 15px;
+    text-align: center; font-size: 14px; font-weight: 800; letter-spacing: .12em;
+    text-transform: uppercase; margin: 15px 0 13px;
 }
 .pcf-doc .pinfo {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 6px 22px;
-    font-size: 12px; padding: 12px 14px; background: #f7f7f9;
-    border-radius: 9px; margin-bottom: 16px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 5px 20px;
+    font-size: 11.5px; padding: 11px 13px; background: #f7f7f9;
+    border-radius: 9px; margin-bottom: 14px;
 }
-.pcf-doc .pinfo span { color: #666; display: inline-block; min-width: 84px; }
-.pcf-doc .sec { margin-bottom: 14px; }
+.pcf-doc .pinfo span { color: #666; display: inline-block; min-width: 82px; }
+.pcf-doc .sec { margin-bottom: 12px; }
 .pcf-doc .sec h4 {
-    font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em;
-    color: #0071e3; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid #e8e8ea;
+    font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em;
+    color: #0071e3; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #e8e8ea;
 }
-.pcf-doc .sec p { font-size: 12.5px; line-height: 1.75; white-space: pre-wrap; }
+.pcf-doc .sec p { font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
 .pcf-doc .sec .none { color: #aaa; font-style: italic; }
 .pcf-doc .dxrow { display: flex; flex-wrap: wrap; gap: 6px; }
 .pcf-doc .dxrow span {
     background: #f5eaff; color: #5c2475; padding: 3px 10px;
     border-radius: 20px; font-size: 11.5px; font-weight: 600;
 }
-.pcf-doc .sig { margin-top: 34px; display: flex; justify-content: space-between; gap: 44px; }
+.pcf-doc .sig { margin-top: 30px; display: flex; justify-content: space-between; gap: 44px; }
 .pcf-doc .sig div {
     flex: 1; border-top: 1px solid #999; padding-top: 6px;
     font-size: 10.5px; color: #666; text-align: center;
 }
 .pcf-doc .stamp {
-    margin-top: 18px; font-size: 10px; color: #999;
+    margin-top: 16px; font-size: 10px; color: #999;
     text-align: center; font-style: italic;
 }
 
-/* ══════════════ PRINT ══════════════ */
+/* ══════════════ PRINT ══════════════
+   Printing normally opens its own window (pcFile.print). This block
+   is the fallback for Ctrl+P on the page itself.                    */
 @media print {
     @page { size: A4; margin: 14mm; }
-    body.pcf { background: #fff !important; }
+    html, body.pcf { height: auto !important; overflow: visible !important; background: #fff !important; }
     body.pcf::before, .pc-topbar, .pc-headerbar, .noprint,
-    .pc-toasts, #pcHandoff, #pcFileBar, .pcf-panel { display: none !important; }
-    .pcf-wrap { max-width: none; padding: 0; }
+    .pc-toasts, #pcHandoff, #pcFileBar, .pcf-panel, .pcf-cmd, .pcf-scrim { display: none !important; }
+    .pcf-wrap { max-width: none; padding: 0; display: block; }
     .pcf-grid { display: block; }
-    .pcf-doc { box-shadow: none; border-radius: 0; padding: 0; position: static; }
+    .pcf-pane { overflow: visible !important; }
+    .pcf-doc { box-shadow: none; border-radius: 0; padding: 0; }
 }
 
-/* ══════════════ RESPONSIVE ══════════════ */
+/* ══════════════ RESPONSIVE ══════════════
+   Below 1000px a locked viewport is hostile — one column, let it scroll. */
 @media (max-width: 1000px) {
-    .pcf-grid, .pcf-grid.wide { grid-template-columns: 1fr; }
-    .pcf-doc { position: static; }
+    body.pcf { height: auto; overflow: visible; display: block; }
+    .pcf-wrap { display: block; }
+    .pcf-grid, .pcf-grid.wide, .pcf-grid.single { grid-template-columns: 1fr; display: block; }
+    .pcf-pane { overflow: visible; }
+    .pcf-pane + .pcf-pane { margin-top: 12px; }
+    .pcf-two { grid-template-columns: 1fr; }
 }
 @media (max-width: 620px) {
-    .pcf-wrap { padding: 0 12px 22px; }
+    .pcf-wrap { padding: 8px 12px 18px; }
     .pcf-row { flex-direction: column; gap: 0; }
-    .pcf-doc { padding: 22px 18px; }
+    .pcf-doc { padding: 20px 16px; }
     .pcf-doc .pinfo { grid-template-columns: 1fr; }
 }

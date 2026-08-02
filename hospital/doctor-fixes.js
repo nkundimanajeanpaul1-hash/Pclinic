@@ -205,9 +205,77 @@
         });
     }
 
+    /* ══════════ 5. THE BLANK PANEL ══════════
+       Reported as "why am I seeing this on a blank page".
+
+       switchTab('lab') looked up tabMap.lab === 'tab-lab', but
+       #tab-lab does not exist — those tab bodies were removed when
+       lab-request.html and friends became real pages. switchTab still
+       ran its first step, `hide every .mp-body`, then found nothing to
+       show. Result: the whole panel collapsed to 0px and the user was
+       left staring at the page background. Measured: main-panel height
+       745px → 0px, zero .mp-body visible.
+
+       Two fixes:
+         a) pcQuick() — quick-action cards open the real page instead
+            of a tab that no longer exists.
+         b) switchTab is wrapped so a missing target restores the last
+            working tab rather than blanking the panel.               */
+    function quickAndGuard() {
+        // (a) quick actions open real pages, carrying the patient
+        window.pcQuick = function (page) {
+            var p = (window.pcPatient && window.pcPatient.get()) || window.currentPatient || null;
+            if (!p) {
+                if (window.pcPatient && window.pcPatient.require) return window.pcPatient.require('open this');
+                if (window.pcToast) pcToast('Select a patient first', 'error');
+                return;
+            }
+            if (window.pcPatient && window.pcPatient.open) return window.pcPatient.open(page);
+            location.href = page + '?patient=' + encodeURIComponent(p.id);
+        };
+
+        // (b) never let a dead tab blank the panel
+        if (window.switchTab && !window.switchTab.__pcGuarded) {
+            var orig = window.switchTab;
+            var lastGood = 'tab-overview';
+            var guarded = function (name, btn) {
+                var r = orig.apply(this, arguments);
+                var shown = document.querySelector('.mp-body.show');
+                if (shown && shown.offsetHeight > 0) { lastGood = shown.id; return r; }
+                // target missing or empty — fall back so something is on screen
+                var fb = document.getElementById(lastGood) || document.getElementById('tab-overview');
+                if (fb) {
+                    document.querySelectorAll('.mp-body').forEach(function (b) {
+                        b.classList.remove('show'); b.style.display = 'none';
+                    });
+                    fb.classList.add('show'); fb.style.display = 'block';
+                }
+                if (window.pcToast) pcToast('That section has moved to its own page', 'info');
+                return r;
+            };
+            guarded.__pcGuarded = true;
+            window.switchTab = guarded;
+        }
+
+        // Hide nav tabs whose body no longer exists, so they can't be clicked
+        var map = { overview:'tab-overview', patients:'tab-patients', admission:'tab-admission',
+                    theater:'tab-theater', imaging:'tab-imaging', lab:'tab-lab',
+                    'lab-results':'tab-lab-results', notes:'tab-notes', rx:'tab-rx',
+                    surgery:'tab-surgery', physio:'tab-physio' };
+        document.querySelectorAll('.nav-tab[data-tab]').forEach(function (t) {
+            var id = map[t.dataset.tab];
+            if (id && !document.getElementById(id)) {
+                t.style.display = 'none';
+                t.dataset.pcDead = '1';
+            }
+        });
+    }
+
     function init() {
         sortNewestFirst();
         fixLogout();
+        quickAndGuard();
+        setTimeout(quickAndGuard, 900);   // after doctor.js defines switchTab
         tick();
         // The patient table re-renders on filter/refresh, so keep relabelling
         setInterval(tick, 1200);
