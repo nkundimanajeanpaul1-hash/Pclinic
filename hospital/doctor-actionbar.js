@@ -165,7 +165,7 @@
         document.body.appendChild(ov);
         requestAnimationFrame(function () { ov.classList.add('open'); });
 
-        function close() { ov.classList.remove('open'); setTimeout(function () { ov.remove(); }, 220); }
+        function close() { ov.remove(); }
         ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
         $('.ab-close', ov).onclick = close;
         document.addEventListener('keydown', function h(e) {

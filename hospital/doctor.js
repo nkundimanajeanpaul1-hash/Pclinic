@@ -6522,7 +6522,7 @@ function openOpdFileModal(patient) {
                 } catch (e) {
                     console.log('❌ Error sending data to iframe:', e);
                 }
-            }, 500);
+            }, 10);
         };
     }
     
@@ -6781,23 +6781,32 @@ window.closeOpdFileModal = closeOpdFileModal;
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsModal = document.getElementById('settings-modal');
 
-    if (settingsBtn && settingsModal) {
-        settingsBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            settingsModal.classList.toggle('show');
-            // Sync dark mode checkbox
+    window.openSettingsModal = function() {
+        if (settingsModal) {
+            settingsModal.classList.add('show');
+            settingsModal.style.display = 'flex';
+            settingsModal.style.zIndex = '999999';
             const darkCheckbox = document.getElementById('settingDarkMode');
             if (darkCheckbox) {
                 darkCheckbox.checked = document.documentElement.getAttribute('data-theme') === 'dark';
             }
-            // Close notif panel if open
             const notifPanel = document.getElementById('notifPanel');
             if (notifPanel) notifPanel.classList.remove('show');
+        }
+    };
+
+    if (settingsBtn && settingsModal) {
+        settingsBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            window.openSettingsModal();
         });
     }
 
     window.closeSettingsModal = function() {
-        if (settingsModal) settingsModal.classList.remove('show');
+        if (settingsModal) {
+            settingsModal.classList.remove('show');
+            settingsModal.style.display = 'none';
+        }
     };
 
     // Compact view

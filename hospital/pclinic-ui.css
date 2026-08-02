@@ -848,3 +848,183 @@
 
 /* Momentum scrolling + no rubber-band flash on iOS */
 html { -webkit-overflow-scrolling: touch; }
+
+/* ============================================================
+   PCLINIC — APPLE-GRADE DARK MODE (FROM ZERO)
+   Guarantees 0 invisible text, 0 black-on-black, crisp contrast
+   ============================================================ */
+[data-theme="dark"],
+html[data-theme="dark"],
+body.dark-mode {
+    --bg: #0d0d12 !important;
+    --s1: #161620 !important;
+    --s2: #1e1e2c !important;
+    --s3: #262638 !important;
+    --bd: rgba(255, 255, 255, 0.14) !important;
+    --tp: #f3f4f6 !important;
+    --ts: #d1d5db !important;
+    --tm: #9ca3af !important;
+    --ac: #60a5fa !important;
+    --ach: #93c5fd !important;
+    --acb: rgba(96, 165, 250, 0.15) !important;
+    --glass-bg: rgba(22, 22, 32, 0.88) !important;
+    --card-bg: #1e1e2c !important;
+    --hover-bg: #262638 !important;
+    color-scheme: dark;
+}
+
+[data-theme="dark"] body,
+body.dark-mode {
+    background: #0d0d12 !important;
+    color: #f3f4f6 !important;
+}
+
+/* 1. Header, Topbar, Navigation, Breadcrumbs */
+[data-theme="dark"] .topbar,
+[data-theme="dark"] .breadcrumb,
+[data-theme="dark"] .header,
+[data-theme="dark"] .main-header,
+[data-theme="dark"] .navbar,
+[data-theme="dark"] .stats-bar {
+    background: rgba(22, 22, 32, 0.92) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f3f4f6 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 2. Patient Cards, Panels, Modals, Dropdowns, Sidebars */
+[data-theme="dark"] .card,
+[data-theme="dark"] .patient-card,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .dropdown,
+[data-theme="dark"] .menu,
+[data-theme="dark"] .tab-content,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .widget {
+    background: #161620 !important;
+    color: #f3f4f6 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 3. Text contrast enforcement — zero invisible characters! */
+[data-theme="dark"] .card *,
+[data-theme="dark"] .patient-card *,
+[data-theme="dark"] .modal *,
+[data-theme="dark"] .dropdown *,
+[data-theme="dark"] .breadcrumb *,
+[data-theme="dark"] table *,
+[data-theme="dark"] th,
+[data-theme="dark"] td,
+[data-theme="dark"] label,
+[data-theme="dark"] span:not(.badge):not(.tag):not(.btn-apple):not(.ab-loc),
+[data-theme="dark"] p,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4 {
+    color: inherit !important;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] th,
+[data-theme="dark"] .modal-title,
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .patient-name {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .subtitle,
+[data-theme="dark"] .meta,
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] small {
+    color: #9ca3af !important;
+}
+
+/* 4. Form inputs, Search bar, Selects, Textareas */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+[data-theme="dark"] .search-bar,
+[data-theme="dark"] .search-input,
+[data-theme="dark"] .fi {
+    background: #242432 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: #9ca3af !important;
+    opacity: 1 !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] .fi:focus {
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25) !important;
+    background: #2c2c3e !important;
+}
+
+/* 5. Buttons & Badges in Dark Mode */
+[data-theme="dark"] button:not(.primary):not(.btn-danger):not(.btn-apple):not(.modal-close) {
+    background: #262638 !important;
+    color: #f3f4f6 !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+[data-theme="dark"] button:hover {
+    background: #32324a !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-apple {
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+[data-theme="dark"] .badge,
+[data-theme="dark"] .tag,
+[data-theme="dark"] .pill {
+    background: rgba(96, 165, 250, 0.18) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(96, 165, 250, 0.3) !important;
+}
+
+/* 6. Tables & Rows */
+[data-theme="dark"] table tr {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+[data-theme="dark"] table tr:hover,
+[data-theme="dark"] .result-item:hover,
+[data-theme="dark"] .list-item:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ============================================================
+   FONT SIZE & COMPACT VIEW SCALING (SETTINGS SUPPORT)
+   ============================================================ */
+body.font-small, body.font-small * { font-size: 11.5px !important; }
+body.font-small h1 { font-size: 18px !important; }
+body.font-small h2 { font-size: 15px !important; }
+body.font-small h3 { font-size: 13px !important; }
+body.font-small .btn-apple, body.font-small button { font-size: 11px !important; padding: 5px 10px !important; }
+
+body.font-large, body.font-large * { font-size: 15px !important; }
+body.font-large h1 { font-size: 24px !important; }
+body.font-large h2 { font-size: 20px !important; }
+body.font-large h3 { font-size: 17px !important; }
+body.font-large .btn-apple, body.font-large button { font-size: 14px !important; padding: 9px 16px !important; }
+
+body.compact .patient-card, body.compact .card {
+    padding: 10px 14px !important;
+    margin-bottom: 8px !important;
+    gap: 6px !important;
+}

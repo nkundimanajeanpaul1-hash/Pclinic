@@ -130,7 +130,7 @@
         var el = openEl; openEl = null;
         el.classList.remove('open');
         document.removeEventListener('keydown', onKey);
-        setTimeout(function () { el.remove(); }, 240);
+        el.remove();
     }
     function onKey(e) { if (e.key === 'Escape') close(); }
 

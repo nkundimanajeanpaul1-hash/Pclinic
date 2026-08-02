@@ -186,7 +186,7 @@
         document.body.appendChild(ov);
         requestAnimationFrame(function () { ov.classList.add('open'); });
 
-        function close() { ov.classList.remove('open'); setTimeout(function () { ov.remove(); }, 220); }
+        function close() { ov.remove(); }
         ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
         ov.querySelector('.dp-close').onclick = close;
         document.addEventListener('keydown', function h(e) {
@@ -377,10 +377,12 @@
 
         // A page can also be entered with ?patient=…
         var q = new URLSearchParams(location.search).get('patient');
-        if (q) setTimeout(function () { setPatient(q, { silent: true }); }, 400);
+        if (q) setPatient(q, { silent: true });
 
-        setTimeout(overrideLegacy, 600);   // after doctor.js has defined them
-        setTimeout(addBarButtons, 700);
+        overrideLegacy();
+        addBarButtons();
+        setTimeout(overrideLegacy, 40);
+        setTimeout(addBarButtons, 50);
         renderCtx();
 
         window.addEventListener('pcPatientChanged', renderCtx);
