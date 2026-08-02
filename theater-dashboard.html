@@ -1,0 +1,2228 @@
+<!-- Shared Styles -->
+<link rel="stylesheet" href="styles.css" />
+
+<!-- Shared JavaScript -->
+
+    <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
+    <script type="module" src="firebase-config.js"></script>
+    <script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+<script src="shared.js" defer></script>
+
+<!-- ─── PATIENT DATA SYSTEM ─── -->          
+<script src="patient-data.js" defer></script>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Operating Theater • PClinic</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" />
+    <link rel="stylesheet" href="pclinic-ui.css">
+<style>
+        /* ─── RESET & VARIABLES ─── */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --bg: #f2f4f8;
+            --s0: #f5f5f7;
+            --s1: #ffffff;
+            --s2: #ffffff;
+            --s3: #f2f2f4;
+            --bd: rgba(0, 0, 0, 0.06);
+            --bds: rgba(0, 0, 0, 0.08);
+            --tp: #1c1c1e;
+            --ts: #3a3a3c;
+            --tm: #8e8e93;
+            --ac: #0071e3;
+            --ach: #0055cc;
+            --acb: #eaf2ff;
+            --acl: rgba(0, 113, 227, 0.15);
+            --green: #34c759;
+            --greenb: #e9f9ee;
+            --greend: #1a7a32;
+            --orange: #ff9500;
+            --orangeb: #fff4e0;
+            --oranged: #7a4500;
+            --red: #ff3b30;
+            --redb: #ffebe9;
+            --redd: #8a1f1a;
+            --purple: #af52de;
+            --purpleb: #f5eaff;
+            --purpled: #5c2475;
+            --teal: #007080;
+            --tealbg: #e6f6f8;
+            --tealt: #004a52;
+            --pink: #b5006e;
+            --pinkb: #fdf0f7;
+            --pinkt: #7a0049;
+            --amber: #8a6200;
+            --amberb: #fdf7e6;
+            --ambert: #5a3f00;
+            --r: 10px;
+            --r2: 14px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 4px 12px rgba(0, 0, 0, .04);
+            --shadow2: 0 2px 12px rgba(0, 0, 0, .10), 0 8px 32px rgba(0, 0, 0, .06);
+            --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+            --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        body {
+            font-family: var(--f);
+            background: var(--bg);
+            color: var(--tp);
+            font-size: 13px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            background-image: radial-gradient(circle at 20% 30%, rgba(0, 113, 227, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(52, 199, 89, 0.03) 0%, transparent 50%);
+        }
+
+        /* ─── SCROLLBAR ─── */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--bd);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--bds);
+        }
+
+        /* ─── TOPBAR ─── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: saturate(180%) blur(24px);
+            -webkit-backdrop-filter: saturate(180%) blur(24px);
+            border-bottom: 0.5px solid var(--bd);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+        }
+        .tl {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #0071e3, #0055cc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s var(--spring);
+        }
+        .logo-box:hover {
+            transform: scale(1.05);
+        }
+        .logo-box svg {
+            width: 16px;
+            height: 16px;
+            stroke: #fff;
+            fill: none;
+            stroke-width: 2.2;
+        }
+        .appname {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--tp);
+            letter-spacing: -0.3px;
+        }
+        .appname span {
+            color: var(--ac);
+        }
+        .appsub {
+            font-size: 10px;
+            color: var(--tm);
+            font-weight: 500;
+            background: rgba(0, 0, 0, 0.04);
+            padding: 2px 10px;
+            border-radius: 30px;
+            border: 0.5px solid var(--bd);
+        }
+        .tr {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+        .tb-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 0.5px solid var(--bd);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s var(--spring);
+            color: var(--tm);
+        }
+        .tb-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.05);
+        }
+        .tb-btn:active {
+            transform: scale(0.92);
+        }
+        .tb-btn i {
+            font-size: 15px;
+        }
+        .notif-dot {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 7px;
+            height: 7px;
+            background: var(--red);
+            border-radius: 50%;
+            border: 1.5px solid rgba(255, 255, 255, 0.8);
+        }
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px 4px 5px;
+            border: 0.5px solid var(--bd);
+            border-radius: 20px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            transition: all 0.2s var(--spring);
+        }
+        .user-chip:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.02);
+        }
+        .user-chip:active {
+            transform: scale(0.95);
+        }
+        .ua {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--ac);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .uname {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--tp);
+        }
+
+        /* ─── NAV TABS ─── */
+        .nav-tabs {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 24px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: saturate(180%) blur(16px);
+            -webkit-backdrop-filter: saturate(180%) blur(16px);
+            border-bottom: 0.5px solid var(--bd);
+            overflow-x: auto;
+            flex-wrap: nowrap;
+        }
+        .nav-tab {
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--tm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: all 0.2s var(--spring);
+            font-family: inherit;
+        }
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--tp);
+            transform: translateY(-1px);
+        }
+        .nav-tab:active {
+            transform: scale(0.95);
+        }
+        .nav-tab.active {
+            background: var(--acb);
+            color: var(--ac);
+        }
+        .nav-tab i {
+            font-size: 14px;
+        }
+        .nav-tab .ncnt {
+            background: var(--red);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 99px;
+            min-width: 16px;
+            text-align: center;
+        }
+
+        /* ─── SEARCH ROW ─── */
+        .search-row {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 0.5px solid var(--bd);
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .search-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+        }
+        .search-wrap .sw {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 0.5px solid var(--bd);
+            border-radius: 20px;
+            padding: 6px 14px;
+            transition: all 0.2s;
+        }
+        .search-wrap .sw:focus-within {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--ac);
+            box-shadow: 0 0 0 3px var(--acl);
+        }
+        .search-wrap .sw i {
+            font-size: 14px;
+            color: var(--tm);
+        }
+        .search-wrap .sw input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 13px;
+            color: var(--tp);
+            width: 100%;
+            font-family: inherit;
+        }
+        .search-wrap .sw input::placeholder {
+            color: var(--tm);
+        }
+        .kpis {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .kpi {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border: 0.5px solid var(--bd);
+            border-radius: 20px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s var(--spring);
+        }
+        .kpi:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .kpi:active {
+            transform: scale(0.95);
+        }
+        .kpi i {
+            font-size: 14px;
+        }
+        .kpi-blue {
+            color: var(--ac);
+        }
+        .kpi-org {
+            color: var(--orange);
+        }
+        .kpi-red {
+            color: var(--red);
+        }
+        .kpi-grn {
+            color: var(--green);
+        }
+        .kpi-pur {
+            color: var(--purple);
+        }
+        .kpi-num {
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        /* ─── CONTENT AREA ─── */
+        .content-area {
+            flex: 1;
+            padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ─── STATS ROW ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 0.5px solid var(--bd);
+            border-radius: var(--r2);
+            padding: 14px 16px;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow2);
+        }
+        .stat-card .sc-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .stat-card .sc-lbl {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--tm);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 4px;
+        }
+        .stat-card .sc-val {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--tp);
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+        .stat-card .sc-sub {
+            font-size: 10px;
+            color: var(--tm);
+            margin-top: 3px;
+        }
+        .stat-card .sc-ic {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .stat-card .sc-ic i {
+            font-size: 15px;
+        }
+        .stat-card .trend {
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 1px 10px;
+            border-radius: 20px;
+        }
+        .trend.up {
+            background: var(--greenb);
+            color: var(--greend);
+        }
+        .trend.down {
+            background: var(--redb);
+            color: var(--redd);
+        }
+        .trend.neutral {
+            background: var(--s3);
+            color: var(--tm);
+        }
+
+        /* ─── MAIN PANEL ─── */
+        .main-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 0.5px solid var(--bd);
+            border-radius: var(--r2);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.2s ease;
+        }
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 0.5px solid var(--bd);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--tp);
+            letter-spacing: -0.2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .panel-body {
+            padding: 16px;
+            display: none;
+            animation: fadeSlide 0.3s var(--spring);
+        }
+        .panel-body.show {
+            display: block;
+        }
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── BUTTONS ─── */
+        .btn-p {
+            padding: 7px 18px;
+            background: var(--ac);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s var(--spring);
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25);
+        }
+        .btn-p:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.35);
+        }
+        .btn-p:active {
+            transform: scale(0.95);
+        }
+        .btn-s {
+            padding: 7px 14px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 0.5px solid var(--bd);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            color: var(--ts);
+            transition: all 0.2s var(--spring);
+        }
+        .btn-s:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.02);
+        }
+        .btn-s:active {
+            transform: scale(0.95);
+        }
+        .btn-export {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 14px;
+            border: 0.5px solid var(--bd);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--ts);
+            font-family: inherit;
+            transition: all 0.2s var(--spring);
+        }
+        .btn-export:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.02);
+        }
+        .btn-export:active {
+            transform: scale(0.95);
+        }
+        .btn-export i {
+            font-size: 14px;
+        }
+
+        /* ─── BADGES ─── */
+        .badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(0, 0, 0, 0.04);
+        }
+        .b-red {
+            background: var(--redb);
+            color: var(--redd);
+        }
+        .b-org {
+            background: var(--orangeb);
+            color: var(--oranged);
+        }
+        .b-grn {
+            background: var(--greenb);
+            color: var(--greend);
+        }
+        .b-blue {
+            background: var(--acb);
+            color: var(--ach);
+        }
+        .b-teal {
+            background: var(--tealbg);
+            color: var(--tealt);
+        }
+        .b-purple {
+            background: var(--purpleb);
+            color: var(--purpled);
+        }
+        .b-amber {
+            background: var(--amberb);
+            color: var(--ambert);
+        }
+        .b-pink {
+            background: var(--pinkb);
+            color: var(--pinkt);
+        }
+
+        /* ─── TABLES ─── */
+        .wtbl {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .wtbl th {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--tm);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            padding: 6px 10px;
+            text-align: left;
+            border-bottom: 0.5px solid var(--bd);
+            background: rgba(0, 0, 0, 0.02);
+        }
+        .wtbl td {
+            padding: 8px 10px;
+            border-bottom: 0.5px solid var(--bd);
+            color: var(--tp);
+            vertical-align: middle;
+        }
+        .wtbl tr:last-child td {
+            border-bottom: none;
+        }
+        .wtbl tr:hover td {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        /* ─── THEATER CARD ─── */
+        .theater-card {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 12px 14px;
+            border: 0.5px solid var(--bd);
+            transition: all 0.2s var(--spring);
+        }
+        .theater-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow2);
+        }
+        .theater-card .t-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--tp);
+        }
+        .theater-card .t-status {
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .theater-card .t-detail {
+            font-size: 11px;
+            color: var(--tm);
+            margin-top: 2px;
+        }
+
+        /* ─── SCHEDULE GRID ─── */
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 60px repeat(5, 1fr);
+            gap: 4px;
+            font-size: 11px;
+        }
+        .schedule-grid .sh {
+            font-weight: 600;
+            color: var(--tm);
+            text-align: center;
+            padding: 4px 2px;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+        .schedule-grid .sh:first-child {
+            text-align: left;
+        }
+        .schedule-grid .scell {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            padding: 4px 2px;
+            text-align: center;
+            font-size: 10px;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: var(--tm);
+            font-weight: 500;
+            cursor: default;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .schedule-grid .scell.surgery {
+            background: var(--acb);
+            color: var(--ach);
+            cursor: pointer;
+            transition: all 0.2s var(--spring);
+        }
+        .schedule-grid .scell.surgery:hover {
+            transform: scale(1.04);
+            box-shadow: var(--shadow);
+        }
+        .schedule-grid .scell .s-name {
+            font-weight: 600;
+            font-size: 9px;
+        }
+        .schedule-grid .scell .s-time {
+            font-size: 8px;
+            opacity: 0.7;
+        }
+        .schedule-grid .scell .s-status {
+            font-size: 7px;
+            padding: 1px 6px;
+            border-radius: 10px;
+        }
+
+        /* ─── MODAL ─── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 200;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 60px;
+        }
+        .modal-overlay.show {
+            display: flex;
+            animation: overlayFade 0.3s ease;
+        }
+        @keyframes overlayFade {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .modal {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: saturate(180%) blur(32px);
+            -webkit-backdrop-filter: saturate(180%) blur(32px);
+            border-radius: 18px;
+            border: 0.5px solid rgba(255, 255, 255, 0.3);
+            width: 520px;
+            max-width: 94%;
+            max-height: 85vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+            animation: modalSpring 0.4s var(--spring);
+        }
+        @keyframes modalSpring {
+            from {
+                opacity: 0;
+                transform: scale(0.92) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .modal-header {
+            padding: 14px 18px;
+            border-bottom: 0.5px solid var(--bd);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .modal-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--tp);
+        }
+        .modal-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: var(--tm);
+            transition: all 0.2s var(--spring);
+        }
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.08);
+            transform: scale(1.1);
+        }
+        .modal-close:active {
+            transform: scale(0.9);
+        }
+        .modal-body {
+            padding: 18px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* ─── FORMS ─── */
+        .fg {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .ff {
+            grid-column: 1/-1;
+        }
+        .fgl {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .lbl {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--tm);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .fi {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 0.5px solid var(--bd);
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 12px;
+            color: var(--tp);
+            outline: none;
+            font-family: inherit;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .fi:focus {
+            border-color: var(--ac);
+            box-shadow: 0 0 0 3px var(--acl);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        select.fi {
+            cursor: pointer;
+        }
+        .ta {
+            resize: vertical;
+            min-height: 60px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 0.5px solid var(--bd);
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 12px;
+            color: var(--tp);
+            outline: none;
+            font-family: inherit;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .ta:focus {
+            border-color: var(--ac);
+            box-shadow: 0 0 0 3px var(--acl);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--ts);
+            padding-bottom: 5px;
+            border-bottom: 0.5px solid var(--bd);
+            margin-bottom: 6px;
+            grid-column: 1/-1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .section-title i {
+            font-size: 14px;
+            color: var(--ac);
+        }
+        .fa {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* ─── TOAST ─── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+            max-width: 90%;
+        }
+        .toast {
+            background: rgba(28, 28, 30, 0.92);
+            backdrop-filter: saturate(180%) blur(24px);
+            -webkit-backdrop-filter: saturate(180%) blur(24px);
+            color: #fff;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            pointer-events: auto;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.4s var(--spring);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        .toast.success {
+            background: #065f46;
+        }
+        .toast.error {
+            background: #991b1b;
+        }
+        .toast.warning {
+            background: #92400e;
+        }
+        .toast.info {
+            background: #1e40af;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (max-width: 960px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .fg {
+                grid-template-columns: 1fr;
+            }
+            .schedule-grid {
+                font-size: 9px;
+                grid-template-columns: 40px repeat(5, 1fr);
+            }
+            .schedule-grid .scell {
+                font-size: 8px;
+                padding: 2px 1px;
+                min-height: 24px;
+            }
+            .schedule-grid .scell .s-name {
+                font-size: 7px;
+            }
+        }
+        @media (max-width: 640px) {
+            .topbar {
+                padding: 0 12px;
+                flex-wrap: wrap;
+                height: auto;
+                padding-top: 8px;
+                padding-bottom: 8px;
+                gap: 4px;
+            }
+            .tr {
+                margin-left: auto;
+            }
+            .nav-tabs {
+                padding: 6px 12px;
+                gap: 0;
+                overflow-x: auto;
+            }
+            .nav-tab {
+                font-size: 10px;
+                padding: 4px 10px;
+            }
+            .search-row {
+                padding: 8px 12px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-wrap {
+                min-width: unset;
+            }
+            .kpis {
+                justify-content: center;
+            }
+            .content-area {
+                padding: 12px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .stat-card .sc-val {
+                font-size: 18px;
+            }
+            .panel-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .panel-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .btn-export {
+                margin-left: 0;
+            }
+            .wtbl {
+                font-size: 11px;
+            }
+            .wtbl th,
+            .wtbl td {
+                padding: 4px 6px;
+            }
+            .modal {
+                width: 96%;
+                max-height: 90vh;
+                margin-top: 20px;
+            }
+            .schedule-grid {
+                font-size: 7px;
+                grid-template-columns: 30px repeat(5, 1fr);
+                gap: 2px;
+            }
+            .schedule-grid .sh {
+                font-size: 7px;
+                padding: 2px 1px;
+            }
+            .schedule-grid .scell {
+                font-size: 7px;
+                padding: 1px;
+                min-height: 20px;
+            }
+            .schedule-grid .scell .s-name {
+                font-size: 6px;
+            }
+            .schedule-grid .scell .s-time {
+                font-size: 6px;
+            }
+        }
+        @media (max-width: 480px) {
+            .topbar {
+                padding: 4px 8px;
+            }
+            .appname {
+                font-size: 13px;
+            }
+            .appsub {
+                font-size: 9px;
+                padding: 1px 6px;
+            }
+            .uname {
+                font-size: 10px;
+            }
+            .ua {
+                width: 20px;
+                height: 20px;
+                font-size: 8px;
+            }
+            .nav-tab {
+                font-size: 9px;
+                padding: 3px 6px;
+            }
+            .nav-tab i {
+                font-size: 11px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 4px;
+            }
+            .stat-card {
+                padding: 10px 12px;
+            }
+            .stat-card .sc-val {
+                font-size: 16px;
+            }
+            .stat-card .sc-lbl {
+                font-size: 9px;
+            }
+            .kpi {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+            .kpi i {
+                font-size: 12px;
+            }
+            .kpi-num {
+                font-size: 11px;
+            }
+            .btn-p,
+            .btn-s,
+            .btn-export {
+                font-size: 10px;
+                padding: 5px 12px;
+            }
+            .fi {
+                font-size: 11px;
+                padding: 5px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══ TOPBAR ═══ -->
+    <div class="topbar">
+        <div class="tl">
+            <div class="logo-box"><img src="logo.png" alt="PClinic" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.outerHTML=\'<svg viewBox=&quot;0 0 24 24&quot; style=&quot;width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2&quot;><path d=&quot;M22 12h-4l-3 9L9 3l-3 9H2&quot;/></svg>\'" /></div>
+            <span class="appname">P<span>clinic</span></span>
+            <span class="appsub">Theater</span>
+        </div>
+        <div class="tr">
+            <div class="tb-btn" onclick="showToast('🔔 2 new notifications', 'info')"><i class="ti ti-bell"></i><div class="notif-dot"></div></div>
+            <div class="tb-btn" onclick="showToast('⚙️ Settings', 'info')"><i class="ti ti-settings"></i></div>
+            <div class="user-chip" onclick="showToast('👤 Theater Scheduler', 'info')">
+                <div class="ua">TS</div>
+                <span class="uname">Theater Scheduler</span>
+            </div>
+            <div class="tb-btn" onclick="showToast('🚪 Logout', 'warning')"><i class="ti ti-logout"></i></div>
+        </div>
+    </div>
+
+    <!-- ═══ NAV TABS ═══ -->
+    <div class="nav-tabs" id="navTabs">
+        <button class="nav-tab active" data-tab="overview" onclick="switchTab('overview',this)"><i class="ti ti-layout-dashboard"></i> Overview</button>
+        <button class="nav-tab" data-tab="schedule" onclick="switchTab('schedule',this)"><i class="ti ti-calendar"></i> Schedule</button>
+        <button class="nav-tab" data-tab="theaters" onclick="switchTab('theaters',this)"><i class="ti ti-bed"></i> Theaters</button>
+        <button class="nav-tab" data-tab="surgeons" onclick="switchTab('surgeons',this)"><i class="ti ti-user-md"></i> Surgeons</button>
+        <button class="nav-tab" data-tab="procedures" onclick="switchTab('procedures',this)"><i class="ti ti-clipboard-list"></i> Procedures</button>
+    </div>
+
+    <!-- ═══ SEARCH ROW ═══ -->
+    <div class="search-row">
+        <div class="search-wrap">
+            <div class="sw">
+                <i class="ti ti-search"></i>
+                <input id="searchInput" placeholder="Search patient, surgeon, procedure…" oninput="handleSearch(this.value)" />
+            </div>
+        </div>
+        <div class="kpis">
+            <div class="kpi kpi-blue" onclick="filterStatus('all')"><i class="ti ti-apps"></i> <span class="kpi-num">All</span></div>
+            <div class="kpi kpi-org" onclick="filterStatus('scheduled')"><i class="ti ti-clock"></i> <span class="kpi-num">5</span> scheduled</div>
+            <div class="kpi kpi-red" onclick="filterStatus('in-progress')"><i class="ti ti-activity"></i> <span class="kpi-num">3</span> in progress</div>
+            <div class="kpi kpi-grn" onclick="filterStatus('completed')"><i class="ti ti-circle-check"></i> <span class="kpi-num">8</span> completed</div>
+        </div>
+    </div>
+
+    <!-- ═══ CONTENT AREA ═══ -->
+    <div class="content-area">
+
+        <!-- ─── VIEW: OVERVIEW ─── -->
+        <div id="view-overview">
+            <!-- Stats -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="sc-top">
+                        <div><div class="sc-lbl">Today's Surgeries</div><div class="sc-val" id="statToday">6</div></div>
+                        <div class="sc-ic" style="background:var(--acb)"><i class="ti ti-scalpel" style="color:var(--ac)"></i></div>
+                    </div>
+                    <div class="sc-sub">3 in progress, 2 scheduled, 1 completed</div>
+                    <span class="trend neutral">—</span>
+                </div>
+                <div class="stat-card">
+                    <div class="sc-top">
+                        <div><div class="sc-lbl">This Week</div><div class="sc-val" id="statWeek">24</div></div>
+                        <div class="sc-ic" style="background:var(--greenb)"><i class="ti ti-calendar" style="color:var(--green)"></i></div>
+                    </div>
+                    <div class="sc-sub">+3 from last week</div>
+                    <span class="trend up">↑ 14.3%</span>
+                </div>
+                <div class="stat-card">
+                    <div class="sc-top">
+                        <div><div class="sc-lbl">Theaters</div><div class="sc-val">4</div></div>
+                        <div class="sc-ic" style="background:var(--purpleb)"><i class="ti ti-bed" style="color:var(--purple)"></i></div>
+                    </div>
+                    <div class="sc-sub">2 available, 1 in use, 1 cleaning</div>
+                    <span class="trend neutral">—</span>
+                </div>
+                <div class="stat-card">
+                    <div class="sc-top">
+                        <div><div class="sc-lbl">Completion Rate</div><div class="sc-val" id="statCompletion">78%</div></div>
+                        <div class="sc-ic" style="background:var(--tealbg)"><i class="ti ti-percentage" style="color:var(--teal)"></i></div>
+                    </div>
+                    <div class="sc-sub">Target: 85%</div>
+                    <span class="trend up">↑ 4%</span>
+                </div>
+                <div class="stat-card">
+                    <div class="sc-top">
+                        <div><div class="sc-lbl">Avg. Duration</div><div class="sc-val" id="statAvgDuration">92 min</div></div>
+                        <div class="sc-ic" style="background:var(--orangeb)"><i class="ti ti-clock" style="color:var(--orange)"></i></div>
+                    </div>
+                    <div class="sc-sub">+12 min from last month</div>
+                    <span class="trend down">↑ 15%</span>
+                </div>
+            </div>
+
+            <!-- Charts: Today's Schedule & Theater Utilization -->
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:16px;">
+                <div class="main-panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="ti ti-calendar" style="color:var(--ac)"></i> Today's Schedule</span>
+                        <div class="panel-actions">
+                            <span style="font-size:11px; color:var(--tm); font-weight:500;">Jun 30, 2026</span>
+                        </div>
+                    </div>
+                    <div class="panel-body show" style="padding-top:8px;">
+                        <div id="todaySchedule" style="margin-top:4px;"></div>
+                    </div>
+                </div>
+                <div class="main-panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="ti ti-chart-pie" style="color:var(--ac)"></i> Theater Utilization</span>
+                    </div>
+                    <div class="panel-body show" style="padding-top:8px;">
+                        <div id="utilizationChart" style="margin-top:4px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Surgeries -->
+            <div class="main-panel">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="ti ti-clock" style="color:var(--ac)"></i> Upcoming Surgeries</span>
+                    <div class="panel-actions">
+                        <button class="btn-p" onclick="openBookModal()"><i class="ti ti-plus"></i> Book Surgery</button>
+                        <button class="btn-export" onclick="showToast('📊 Exporting schedule...', 'info')"><i class="ti ti-download"></i> Export</button>
+                    </div>
+                </div>
+                <div class="panel-body show">
+                    <table class="wtbl" id="upcomingTable">
+                        <thead><tr><th>Patient</th><th>Procedure</th><th>Surgeon</th><th>Theater</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="upcomingBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── VIEW: SCHEDULE ─── -->
+        <div id="view-schedule" style="display:none;">
+            <div class="main-panel">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="ti ti-calendar" style="color:var(--ac)"></i> Weekly Schedule</span>
+                    <div class="panel-actions">
+                        <button class="btn-s" onclick="changeWeek(-1)"><i class="ti ti-chevron-left"></i></button>
+                        <span style="font-size:12px; color:var(--tm); font-weight:500;" id="weekLabel">Jun 30 - Jul 6, 2026</span>
+                        <button class="btn-s" onclick="changeWeek(1)"><i class="ti ti-chevron-right"></i></button>
+                        <button class="btn-export" onclick="showToast('🖨️ Printing schedule...', 'info')"><i class="ti ti-printer"></i></button>
+                    </div>
+                </div>
+                <div class="panel-body show" style="overflow-x:auto;">
+                    <div class="schedule-grid" id="scheduleGrid">
+                        <div class="sh"></div>
+                        <div class="sh">Mon</div>
+                        <div class="sh">Tue</div>
+                        <div class="sh">Wed</div>
+                        <div class="sh">Thu</div>
+                        <div class="sh">Fri</div>
+                        <!-- Rows rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── VIEW: THEATERS ─── -->
+        <div id="view-theaters" style="display:none;">
+            <div class="main-panel">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="ti ti-bed" style="color:var(--ac)"></i> Operating Theaters</span>
+                    <div class="panel-actions">
+                        <button class="btn-p" onclick="showToast('🏥 Adding new theater...', 'info')"><i class="ti ti-plus"></i> Add Theater</button>
+                        <button class="btn-export" onclick="showToast('📊 Exporting theater data...', 'info')"><i class="ti ti-download"></i> Export</button>
+                    </div>
+                </div>
+                <div class="panel-body show">
+                    <div id="theaterGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── VIEW: SURGEONS ─── -->
+        <div id="view-surgeons" style="display:none;">
+            <div class="main-panel">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="ti ti-user-md" style="color:var(--ac)"></i> Surgeon Schedule</span>
+                    <div class="panel-actions">
+                        <button class="btn-export" onclick="showToast('📊 Exporting surgeon data...', 'info')"><i class="ti ti-download"></i> Export</button>
+                    </div>
+                </div>
+                <div class="panel-body show">
+                    <table class="wtbl" id="surgeonsTable">
+                        <thead><tr><th>Surgeon</th><th>Specialty</th><th>Surgeries This Week</th><th>Surgeries Today</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="surgeonsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── VIEW: PROCEDURES ─── -->
+        <div id="view-procedures" style="display:none;">
+            <div class="main-panel">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="ti ti-clipboard-list" style="color:var(--ac)"></i> Procedure Log</span>
+                    <div class="panel-actions">
+                        <select class="fi" style="width:auto;font-size:11px;padding:5px 10px;" id="procedureFilter" onchange="renderProcedures()">
+                            <option value="all">All Types</option>
+                            <option value="General Surgery">General Surgery</option>
+                            <option value="Orthopedic">Orthopedic</option>
+                            <option value="Cardiac">Cardiac</option>
+                            <option value="Neurology">Neurology</option>
+                            <option value="Gynecology">Gynecology</option>
+                            <option value="Urology">Urology</option>
+                            <option value="Ophthalmology">Ophthalmology</option>
+                        </select>
+                        <button class="btn-export" onclick="showToast('📊 Exporting procedures...', 'info')"><i class="ti ti-download"></i> Export</button>
+                    </div>
+                </div>
+                <div class="panel-body show">
+                    <table class="wtbl" id="proceduresTable">
+                        <thead><tr><th>Patient</th><th>Procedure</th><th>Type</th><th>Surgeon</th><th>Date</th><th>Duration</th><th>Status</th></tr></thead>
+                        <tbody id="proceduresBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /content-area -->
+
+    <!-- ═══ MODAL: BOOK SURGERY ═══ -->
+    <div class="modal-overlay" id="bookModal" onclick="if(event.target===this)closeBookModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Book Surgery</span>
+                <button class="modal-close" onclick="closeBookModal()"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="fg">
+                    <div class="fgl"><div class="lbl">Patient Name *</div><input class="fi" id="bookPatient" placeholder="e.g. John Kamau" /></div>
+                    <div class="fgl"><div class="lbl">MRN</div><input class="fi" id="bookMRN" placeholder="e.g. 00-1882" /></div>
+                    <div class="fgl"><div class="lbl">Procedure *</div><input class="fi" id="bookProcedure" placeholder="e.g. CABG" /></div>
+                    <div class="fgl"><div class="lbl">Procedure Type</div>
+                        <select class="fi" id="bookType">
+                            <option>General Surgery</option>
+                            <option>Orthopedic</option>
+                            <option>Cardiac</option>
+                            <option>Neurology</option>
+                            <option>Gynecology</option>
+                            <option>Urology</option>
+                            <option>Ophthalmology</option>
+                        </select>
+                    </div>
+                    <div class="fgl"><div class="lbl">Surgeon *</div>
+                        <select class="fi" id="bookSurgeon">
+                            <option>Dr. David Mutua</option>
+                            <option>Dr. Eric Nkurunziza</option>
+                            <option>Dr. Grace Ineza</option>
+                            <option>Dr. Anne Ndirangu</option>
+                            <option>Dr. Samuel Bizimana</option>
+                        </select>
+                    </div>
+                    <div class="fgl"><div class="lbl">Anaesthetist</div>
+                        <select class="fi" id="bookAnaesthetist">
+                            <option>Dr. James Ochieng</option>
+                            <option>Dr. Sarah Wanjiru</option>
+                            <option>Dr. Peter Omondi</option>
+                            <option>Not assigned</option>
+                        </select>
+                    </div>
+                    <div class="fgl"><div class="lbl">Theater *</div>
+                        <select class="fi" id="bookTheater">
+                            <option>Theater 1</option>
+                            <option>Theater 2</option>
+                            <option>Theater 3</option>
+                            <option>Theater 4</option>
+                        </select>
+                    </div>
+                    <div class="fgl"><div class="lbl">Date *</div><input class="fi" type="date" id="bookDate" /></div>
+                    <div class="fgl"><div class="lbl">Time *</div><input class="fi" type="time" id="bookTime" /></div>
+                    <div class="fgl"><div class="lbl">Estimated Duration (min) *</div><input class="fi" type="number" id="bookDuration" placeholder="e.g. 90" value="60" /></div>
+                    <div class="fgl"><div class="lbl">Priority</div>
+                        <select class="fi" id="bookPriority">
+                            <option>Routine</option>
+                            <option>Urgent</option>
+                            <option>Emergency</option>
+                        </select>
+                    </div>
+                    <div class="fgl ff"><div class="lbl">Special Notes / Requirements</div><textarea class="ta" id="bookNotes" style="min-height:50px;" placeholder="Special equipment, implants, blood products, positioning…"></textarea></div>
+                </div>
+                <div class="fa">
+                    <button class="btn-p" onclick="submitBooking()"><i class="ti ti-calendar-plus"></i> Book Surgery</button>
+                    <button class="btn-s" onclick="closeBookModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: SURGERY DETAILS ═══ -->
+    <div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetailModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title" id="detailModalTitle">Surgery Details</span>
+                <button class="modal-close" onclick="closeDetailModal()"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="modal-body" id="detailModalBody"></div>
+        </div>
+    </div>
+
+    <!-- ═══ TOAST CONTAINER ═══ -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ═══ JAVASCRIPT ═══ -->
+    <script>
+        // ─── DATA ───
+        const surgeries = [{
+            id: 1,
+            patient: 'John Kamau',
+            mrn: '00-1882',
+            procedure: 'CABG × 3',
+            type: 'Cardiac',
+            surgeon: 'Dr. David Mutua',
+            anaesthetist: 'Dr. James Ochieng',
+            theater: 'Theater 1',
+            date: '2026-06-30',
+            time: '08:00',
+            duration: 180,
+            priority: 'Emergency',
+            status: 'in-progress',
+            notes: 'Urgent revascularization. LIMA prepared.'
+        }, {
+            id: 2,
+            patient: 'Grace Wanjiru',
+            mrn: '00-2047',
+            procedure: 'Lumbar Discectomy',
+            type: 'Neurology',
+            surgeon: 'Dr. Grace Ineza',
+            anaesthetist: 'Dr. Sarah Wanjiru',
+            theater: 'Theater 2',
+            date: '2026-06-30',
+            time: '09:00',
+            duration: 90,
+            priority: 'Routine',
+            status: 'scheduled',
+            notes: 'L4-L5 disc herniation. Pre-op clearance obtained.'
+        }, {
+            id: 3,
+            patient: 'Samuel Otieno',
+            mrn: '00-2918',
+            procedure: 'Total Knee Replacement',
+            type: 'Orthopedic',
+            surgeon: 'Dr. Eric Nkurunziza',
+            anaesthetist: 'Dr. Peter Omondi',
+            theater: 'Theater 3',
+            date: '2026-06-30',
+            time: '10:30',
+            duration: 120,
+            priority: 'Urgent',
+            status: 'scheduled',
+            notes: 'Severe osteoarthritis. Custom implant ordered.'
+        }, {
+            id: 4,
+            patient: 'Amina Hassan',
+            mrn: '00-3301',
+            procedure: 'Cholecystectomy',
+            type: 'General Surgery',
+            surgeon: 'Dr. David Mutua',
+            anaesthetist: 'Dr. James Ochieng',
+            theater: 'Theater 1',
+            date: '2026-06-29',
+            time: '14:00',
+            duration: 60,
+            priority: 'Routine',
+            status: 'completed',
+            notes: 'Laparoscopic, uneventful. Discharged next day.'
+        }, {
+            id: 5,
+            patient: 'Peter Omondi',
+            mrn: '00-4412',
+            procedure: 'Craniotomy',
+            type: 'Neurology',
+            surgeon: 'Dr. Grace Ineza',
+            anaesthetist: 'Dr. Sarah Wanjiru',
+            theater: 'Theater 2',
+            date: '2026-06-29',
+            time: '08:00',
+            duration: 240,
+            priority: 'Emergency',
+            status: 'completed',
+            notes: 'Trauma from RTA. Subdural haematoma evacuation.'
+        }, {
+            id: 6,
+            patient: 'Mary Adhiambo',
+            mrn: '00-3104',
+            procedure: 'Hysterectomy',
+            type: 'Gynecology',
+            surgeon: 'Dr. Anne Ndirangu',
+            anaesthetist: 'Dr. Peter Omondi',
+            theater: 'Theater 3',
+            date: '2026-06-30',
+            time: '14:00',
+            duration: 90,
+            priority: 'Routine',
+            status: 'scheduled',
+            notes: 'Uterine fibroids. Abdominal approach.'
+        }, {
+            id: 7,
+            patient: 'David Mugabo',
+            mrn: '00-5512',
+            procedure: 'PCI with Stent',
+            type: 'Cardiac',
+            surgeon: 'Dr. David Mutua',
+            anaesthetist: 'Dr. James Ochieng',
+            theater: 'Theater 1',
+            date: '2026-06-30',
+            time: '13:00',
+            duration: 120,
+            priority: 'Urgent',
+            status: 'in-progress',
+            notes: 'Acute coronary syndrome. Drug-eluting stent planned.'
+        }, {
+            id: 8,
+            patient: 'Faith Njeri',
+            mrn: '00-2215',
+            procedure: 'Cataract Surgery',
+            type: 'Ophthalmology',
+            surgeon: 'Dr. Samuel Bizimana',
+            anaesthetist: 'Dr. Sarah Wanjiru',
+            theater: 'Theater 4',
+            date: '2026-06-28',
+            time: '09:00',
+            duration: 45,
+            priority: 'Routine',
+            status: 'completed',
+            notes: 'Phacoemulsification. IOL implanted.'
+        }, {
+            id: 9,
+            patient: 'Tom Maina',
+            mrn: '00-4411',
+            procedure: 'Appendectomy',
+            type: 'General Surgery',
+            surgeon: 'Dr. David Mutua',
+            anaesthetist: 'Not assigned',
+            theater: 'Theater 1',
+            date: '2026-06-30',
+            time: '07:00',
+            duration: 45,
+            priority: 'Routine',
+            status: 'completed',
+            notes: 'Laparoscopic. Uncomplicated.'
+        }, {
+            id: 10,
+            patient: 'Alice Mutoni',
+            mrn: '00-6612',
+            procedure: 'Hip Replacement',
+            type: 'Orthopedic',
+            surgeon: 'Dr. Eric Nkurunziza',
+            anaesthetist: 'Dr. Peter Omondi',
+            theater: 'Theater 3',
+            date: '2026-07-01',
+            time: '09:00',
+            duration: 150,
+            priority: 'Routine',
+            status: 'scheduled',
+            notes: 'Right total hip replacement. Implant available.'
+        }, {
+            id: 11,
+            patient: 'Jean Pierre',
+            mrn: '00-7711',
+            procedure: 'TURP',
+            type: 'Urology',
+            surgeon: 'Dr. Samuel Bizimana',
+            anaesthetist: 'Dr. James Ochieng',
+            theater: 'Theater 4',
+            date: '2026-07-01',
+            time: '13:00',
+            duration: 90,
+            priority: 'Routine',
+            status: 'scheduled',
+            notes: 'Benign prostatic hyperplasia. Pre-op workup done.'
+        }, {
+            id: 12,
+            patient: 'Grace Uwase',
+            mrn: '00-8812',
+            procedure: 'C-section',
+            type: 'Gynecology',
+            surgeon: 'Dr. Anne Ndirangu',
+            anaesthetist: 'Dr. Sarah Wanjiru',
+            theater: 'Theater 2',
+            date: '2026-06-29',
+            time: '10:00',
+            duration: 60,
+            priority: 'Emergency',
+            status: 'completed',
+            notes: 'Emergency C-section. Healthy baby delivered.'
+        }];
+
+        const theaters = [
+            { id: 1, name: 'Theater 1', status: 'in-use', currentSurgery: 'CABG × 3', surgeon: 'Dr. David Mutua',
+                nextSurgery: 'PCI with Stent', utilization: 85 },
+            { id: 2, name: 'Theater 2', status: 'available', currentSurgery: null, surgeon: null,
+                nextSurgery: 'Lumbar Discectomy', utilization: 60 },
+            { id: 3, name: 'Theater 3', status: 'in-use', currentSurgery: 'Total Knee Replacement',
+                surgeon: 'Dr. Eric Nkurunziza', nextSurgery: 'Hysterectomy', utilization: 75 },
+            { id: 4, name: 'Theater 4', status: 'cleaning', currentSurgery: null, surgeon: null, nextSurgery: null,
+                utilization: 40 }
+        ];
+
+        const surgeons = [
+            { name: 'Dr. David Mutua', specialty: 'Cardiothoracic Surgery', surgeriesWeek: 8, surgeriesToday: 3,
+                status: 'available' },
+            { name: 'Dr. Eric Nkurunziza', specialty: 'Orthopedic Surgery', surgeriesWeek: 6, surgeriesToday: 2,
+                status: 'in-surgery' },
+            { name: 'Dr. Grace Ineza', specialty: 'Neurosurgery', surgeriesWeek: 5, surgeriesToday: 1,
+                status: 'available' },
+            { name: 'Dr. Anne Ndirangu', specialty: 'Gynecology', surgeriesWeek: 4, surgeriesToday: 1,
+                status: 'available' },
+            { name: 'Dr. Samuel Bizimana', specialty: 'Ophthalmology & Urology', surgeriesWeek: 3, surgeriesToday: 0,
+                status: 'available' }
+        ];
+
+        const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+        const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
+        let currentWeekOffset = 0;
+
+        // ─── RENDER FUNCTIONS ───
+        function renderOverview() {
+            const today = new Date().toISOString().slice(0, 10);
+            const todaySurgeries = surgeries.filter(s => s.date === today);
+            const inProgress = todaySurgeries.filter(s => s.status === 'in-progress').length;
+            const scheduled = todaySurgeries.filter(s => s.status === 'scheduled').length;
+            const completed = todaySurgeries.filter(s => s.status === 'completed').length;
+            document.getElementById('statToday').textContent = todaySurgeries.length;
+
+            const weekSurgeries = surgeries.filter(s => {
+                const d = new Date(s.date);
+                const weekStart = getWeekStart(new Date());
+                return d >= weekStart && d < new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+            });
+            document.getElementById('statWeek').textContent = weekSurgeries.length;
+
+            const completedTotal = surgeries.filter(s => s.status === 'completed').length;
+            const total = surgeries.length;
+            document.getElementById('statCompletion').textContent = total > 0 ? Math.round((completedTotal / total) * 100) +
+                '%' : '0%';
+
+            const avgDuration = surgeries.reduce((sum, s) => sum + s.duration, 0) / surgeries.length;
+            document.getElementById('statAvgDuration').textContent = Math.round(avgDuration) + ' min';
+
+            // Today's schedule
+            const container = document.getElementById('todaySchedule');
+            const todaySorted = todaySurgeries.sort((a, b) => a.time.localeCompare(b.time));
+            if (todaySorted.length === 0) {
+                container.innerHTML =
+                    '<div style="padding:20px;text-align:center;color:var(--tm);">No surgeries scheduled today.</div>';
+            } else {
+                const statusColors = {
+                    'scheduled': 'b-blue',
+                    'in-progress': 'b-org',
+                    'completed': 'b-grn',
+                    'cancelled': 'b-red',
+                    'delayed': 'b-amber'
+                };
+                container.innerHTML = todaySorted.map(s => `
+                    <div style="display:flex;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--bd);gap:10px;cursor:pointer;" onclick="viewSurgery(${s.id})">
+                        <div style="min-width:60px;font-weight:600;color:var(--ac);font-size:12px;">${s.time}</div>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:13px;">${s.patient}</div>
+                            <div style="font-size:11px;color:var(--tm);">${s.procedure} — ${s.surgeon}</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:11px;color:var(--tm);">${s.theater}</span>
+                            <span class="badge ${statusColors[s.status]||'b-blue'}">${s.status.replace('-',' ').charAt(0).toUpperCase()+s.status.replace('-',' ').slice(1)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Utilization chart
+            renderUtilizationChart();
+            renderUpcoming();
+        }
+
+        function renderUtilizationChart() {
+            const container = document.getElementById('utilizationChart');
+            const total = theaters.length;
+            const inUse = theaters.filter(t => t.status === 'in-use').length;
+            const available = theaters.filter(t => t.status === 'available').length;
+            const cleaning = theaters.filter(t => t.status === 'cleaning').length;
+            const maintenance = theaters.filter(t => t.status === 'maintenance').length;
+
+            container.innerHTML = `
+                <div style="padding:8px 0;">
+                    <div style="display:flex;height:20px;border-radius:10px;overflow:hidden;background:var(--s3);">
+                        <div style="width:${(inUse/total)*100}%;background:var(--ac);transition:width 0.6s var(--spring);"></div>
+                        <div style="width:${(available/total)*100}%;background:var(--green);transition:width 0.6s var(--spring);"></div>
+                        <div style="width:${(cleaning/total)*100}%;background:var(--orange);transition:width 0.6s var(--spring);"></div>
+                        <div style="width:${(maintenance/total)*100}%;background:var(--red);transition:width 0.6s var(--spring);"></div>
+                    </div>
+                    <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
+                        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tm);">
+                            <span style="width:10px;height:10px;border-radius:3px;background:var(--ac);"></span>
+                            In Use: ${inUse}
+                        </span>
+                        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tm);">
+                            <span style="width:10px;height:10px;border-radius:3px;background:var(--green);"></span>
+                            Available: ${available}
+                        </span>
+                        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tm);">
+                            <span style="width:10px;height:10px;border-radius:3px;background:var(--orange);"></span>
+                            Cleaning: ${cleaning}
+                        </span>
+                        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tm);">
+                            <span style="width:10px;height:10px;border-radius:3px;background:var(--red);"></span>
+                            Maintenance: ${maintenance}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            d.setDate(diff);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        function renderSchedule() {
+            const weekStart = getWeekStart(new Date());
+            weekStart.setDate(weekStart.getDate() + currentWeekOffset * 7);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 4);
+
+            document.getElementById('weekLabel').textContent =
+                `${weekStart.toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${weekEnd.toLocaleDateString('en-US', {month:'short', day:'numeric'})}, ${weekEnd.getFullYear()}`;
+
+            const container = document.getElementById('scheduleGrid');
+            let html = `<div class="sh">Time</div>`;
+            weekDays.forEach(day => html += `<div class="sh">${day}</div>`);
+
+            timeSlots.forEach(time => {
+                html += `<div class="sh" style="font-size:9px;color:var(--tm);">${time}</div>`;
+                weekDays.forEach((day, idx) => {
+                    const date = new Date(weekStart);
+                    date.setDate(date.getDate() + idx);
+                    const dateStr = date.toISOString().slice(0, 10);
+                    const surgery = surgeries.find(s => s.date === dateStr && s.time <= time && s.time > time);
+                    if (surgery && surgery.time === time) {
+                        const statusColors = {
+                            'scheduled': 'b-blue',
+                            'in-progress': 'b-org',
+                            'completed': 'b-grn',
+                            'cancelled': 'b-red',
+                            'delayed': 'b-amber'
+                        };
+                        html += `<div class="scell surgery" onclick="viewSurgery(${surgery.id})">
+                            <span class="s-name">${surgery.patient.split(' ')[0]}</span>
+                            <span class="s-time">${surgery.procedure.slice(0,8)}</span>
+                            <span class="s-status badge ${statusColors[surgery.status]||'b-blue'}">${surgery.status.slice(0,3)}</span>
+                        </div>`;
+                    } else {
+                        html += `<div class="scell">—</div>`;
+                    }
+                });
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderTheaters() {
+            const container = document.getElementById('theaterGrid');
+            const statusColors = {
+                'available': 'b-grn',
+                'in-use': 'b-org',
+                'cleaning': 'b-amber',
+                'maintenance': 'b-red'
+            };
+            const statusLabels = {
+                'available': 'Available',
+                'in-use': 'In Use',
+                'cleaning': 'Cleaning',
+                'maintenance': 'Maintenance'
+            };
+            const statusIcons = {
+                'available': 'ti-circle-check',
+                'in-use': 'ti-activity',
+                'cleaning': 'ti-broom',
+                'maintenance': 'ti-tools'
+            };
+            const statusColorsHex = {
+                'available': 'var(--green)',
+                'in-use': 'var(--orange)',
+                'cleaning': 'var(--amber)',
+                'maintenance': 'var(--red)'
+            };
+
+            container.innerHTML = theaters.map(t => `
+                <div class="theater-card" style="border-left: 4px solid ${statusColorsHex[t.status]};">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div>
+                            <div class="t-name">${t.name}</div>
+                            <div class="t-status" style="color:${statusColorsHex[t.status]}">
+                                <i class="ti ${statusIcons[t.status]}"></i> ${statusLabels[t.status]}
+                            </div>
+                        </div>
+                        <div style="font-size:11px;color:var(--tm);background:var(--s3);padding:2px 10px;border-radius:20px;">
+                            ${t.utilization}% utilized
+                        </div>
+                    </div>
+                    <div style="margin-top:6px;">
+                        ${t.currentSurgery ? `
+                            <div class="t-detail"><strong>Current:</strong> ${t.currentSurgery}</div>
+                            <div class="t-detail"><strong>Surgeon:</strong> ${t.surgeon}</div>
+                        ` : `<div class="t-detail" style="color:var(--tm);">No surgery in progress</div>`}
+                        ${t.nextSurgery ? `<div class="t-detail"><strong>Next:</strong> ${t.nextSurgery}</div>` : ''}
+                    </div>
+                    <div style="margin-top:8px;display:flex;gap:6px;">
+                        <button class="btn-s" style="padding:2px 10px;font-size:10px;" onclick="showToast('📋 Viewing ${t.name} schedule','info')">Schedule</button>
+                        ${t.status === 'available' ? `<button class="btn-p" style="padding:2px 10px;font-size:10px;" onclick="openBookModal()">Book</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSurgeons() {
+            const tbody = document.getElementById('surgeonsBody');
+            const statusColors = {
+                'available': 'b-grn',
+                'in-surgery': 'b-org',
+                'on-call': 'b-blue',
+                'off-duty': 'b-red'
+            };
+            tbody.innerHTML = surgeons.map(s => `
+                <tr>
+                    <td style="font-weight:600;color:var(--ac)">${s.name}</td>
+                    <td>${s.specialty}</td>
+                    <td style="font-weight:600;text-align:center;">${s.surgeriesWeek}</td>
+                    <td style="font-weight:600;text-align:center;">${s.surgeriesToday}</td>
+                    <td><span class="badge ${statusColors[s.status]||'b-grn'}">${s.status.replace('-',' ').charAt(0).toUpperCase()+s.status.replace('-',' ').slice(1)}</span></td>
+                    <td>
+                        <button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="showToast('📋 Viewing ${s.name} schedule','info')">View Schedule</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderProcedures() {
+            const filter = document.getElementById('procedureFilter').value;
+            const filtered = surgeries.filter(s => filter === 'all' || s.type === filter);
+            const tbody = document.getElementById('proceduresBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML =
+                    '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--tm)">No procedures found.</td></tr>';
+                return;
+            }
+            const statusColors = {
+                'scheduled': 'b-blue',
+                'in-progress': 'b-org',
+                'completed': 'b-grn',
+                'cancelled': 'b-red',
+                'delayed': 'b-amber'
+            };
+            tbody.innerHTML = filtered.map(s => `
+                <tr onclick="viewSurgery(${s.id})" style="cursor:pointer;">
+                    <td style="font-weight:500;">${s.patient}</td>
+                    <td style="font-weight:600;color:var(--ac)">${s.procedure}</td>
+                    <td>${s.type}</td>
+                    <td>${s.surgeon}</td>
+                    <td>${s.date}</td>
+                    <td>${s.duration} min</td>
+                    <td><span class="badge ${statusColors[s.status]||'b-blue'}">${s.status.replace('-',' ').charAt(0).toUpperCase()+s.status.replace('-',' ').slice(1)}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderUpcoming() {
+            const today = new Date().toISOString().slice(0, 10);
+            const upcoming = surgeries
+                .filter(s => s.date >= today && s.status !== 'completed' && s.status !== 'cancelled')
+                .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
+                .slice(0, 6);
+
+            const tbody = document.getElementById('upcomingBody');
+            if (upcoming.length === 0) {
+                tbody.innerHTML =
+                    '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--tm)">No upcoming surgeries.</td></tr>';
+                return;
+            }
+            const statusColors = {
+                'scheduled': 'b-blue',
+                'in-progress': 'b-org',
+                'completed': 'b-grn',
+                'cancelled': 'b-red',
+                'delayed': 'b-amber'
+            };
+            tbody.innerHTML = upcoming.map(s => `
+                <tr onclick="viewSurgery(${s.id})" style="cursor:pointer;">
+                    <td style="font-weight:500;">${s.patient}</td>
+                    <td style="font-weight:600;color:var(--ac)">${s.procedure}</td>
+                    <td>${s.surgeon}</td>
+                    <td>${s.theater}</td>
+                    <td>${s.date}</td>
+                    <td>${s.time}</td>
+                    <td><span class="badge ${statusColors[s.status]||'b-blue'}">${s.status.replace('-',' ').charAt(0).toUpperCase()+s.status.replace('-',' ').slice(1)}</span></td>
+                    <td>
+                        <button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="event.stopPropagation();viewSurgery(${s.id})">View</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ─── VIEW SURGERY DETAILS ───
+        function viewSurgery(id) {
+            const s = surgeries.find(s => s.id === id);
+            if (!s) return;
+            const statusColors = {
+                'scheduled': 'b-blue',
+                'in-progress': 'b-org',
+                'completed': 'b-grn',
+                'cancelled': 'b-red',
+                'delayed': 'b-amber'
+            };
+            document.getElementById('detailModalTitle').textContent = `🔬 ${s.procedure} — ${s.patient}`;
+            document.getElementById('detailModalBody').innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Patient</div>
+                        <div style="font-size:14px;font-weight:600;">${s.patient}</div>
+                        <div style="font-size:11px;color:var(--tm);">MRN: ${s.mrn}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Status</div>
+                        <div><span class="badge ${statusColors[s.status]||'b-blue'}">${s.status.replace('-',' ').charAt(0).toUpperCase()+s.status.replace('-',' ').slice(1)}</span></div>
+                        <div style="font-size:11px;color:var(--tm);">Priority: ${s.priority}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Surgeon</div>
+                        <div style="font-size:14px;font-weight:600;">${s.surgeon}</div>
+                        <div style="font-size:11px;color:var(--tm);">Anaesthetist: ${s.anaesthetist}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Theater</div>
+                        <div style="font-size:14px;font-weight:600;">${s.theater}</div>
+                        <div style="font-size:11px;color:var(--tm);">Type: ${s.type}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Date & Time</div>
+                        <div style="font-size:14px;font-weight:600;">${s.date}</div>
+                        <div style="font-size:11px;color:var(--tm);">${s.time} · ${s.duration} min</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Procedure</div>
+                        <div style="font-size:14px;font-weight:600;color:var(--ac);">${s.procedure}</div>
+                    </div>
+                    <div style="grid-column:1/-1;background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
+                        <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Notes</div>
+                        <div style="font-size:13px;">${s.notes || 'No additional notes.'}</div>
+                    </div>
+                </div>
+                <div class="fa" style="margin-top:4px;">
+                    ${s.status === 'scheduled' ? `
+                        <button class="btn-p" onclick="updateSurgeryStatus(${s.id},'in-progress');closeDetailModal();"><i class="ti ti-play"></i> Start Surgery</button>
+                        <button class="btn-s" onclick="updateSurgeryStatus(${s.id},'delayed');closeDetailModal();" style="background:var(--orangeb);color:var(--oranged);"><i class="ti ti-clock"></i> Delay</button>
+                    ` : ''}
+                    ${s.status === 'in-progress' ? `
+                        <button class="btn-p" onclick="updateSurgeryStatus(${s.id},'completed');closeDetailModal();" style="background:var(--green);"><i class="ti ti-check"></i> Complete</button>
+                        <button class="btn-s" onclick="updateSurgeryStatus(${s.id},'delayed');closeDetailModal();" style="background:var(--orangeb);color:var(--oranged);"><i class="ti ti-clock"></i> Delay</button>
+                    ` : ''}
+                    <button class="btn-s" onclick="closeDetailModal(); showToast('📊 Exporting ${s.patient} record...','info')"><i class="ti ti-download"></i> Export</button>
+                    <button class="btn-export" onclick="closeDetailModal(); showToast('🖨️ Printing details...','info')"><i class="ti ti-printer"></i> Print</button>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.add('show');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+
+        // ─── UPDATE SURGERY STATUS ───
+        function updateSurgeryStatus(id, status) {
+            const s = surgeries.find(s => s.id === id);
+            if (s) {
+                s.status = status;
+                renderOverview();
+                renderSchedule();
+                renderProcedures();
+                renderUpcoming();
+                showToast(`✅ ${s.patient} — Status updated to ${status}`, 'success');
+            }
+        }
+
+        // ─── BOOK SURGERY ───
+        function openBookModal() {
+            document.getElementById('bookModal').classList.add('show');
+            document.getElementById('bookDate').value = new Date().toISOString().slice(0, 10);
+        }
+
+        function closeBookModal() {
+            document.getElementById('bookModal').classList.remove('show');
+        }
+
+        function submitBooking() {
+            const patient = document.getElementById('bookPatient').value.trim();
+            const mrn = document.getElementById('bookMRN').value.trim();
+            const procedure = document.getElementById('bookProcedure').value.trim();
+            const type = document.getElementById('bookType').value;
+            const surgeon = document.getElementById('bookSurgeon').value;
+            const anaesthetist = document.getElementById('bookAnaesthetist').value;
+            const theater = document.getElementById('bookTheater').value;
+            const date = document.getElementById('bookDate').value;
+            const time = document.getElementById('bookTime').value;
+            const duration = parseInt(document.getElementById('bookDuration').value) || 60;
+            const priority = document.getElementById('bookPriority').value;
+            const notes = document.getElementById('bookNotes').value.trim();
+
+            if (!patient || !procedure || !date || !time) {
+                showToast('⚠️ Please fill in all required fields.', 'warning');
+                return;
+            }
+
+            const newSurgery = {
+                id: surgeries.length + 1,
+                patient,
+                mrn: mrn || '—',
+                procedure,
+                type,
+                surgeon,
+                anaesthetist: anaesthetist || 'Not assigned',
+                theater,
+                date,
+                time,
+                duration,
+                priority,
+                status: 'scheduled',
+                notes: notes || 'Pre-op workup in progress.'
+            };
+
+            surgeries.push(newSurgery);
+            closeBookModal();
+            renderOverview();
+            renderSchedule();
+            renderProcedures();
+            renderUpcoming();
+            showToast(`✅ Surgery booked for ${patient} on ${date} at ${time}`, 'success');
+        }
+
+        // ─── WEEK NAVIGATION ───
+        function changeWeek(delta) {
+            currentWeekOffset += delta;
+            renderSchedule();
+        }
+
+        // ─── SEARCH ───
+        function handleSearch(query) {
+            const q = query.toLowerCase().trim();
+            const rows = document.querySelectorAll('#upcomingBody tr, #proceduresBody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = (!q || text.includes(q)) ? '' : 'none';
+            });
+        }
+
+        // ─── FILTER STATUS ───
+        function filterStatus(status) {
+            // Switch to procedures view and filter by status
+            switchTab('procedures', document.querySelector('[data-tab="procedures"]'));
+            // Filter logic is handled in renderProcedures with status filter
+            const rows = document.querySelectorAll('#proceduresBody tr');
+            rows.forEach(row => {
+                if (status === 'all') {
+                    row.style.display = '';
+                } else {
+                    const statusText = row.cells[6]?.textContent?.toLowerCase().trim() || '';
+                    row.style.display = statusText.includes(status) ? '' : 'none';
+                }
+            });
+        }
+
+        // ─── TAB SWITCHING ───
+        function switchTab(name, btn) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            document.querySelectorAll('[id^="view-"]').forEach(v => v.style.display = 'none');
+            const target = document.getElementById('view-' + name);
+            if (target) target.style.display = 'block';
+            showToast('📂 Switched to ' + name.charAt(0).toUpperCase() + name.slice(1), 'info');
+            if (name === 'overview') renderOverview();
+            if (name === 'schedule') renderSchedule();
+            if (name === 'theaters') renderTheaters();
+            if (name === 'surgeons') renderSurgeons();
+            if (name === 'procedures') renderProcedures();
+        }
+
+        // ─── TOAST ───
+        function showToast(msg, type) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + (type || 'info');
+            const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+            toast.textContent = (icons[type] || 'ℹ️') + ' ' + msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
+
+        // ─── KEYBOARD SHORTCUTS ───
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key >= '1' && e.key <= '5') {
+                e.preventDefault();
+                const tabs = document.querySelectorAll('.nav-tab');
+                const idx = parseInt(e.key) - 1;
+                if (tabs[idx]) tabs[idx].click();
+            }
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            if (e.key === 'Escape') {
+                closeBookModal();
+                closeDetailModal();
+            }
+        });
+
+        // ─── HAPTIC FEEDBACK ───
+        document.addEventListener('click', function(e) {
+            if (navigator.vibrate) {
+                const target = e.target.closest('.nav-tab, .btn-p, .btn-s, .btn-export, .kpi, .tb-btn, .user-chip, .scell.surgery');
+                if (target) navigator.vibrate(8);
+            }
+        });
+
+        // ─── INIT ───
+        console.log('🏥 PClinic Operating Theater Scheduling — Apple-Style');
+        console.log('📌 Shortcuts: Ctrl+1-5 → Switch views, Ctrl+F → Search, Escape → Close modals');
+        renderOverview();
+        renderSchedule();
+        renderTheaters();
+        renderSurgeons();
+        renderProcedures();
+        renderUpcoming();
+    </script>
+
+
+    <script>
+        requireAuth(['theater']).then(function(staff) {
+            window.currentStaff = staff;
+            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
+        }).catch(function(err) {
+            console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+</body>
+</html>

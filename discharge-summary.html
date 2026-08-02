@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PClinic — Discharge Summary</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="stylesheet" href="pclinic-ui.css">
+<link rel="stylesheet" href="pclinic-file.css">
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
+<script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');}catch(e){}})();</script>
+</head>
+<body class="pcf">
+
+<div class="pc-topbar noprint">
+    <div class="pc-brand">
+        <img class="pc-logo" src="logo-wide.png" alt="PClinic" width="118" height="30">
+        <span class="pc-appsub" id="appSub">Discharge</span>
+    </div>
+    <div class="pc-tr">
+        <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
+        <div class="pc-chip"><span class="pc-avatar" id="userAvatar">··</span><span id="userName">…</span></div>
+        <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
+    </div>
+</div>
+
+<div class="pcf-wrap">
+    <div id="pcfRoot" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
+</div>
+
+<div class="pc-toasts noprint"></div>
+
+<script type="module" src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+<script src="patient-data.js"></script>
+<script src="pclinic-orders.js"></script>
+<script src="pclinic-file.js"></script>
+<script src="pclinic-filepage.js"></script>
+<script>
+pcFilePage.init({
+  "type": "discharge",
+  "ref": "DS",
+  "title": "Discharge Summary",
+  "sub": "Discharge",
+  "docTitle": "Discharge Summary",
+  "icon": "ti-door-exit",
+  "histTitle": "Previous discharges",
+  "histUnit": "discharge",
+  "newLabel": "New Discharge Summary",
+  "dx": true,
+  "rdv": true,
+  "att": true,
+  "vitals": false,
+  "rx": false,
+  "fields": [
+    {
+      "id": "adm",
+      "label": "Date of admission",
+      "kind": "date",
+      "panel": "Stay",
+      "icon": "ti-calendar"
+    },
+    {
+      "id": "disch",
+      "label": "Date of discharge",
+      "kind": "date",
+      "panel": "Stay"
+    },
+    {
+      "id": "ward",
+      "label": "Ward",
+      "ph": "Medical ward",
+      "panel": "Stay"
+    },
+    {
+      "id": "cond",
+      "label": "Condition on discharge",
+      "kind": "sel",
+      "panel": "Stay",
+      "options": [
+        "Recovered",
+        "Improved",
+        "Unchanged",
+        "Referred",
+        "Against medical advice",
+        "Deceased"
+      ]
+    },
+    {
+      "id": "reason",
+      "label": "Reason for admission",
+      "kind": "area",
+      "ph": "Why the patient was admitted…",
+      "panel": "Clinical",
+      "icon": "ti-report-medical"
+    },
+    {
+      "id": "course",
+      "label": "Course in hospital",
+      "kind": "area",
+      "ph": "Investigations, treatment, progress…",
+      "panel": "Clinical"
+    },
+    {
+      "id": "meds",
+      "label": "Discharge medication",
+      "kind": "area",
+      "ph": "Drug, dose, duration — one per line…",
+      "panel": "Going home",
+      "icon": "ti-pill"
+    },
+    {
+      "id": "plan",
+      "label": "Follow-up instructions",
+      "kind": "area",
+      "ph": "What the patient must do, danger signs…",
+      "panel": "Going home"
+    }
+  ]
+});
+</script>
+<script src="pclinic-handoff.js"></script>
+</body>
+</html>

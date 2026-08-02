@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PClinic — Admission Form</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="stylesheet" href="pclinic-ui.css">
+<link rel="stylesheet" href="pclinic-file.css">
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
+<script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');}catch(e){}})();</script>
+</head>
+<body class="pcf">
+
+<div class="pc-topbar noprint">
+    <div class="pc-brand">
+        <img class="pc-logo" src="logo-wide.png" alt="PClinic" width="118" height="30">
+        <span class="pc-appsub" id="appSub">Admission</span>
+    </div>
+    <div class="pc-tr">
+        <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
+        <div class="pc-chip"><span class="pc-avatar" id="userAvatar">··</span><span id="userName">…</span></div>
+        <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
+    </div>
+</div>
+
+<div class="pcf-wrap">
+    <div id="pcfRoot" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
+</div>
+
+<div class="pc-toasts noprint"></div>
+
+<script type="module" src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+<script src="patient-data.js"></script>
+<script src="pclinic-orders.js"></script>
+<script src="pclinic-file.js"></script>
+<script src="pclinic-filepage.js"></script>
+<script>
+pcFilePage.init({
+  "type": "admission",
+  "ref": "AD",
+  "title": "Admission Form",
+  "sub": "Admission",
+  "docTitle": "Admission Form",
+  "icon": "ti-file-plus",
+  "histTitle": "Previous admissions",
+  "histUnit": "admission",
+  "newLabel": "New Admission Form",
+  "dx": true,
+  "rdv": false,
+  "att": true,
+  "vitals": true,
+  "rx": false,
+  "fields": [
+    {
+      "id": "ward",
+      "label": "Ward requested",
+      "kind": "sel",
+      "panel": "Admission",
+      "icon": "ti-building-hospital",
+      "options": [
+        "Medical",
+        "Surgical",
+        "Paediatric",
+        "Maternity",
+        "ICU",
+        "Isolation"
+      ]
+    },
+    {
+      "id": "los",
+      "label": "Expected length of stay",
+      "ph": "3 days",
+      "panel": "Admission"
+    },
+    {
+      "id": "prov",
+      "label": "Provisional diagnosis",
+      "panel": "Admission"
+    },
+    {
+      "id": "cons",
+      "label": "Admitting consultant",
+      "panel": "Admission"
+    },
+    {
+      "id": "reason",
+      "label": "Reason for admission",
+      "kind": "area",
+      "ph": "Why inpatient care is needed…",
+      "panel": "Clinical",
+      "icon": "ti-report-medical"
+    },
+    {
+      "id": "hist",
+      "label": "Relevant history",
+      "kind": "area",
+      "ph": "Presenting illness, past history, allergies…",
+      "panel": "Clinical"
+    },
+    {
+      "id": "exam",
+      "label": "Examination on admission",
+      "kind": "area",
+      "ph": "Findings…",
+      "panel": "Clinical"
+    },
+    {
+      "id": "plan",
+      "label": "Initial management plan",
+      "kind": "area",
+      "ph": "Investigations, treatment, monitoring…",
+      "panel": "Plan",
+      "icon": "ti-clipboard-check"
+    }
+  ]
+});
+</script>
+<script src="pclinic-handoff.js"></script>
+</body>
+</html>

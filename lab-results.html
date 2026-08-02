@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
+    <script type="module" src="firebase-config.js"></script>
+    <script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Results • PClinic</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+    <link rel="stylesheet" href="pclinic-ui.css">
+<link rel="stylesheet" href="pclinic-file.css">
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+            background: #c3c4ca;
+            color: #1a1a2e;
+            font-size: 13px;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .card {
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 0.5px solid rgba(255,255,255,0.3);
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03);
+        }
+        .header {
+            padding: 16px 24px;
+            border-bottom: 0.5px solid rgba(0,0,0,0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: rgba(255,255,255,0.3);
+        }
+        .header-title {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-title i { color: #c62828; font-size: 20px; }
+        .header-title span { font-size: 12px; font-weight: 400; color: #6b7280; margin-left: 8px; }
+        .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn {
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 10px;
+            border: 0.5px solid rgba(0,0,0,0.04);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn:hover { transform: scale(1.04); }
+        .btn:active { transform: scale(0.94); }
+        .btn-close { background: rgba(255,59,48,0.06); color: #991b1b; border-color: rgba(255,59,48,0.1); }
+        .btn-close:hover { background: rgba(255,59,48,0.1); }
+        .btn-dark { background: rgba(255,255,255,0.4); color: #1a1a2e; }
+        .btn-dark:hover { background: rgba(255,255,255,0.7); }
+        .btn-print { background: rgba(0,113,227,0.06); color: #0071e3; border-color: rgba(0,113,227,0.1); }
+        .btn-print:hover { background: rgba(0,113,227,0.1); }
+        .patient-banner {
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.2);
+            border-bottom: 0.5px solid rgba(0,0,0,0.03);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .patient-name { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+        .patient-mrn { font-size: 12px; color: #6b7280; font-weight: 500; }
+        .result-count { font-size: 12px; color: #6b7280; background: rgba(0,0,0,0.03); padding: 2px 12px; border-radius: 12px; }
+        .body { padding: 20px 24px; background: rgba(255,255,255,0.2); }
+        .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+        .filter-input, .filter-select {
+            padding: 8px 14px;
+            border: 0.5px solid rgba(0,0,0,0.04);
+            border-radius: 12px;
+            font-size: 12px;
+            font-family: inherit;
+            background: rgba(255,255,255,0.3);
+            color: #1a1a2e;
+            flex: 1;
+            min-width: 150px;
+            transition: all 0.2s;
+        }
+        .filter-input:focus, .filter-select:focus {
+            border-color: #0071e3;
+            outline: none;
+            background: rgba(255,255,255,0.6);
+        }
+        .filter-select { cursor: pointer; appearance: none; padding-right: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+        .table-wrap { overflow-x: auto; border-radius: 14px; border: 0.5px solid rgba(0,0,0,0.04); background: rgba(255,255,255,0.15); }
+        .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .table-header { background: rgba(255,255,255,0.2); border-bottom: 0.5px solid rgba(0,0,0,0.04); }
+        .table-header th { padding: 12px 14px; font-size: 10px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
+        .table-header th.center { text-align: center; }
+        .result-item { background: rgba(255,255,255,0.15); border-bottom: 0.5px solid rgba(0,0,0,0.02); transition: background 0.2s; }
+        .result-item:hover { background: rgba(255,255,255,0.3); }
+        .result-item td { padding: 10px 14px; color: #1a1a2e; vertical-align: middle; }
+        .result-item td.center { text-align: center; }
+        .category-badge { display: inline-block; padding: 2px 12px; border-radius: 12px; font-size: 10px; font-weight: 600; border-left: 3px solid #0071e3; }
+        .category-badge.hematology { background: #fce4ec; color: #c62828; border-color: #dc3545; }
+        .category-badge.biochemistry { background: #e8f5e9; color: #2e7d32; border-color: #28a745; }
+        .category-badge.microbiology { background: #f3e5f5; color: #6a1b9a; border-color: #9b59b6; }
+        .category-badge.urinalysis { background: #e3f2fd; color: #1565c0; border-color: #007bff; }
+        .category-badge.hormones { background: #fff3e0; color: #e65100; border-color: #fd7e14; }
+        .category-badge.serology { background: #fce4ec; color: #880e4f; border-color: #e83e8c; }
+        .category-badge.parasitology { background: #fff8e1; color: #f57f17; border-color: #ffc107; }
+        .category-badge.covid { background: #ffebee; color: #b71c1c; border-color: #c82333; }
+        .category-badge.general { background: #f5f5f5; color: #424242; border-color: #6c757d; }
+        .test-name-cell { font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        .test-icon { width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; background: rgba(0,0,0,0.02); flex-shrink: 0; }
+        .result-value { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; }
+        .result-value.normal { color: #1a7a32; }
+        .result-value.high { color: #8a1f1a; }
+        .result-value.low { color: #0066d6; }
+        .result-value.critical { color: #8a1f1a; animation: pulseCritical 1.5s ease-in-out infinite; }
+        @keyframes pulseCritical { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
+        .result-unit { font-weight:400; font-size:10px; color:#6b7280; margin-left:2px; }
+        .reference-range { font-size:11px; color:#6b7280; text-align:center; }
+        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 14px; border-radius:12px; font-size:10px; font-weight:600; white-space:nowrap; }
+        .status-badge .dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+        .status-badge.normal { background: rgba(52,199,89,0.08); color: #1a7a32; }
+        .status-badge.normal .dot { background: #34c759; }
+        .status-badge.high { background: rgba(255,59,48,0.08); color: #8a1f1a; }
+        .status-badge.high .dot { background: #ff3b30; }
+        .status-badge.low { background: rgba(0,113,227,0.08); color: #0066d6; }
+        .status-badge.low .dot { background: #0071e3; }
+        .status-badge.critical { background: rgba(255,59,48,0.08); color: #8a1f1a; animation: statusPulse 1.5s ease-in-out infinite; }
+        .status-badge.critical .dot { background: #ff3b30; }
+        .status-badge.pending { background: rgba(255,149,0,0.08); color: #7a4500; }
+        .status-badge.pending .dot { background: #ff9500; animation: pulseDot 1.5s ease-in-out infinite; }
+        @keyframes pulseDot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.7); } }
+        @keyframes statusPulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
+        .result-date { font-size:11px; color:#6b7280; text-align:center; }
+        .no-results { text-align:center; padding:40px 20px; color:#6b7280; font-size:13px; }
+        .no-results .icon { font-size:48px; display:block; margin-bottom:12px; opacity:0.5; }
+        .pending-note { font-size:11px; color:#6b7280; font-style:italic; opacity:0.7; display:block; margin-top:2px; }
+        .footer { display:flex; justify-content:space-between; align-items:center; padding:12px 4px 0; font-size:11px; color:#6b7280; flex-wrap:wrap; gap:6px; }
+        .toast-container { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:999; display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; max-width:90%; }
+        .toast { background:rgba(28,28,30,0.9); backdrop-filter:blur(24px); color:#fff; border-radius:14px; padding:10px 20px; font-size:13px; font-weight:500; pointer-events:auto; opacity:0; transform:translateY(20px) scale(0.95); transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1); box-shadow:0 4px 20px rgba(0,0,0,0.12); text-align:center; }
+        .toast.show { opacity:1; transform:translateY(0) scale(1); }
+        .toast.success { background:#065f46; }
+        .toast.error { background:#991b1b; }
+        .toast.warning { background:#92400e; }
+        .toast.info { background:#1e40af; }
+        .btn-history { background: rgba(175,82,222,0.08); color: #6a1b9a; border-color: rgba(175,82,222,0.15); }
+        .btn-history:hover { background: rgba(175,82,222,0.14); }
+
+        /* ─── REQUEST HISTORY MODAL ─── */
+        .history-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .history-modal {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(24px);
+            border-radius: 18px;
+            border: 0.5px solid rgba(255,255,255,0.4);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04), 0 8px 40px rgba(0,0,0,0.04);
+            width: 100%;
+            max-width: 640px;
+            max-height: 82vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .history-modal-header {
+            padding: 16px 20px;
+            border-bottom: 0.5px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.3);
+        }
+        .history-modal-title {
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1a1a2e;
+        }
+        .history-modal-title i { color: #af52de; font-size: 18px; }
+        .history-modal-body { padding: 16px 20px; overflow-y: auto; }
+        .history-empty { text-align: center; padding: 40px 20px; color: #6b7280; font-size: 13px; }
+        .history-empty .icon { font-size: 40px; display: block; margin-bottom: 10px; opacity: 0.5; }
+        .history-item {
+            border: 0.5px solid rgba(0,0,0,0.05);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.3);
+        }
+        .history-row {
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            gap: 10px;
+            flex-wrap: wrap;
+            transition: background 0.2s;
+        }
+        .history-row:hover { background: rgba(0,0,0,0.02); }
+        .history-date { font-size: 12px; font-weight: 600; color: #1a1a2e; display: flex; align-items: center; gap: 6px; }
+        .history-date i { color: #6b7280; font-size: 14px; }
+        .history-meta { display: flex; align-items: center; gap: 8px; }
+        .history-badge { font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 10px; white-space: nowrap; }
+        .history-badge.pending { background: rgba(255,149,0,0.08); color: #7a4500; }
+        .history-badge.completed { background: rgba(52,199,89,0.08); color: #1a7a32; }
+        .history-badge.cancelled { background: rgba(255,59,48,0.08); color: #8a1f1a; }
+        .history-count { font-size: 11px; color: #6b7280; }
+        .history-chevron { font-size: 14px; color: #6b7280; transition: transform 0.3s ease; }
+        .history-details { padding: 0 14px 14px; border-top: 0.5px solid rgba(0,0,0,0.04); font-size: 12px; color: #2d2d44; }
+        .history-detail-row { padding: 6px 0 0; }
+        .history-test-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+        .history-test-list li { background: rgba(0,113,227,0.06); color: #0071e3; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 8px; }
+        @media (max-width:768px) { body { padding:12px; } .header { flex-direction:column; align-items:flex-start; } .header-actions { width:100%; justify-content:flex-start; } .body { padding:14px 16px; } .filters { flex-direction:column; align-items:stretch; } .filter-input, .filter-select { width:100%; min-width:unset; } .result-item td { padding:6px 8px; } .result-value { font-size:13px; } .table-header th { padding:8px 8px; font-size:9px; } .category-badge { font-size:8px; padding:1px 8px; } .status-badge { font-size:8px; padding:2px 8px; } .test-icon { width:20px; height:20px; font-size:10px; } }
+        @media (max-width:480px) { body { padding:8px; } .result-item td { padding:4px 6px; } .result-value { font-size:11px; } .table-header th { padding:6px 6px; font-size:8px; } .reference-range { font-size:9px; } .result-date { font-size:9px; } .header-title { font-size:14px; } .header-title span { display:none; } .btn { font-size:10px; padding:4px 10px; } }
+    </style>
+</head>
+<body>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <div class="card">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-title">
+                    <i class="ti ti-chart-bar"></i> Lab Results
+                    <span>View all lab requests and results</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-dark" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+                        <i class="ti ti-moon"></i>
+                    </button>
+                    <button class="btn btn-history" onclick="openRequestHistory()" title="View request history">
+                        <i class="ti ti-history"></i> History
+                    </button>
+                    <button class="btn btn-print" onclick="printResults()">
+                        <i class="ti ti-printer"></i> Print
+                    </button>
+                    <button class="btn btn-close" onclick="closeLabResultsPage()">
+                        <i class="ti ti-x"></i> Close
+                    </button>
+                </div>
+            </div>
+
+            <!-- Patient Banner -->
+            <div class="patient-banner" id="patientBanner">
+                <div>
+                    <span class="patient-name" id="patientName">Loading patient...</span>
+                    <span class="patient-mrn" id="patientMrn">MRN: --</span>
+                </div>
+                <span class="result-count" id="resultCount">0 requests</span>
+            </div>
+
+            <!-- Body -->
+            <div class="body">
+                <!-- Filters -->
+                <div class="filters">
+                    <input class="filter-input" id="searchFilter" placeholder="🔍 Search tests..." oninput="filterResults()">
+                    <select class="filter-select" id="statusFilter" onchange="filterResults()">
+                        <option value="all">All Status</option>
+                        <option value="pending">⏳ Pending</option>
+                        <option value="normal">✅ Normal</option>
+                        <option value="high">⬆️ High</option>
+                        <option value="low">⬇️ Low</option>
+                        <option value="critical">⚠️ Critical</option>
+                    </select>
+                    <select class="filter-select" id="categoryFilter" onchange="filterResults()">
+                        <option value="all">All Categories</option>
+                        <option value="Hematology">🩸 Hematology</option>
+                        <option value="Biochemistry">🧬 Biochemistry</option>
+                        <option value="Microbiology">🦠 Microbiology</option>
+                        <option value="Urinalysis">💧 Urinalysis</option>
+                        <option value="Hormones">🧪 Hormones</option>
+                        <option value="Serology">🧫 Serology</option>
+                        <option value="Parasitology">🦟 Parasitology</option>
+                        <option value="COVID-19">🦠 COVID-19</option>
+                        <option value="General">📋 General</option>
+                    </select>
+                </div>
+
+                <!-- Table -->
+                <div class="table-wrap">
+                    <table class="results-table" id="resultsTable">
+                        <thead class="table-header">
+                            <tr>
+                                <th style="min-width:120px;">Category</th>
+                                <th style="min-width:160px;">Test</th>
+                                <th style="min-width:100px;text-align:center;">Result</th>
+                                <th style="min-width:120px;text-align:center;">Reference Range</th>
+                                <th style="min-width:100px;text-align:center;">Status</th>
+                                <th style="min-width:120px;text-align:center;">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                            <tr>
+                                <td colspan="6">
+                                    <div class="no-results">
+                                        <span class="icon">🧪</span>
+                                        <p>No lab requests found for this patient.</p>
+                                        <p style="font-size:11px;margin-top:4px;opacity:0.6;">Lab requests will appear here once they are created.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer -->
+                <div class="footer">
+                    <span id="paginationInfo">Showing <strong id="resultStart">0</strong> - <strong id="resultEnd">0</strong> of <strong id="resultTotal">0</strong> requests</span>
+                    <span style="opacity:0.5;">Last updated: <span id="lastUpdated">--</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── REQUEST HISTORY MODAL ─── -->
+    <div class="history-overlay" id="historyOverlay" onclick="if(event.target===this) closeRequestHistory()">
+        <div class="history-modal">
+            <div class="history-modal-header">
+                <div class="history-modal-title">
+                    <i class="ti ti-history"></i> Lab Request History
+                </div>
+                <button class="btn btn-close" onclick="closeRequestHistory()">
+                    <i class="ti ti-x"></i> Close
+                </button>
+            </div>
+            <div class="history-modal-body" id="historyModalBody">
+                <!-- Populated by renderRequestHistory() -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // LAB RESULTS - Clean Version (No Syntax Errors)
+        // ============================================================
+
+        let currentPatient = null;
+        let allResults = [];
+        let filteredResults = [];
+        let isDarkMode = false;
+
+        // ─── TOAST ───
+        function showToast(message, type) {
+            var container = document.getElementById('toastContainer');
+            if (!container) return;
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + (type || 'info');
+            var icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+            toast.textContent = (icons[type] || 'ℹ️') + ' ' + message;
+            container.appendChild(toast);
+            setTimeout(function() { toast.classList.add('show'); }, 10);
+            setTimeout(function() {
+                toast.classList.remove('show');
+                setTimeout(function() { toast.remove(); }, 400);
+            }, 3000);
+        }
+
+        // ─── DARK MODE ───
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            localStorage.setItem('pclinic-theme', isDarkMode ? 'dark' : 'light');
+            var icon = document.querySelector('.btn-dark i');
+            if (icon) icon.className = isDarkMode ? 'ti ti-sun' : 'ti ti-moon';
+            showToast(isDarkMode ? '🌙 Dark mode enabled' : '☀️ Light mode enabled', 'info');
+        }
+
+        function loadDarkModePreference() {
+            var saved = (localStorage.getItem('pclinic-theme') === 'dark' ? 'enabled' : localStorage.getItem('pclinic-theme') === 'light' ? 'disabled' : localStorage.getItem('lab_results_dark_mode'));
+            if (saved === 'enabled') {
+                isDarkMode = true;
+                document.body.classList.add('dark-mode');
+                var icon = document.querySelector('.btn-dark i');
+                if (icon) icon.className = 'ti ti-sun';
+            }
+        }
+
+        // ─── CATEGORY DETECTION ───
+        function detectCategory(testName) {
+            var categories = {
+                'Hematology': ['CBC', 'Hemoglobin', 'WBC', 'Platelet', 'ESR', 'Blood Group', 'Reticulocyte', 'FBC', 'Bleeding Time', 'Clotting Time', 'PT', 'APTT', 'INR'],
+                'Biochemistry': ['FBS', 'RBS', 'HbA1c', 'Lipid Profile', 'LFT', 'RFT', 'Electrolytes', 'Creatinine', 'BUN', 'Uric Acid', 'Amylase', 'Lipase', 'Glucose'],
+                'Microbiology': ['Blood Culture', 'Urine Culture', 'Sputum Culture', 'Gram Stain', 'AFB', 'TB Culture', 'Widal', 'Brucella'],
+                'Urinalysis': ['Urinalysis', 'UPT', '24-Hr Urine', 'Microalbumin', 'Ketones'],
+                'Hormones': ['TFT', 'TSH', 'T3', 'T4', 'FSH', 'LH', 'Cortisol', 'Prolactin', 'Testosterone', 'Estradiol'],
+                'Serology': ['HIV', 'HBsAg', 'HCV', 'RPR', 'Dengue', 'Chikungunya', 'Zika', 'RF', 'CRP', 'ASO'],
+                'Parasitology': ['Malaria', 'Stool Ova', 'Filaria', 'Schistosomiasis', 'Toxoplasmosis', 'Leishmania'],
+                'COVID-19': ['COVID-19 Antigen', 'COVID-19 PCR', 'COVID-19 Antibody']
+            };
+            for (var cat in categories) {
+                for (var i = 0; i < categories[cat].length; i++) {
+                    if (testName.toLowerCase().includes(categories[cat][i].toLowerCase())) {
+                        return cat;
+                    }
+                }
+            }
+            return 'General';
+        }
+
+        function getCategoryClass(category) {
+            var map = {
+                'Hematology': 'hematology',
+                'Biochemistry': 'biochemistry',
+                'Microbiology': 'microbiology',
+                'Urinalysis': 'urinalysis',
+                'Hormones': 'hormones',
+                'Serology': 'serology',
+                'Parasitology': 'parasitology',
+                'COVID-19': 'covid',
+                'General': 'general'
+            };
+            return map[category] || 'general';
+        }
+
+        function getStatusClass(status) {
+            var map = {
+                'normal': 'normal',
+                'high': 'high',
+                'low': 'low',
+                'critical': 'critical',
+                'pending': 'pending'
+            };
+            return map[status] || 'pending';
+        }
+
+        // ─── LOAD PATIENT ───
+        function loadPatientData(patient) {
+            if (patient && patient.id) {
+                currentPatient = patient;
+                updatePatientUI(patient);
+                loadResults(patient);
+                return true;
+            }
+            // Try parent
+            try {
+                if (window.parent && window.parent.currentPatient) {
+                    var p = window.parent.currentPatient;
+                    if (p && p.id) {
+                        currentPatient = p;
+                        updatePatientUI(p);
+                        loadResults(p);
+                        return true;
+                    }
+                }
+            } catch (e) {}
+            // Try localStorage
+            try {
+                var stored = localStorage.getItem('pclinic_lab_patient_data');
+                if (stored) {
+                    var p = JSON.parse(stored);
+                    if (p && p.id) {
+                        currentPatient = p;
+                        updatePatientUI(p);
+                        loadResults(p);
+                        return true;
+                    }
+                }
+            } catch (e) {}
+            return false;
+        }
+
+        function updatePatientUI(patient) {
+            document.getElementById('patientName').textContent = (patient.firstName || '') + ' ' + (patient.lastName || '');
+            document.getElementById('patientMrn').textContent = 'MRN: ' + (patient.mrn || 'N/A');
+        }
+
+        // ─── LOAD RESULTS ───
+        function loadResults(patient) {
+            var requests = patient.labRequests || [];
+            var completed = patient.labResults || [];
+            allResults = [];
+
+            requests.forEach(function(req) {
+                var tests = req.tests || ['Unknown Test'];
+                tests.forEach(function(testName) {
+                    var status = 'pending';
+                    var value = '--';
+                    var unit = '';
+                    var range = '--';
+                    var date = req.timestamp || new Date().toISOString();
+                    var result = completed.find(function(r) { return String(r.requestId) === String(req.id); });
+                    if (req.status === 'Completed' && result) {
+                        status = result.status || 'normal';
+                        value = result.value || '--';
+                        unit = result.unit || '';
+                        range = result.range || '--';
+                        date = result.date || req.timestamp || new Date().toISOString();
+                    } else if (req.status === 'Cancelled') {
+                        status = 'cancelled';
+                    }
+                    allResults.push({
+                        test: testName,
+                        value: value,
+                        unit: unit,
+                        range: range,
+                        status: status,
+                        date: date,
+                        category: detectCategory(testName),
+                        requestId: req.id,
+                        isPending: status === 'pending'
+                    });
+                });
+            });
+
+            completed.forEach(function(r) {
+                var has = requests.some(function(req) { return String(req.id) === String(r.requestId); });
+                if (!has) {
+                    allResults.push({
+                        test: r.test || 'Unknown Test',
+                        value: r.value || '--',
+                        unit: r.unit || '',
+                        range: r.range || '--',
+                        status: r.status || 'normal',
+                        date: r.date || r.timestamp || new Date().toISOString(),
+                        category: r.category || detectCategory(r.test),
+                        requestId: null,
+                        isPending: false
+                    });
+                }
+            });
+
+            allResults.sort(function(a, b) {
+                if (a.isPending && !b.isPending) return -1;
+                if (!a.isPending && b.isPending) return 1;
+                return new Date(b.date) - new Date(a.date);
+            });
+
+            document.getElementById('resultCount').textContent = allResults.length + ' requests';
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+            filterResults();
+        }
+
+        // ─── FILTER ───
+        function filterResults() {
+            var search = document.getElementById('searchFilter').value.toLowerCase().trim();
+            var status = document.getElementById('statusFilter').value;
+            var category = document.getElementById('categoryFilter').value;
+
+            filteredResults = allResults.filter(function(r) {
+                var match = true;
+                if (search) match = match && r.test.toLowerCase().includes(search);
+                if (status !== 'all') {
+                    if (status === 'pending') match = match && r.isPending === true;
+                    else match = match && r.status === status;
+                }
+                if (category !== 'all') match = match && r.category === category;
+                return match;
+            });
+
+            renderResults();
+        }
+
+        // ─── RENDER ───
+        function renderResults() {
+            var tbody = document.getElementById('resultsBody');
+            var start = document.getElementById('resultStart');
+            var end = document.getElementById('resultEnd');
+            var total = document.getElementById('resultTotal');
+
+            if (filteredResults.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="no-results"><span class="icon">🔍</span><p>No results found matching your filters.</p><p style="font-size:11px;margin-top:4px;opacity:0.6;">Try adjusting your search or filters.</p></div></td></tr>';
+                start.textContent = '0';
+                end.textContent = '0';
+                total.textContent = '0';
+                return;
+            }
+
+            var html = '';
+            filteredResults.forEach(function(r, index) {
+                var categoryClass = getCategoryClass(r.category);
+                var statusClass = getStatusClass(r.status);
+                var date = new Date(r.date).toLocaleString();
+                var resultDisplay = '';
+                var valueClass = 'pending';
+                var statusLabel = 'Pending';
+
+                var safeCategory = (r.category || 'General').replace(/&/g, '&amp;');
+                var safeTest = (r.test || '').replace(/&/g, '&amp;');
+
+                if (r.isPending || r.status === 'pending') {
+                    resultDisplay = '<span style="color:#7a4500;font-style:italic;">⏳ Pending</span>';
+                    statusLabel = 'Pending';
+                    valueClass = 'pending';
+                } else if (r.status === 'cancelled') {
+                    resultDisplay = '<span style="color:#8a1f1a;font-style:italic;">❌ Cancelled</span>';
+                    statusLabel = 'Cancelled';
+                    valueClass = 'cancelled';
+                } else {
+                    var safeValue = r.value !== '--' ? String(r.value).replace(/&/g, '&amp;') : '--';
+                    resultDisplay = r.value !== '--' ? safeValue + (r.unit ? ' <span class="result-unit">' + r.unit + '</span>' : '') : '--';
+                    valueClass = r.status === 'normal' ? 'normal' : r.status === 'high' ? 'high' : r.status === 'low' ? 'low' : 'critical';
+                    statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+                }
+
+                var icons = {
+                    'Hematology': '🩸', 'Biochemistry': '🧬', 'Microbiology': '🦠',
+                    'Urinalysis': '💧', 'Hormones': '🧪', 'Serology': '🧫',
+                    'Parasitology': '🦟', 'COVID-19': '🦠', 'General': '📋'
+                };
+                var icon = icons[r.category] || '🧪';
+
+                var pendingNote = '';
+                if (r.isPending || r.status === 'pending') {
+                    pendingNote = '<span class="pending-note">Awaiting lab technician result</span>';
+                }
+
+                html += '<tr class="result-item">';
+                html += '<td><span class="category-badge ' + categoryClass + '">' + safeCategory + '</span></td>';
+                html += '<td><span class="test-name-cell"><span class="test-icon">' + icon + '</span>' + safeTest + '</span></td>';
+                html += '<td class="center"><span class="result-value ' + valueClass + '">' + resultDisplay + '</span>' + pendingNote + '</td>';
+                html += '<td class="center"><span class="reference-range">' + (r.range || '--') + '</span></td>';
+                html += '<td class="center"><span class="status-badge ' + statusClass + '"><span class="dot"></span> ' + statusLabel + '</span></td>';
+                html += '<td class="center"><span class="result-date">' + date + '</span></td>';
+                html += '</tr>';
+            });
+
+            tbody.innerHTML = html;
+            start.textContent = '1';
+            end.textContent = filteredResults.length;
+            total.textContent = allResults.length;
+        }
+
+        // ─── PRINT ───
+        function printResults() {
+            if (filteredResults.length === 0) {
+                showToast('⚠️ No results to print', 'warning');
+                return;
+            }
+            var patientName = currentPatient ? (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '') : 'Unknown';
+            var patientMrn = currentPatient ? currentPatient.mrn || 'N/A' : 'N/A';
+
+            var printContent = '<div style="font-family: -apple-system, BlinkMacSystemFont, \'Helvetica Neue\', Arial, sans-serif; padding: 40px; max-width: 1000px; margin: 0 auto;">';
+            printContent += '<div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px;">';
+            printContent += '<h1 style="font-size: 24px; font-weight: 700; color: #1a1a2e;">PClinic Lab Results</h1>';
+            printContent += '<p style="font-size: 16px; color: #6b7280; margin-top: 4px;">Patient: <strong>' + patientName + '</strong> | MRN: ' + patientMrn + '</p>';
+            printContent += '<p style="font-size: 14px; color: #6b7280;">Printed: ' + new Date().toLocaleString() + '</p>';
+            printContent += '</div>';
+            printContent += '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">';
+            printContent += '<thead><tr style="background: #f3f4f6; border-bottom: 2px solid #e5e7eb;">';
+            printContent += '<th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #374151;">Category</th>';
+            printContent += '<th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #374151;">Test</th>';
+            printContent += '<th style="padding: 10px 12px; text-align: center; font-weight: 600; color: #374151;">Result</th>';
+            printContent += '<th style="padding: 10px 12px; text-align: center; font-weight: 600; color: #374151;">Reference Range</th>';
+            printContent += '<th style="padding: 10px 12px; text-align: center; font-weight: 600; color: #374151;">Status</th>';
+            printContent += '<th style="padding: 10px 12px; text-align: center; font-weight: 600; color: #374151;">Date</th>';
+            printContent += '</tr></thead><tbody>';
+
+            filteredResults.forEach(function(r) {
+                var statusColor = '#f59e0b';
+                var statusLabel = 'Pending';
+                if (r.isPending || r.status === 'pending') { statusColor = '#f59e0b'; statusLabel = 'Pending'; }
+                else if (r.status === 'cancelled') { statusColor = '#ef4444'; statusLabel = 'Cancelled'; }
+                else {
+                    statusColor = r.status === 'normal' ? '#10b981' : r.status === 'high' ? '#ef4444' : r.status === 'low' ? '#3b82f6' : '#ef4444';
+                    statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+                }
+                var resultDisplay = (r.isPending || r.status === 'pending') ? 'Pending' : (r.value !== '--' ? r.value + (r.unit ? ' ' + r.unit : '') : '--');
+                var date = new Date(r.date).toLocaleString();
+                var safeCategory = (r.category || 'General').replace(/&/g, '&amp;');
+                var safeTest = (r.test || '').replace(/&/g, '&amp;');
+                printContent += '<tr style="border-bottom: 0.5px solid #e5e7eb;">';
+                printContent += '<td style="padding: 8px 12px;">' + safeCategory + '</td>';
+                printContent += '<td style="padding: 8px 12px; font-weight: 500;">' + safeTest + '</td>';
+                printContent += '<td style="padding: 8px 12px; text-align: center; font-weight: 600; color: ' + statusColor + ';">' + resultDisplay + '</td>';
+                printContent += '<td style="padding: 8px 12px; text-align: center; color: #6b7280;">' + (r.range || '--') + '</td>';
+                printContent += '<td style="padding: 8px 12px; text-align: center; color: ' + statusColor + '; font-weight: 600;">' + statusLabel + '</td>';
+                printContent += '<td style="padding: 8px 12px; text-align: center; color: #6b7280; font-size: 12px;">' + date + '</td>';
+                printContent += '</tr>';
+            });
+
+            printContent += '</tbody></table>';
+            printContent += '<div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb; font-size: 12px; color: #6b7280;">';
+            printContent += '<p>PClinic - Quality Healthcare</p>';
+            printContent += '<p style="margin-top: 4px;">This report is generated automatically and does not replace clinical judgment.</p>';
+            printContent += '</div></div>';
+
+            var printWindow = window.open('', '_blank', 'width=1000,height=800');
+            if (printWindow) {
+                var closingTags = '<' + '/body>' + '<' + '/html>';
+                printWindow.document.write('<html><head><title>Lab Results - PClinic</title></head><body>' + printContent + closingTags);
+                printWindow.document.close();
+                printWindow.print();
+                showToast('🖨️ Results sent to printer', 'success');
+            } else {
+                showToast('❌ Please allow pop-ups to print', 'error');
+            }
+        }
+
+        // ─── CLOSE ───
+        function closeLabResultsPage() {
+            window.parent.postMessage({ type: 'CLOSE_LAB_RESULTS' }, '*');
+        }
+
+        // ─── ESCAPE HELPER ───
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // ─── GET LATEST LAB REQUESTS FOR CURRENT PATIENT ───
+        function getPatientLabRequests() {
+            if (!currentPatient) return [];
+
+            // Prefer the freshest copy from localStorage in case it changed
+            // since this iframe loaded
+            try {
+                var patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                var found = patients.find(function(p) { return String(p.id) === String(currentPatient.id); });
+                if (found && Array.isArray(found.labRequests)) {
+                    return found.labRequests;
+                }
+            } catch (e) {}
+
+            return Array.isArray(currentPatient.labRequests) ? currentPatient.labRequests : [];
+        }
+
+        // ─── OPEN REQUEST HISTORY ───
+        function openRequestHistory() {
+            if (!currentPatient) {
+                try {
+                    if (window.parent && window.parent.currentPatient) {
+                        currentPatient = window.parent.currentPatient;
+                    }
+                } catch (e) {}
+            }
+
+            if (!currentPatient) {
+                showToast('⚠️ Please select a patient first', 'warning');
+                return;
+            }
+
+            renderRequestHistory();
+            document.getElementById('historyOverlay').style.display = 'flex';
+        }
+
+        // ─── CLOSE REQUEST HISTORY ───
+        function closeRequestHistory() {
+            document.getElementById('historyOverlay').style.display = 'none';
+        }
+
+        // ─── RENDER REQUEST HISTORY LIST ───
+        function renderRequestHistory() {
+            var body = document.getElementById('historyModalBody');
+            var requests = getPatientLabRequests().slice().sort(function(a, b) {
+                return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
+            });
+
+            if (requests.length === 0) {
+                body.innerHTML = '<div class="history-empty"><span class="icon">🧪</span><p>No lab requests found for this patient.</p></div>';
+                return;
+            }
+
+            var html = '';
+            requests.forEach(function(req, idx) {
+                var date = req.timestamp ? new Date(req.timestamp).toLocaleString() : 'Unknown date';
+                var statusRaw = req.status || 'Pending';
+                var statusClass = statusRaw.toLowerCase();
+                var tests = Array.isArray(req.tests) ? req.tests : [];
+                var testsHtml = tests.length
+                    ? tests.map(function(t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('')
+                    : '<li>No tests recorded</li>';
+
+                html += '<div class="history-item">';
+                html += '<div class="history-row" onclick="toggleHistoryDetails(' + idx + ')">';
+                html += '<div class="history-date"><i class="ti ti-calendar-event"></i> ' + escapeHtml(date) + '</div>';
+                html += '<div class="history-meta">';
+                html += '<span class="history-badge ' + statusClass + '">' + escapeHtml(statusRaw) + '</span>';
+                html += '<span class="history-count">' + tests.length + ' test(s)</span>';
+                html += '<i class="ti ti-chevron-down history-chevron" id="historyChevron' + idx + '"></i>';
+                html += '</div></div>';
+                html += '<div class="history-details" id="historyDetails' + idx + '" style="display:none;">';
+                html += '<div class="history-detail-row"><strong>Priority:</strong> ' + escapeHtml(req.priority || 'Routine') + '</div>';
+                html += '<div class="history-detail-row"><strong>Sample Type:</strong> ' + escapeHtml(req.sampleType || '--') + '</div>';
+                html += '<div class="history-detail-row"><strong>Requested By:</strong> ' + escapeHtml(req.requestedBy || '--') + '</div>';
+                html += '<div class="history-detail-row"><strong>Tests Requested:</strong></div>';
+                html += '<ul class="history-test-list">' + testsHtml + '</ul>';
+                html += '</div></div>';
+            });
+
+            body.innerHTML = html;
+        }
+
+        // ─── TOGGLE HISTORY DETAILS ───
+        function toggleHistoryDetails(idx) {
+            var details = document.getElementById('historyDetails' + idx);
+            var chevron = document.getElementById('historyChevron' + idx);
+            if (!details) return;
+
+            var isOpen = details.style.display === 'block';
+            details.style.display = isOpen ? 'none' : 'block';
+            if (chevron) chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        // ─── MESSAGE LISTENER ───
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'LOAD_PATIENT') {
+                var patient = event.data.patient;
+                if (patient && patient.id) {
+                    loadPatientData(patient);
+                    showToast('✅ Loaded results for ' + patient.firstName + ' ' + patient.lastName, 'success');
+                }
+            }
+        });
+
+        // ─── INIT ───
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDarkModePreference();
+
+            // 1. Try URL param
+            var urlParams = new URLSearchParams(window.location.search);
+            var encoded = urlParams.get('data');
+            if (encoded) {
+                try {
+                    var patient = JSON.parse(decodeURIComponent(encoded));
+                    if (patient && patient.id) {
+                        loadPatientData(patient);
+                        return;
+                    }
+                } catch (e) {}
+            }
+
+            // 2. Try localStorage
+            try {
+                var stored = localStorage.getItem('pclinic_lab_patient_data');
+                if (stored) {
+                    var patient = JSON.parse(stored);
+                    if (patient && patient.id) {
+                        loadPatientData(patient);
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            // 3. Try parent
+            try {
+                if (window.parent && window.parent.currentPatient) {
+                    loadPatientData(window.parent.currentPatient);
+                    return;
+                }
+            } catch (e) {}
+
+            // 4. No patient found
+            document.getElementById('patientName').textContent = 'No patient selected';
+            document.getElementById('patientMrn').textContent = 'Please select a patient';
+        });
+
+        // ─── EXPOSE ───
+        window.loadPatientData = loadPatientData;
+        window.filterResults = filterResults;
+        window.printResults = printResults;
+        window.closeLabResultsPage = closeLabResultsPage;
+        window.toggleDarkMode = toggleDarkMode;
+        window.showToast = showToast;
+        window.openRequestHistory = openRequestHistory;
+        window.closeRequestHistory = closeRequestHistory;
+        window.toggleHistoryDetails = toggleHistoryDetails;
+    </script>
+
+    <script>
+        requireAuth([]).then(function(staff) {
+            window.currentStaff = staff;
+            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
+        }).catch(function(err) {
+            console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+<script src="pclinic-file.js"></script>
+<script src="pclinic-handoff.js"></script>
+</body>
+</html>

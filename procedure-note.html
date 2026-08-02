@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PClinic — Procedure Note</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="stylesheet" href="pclinic-ui.css">
+<link rel="stylesheet" href="pclinic-file.css">
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
+<script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');}catch(e){}})();</script>
+</head>
+<body class="pcf">
+
+<div class="pc-topbar noprint">
+    <div class="pc-brand">
+        <img class="pc-logo" src="logo-wide.png" alt="PClinic" width="118" height="30">
+        <span class="pc-appsub" id="appSub">Procedure</span>
+    </div>
+    <div class="pc-tr">
+        <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
+        <div class="pc-chip"><span class="pc-avatar" id="userAvatar">··</span><span id="userName">…</span></div>
+        <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
+    </div>
+</div>
+
+<div class="pcf-wrap">
+    <div id="pcfRoot" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
+</div>
+
+<div class="pc-toasts noprint"></div>
+
+<script type="module" src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+<script src="patient-data.js"></script>
+<script src="pclinic-orders.js"></script>
+<script src="pclinic-file.js"></script>
+<script src="pclinic-filepage.js"></script>
+<script>
+pcFilePage.init({
+  "type": "procedure",
+  "ref": "PR",
+  "title": "Procedure Note",
+  "sub": "Procedure",
+  "docTitle": "Procedure Note",
+  "icon": "ti-stethoscope",
+  "histTitle": "Previous procedures",
+  "histUnit": "procedure",
+  "newLabel": "New Procedure Note",
+  "dx": false,
+  "rdv": true,
+  "att": true,
+  "vitals": false,
+  "rx": false,
+  "fields": [
+    {
+      "id": "proc",
+      "label": "Procedure",
+      "ph": "e.g. Lumbar puncture",
+      "panel": "Procedure",
+      "icon": "ti-stethoscope"
+    },
+    {
+      "id": "ind",
+      "label": "Indication",
+      "ph": "Why it was done",
+      "panel": "Procedure"
+    },
+    {
+      "id": "consent",
+      "label": "Consent obtained",
+      "kind": "sel",
+      "panel": "Procedure",
+      "options": [
+        "Yes — written",
+        "Yes — verbal",
+        "Emergency, not obtained"
+      ]
+    },
+    {
+      "id": "anaes",
+      "label": "Anaesthesia / Sedation",
+      "ph": "Local lidocaine 1%",
+      "panel": "Procedure"
+    },
+    {
+      "id": "desc",
+      "label": "Description",
+      "kind": "area",
+      "ph": "How the procedure was carried out…",
+      "panel": "Record",
+      "icon": "ti-clipboard-text"
+    },
+    {
+      "id": "comp",
+      "label": "Complications",
+      "kind": "area",
+      "ph": "None, or describe…",
+      "panel": "Record"
+    },
+    {
+      "id": "plan",
+      "label": "Post-procedure instructions",
+      "kind": "area",
+      "ph": "Observation, analgesia, when to review…",
+      "panel": "Aftercare",
+      "icon": "ti-clipboard-check"
+    }
+  ]
+});
+</script>
+<script src="pclinic-handoff.js"></script>
+</body>
+</html>

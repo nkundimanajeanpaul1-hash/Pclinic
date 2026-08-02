@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
+    <script type="module" src="firebase-config.js"></script>
+    <script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Physiotherapy • PClinic</title>
+    <link rel="icon" type="image/png" href="logo.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="shared.js" defer></script>
+    <script src="patient-data.js" defer></script>
+    <link rel="stylesheet" href="pclinic-ui.css">
+<style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f0f2f5; --s1: #ffffff; --s2: #f8f9fa; --s3: #f1f3f6; --bd: #e4e7ec;
+            --tp: #1a1a2e; --ts: #2d2d44; --tm: #6b7280;
+            --ac: #059669; --ach: #047857; --acb: #ecfdf5; --acl: #d1fae5;
+            --green: #10b981; --greenb: #ecfdf5;
+            --orange: #f59e0b; --orangeb: #fffbeb;
+            --red: #ef4444; --redb: #fef2f2;
+            --purple: #7c3aed; --purpleb: #f5f3ff;
+            --gradient: linear-gradient(135deg, #059669, #10b981);
+            --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+            --shadow2: 0 4px 20px rgba(0,0,0,.08), 0 12px 40px rgba(0,0,0,.06);
+            --r: 10px; --r2: 14px;
+            --f: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        [data-theme="dark"] {
+            --bg: #0f1117; --s1: #1a1d27; --s2: #14171f; --s3: #222533; --bd: #2d3040;
+            --tp: #f0f2f5; --ts: #d1d5db; --tm: #9ca3af;
+            --ac: #34d399; --ach: #6ee7b7; --acb: #1a3a2a; --acl: #1e4a3a;
+            --shadow: 0 1px 3px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.2);
+            --shadow2: 0 4px 20px rgba(0,0,0,.4), 0 12px 40px rgba(0,0,0,.3);
+        }
+
+        body {
+            font-family: var(--f); background: var(--bg); color: var(--tp);
+            font-size: 13px; line-height: 1.6; min-height: 100vh;
+            transition: background 0.4s, color 0.4s;
+        }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--bd); border-radius: 10px; }
+
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 24px; background: rgba(255,255,255,0.85);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 0.5px solid var(--bd); position: sticky; top: 0; z-index: 100; height: 56px;
+        }
+        [data-theme="dark"] .topbar { background: rgba(26,29,39,0.85); }
+        .tl { display: flex; align-items: center; gap: 10px; }
+        .logo-box {
+            width: 32px; height: 32px; border-radius: 8px; background: var(--gradient);
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(5,150,105,0.3);
+        }
+        .appname { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: var(--tp); }
+        .appname span { color: var(--ac); }
+        .appsub { font-size: 11px; color: var(--tm); font-weight: 500; margin-left: 2px; }
+        .tr { display: flex; align-items: center; gap: 6px; }
+        .realtime-clock {
+            font-size: 12px; color: var(--tm); font-weight: 500; background: rgba(255,255,255,0.5);
+            padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--bd);
+            display: flex; align-items: center; gap: 6px;
+        }
+        [data-theme="dark"] .realtime-clock { background: rgba(255,255,255,0.05); }
+        .tb-btn {
+            width: 32px; height: 32px; border-radius: 50%; border: 0.5px solid var(--bd);
+            background: var(--s1); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: var(--transition); color: var(--tm); font-size: 15px;
+        }
+        .tb-btn:hover { background: var(--s3); transform: scale(1.05); color: var(--tp); }
+        .user-chip {
+            display: flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px;
+            border-radius: 20px; border: 0.5px solid var(--bd); background: var(--s1); cursor: pointer;
+        }
+        .ua {
+            width: 26px; height: 26px; border-radius: 50%; background: var(--gradient);
+            display: flex; align-items: center; justify-content: center; color: #fff;
+            font-size: 10px; font-weight: 700;
+        }
+        .uname { font-size: 12px; font-weight: 600; color: var(--tp); }
+
+        .breadcrumb {
+            display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--tm);
+            padding: 10px 24px 6px 24px; flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--ac); text-decoration: none; font-weight: 500; }
+        .breadcrumb .separator { color: var(--bd); font-size: 10px; }
+        .breadcrumb .current { color: var(--ts); font-weight: 500; }
+
+        .greeting { padding: 12px 24px 6px 24px; }
+        .greeting h1 { font-size: 24px; font-weight: 800; color: var(--tp); letter-spacing: -0.5px; }
+        .greeting h1 .highlight {
+            background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .greeting p { font-size: 13px; color: var(--tm); margin-top: 2px; }
+
+        .tabs { display: flex; gap: 4px; padding: 10px 24px 0; border-bottom: 1px solid var(--bd); flex-wrap: wrap; }
+        .tab-btn {
+            padding: 9px 16px; font-size: 12.5px; font-weight: 600; color: var(--tm);
+            background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent;
+            display: flex; align-items: center; gap: 6px; transition: var(--transition);
+        }
+        .tab-btn:hover { color: var(--tp); }
+        .tab-btn.active { color: var(--ac); border-bottom-color: var(--ac); }
+
+        .view { padding: 16px 24px 24px; display: none; }
+        .view.active { display: block; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+        .stat-card {
+            background: var(--s1); border: 0.5px solid var(--bd); border-radius: var(--r2);
+            padding: 14px 18px; display: flex; align-items: center; gap: 14px;
+            box-shadow: var(--shadow); transition: var(--transition);
+        }
+        .stat-card:hover { box-shadow: var(--shadow2); transform: translateY(-2px); }
+        .stat-card .icon {
+            width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center;
+            justify-content: center; font-size: 18px; flex-shrink: 0;
+        }
+        .stat-card .icon.green { background: var(--acb); color: var(--ac); }
+        .stat-card .icon.orange { background: var(--orangeb); color: var(--orange); }
+        .stat-card .icon.blue { background: #eff6ff; color: #2563eb; }
+        .stat-card .icon.purple { background: var(--purpleb); color: var(--purple); }
+        .stat-card .number { font-size: 22px; font-weight: 800; color: var(--tp); letter-spacing: -0.5px; }
+        .stat-card .label { font-size: 12px; color: var(--tm); font-weight: 500; }
+
+        .card {
+            background: var(--s1); border: 0.5px solid var(--bd); border-radius: var(--r2);
+            padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 16px;
+        }
+        .card-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+            flex-wrap: wrap; gap: 10px;
+        }
+        .card-header h3 {
+            font-size: 15px; font-weight: 700; color: var(--tp); display: flex; align-items: center; gap: 8px;
+        }
+        .card-header h3 i { color: var(--ac); }
+
+        .btn {
+            padding: 8px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 600;
+            border: 1px solid var(--bd); background: var(--s1); color: var(--tp); cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px; transition: var(--transition);
+            font-family: var(--f);
+        }
+        .btn:hover { background: var(--s3); }
+        .btn-green { background: var(--gradient); color: #fff; border: none; }
+        .btn-green:hover { filter: brightness(1.08); }
+        .btn-sm { padding: 5px 10px; font-size: 11px; }
+        .btn-outline { background: transparent; }
+
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            text-align: left; font-size: 10.5px; font-weight: 700; color: var(--tm);
+            text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px;
+            border-bottom: 1px solid var(--bd);
+        }
+        tbody td { padding: 11px 10px; font-size: 12.5px; border-bottom: 1px solid var(--bd); color: var(--ts); }
+        tbody tr:hover { background: var(--s2); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        .badge {
+            font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 10px;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .badge.green { background: var(--acb); color: var(--ac); }
+        .badge.orange { background: var(--orangeb); color: var(--orange); }
+        .badge.gray { background: var(--s3); color: var(--tm); }
+        .badge.red { background: var(--redb); color: var(--red); }
+
+        .progress-bar-track {
+            width: 100%; height: 7px; background: var(--s3); border-radius: 10px; overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%; background: var(--gradient); border-radius: 10px; transition: width 0.4s ease;
+        }
+
+        .plan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+        .exercise-card {
+            background: var(--s2); border: 0.5px solid var(--bd); border-radius: var(--r);
+            padding: 14px; transition: var(--transition);
+        }
+        .exercise-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+        .exercise-card .ex-title { font-size: 13px; font-weight: 700; color: var(--tp); margin-bottom: 4px; }
+        .exercise-card .ex-meta { font-size: 11px; color: var(--tm); margin-bottom: 8px; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px; }
+        .field label {
+            display: block; font-size: 10.5px; font-weight: 700; color: var(--tm);
+            text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px;
+        }
+        .field input, .field select, .field textarea {
+            width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--bd);
+            background: var(--s1); color: var(--tp); font-size: 12.5px; font-family: var(--f);
+        }
+        .field textarea { resize: vertical; min-height: 70px; }
+
+        #toastContainer {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 999;
+            display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;
+        }
+        .toast {
+            background: rgba(28,28,30,0.92); backdrop-filter: blur(20px); color: #fff; border-radius: 12px;
+            padding: 10px 20px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: toastPop 0.4s cubic-bezier(0.34,1.56,0.64,1); display: flex; align-items: center; gap: 8px;
+        }
+        .toast.success { background: var(--green); }
+        .toast.error { background: var(--red); }
+        .toast.info { background: #2563eb; }
+        @keyframes toastPop { from { opacity:0; transform: translateY(20px) scale(0.9);} to {opacity:1; transform: translateY(0) scale(1);} }
+        @keyframes toastOut { from { opacity:1; } to {opacity:0; transform: translateY(-20px) scale(0.9);} }
+
+        @media (max-width: 900px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .topbar { padding: 6px 16px; }
+            .greeting { padding: 8px 16px 4px; }
+            .view { padding: 12px 16px 20px; }
+            .tabs { padding: 8px 16px 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="tl">
+            <div class="logo-box">
+                <img src="logo.png" alt="PClinic" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.outerHTML='<svg viewBox=&quot;0 0 24 24&quot; style=&quot;width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2&quot;><path d=&quot;M22 12h-4l-3 9L9 3l-3 9H2&quot;/></svg>'" />
+            </div>
+            <span class="appname">P<span>clinic</span></span>
+            <span class="appsub">Physiotherapy</span>
+        </div>
+        <div class="tr">
+            <div class="realtime-clock"><i class="ti ti-clock"></i> <span id="clockDisplay">--:--:--</span></div>
+            <button class="tb-btn" onclick="toggleDarkMode()" title="Toggle Dark Mode (Ctrl+D)"><i class="ti ti-moon" id="themeIcon"></i></button>
+            <div class="user-chip" onclick="showToast('👤 ' + (window.currentStaff ? window.currentStaff.name : 'Staff'), 'info')">
+                <div class="ua" id="userAvatar">PT</div>
+                <span class="uname" id="userName">Physio</span>
+            </div>
+            <div class="tb-btn" onclick="logout()" title="Logout (Ctrl+L)"><i class="ti ti-logout"></i></div>
+        </div>
+    </div>
+
+    <div class="breadcrumb">
+        <a href="hub.html">🏥 Hub</a>
+        <span class="separator">›</span>
+        <span class="current">Physiotherapy</span>
+    </div>
+
+    <div class="greeting">
+        <h1>Physiotherapy <span class="highlight">Portal</span></h1>
+        <p>Rehabilitation plans, therapy sessions, and patient progress tracking</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-view="overview" onclick="switchView('overview')"><i class="ti ti-layout-dashboard"></i> Overview</button>
+        <button class="tab-btn" data-view="sessions" onclick="switchView('sessions')"><i class="ti ti-calendar-time"></i> Sessions</button>
+        <button class="tab-btn" data-view="plans" onclick="switchView('plans')"><i class="ti ti-list-check"></i> Exercise Plans</button>
+        <button class="tab-btn" data-view="progress" onclick="switchView('progress')"><i class="ti ti-chart-line"></i> Progress Notes</button>
+    </div>
+
+    <!-- ═══ OVERVIEW ═══ -->
+    <div class="view active" id="view-overview">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon green"><i class="ti ti-accessible"></i></div>
+                <div><div class="number" id="statActivePatients">0</div><div class="label">Active Patients</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="icon blue"><i class="ti ti-calendar-time"></i></div>
+                <div><div class="number" id="statTodaySessions">0</div><div class="label">Sessions Today</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="icon orange"><i class="ti ti-clock-hour-4"></i></div>
+                <div><div class="number" id="statPending">0</div><div class="label">Pending Reviews</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="icon purple"><i class="ti ti-trophy"></i></div>
+                <div><div class="number" id="statCompleted">0</div><div class="label">Completed Plans</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="ti ti-calendar-time"></i> Today's Sessions</h3>
+                <button class="btn btn-green" onclick="switchView('sessions')"><i class="ti ti-plus"></i> New Session</button>
+            </div>
+            <table>
+                <thead><tr><th>Time</th><th>Patient</th><th>Session Type</th><th>Therapist</th><th>Status</th></tr></thead>
+                <tbody id="overviewSessionsBody">
+                    <tr><td colspan="5" style="text-align:center;color:var(--tm);padding:20px;">No sessions scheduled yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══ SESSIONS ═══ -->
+    <div class="view" id="view-sessions">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="ti ti-calendar-plus"></i> Schedule a Session</h3>
+            </div>
+            <div class="form-grid">
+                <div class="field"><label>Patient Name</label><input type="text" id="sessPatient" placeholder="e.g. John Mugisha" /></div>
+                <div class="field"><label>Date &amp; Time</label><input type="datetime-local" id="sessDateTime" /></div>
+                <div class="field">
+                    <label>Session Type</label>
+                    <select id="sessType">
+                        <option>Post-Surgical Rehab</option>
+                        <option>Sports Injury</option>
+                        <option>Neurological Rehab</option>
+                        <option>Chronic Pain Management</option>
+                        <option>Mobility &amp; Balance</option>
+                        <option>General Physiotherapy</option>
+                    </select>
+                </div>
+                <div class="field"><label>Therapist</label><input type="text" id="sessTherapist" placeholder="e.g. Dr. Amina" /></div>
+            </div>
+            <div class="field" style="margin-bottom:12px;"><label>Notes</label><textarea id="sessNotes" placeholder="Session focus, precautions, etc."></textarea></div>
+            <button class="btn btn-green" onclick="addSession()"><i class="ti ti-check"></i> Schedule Session</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3><i class="ti ti-list"></i> Upcoming &amp; Past Sessions</h3></div>
+            <table>
+                <thead><tr><th>Date</th><th>Patient</th><th>Type</th><th>Therapist</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="sessionsBody">
+                    <tr><td colspan="6" style="text-align:center;color:var(--tm);padding:20px;">No sessions yet. Schedule one above.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══ EXERCISE PLANS ═══ -->
+    <div class="view" id="view-plans">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="ti ti-plus"></i> Create Exercise Plan</h3>
+            </div>
+            <div class="form-grid">
+                <div class="field"><label>Patient Name</label><input type="text" id="planPatient" placeholder="e.g. John Mugisha" /></div>
+                <div class="field"><label>Exercise Name</label><input type="text" id="planExercise" placeholder="e.g. Knee flexion stretches" /></div>
+                <div class="field"><label>Sets / Reps</label><input type="text" id="planReps" placeholder="e.g. 3 sets x 12 reps" /></div>
+                <div class="field"><label>Frequency</label><input type="text" id="planFrequency" placeholder="e.g. Daily, 2x/week" /></div>
+            </div>
+            <button class="btn btn-green" onclick="addExercisePlan()"><i class="ti ti-check"></i> Add to Plan</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3><i class="ti ti-list-check"></i> Active Exercise Plans</h3></div>
+            <div class="plan-grid" id="plansGrid">
+                <p style="color:var(--tm);grid-column:1/-1;text-align:center;padding:20px;">No exercise plans yet. Create one above.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ PROGRESS NOTES ═══ -->
+    <div class="view" id="view-progress">
+        <div class="card">
+            <div class="card-header"><h3><i class="ti ti-notes"></i> Add Progress Note</h3></div>
+            <div class="form-grid">
+                <div class="field"><label>Patient Name</label><input type="text" id="progPatient" placeholder="e.g. John Mugisha" /></div>
+                <div class="field">
+                    <label>Mobility Score (0-10)</label>
+                    <input type="number" id="progScore" min="0" max="10" placeholder="e.g. 7" />
+                </div>
+            </div>
+            <div class="field" style="margin-bottom:12px;"><label>Progress Notes</label><textarea id="progNotes" placeholder="Observations, improvements, concerns..."></textarea></div>
+            <button class="btn btn-green" onclick="addProgressNote()"><i class="ti ti-check"></i> Save Note</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3><i class="ti ti-chart-line"></i> Recent Progress Notes</h3></div>
+            <div id="progressList">
+                <p style="color:var(--tm);text-align:center;padding:20px;">No progress notes yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ─── CLOCK ───
+            function updateClock() {
+                document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString('en-GB');
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // ─── VIEW SWITCHING ───
+            window.switchView = function(name) {
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('view-' + name).classList.add('active');
+                document.querySelector('.tab-btn[data-view="' + name + '"]').classList.add('active');
+            };
+
+            // ─── STATE (in-memory for this session; persisted via localStorage) ───
+            const STORAGE_KEY = 'pclinic_physio_data';
+            function loadData() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    return raw ? JSON.parse(raw) : { sessions: [], plans: [], notes: [] };
+                } catch (e) { return { sessions: [], plans: [], notes: [] }; }
+            }
+            function saveData(data) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+            let data = loadData();
+
+            function fmtDate(iso) {
+                if (!iso) return '—';
+                const d = new Date(iso);
+                return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + ' · ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            function renderStats() {
+                document.getElementById('statActivePatients').textContent = new Set(data.sessions.map(s => s.patient)).size;
+                const today = new Date().toDateString();
+                document.getElementById('statTodaySessions').textContent = data.sessions.filter(s => s.dateTime && new Date(s.dateTime).toDateString() === today).length;
+                document.getElementById('statPending').textContent = data.sessions.filter(s => s.status === 'Scheduled').length;
+                document.getElementById('statCompleted').textContent = data.plans.filter(p => p.completed).length;
+            }
+
+            function renderSessions() {
+                const tbody = document.getElementById('sessionsBody');
+                const overviewBody = document.getElementById('overviewSessionsBody');
+                if (data.sessions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--tm);padding:20px;">No sessions yet. Schedule one above.</td></tr>';
+                    overviewBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--tm);padding:20px;">No sessions scheduled yet.</td></tr>';
+                    return;
+                }
+                const sorted = [...data.sessions].sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+                tbody.innerHTML = sorted.map((s, i) => `
+                    <tr>
+                        <td>${fmtDate(s.dateTime)}</td>
+                        <td>${s.patient}</td>
+                        <td>${s.type}</td>
+                        <td>${s.therapist || '—'}</td>
+                        <td><span class="badge ${s.status === 'Completed' ? 'green' : 'orange'}">${s.status}</span></td>
+                        <td>
+                            ${s.status === 'Scheduled' ? `<button class="btn btn-sm btn-outline" onclick="completeSession(${i})"><i class="ti ti-check"></i> Mark Done</button>` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+
+                const today = new Date().toDateString();
+                const todaySessions = sorted.filter(s => s.dateTime && new Date(s.dateTime).toDateString() === today);
+                overviewBody.innerHTML = todaySessions.length
+                    ? todaySessions.map(s => `
+                        <tr>
+                            <td>${new Date(s.dateTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</td>
+                            <td>${s.patient}</td>
+                            <td>${s.type}</td>
+                            <td>${s.therapist || '—'}</td>
+                            <td><span class="badge ${s.status === 'Completed' ? 'green' : 'orange'}">${s.status}</span></td>
+                        </tr>
+                    `).join('')
+                    : '<tr><td colspan="5" style="text-align:center;color:var(--tm);padding:20px;">No sessions scheduled for today.</td></tr>';
+            }
+
+            function renderPlans() {
+                const grid = document.getElementById('plansGrid');
+                if (data.plans.length === 0) {
+                    grid.innerHTML = '<p style="color:var(--tm);grid-column:1/-1;text-align:center;padding:20px;">No exercise plans yet. Create one above.</p>';
+                    return;
+                }
+                grid.innerHTML = data.plans.map((p, i) => `
+                    <div class="exercise-card">
+                        <div class="ex-title">${p.exercise}</div>
+                        <div class="ex-meta">${p.patient} · ${p.reps || '—'} · ${p.frequency || '—'}</div>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tm);cursor:pointer;">
+                            <input type="checkbox" ${p.completed ? 'checked' : ''} onchange="togglePlanComplete(${i})" />
+                            Mark as completed
+                        </label>
+                    </div>
+                `).join('');
+            }
+
+            function renderProgress() {
+                const list = document.getElementById('progressList');
+                if (data.notes.length === 0) {
+                    list.innerHTML = '<p style="color:var(--tm);text-align:center;padding:20px;">No progress notes yet.</p>';
+                    return;
+                }
+                const sorted = [...data.notes].sort((a, b) => new Date(b.date) - new Date(a.date));
+                list.innerHTML = sorted.map(n => `
+                    <div style="padding:12px 0;border-bottom:1px solid var(--bd);">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                            <strong style="font-size:13px;color:var(--tp);">${n.patient}</strong>
+                            <span style="font-size:11px;color:var(--tm);">${fmtDate(n.date)}</span>
+                        </div>
+                        <div style="margin-bottom:6px;">
+                            <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${(n.score || 0) * 10}%"></div></div>
+                            <span style="font-size:10.5px;color:var(--tm);">Mobility score: ${n.score}/10</span>
+                        </div>
+                        <p style="font-size:12.5px;color:var(--ts);">${n.notes}</p>
+                    </div>
+                `).join('');
+            }
+
+            function renderAll() {
+                renderStats();
+                renderSessions();
+                renderPlans();
+                renderProgress();
+            }
+
+            window.addSession = function() {
+                const patient = document.getElementById('sessPatient').value.trim();
+                const dateTime = document.getElementById('sessDateTime').value;
+                const type = document.getElementById('sessType').value;
+                const therapist = document.getElementById('sessTherapist').value.trim();
+                const notes = document.getElementById('sessNotes').value.trim();
+                if (!patient || !dateTime) {
+                    showToast('⚠️ Please enter patient name and date/time.', 'error');
+                    return;
+                }
+                data.sessions.push({ patient, dateTime, type, therapist, notes, status: 'Scheduled' });
+                saveData(data);
+                renderAll();
+                document.getElementById('sessPatient').value = '';
+                document.getElementById('sessDateTime').value = '';
+                document.getElementById('sessTherapist').value = '';
+                document.getElementById('sessNotes').value = '';
+                showToast('✅ Session scheduled', 'success');
+            };
+
+            window.completeSession = function(i) {
+                const sorted = [...data.sessions].sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+                const target = sorted[i];
+                const idx = data.sessions.indexOf(target);
+                if (idx > -1) {
+                    data.sessions[idx].status = 'Completed';
+                    saveData(data);
+                    renderAll();
+                    showToast('✅ Session marked as completed', 'success');
+                }
+            };
+
+            window.addExercisePlan = function() {
+                const patient = document.getElementById('planPatient').value.trim();
+                const exercise = document.getElementById('planExercise').value.trim();
+                const reps = document.getElementById('planReps').value.trim();
+                const frequency = document.getElementById('planFrequency').value.trim();
+                if (!patient || !exercise) {
+                    showToast('⚠️ Please enter patient name and exercise.', 'error');
+                    return;
+                }
+                data.plans.push({ patient, exercise, reps, frequency, completed: false });
+                saveData(data);
+                renderAll();
+                document.getElementById('planPatient').value = '';
+                document.getElementById('planExercise').value = '';
+                document.getElementById('planReps').value = '';
+                document.getElementById('planFrequency').value = '';
+                showToast('✅ Exercise added to plan', 'success');
+            };
+
+            window.togglePlanComplete = function(i) {
+                data.plans[i].completed = !data.plans[i].completed;
+                saveData(data);
+                renderAll();
+            };
+
+            window.addProgressNote = function() {
+                const patient = document.getElementById('progPatient').value.trim();
+                const score = document.getElementById('progScore').value;
+                const notes = document.getElementById('progNotes').value.trim();
+                if (!patient || !notes) {
+                    showToast('⚠️ Please enter patient name and notes.', 'error');
+                    return;
+                }
+                data.notes.push({ patient, score: score || 0, notes, date: new Date().toISOString() });
+                saveData(data);
+                renderAll();
+                document.getElementById('progPatient').value = '';
+                document.getElementById('progScore').value = '';
+                document.getElementById('progNotes').value = '';
+                showToast('✅ Progress note saved', 'success');
+            };
+
+            // ─── TOAST ───
+            window.showToast = function(msg, type) {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = 'toast' + (type ? ' ' + type : '');
+                const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+                toast.innerHTML = `<span>${icon}</span> ${msg}`;
+                container.appendChild(toast);
+                setTimeout(function() {
+                    toast.style.animation = 'toastOut 0.3s ease forwards';
+                    setTimeout(function() { toast.remove(); }, 300);
+                }, 3000);
+            };
+
+            // ─── DARK MODE ───
+            window.toggleDarkMode = function() {
+                const html = document.documentElement;
+                const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('pclinic-theme', next);
+                document.getElementById('themeIcon').className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
+                showToast(next === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled', 'info');
+            };
+            (function() {
+                const saved = (localStorage.getItem('pclinic-theme') || localStorage.getItem('pclinic_theme')) || 'light';
+                document.documentElement.setAttribute('data-theme', saved);
+                document.getElementById('themeIcon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
+            })();
+
+            // ─── LOGOUT ───
+            window.logout = function() { window.pclinicLogout(); };
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'd') { e.preventDefault(); toggleDarkMode(); }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'l') { e.preventDefault(); logout(); }
+            });
+
+            // ─── APPLY REAL STAFF PROFILE ───
+            window.addEventListener('pclinicStaffReady', function(e) {
+                const staff = e.detail;
+                document.getElementById('userName').textContent = staff.name || 'Physio';
+                document.getElementById('userAvatar').textContent = (staff.name || 'PT').substring(0, 2).toUpperCase();
+            });
+
+            renderAll();
+            console.log('🏥 PClinic Physiotherapy Portal loaded');
+        })();
+    </script>
+
+    <script>
+        requireAuth(['physio']).then(function(staff) {
+            window.currentStaff = staff;
+            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
+        }).catch(function(err) {
+            console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+</body>
+</html>
