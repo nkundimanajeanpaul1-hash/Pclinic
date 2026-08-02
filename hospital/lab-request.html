@@ -1643,7 +1643,7 @@ function submitLabRequest() {
 }
 
 
-// ─── CLOSE LAB PAGE (sends message to parent or navigates back) ───
+// ─── CLOSE LAB PAGE (sends message to parent or goes directly to new doctor dashboard) ───
 function closeLabPage() {
     try {
         if (window.parent && window.parent !== window) {
@@ -1651,11 +1651,7 @@ function closeLabPage() {
             return;
         }
     } catch (e) {}
-    if (window.history.length > 1) {
-        window.history.back();
-    } else {
-        window.location.href = 'doctor-dashboard.html';
-    }
+    window.location.href = 'doctor-dashboard.html';
 }
 
 

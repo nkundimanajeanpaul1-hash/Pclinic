@@ -388,6 +388,7 @@
 
     /* ══════════════ MOUNT ══════════════ */
     function mount() {
+        return; // Suppress legacy dcBar — doctor-actionbar.js builds the modern action bar!
         if ($('#dcBar')) return;
         var tabs = document.querySelector('.nav-tabs');
         if (!tabs) return;

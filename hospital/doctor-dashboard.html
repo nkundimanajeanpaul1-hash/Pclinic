@@ -3901,57 +3901,15 @@ input.fi:focus,
         </div>
         </div>
 
-                       <!-- ─── BREADCRUMB WITH BUTTONS ─── -->
-        <div class="breadcrumb" id="breadcrumb" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: rgba(255,255,255,0.5); backdrop-filter: blur(10px); padding: 8px 24px;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-                <a href="hub.html" style="color: var(--ac); text-decoration: none; font-weight: 500;">🏥 Hub</a>
+                       <!-- ─── BREADCRUMB ─── -->
+        <div class="breadcrumb" id="breadcrumb" style="display: flex; justify-content: space-between; align-items: center; background: var(--s2); border-bottom: 1px solid var(--bd); padding: 8px 24px;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                <a href="hub.html" style="color: var(--ac); text-decoration: none; font-weight: 600;">🏥 Hub</a>
                 <span class="separator" style="color: var(--tm);">›</span>
-                <span class="current" style="color: var(--tp); font-weight: 500;">Doctor Dashboard</span>
+                <span class="current" style="color: var(--tp); font-weight: 600;">Doctor Dashboard</span>
             </div>
-            
-            <!-- ─── BREADCRUMB BUTTONS (BRIGHTER) ─── -->
-            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                
-                <!-- ─── ADD PATIENT FILE BUTTON ─── -->
-               <button class="btn-p" onclick="openAddPatientFile()" style="padding: 5px 16px; font-size: 11px; display: flex; align-items: center; gap: 5px; background: var(--ac); color: #fff; border-radius: 8px; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 2px 8px rgba(0,113,227,0.25);" title="Patient File" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-    <i class="ti ti-user"></i> Patient File
-</button>
-                
-                <!-- ─── LAB RESULTS BUTTON ─── -->
-                <button class="btn-p" onclick="openLabResults()" style="padding: 6px 18px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; background: linear-gradient(145deg, #34c759, #28a745); color: #fff; border-radius: 10px; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 4px 14px rgba(52,199,89,0.35);" title="Lab Results" onmouseover="this.style.transform='scale(1.06)'; this.style.boxShadow='0 6px 24px rgba(52,199,89,0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 14px rgba(52,199,89,0.35)';">
-                    <i class="ti ti-test-pipe" style="font-size: 14px;"></i> Lab Results
-                </button>
-                
-                <!-- ─── REFRESH BUTTON ─── -->
-                <button class="btn-s" onclick="refreshPage()" style="padding: 6px 14px; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.8); color: var(--tp); border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.04);" title="Refresh" onmouseover="this.style.transform='scale(1.05)'; this.style.background='rgba(255,255,255,1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';" onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.8)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.04)';">
-                    <i class="ti ti-refresh"></i> Refresh
-                </button>
-                
-                <!-- ─── PRINT BUTTON ─── -->
-                <button class="btn-s" onclick="window.print()" style="padding: 6px 14px; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.8); color: var(--tp); border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.04);" title="Print" onmouseover="this.style.transform='scale(1.05)'; this.style.background='rgba(255,255,255,1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';" onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.8)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.04)';">
-                    <i class="ti ti-printer"></i> Print
-                </button>
-                
-                <!-- ─── NOTIFICATIONS BUTTON ─── -->
-                <button class="btn-s" onclick="showToast('🔔 3 new notifications', 'info')" style="padding: 6px 14px; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 5px; position: relative; background: rgba(255,255,255,0.8); color: var(--tp); border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.04);" title="Notifications" onmouseover="this.style.transform='scale(1.05)'; this.style.background='rgba(255,255,255,1)';" onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.8)';">
-                    <i class="ti ti-bell"></i> Notifications
-                    <span style="position: absolute; top: -4px; right: -4px; background: var(--red); color: #fff; font-size: 8px; padding: 1px 6px; border-radius: 50%; border: 2px solid var(--s1); font-weight: 700;">3</span>
-                </button>
-                
-                <!-- ─── SETTINGS BUTTON ─── -->
-                <button class="btn-s" onclick="openSettingsModal()" style="padding: 6px 14px; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.8); color: var(--tp); border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.04);" title="Settings" onmouseover="this.style.transform='scale(1.05)'; this.style.background='rgba(255,255,255,1)';" onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.8)';">
-                    <i class="ti ti-settings"></i>
-                </button>
-                
-                <!-- ─── DARK MODE TOGGLE ─── -->
-                <button class="btn-s" onclick="toggleDarkMode()" style="padding: 6px 14px; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.8); color: var(--tp); border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.04);" title="Toggle Dark Mode" onmouseover="this.style.transform='scale(1.05)'; this.style.background='rgba(255,255,255,1)';" onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.8)';">
-                    <i class="ti ti-moon" id="breadcrumbThemeIcon"></i>
-                </button>
-                
-                <!-- ─── HELP BUTTON ─── -->
-                <button class="btn-s" onclick="showShortcuts()" style="padding: 6px 14px; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.8); color: var(--tp); border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.04);" title="Help" onmouseover="this.style.transform='scale(1.05)'; this.style.background='rgba(255,255,255,1)';" onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.8)';">
-                    <i class="ti ti-help"></i>
-                </button>
+            <div style="font-size: 11.5px; color: var(--tm); font-weight: 500;">
+                Clinical Console &amp; Orders
             </div>
         </div>
 
