@@ -372,21 +372,18 @@
 <body>
 
     <div class="container">
-        <!-- Top Navigation -->
-        <div class="pc-topbar">
-            <div style="display:flex;align-items:center;gap:12px;">
-                <img src="logo-wide.png" alt="PClinic" width="118" height="30" />
-                <span style="font-size:15px;font-weight:700;color:var(--tp);">Laboratory Results</span>
+        <!-- Compact Toolbar (No Top Navigation Bar / Logo, No Demographic Banner) -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px;">
+            <div style="font-size: 14.5px; font-weight: 700; color: var(--tp); display: flex; align-items: center; gap: 8px;">
+                <i class="ti ti-test-pipe" style="color: var(--ac); font-size: 18px;"></i>
+                <span>Cumulative Laboratory Results Flow Sheet</span>
             </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-                <button class="btn-apple" onclick="window.print()" title="Print cumulative report">
-                    <i class="ti ti-printer"></i> Print Matrix
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button class="btn-apple" onclick="window.print()" title="Print report">
+                    <i class="ti ti-printer"></i> Print
                 </button>
-                <button class="btn-apple" onclick="pcToggleTheme()" title="Toggle Dark Mode">
-                    <i class="ti ti-moon" id="themeIcon"></i>
-                </button>
-                <button class="btn-apple" onclick="closeLabResultsPage()" title="Close and return to dashboard">
-                    <i class="ti ti-arrow-left"></i> <span>Close</span>
+                <button class="btn-apple" onclick="closeLabResultsPage()" title="Close and return">
+                    <i class="ti ti-arrow-left"></i> Close
                 </button>
             </div>
         </div>
