@@ -180,20 +180,30 @@
 
         el.innerHTML =
             '<div style="display:flex;flex-direction:column;gap:6px;">' +
-                '<div class="demo-row"><span class="demo-lbl">Family name</span><input type="text" class="demo-input readonly" readonly value="' + esc(name) + '" /></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input readonly" readonly value="' + esc(natId) + '" /></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Department</span><input type="text" class="demo-input readonly" readonly value="' + esc(dept) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Family name</span><input type="text" class="demo-input" id="ocSearchFamily" placeholder="Search family..." value="' + esc(name) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input" id="ocSearchNatId" placeholder="National ID..." value="' + esc(natId) + '" /></div>' +
+                '<div class="demo-row">' +
+                    '<span class="demo-lbl">Department</span>' +
+                    '<div style="display:flex;gap:4px;width:68%;align-items:center;">' +
+                        '<button type="button" class="demo-btn" onclick="if(window.pcFile&&pcFile.openWardPicker)pcFile.openWardPicker();" title="Browse Patients by Ward / Department" style="padding:4px 8px;font-size:10.5px;white-space:nowrap;">🏥 Ward</button>' +
+                        '<input type="text" class="demo-input readonly" id="ocDepartment" readonly value="' + esc(dept) + '" style="width:100%;" />' +
+                    '</div>' +
+                '</div>' +
             '</div>' +
             '<div style="display:flex;flex-direction:column;gap:6px;">' +
-                '<div class="demo-row"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input readonly" readonly value="' + esc(first) + '" /></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Record number</span><input type="text" class="demo-input readonly" readonly value="' + esc(mrn) + '" /></div>' +
-                '<div class="demo-row" style="justify-content:flex-start;gap:6px;color:var(--tm);font-size:14px;padding-top:2px;">' +
-                    '<span title="Quick Action">⏱️</span><span title="Gender Male">M</span><span title="Inpatient Ward">🏥</span>' +
+                '<div class="demo-row"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input" id="ocSearchFirst" placeholder="Search first..." value="' + esc(first) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Record number</span><input type="text" class="demo-input" id="ocSearchMrn" placeholder="MRN..." value="' + esc(mrn) + '" /></div>' +
+                '<div class="demo-row" style="justify-content:flex-start;padding-top:2px;">' +
+                    '<span class="demo-status-pills">' +
+                        '<span title="Quick Action">⏱️</span>' +
+                        '<span title="Gender">' + esc(sex.charAt(0).toUpperCase()) + '</span>' +
+                        '<span title="Inpatient Ward">🏥</span>' +
+                    '</span>' +
                 '</div>' +
             '</div>' +
             '<div style="display:flex;flex-direction:column;gap:6px;">' +
                 '<div class="demo-row"><span class="demo-lbl">Date of birth</span><input type="text" class="demo-input readonly" readonly value="' + esc(dobStr) + '" style="width:50%;" /><span style="font-size:11px;font-weight:700;color:var(--tm);">(' + esc(sex) + ' - ' + esc(ageStr) + ')</span></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Archive code</span><input type="text" class="demo-input readonly" readonly value="' + esc(arch) + '" style="border-left: 4px solid #ef4444;" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Archive code</span><input type="text" class="demo-input readonly" id="ocArchiveCode" readonly value="' + esc(arch) + '" /></div>' +
                 '<div class="demo-row"><span class="demo-lbl">District</span>' +
                     '<select class="demo-input">' +
                         '<option value="KAMONYI" selected>KAMONYI</option>' +
@@ -204,10 +214,10 @@
                     '</select></div>' +
             '</div>' +
             '<div style="display:flex;flex-direction:column;gap:6px;justify-content:space-between;">' +
-                '<div class="demo-row"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input readonly" readonly value="' + esc(pid) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input" id="ocSearchId" placeholder="Person ID..." value="' + esc(pid) + '" /></div>' +
                 '<div class="demo-btn-group">' +
-                    '<button type="button" class="demo-btn" onclick="dpPick()">Find</button>' +
-                    '<button type="button" class="demo-btn" onclick="dpClear()">Clear</button>' +
+                    '<button type="button" class="demo-btn" onclick="if(window.pcFile&&pcFile.searchFromDemoBar)pcFile.searchFromDemoBar();else dpPick();">Find</button>' +
+                    '<button type="button" class="demo-btn clear-btn" onclick="if(window.pcFile&&pcFile.clearPatientBar)pcFile.clearPatientBar();else dpClear();">Clear</button>' +
                 '</div>' +
             '</div>';
     }

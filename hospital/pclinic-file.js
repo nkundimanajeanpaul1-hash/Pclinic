@@ -485,12 +485,13 @@
         return w;
     }
 
-    /* ══════════ OPENCLINIC GA COMPLETE COMMON PATIENT IDENTIFICATION BAR ══════════ */
+    /* ══════════ OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR & WARD REGISTRY ══════════ */
     function renderPatientIdentificationBar(targetEl, p) {
         var el = typeof targetEl === 'string' ? document.querySelector(targetEl) : targetEl;
         if (!el) return;
         var barId = 'pc_common_demo_bar';
-        if (document.getElementById(barId)) return;
+        var oldBar = document.getElementById(barId);
+        if (oldBar) oldBar.remove();
 
         p = p || patient() || {};
         var name = (p.lastName || 'TEKEREZA').toUpperCase();
@@ -509,20 +510,30 @@
         div.className = 'oc-demo-bar noprint';
         div.innerHTML =
             '<div style="display:flex;flex-direction:column;gap:6px;">' +
-                '<div class="demo-row"><span class="demo-lbl">Family name</span><input type="text" class="demo-input readonly" readonly value="' + esc(name) + '" /></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input readonly" readonly value="' + esc(natId) + '" /></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Department</span><input type="text" class="demo-input readonly" readonly value="' + esc(dept) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Family name</span><input type="text" class="demo-input" id="ocSearchFamily" placeholder="Search family..." value="' + esc(name) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input" id="ocSearchNatId" placeholder="National ID..." value="' + esc(natId) + '" /></div>' +
+                '<div class="demo-row">' +
+                    '<span class="demo-lbl">Department</span>' +
+                    '<div style="display:flex;gap:4px;width:68%;align-items:center;">' +
+                        '<button type="button" class="demo-btn" onclick="pcFile.openWardPicker()" title="Browse Patients by Ward / Department" style="padding:4px 8px;font-size:10.5px;white-space:nowrap;">🏥 Ward</button>' +
+                        '<input type="text" class="demo-input readonly" id="ocDepartment" readonly value="' + esc(dept) + '" style="width:100%;" />' +
+                    '</div>' +
+                '</div>' +
             '</div>' +
             '<div style="display:flex;flex-direction:column;gap:6px;">' +
-                '<div class="demo-row"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input readonly" readonly value="' + esc(first) + '" /></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Record number</span><input type="text" class="demo-input readonly" readonly value="' + esc(mrn) + '" /></div>' +
-                '<div class="demo-row" style="justify-content:flex-start;gap:6px;color:var(--tm);font-size:14px;padding-top:2px;">' +
-                    '<span title="Quick Action">⏱️</span><span title="Gender Male">M</span><span title="Inpatient Ward">🏥</span>' +
+                '<div class="demo-row"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input" id="ocSearchFirst" placeholder="Search first..." value="' + esc(first) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Record number</span><input type="text" class="demo-input" id="ocSearchMrn" placeholder="MRN..." value="' + esc(mrn) + '" /></div>' +
+                '<div class="demo-row" style="justify-content:flex-start;padding-top:2px;">' +
+                    '<span class="demo-status-pills">' +
+                        '<span title="Quick Action">⏱️</span>' +
+                        '<span title="Gender">' + esc(sex.charAt(0).toUpperCase()) + '</span>' +
+                        '<span title="Inpatient Ward">🏥</span>' +
+                    '</span>' +
                 '</div>' +
             '</div>' +
             '<div style="display:flex;flex-direction:column;gap:6px;">' +
                 '<div class="demo-row"><span class="demo-lbl">Date of birth</span><input type="text" class="demo-input readonly" readonly value="' + esc(dobStr) + '" style="width:50%;" /><span style="font-size:11px;font-weight:700;color:var(--tm);">(' + esc(sex) + ' - ' + esc(ageStr) + ')</span></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Archive code</span><input type="text" class="demo-input readonly" readonly value="' + esc(arch) + '" style="border-left: 4px solid #ef4444;" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Archive code</span><input type="text" class="demo-input readonly" id="ocArchiveCode" readonly value="' + esc(arch) + '" /></div>' +
                 '<div class="demo-row"><span class="demo-lbl">District</span>' +
                     '<select class="demo-input">' +
                         '<option value="KAMONYI" selected>KAMONYI</option>' +
@@ -533,10 +544,10 @@
                     '</select></div>' +
             '</div>' +
             '<div style="display:flex;flex-direction:column;gap:6px;justify-content:space-between;">' +
-                '<div class="demo-row"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input readonly" readonly value="' + esc(pid) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input" id="ocSearchId" placeholder="Person ID..." value="' + esc(pid) + '" /></div>' +
                 '<div class="demo-btn-group">' +
-                    '<button type="button" class="demo-btn" onclick="if(window.openPatientSearch)openPatientSearch();else if(window.pcToast)pcToast(\'🔍 Searching patient registry...\',\'info\')">Find</button>' +
-                    '<button type="button" class="demo-btn" onclick="if(window.pcToast)pcToast(\'🧹 Search cleared\',\'info\')">Clear</button>' +
+                    '<button type="button" class="demo-btn" onclick="pcFile.searchPatientRegistry()">Find</button>' +
+                    '<button type="button" class="demo-btn clear-btn" onclick="pcFile.clearPatientBar()">Clear</button>' +
                 '</div>' +
             '</div>';
 
@@ -547,6 +558,174 @@
         }
     }
 
+    function searchPatientRegistry() {
+        var fam = ($('#ocSearchFamily') ? $('#ocSearchFamily').value.trim().toLowerCase() : '');
+        var first = ($('#ocSearchFirst') ? $('#ocSearchFirst').value.trim().toLowerCase() : '');
+        var nat = ($('#ocSearchNatId') ? $('#ocSearchNatId').value.trim().toLowerCase() : '');
+        var mrn = ($('#ocSearchMrn') ? $('#ocSearchMrn').value.trim().toLowerCase() : '');
+        var pid = ($('#ocSearchId') ? $('#ocSearchId').value.trim().toLowerCase() : '');
+
+        var list = [];
+        try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
+        if (!list.length) {
+            try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+        }
+
+        var matching = list.filter(function(p) {
+            var mFam = !fam || (p.lastName || '').toLowerCase().indexOf(fam) !== -1;
+            var mFirst = !first || (p.firstName || '').toLowerCase().indexOf(first) !== -1;
+            var mNat = !nat || (p.nationalId || '').toLowerCase().indexOf(nat) !== -1;
+            var mMrn = !mrn || String(p.mrn || '').toLowerCase().indexOf(mrn) !== -1;
+            var mPid = !pid || String(p.id || '').toLowerCase().indexOf(pid) !== -1;
+            return mFam && mFirst && mNat && mMrn && mPid;
+        });
+
+        if (!matching.length) {
+            if (window.pcToast) pcToast('No patients found matching search criteria', 'warning');
+            return;
+        }
+
+        openPatientPickerModal(matching, 'Patient Registry Search Results (' + matching.length + ' found)');
+    }
+
+    function openWardPicker() {
+        var wards = [
+            'SURGERY WARD 7', 'OPD - OUTPATIENT DEPARTMENT', 'EMERGENCIES (32)',
+            'INTERNAL MEDICINE (Ward 5)', 'PAEDIATRICS', 'GYNAECOLOGIE - OBSTETRICS (44)',
+            'INTENSIVE CARE UNIT (ICU)', 'PHYSIOTHERAPY', 'ORTHOPEDICS', 'MENTAL HEALTH',
+            'DIALYSIS', 'ANESTHESIOLOGY & RECOVERY'
+        ];
+        var list = [];
+        try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
+        if (!list.length) {
+            try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+        }
+
+        var modalId = 'pc_ward_picker_modal';
+        var old = document.getElementById(modalId); if (old) old.remove();
+
+        var scrim = document.createElement('div');
+        scrim.id = modalId;
+        scrim.className = 'pcf-scrim noprint open';
+        scrim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999999;display:flex;align-items:center;justify-content:center;padding:20px;';
+        
+        var box = document.createElement('div');
+        box.style.cssText = 'background:var(--s1,#fff);border:1px solid var(--bd);border-radius:16px;width:560px;max-width:95%;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,0.5);';
+        
+        var head = document.createElement('div');
+        head.style.cssText = 'padding:14px 20px;background:var(--s2,#f8f9fa);border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:14px;';
+        head.innerHTML = '<span>🏥 Select Ward / Department to View Patients</span><button type="button" class="cl" style="border:0;background:none;font-size:18px;cursor:pointer;">&times;</button>';
+        head.querySelector('button').onclick = function() { scrim.remove(); };
+
+        var body = document.createElement('div');
+        body.style.cssText = 'padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;';
+        body.innerHTML = wards.map(function(w) {
+            var count = list.filter(function(p){ return (p.department || '').toUpperCase() === w.toUpperCase(); }).length;
+            return '<div class="ward-item" style="padding:12px 16px;border:1px solid var(--bd);border-radius:10px;background:var(--s2);display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-weight:700;transition:all 0.15s ease;" ' +
+                   'onmouseover="this.style.borderColor=\'#0071e3\';this.style.background=\'rgba(0,113,227,0.08)\'" onmouseout="this.style.borderColor=\'var(--bd)\';this.style.background=\'var(--s2)\'" data-ward="' + esc(w) + '">' +
+                   '<span><i class="ti ti-building-hospital" style="color:#0071e3;margin-right:8px;"></i> ' + esc(w) + '</span>' +
+                   '<span style="background:rgba(0,113,227,0.15);color:#0071e3;padding:2px 10px;border-radius:12px;font-size:11px;">' + count + ' patient(s)</span>' +
+                   '</div>';
+        }).join('');
+
+        box.appendChild(head);
+        box.appendChild(body);
+        scrim.appendChild(box);
+        document.body.appendChild(scrim);
+
+        body.querySelectorAll('.ward-item').forEach(function(el) {
+            el.onclick = function() {
+                var w = el.dataset.ward;
+                scrim.remove();
+                var matching = list.filter(function(p){ return (p.department || '').toUpperCase() === w.toUpperCase(); });
+                if (!matching.length) {
+                    if (window.pcToast) pcToast('No patients currently assigned to ' + w, 'warning');
+                    return;
+                }
+                openPatientPickerModal(matching, 'Patients in ' + w + ' (' + matching.length + ')');
+            };
+        });
+    }
+
+    function openPatientPickerModal(list, title) {
+        var modalId = 'pc_patient_picker_modal';
+        var old = document.getElementById(modalId); if (old) old.remove();
+
+        var scrim = document.createElement('div');
+        scrim.id = modalId;
+        scrim.className = 'pcf-scrim noprint open';
+        scrim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999999;display:flex;align-items:center;justify-content:center;padding:20px;';
+        
+        var box = document.createElement('div');
+        box.style.cssText = 'background:var(--s1,#fff);border:1px solid var(--bd);border-radius:16px;width:660px;max-width:96%;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,0.5);';
+        
+        var head = document.createElement('div');
+        head.style.cssText = 'padding:14px 20px;background:var(--s2,#f8f9fa);border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:14px;';
+        head.innerHTML = '<span>👤 ' + esc(title) + '</span><button type="button" class="cl" style="border:0;background:none;font-size:18px;cursor:pointer;">&times;</button>';
+        head.querySelector('button').onclick = function() { scrim.remove(); };
+
+        var body = document.createElement('div');
+        body.style.cssText = 'padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;';
+        body.innerHTML = list.map(function(p) {
+            var name = ((p.lastName||'') + ' ' + (p.firstName||'')).trim() || 'PATIENT GASPARD';
+            var mrn = p.mrn || p.id || '655055';
+            var dobStr = p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '07/01/1986';
+            var age = p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' yrs' : '40 yrs';
+            var sex = p.gender || 'Male';
+            var dept = p.department || 'SURGERY WARD 7';
+            return '<div class="pat-item" style="padding:12px 16px;border:1px solid var(--bd);border-radius:10px;background:var(--s2);display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:all 0.15s ease;" ' +
+                   'onmouseover="this.style.borderColor=\'#0071e3\';this.style.background=\'rgba(0,113,227,0.08)\'" onmouseout="this.style.borderColor=\'var(--bd)\';this.style.background=\'var(--s2)\'" data-pid="' + esc(p.id) + '">' +
+                   '<div>' +
+                       '<div style="font-weight:800;font-size:13.5px;color:var(--tp);">' + esc(name) + ' <span style="color:#0071e3;font-size:11.5px;">(MRN ' + esc(mrn) + ')</span></div>' +
+                       '<div style="font-size:11.5px;color:var(--tm);margin-top:3px;">DOB: ' + esc(dobStr) + ' (' + esc(sex) + ' - ' + esc(age) + ') · Dept: ' + esc(dept) + '</div>' +
+                   '</div>' +
+                   '<button type="button" class="demo-btn" style="pointer-events:none;">Select</button>' +
+                   '</div>';
+        }).join('');
+
+        box.appendChild(head);
+        box.appendChild(body);
+        scrim.appendChild(box);
+        document.body.appendChild(scrim);
+
+        body.querySelectorAll('.pat-item').forEach(function(el) {
+            el.onclick = function() {
+                var pid = el.dataset.pid;
+                scrim.remove();
+                var chosen = list.find(function(p){ return String(p.id) === String(pid); });
+                if (chosen) {
+                    try { localStorage.setItem('pclinic_active_patient', String(chosen.id)); } catch(e){}
+                    window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: chosen }));
+                    if (window.pcToast) pcToast('✅ Active patient switched to ' + ((chosen.lastName||'')+' '+(chosen.firstName||'')).trim(), 'success');
+                    setTimeout(function(){
+                        var u = new URL(window.location.href);
+                        if (u.searchParams.has('patient')) {
+                            u.searchParams.set('patient', chosen.id);
+                            window.location.href = u.toString();
+                        } else if (window.location.pathname.indexOf('doctor-dashboard') !== -1) {
+                            if (typeof setPatient === 'function') setPatient(chosen.id);
+                            else window.location.reload();
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 250);
+                }
+            };
+        });
+    }
+
+    function clearPatientBar() {
+        try { localStorage.removeItem('pclinic_active_patient'); } catch(e){}
+        window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: null }));
+        if (window.pcToast) pcToast('🧹 Active patient selection cleared', 'info');
+        var old = document.getElementById('pc_common_demo_bar');
+        if (old) old.remove();
+        renderPatientIdentificationBar(document.querySelector('.oc-demo-bar') || document.body, {
+            lastName: 'TEKEREZA', firstName: 'GASPARD', mrn: '655055', nationalId: '1 1986 8 0064652 0 14',
+            department: 'SURGERY WARD 7', id: '655055', dob: '1986-01-07', gender: 'Male', archiveCode: 'ARCH-2026-655'
+        });
+    }
+
     /* ══════════ EXPORTS ══════════ */
     window.pcFile = {
         patient: patient, nameOf: nameOf, age: age, esc: esc, uid: uid, staff: staff,
@@ -555,6 +734,9 @@
         save: saveFile, list: listFiles,
         actionBar: actionBar, sheet: sheet, print: printDoc,
         renderDemoBar: renderPatientIdentificationBar,
+        searchFromDemoBar: searchPatientRegistry,
+        openWardPicker: openWardPicker,
+        clearPatientBar: clearPatientBar,
         read: read, write: write
     };
 
