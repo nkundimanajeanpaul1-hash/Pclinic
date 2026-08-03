@@ -376,7 +376,7 @@
         <div class="pc-topbar">
             <div style="display:flex;align-items:center;gap:12px;">
                 <img src="logo-wide.png" alt="PClinic" width="118" height="30" />
-                <span style="font-size:15px;font-weight:700;color:var(--tp);">OpenClinic GA • Cumulative Laboratory Matrix</span>
+                <span style="font-size:15px;font-weight:700;color:var(--tp);">Laboratory Results</span>
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
                 <button class="btn-apple" onclick="window.print()" title="Print cumulative report">
@@ -388,26 +388,6 @@
                 <button class="btn-apple" onclick="closeLabResultsPage()" title="Close and return to dashboard">
                     <i class="ti ti-arrow-left"></i> <span>Close</span>
                 </button>
-            </div>
-        </div>
-
-        <!-- OpenClinic Patient Demographic Banner -->
-        <div class="oc-patient-banner" id="patientBanner">
-            <div class="oc-demo-item">
-                <span class="oc-demo-lbl">Family name / Firstname</span>
-                <span class="oc-demo-val" id="demoName">TEKEREZA GASPARD</span>
-            </div>
-            <div class="oc-demo-item">
-                <span class="oc-demo-lbl">Record number / Nat ID/PP</span>
-                <span class="oc-demo-val mrn" id="demoMrn">655055 · 1 1986 8 0064652 0 14</span>
-            </div>
-            <div class="oc-demo-item">
-                <span class="oc-demo-lbl">Date of birth / Age &amp; Sex</span>
-                <span class="oc-demo-val" id="demoDob">07/01/1986 (Male - 40 years 7 months)</span>
-            </div>
-            <div class="oc-demo-item">
-                <span class="oc-demo-lbl">Department / District</span>
-                <span class="oc-demo-val" id="demoDept">SURGERY WARD 7 · KAMONYI</span>
             </div>
         </div>
 
@@ -578,12 +558,7 @@
         }
 
         function updatePatientBanner(p) {
-            const name = ((p.lastName || '') + ' ' + (p.firstName || '')).trim() || 'PATIENT GASPARD';
-            document.getElementById('demoName').textContent = name.toUpperCase();
-            document.getElementById('demoMrn').textContent = (p.mrn || '655055') + ' · ' + (p.nationalId || '1 1986 8 0064652 0 14');
-            const age = p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' years' : '40 years 7 months';
-            document.getElementById('demoDob').textContent = (p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '07/01/1986') + ' (' + (p.gender || 'Male') + ' - ' + age + ')';
-            document.getElementById('demoDept').textContent = (p.department || 'SURGERY WARD 7').toUpperCase() + ' · ' + (p.district || 'KAMONYI').toUpperCase();
+            // Patient banner deleted per user request
         }
 
         // ─── BUILD OPENCLINIC GA CUMULATIVE FLOW SHEET MATRIX ───
