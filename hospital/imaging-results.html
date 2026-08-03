@@ -8,7 +8,7 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PClinic — OpenClinic GA PACS / DXViewer</title>
+    <title>PClinic • PACS Radiography Console &amp; DXViewer</title>
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
     <link rel="stylesheet" href="pclinic-ui.css">
@@ -171,7 +171,7 @@
 
         .btn-apple.primary {
             background: var(--ac);
-            color: #0d1117;
+            color: #ffffff;
             border-color: var(--ac);
         }
 
@@ -264,6 +264,21 @@
             justify-content: center;
             width: 100%;
             height: 100%;
+        }
+
+        /* Interactive SVG Measurement Overlay Canvas */
+        .measure-svg-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 8;
+            pointer-events: none;
+        }
+
+        .measure-svg-overlay.interactive {
+            pointer-events: auto;
+            cursor: crosshair;
         }
 
         /* DICOM Text Corner Overlays */
@@ -377,6 +392,11 @@
         table.studies-table tr.study-row.selected td {
             color: var(--orange);
             font-weight: 700;
+        }
+
+        table.studies-table tr.study-row.pending-row {
+            background: rgba(0, 113, 227, 0.08);
+            border-left: 4px solid var(--ac);
         }
 
         /* Series / Thumbnails Gallery */
@@ -531,7 +551,7 @@
     <div class="header-toolbar">
         <div class="header-title">
             <img src="logo-wide.png" alt="PClinic" width="112" height="28" />
-            <span>OpenClinic GA • PACS Radiography Console &amp; DXViewer</span>
+            <span>PClinic • PACS Radiography Console &amp; DXViewer</span>
         </div>
         <div class="header-actions">
             <a href="imaging-request.html" class="btn-apple" title="New Imaging Request"><i class="ti ti-radio"></i> New Request</a>
@@ -562,8 +582,9 @@
                 <button class="tool-btn" id="btnToolPan" onclick="setTool('pan', this)" title="Pan / Move Image"><i class="ti ti-arrows-move"></i> Pan</button>
                 <button class="tool-btn" onclick="toggleInvert()" title="Invert Colors / Soft Tissue Window"><i class="ti ti-contrast"></i> Invert</button>
                 <button class="tool-btn" onclick="rotateImage(90)" title="Rotate 90°"><i class="ti ti-rotate-clockwise"></i> Rotate 90°</button>
-                <button class="tool-btn" onclick="rotateImage(-90)" title="Rotate -90°"><i class="ti ti-rotate-2"></i> -90°</button>
-                <button class="tool-btn" onclick="setTool('measure', this)" title="Ruler / Distance"><i class="ti ti-ruler"></i> Measure</button>
+                <button class="tool-btn" id="btnToolMeasure" onclick="setTool('measure', this)" title="Measure Distance in Centimeters (cm)"><i class="ti ti-ruler"></i> Measure (cm)</button>
+                <button class="tool-btn" id="btnToolAngle" onclick="setTool('angle', this)" title="Measure Angle in Degrees (°)"><i class="ti ti-angle"></i> Angle (°)</button>
+                <button class="tool-btn" onclick="clearMeasurements()" title="Clear All Ruler &amp; Angle Measurements"><i class="ti ti-trash"></i> Clear</button>
                 <button class="tool-btn" onclick="resetViewport()" title="Reset Viewport / Fit to Window"><i class="ti ti-refresh"></i> Reset</button>
             </div>
 
@@ -585,7 +606,7 @@
                 <div class="dicom-laterality">R</div>
 
                 <div class="dicom-overlay bottom-left">
-                    <div style="font-weight: 800; font-size: 15px; letter-spacing: 1px;">CHUK</div>
+                    <div style="font-weight: 800; font-size: 15px; letter-spacing: 1px;">PCLINIC</div>
                 </div>
 
                 <div class="dicom-overlay bottom-right">
@@ -631,6 +652,9 @@
                         <path d="M 335 100 Q 342 400 338 750" stroke="rgba(255,255,255,0.4)" stroke-width="12" stroke-dasharray="6,4" />
                     </svg>
                 </div>
+
+                <!-- Interactive SVG Overlay for Ruler (cm) & Angle (°) -->
+                <svg class="measure-svg-overlay" id="measureSvg"></svg>
             </div>
         </div>
 
@@ -642,7 +666,7 @@
             <div class="section-box">
                 <div class="section-box-header">
                     <span>EXAMINATIONS / STUDIES</span>
-                    <span style="color:var(--tm);font-weight:400;">2 studies</span>
+                    <span style="color:var(--tm);font-weight:400;" id="studyCountLbl">2 studies</span>
                 </div>
                 <div class="studies-table-wrapper">
                     <table class="studies-table">
@@ -693,8 +717,8 @@
                 <input type="text" id="reportPatientSummary" class="form-textarea" style="min-height:36px;font-weight:700;" readonly />
             </div>
             <div class="form-row">
-                <label>Radiological Findings (Anatomical observations &amp; measurements)</label>
-                <textarea id="reportFindings" class="form-textarea" rows="4" placeholder="e.g. Right tibia and fibula midshaft fracture treated with intramedullary nail fixation. Good bone alignment and callus formation..."></textarea>
+                <label>Radiological Findings (Anatomical observations &amp; measurements in cm / °)</label>
+                <textarea id="reportFindings" class="form-textarea" rows="4" placeholder="e.g. Right tibia and fibula midshaft fracture treated with intramedullary nail fixation (length 32.5 cm, Cobb angle 0°). Good bone alignment and callus formation..."></textarea>
             </div>
             <div class="form-row">
                 <label>Impression / Conclusion</label>
@@ -723,8 +747,14 @@
     let scale = 1.0;
     let rotation = 0;
     let isInverted = false;
+    let activeTool = 'select';
 
-    const STUDIES = [
+    // Measuring state
+    let isDrawing = false;
+    let startX = 0, startY = 0;
+    let tempElem = null;
+
+    let STUDIES = [
         {
             id: '849014',
             mod: 'DX',
@@ -752,9 +782,11 @@
 
     function init() {
         loadPatient();
+        mergePendingDoctorOrders();
         renderStudiesTable();
         renderSeriesGallery();
         setupMouseZoom();
+        setupInteractiveMeasuring();
     }
 
     function loadPatient() {
@@ -780,7 +812,6 @@
             }
         } catch(e) {}
 
-        // Default fallback matching the CHUK photo
         currentPatient = {
             id: '849014',
             firstName: 'OLIVIER',
@@ -790,6 +821,37 @@
             mrn: '849014'
         };
         updateDicomOverlays(currentPatient);
+    }
+
+    function mergePendingDoctorOrders() {
+        if (!currentPatient) return;
+        try {
+            const orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
+            const pendingImg = orders.filter(o => 
+                String(o.patientId) === String(currentPatient.id) &&
+                (o.type === 'imaging' || o.type === 'radiology' || o.dept === 'radiology')
+            );
+
+            pendingImg.forEach(o => {
+                const isCompleted = o.status === 'completed' || o.status === 'Completed';
+                const dObj = new Date(o.orderedAt || Date.now());
+                const descText = (o.items && o.items.length) ? o.items.map(i => i.name).join(', ') : (o.notes || 'Imaging Request');
+                
+                // Add pending study at the very top of STUDIES table!
+                STUDIES.unshift({
+                    id: String(currentPatient.id || '849014'),
+                    mod: 'DX',
+                    date: dObj.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + dObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                    desc: (isCompleted ? '' : '[PENDING SCAN] ') + descText,
+                    reported: isCompleted,
+                    isPending: !isCompleted,
+                    findings: isCompleted ? 'Radiologist report completed.' : 'Awaiting DICOM scan capture and Radiologist interpretation.',
+                    thumbs: [
+                        { label: isCompleted ? 'Scan 1' : 'Pending', desc: descText }
+                    ]
+                });
+            });
+        } catch(e) {}
     }
 
     function updateDicomOverlays(p) {
@@ -813,11 +875,13 @@
 
     function renderStudiesTable() {
         const tbody = document.getElementById('studiesTableBody');
+        document.getElementById('studyCountLbl').textContent = STUDIES.length + ' studies';
         tbody.innerHTML = STUDIES.map((s, idx) => {
             const sel = idx === selectedStudyIdx ? 'selected' : '';
             const icon = idx === selectedStudyIdx ? '◉' : '○';
+            const rowClass = s.isPending ? `study-row pending-row ${sel}` : `study-row ${sel}`;
             return `
-            <tr class="study-row ${sel}" onclick="selectStudy(${idx})">
+            <tr class="${rowClass}" onclick="selectStudy(${idx})">
                 <td style="text-align:center;">${icon}</td>
                 <td><b>${s.id}</b></td>
                 <td><span style="font-weight:700;color:var(--ac);">${s.mod}</span></td>
@@ -874,7 +938,15 @@
     function updateReportStatusBox() {
         const study = STUDIES[selectedStudyIdx];
         const box = document.getElementById('reportStatusBox');
-        if (study.reported) {
+        if (study.isPending) {
+            box.innerHTML = `
+                <div style="font-size:13.5px;font-weight:700;color:var(--orange);margin-bottom:6px;">⏳ PENDING SCAN — AWAITING RADIOLOGY EXAMINATION</div>
+                <div style="font-size:12px;color:var(--ts);margin-bottom:12px;line-height:1.45;">${study.findings || 'Awaiting DICOM scan capture and Radiologist interpretation.'}</div>
+                <button class="btn-apple primary" onclick="openReportModal()" style="width:100%;justify-content:center;">
+                    <i class="ti ti-upload"></i> Upload DICOM Scan / Mark Complete
+                </button>
+            `;
+        } else if (study.reported) {
             box.innerHTML = `
                 <div style="font-size:13.5px;font-weight:700;color:var(--green);margin-bottom:6px;">✅ Reported by Radiologist</div>
                 <div style="font-size:12px;color:var(--ts);margin-bottom:12px;line-height:1.45;">${study.findings || 'Report completed.'}</div>
@@ -896,7 +968,12 @@
     window.setTool = function(tool, btn) {
         document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
         if (btn) btn.classList.add('active');
-        showToast('🖱️ DXViewer Tool: ' + tool.toUpperCase(), 'info');
+        activeTool = tool;
+        const svg = document.getElementById('measureSvg');
+        if (svg) {
+            svg.classList.toggle('interactive', tool === 'measure' || tool === 'angle');
+        }
+        showToast('🖱️ DXViewer Tool: ' + (tool === 'measure' ? 'RULER (Centimeters - cm)' : tool === 'angle' ? 'ANGLE (Degrees - °)' : tool.toUpperCase()), 'info');
     };
 
     window.rotateImage = function(deg) {
@@ -916,6 +993,12 @@
         isInverted = false;
         applyViewportTransform();
         showToast('🔄 Viewport reset to default', 'info');
+    };
+
+    window.clearMeasurements = function() {
+        const svg = document.getElementById('measureSvg');
+        if (svg) svg.innerHTML = '';
+        showToast('🗑️ Cleared all Ruler (cm) and Angle (°) measurements', 'info');
     };
 
     function applyViewportTransform() {
@@ -941,6 +1024,81 @@
         }, { passive: false });
     }
 
+    /* ─── INTERACTIVE RULER (cm) & ANGLE (°) MEASURING ENGINE ─── */
+    function setupInteractiveMeasuring() {
+        const svg = document.getElementById('measureSvg');
+        if (!svg) return;
+
+        svg.addEventListener('mousedown', function(e) {
+            if (activeTool !== 'measure' && activeTool !== 'angle') return;
+            const rect = svg.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+            isDrawing = true;
+
+            const ns = 'http://www.w3.org/2000/svg';
+            const g = document.createElementNS(ns, 'g');
+
+            const line = document.createElementNS(ns, 'line');
+            line.setAttribute('x1', startX);
+            line.setAttribute('y1', startY);
+            line.setAttribute('x2', startX);
+            line.setAttribute('y2', startY);
+            line.setAttribute('stroke', activeTool === 'measure' ? '#10b981' : '#f59e0b');
+            line.setAttribute('stroke-width', '2.5');
+            line.setAttribute('stroke-dasharray', activeTool === 'angle' ? '5,3' : '');
+
+            const text = document.createElementNS(ns, 'text');
+            text.setAttribute('x', startX + 8);
+            text.setAttribute('y', startY - 8);
+            text.setAttribute('fill', '#ffffff');
+            text.setAttribute('font-family', 'monospace');
+            text.setAttribute('font-size', '12px');
+            text.setAttribute('font-weight', 'bold');
+            text.setAttribute('filter', 'drop-shadow(1px 1px 2px #000)');
+
+            g.appendChild(line);
+            g.appendChild(text);
+            svg.appendChild(g);
+            tempElem = { g, line, text };
+        });
+
+        svg.addEventListener('mousemove', function(e) {
+            if (!isDrawing || !tempElem) return;
+            const rect = svg.getBoundingClientRect();
+            const currX = e.clientX - rect.left;
+            const currY = e.clientY - rect.top;
+
+            tempElem.line.setAttribute('x2', currX);
+            tempElem.line.setAttribute('y2', currY);
+
+            const dx = currX - startX;
+            const dy = currY - startY;
+            const distPx = Math.sqrt(dx*dx + dy*dy);
+
+            if (activeTool === 'measure') {
+                // Scale ~0.035 cm per pixel
+                const distCm = (distPx * 0.035).toFixed(1);
+                tempElem.text.setAttribute('x', (startX + currX)/2 + 8);
+                tempElem.text.setAttribute('y', (startY + currY)/2 - 8);
+                tempElem.text.textContent = `📏 ${distCm} cm`;
+            } else if (activeTool === 'angle') {
+                const rad = Math.atan2(dy, dx);
+                let deg = Math.abs(rad * (180 / Math.PI)).toFixed(1);
+                tempElem.text.setAttribute('x', (startX + currX)/2 + 8);
+                tempElem.text.setAttribute('y', (startY + currY)/2 - 8);
+                tempElem.text.textContent = `📐 ${deg}°`;
+            }
+        });
+
+        svg.addEventListener('mouseup', function() {
+            if (isDrawing && tempElem) {
+                isDrawing = false;
+                tempElem = null;
+            }
+        });
+    }
+
     /* ─── REPORT MODAL ─── */
     window.openReportModal = function() {
         const study = STUDIES[selectedStudyIdx];
@@ -958,6 +1116,7 @@
         const study = STUDIES[selectedStudyIdx];
         study.findings = document.getElementById('reportFindings').value.trim();
         study.reported = true;
+        study.isPending = false;
         updateReportStatusBox();
         closeReportModal();
         showToast('✅ Radiology report saved and finalized for study #' + study.id, 'success');
