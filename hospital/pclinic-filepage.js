@@ -743,7 +743,14 @@
             var tries = 0;
             (function wait() {
                 P = pcFile.patient();
-                if (P) { shell(); renderHistory(); return; }
+                if (P) {
+                    if (typeof pcFile.renderDemoBar === 'function') {
+                        pcFile.renderDemoBar('#pcfRoot', P);
+                    }
+                    shell();
+                    renderHistory();
+                    return;
+                }
                 if (++tries < 20) return setTimeout(wait, 200);
                 $('#pcfRoot').innerHTML =
                     '<div class="pcf-panel"><div class="pcf-empty"><i class="ti ti-user-off"></i>' +

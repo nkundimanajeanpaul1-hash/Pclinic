@@ -212,6 +212,18 @@ function loadPatients(){
     if (pid && sel.querySelector('option[value="' + pid + '"]')) {
         sel.value = pid;
     }
+    var activeP = list.find(function(p){ return String(p.id) === String(sel.value || pid); }) || list[0] || null;
+    if (activeP && typeof pcFile !== 'undefined' && typeof pcFile.renderDemoBar === 'function') {
+        pcFile.renderDemoBar('.panel', activeP);
+    }
+    sel.addEventListener('change', function() {
+        var selP = list.find(function(p){ return String(p.id) === String(sel.value); });
+        if (selP && typeof pcFile !== 'undefined' && typeof pcFile.renderDemoBar === 'function') {
+            var oldBar = document.getElementById('pc_common_demo_bar');
+            if (oldBar) oldBar.remove();
+            pcFile.renderDemoBar('.panel', selP);
+        }
+    });
 }
 
 // ── Modalities Catalogue ──

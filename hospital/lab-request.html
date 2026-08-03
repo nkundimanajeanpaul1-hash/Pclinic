@@ -1464,6 +1464,9 @@ function loadPatientData(patient) {
     }
     
     if (success) {
+        if (typeof pcFile !== 'undefined' && typeof pcFile.renderDemoBar === 'function') {
+            pcFile.renderDemoBar('.body', currentPatient);
+        }
         autoTickRecentLabRequests();
         return true;
     }

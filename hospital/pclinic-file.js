@@ -485,6 +485,68 @@
         return w;
     }
 
+    /* ══════════ OPENCLINIC GA COMPLETE COMMON PATIENT IDENTIFICATION BAR ══════════ */
+    function renderPatientIdentificationBar(targetEl, p) {
+        var el = typeof targetEl === 'string' ? document.querySelector(targetEl) : targetEl;
+        if (!el) return;
+        var barId = 'pc_common_demo_bar';
+        if (document.getElementById(barId)) return;
+
+        p = p || patient() || {};
+        var name = (p.lastName || 'TEKEREZA').toUpperCase();
+        var first = (p.firstName || 'GASPARD').toUpperCase();
+        var natId = p.nationalId || '1 1986 8 0064652 0 14';
+        var mrn = p.mrn || p.id || '655055';
+        var dobStr = p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '07/01/1986';
+        var ageStr = p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' years' : '40 years 7 months';
+        var sex = p.gender || 'Male';
+        var dept = (p.department || 'SURGERY WARD 7').toUpperCase();
+        var arch = p.archiveCode || 'ARCH-2026-655';
+        var pid = p.id || '655055';
+
+        var div = document.createElement('div');
+        div.id = barId;
+        div.className = 'oc-demo-bar noprint';
+        div.innerHTML =
+            '<div style="display:flex;flex-direction:column;gap:6px;">' +
+                '<div class="demo-row"><span class="demo-lbl">Family name</span><input type="text" class="demo-input readonly" readonly value="' + esc(name) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input readonly" readonly value="' + esc(natId) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Department</span><input type="text" class="demo-input readonly" readonly value="' + esc(dept) + '" /></div>' +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:6px;">' +
+                '<div class="demo-row"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input readonly" readonly value="' + esc(first) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Record number</span><input type="text" class="demo-input readonly" readonly value="' + esc(mrn) + '" /></div>' +
+                '<div class="demo-row" style="justify-content:flex-start;gap:6px;color:var(--tm);font-size:14px;padding-top:2px;">' +
+                    '<span title="Quick Action">⏱️</span><span title="Gender Male">M</span><span title="Inpatient Ward">🏥</span>' +
+                '</div>' +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:6px;">' +
+                '<div class="demo-row"><span class="demo-lbl">Date of birth</span><input type="text" class="demo-input readonly" readonly value="' + esc(dobStr) + '" style="width:50%;" /><span style="font-size:11px;font-weight:700;color:var(--tm);">(' + esc(sex) + ' - ' + esc(ageStr) + ')</span></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Archive code</span><input type="text" class="demo-input readonly" readonly value="' + esc(arch) + '" style="border-left: 4px solid #ef4444;" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">District</span>' +
+                    '<select class="demo-input">' +
+                        '<option value="KAMONYI" selected>KAMONYI</option>' +
+                        '<option value="KIGALI">KIGALI</option>' +
+                        '<option value="GASABO">GASABO</option>' +
+                        '<option value="NYARUGENGE">NYARUGENGE</option>' +
+                        '<option value="KICUKIRO">KICUKIRO</option>' +
+                    '</select></div>' +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:6px;justify-content:space-between;">' +
+                '<div class="demo-row"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input readonly" readonly value="' + esc(pid) + '" /></div>' +
+                '<div class="demo-btn-group">' +
+                    '<button type="button" class="demo-btn" onclick="if(window.openPatientSearch)openPatientSearch();else if(window.pcToast)pcToast(\'🔍 Searching patient registry...\',\'info\')">Find</button>' +
+                    '<button type="button" class="demo-btn" onclick="if(window.pcToast)pcToast(\'🧹 Search cleared\',\'info\')">Clear</button>' +
+                '</div>' +
+            '</div>';
+
+        if (el.firstChild) {
+            el.insertBefore(div, el.firstChild);
+        } else {
+            el.appendChild(div);
+        }
+    }
+
     /* ══════════ EXPORTS ══════════ */
     window.pcFile = {
         patient: patient, nameOf: nameOf, age: age, esc: esc, uid: uid, staff: staff,
@@ -492,6 +554,7 @@
         attachments: attachments, saveRdv: saveRdv,
         save: saveFile, list: listFiles,
         actionBar: actionBar, sheet: sheet, print: printDoc,
+        renderDemoBar: renderPatientIdentificationBar,
         read: read, write: write
     };
 
