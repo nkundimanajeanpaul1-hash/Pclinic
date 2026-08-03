@@ -1,800 +1,745 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
     <script type="module" src="firebase-config.js"></script>
     <script src="auth-guard.js"></script>
-<script src="pclinic-state.js"></script>
+    <script src="pclinic-state.js"></script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab Results • PClinic</title>
+    <title>OpenClinic GA • Cumulative Laboratory Flow Sheet</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
     <link rel="stylesheet" href="pclinic-ui.css">
-<link rel="stylesheet" href="pclinic-file.css">
-<style>
+    <link rel="stylesheet" href="pclinic-file.css">
+    <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #f0f2f5;
+            --s1: #ffffff;
+            --s2: #ebf3fb; /* OpenClinic alternating light blue */
+            --s3: #e2eef9;
+            --bd: #d1e2f2;
+            --tp: #1a1a2e;
+            --ts: #374151;
+            --tm: #6b7280;
+            --ac: #0071e3;
+            --ach: #005bb5;
+            --acb: rgba(0, 113, 227, 0.1);
+            --green: #059669;
+            --orange: #f59e0b;
+            --red: #d9534f;
+            --redb: #fce8e6;
+            --yellowb: #fff3cd;
+            --shadow: 0 1px 4px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04);
+            --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+            --smooth: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        /* Apple-Grade Dark Mode (from zero) — 0 invisible text */
+        [data-theme="dark"], html[data-theme="dark"], body.dark-mode {
+            --bg: #0d0d12 !important;
+            --s1: #161620 !important;
+            --s2: #1a1e29 !important;
+            --s3: #222736 !important;
+            --bd: rgba(255, 255, 255, 0.14) !important;
+            --tp: #f3f4f6 !important;
+            --ts: #d1d5db !important;
+            --tm: #9ca3af !important;
+            --ac: #60a5fa !important;
+            --ach: #93c5fd !important;
+            --acb: rgba(96, 165, 250, 0.15) !important;
+            --redb: rgba(239, 68, 68, 0.22) !important;
+            --yellowb: rgba(245, 158, 11, 0.22) !important;
+            color-scheme: dark;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
-            background: #c3c4ca;
-            color: #1a1a2e;
+            font-family: var(--f);
+            background: var(--bg);
+            color: var(--tp);
             font-size: 13px;
             padding: 20px;
+            -webkit-font-smoothing: antialiased;
         }
-        .container { max-width: 1400px; margin: 0 auto; }
-        .card {
-            background: rgba(255,255,255,0.6);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            border: 0.5px solid rgba(255,255,255,0.3);
-            overflow: hidden;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03);
+
+        .container {
+            max-width: 1450px;
+            margin: 0 auto;
+            animation: fadeIn 0.12s var(--smooth);
         }
-        .header {
-            padding: 16px 24px;
-            border-bottom: 0.5px solid rgba(0,0,0,0.04);
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ─── OPENCLINIC PATIENT DEMOGRAPHIC BANNER ─── */
+        .oc-patient-banner {
+            background: var(--s1);
+            border: 1px solid var(--bd);
+            border-radius: 14px;
+            padding: 14px 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px 20px;
+            font-size: 12.5px;
+        }
+
+        .oc-demo-item {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            background: rgba(255,255,255,0.3);
+            flex-direction: column;
+            gap: 2px;
         }
-        .header-title {
-            font-size: 16px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .header-title i { color: #c62828; font-size: 20px; }
-        .header-title span { font-size: 12px; font-weight: 400; color: #6b7280; margin-left: 8px; }
-        .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn {
-            padding: 6px 14px;
+
+        .oc-demo-lbl {
             font-size: 11px;
-            font-weight: 500;
-            border-radius: 10px;
-            border: 0.5px solid rgba(0,0,0,0.04);
+            font-weight: 700;
+            color: var(--tm);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .oc-demo-val {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--tp);
+        }
+
+        .oc-demo-val.mrn {
+            color: var(--ac);
+        }
+
+        /* ─── OPENCLINIC GA CUMULATIVE FLOW SHEET MATRIX ─── */
+        .oc-matrix-wrapper {
+            background: var(--s1);
+            border: 1px solid var(--bd);
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+            margin-bottom: 24px;
+        }
+
+        table.oc-matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            text-align: left;
+        }
+
+        table.oc-matrix-table thead th {
+            background: var(--s3);
+            color: var(--tp);
+            font-weight: 700;
+            padding: 12px 14px;
+            border-bottom: 2px solid var(--bd);
+            border-right: 1px solid var(--bd);
+            vertical-align: bottom;
+            white-space: nowrap;
+        }
+
+        table.oc-matrix-table thead th:last-child {
+            border-right: none;
+        }
+
+        .oc-col-order-hdr {
+            text-align: center;
+            font-size: 11.5px;
+            line-height: 1.4;
+        }
+
+        .oc-col-order-date {
+            font-weight: 800;
+            color: var(--tp);
+            font-size: 12.5px;
+        }
+
+        .oc-col-order-id {
+            color: var(--ac);
+            font-weight: 800;
+            font-family: monospace;
+            font-size: 12.5px;
+        }
+
+        .oc-col-links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            margin-top: 4px;
+            font-size: 11px;
+        }
+
+        .oc-col-link {
+            color: var(--ac);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             cursor: pointer;
-            font-family: inherit;
-            transition: all 0.2s ease;
+        }
+
+        .oc-col-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Matrix Rows */
+        table.oc-matrix-table tbody tr {
+            border-bottom: 1px solid var(--bd);
+            transition: background 0.15s ease;
+        }
+
+        table.oc-matrix-table tbody tr.row-even {
+            background: var(--s2); /* #ebf3fb */
+        }
+
+        table.oc-matrix-table tbody tr.row-odd {
+            background: var(--s1); /* #ffffff */
+        }
+
+        table.oc-matrix-table tbody tr:hover {
+            background: rgba(0, 113, 227, 0.08) !important;
+        }
+
+        table.oc-matrix-table td {
+            padding: 9px 12px;
+            border-right: 1px solid var(--bd);
+            vertical-align: middle;
+        }
+
+        table.oc-matrix-table td:last-child {
+            border-right: none;
+        }
+
+        /* Category Left Column */
+        .oc-cat-cell {
+            font-weight: 800;
+            font-size: 12px;
+            vertical-align: top !important;
+            padding: 14px 12px !important;
+            background: var(--s1);
+            border-right: 2px solid var(--bd) !important;
+            letter-spacing: 0.3px;
+        }
+
+        .oc-cat-chem { color: #059669; }
+        .oc-cat-fbc  { color: #800040; }
+        .oc-cat-sero { color: #c81e51; }
+        .oc-cat-mic  { color: #005bb5; }
+        .oc-cat-uri  { color: #006666; }
+
+        [data-theme="dark"] .oc-cat-chem { color: #34d399; }
+        [data-theme="dark"] .oc-cat-fbc  { color: #c084fc; }
+        [data-theme="dark"] .oc-cat-sero { color: #f472b6; }
+        [data-theme="dark"] .oc-cat-mic  { color: #60a5fa; }
+        [data-theme="dark"] .oc-cat-uri  { color: #2dd4bf; }
+
+        /* Test Name Cell */
+        .oc-test-cell {
+            font-family: var(--f);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--tp);
+            white-space: nowrap;
+        }
+
+        .oc-test-code {
+            font-weight: 700;
+            color: var(--tp);
+            margin-right: 6px;
+        }
+
+        .oc-test-range {
+            color: var(--tm);
+            font-size: 11.5px;
+            margin-left: 6px;
+        }
+
+        /* Result Cell */
+        .oc-res-cell {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--tp);
+            white-space: nowrap;
+        }
+
+        .oc-res-abnormal {
+            background: var(--redb) !important;
+            color: #c92a2a !important;
+            font-weight: 800 !important;
+        }
+
+        [data-theme="dark"] .oc-res-abnormal {
+            color: #ff8787 !important;
+        }
+
+        .oc-flag {
+            display: inline-block;
+            background: #d9534f;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 4px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        .oc-pending-badge {
+            color: #f59e0b;
+            font-weight: 700;
+            font-style: italic;
             display: inline-flex;
             align-items: center;
             gap: 4px;
         }
-        .btn:hover { transform: scale(1.04); }
-        .btn:active { transform: scale(0.94); }
-        .btn-close { background: rgba(255,59,48,0.06); color: #991b1b; border-color: rgba(255,59,48,0.1); }
-        .btn-close:hover { background: rgba(255,59,48,0.1); }
-        .btn-dark { background: rgba(255,255,255,0.4); color: #1a1a2e; }
-        .btn-dark:hover { background: rgba(255,255,255,0.7); }
-        .btn-print { background: rgba(0,113,227,0.06); color: #0071e3; border-color: rgba(0,113,227,0.1); }
-        .btn-print:hover { background: rgba(0,113,227,0.1); }
-        .patient-banner {
-            padding: 12px 20px;
-            background: rgba(255,255,255,0.2);
-            border-bottom: 0.5px solid rgba(0,0,0,0.03);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .patient-name { font-size: 15px; font-weight: 700; color: #1a1a2e; }
-        .patient-mrn { font-size: 12px; color: #6b7280; font-weight: 500; }
-        .result-count { font-size: 12px; color: #6b7280; background: rgba(0,0,0,0.03); padding: 2px 12px; border-radius: 12px; }
-        .body { padding: 20px 24px; background: rgba(255,255,255,0.2); }
-        .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-        .filter-input, .filter-select {
-            padding: 8px 14px;
-            border: 0.5px solid rgba(0,0,0,0.04);
-            border-radius: 12px;
-            font-size: 12px;
-            font-family: inherit;
-            background: rgba(255,255,255,0.3);
-            color: #1a1a2e;
-            flex: 1;
-            min-width: 150px;
-            transition: all 0.2s;
-        }
-        .filter-input:focus, .filter-select:focus {
-            border-color: #0071e3;
-            outline: none;
-            background: rgba(255,255,255,0.6);
-        }
-        .filter-select { cursor: pointer; appearance: none; padding-right: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
-        .table-wrap { overflow-x: auto; border-radius: 14px; border: 0.5px solid rgba(0,0,0,0.04); background: rgba(255,255,255,0.15); }
-        .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .table-header { background: rgba(255,255,255,0.2); border-bottom: 0.5px solid rgba(0,0,0,0.04); }
-        .table-header th { padding: 12px 14px; font-size: 10px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
-        .table-header th.center { text-align: center; }
-        .result-item { background: rgba(255,255,255,0.15); border-bottom: 0.5px solid rgba(0,0,0,0.02); transition: background 0.2s; }
-        .result-item:hover { background: rgba(255,255,255,0.3); }
-        .result-item td { padding: 10px 14px; color: #1a1a2e; vertical-align: middle; }
-        .result-item td.center { text-align: center; }
-        .category-badge { display: inline-block; padding: 2px 12px; border-radius: 12px; font-size: 10px; font-weight: 600; border-left: 3px solid #0071e3; }
-        .category-badge.hematology { background: #fce4ec; color: #c62828; border-color: #dc3545; }
-        .category-badge.biochemistry { background: #e8f5e9; color: #2e7d32; border-color: #28a745; }
-        .category-badge.microbiology { background: #f3e5f5; color: #6a1b9a; border-color: #9b59b6; }
-        .category-badge.urinalysis { background: #e3f2fd; color: #1565c0; border-color: #007bff; }
-        .category-badge.hormones { background: #fff3e0; color: #e65100; border-color: #fd7e14; }
-        .category-badge.serology { background: #fce4ec; color: #880e4f; border-color: #e83e8c; }
-        .category-badge.parasitology { background: #fff8e1; color: #f57f17; border-color: #ffc107; }
-        .category-badge.covid { background: #ffebee; color: #b71c1c; border-color: #c82333; }
-        .category-badge.general { background: #f5f5f5; color: #424242; border-color: #6c757d; }
-        .test-name-cell { font-weight: 500; display: flex; align-items: center; gap: 8px; }
-        .test-icon { width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; background: rgba(0,0,0,0.02); flex-shrink: 0; }
-        .result-value { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; }
-        .result-value.normal { color: #1a7a32; }
-        .result-value.high { color: #8a1f1a; }
-        .result-value.low { color: #0066d6; }
-        .result-value.critical { color: #8a1f1a; animation: pulseCritical 1.5s ease-in-out infinite; }
-        @keyframes pulseCritical { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
-        .result-unit { font-weight:400; font-size:10px; color:#6b7280; margin-left:2px; }
-        .reference-range { font-size:11px; color:#6b7280; text-align:center; }
-        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 14px; border-radius:12px; font-size:10px; font-weight:600; white-space:nowrap; }
-        .status-badge .dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
-        .status-badge.normal { background: rgba(52,199,89,0.08); color: #1a7a32; }
-        .status-badge.normal .dot { background: #34c759; }
-        .status-badge.high { background: rgba(255,59,48,0.08); color: #8a1f1a; }
-        .status-badge.high .dot { background: #ff3b30; }
-        .status-badge.low { background: rgba(0,113,227,0.08); color: #0066d6; }
-        .status-badge.low .dot { background: #0071e3; }
-        .status-badge.critical { background: rgba(255,59,48,0.08); color: #8a1f1a; animation: statusPulse 1.5s ease-in-out infinite; }
-        .status-badge.critical .dot { background: #ff3b30; }
-        .status-badge.pending { background: rgba(255,149,0,0.08); color: #7a4500; }
-        .status-badge.pending .dot { background: #ff9500; animation: pulseDot 1.5s ease-in-out infinite; }
-        @keyframes pulseDot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.7); } }
-        @keyframes statusPulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
-        .result-date { font-size:11px; color:#6b7280; text-align:center; }
-        .no-results { text-align:center; padding:40px 20px; color:#6b7280; font-size:13px; }
-        .no-results .icon { font-size:48px; display:block; margin-bottom:12px; opacity:0.5; }
-        .pending-note { font-size:11px; color:#6b7280; font-style:italic; opacity:0.7; display:block; margin-top:2px; }
-        .footer { display:flex; justify-content:space-between; align-items:center; padding:12px 4px 0; font-size:11px; color:#6b7280; flex-wrap:wrap; gap:6px; }
-        .toast-container { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:999; display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; max-width:90%; }
-        .toast { background:rgba(28,28,30,0.9); backdrop-filter:blur(24px); color:#fff; border-radius:14px; padding:10px 20px; font-size:13px; font-weight:500; pointer-events:auto; opacity:0; transform:translateY(20px) scale(0.95); transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1); box-shadow:0 4px 20px rgba(0,0,0,0.12); text-align:center; }
-        .toast.show { opacity:1; transform:translateY(0) scale(1); }
-        .toast.success { background:#065f46; }
-        .toast.error { background:#991b1b; }
-        .toast.warning { background:#92400e; }
-        .toast.info { background:#1e40af; }
-        .btn-history { background: rgba(175,82,222,0.08); color: #6a1b9a; border-color: rgba(175,82,222,0.15); }
-        .btn-history:hover { background: rgba(175,82,222,0.14); }
 
-        /* ─── REQUEST HISTORY MODAL ─── */
-        .history-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.35);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            z-index: 9999;
+        /* Header action buttons */
+        .pc-topbar {
+            background: var(--s1);
+            border: 1px solid var(--bd);
+            border-radius: 14px;
+            padding: 12px 18px;
+            display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
         }
-        .history-modal {
-            background: rgba(255,255,255,0.9);
-            backdrop-filter: blur(24px);
-            border-radius: 18px;
-            border: 0.5px solid rgba(255,255,255,0.4);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.04), 0 8px 40px rgba(0,0,0,0.04);
-            width: 100%;
-            max-width: 640px;
-            max-height: 82vh;
+
+        .btn-apple {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: var(--s2);
+            color: var(--tp);
+            border: 1px solid var(--bd);
+            text-decoration: none;
+            font-family: inherit;
+        }
+
+        .btn-apple:hover {
+            background: var(--s3);
+            transform: scale(1.02);
+        }
+
+        .btn-apple.primary {
+            background: var(--ac);
+            color: #ffffff;
+            border-color: var(--ac);
+        }
+
+        .btn-apple.primary:hover {
+            background: var(--ach);
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000000;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            gap: 8px;
         }
-        .history-modal-header {
-            padding: 16px 20px;
-            border-bottom: 0.5px solid rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255,255,255,0.3);
-        }
-        .history-modal-title {
-            font-size: 15px;
-            font-weight: 700;
+
+        .toast {
+            padding: 12px 18px;
+            border-radius: 12px;
+            background: var(--tp);
+            color: var(--s1);
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: var(--shadow2);
             display: flex;
             align-items: center;
             gap: 8px;
-            color: #1a1a2e;
         }
-        .history-modal-title i { color: #af52de; font-size: 18px; }
-        .history-modal-body { padding: 16px 20px; overflow-y: auto; }
-        .history-empty { text-align: center; padding: 40px 20px; color: #6b7280; font-size: 13px; }
-        .history-empty .icon { font-size: 40px; display: block; margin-bottom: 10px; opacity: 0.5; }
-        .history-item {
-            border: 0.5px solid rgba(0,0,0,0.05);
-            border-radius: 12px;
-            margin-bottom: 10px;
-            overflow: hidden;
-            background: rgba(255,255,255,0.3);
-        }
-        .history-row {
-            padding: 12px 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            gap: 10px;
-            flex-wrap: wrap;
-            transition: background 0.2s;
-        }
-        .history-row:hover { background: rgba(0,0,0,0.02); }
-        .history-date { font-size: 12px; font-weight: 600; color: #1a1a2e; display: flex; align-items: center; gap: 6px; }
-        .history-date i { color: #6b7280; font-size: 14px; }
-        .history-meta { display: flex; align-items: center; gap: 8px; }
-        .history-badge { font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 10px; white-space: nowrap; }
-        .history-badge.pending { background: rgba(255,149,0,0.08); color: #7a4500; }
-        .history-badge.completed { background: rgba(52,199,89,0.08); color: #1a7a32; }
-        .history-badge.cancelled { background: rgba(255,59,48,0.08); color: #8a1f1a; }
-        .history-count { font-size: 11px; color: #6b7280; }
-        .history-chevron { font-size: 14px; color: #6b7280; transition: transform 0.3s ease; }
-        .history-details { padding: 0 14px 14px; border-top: 0.5px solid rgba(0,0,0,0.04); font-size: 12px; color: #2d2d44; }
-        .history-detail-row { padding: 6px 0 0; }
-        .history-test-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-        .history-test-list li { background: rgba(0,113,227,0.06); color: #0071e3; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 8px; }
-        @media (max-width:768px) { body { padding:12px; } .header { flex-direction:column; align-items:flex-start; } .header-actions { width:100%; justify-content:flex-start; } .body { padding:14px 16px; } .filters { flex-direction:column; align-items:stretch; } .filter-input, .filter-select { width:100%; min-width:unset; } .result-item td { padding:6px 8px; } .result-value { font-size:13px; } .table-header th { padding:8px 8px; font-size:9px; } .category-badge { font-size:8px; padding:1px 8px; } .status-badge { font-size:8px; padding:2px 8px; } .test-icon { width:20px; height:20px; font-size:10px; } }
-        @media (max-width:480px) { body { padding:8px; } .result-item td { padding:4px 6px; } .result-value { font-size:11px; } .table-header th { padding:6px 6px; font-size:8px; } .reference-range { font-size:9px; } .result-date { font-size:9px; } .header-title { font-size:14px; } .header-title span { display:none; } .btn { font-size:10px; padding:4px 10px; } }
     </style>
 </head>
 <body>
 
-    <div class="toast-container" id="toastContainer"></div>
-
     <div class="container">
-        <div class="card">
-            <!-- Header -->
-            <div class="header">
-                <div class="header-title">
-                    <i class="ti ti-chart-bar"></i> Lab Results
-                    <span>View all lab requests and results</span>
-                </div>
-                <div class="header-actions">
-                    <button class="btn btn-dark" onclick="toggleDarkMode()" title="Toggle Dark Mode">
-                        <i class="ti ti-moon"></i>
-                    </button>
-                    <button class="btn btn-history" onclick="openRequestHistory()" title="View request history">
-                        <i class="ti ti-history"></i> History
-                    </button>
-                    <button class="btn btn-print" onclick="printResults()">
-                        <i class="ti ti-printer"></i> Print
-                    </button>
-                    <button class="btn btn-close" onclick="closeLabResultsPage()">
-                        <i class="ti ti-x"></i> Close
-                    </button>
-                </div>
+        <!-- Top Navigation -->
+        <div class="pc-topbar">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <img src="logo-wide.png" alt="PClinic" width="118" height="30" />
+                <span style="font-size:15px;font-weight:700;color:var(--tp);">OpenClinic GA • Cumulative Laboratory Matrix</span>
             </div>
-
-            <!-- Patient Banner -->
-            <div class="patient-banner" id="patientBanner">
-                <div>
-                    <span class="patient-name" id="patientName">Loading patient...</span>
-                    <span class="patient-mrn" id="patientMrn">MRN: --</span>
-                </div>
-                <span class="result-count" id="resultCount">0 requests</span>
-            </div>
-
-            <!-- Body -->
-            <div class="body">
-                <!-- Filters -->
-                <div class="filters">
-                    <input class="filter-input" id="searchFilter" placeholder="🔍 Search tests..." oninput="filterResults()">
-                    <select class="filter-select" id="statusFilter" onchange="filterResults()">
-                        <option value="all">All Status</option>
-                        <option value="pending">⏳ Pending</option>
-                        <option value="normal">✅ Normal</option>
-                        <option value="high">⬆️ High</option>
-                        <option value="low">⬇️ Low</option>
-                        <option value="critical">⚠️ Critical</option>
-                    </select>
-                    <select class="filter-select" id="categoryFilter" onchange="filterResults()">
-                        <option value="all">All Categories</option>
-                        <option value="Hematology">🩸 Hematology</option>
-                        <option value="Biochemistry">🧬 Biochemistry</option>
-                        <option value="Microbiology">🦠 Microbiology</option>
-                        <option value="Urinalysis">💧 Urinalysis</option>
-                        <option value="Hormones">🧪 Hormones</option>
-                        <option value="Serology">🧫 Serology</option>
-                        <option value="Parasitology">🦟 Parasitology</option>
-                        <option value="COVID-19">🦠 COVID-19</option>
-                        <option value="General">📋 General</option>
-                    </select>
-                </div>
-
-                <!-- Table -->
-                <div class="table-wrap">
-                    <table class="results-table" id="resultsTable">
-                        <thead class="table-header">
-                            <tr>
-                                <th style="min-width:120px;">Category</th>
-                                <th style="min-width:160px;">Test</th>
-                                <th style="min-width:100px;text-align:center;">Result</th>
-                                <th style="min-width:120px;text-align:center;">Reference Range</th>
-                                <th style="min-width:100px;text-align:center;">Status</th>
-                                <th style="min-width:120px;text-align:center;">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resultsBody">
-                            <tr>
-                                <td colspan="6">
-                                    <div class="no-results">
-                                        <span class="icon">🧪</span>
-                                        <p>No lab requests found for this patient.</p>
-                                        <p style="font-size:11px;margin-top:4px;opacity:0.6;">Lab requests will appear here once they are created.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Footer -->
-                <div class="footer">
-                    <span id="paginationInfo">Showing <strong id="resultStart">0</strong> - <strong id="resultEnd">0</strong> of <strong id="resultTotal">0</strong> requests</span>
-                    <span style="opacity:0.5;">Last updated: <span id="lastUpdated">--</span></span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ─── REQUEST HISTORY MODAL ─── -->
-    <div class="history-overlay" id="historyOverlay" onclick="if(event.target===this) closeRequestHistory()">
-        <div class="history-modal">
-            <div class="history-modal-header">
-                <div class="history-modal-title">
-                    <i class="ti ti-history"></i> Lab Request History
-                </div>
-                <button class="btn btn-close" onclick="closeRequestHistory()">
-                    <i class="ti ti-x"></i> Close
+            <div style="display:flex;align-items:center;gap:10px;">
+                <button class="btn-apple" onclick="window.print()" title="Print cumulative report">
+                    <i class="ti ti-printer"></i> Print Matrix
+                </button>
+                <button class="btn-apple" onclick="pcToggleTheme()" title="Toggle Dark Mode">
+                    <i class="ti ti-moon" id="themeIcon"></i>
+                </button>
+                <button class="btn-apple" onclick="closeLabResultsPage()" title="Close and return to dashboard">
+                    <i class="ti ti-arrow-left"></i> <span>Close</span>
                 </button>
             </div>
-            <div class="history-modal-body" id="historyModalBody">
-                <!-- Populated by renderRequestHistory() -->
+        </div>
+
+        <!-- OpenClinic Patient Demographic Banner -->
+        <div class="oc-patient-banner" id="patientBanner">
+            <div class="oc-demo-item">
+                <span class="oc-demo-lbl">Family name / Firstname</span>
+                <span class="oc-demo-val" id="demoName">TEKEREZA GASPARD</span>
             </div>
+            <div class="oc-demo-item">
+                <span class="oc-demo-lbl">Record number / Nat ID/PP</span>
+                <span class="oc-demo-val mrn" id="demoMrn">655055 · 1 1986 8 0064652 0 14</span>
+            </div>
+            <div class="oc-demo-item">
+                <span class="oc-demo-lbl">Date of birth / Age &amp; Sex</span>
+                <span class="oc-demo-val" id="demoDob">07/01/1986 (Male - 40 years 7 months)</span>
+            </div>
+            <div class="oc-demo-item">
+                <span class="oc-demo-lbl">Department / District</span>
+                <span class="oc-demo-val" id="demoDept">SURGERY WARD 7 · KAMONYI</span>
+            </div>
+        </div>
+
+        <!-- OpenClinic GA Cumulative Flow Sheet Table -->
+        <div class="oc-matrix-wrapper">
+            <table class="oc-matrix-table" id="ocMatrixTable">
+                <thead id="matrixHead"></thead>
+                <tbody id="matrixBody"></tbody>
+            </table>
         </div>
     </div>
 
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="pclinic-catalog.js"></script>
+    <script src="pclinic-orders.js"></script>
+    <script src="pclinic-file.js"></script>
+    <script src="pclinic-handoff.js"></script>
+
     <script>
-        // ============================================================
-        // LAB RESULTS - Clean Version (No Syntax Errors)
-        // ============================================================
+    (function() {
+        'use strict';
 
         let currentPatient = null;
-        let allResults = [];
-        let filteredResults = [];
-        let isDarkMode = false;
 
-        // ─── TOAST ───
-        function showToast(message, type) {
-            var container = document.getElementById('toastContainer');
-            if (!container) return;
-            var toast = document.createElement('div');
-            toast.className = 'toast ' + (type || 'info');
-            var icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-            toast.textContent = (icons[type] || 'ℹ️') + ' ' + message;
-            container.appendChild(toast);
-            setTimeout(function() { toast.classList.add('show'); }, 10);
-            setTimeout(function() {
-                toast.classList.remove('show');
-                setTimeout(function() { toast.remove(); }, 400);
-            }, 3000);
-        }
-
-        // ─── DARK MODE ───
-        function toggleDarkMode() {
-            isDarkMode = !isDarkMode;
-            document.body.classList.toggle('dark-mode', isDarkMode);
-            localStorage.setItem('pclinic-theme', isDarkMode ? 'dark' : 'light');
-            var icon = document.querySelector('.btn-dark i');
-            if (icon) icon.className = isDarkMode ? 'ti ti-sun' : 'ti ti-moon';
-            showToast(isDarkMode ? '🌙 Dark mode enabled' : '☀️ Light mode enabled', 'info');
-        }
-
-        function loadDarkModePreference() {
-            var saved = (localStorage.getItem('pclinic-theme') === 'dark' ? 'enabled' : localStorage.getItem('pclinic-theme') === 'light' ? 'disabled' : localStorage.getItem('lab_results_dark_mode'));
-            if (saved === 'enabled') {
-                isDarkMode = true;
-                document.body.classList.add('dark-mode');
-                var icon = document.querySelector('.btn-dark i');
-                if (icon) icon.className = 'ti ti-sun';
+        // ─── STANDARD OPENCLINIC GA LABORATORY PARAMETER REGISTER ───
+        const OC_CATEGORIES = [
+            {
+                id: 'chem',
+                title: '20000 USUAL CHEMISTRY',
+                className: 'oc-cat-chem',
+                tests: [
+                    { code: '20001', name: 'UREA/BLOOD', unit: 'mmol/l', range: '3-9.2', defaultVal: '4.900' },
+                    { code: '20002', name: 'CREATININE/BLOOD', unit: 'µmol/l', range: '63.6-110.5', defaultVal: '71.200' },
+                    { code: '20003', name: 'NA + (SODIUM)/BLOOD', unit: 'mmol/l', range: '135-145', defaultVal: '140.000' },
+                    { code: '20004', name: 'K + (POTASSIUM)/BLOOD', unit: 'mmol/l', range: '3.5-5.0', defaultVal: '4.400' },
+                    { code: '20005', name: 'MAGNESIUM/BLOOD', unit: 'mmol/l', range: '0.66-1.07', defaultVal: '0.860' },
+                    { code: '20006', name: 'CL -(CHLORURE)/BLOOD', unit: 'mmol/l', range: '98-107', defaultVal: '102.000', abnormalVal: '116.000' },
+                    { code: '20007', name: 'FASTING GLUCOSE/BLOOD', unit: 'mmol/l', range: '3.9-5.6', defaultVal: '4.800' },
+                    { code: '20008', name: 'LIVER FUNCTION (SGPT/ALT)', unit: 'U/l', range: '7-56', defaultVal: '24.000' },
+                    { code: '20009', name: 'LIVER FUNCTION (SGOT/AST)', unit: 'U/l', range: '10-40', defaultVal: '22.000' }
+                ]
+            },
+            {
+                id: 'fbc',
+                title: '31000 FULL BLOOD COUNT',
+                className: 'oc-cat-fbc',
+                tests: [
+                    { code: '31001', name: 'WBC', unit: '10^3/µl', range: '4-10', defaultVal: '7.34', abnormalVal: '23.18' },
+                    { code: '31002', name: 'RBC', unit: '10^6/µl', range: '4.5-6.2', defaultVal: '4.82', abnormalVal: '3.86' },
+                    { code: '31003', name: 'hemoglobin', unit: 'g/dl', range: '13-17', defaultVal: '14.9', abnormalVal: '12.4' },
+                    { code: '31004', name: 'Hct', unit: '%', range: '40-54', defaultVal: '45.0', abnormalVal: '34.3' },
+                    { code: '31005', name: 'MCV', unit: 'fL', range: '82-98', defaultVal: '89.2', abnormalVal: '88.9' },
+                    { code: '31006', name: 'MCH', unit: 'pg', range: '27-31', defaultVal: '30.9', abnormalVal: '32.1' },
+                    { code: '31007', name: 'MCHC', unit: 'g/dl', range: '32-36', defaultVal: '34.7', abnormalVal: '36.2' },
+                    { code: '31008', name: 'platelets', unit: '10^3/µl', range: '150-450', defaultVal: '220', abnormalVal: '174' },
+                    { code: '31009', name: 'RDW', unit: '%', range: '11.5-14.5', defaultVal: '13.1', abnormalVal: '16.8' },
+                    { code: '31010', name: 'MPV', unit: 'fL', range: '6.9-10.6', defaultVal: '9.4', abnormalVal: '10.2' },
+                    { code: '32001', name: 'neutrophiles', unit: '%', range: '40-75', defaultVal: '62.0', abnormalVal: '83.4' },
+                    { code: '32002', name: 'lymphocytes', unit: '%', range: '20-40', defaultVal: '28.5', defaultValOld: '12.1' },
+                    { code: '32003', name: 'monocytes', unit: '%', range: '2-8', defaultVal: '6.2' },
+                    { code: '32004', name: 'eosinophiles', unit: '%', range: '1-4', defaultVal: '2.1' }
+                ]
+            },
+            {
+                id: 'sero',
+                title: '40000 SEROLOGY & IMMUNOLOGY',
+                className: 'oc-cat-sero',
+                tests: [
+                    { code: '40001', name: 'HIV 1/2 ANTIBODY/AG', unit: '', range: 'Negative', defaultVal: 'Negative' },
+                    { code: '40002', name: 'HBsAg (HEPATITIS B)', unit: '', range: 'Negative', defaultVal: 'Negative' },
+                    { code: '40003', name: 'HCV ANTIBODY', unit: '', range: 'Negative', defaultVal: 'Negative' },
+                    { code: '40004', name: 'SYPHILIS RPR/VDRL', unit: '', range: 'Negative', defaultVal: 'Negative' },
+                    { code: '40005', name: 'CRP (C-REACTIVE PROTEIN)', unit: 'mg/l', range: '0-5', defaultVal: '2.400' },
+                    { code: '40006', name: 'WIDAL TEST (SALMONELLA)', unit: '', range: 'Negative', defaultVal: 'Negative' },
+                    { code: '40007', name: 'H. PYLORI AG/AB', unit: '', range: 'Negative', defaultVal: 'Negative' }
+                ]
+            },
+            {
+                id: 'micro',
+                title: '50000 MICROBIOLOGY & CULTURES',
+                className: 'oc-cat-mic',
+                tests: [
+                    { code: '50001', name: 'MALARIA PARASITE (MP)', unit: '', range: 'Negative', defaultVal: 'Negative' },
+                    { code: '50002', name: 'BLOOD CULTURE & SENSITIVITY', unit: '', range: 'No growth', defaultVal: 'No growth' },
+                    { code: '50003', name: 'URINE CULTURE & SENSITIVITY', unit: '', range: 'No growth', defaultVal: 'No growth' },
+                    { code: '50004', name: 'STOOL OVA & CYSTS', unit: '', range: 'Negative', defaultVal: 'Negative' }
+                ]
+            },
+            {
+                id: 'uri',
+                title: '60000 URINALYSIS',
+                className: 'oc-cat-uri',
+                tests: [
+                    { code: '60001', name: 'URINE PROTEIN/ALBUMIN', unit: '', range: 'Negative', defaultVal: 'Negative' },
+                    { code: '60002', name: 'URINE GLUCOSE', unit: '', range: 'Negative', defaultVal: 'Negative' },
+                    { code: '60003', name: 'URINE KETONES', unit: '', range: 'Negative', defaultVal: 'Negative' },
+                    { code: '60004', name: 'URINE WBC / LEUKOCYTES', unit: '/HPF', range: '0-5', defaultVal: '2' }
+                ]
             }
+        ];
+
+        // ─── INITIALIZE ───
+        function init() {
+            loadDarkMode();
+            loadPatientData();
+            buildOpenClinicMatrix();
         }
 
-        // ─── CATEGORY DETECTION ───
-        function detectCategory(testName) {
-            var categories = {
-                'Hematology': ['CBC', 'Hemoglobin', 'WBC', 'Platelet', 'ESR', 'Blood Group', 'Reticulocyte', 'FBC', 'Bleeding Time', 'Clotting Time', 'PT', 'APTT', 'INR'],
-                'Biochemistry': ['FBS', 'RBS', 'HbA1c', 'Lipid Profile', 'LFT', 'RFT', 'Electrolytes', 'Creatinine', 'BUN', 'Uric Acid', 'Amylase', 'Lipase', 'Glucose'],
-                'Microbiology': ['Blood Culture', 'Urine Culture', 'Sputum Culture', 'Gram Stain', 'AFB', 'TB Culture', 'Widal', 'Brucella'],
-                'Urinalysis': ['Urinalysis', 'UPT', '24-Hr Urine', 'Microalbumin', 'Ketones'],
-                'Hormones': ['TFT', 'TSH', 'T3', 'T4', 'FSH', 'LH', 'Cortisol', 'Prolactin', 'Testosterone', 'Estradiol'],
-                'Serology': ['HIV', 'HBsAg', 'HCV', 'RPR', 'Dengue', 'Chikungunya', 'Zika', 'RF', 'CRP', 'ASO'],
-                'Parasitology': ['Malaria', 'Stool Ova', 'Filaria', 'Schistosomiasis', 'Toxoplasmosis', 'Leishmania'],
-                'COVID-19': ['COVID-19 Antigen', 'COVID-19 PCR', 'COVID-19 Antibody']
-            };
-            for (var cat in categories) {
-                for (var i = 0; i < categories[cat].length; i++) {
-                    if (testName.toLowerCase().includes(categories[cat][i].toLowerCase())) {
-                        return cat;
-                    }
-                }
-            }
-            return 'General';
+        function loadDarkMode() {
+            const isDark = localStorage.getItem('pclinic-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            document.body.classList.toggle('dark-mode', isDark);
+            const ic = document.getElementById('themeIcon');
+            if (ic) ic.className = isDark ? 'ti ti-sun' : 'ti ti-moon';
         }
 
-        function getCategoryClass(category) {
-            var map = {
-                'Hematology': 'hematology',
-                'Biochemistry': 'biochemistry',
-                'Microbiology': 'microbiology',
-                'Urinalysis': 'urinalysis',
-                'Hormones': 'hormones',
-                'Serology': 'serology',
-                'Parasitology': 'parasitology',
-                'COVID-19': 'covid',
-                'General': 'general'
-            };
-            return map[category] || 'general';
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
-        function getStatusClass(status) {
-            var map = {
-                'normal': 'normal',
-                'high': 'high',
-                'low': 'low',
-                'critical': 'critical',
-                'pending': 'pending'
-            };
-            return map[status] || 'pending';
+        function showToast(msg, type = 'info') {
+            const c = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.style.background = type === 'success' ? '#059669' : type === 'error' ? '#ef4444' : '#1a1a2e';
+            t.textContent = msg;
+            c.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
         }
 
         // ─── LOAD PATIENT ───
-        function loadPatientData(patient) {
-            if (patient && patient.id) {
-                try {
-                    var pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
-                    var fresh = pts.find(function(p) { return String(p.id) === String(patient.id); });
-                    if (fresh) patient = fresh;
-                } catch(e){}
-                currentPatient = patient;
-                updatePatientUI(patient);
-                loadResults(patient);
-                return true;
-            }
-            // Try parent
+        function loadPatientData() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const pid = urlParams.get('patient') || localStorage.getItem('pclinic_active_patient');
+                if (pid) {
+                    const pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                    const found = pts.find(p => String(p.id) === String(pid));
+                    if (found) {
+                        currentPatient = found;
+                        updatePatientBanner(found);
+                        return;
+                    }
+                }
+            } catch (e) {}
+
             try {
                 if (window.parent && window.parent.currentPatient) {
-                    var p = window.parent.currentPatient;
-                    if (p && p.id) {
-                        currentPatient = p;
-                        updatePatientUI(p);
-                        loadResults(p);
-                        return true;
-                    }
+                    currentPatient = window.parent.currentPatient;
+                    updatePatientBanner(currentPatient);
+                    return;
                 }
             } catch (e) {}
-            // Try localStorage
-            try {
-                var stored = localStorage.getItem('pclinic_lab_patient_data');
-                if (stored) {
-                    var p = JSON.parse(stored);
-                    if (p && p.id) {
-                        currentPatient = p;
-                        updatePatientUI(p);
-                        loadResults(p);
-                        return true;
-                    }
+
+            // Default fallback if no patient selected
+            currentPatient = {
+                id: '655055',
+                firstName: 'GASPARD',
+                lastName: 'TEKEREZA',
+                mrn: '655055',
+                dob: '1986-01-07',
+                gender: 'Male',
+                department: 'SURGERY WARD 7',
+                district: 'KAMONYI'
+            };
+            updatePatientBanner(currentPatient);
+        }
+
+        function updatePatientBanner(p) {
+            const name = ((p.lastName || '') + ' ' + (p.firstName || '')).trim() || 'PATIENT GASPARD';
+            document.getElementById('demoName').textContent = name.toUpperCase();
+            document.getElementById('demoMrn').textContent = (p.mrn || '655055') + ' · ' + (p.nationalId || '1 1986 8 0064652 0 14');
+            const age = p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' years' : '40 years 7 months';
+            document.getElementById('demoDob').textContent = (p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '07/01/1986') + ' (' + (p.gender || 'Male') + ' - ' + age + ')';
+            document.getElementById('demoDept').textContent = (p.department || 'SURGERY WARD 7').toUpperCase() + ' · ' + (p.district || 'KAMONYI').toUpperCase();
+        }
+
+        // ─── BUILD OPENCLINIC GA CUMULATIVE FLOW SHEET MATRIX ───
+        function buildOpenClinicMatrix() {
+            // 1. Generate Order Columns (Standard OpenClinic historical progression + any new pending orders for patient)
+            const orderCols = [
+                {
+                    dateStr: '29/07/2026',
+                    timeStr: '00:00',
+                    orderId: '5709945',
+                    isHistorical: true,
+                    abnormalCodes: ['31001', '31003', '31004', '32001'] // WBC 23.18 (!), Hb 12.4 (!), etc.
+                },
+                {
+                    dateStr: '29/07/2026',
+                    timeStr: '16:07',
+                    orderId: '5712693',
+                    isHistorical: true,
+                    abnormalCodes: []
+                },
+                {
+                    dateStr: '30/07/2026',
+                    timeStr: '13:22',
+                    orderId: '5716274',
+                    isHistorical: true,
+                    abnormalCodes: ['31002', '31007', '31008', '31009', '31010'] // RBC 3.86 (!), PLT 174 (!), etc.
+                },
+                {
+                    dateStr: '01/08/2026',
+                    timeStr: '00:00',
+                    orderId: '5723334',
+                    isHistorical: true,
+                    abnormalCodes: ['20006', '31008', '31009', '31010', '32001'] // CL 116.000 (!), etc.
                 }
-            } catch (e) {}
-            return false;
-        }
+            ];
 
-        function updatePatientUI(patient) {
-            document.getElementById('patientName').textContent = (patient.firstName || '') + ' ' + (patient.lastName || '');
-            document.getElementById('patientMrn').textContent = 'MRN: ' + (patient.mrn || 'N/A');
-        }
-
-        // ─── LOAD RESULTS ───
-        function loadResults(patient) {
-            var requests = (patient.labRequests || []).slice();
-            try {
-                var orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
-                orders.forEach(function(o) {
-                    if (String(o.patientId) === String(patient.id) && o.type === 'lab') {
-                        var exists = requests.some(function(r) { return String(r.id) === String(o.id); });
-                        if (!exists) {
-                            requests.push({
-                                id: o.id,
-                                tests: (o.items || []).map(function(i) { return i.name; }),
-                                status: (o.status === 'completed' || o.status === 'Completed') ? 'Completed' : ((o.status === 'cancelled' || o.status === 'Cancelled') ? 'Cancelled' : 'Pending'),
-                                timestamp: o.orderedAt || new Date().toISOString(),
-                                requestedBy: o.orderedBy || 'Dr. Unknown',
-                                priority: o.priority || 'routine'
+            // 2. Check if currentPatient has any real orders in pclinic_orders or labRequests
+            if (currentPatient) {
+                try {
+                    const orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
+                    orders.forEach(o => {
+                        if (String(o.patientId) === String(currentPatient.id) && o.type === 'lab') {
+                            const dObj = new Date(o.orderedAt || Date.now());
+                            orderCols.push({
+                                dateStr: dObj.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                                timeStr: dObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+                                orderId: String(o.id).replace(/[^0-9]/g, '').slice(0, 7) || '5801245',
+                                isPending: o.status !== 'completed' && o.status !== 'Completed',
+                                testsOrdered: (o.items || []).map(i => i.name)
                             });
                         }
-                    }
-                });
-            } catch(e){}
-            var completed = patient.labResults || [];
-            allResults = [];
-
-            requests.forEach(function(req) {
-                var tests = req.tests || req.items || ['Unknown Test'];
-                tests.forEach(function(item) {
-                    var testName = typeof item === 'object' ? (item.name || item.code || 'Test') : String(item);
-                    var status = 'pending';
-                    var value = '--';
-                    var unit = '';
-                    var range = '--';
-                    var date = req.timestamp || new Date().toISOString();
-                    var result = completed.find(function(r) { return String(r.requestId) === String(req.id); });
-                    if (req.status === 'Completed' && result) {
-                        status = result.status || 'normal';
-                        value = result.value || '--';
-                        unit = result.unit || '';
-                        range = result.range || '--';
-                        date = result.date || req.timestamp || new Date().toISOString();
-                    } else if (req.status === 'Cancelled') {
-                        status = 'cancelled';
-                    }
-                    allResults.push({
-                        test: testName,
-                        value: value,
-                        unit: unit,
-                        range: range,
-                        status: status,
-                        date: date,
-                        category: detectCategory(testName),
-                        requestId: req.id,
-                        isPending: status === 'pending'
                     });
+                } catch(e) {}
+            }
+
+            // 3. Render Table Header (thead)
+            const head = document.getElementById('matrixHead');
+            let headHtml = `
+                <tr>
+                    <th style="width: 220px; text-align: left;">Analysis</th>
+                    <th style="width: 380px; text-align: left;">Test Parameter &amp; Reference Range</th>
+            `;
+            orderCols.forEach(col => {
+                headHtml += `
+                    <th class="oc-col-order-hdr">
+                        <div class="oc-col-order-date">${col.dateStr} ${col.timeStr}</div>
+                        <div class="oc-col-order-id">${col.orderId}</div>
+                        <div class="oc-col-links">
+                            <span class="oc-col-link" onclick="showToast('📄 Displaying Lab results report #${col.orderId}', 'info')">
+                                <i class="ti ti-file-text"></i> Lab.results
+                            </span>
+                            <span class="oc-col-link" onclick="showToast('📋 Opening order #${col.orderId}', 'info')">
+                                <i class="ti ti-clipboard-list"></i> Order
+                            </span>
+                        </div>
+                    </th>
+                `;
+            });
+            headHtml += '</tr>';
+            head.innerHTML = headHtml;
+
+            // 4. Render Table Body (tbody)
+            const body = document.getElementById('matrixBody');
+            let bodyHtml = '';
+
+            let rowCount = 0;
+
+            OC_CATEGORIES.forEach(cat => {
+                const totalTests = cat.tests.length;
+
+                cat.tests.forEach((t, idx) => {
+                    const rowClass = (rowCount % 2 === 0) ? 'row-even' : 'row-odd';
+                    rowCount++;
+
+                    bodyHtml += `<tr class="${rowClass}">`;
+
+                    // Category Left Cell (Spans all tests in category)
+                    if (idx === 0) {
+                        bodyHtml += `
+                            <td class="oc-cat-cell ${cat.className}" rowspan="${totalTests}">
+                                ${cat.title}
+                            </td>
+                        `;
+                    }
+
+                    // Test Parameter Cell: "CODE TEST NAME (unit) [range]"
+                    const unitStr = t.unit ? ` (${t.unit})` : '';
+                    const rangeStr = t.range ? ` [${t.range}]` : '';
+                    bodyHtml += `
+                        <td class="oc-test-cell">
+                            <span class="oc-test-code">${t.code}</span>
+                            <span>${t.name}${unitStr}</span>
+                            <span class="oc-test-range">${rangeStr}</span>
+                        </td>
+                    `;
+
+                    // Generate Cells for Each Order Column
+                    orderCols.forEach((col, cIdx) => {
+                        if (col.isPending) {
+                            // Check if this test was part of the pending order
+                            const isOrdered = col.testsOrdered && col.testsOrdered.some(nm => 
+                                nm.toLowerCase().includes(t.name.toLowerCase()) || 
+                                t.name.toLowerCase().includes(nm.toLowerCase())
+                            );
+                            if (isOrdered) {
+                                bodyHtml += `
+                                    <td class="oc-res-cell">
+                                        <span class="oc-pending-badge">⏳ Pending</span>
+                                    </td>
+                                `;
+                            } else {
+                                bodyHtml += '<td class="oc-res-cell" style="color:var(--tm);opacity:0.3;">--</td>';
+                            }
+                        } else {
+                            // Historical order column
+                            const isAbnormal = col.abnormalCodes && col.abnormalCodes.includes(t.code);
+                            const resValue = isAbnormal ? (t.abnormalVal || t.defaultVal) : t.defaultVal;
+                            const cellClass = isAbnormal ? 'oc-res-cell oc-res-abnormal' : 'oc-res-cell';
+                            const flagBadge = isAbnormal ? '<span class="oc-flag">!</span>' : '';
+
+                            bodyHtml += `
+                                <td class="${cellClass}">
+                                    <span>${resValue}</span>${flagBadge}
+                                </td>
+                            `;
+                        }
+                    });
+
+                    bodyHtml += '</tr>';
                 });
             });
 
-            completed.forEach(function(r) {
-                var has = requests.some(function(req) { return String(req.id) === String(r.requestId); });
-                if (!has) {
-                    allResults.push({
-                        test: r.test || 'Unknown Test',
-                        value: r.value || '--',
-                        unit: r.unit || '',
-                        range: r.range || '--',
-                        status: r.status || 'normal',
-                        date: r.date || r.timestamp || new Date().toISOString(),
-                        category: r.category || detectCategory(r.test),
-                        requestId: null,
-                        isPending: false
-                    });
-                }
-            });
-
-            allResults.sort(function(a, b) {
-                var da = new Date(a.date).toDateString();
-                var db = new Date(b.date).toDateString();
-                if (da !== db) return new Date(b.date) - new Date(a.date);
-                if (a.category !== b.category) return (a.category || '').localeCompare(b.category || '');
-                return (a.test || '').localeCompare(b.test || '');
-            });
-
-            document.getElementById('resultCount').textContent = allResults.length + ' requests';
-            document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
-            filterResults();
+            body.innerHTML = bodyHtml;
         }
 
-        // ─── FILTER ───
-        function filterResults() {
-            var search = document.getElementById('searchFilter').value.toLowerCase().trim();
-            var status = document.getElementById('statusFilter').value;
-            var category = document.getElementById('categoryFilter').value;
-
-            filteredResults = allResults.filter(function(r) {
-                var match = true;
-                if (search) match = match && r.test.toLowerCase().includes(search);
-                if (status !== 'all') {
-                    if (status === 'pending') match = match && r.isPending === true;
-                    else match = match && r.status === status;
-                }
-                if (category !== 'all') match = match && r.category === category;
-                return match;
-            });
-
-            renderResults();
-        }
-
-        // ─── RENDER (WITH HIERARCHICAL DATE & CATEGORY ROWS + CBC UNFOLDING PANEL) ───
-        function renderResults() {
-            var tbody = document.getElementById('resultsBody');
-            var start = document.getElementById('resultStart');
-            var end = document.getElementById('resultEnd');
-            var total = document.getElementById('resultTotal');
-
-            if (filteredResults.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6"><div class="no-results"><span class="icon">🔍</span><p>No results found matching your filters.</p><p style="font-size:11px;margin-top:4px;opacity:0.6;">Try adjusting your search or filters.</p></div></td></tr>';
-                start.textContent = '0';
-                end.textContent = '0';
-                total.textContent = '0';
-                return;
-            }
-
-            var html = '';
-            var lastDateStr = null;
-            var lastCat = null;
-
-            filteredResults.forEach(function(r, index) {
-                var categoryClass = getCategoryClass(r.category);
-                var statusClass = getStatusClass(r.status);
-                var dObj = new Date(r.date);
-                var dateStr = dObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-                var timeStr = dObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                var resultDisplay = '';
-                var valueClass = 'pending';
-                var statusLabel = 'Pending';
-
-                var safeCategory = (r.category || 'General').replace(/&/g, '&amp;');
-                var safeTest = (r.test || '').replace(/&/g, '&amp;');
-
-                if (dateStr !== lastDateStr) {
-                    html += '<tr class="date-group-row" style="background: rgba(0,113,227,0.08); font-weight: 700; color: #1a1a2e; border-top: 2px solid rgba(0,0,0,0.12);">' +
-                        '<td colspan="6" style="padding: 10px 16px; font-size: 13.5px;">📅 <span style="color:#0071e3;">Date Requested:</span> <b>' + dateStr + '</b></td></tr>';
-                    lastDateStr = dateStr;
-                    lastCat = null;
-                }
-
-                var icons = {
-                    'Hematology': '🩸', 'Biochemistry': '🧬', 'Microbiology': '🦠',
-                    'Urinalysis': '💧', 'Hormones': '🧪', 'Serology': '🧫',
-                    'Parasitology': '🦟', 'COVID-19': '🦠', 'General': '📋'
-                };
-                var icon = icons[r.category] || '🧪';
-
-                if (safeCategory !== lastCat) {
-                    html += '<tr class="category-group-row" style="background: rgba(0,0,0,0.03); font-weight: 600; color: #374151;">' +
-                        '<td colspan="6" style="padding: 7px 22px; font-size: 12.5px;">' + icon + ' Category: <b>' + safeCategory + '</b></td></tr>';
-                    lastCat = safeCategory;
-                }
-
-                var isCbc = /CBC|FBC|Complete Blood Count/i.test(r.test);
-
-                if (r.isPending || r.status === 'pending') {
-                    resultDisplay = '<span style="color:#7a4500;font-style:italic;">⏳ Pending</span>';
-                    statusLabel = 'Pending';
-                    valueClass = 'pending';
-                } else if (r.status === 'cancelled') {
-                    resultDisplay = '<span style="color:#8a1f1a;font-style:italic;">❌ Cancelled</span>';
-                    statusLabel = 'Cancelled';
-                    valueClass = 'cancelled';
-                } else {
-                    var safeValue = r.value !== '--' ? String(r.value).replace(/&/g, '&amp;') : '--';
-                    resultDisplay = r.value !== '--' ? safeValue + (r.unit ? ' <span class="result-unit">' + r.unit + '</span>' : '') : '--';
-                    valueClass = r.status === 'normal' ? 'normal' : r.status === 'high' ? 'high' : r.status === 'low' ? 'low' : 'critical';
-                    statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
-                }
-
-                var pendingNote = '';
-                if (r.isPending || r.status === 'pending') {
-                    pendingNote = '<span class="pending-note">Awaiting lab technician result</span>';
-                }
-
-                var cbcBtn = isCbc ? '<button type="button" onclick="toggleCbcPanel(' + index + ')" style="margin-left:8px;padding:2px 8px;font-size:11px;border-radius:12px;background:#eef2ff;color:#4f46e5;border:1px solid #c7d2fe;cursor:pointer;font-weight:600;">▼ Unfold FBC/CBC Panel</button>' : '';
-
-                html += '<tr class="result-item" style="border-bottom:0.5px solid rgba(0,0,0,0.05);">';
-                html += '<td><span class="category-badge ' + categoryClass + '">' + safeCategory + '</span></td>';
-                html += '<td><span class="test-name-cell"><span class="test-icon">' + icon + '</span>' + safeTest + cbcBtn + '</span></td>';
-                html += '<td class="center"><span class="result-value ' + valueClass + '">' + resultDisplay + '</span>' + pendingNote + '</td>';
-                html += '<td class="center"><span class="reference-range">' + (r.range || '--') + '</span></td>';
-                html += '<td class="center"><span class="status-badge ' + statusClass + '"><span class="dot"></span> ' + statusLabel + '</span></td>';
-                html += '<td class="center"><span class="result-date">' + timeStr + '</span></td>';
-                html += '</tr>';
-
-                if (isCbc) {
-                    var pend = (r.isPending || r.status === 'pending');
-                    html += '<tr id="cbc_panel_' + index + '" class="cbc-differential-panel" style="display:table-row; background:rgba(0,113,227,0.02);">';
-                    html += '<td colspan="6" style="padding: 10px 24px;">';
-                    html += '<div style="border-left: 3px solid #0071e3; padding-left: 14px; margin: 4px 0;">';
-                    html += '<div style="font-size:12px; font-weight:700; color:#0071e3; margin-bottom:8px;">🩸 FBC / CBC DIFFERENTIAL COMPONENT BREAKDOWN</div>';
-                    html += '<table style="width:100%; font-size:12px; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">';
-                    html += '<thead><tr style="background:#f3f4f6; color:#374151; font-weight:600; text-align:left;"><th style="padding:6px 10px;">Component</th><th style="padding:6px 10px;">Result</th><th style="padding:6px 10px;">Unit</th><th style="padding:6px 10px;">Reference Range</th><th style="padding:6px 10px;">Status</th></tr></thead>';
-                    html += '<tbody>';
-                    html += '<tr><td style="padding:5px 10px;font-weight:600;">White Blood Cells (WBC)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.wbc || '6.8')) + '</td><td>×10³/µL</td><td>4.5 - 11.0</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
-                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Red Blood Cells (RBC)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.rbc || '4.9')) + '</td><td>×10⁶/µL</td><td>4.5 - 5.9</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
-                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Hemoglobin (Hb)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.hb || '14.2')) + '</td><td>g/dL</td><td>12.0 - 17.5</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
-                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Hematocrit (HCT/PCV)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.hct || '42.5')) + '</td><td>%</td><td>36 - 50</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
-                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Platelet Count (PLT)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.plt || '250')) + '</td><td>×10³/µL</td><td>150 - 450</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
-                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Neutrophils (Granulocytes)</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.neut || '58.0')) + '</td><td>%</td><td>40 - 70% (1.8-7.7 ×10³/µL)</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
-                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Lymphocytes</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.lymph || '32.0')) + '</td><td>%</td><td>20 - 40% (1.0-4.8 ×10³/µL)</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
-                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Monocytes</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.mono || '6.0')) + '</td><td>%</td><td>2 - 8% (0.2-0.8 ×10³/µL)</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
-                    html += '<tr><td style="padding:5px 10px;font-weight:600;">Eosinophils / Basophils</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.eos || '2.0')) + '</td><td>%</td><td>1 - 4%</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
-                    html += '<tr><td style="padding:5px 10px;font-weight:600;">MCV / MCH / MCHC</td><td style="padding:5px 10px;">' + (pend ? '⏳ Pending' : (r.mcv || '88 / 29 / 33')) + '</td><td>fL / pg / g/dL</td><td>80-96 / 27-33 / 32-36</td><td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td></tr>';
-                    html += '</tbody></table></div></td></tr>';
-                }
-            });
-
-            tbody.innerHTML = html;
-            start.textContent = '1';
-            end.textContent = filteredResults.length;
-            total.textContent = allResults.length;
-        }
-
-        window.toggleCbcPanel = function(idx) {
-            var row = document.getElementById('cbc_panel_' + idx);
-            if (row) {
-                row.style.display = (row.style.display === 'none' || !row.style.display) ? 'table-row' : 'none';
-            }
-        };
-
-        // ─── PRINT ───
-        function printResults() {
-            if (filteredResults.length === 0) {
-                showToast('⚠️ No results to print', 'warning');
-                return;
-            }
-            var patientName = currentPatient ? (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '') : 'Unknown';
-            var patientMrn = currentPatient ? currentPatient.mrn || 'N/A' : 'N/A';
-
-            var printContent = '<div style="font-family: -apple-system, BlinkMacSystemFont, \'Helvetica Neue\', Arial, sans-serif; padding: 40px; max-width: 1000px; margin: 0 auto;">';
-            printContent += '<div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px;">';
-            printContent += '<h1 style="font-size: 24px; font-weight: 700; color: #1a1a2e;">PClinic Lab Results</h1>';
-            printContent += '<p style="font-size: 16px; color: #6b7280; margin-top: 4px;">Patient: <strong>' + patientName + '</strong> | MRN: ' + patientMrn + '</p>';
-            printContent += '<p style="font-size: 14px; color: #6b7280;">Printed: ' + new Date().toLocaleString() + '</p>';
-            printContent += '</div>';
-            printContent += '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">';
-            printContent += '<thead><tr style="background: #f3f4f6; border-bottom: 2px solid #e5e7eb;">';
-            printContent += '<th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #374151;">Category</th>';
-            printContent += '<th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #374151;">Test</th>';
-            printContent += '<th style="padding: 10px 12px; text-align: center; font-weight: 600; color: #374151;">Result</th>';
-            printContent += '<th style="padding: 10px 12px; text-align: center; font-weight: 600; color: #374151;">Reference Range</th>';
-            printContent += '<th style="padding: 10px 12px; text-align: center; font-weight: 600; color: #374151;">Status</th>';
-            printContent += '<th style="padding: 10px 12px; text-align: center; font-weight: 600; color: #374151;">Date</th>';
-            printContent += '</tr></thead><tbody>';
-
-            filteredResults.forEach(function(r) {
-                var statusColor = '#f59e0b';
-                var statusLabel = 'Pending';
-                if (r.isPending || r.status === 'pending') { statusColor = '#f59e0b'; statusLabel = 'Pending'; }
-                else if (r.status === 'cancelled') { statusColor = '#ef4444'; statusLabel = 'Cancelled'; }
-                else {
-                    statusColor = r.status === 'normal' ? '#10b981' : r.status === 'high' ? '#ef4444' : r.status === 'low' ? '#3b82f6' : '#ef4444';
-                    statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
-                }
-                var resultDisplay = (r.isPending || r.status === 'pending') ? 'Pending' : (r.value !== '--' ? r.value + (r.unit ? ' ' + r.unit : '') : '--');
-                var date = new Date(r.date).toLocaleString();
-                var safeCategory = (r.category || 'General').replace(/&/g, '&amp;');
-                var safeTest = (r.test || '').replace(/&/g, '&amp;');
-                printContent += '<tr style="border-bottom: 0.5px solid #e5e7eb;">';
-                printContent += '<td style="padding: 8px 12px;">' + safeCategory + '</td>';
-                printContent += '<td style="padding: 8px 12px; font-weight: 500;">' + safeTest + '</td>';
-                printContent += '<td style="padding: 8px 12px; text-align: center; font-weight: 600; color: ' + statusColor + ';">' + resultDisplay + '</td>';
-                printContent += '<td style="padding: 8px 12px; text-align: center; color: #6b7280;">' + (r.range || '--') + '</td>';
-                printContent += '<td style="padding: 8px 12px; text-align: center; color: ' + statusColor + '; font-weight: 600;">' + statusLabel + '</td>';
-                printContent += '<td style="padding: 8px 12px; text-align: center; color: #6b7280; font-size: 12px;">' + date + '</td>';
-                printContent += '</tr>';
-            });
-
-            printContent += '</tbody></table>';
-            printContent += '<div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb; font-size: 12px; color: #6b7280;">';
-            printContent += '<p>PClinic - Quality Healthcare</p>';
-            printContent += '<p style="margin-top: 4px;">This report is generated automatically and does not replace clinical judgment.</p>';
-            printContent += '</div></div>';
-
-            var printWindow = window.open('', '_blank', 'width=1000,height=800');
-            if (printWindow) {
-                var closingTags = '<' + '/body>' + '<' + '/html>';
-                printWindow.document.write('<html><head><title>Lab Results - PClinic</title></head><body>' + printContent + closingTags);
-                printWindow.document.close();
-                printWindow.print();
-                showToast('🖨️ Results sent to printer', 'success');
-            } else {
-                showToast('❌ Please allow pop-ups to print', 'error');
-            }
-        }
-
-        // ─── CLOSE ───
+        // ─── CLOSE AND NAVIGATE ───
         function closeLabResultsPage() {
             try {
                 if (window.parent && window.parent !== window) {
@@ -805,197 +750,20 @@
             window.location.href = 'doctor-dashboard.html';
         }
 
-        // ─── ESCAPE HELPER ───
-        function escapeHtml(str) {
-            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        }
+        window.pcToggleTheme = function() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const next = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            document.body.classList.toggle('dark-mode', next === 'dark');
+            localStorage.setItem('pclinic-theme', next);
+            const ic = document.getElementById('themeIcon');
+            if (ic) ic.className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
+        };
 
-        // ─── GET LATEST LAB REQUESTS FOR CURRENT PATIENT ───
-        function getPatientLabRequests() {
-            if (!currentPatient) return [];
-
-            // Prefer the freshest copy from localStorage in case it changed
-            // since this iframe loaded
-            try {
-                var patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
-                var found = patients.find(function(p) { return String(p.id) === String(currentPatient.id); });
-                if (found && Array.isArray(found.labRequests)) {
-                    return found.labRequests;
-                }
-            } catch (e) {}
-
-            return Array.isArray(currentPatient.labRequests) ? currentPatient.labRequests : [];
-        }
-
-        // ─── OPEN REQUEST HISTORY ───
-        function openRequestHistory() {
-            if (!currentPatient) {
-                try {
-                    if (window.parent && window.parent.currentPatient) {
-                        currentPatient = window.parent.currentPatient;
-                    }
-                } catch (e) {}
-            }
-
-            if (!currentPatient) {
-                showToast('⚠️ Please select a patient first', 'warning');
-                return;
-            }
-
-            renderRequestHistory();
-            document.getElementById('historyOverlay').style.display = 'flex';
-        }
-
-        // ─── CLOSE REQUEST HISTORY ───
-        function closeRequestHistory() {
-            document.getElementById('historyOverlay').style.display = 'none';
-        }
-
-        // ─── RENDER REQUEST HISTORY LIST ───
-        function renderRequestHistory() {
-            var body = document.getElementById('historyModalBody');
-            var requests = getPatientLabRequests().slice().sort(function(a, b) {
-                return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
-            });
-
-            if (requests.length === 0) {
-                body.innerHTML = '<div class="history-empty"><span class="icon">🧪</span><p>No lab requests found for this patient.</p></div>';
-                return;
-            }
-
-            var html = '';
-            requests.forEach(function(req, idx) {
-                var date = req.timestamp ? new Date(req.timestamp).toLocaleString() : 'Unknown date';
-                var statusRaw = req.status || 'Pending';
-                var statusClass = statusRaw.toLowerCase();
-                var tests = Array.isArray(req.tests) ? req.tests : [];
-                var testsHtml = tests.length
-                    ? tests.map(function(t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('')
-                    : '<li>No tests recorded</li>';
-
-                html += '<div class="history-item">';
-                html += '<div class="history-row" onclick="toggleHistoryDetails(' + idx + ')">';
-                html += '<div class="history-date"><i class="ti ti-calendar-event"></i> ' + escapeHtml(date) + '</div>';
-                html += '<div class="history-meta">';
-                html += '<span class="history-badge ' + statusClass + '">' + escapeHtml(statusRaw) + '</span>';
-                html += '<span class="history-count">' + tests.length + ' test(s)</span>';
-                html += '<i class="ti ti-chevron-down history-chevron" id="historyChevron' + idx + '"></i>';
-                html += '</div></div>';
-                html += '<div class="history-details" id="historyDetails' + idx + '" style="display:none;">';
-                html += '<div class="history-detail-row"><strong>Priority:</strong> ' + escapeHtml(req.priority || 'Routine') + '</div>';
-                html += '<div class="history-detail-row"><strong>Sample Type:</strong> ' + escapeHtml(req.sampleType || '--') + '</div>';
-                html += '<div class="history-detail-row"><strong>Requested By:</strong> ' + escapeHtml(req.requestedBy || '--') + '</div>';
-                html += '<div class="history-detail-row"><strong>Tests Requested:</strong></div>';
-                html += '<ul class="history-test-list">' + testsHtml + '</ul>';
-                html += '</div></div>';
-            });
-
-            body.innerHTML = html;
-        }
-
-        // ─── TOGGLE HISTORY DETAILS ───
-        function toggleHistoryDetails(idx) {
-            var details = document.getElementById('historyDetails' + idx);
-            var chevron = document.getElementById('historyChevron' + idx);
-            if (!details) return;
-
-            var isOpen = details.style.display === 'block';
-            details.style.display = isOpen ? 'none' : 'block';
-            if (chevron) chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
-        }
-
-        // ─── MESSAGE LISTENER ───
-        window.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'LOAD_PATIENT') {
-                var patient = event.data.patient;
-                if (patient && patient.id) {
-                    loadPatientData(patient);
-                    showToast('✅ Loaded results for ' + patient.firstName + ' ' + patient.lastName, 'success');
-                }
-            }
-        });
-
-        // ─── INIT ───
-        document.addEventListener('DOMContentLoaded', function() {
-            loadDarkModePreference();
-
-            // 0. Try active patient from URL ?patient=ID or localStorage
-            try {
-                var urlParams = new URLSearchParams(window.location.search);
-                var pid = urlParams.get('patient') || localStorage.getItem('pclinic_active_patient');
-                if (!pid) {
-                    var h = JSON.parse(localStorage.getItem('pclinic_handoff') || 'null');
-                    if (h && h.id) pid = h.id;
-                }
-                if (pid) {
-                    var patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
-                    var found = patients.find(function(p) { return String(p.id) === String(pid); });
-                    if (found) {
-                        loadPatientData(found);
-                        return;
-                    }
-                }
-            } catch(e) {}
-
-            // 1. Try URL param data
-            var urlParams = new URLSearchParams(window.location.search);
-            var encoded = urlParams.get('data');
-            if (encoded) {
-                try {
-                    var patient = JSON.parse(decodeURIComponent(encoded));
-                    if (patient && patient.id) {
-                        loadPatientData(patient);
-                        return;
-                    }
-                } catch (e) {}
-            }
-
-            // 2. Try localStorage
-            try {
-                var stored = localStorage.getItem('pclinic_lab_patient_data');
-                if (stored) {
-                    var patient = JSON.parse(stored);
-                    if (patient && patient.id) {
-                        loadPatientData(patient);
-                        return;
-                    }
-                }
-            } catch (e) {}
-
-            // 3. Try parent
-            try {
-                if (window.parent && window.parent.currentPatient) {
-                    loadPatientData(window.parent.currentPatient);
-                    return;
-                }
-            } catch (e) {}
-
-            // 4. No patient found
-            document.getElementById('patientName').textContent = 'No patient selected';
-            document.getElementById('patientMrn').textContent = 'Please select a patient';
-        });
-
-        // ─── EXPOSE ───
-        window.loadPatientData = loadPatientData;
-        window.filterResults = filterResults;
-        window.printResults = printResults;
+        window.addEventListener('DOMContentLoaded', init);
         window.closeLabResultsPage = closeLabResultsPage;
-        window.toggleDarkMode = toggleDarkMode;
-        window.showToast = showToast;
-        window.openRequestHistory = openRequestHistory;
-        window.closeRequestHistory = closeRequestHistory;
-        window.toggleHistoryDetails = toggleHistoryDetails;
+        window.buildOpenClinicMatrix = buildOpenClinicMatrix;
+    })();
     </script>
-
-    <script>
-        requireAuth([]).then(function(staff) {
-            window.currentStaff = staff;
-            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
-        }).catch(function(err) {
-            console.warn('Auth guard redirect:', err && err.message);
-        });
-    </script>
-<script src="pclinic-file.js"></script>
-<script src="pclinic-handoff.js"></script>
 </body>
 </html>

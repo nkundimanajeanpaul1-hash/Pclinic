@@ -287,7 +287,20 @@
     /* ══════════ BUILD ══════════ */
     function build() {
         var bar = $('#dcBar');
-        if (!bar) return;
+        if (!bar) {
+            var tabs = document.querySelector('.nav-tabs') || document.querySelector('#breadcrumb') || document.body;
+            var ctx = document.createElement('div');
+            ctx.className = 'dc-ctx noprint'; ctx.id = 'dcCtx';
+            bar = document.createElement('div');
+            bar.className = 'dc-bar noprint'; bar.id = 'dcBar';
+            if (tabs && tabs.parentNode) {
+                tabs.parentNode.insertBefore(bar, tabs);
+                tabs.parentNode.insertBefore(ctx, bar);
+            } else {
+                document.body.appendChild(ctx);
+                document.body.appendChild(bar);
+            }
+        }
         bar.dataset.rebuilt = '1';
         bar.innerHTML = '';
         var last = null;
@@ -471,11 +484,9 @@
 
     /* ══════════ INIT ══════════ */
     function init() {
-        var tries = 0;
-        (function wait() {
-            if ($('#dcBar')) { build(); hideCard(); enrichStrip(); return; }
-            if (++tries < 30) setTimeout(wait, 200);
-        })();
+        build();
+        hideCard();
+        enrichStrip();
         window.addEventListener('pcPatientChanged', function () {
             syncEnabled(); hideCard();
             var el = $('#dcCtx'); if (el) delete el.dataset.enrichedFor;

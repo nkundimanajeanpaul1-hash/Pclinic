@@ -389,27 +389,15 @@
     /* ══════════════ MOUNT ══════════════ */
     function mount() {
         if ($('#dcBar')) return;
-        var tabs = document.querySelector('.nav-tabs');
+        var tabs = document.querySelector('.nav-tabs') || document.querySelector('#breadcrumb') || document.body;
         if (!tabs) return;
 
         var ctx = document.createElement('div');
-        ctx.className = 'dc-ctx'; ctx.id = 'dcCtx';
+        ctx.className = 'dc-ctx noprint'; ctx.id = 'dcCtx';
 
         var bar = document.createElement('div');
-        bar.className = 'dc-bar'; bar.id = 'dcBar';
-        bar.innerHTML =
-            '<button class="dc-btn lab"  onclick="dcLab()"><i class="ti ti-test-pipe"></i><span>Lab Request</span></button>' +
-            '<button class="dc-btn img"  onclick="dcImaging()"><i class="ti ti-radioactive"></i><span>Imaging</span></button>' +
-            '<button class="dc-btn rx"   onclick="dcRx()"><i class="ti ti-pill"></i><span>Prescription</span></button>' +
-            '<button class="dc-btn proc" onclick="dcProc()"><i class="ti ti-stethoscope"></i><span>Procedure</span></button>' +
-            '<button class="dc-btn bill" onclick="dcBill()"><i class="ti ti-receipt"></i><span>Bill</span></button>' +
-            '<span style="flex:1"></span>' +
-            '<button class="dc-btn" onclick="location.href=\'messages.html\'" title="Messages">' +
-                '<i class="ti ti-mail"></i><span>Messages</span>' +
-                '<span id="dcUnread" style="display:none;min-width:17px;height:17px;border-radius:9px;' +
-                'background:#ff3b30;color:#fff;font-size:10px;font-weight:800;display:none;' +
-                'align-items:center;justify-content:center;padding:0 5px">0</span></button>' +
-            '<button class="dc-btn" onclick="dcMyOrders()"><i class="ti ti-clipboard-list"></i><span>My Orders</span></button>';
+        bar.className = 'dc-bar noprint'; bar.id = 'dcBar';
+        bar.innerHTML = '';
 
         tabs.parentNode.insertBefore(bar, tabs);
         tabs.parentNode.insertBefore(ctx, bar);
