@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script type="module" src="firebase-config.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="pclinic-state.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PClinic • OpenClinic GA Global &amp; Specific Examinations</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+    <link rel="stylesheet" href="pclinic-ui.css">
+    <link rel="stylesheet" href="pclinic-file.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #f5f5f7;
+            --s1: #ffffff;
+            --s2: #f8f9fa;
+            --s3: #f1f3f6;
+            --bd: #d1d5db;
+            --tp: #1a1a2e;
+            --ts: #374151;
+            --tm: #6b7280;
+            --ac: #0071e3;
+            --ach: #005bb5;
+            --green: #10b981;
+            --green-dark: #059669;
+            --red: #ef4444;
+            --purple: #7c3aed;
+            --shadow: 0 1px 4px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.04);
+            --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+            --smooth: cubic-bezier(0.23, 1, 0.32, 1);
+            color-scheme: light;
+        }
+
+        [data-theme="dark"], html[data-theme="dark"], body.dark-mode {
+            --bg: #0d1117 !important;
+            --s1: #161b22 !important;
+            --s2: #1e242e !important;
+            --s3: #262c36 !important;
+            --bd: #30363d !important;
+            --tp: #f0f6fc !important;
+            --ts: #c9d1d9 !important;
+            --tm: #8b949e !important;
+            --ac: #58a6ff !important;
+            color-scheme: dark;
+        }
+
+        body {
+            font-family: var(--f);
+            background: var(--bg);
+            color: var(--tp);
+            font-size: 13px;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .wrap {
+            max-width: 1400px;
+            margin: 0 auto;
+            animation: fadeIn 0.12s var(--smooth);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ─── OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR ─── */
+        .oc-demo-bar {
+            background: #e2e8f0;
+            border: 1px solid var(--bd);
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-bottom: 16px;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1.3fr 0.9fr;
+            gap: 10px 18px;
+            box-shadow: var(--shadow);
+            font-size: 12px;
+        }
+
+        [data-theme="dark"] .oc-demo-bar {
+            background: #1e242e !important;
+        }
+
+        .demo-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .demo-lbl {
+            color: var(--tm);
+            font-weight: 700;
+            white-space: nowrap;
+            font-size: 11.5px;
+        }
+
+        .demo-input {
+            padding: 3px 8px;
+            border: 1px solid var(--bd);
+            border-radius: 6px;
+            background: var(--s1);
+            color: var(--tp);
+            font-weight: 700;
+            font-size: 12px;
+            width: 65%;
+            outline: none;
+        }
+
+        .demo-input.readonly {
+            background: rgba(255,255,255,0.6);
+            border-color: transparent;
+        }
+
+        [data-theme="dark"] .demo-input.readonly {
+            background: rgba(0,0,0,0.3) !important;
+        }
+
+        .demo-btn-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+
+        .demo-btn {
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--bd);
+            background: var(--s1);
+            color: var(--tp);
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 11.5px;
+            transition: all 0.15s ease;
+        }
+
+        .demo-btn:hover {
+            background: var(--ac);
+            color: #fff;
+            border-color: var(--ac);
+        }
+
+        /* ─── HEADER BAR ─── */
+        .oc-header {
+            background: var(--s1);
+            border: 1px solid var(--bd);
+            border-radius: 14px;
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .oc-header-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--ac);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-apple {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 18px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: var(--s2);
+            color: var(--tp);
+            border: 1px solid var(--bd);
+            text-decoration: none;
+            font-family: inherit;
+        }
+
+        .btn-apple:hover {
+            background: var(--s3);
+            border-color: var(--ac);
+        }
+
+        .btn-apple.green {
+            background: var(--green);
+            color: #ffffff;
+            border-color: var(--green-dark);
+        }
+
+        .btn-apple.green:hover {
+            background: var(--green-dark);
+        }
+
+        .btn-apple.blue {
+            background: var(--ac);
+            color: #ffffff;
+            border-color: var(--ach);
+        }
+
+        .btn-apple.blue:hover {
+            background: var(--ach);
+        }
+
+        /* ─── BLUE SECTION HEADERS & TABLES ─── */
+        .oc-section-box {
+            background: var(--s1);
+            border: 1px solid var(--bd);
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .oc-section-header {
+            padding: 10px 18px;
+            background: #005bb5;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 13.5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            letter-spacing: 0.3px;
+        }
+
+        table.oc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table.oc-table td {
+            padding: 10px 18px;
+            border-bottom: 1px solid var(--bd);
+            color: var(--tp);
+            vertical-align: middle;
+        }
+
+        table.oc-table tr:last-child td { border-bottom: none; }
+
+        table.oc-table tr:hover {
+            background: rgba(0, 113, 227, 0.05);
+        }
+
+        .form-bullet {
+            color: var(--ac);
+            font-weight: 800;
+            margin-right: 8px;
+        }
+
+        .form-name {
+            font-weight: 600;
+            color: var(--tp);
+        }
+
+        .new-link {
+            color: var(--ac);
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            transition: background 0.15s ease;
+        }
+
+        .new-link:hover {
+            background: rgba(0,113,227,0.1);
+            text-decoration: underline;
+        }
+
+        .rec-date {
+            font-family: monospace;
+            font-weight: 700;
+            color: var(--ac);
+            margin-left: 14px;
+        }
+
+        /* Department Expandable List (Photo 4 & 5) */
+        .dept-row {
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--bd);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--tp);
+            transition: background 0.15s ease;
+        }
+
+        .dept-row:hover {
+            background: rgba(0,113,227,0.06);
+        }
+
+        .plus-btn {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--green);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        .dept-list-sub {
+            display: none;
+            background: var(--s2);
+            padding: 10px 24px;
+            border-bottom: 1px solid var(--bd);
+            font-size: 12.5px;
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 18px;
+            border-radius: 12px;
+            background: var(--tp);
+            color: var(--bg);
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrap">
+    <!-- ═══ OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR ═══ -->
+    <div class="oc-demo-bar">
+        <!-- Col 1 -->
+        <div style="display:flex;flex-direction:column;gap:6px;">
+            <div class="demo-row">
+                <span class="demo-lbl">Family name</span>
+                <input type="text" class="demo-input readonly" id="demoFamily" readonly value="TEKEREZA" />
+            </div>
+            <div class="demo-row">
+                <span class="demo-lbl">Nat ID/PP</span>
+                <input type="text" class="demo-input readonly" id="demoNatId" readonly value="1 1986 8 0064652 0 14" />
+            </div>
+            <div class="demo-row">
+                <span class="demo-lbl">Department</span>
+                <input type="text" class="demo-input readonly" id="demoDept" readonly value="SURGERY WARD 7" />
+            </div>
+        </div>
+
+        <!-- Col 2 -->
+        <div style="display:flex;flex-direction:column;gap:6px;">
+            <div class="demo-row">
+                <span class="demo-lbl">Firstname</span>
+                <input type="text" class="demo-input readonly" id="demoFirst" readonly value="GASPARD" />
+            </div>
+            <div class="demo-row">
+                <span class="demo-lbl">Record number</span>
+                <input type="text" class="demo-input readonly" id="demoMrn" readonly value="655055" />
+            </div>
+            <div class="demo-row" style="justify-content:flex-start;gap:6px;color:var(--tm);font-size:14px;padding-top:2px;">
+                <span title="Quick Action">⏱️</span>
+                <span title="Gender Male">M</span>
+                <span title="Inpatient Ward">🏥</span>
+            </div>
+        </div>
+
+        <!-- Col 3 -->
+        <div style="display:flex;flex-direction:column;gap:6px;">
+            <div class="demo-row">
+                <span class="demo-lbl">Date of birth</span>
+                <input type="text" class="demo-input readonly" id="demoDob" readonly value="07/01/1986" style="width:50%;" />
+                <span id="demoAgeSex" style="font-size:11px;font-weight:700;color:var(--tm);">(Male - 40 years 7 months)</span>
+            </div>
+            <div class="demo-row">
+                <span class="demo-lbl">Archive code</span>
+                <input type="text" class="demo-input readonly" id="demoArchive" readonly value="ARCH-2026-655" style="border-left: 4px solid var(--red);" />
+            </div>
+            <div class="demo-row">
+                <span class="demo-lbl">District</span>
+                <select class="demo-input" id="demoDistrict">
+                    <option value="KAMONYI" selected>KAMONYI</option>
+                    <option value="KIGALI">KIGALI</option>
+                    <option value="GASABO">GASABO</option>
+                    <option value="NYARUGENGE">NYARUGENGE</option>
+                    <option value="KICUKIRO">KICUKIRO</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Col 4 -->
+        <div style="display:flex;flex-direction:column;gap:6px;justify-content:space-between;">
+            <div class="demo-row">
+                <span class="demo-lbl">Person ID</span>
+                <input type="text" class="demo-input readonly" id="demoPersonId" readonly value="655055" />
+            </div>
+            <div class="demo-btn-group">
+                <button class="demo-btn" onclick="showToast('🔍 Searching patient registry...','info')">Find</button>
+                <button class="demo-btn" onclick="showToast('🧹 Search cleared','info')">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ HEADER BAR ═══ -->
+    <div class="oc-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <img src="logo-wide.png" alt="PClinic" width="112" height="28" />
+            <span class="oc-header-title">
+                <i class="ti ti-clipboard-list"></i>
+                <span>OpenClinic GA • Global &amp; Specific Examinations</span>
+            </span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <a href="medical-summary.html" class="btn-apple green" title="Medical summary"><i class="ti ti-file-text"></i> Medical summary</a>
+            <a href="doctor-dashboard.html" class="btn-apple" title="Doctor Console"><i class="ti ti-user-check"></i> Doctor</a>
+            <a href="lab-request.html" class="btn-apple" title="Lab Request"><i class="ti ti-test-pipe"></i> Lab Request</a>
+            <a href="imaging-request.html" class="btn-apple" title="Imaging Request"><i class="ti ti-radio"></i> Imaging</a>
+            <button class="btn-apple" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
+            <button class="btn-apple" onclick="closeGlobalExaminations()"><i class="ti ti-arrow-left"></i> Close</button>
+        </div>
+    </div>
+
+    <!-- ═══ SECTION 1: GLOBAL EXAMINATIONS (FROM PHOTO 3) ═══ -->
+    <div class="oc-section-box">
+        <div class="oc-section-header">
+            <span>Global examinations</span>
+            <span style="font-size:11.5px;opacity:0.85;">9 Standard Modalities</span>
+        </div>
+        <table class="oc-table">
+            <tbody id="globalTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- ═══ SECTION 2: SPECIFIC EXAMINATIONS (SURGERY) (FROM PHOTO 3) ═══ -->
+    <div class="oc-section-box">
+        <div class="oc-section-header">
+            <span>Specific examinations (SURGERY)</span>
+            <span style="font-size:11.5px;opacity:0.85;">25+ Ward Protocols</span>
+        </div>
+        <table class="oc-table">
+            <tbody id="specificTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- ═══ SECTION 3: OTHER DEPARTMENTS AND THEIR EXAMINATIONS (FROM PHOTO 4 & 5) ═══ -->
+    <div class="oc-section-box">
+        <div class="oc-section-header" style="background:#475569;">
+            <span>▸ Other departments and their examinations</span>
+            <span style="font-size:11.5px;opacity:0.85;">20 Hospital Departments</span>
+        </div>
+        <div id="deptAccordion"></div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="pclinic-catalog.js"></script>
+<script src="pclinic-orders.js"></script>
+<script src="pclinic-file.js"></script>
+<script src="pclinic-vitals.js"></script>
+<script src="pclinic-handoff.js"></script>
+<script>
+(function() {
+    'use strict';
+
+    let currentPatient = null;
+
+    // SECTION 1: GLOBAL EXAMINATIONS (EXACT FROM PHOTO 3)
+    const GLOBAL_EXAMINATIONS = [
+        { title: '0 Surveillance protocol',   target: 'nursing-note.html',     date: '' },
+        { title: '1 Lab request',             target: 'lab-request.html',      date: '01/08/2026' },
+        { title: '2 Medical imaging',         target: 'imaging-request.html',  date: '01/08/2026' },
+        { title: '3 Pathology examination',   target: 'lab-request.html',      date: '' },
+        { title: '4 Referral letter',         target: 'referral.html',         date: '' },
+        { title: '5 Counter referral letter', target: 'referral.html',         date: '' },
+        { title: '6 Archive document',        target: 'medical-report.html',   date: '03/08/2026' },
+        { title: '7 Care prescriptions',      target: 'prescription.html',     date: '' },
+        { title: '8 Drug prescription',       target: 'prescription.html',     date: '' }
+    ];
+
+    // SECTION 2: SPECIFIC EXAMINATIONS (SURGERY) (EXACT FROM PHOTO 3)
+    const SPECIFIC_SURGERY = [
+        { title: 'Admission malnutrition ward',           target: 'admission-form.html',       date: '' },
+        { title: 'Anesthesia record',                     target: 'surgical-note.html',        date: '' },
+        { title: 'Anesthesia report',                     target: 'surgical-note.html',        date: '' },
+        { title: 'Blood request',                         target: 'lab-request.html',          date: '' },
+        { title: 'CNRKR outpatient consultation',         target: 'opd-file.html',             date: '' },
+        { title: 'Clinical Progress',                     target: 'clinical-note.html',        date: '' },
+        { title: 'Daily note',                            target: 'clinical-note.html',        date: '' },
+        { title: 'Death certificate in ICD-11',           target: 'medical-certificate.html',  date: '' },
+        { title: 'Discharge malnutrition ward',           target: 'discharge-summary.html',    date: '' },
+        { title: 'ECG',                                   target: 'imaging-request.html',      date: '' },
+        { title: 'Follow-up malnutrition',                target: 'opd-file.html',             date: '' },
+        { title: 'Follow-up of the psychiatric patient',  target: 'opd-file.html',             date: '' },
+        { title: 'Physiotherapy evaluation form',         target: 'physio-request.html',       date: '' },
+        { title: 'Pre-anaesthesia record (KIRA model)',   target: 'surgical-note.html',        date: '01/08/2026' },
+        { title: 'Progress Note',                         target: 'clinical-note.html',        date: '' },
+        { title: 'Psychiatric care',                      target: 'opd-file.html',             date: '' },
+        { title: 'Referral letter',                       target: 'referral.html',             date: '' },
+        { title: 'Stomatology surgery protocol',          target: 'surgical-note.html',        date: '' },
+        { title: 'Surgery protocol',                      target: 'surgical-note.html',        date: '' },
+        { title: 'Surveillance during anaestesia',        target: 'surgical-note.html',        date: '01/08/2026' },
+        { title: 'Surveillance protocol',                 target: 'nursing-note.html',         date: '01/08/2026' },
+        { title: 'Vital signs',                           target: 'vitals-action',             date: '' },
+        { title: 'Warning',                               target: 'messages.html',             date: '' }
+    ];
+
+    // SECTION 3: OTHER DEPARTMENTS (EXACT FROM PHOTO 4 & 5)
+    const OTHER_DEPARTMENTS = [
+        { name: 'ANESTESIOLOGY & RESCISITATION', count: 7,  items: ['Anesthesia record', 'Anesthesia report', 'Pre-anaesthesia record', 'Surveillance during anaestesia'] },
+        { name: 'CLINIC',                        count: 2,  items: ['Outpatient consultation (RMH)', 'Progress Note'] },
+        { name: 'DERMATOLOGY',                   count: 2,  items: ['Dermatology consultation', 'Biopsy protocol'] },
+        { name: 'DIALYSIS',                      count: 7,  items: ['Renal follow-up', 'Dialysis surveillance', 'Electrolytes monitoring'] },
+        { name: 'EMERGENCIES',                   count: 32, items: ['Emergency triage (CPTAS)', 'Trauma protocol', 'ECG', 'Resuscitation note'] },
+        { name: 'GYNAECOLOGIE - OBSTETRICS',     count: 44, items: ['Antenatal care', 'Labor & Delivery note', 'Obstetric ultrasound', 'Postpartum check'] },
+        { name: 'HIV-CLINIC',                    count: 3,  items: ['ART surveillance', 'CD4 / Viral load check', 'Counselling note'] },
+        { name: 'ICT',                           count: 299,items: ['System audit log', 'Archive document', 'Digital signature log'] },
+        { name: 'IM SALLE 5',                    count: 10, items: ['Inpatient round note', 'Nursing care plan', 'Vitals sheet'] },
+        { name: 'INTENSIVE CARE',                count: 4,  items: ['ICU hourly surveillance', 'Ventilator settings record', 'Fluid balance sheet'] },
+        { name: 'INTERNAL MEDICINE',             count: 32, items: ['Comprehensive medical round', 'Chronic disease follow-up', 'Lab review'] },
+        { name: 'IZERE CLINIC',                  count: 1,  items: ['Specialized outreach check'] },
+        { name: 'MENTAL HEALTH',                 count: 10, items: ['Psychiatric care record', 'Psychological assessment', 'Counselling note'] },
+        { name: 'OPHTALMOLOGY',                  count: 6,  items: ['Visual acuity check', 'Slit-lamp exam', 'Fundus exam'] },
+        { name: 'ORL',                           count: 5,  items: ['Audiometry exam', 'ENT consultation', 'Laryngoscopy note'] },
+        { name: 'ORTHOPEDIC WORKSHOP',           count: 3,  items: ['Prosthetic fitting record', 'Cast application note'] },
+        { name: 'PAEDIATRICS',                   count: 14, items: ['Pediatric consultation', 'Malnutrition ward admission', 'Growth chart'] },
+        { name: 'PAEDIATRICS EMERGENCIES',       count: 1,  items: ['Pediatric triage (CPTAS)'] },
+        { name: 'PHYSIOTHERAPY',                 count: 3,  items: ['Physiotherapy evaluation form', 'Exercise rehabilitation plan', 'Gait assessment'] },
+        { name: 'STOMATOLOGY',                   count: 8,  items: ['Stomatology surgery protocol', 'Dental procedure note'] }
+    ];
+
+    function init() {
+        loadDarkMode();
+        loadPatient();
+        renderGlobalTable();
+        renderSpecificTable();
+        renderDepartmentsAccordion();
+    }
+
+    function loadDarkMode() {
+        const isDark = localStorage.getItem('pclinic-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        document.body.classList.toggle('dark-mode', isDark);
+    }
+
+    function loadPatient() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pid = urlParams.get('patient') || localStorage.getItem('pclinic_active_patient');
+            if (pid) {
+                const pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                const found = pts.find(p => String(p.id) === String(pid));
+                if (found) {
+                    currentPatient = found;
+                    updatePatientIdentification(found);
+                    return;
+                }
+            }
+        } catch(e) {}
+
+        try {
+            if (window.parent && window.parent.currentPatient) {
+                currentPatient = window.parent.currentPatient;
+                updatePatientIdentification(currentPatient);
+                return;
+            }
+        } catch(e) {}
+
+        currentPatient = {
+            id: '655055',
+            lastName: 'TEKEREZA',
+            firstName: 'GASPARD',
+            nationalId: '1 1986 8 0064652 0 14',
+            mrn: '655055',
+            dob: '1986-01-07',
+            gender: 'Male',
+            department: 'SURGERY WARD 7',
+            district: 'KAMONYI',
+            archiveCode: 'ARCH-2026-655'
+        };
+        updatePatientIdentification(currentPatient);
+    }
+
+    function updatePatientIdentification(p) {
+        document.getElementById('demoFamily').value = (p.lastName || 'TEKEREZA').toUpperCase();
+        document.getElementById('demoFirst').value = (p.firstName || 'GASPARD').toUpperCase();
+        document.getElementById('demoNatId').value = p.nationalId || '1 1986 8 0064652 0 14';
+        document.getElementById('demoMrn').value = p.mrn || p.id || '655055';
+        document.getElementById('demoPersonId').value = p.id || '655055';
+        document.getElementById('demoArchive').value = p.archiveCode || 'ARCH-2026-655';
+        document.getElementById('demoDept').value = (p.department || 'SURGERY WARD 7').toUpperCase();
+        const dobStr = p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '07/01/1986';
+        const age = p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' years' : '40 years 7 months';
+        document.getElementById('demoDob').value = dobStr;
+        document.getElementById('demoAgeSex').textContent = `(${p.gender || 'Male'} - ${age})`;
+    }
+
+    function renderGlobalTable() {
+        const tbody = document.getElementById('globalTableBody');
+        tbody.innerHTML = GLOBAL_EXAMINATIONS.map((item) => {
+            const dateBadge = item.date ? `<span class="rec-date">${item.date}</span>` : '';
+            return `
+            <tr>
+                <td>
+                    <span class="form-bullet">▸</span>
+                    <span class="form-name">${escapeHtml(item.title)}</span>
+                </td>
+                <td style="text-align:right;width:180px;">
+                    <a class="new-link" onclick="launchForm('${item.target}', '${escapeHtml(item.title)}')">New</a>
+                    ${dateBadge}
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function renderSpecificTable() {
+        const tbody = document.getElementById('specificTableBody');
+        tbody.innerHTML = SPECIFIC_SURGERY.map((item) => {
+            const dateBadge = item.date ? `<span class="rec-date">${item.date}</span>` : '';
+            return `
+            <tr>
+                <td>
+                    <span class="form-bullet">▸</span>
+                    <span class="form-name">${escapeHtml(item.title)}</span>
+                </td>
+                <td style="text-align:right;width:180px;">
+                    <a class="new-link" onclick="launchForm('${item.target}', '${escapeHtml(item.title)}')">New</a>
+                    ${dateBadge}
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function renderDepartmentsAccordion() {
+        const box = document.getElementById('deptAccordion');
+        box.innerHTML = OTHER_DEPARTMENTS.map((dept, idx) => `
+            <div>
+                <div class="dept-row" onclick="toggleDept(${idx})">
+                    <div style="display:flex;align-items:center;">
+                        <span class="plus-btn" id="plus_${idx}">+</span>
+                        <span>${escapeHtml(dept.name)} (${dept.count} examinations)</span>
+                    </div>
+                    <i class="ti ti-chevron-down" id="chevron_${idx}" style="color:var(--tm);transition:transform 0.2s;"></i>
+                </div>
+                <div class="dept-list-sub" id="sub_${idx}">
+                    <table class="oc-table" style="background:var(--s1);border-radius:8px;overflow:hidden;">
+                        ${dept.items.map(it => `
+                            <tr>
+                                <td><span class="form-bullet" style="color:var(--green);">•</span> <b>${escapeHtml(it)}</b></td>
+                                <td style="text-align:right;width:140px;">
+                                    <a class="new-link" onclick="launchForm('clinical-note.html', '${escapeHtml(it)}')">New</a>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.toggleDept = function(idx) {
+        const sub = document.getElementById('sub_' + idx);
+        const ch = document.getElementById('chevron_' + idx);
+        const pl = document.getElementById('plus_' + idx);
+        if (!sub) return;
+        const isOpen = sub.style.display === 'block';
+        sub.style.display = isOpen ? 'none' : 'block';
+        if (ch) ch.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+        if (pl) pl.textContent = isOpen ? '+' : '–';
+    };
+
+    window.launchForm = function(target, title) {
+        const p = currentPatient || { id: '655055' };
+        try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
+
+        if (target === 'vitals-action') {
+            if (window.pcVitals) pcVitals.open();
+            else showToast('📊 Recording Vital Signs for ' + p.firstName, 'info');
+            return;
+        }
+
+        showToast(`📄 Opening ${title} for patient #${p.id}`, 'info');
+        setTimeout(() => {
+            window.location.href = `${target}?patient=${encodeURIComponent(p.id)}`;
+        }, 200);
+    };
+
+    window.closeGlobalExaminations = function() {
+        try {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'CLOSE_MODAL' }, '*');
+                return;
+            }
+        } catch(e) {}
+        window.location.href = 'doctor-dashboard.html';
+    };
+
+    function escapeHtml(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function showToast(msg, type = 'info') {
+        const c = document.getElementById('toastContainer');
+        const t = document.createElement('div');
+        t.className = 'toast';
+        t.style.background = type === 'success' ? '#059669' : type === 'error' ? '#ef4444' : '#1a1a2e';
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+    window.closeGlobalExaminations = closeGlobalExaminations;
+})();
+</script>
+</body>
+</html>
