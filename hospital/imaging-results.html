@@ -754,35 +754,11 @@
     let startX = 0, startY = 0;
     let tempElem = null;
 
-    let STUDIES = [
-        {
-            id: '849014',
-            mod: 'DX',
-            date: '01/08/2026 12:24:39',
-            desc: '015. RX LOWER LIMBS - Leg (Tibia and Fibula) UNILATERAL (AP & lateral)',
-            reported: false,
-            thumbs: [
-                { label: 'AP View',  desc: 'Tibia/Fibula AP View' },
-                { label: 'LAT View', desc: 'Tibia/Fibula Lateral View' }
-            ]
-        },
-        {
-            id: '849014',
-            mod: 'DX',
-            date: '30/07/2026 16:47:28',
-            desc: 'Tibia AP+LAT (Initial Post-OP)',
-            reported: true,
-            findings: 'Initial post-operative radiographs showing intramedullary rod insertion.',
-            thumbs: [
-                { label: 'AP View',  desc: 'Tibia AP Post-OP' },
-                { label: 'LAT View', desc: 'Tibia Lateral Post-OP' }
-            ]
-        }
-    ];
+    let STUDIES = [];
 
     function init() {
         loadPatient();
-        mergePendingDoctorOrders();
+        loadExistingRequestedRadiology();
         renderStudiesTable();
         renderSeriesGallery();
         setupMouseZoom();
@@ -790,6 +766,7 @@
     }
 
     function loadPatient() {
+        let success = false;
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const pid = urlParams.get('patient') || localStorage.getItem('pclinic_active_patient');
@@ -799,66 +776,109 @@
                 if (found) {
                     currentPatient = found;
                     updateDicomOverlays(found);
-                    return;
+                    success = true;
                 }
             }
         } catch(e) {}
 
-        try {
-            if (window.parent && window.parent.currentPatient) {
-                currentPatient = window.parent.currentPatient;
-                updateDicomOverlays(currentPatient);
-                return;
-            }
-        } catch(e) {}
+        if (!success) {
+            try {
+                if (window.parent && window.parent.currentPatient) {
+                    currentPatient = window.parent.currentPatient;
+                    updateDicomOverlays(currentPatient);
+                    success = true;
+                }
+            } catch(e) {}
+        }
 
-        currentPatient = {
-            id: '849014',
-            firstName: 'OLIVIER',
-            lastName: 'DUSHIMIRIMANA',
-            dob: '2009-01-01',
-            gender: 'M',
-            mrn: '849014'
-        };
-        updateDicomOverlays(currentPatient);
+        if (!success) {
+            try {
+                const pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                if (pts.length > 0) {
+                    currentPatient = pts[0];
+                    updateDicomOverlays(currentPatient);
+                    success = true;
+                }
+            } catch(e) {}
+        }
+
+        if (!success) {
+            currentPatient = null;
+            document.getElementById('pacsPatientId').value = 'No patient selected';
+            document.getElementById('dicomTopLeft').innerHTML = `<div>No Patient Selected</div>`;
+            document.getElementById('seriesHeader').innerHTML = `<span>No Series</span><i class="ti ti-user"></i>`;
+        }
     }
 
-    function mergePendingDoctorOrders() {
+    function loadExistingRequestedRadiology() {
+        STUDIES = [];
         if (!currentPatient) return;
         try {
             const orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
-            const pendingImg = orders.filter(o => 
+            const matching = orders.filter(o => 
                 String(o.patientId) === String(currentPatient.id) &&
-                (o.type === 'imaging' || o.type === 'radiology' || o.dept === 'radiology')
+                (o.type === 'imaging' || o.type === 'radiology' || o.dept === 'radiology' ||
+                 o.type === 'X-Ray' || o.type === 'Ultrasound' || o.type === 'CT' || o.type === 'MRI')
             );
 
-            pendingImg.forEach(o => {
-                const isCompleted = o.status === 'completed' || o.status === 'Completed';
-                const dObj = new Date(o.orderedAt || Date.now());
-                const descText = (o.items && o.items.length) ? o.items.map(i => i.name).join(', ') : (o.notes || 'Imaging Request');
+            matching.forEach(o => {
+                const isCompleted = (o.status === 'completed' || o.status === 'Completed');
+                const dObj = new Date(o.orderedAt || o.timestamp || Date.now());
+                const descText = (o.items && o.items.length) ? o.items.map(i => i.name).join(', ') : (o.notes || 'Radiology Request');
                 
-                // Add pending study at the very top of STUDIES table!
-                STUDIES.unshift({
-                    id: String(currentPatient.id || '849014'),
-                    mod: 'DX',
+                let modCode = 'DX';
+                if (/ultrasound|echo|us/i.test(descText)) modCode = 'US';
+                else if (/ct|scan/i.test(descText)) modCode = 'CT';
+                else if (/mri|mr/i.test(descText)) modCode = 'MR';
+
+                STUDIES.push({
+                    id: String(currentPatient.id),
+                    mod: modCode,
                     date: dObj.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + dObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
                     desc: (isCompleted ? '' : '[PENDING SCAN] ') + descText,
                     reported: isCompleted,
                     isPending: !isCompleted,
-                    findings: isCompleted ? 'Radiologist report completed.' : 'Awaiting DICOM scan capture and Radiologist interpretation.',
+                    orderId: o.id,
+                    findings: isCompleted ? (o.report || o.findings || 'Radiology study completed and verified.') : 'Awaiting DICOM scan capture and Radiologist interpretation.',
                     thumbs: [
-                        { label: isCompleted ? 'Scan 1' : 'Pending', desc: descText }
+                        { label: isCompleted ? 'AP View' : 'Pending', desc: descText },
+                        { label: isCompleted ? 'LAT View' : 'Pending', desc: 'Lateral / Sub View' }
                     ]
                 });
+            });
+
+            // Also check patient imagingRequests / radiologyRequests
+            const patientReqs = (currentPatient.imagingRequests || []).concat(currentPatient.radiologyRequests || []);
+            patientReqs.forEach(req => {
+                const exists = STUDIES.some(s => String(s.orderId) === String(req.id));
+                if (!exists) {
+                    const isCompleted = req.status === 'Completed' || req.status === 'completed';
+                    const dObj = new Date(req.timestamp || req.date || Date.now());
+                    const descText = Array.isArray(req.tests) ? req.tests.join(', ') : (req.test || req.desc || 'Imaging Request');
+                    STUDIES.push({
+                        id: String(currentPatient.id),
+                        mod: 'DX',
+                        date: dObj.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + dObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                        desc: (isCompleted ? '' : '[PENDING SCAN] ') + descText,
+                        reported: isCompleted,
+                        isPending: !isCompleted,
+                        orderId: req.id,
+                        findings: isCompleted ? (req.findings || 'Completed study.') : 'Awaiting DICOM scan capture and Radiologist interpretation.',
+                        thumbs: [
+                            { label: isCompleted ? 'Scan 1' : 'Pending', desc: descText }
+                        ]
+                    });
+                }
             });
         } catch(e) {}
     }
 
     function updateDicomOverlays(p) {
-        const name = ((p.lastName || '') + ' ' + (p.firstName || '')).trim() || 'DUSHIMIRIMANA OLIVIER';
-        const age = p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + 'Y' : '017Y';
-        const sex = p.gender ? p.gender.charAt(0).toUpperCase() : 'M';
-        const id = p.id || '849014';
+        if (!p) return;
+        const name = ((p.lastName || '') + ' ' + (p.firstName || '')).trim() || ('PATIENT ID ' + p.id);
+        const age = p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + 'Y' : '--';
+        const sex = p.gender ? p.gender.charAt(0).toUpperCase() : '--';
+        const id = p.id || '--';
 
         document.getElementById('pacsPatientId').value = id + ' · ' + name.toUpperCase() + ' (' + age + '/' + sex + ')';
         document.getElementById('dicomTopLeft').innerHTML = `
@@ -868,7 +888,7 @@
             <div>${sex}</div>
         `;
         document.getElementById('seriesHeader').innerHTML = `
-            <span>2/2 ${name.toUpperCase()} ${sex} ${age}</span>
+            <span>${STUDIES.length} studies · ${name.toUpperCase()}</span>
             <i class="ti ti-user"></i>
         `;
     }
@@ -876,6 +896,11 @@
     function renderStudiesTable() {
         const tbody = document.getElementById('studiesTableBody');
         document.getElementById('studyCountLbl').textContent = STUDIES.length + ' studies';
+        if (STUDIES.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--tm);">📭 No radiology studies requested for this patient yet.</td></tr>';
+            document.getElementById('reportStatusBox').innerHTML = '<div style="font-size:13px;font-weight:700;color:var(--tm);">No active study selected.</div>';
+            return;
+        }
         tbody.innerHTML = STUDIES.map((s, idx) => {
             const sel = idx === selectedStudyIdx ? 'selected' : '';
             const icon = idx === selectedStudyIdx ? '◉' : '○';
@@ -904,6 +929,10 @@
     function renderSeriesGallery() {
         const gallery = document.getElementById('seriesGallery');
         const study = STUDIES[selectedStudyIdx];
+        if (!study || !study.thumbs) {
+            gallery.innerHTML = '<div style="color:var(--tm);font-size:11.5px;padding:12px;">No DICOM series available.</div>';
+            return;
+        }
         gallery.innerHTML = study.thumbs.map((th, idx) => {
             const sel = idx === selectedThumbIdx ? 'selected' : '';
             return `
@@ -929,6 +958,10 @@
 
     function updateViewportHeader() {
         const study = STUDIES[selectedStudyIdx];
+        if (!study) {
+            document.getElementById('dicomTopRight').innerHTML = `<div>No Study</div>`;
+            return;
+        }
         document.getElementById('dicomTopRight').innerHTML = `
             <div>${study.date}</div>
             <div style="font-weight:700;">${study.desc}</div>
@@ -938,6 +971,10 @@
     function updateReportStatusBox() {
         const study = STUDIES[selectedStudyIdx];
         const box = document.getElementById('reportStatusBox');
+        if (!study) {
+            box.innerHTML = '<div style="font-size:13px;font-weight:700;color:var(--tm);">No study selected.</div>';
+            return;
+        }
         if (study.isPending) {
             box.innerHTML = `
                 <div style="font-size:13.5px;font-weight:700;color:var(--orange);margin-bottom:6px;">⏳ PENDING SCAN — AWAITING RADIOLOGY EXAMINATION</div>
@@ -1102,7 +1139,11 @@
     /* ─── REPORT MODAL ─── */
     window.openReportModal = function() {
         const study = STUDIES[selectedStudyIdx];
-        const p = currentPatient || { firstName: 'OLIVIER', lastName: 'DUSHIMIRIMANA' };
+        if (!study) {
+            showToast('⚠️ No active study to report on', 'warning');
+            return;
+        }
+        const p = currentPatient || { firstName: 'PATIENT', lastName: 'ID' };
         document.getElementById('reportPatientSummary').value = `${p.lastName || ''} ${p.firstName || ''} — ${study.desc}`;
         document.getElementById('reportFindings').value = study.findings || '';
         document.getElementById('reportModal').style.display = 'flex';
@@ -1114,6 +1155,7 @@
 
     window.saveRadiologyReport = function() {
         const study = STUDIES[selectedStudyIdx];
+        if (!study) return;
         study.findings = document.getElementById('reportFindings').value.trim();
         study.reported = true;
         study.isPending = false;
