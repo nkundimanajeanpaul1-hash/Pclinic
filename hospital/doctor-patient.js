@@ -128,45 +128,88 @@
         location.href = page + q;
     }
 
-    /* ══════════════ 3. CONTEXT STRIP ══════════════ */
+    /* ══════════════ 3. CONTEXT STRIP REPLACED WITH OPENCLINIC GA PATIENT BANNER ══════════════ */
     function renderCtx() {
         var el = $('#dcCtx');
         if (!el) return;
         var p = getPatient();
 
         if (!p) {
+            el.className = 'oc-demo-bar noprint';
             el.innerHTML =
-                '<span class="none"><i class="ti ti-user-off"></i> No patient selected</span>' +
-                '<button class="dc-btn" style="height:28px;padding:0 12px;font-size:11.5px" ' +
-                'onclick="dpPick()"><i class="ti ti-search"></i> Choose patient</button>';
+                '<div style="display:flex;flex-direction:column;gap:6px;">' +
+                    '<div class="demo-row"><span class="demo-lbl">Family name</span><input type="text" class="demo-input readonly" readonly value="--" /></div>' +
+                    '<div class="demo-row"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input readonly" readonly value="--" /></div>' +
+                    '<div class="demo-row"><span class="demo-lbl">Department</span><input type="text" class="demo-input readonly" readonly value="SURGERY WARD 7" /></div>' +
+                '</div>' +
+                '<div style="display:flex;flex-direction:column;gap:6px;">' +
+                    '<div class="demo-row"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input readonly" readonly value="No patient" /></div>' +
+                    '<div class="demo-row"><span class="demo-lbl">Record number</span><input type="text" class="demo-input readonly" readonly value="--" /></div>' +
+                    '<div class="demo-row" style="justify-content:flex-start;gap:6px;color:var(--tm);font-size:14px;padding-top:2px;">' +
+                        '<span title="Quick Action">⏱️</span><span title="Gender">--</span><span title="Inpatient Ward">🏥</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="display:flex;flex-direction:column;gap:6px;">' +
+                    '<div class="demo-row"><span class="demo-lbl">Date of birth</span><input type="text" class="demo-input readonly" readonly value="--" style="width:50%;" /><span style="font-size:11px;font-weight:700;color:var(--tm);">(Select Patient)</span></div>' +
+                    '<div class="demo-row"><span class="demo-lbl">Archive code</span><input type="text" class="demo-input readonly" readonly value="--" style="border-left: 4px solid #ef4444;" /></div>' +
+                    '<div class="demo-row"><span class="demo-lbl">District</span><input type="text" class="demo-input readonly" readonly value="KAMONYI" /></div>' +
+                '</div>' +
+                '<div style="display:flex;flex-direction:column;gap:6px;justify-content:space-between;">' +
+                    '<div class="demo-row"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input readonly" readonly value="--" /></div>' +
+                    '<div class="demo-btn-group">' +
+                        '<button type="button" class="demo-btn" onclick="dpPick()">Find</button>' +
+                        '<button type="button" class="demo-btn" onclick="dpClear()">Clear</button>' +
+                    '</div>' +
+                '</div>';
             document.body.classList.add('dp-nopatient');
             return;
         }
         document.body.classList.remove('dp-nopatient');
 
-        var a = age(p.dob);
-        var v = (p.vitals && p.vitals.length) ? p.vitals[p.vitals.length - 1] : null;
-        var al = p.allergies || [];
-        if (typeof al === 'string') al = al.split(/[,;]/).map(function (s) { return s.trim(); }).filter(Boolean);
+        el.className = 'oc-demo-bar noprint';
+        var name = (p.lastName || 'TEKEREZA').toUpperCase();
+        var first = (p.firstName || 'GASPARD').toUpperCase();
+        var natId = p.nationalId || '1 1986 8 0064652 0 14';
+        var mrn = p.mrn || p.id || '655055';
+        var dobStr = p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '07/01/1986';
+        var ageStr = p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' years' : '40 years 7 months';
+        var sex = p.gender || 'Male';
+        var dept = (p.department || 'SURGERY WARD 7').toUpperCase();
+        var arch = p.archiveCode || 'ARCH-2026-655';
+        var pid = p.id || '655055';
 
         el.innerHTML =
-            '<span class="dp-ava">' + esc(fullName(p).substring(0, 2).toUpperCase()) + '</span>' +
-            '<span class="nm">' + esc(fullName(p)) + '</span>' +
-            (a != null ? '<span class="pill">' + a + ' yrs</span>' : '') +
-            (p.gender ? '<span class="pill">' + esc(p.gender) + '</span>' : '') +
-            '<span class="pill">' + esc(p.mrn || ('ID ' + p.id)) + '</span>' +
-            (p.phone ? '<span class="pill"><i class="ti ti-phone"></i> ' + esc(p.phone) + '</span>' : '') +
-            (v ? (v.bp || v.bloodPressure ? '<span class="pill">BP ' + esc(v.bp || v.bloodPressure) + '</span>' : '') +
-                 (v.temp || v.temperature ? '<span class="pill">T ' + esc(v.temp || v.temperature) + '</span>' : '') +
-                 (v.pulse ? '<span class="pill">HR ' + esc(v.pulse) + '</span>' : '') +
-                 (v.weight ? '<span class="pill">Wt ' + esc(v.weight) + '</span>' : '')
-               : '<span class="pill none">No vitals</span>') +
-            (al.length ? '<span class="pill allergy"><i class="ti ti-alert-triangle"></i> ' +
-                         al.map(esc).join(', ') + '</span>'
-                       : '<span class="pill none">No known allergies</span>') +
-            '<span style="flex:1"></span>' +
-            '<button class="dp-x" onclick="dpClear()" title="Clear selection">' +
-                '<i class="ti ti-x"></i></button>';
+            '<div style="display:flex;flex-direction:column;gap:6px;">' +
+                '<div class="demo-row"><span class="demo-lbl">Family name</span><input type="text" class="demo-input readonly" readonly value="' + esc(name) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input readonly" readonly value="' + esc(natId) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Department</span><input type="text" class="demo-input readonly" readonly value="' + esc(dept) + '" /></div>' +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:6px;">' +
+                '<div class="demo-row"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input readonly" readonly value="' + esc(first) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Record number</span><input type="text" class="demo-input readonly" readonly value="' + esc(mrn) + '" /></div>' +
+                '<div class="demo-row" style="justify-content:flex-start;gap:6px;color:var(--tm);font-size:14px;padding-top:2px;">' +
+                    '<span title="Quick Action">⏱️</span><span title="Gender Male">M</span><span title="Inpatient Ward">🏥</span>' +
+                '</div>' +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:6px;">' +
+                '<div class="demo-row"><span class="demo-lbl">Date of birth</span><input type="text" class="demo-input readonly" readonly value="' + esc(dobStr) + '" style="width:50%;" /><span style="font-size:11px;font-weight:700;color:var(--tm);">(' + esc(sex) + ' - ' + esc(ageStr) + ')</span></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Archive code</span><input type="text" class="demo-input readonly" readonly value="' + esc(arch) + '" style="border-left: 4px solid #ef4444;" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">District</span>' +
+                    '<select class="demo-input">' +
+                        '<option value="KAMONYI" selected>KAMONYI</option>' +
+                        '<option value="KIGALI">KIGALI</option>' +
+                        '<option value="GASABO">GASABO</option>' +
+                        '<option value="NYARUGENGE">NYARUGENGE</option>' +
+                        '<option value="KICUKIRO">KICUKIRO</option>' +
+                    '</select></div>' +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:6px;justify-content:space-between;">' +
+                '<div class="demo-row"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input readonly" readonly value="' + esc(pid) + '" /></div>' +
+                '<div class="demo-btn-group">' +
+                    '<button type="button" class="demo-btn" onclick="dpPick()">Find</button>' +
+                    '<button type="button" class="demo-btn" onclick="dpClear()">Clear</button>' +
+                '</div>' +
+            '</div>';
     }
 
     /* ══════════════ 4. PATIENT PICKER ══════════════ */
