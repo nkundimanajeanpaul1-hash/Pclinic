@@ -938,6 +938,77 @@
             }
         });
     }
+
+    /* ══════════════ SEARCH REGISTRY, CLEAR BAR, WARD PICKER ══════════════ */
+    function searchPatientRegistry() {
+        var fam = ($('#ocSearchFamily') ? $('#ocSearchFamily').value.trim().toLowerCase() : '');
+        var first = ($('#ocSearchFirst') ? $('#ocSearchFirst').value.trim().toLowerCase() : '');
+        var nat = ($('#ocSearchNatId') ? $('#ocSearchNatId').value.trim().toLowerCase() : '');
+        var mrn = ($('#ocSearchMrn') ? $('#ocSearchMrn').value.trim().toLowerCase() : '');
+        var pid = ($('#ocSearchId') ? $('#ocSearchId').value.trim().toLowerCase() : '');
+
+        var list = [];
+        try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
+        if (!list.length) {
+            try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+        }
+
+        var matching = [];
+        if (!fam && !first && !nat && !mrn && !pid) {
+            matching = list;
+        } else {
+            matching = list.filter(function(p) {
+                var mFam = !fam || (p.lastName || '').toLowerCase().indexOf(fam) !== -1;
+                var mFirst = !first || (p.firstName || '').toLowerCase().indexOf(first) !== -1;
+                var mNat = !nat || (p.nationalId || '').toLowerCase().indexOf(nat) !== -1;
+                var mMrn = !mrn || String(p.mrn || '').toLowerCase().indexOf(mrn) !== -1;
+                var mPid = !pid || String(p.id || '').toLowerCase().indexOf(pid) !== -1;
+                return mFam && mFirst && mNat && mMrn && mPid;
+            });
+        }
+
+        if (!matching.length) {
+            if (window.pcToast) pcToast('No patients found matching search criteria', 'warning');
+            else alert('No patients found matching search criteria');
+            return;
+        }
+
+        if (typeof openPatientPickerModal === 'function') {
+            openPatientPickerModal(matching, 'Patient Registry Search Results (' + matching.length + ' found)');
+        } else {
+            alert('Found ' + matching.length + ' matching patient(s). Select from patient registry.');
+        }
+    }
+
+    function clearPatientBar() {
+        try { localStorage.removeItem('pclinic_active_patient'); } catch(e){}
+        window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: null }));
+        if (window.pcToast) pcToast('🧹 Active patient selection cleared', 'info');
+        var old = document.getElementById('pc_common_demo_bar');
+        if (old) old.remove();
+        renderPatientIdentificationBar(document.querySelector('.oc-demo-bar') || document.body, {
+            _cleared: true, lastName: '', firstName: '', mrn: '', nationalId: '',
+            department: '', id: '', dob: '', gender: '', archiveCode: ''
+        });
+    }
+
+    function openWardPicker() {
+        var wards = ['ADMISSION WARD 7', 'NEUROLOGY', 'SURGERY WARD 7', 'INTERNAL MEDICINE', 'PEDIATRICS', 'MATERNITY', 'ICU / HIGH DEPENDENCY'];
+        var scrim = document.createElement('div');
+        scrim.className = 'pc-modal-scrim noprint';
+        scrim.innerHTML =
+            '<div class="pc-modal-box" style="width:500px;">' +
+                '<div class="pc-modal-head"><span>🏥 Select Ward / Department</span><button type="button" class="close-ward-btn" style="border:0;background:none;font-size:22px;cursor:pointer;">&times;</button></div>' +
+                '<div class="pc-modal-body" style="gap:8px;">' +
+                    wards.map(function(w) { return '<div class="patient-row" style="padding:10px 14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;display:flex;justify-content:space-between;cursor:pointer;" onclick="var d=document.getElementById(\'ocDepartment\'); if(d) d.value=\' ' + w + ' \'; this.closest(\' .pc-modal-scrim \').remove();"><b>🏥 ' + w + '</b><span style="color:#4b5563;font-size:12px;">Active Ward</span></div>'; }).join('') +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(scrim);
+        var btn = scrim.querySelector('.close-ward-btn');
+        if (btn) btn.onclick = function() { scrim.remove(); };
+        scrim.onclick = function(e) { if (e.target === scrim) scrim.remove(); };
+    }
+
 /* ══════════ EXPORTS ══════════ */
     window.pcFile = {
         patient: patient, nameOf: nameOf, age: age, esc: esc, uid: uid, staff: staff,
