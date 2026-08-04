@@ -771,6 +771,12 @@
         var old = document.getElementById(barId);
         if (old && old.parentNode) old.parentNode.removeChild(old);
 
+        // Remove any breadcrumb bar everywhere because it takes big space
+        var allBcs = document.querySelectorAll('.breadcrumb, #breadcrumb, .header-breadcrumb');
+        for (var idx=0; idx<allBcs.length; idx++) {
+            if (allBcs[idx] && allBcs[idx].parentNode) allBcs[idx].parentNode.removeChild(allBcs[idx]);
+        }
+
         // Remove old top menu if present to ensure fresh wiring
         var oldMenu = document.getElementById('pc_chuk_top_menu');
         if (oldMenu && oldMenu.parentNode) oldMenu.parentNode.removeChild(oldMenu);

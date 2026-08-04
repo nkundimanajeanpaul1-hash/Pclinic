@@ -1430,3 +1430,17 @@ body.compact .patient-card, body.compact .card {
     color: #ffffff !important;
     border-color: #003399 !important;
 }
+
+
+/* ============================================================
+   REMOVE BREADCRUMB BAR EVERYWHERE PER USER INSTRUCTION
+   (Saves ~45px vertical screen space across all pages!)
+   ============================================================ */
+.breadcrumb, #breadcrumb, .header-breadcrumb {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+}
