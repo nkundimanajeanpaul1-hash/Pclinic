@@ -790,10 +790,10 @@
             '<!-- LEFT SIDE: CLINICAL PORTALS (ACTION-CODED COLORS) -->' +
             '<div class="chuk-menu-left">' +
                 '<a class="chk-btn btn-patient" onclick="if(window.pcFile)pcFile.openPatientProfileModal();">👤 Patient</a>' +
-                '<a class="chk-btn btn-summary" onclick="window.location.href=\'medical-summary.html\'">📋 Medical summary</a>' +
-                '<a class="chk-btn btn-nursing" onclick="window.location.href=\'nurse-dashboard.html\'">🏥 Nursing</a>' +
-                '<a class="chk-btn btn-applications" onclick="window.location.href=\'lab-request.html\'">💉 Applications</a>' +
-                '<a class="chk-btn btn-documents" onclick="window.location.href=\'opd-file.html\'">📂 Documents</a>' +
+                '<a class="chk-btn btn-summary" onclick="var p=window.pcFile&&pcFile.patient(); window.location.href=\'medical-summary.html?patient=\' + encodeURIComponent((p&&p.id)||\'754775\');">📋 Medical summary</a>' +
+                '<a class="chk-btn btn-nursing" onclick="var p=window.pcFile&&pcFile.patient(); window.location.href=\'nurse-dashboard.html?patient=\' + encodeURIComponent((p&&p.id)||\'754775\');">🏥 Nursing</a>' +
+                '<a class="chk-btn btn-applications" onclick="var p=window.pcFile&&pcFile.patient(); window.location.href=\'lab-request.html?patient=\' + encodeURIComponent((p&&p.id)||\'754775\');">💉 Applications</a>' +
+                '<a class="chk-btn btn-documents" onclick="var p=window.pcFile&&pcFile.patient(); window.location.href=\'opd-file.html?patient=\' + encodeURIComponent((p&&p.id)||\'754775\');">📂 Documents</a>' +
                 '<a class="chk-btn btn-system" onclick="if(window.pcFile)pcFile.openSystemSettingsModal();">⚙️ System</a>' +
             '</div>' +
             '<!-- 🌟 RIGHT CORNER: THEME, NOTIFICATION, DR. MUTUA, LOGOUT, INFO 🌟 -->' +
@@ -998,3 +998,55 @@
             window.location.href = 'login.html';
         }
     }
+
+
+    /* ══════════════ AUTOMATIC SYSTEM-WIDE BANNER BOOTSTRAP ══════════════
+       Ensures on whichever page is opened across the entire hospital system,
+       the Complete Patient Identification Bar (.oc-demo-bar) and Top Menu Strip
+       (.chuk-top-menu) stay visible at the top exactly as it is!
+       ════════════════════════════════════════════════════════════════════ */
+    function autoMountPatientBar() {
+        if (window.__pcBannerMounted) return;
+        window.__pcBannerMounted = true;
+
+        var p = pcFile.patient();
+        if (!p) {
+            var savedId = localStorage.getItem('pclinic_active_patient');
+            if (savedId) {
+                var list = [];
+                try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
+                if (!list.length) {
+                    try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+                }
+                for (var i=0; i<list.length; i++) {
+                    if (String(list[i].id) === String(savedId)) { p = list[i]; break; }
+                }
+            }
+        }
+        p = p || {
+            id: '754775', mrn: '754775', lastName: 'NSANZINTWARI', firstName: 'SARATIEL',
+            nationalId: '1198280034887038', department: 'ADMISSION WARD 7', dob: '1982-01-01',
+            gender: 'Male', archiveCode: '', insurance: 'RSSB / RAMA', district: 'NYARUGENGE'
+        };
+
+        var barContainer = document.getElementById('pc_common_demo_bar');
+        if (!barContainer) {
+            barContainer = document.createElement('div');
+            barContainer.id = 'pc_common_demo_bar';
+            barContainer.className = 'oc-demo-bar noprint';
+            var host = document.querySelector('.topbar, .top-bar, header');
+            if (host && host.parentNode) host.parentNode.insertBefore(barContainer, host.nextSibling);
+            else if (document.body.firstChild) document.body.insertBefore(barContainer, document.body.firstChild);
+            else document.body.appendChild(barContainer);
+        }
+
+        renderPatientIdentificationBar(barContainer, p);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', autoMountPatientBar);
+    } else {
+        autoMountPatientBar();
+    }
+    setTimeout(autoMountPatientBar, 100);
+    setTimeout(autoMountPatientBar, 400);

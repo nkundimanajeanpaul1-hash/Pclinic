@@ -111,18 +111,19 @@
         if (c.att) chips += '<button class="pcf-tool" type="button" id="toolAtt" style="--c:#7a4500;--b:#fff4e0">' +
                             '<i class="ti ti-paperclip"></i> Attachments<span class="n" data-n="0"></span></button>';
 
+        // 🌟 100/100 EXACT BILL PAGE 2-COLUMN LAYOUT (1.35fr 1fr) FOR ALL NOTES & FORMS 🌟
         $('#pcfRoot').innerHTML =
-        '<div id="viewHistory">' +
-          '<div class="pcf-panel">' +
-            '<h2><i class="ti ti-history"></i> ' + esc(c.histTitle || (c.title + ' history')) +
-              '<span class="count" id="histCount">0</span></h2>' +
-            '<div class="pcf-hist" id="histList"></div>' +
-          '</div>' +
-          '<div style="margin-top:11px"><button class="pcf-btn primary full" id="btnNew">' +
-            '<i class="ti ti-plus"></i> ' + esc(c.newLabel || ('New ' + c.title)) + '</button></div>' +
-        '</div>' +
+        '<div class="pcf-bill-layout" style="display:grid; grid-template-columns: 1.35fr 1fr; gap:16px; align-items:start; width:100%;">' +
 
-        '<div id="viewFile" style="display:none;flex:1;min-height:0;flex-direction:column;gap:9px">' +
+          '<!-- LEFT COLUMN (1.35fr): ACTIVE CLINICAL FORM (#viewFile ALWAYS VISIBLE LIKE BILL PAGE) -->' +
+          '<div id="viewFile" style="display:flex; flex:1; min-height:0; flex-direction:column; gap:9px;">' +
+            '<div class="pcf-panel" style="background:#ffffff; border-radius:16px; border:1px solid rgba(0,0,0,0.08); padding:20px 24px; box-shadow:0 4px 20px rgba(0,0,0,0.05);">' +
+              '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid #e5e7eb;">' +
+                '<h2 style="font-size:15px; font-weight:800; color:#1d1d1f; display:flex; align-items:center; gap:8px;">' +
+                  '<i class="ti ' + esc(c.icon || 'ti-file-description') + '" style="color:#0b57d0;"></i> ' + esc(c.docTitle || c.title) +
+                '</h2>' +
+                '<span class="badge" style="background:#e8f0fe; color:#0b57d0; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px;">Active Record</span>' +
+              '</div>' +
           '<div class="pcf-cmd noprint">' +
             '<button class="pcf-btn sm" id="btnBack"><i class="ti ti-arrow-left"></i> History</button>' +
             '<b class="mode" id="fileMode"></b>' +
@@ -137,6 +138,22 @@
             '</div>' +
             '<div class="pcf-pane"><div class="pcf-doc" id="doc"></div></div>' +
           '</div>' +
+        '</div>' +
+
+          '<!-- RIGHT COLUMN (1fr): VISIT HISTORY & PAST RECORDS (#viewHistory ALWAYS VISIBLE LIKE BILL PAGE) -->' +
+          '<div id="viewHistory" style="display:block;">' +
+            '<div class="pcf-panel" style="background:#ffffff; border-radius:16px; border:1px solid rgba(0,0,0,0.08); padding:20px 24px; box-shadow:0 4px 20px rgba(0,0,0,0.05);">' +
+              '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid #e5e7eb;">' +
+                '<h2 style="font-size:15px; font-weight:800; color:#1d1d1f; display:flex; align-items:center; gap:8px;">' +
+                  '<i class="ti ti-history" style="color:#0b57d0;"></i> ' + esc(c.histTitle || (c.title + ' History')) +
+                  ' <span class="count" id="histCount" style="background:#f1f5f9; color:#475569; padding:2px 8px; border-radius:12px; font-size:11px;">0</span>' +
+                '</h2>' +
+                '<button type="button" class="pcf-btn sm" id="btnNew" style="background:#e8f0fe; color:#0b57d0; border:1px solid rgba(11,87,208,0.25); font-weight:700; border-radius:8px; padding:4px 10px; font-size:11px; cursor:pointer;"><i class="ti ti-plus"></i> ' + esc(c.newLabel || 'New Note') + '</button>' +
+              '</div>' +
+              '<div class="pcf-hist" id="histList" style="max-height:600px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>' +
+            '</div>' +
+          '</div>' +
+
         '</div>';
 
         $('#btnNew').onclick = newFile;
@@ -469,8 +486,9 @@
     }
 
     function showFileView(on) {
-        $('#viewHistory').style.display = on ? 'none' : '';
-        $('#viewFile').style.display = on ? 'flex' : 'none';
+        // In 100/100 Bill Page 2-Column Layout, BOTH #viewFile and #viewHistory remain visible!
+        var h = $('#viewHistory'); if (h) h.style.display = 'block';
+        var f = $('#viewFile'); if (f) f.style.display = 'flex';
     }
 
     function openFile(f) {
