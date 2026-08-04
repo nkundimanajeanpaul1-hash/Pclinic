@@ -134,6 +134,12 @@
         if (!el) return;
         var p = getPatient();
 
+        // Delegate to unified pclinic-file.js engine to eliminate duplication and ensure consistent Insurance/RSSB & search
+        if (window.pcFile && typeof window.pcFile.renderDemoBar === 'function') {
+            window.pcFile.renderDemoBar(el, p || { _cleared: !p });
+            return;
+        }
+
         if (!p) {
             el.className = 'oc-demo-bar noprint';
             el.innerHTML =

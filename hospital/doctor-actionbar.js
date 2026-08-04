@@ -335,35 +335,11 @@
 
     /* ══════════ 2. RICHER PATIENT STRIP ══════════ */
     function enrichStrip() {
-        var el = $('#dcCtx'); if (!el) return;
-        var p = P();
-        if (!p) return;                       // doctor-patient.js renders the empty state
-        if (el.dataset.enrichedFor === String(p.id)) return;
-        el.dataset.enrichedFor = String(p.id);
-
-        // Append the extra facts doctor-patient.js does not carry
-        var extra = [];
-        if (p.insurance && p.insurance.provider) {
-            extra.push('<span class="pill ins"><i class="ti ti-shield-check"></i> ' + esc(p.insurance.provider) +
-                       (p.insurance.policyNumber ? ' · ' + esc(p.insurance.policyNumber) : '') + '</span>');
-        } else {
-            extra.push('<span class="pill none">Cash patient</span>');
-        }
-        if (p.district) extra.push('<span class="pill"><i class="ti ti-map-pin"></i> ' + esc(p.district) +
-                                   (p.sector ? ', ' + esc(p.sector) : '') + '</span>');
-        var loc = p.location || p.department || 'OPD';
-        extra.push('<button class="pill locbtn" onclick="abFindPatient(\'' + esc(loc) + '\')" ' +
-                   'title="Show everyone in ' + esc(loc) + '"><i class="ti ti-building-hospital"></i> ' +
-                   esc(loc) + '</button>');
-        extra.push('<button class="pill locbtn" onclick="abFindPatient()" title="Search patients">' +
-                   '<i class="ti ti-search"></i></button>');
-
-        var spacer = el.querySelector('span[style*="flex:1"]');
-        var frag = document.createElement('span');
-        frag.className = 'ab-extra';
-        frag.style.cssText = 'display:contents';
-        frag.innerHTML = extra.join('');
-        if (spacer) el.insertBefore(frag, spacer); else el.appendChild(frag);
+        // Disabled per user instructions:
+        // 1. Removed blue large neurology box from bottom
+        // 2. Removed blue search box from bottom
+        // 3. Moved RSSB from bottom into .oc-demo-bar in front of District with same color as Family name box
+        return;
     }
 
     /* ══════════ HIDE THE OLD CARD ══════════ */
