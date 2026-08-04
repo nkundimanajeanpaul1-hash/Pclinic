@@ -1429,3 +1429,17 @@ body.compact .patient-card, body.compact .card {
     background: #d93025 !important;
     color: #ffffff !important;
 }
+
+
+/* ============================================================
+   HIDE LEGACY #pcHandoff SLIM BAR EVERYWHERE
+   Ensure only Complete Patient Identification Bar (.oc-demo-bar) is shown
+   ============================================================ */
+#pcHandoff {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+}
