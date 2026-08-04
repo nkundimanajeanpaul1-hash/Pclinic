@@ -494,7 +494,6 @@
         var old = document.getElementById(barId);
         if (old && old.parentNode) old.parentNode.removeChild(old);
 
-        // Clear any existing duplicate banner or department
         if (el.classList && (el.classList.contains('oc-demo-bar') || el.id === 'dcCtx')) {
             el.innerHTML = '';
         }
@@ -505,7 +504,7 @@
         var natId = isCleared ? '' : (p.nationalId || '1 1986 8 0064652 0 14');
         var mrn = isCleared ? '' : (p.mrn || p.id || '655055');
         var dobStr = isCleared ? '' : (p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '07/01/1986');
-        var ageStr = isCleared ? '' : (p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' years' : '40 years 7 months');
+        var ageStr = isCleared ? '' : (p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + 'y' : '40y');
         var sex = isCleared ? '' : (p.gender || 'Male');
         var dept = isCleared ? '' : ((p.department || 'SURGERY WARD 7').toUpperCase());
         var arch = isCleared ? '' : (p.archiveCode || 'ARCH-2026-655');
@@ -516,32 +515,23 @@
         div.id = barId;
         div.className = 'oc-demo-bar noprint';
         div.innerHTML =
-            '<div style="display:flex;flex-direction:column;gap:6px;">' +
-                '<div class="demo-row"><span class="demo-lbl">Family name</span><input type="text" class="demo-input" id="ocSearchFamily" placeholder="e.g. NSHUTI..." value="' + esc(name) + '" /></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input" id="ocSearchNatId" placeholder="e.g. 1 1986..." value="' + esc(natId) + '" /></div>' +
-                '<div class="demo-row">' +
-                    '<span class="demo-lbl">Department</span>' +
-                    '<div style="display:flex;gap:4px;width:68%;align-items:center;">' +
-                        '<button type="button" class="demo-btn" onclick="pcFile.openWardPicker()" title="Browse Patients by Ward / Department" style="padding:5px 10px;font-size:11px;white-space:nowrap;">🏥 Ward</button>' +
-                        '<input type="text" class="demo-input readonly" id="ocDepartment" readonly value="' + esc(dept) + '" style="width:100%;" placeholder="Department..." />' +
-                    '</div>' +
+            '<!-- ═══ ROW 1: PRIMARY SEARCH & DEMOGRAPHICS (ULTRA-COMPACT SINGLE LINE) ═══ -->' +
+            '<div class="demo-row-grid">' +
+                '<div class="demo-field"><span class="demo-lbl">Family</span><input type="text" class="demo-input" id="ocSearchFamily" placeholder="NSHUTI..." value="' + esc(name) + '" /></div>' +
+                '<div class="demo-field"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input" id="ocSearchFirst" placeholder="DJUMA..." value="' + esc(first) + '" /></div>' +
+                '<div class="demo-field"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input" id="ocSearchNatId" placeholder="1 1986..." value="' + esc(natId) + '" /></div>' +
+                '<div class="demo-field"><span class="demo-lbl">Record no.</span><input type="text" class="demo-input" id="ocSearchMrn" placeholder="MRN..." value="' + esc(mrn) + '" /></div>' +
+                '<div class="demo-field"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input" id="ocSearchId" placeholder="1003..." value="' + esc(pid) + '" /></div>' +
+                '<div class="demo-btn-group">' +
+                    '<button type="button" class="demo-btn" onclick="pcFile.searchPatientRegistry()">Find</button>' +
+                    '<button type="button" class="demo-btn clear-btn" onclick="pcFile.clearPatientBar()">Clear</button>' +
                 '</div>' +
             '</div>' +
-            '<div style="display:flex;flex-direction:column;gap:6px;">' +
-                '<div class="demo-row"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input" id="ocSearchFirst" placeholder="e.g. DJUMA..." value="' + esc(first) + '" /></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Record number</span><input type="text" class="demo-input" id="ocSearchMrn" placeholder="e.g. MRN 1003..." value="' + esc(mrn) + '" /></div>' +
-                '<div class="demo-row" style="justify-content:flex-start;padding-top:4px;">' +
-                    '<span class="demo-status-pills">' +
-                        '<span title="Insurance Status">🟢 ' + esc(ins) + '</span>' +
-                        '<span title="Ward Department">🏥 ' + esc(dept) + '</span>' +
-                        '<span title="Demographics">👤 ' + esc(sex ? (sex.charAt(0).toUpperCase() + ' · ' + ageStr) : '-') + '</span>' +
-                    '</span>' +
-                '</div>' +
-            '</div>' +
-            '<div style="display:flex;flex-direction:column;gap:6px;">' +
-                '<div class="demo-row"><span class="demo-lbl">Date of birth</span><input type="text" class="demo-input readonly" readonly value="' + esc(dobStr) + '" style="width:55%;" placeholder="DD/MM/YYYY" /><span style="font-size:11px;font-weight:700;color:#5f6368;">' + (sex ? '(' + esc(sex) + ' - ' + esc(ageStr) + ')' : '') + '</span></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Archive code</span><input type="text" class="demo-input readonly" id="ocArchiveCode" readonly value="' + esc(arch) + '" placeholder="Archive..." /></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Insurance/RSSB</span>' +
+            '<!-- ═══ ROW 2: CLINICAL CONTEXT & RSSB IN FRONT OF DISTRICT (ULTRA-COMPACT SINGLE LINE) ═══ -->' +
+            '<div class="demo-row-grid" style="margin-top:2px; border-top:1px solid rgba(0,0,0,0.06); padding-top:5px;">' +
+                '<div class="demo-field"><span class="demo-lbl">DOB</span><div style="display:flex;align-items:center;gap:4px;width:100%;"><input type="text" class="demo-input readonly" id="ocDob" readonly value="' + esc(dobStr) + '" style="width:65%;" /><span id="ocAgeTxt" style="font-size:9.5px;font-weight:700;color:#6e6e73;white-space:nowrap;">' + (sex ? '(' + esc(sex.charAt(0)) + '·' + esc(ageStr) + ')' : '') + '</span></div></div>' +
+                '<div class="demo-field"><span class="demo-lbl">Archive</span><input type="text" class="demo-input readonly" id="ocArchiveCode" readonly value="' + esc(arch) + '" placeholder="Archive..." /></div>' +
+                '<div class="demo-field"><span class="demo-lbl">Insurance</span>' +
                     '<select class="demo-input" id="ocInsurance">' +
                         '<option value="RSSB / RAMA"' + (ins === 'RSSB / RAMA' ? ' selected' : '') + '>RSSB / RAMA</option>' +
                         '<option value="MUTUELLE DE SANTE"' + (ins === 'MUTUELLE DE SANTE' ? ' selected' : '') + '>MUTUELLE DE SANTE</option>' +
@@ -549,7 +539,7 @@
                         '<option value="RADIANT"' + (ins === 'RADIANT' ? ' selected' : '') + '>RADIANT</option>' +
                         '<option value="PRIVATE / CASH"' + (ins === 'PRIVATE / CASH' ? ' selected' : '') + '>PRIVATE / CASH</option>' +
                     '</select></div>' +
-                '<div class="demo-row"><span class="demo-lbl">District</span>' +
+                '<div class="demo-field"><span class="demo-lbl">District</span>' +
                     '<select class="demo-input">' +
                         '<option value="KAMONYI" selected>KAMONYI</option>' +
                         '<option value="KIGALI">KIGALI</option>' +
@@ -557,12 +547,11 @@
                         '<option value="NYARUGENGE">NYARUGENGE</option>' +
                         '<option value="KICUKIRO">KICUKIRO</option>' +
                     '</select></div>' +
-            '</div>' +
-            '<div style="display:flex;flex-direction:column;gap:6px;justify-content:space-between;">' +
-                '<div class="demo-row"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input" id="ocSearchId" placeholder="e.g. 1003..." value="' + esc(pid) + '" /></div>' +
-                '<div class="demo-btn-group">' +
-                    '<button type="button" class="demo-btn" onclick="pcFile.searchPatientRegistry()">Find</button>' +
-                    '<button type="button" class="demo-btn clear-btn" onclick="pcFile.clearPatientBar()">Clear</button>' +
+                '<div class="demo-field"><span class="demo-lbl">Dept</span><div style="display:flex;gap:4px;width:100%;align-items:center;"><button type="button" class="demo-btn" onclick="pcFile.openWardPicker()" title="Browse Wards" style="padding:2px 8px;font-size:10px;height:22px;white-space:nowrap;">🏥 Ward</button><input type="text" class="demo-input readonly" id="ocDepartment" readonly value="' + esc(dept) + '" style="width:100%;" placeholder="Department..." /></div></div>' +
+                '<div class="demo-status-pills">' +
+                    '<span title="Insurance">🟢 ' + esc(ins) + '</span>' +
+                    '<span title="Ward">🏥 ' + esc(dept) + '</span>' +
+                    '<span title="Patient">👤 ' + esc(sex ? (sex.charAt(0) + '·' + ageStr) : '-') + '</span>' +
                 '</div>' +
             '</div>';
 
