@@ -938,6 +938,88 @@
             }
         });
     }
+
+    /* ══════════════ RESTORED MISSING SEARCH & CLEAR FUNCTIONS ══════════════ */
+    function searchPatientRegistry() {
+        var fam = ($('#ocSearchFamily') ? $('#ocSearchFamily').value.trim().toLowerCase() : '');
+        var first = ($('#ocSearchFirst') ? $('#ocSearchFirst').value.trim().toLowerCase() : '');
+        var nat = ($('#ocSearchNatId') ? $('#ocSearchNatId').value.trim().toLowerCase() : '');
+        var mrn = ($('#ocSearchMrn') ? $('#ocSearchMrn').value.trim().toLowerCase() : '');
+        var pid = ($('#ocSearchId') ? $('#ocSearchId').value.trim().toLowerCase() : '');
+
+        var list = [];
+        try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
+        if (!list.length) {
+            try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+        }
+
+        var matching = [];
+        if (!fam && !first && !nat && !mrn && !pid) {
+            matching = list;
+        } else {
+            matching = list.filter(function(p) {
+                var mFam = !fam || (p.lastName || '').toLowerCase().indexOf(fam) !== -1;
+                var mFirst = !first || (p.firstName || '').toLowerCase().indexOf(first) !== -1;
+                var mNat = !nat || (p.nationalId || '').toLowerCase().indexOf(nat) !== -1;
+                var mMrn = !mrn || String(p.mrn || '').toLowerCase().indexOf(mrn) !== -1;
+                var mPid = !pid || String(p.id || '').toLowerCase().indexOf(pid) !== -1;
+                return mFam && mFirst && mNat && mMrn && mPid;
+            });
+        }
+
+        if (!matching.length) {
+            if (window.pcToast) pcToast('No patients found matching search criteria', 'warning');
+            else alert('No patients found matching search criteria.');
+            return;
+        }
+
+        if (typeof openPatientPickerModal === 'function') {
+            openPatientPickerModal(matching, 'Patient Registry Search Results (' + matching.length + ' found)');
+        } else {
+            alert('👤 Patient Registry Search Results (' + matching.length + ' found)');
+        }
+    }
+
+    function clearPatientBar() {
+        try { localStorage.removeItem('pclinic_active_patient'); } catch(e){}
+        window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: null }));
+        if (window.pcToast) pcToast('🧹 Active patient selection cleared', 'info');
+        var old = document.getElementById('pc_common_demo_bar');
+        if (old) old.remove();
+        renderPatientIdentificationBar(document.querySelector('.oc-demo-bar') || document.body, {
+            _cleared: true, lastName: '', firstName: '', mrn: '', nationalId: '',
+            department: '', id: '', dob: '', gender: '', archiveCode: ''
+        });
+    }
+
+
+
+    /* ══════════════ RESTORED WARD PICKER FUNCTION ══════════════ */
+    function openWardPicker() {
+        var wards = [
+            'ADMISSION WARD 7', 'NEUROLOGY', 'SURGERY WARD 7',
+            'INTERNAL MEDICINE', 'PEDIATRICS', 'MATERNITY',
+            'ICU / HIGH DEPENDENCY', 'EMERGENCY ROOM', 'ORTHOPEDICS',
+            'CARDIOLOGY', 'GYNAECOLOGY - OBSTETRICS', 'ONCOLOGY'
+        ];
+        var scrim = document.createElement('div');
+        scrim.className = 'pc-modal-scrim noprint';
+        scrim.innerHTML =
+            '<div class="pc-modal-box" style="width:520px;" role="dialog" aria-modal="true">' +
+                '<div class="pc-modal-head"><span>🏥 Select Hospital Ward / Department</span><button onclick="this.closest(\'.pc-modal-scrim\').remove()" style="border:0;background:none;font-size:22px;cursor:pointer;">&times;</button></div>' +
+                '<div class="pc-modal-body">' +
+                    wards.map(function(w) {
+                        return '<div class="patient-row" onclick="var el=document.getElementById(\'ocDepartment\'); if(el) el.value=\'' + w + '\'; this.closest(\'.pc-modal-scrim\').remove();"><b>🏥 ' + w + '</b><span style="color:#6b7280;font-size:11.5px;">Active Ward</span></div>';
+                    }).join('') +
+                '</div>' +
+                '<div class="pc-modal-foot">' +
+                    '<button type="button" class="pc-tab-btn" onclick="this.closest(\'.pc-modal-scrim\').remove()">Cancel</button>' +
+                '</div>' +
+            '</div>';
+        scrim.onclick = function(e) { if (e.target === scrim) scrim.remove(); };
+        document.body.appendChild(scrim);
+    }
+
 /* ══════════ EXPORTS ══════════ */
     window.pcFile = {
         patient: patient, nameOf: nameOf, age: age, esc: esc, uid: uid, staff: staff,
@@ -963,43 +1045,6 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
     else boot();
 
-    console.log('📁 PClinic file engine ready');
-})();
-
-
-    /* ══════════════ MOVED TOPBAR BUTTON HELPERS (THEME, ALERTS, DR. MUTUA, LOGOUT) ══════════════ */
-    function toggleThemeFromMenu() {
-        var current = localStorage.getItem('pclinic-theme') || 'light';
-        var next = current === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('pclinic-theme', next);
-        if (next === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            document.body.classList.add('dark-mode');
-        } else {
-            document.documentElement.setAttribute('data-theme', 'light');
-            document.body.classList.remove('dark-mode');
-        }
-        if (window.pcToast) pcToast('🎨 Switched to Apple ' + (next === 'dark' ? 'Dark' : 'Light') + ' Mode', 'info');
-        else alert('🎨 Switched to Apple ' + (next === 'dark' ? 'Dark' : 'Light') + ' Mode');
-    }
-
-    function showNotificationsModal() {
-        alert('🔔 Clinical Alerts & Notifications (3 Unread)\n\n1. [LAB] FBC test results ready for Patient 1003 (Nshuti Djuma)\n2. [PACS] CT Brain scan ready for reading\n3. [CASHIER] Bill BILL-2026-882 paid in full via RSSB/RAMA');
-    }
-
-    function openStaffProfileModal() {
-        alert('👨‍⚕️ Active Staff Account Profile\n\nName: Dr. Mutua (Doctor / Consultant)\nDepartment: SURGERY WARD 7 / NEUROLOGY\nEmail: d.mutua@pclinic.rw\nRole: Senior Specialist Physician\nStatus: Active Clinical Staff (Authenticated in Firebase Auth)');
-    }
-
-    function confirmLogout() {
-        if (confirm('Sign out of PClinic as Dr. Mutua?')) {
-            localStorage.removeItem('pclinic_active_patient');
-            if (window.pcToast) pcToast('🚪 Signing out...', 'info');
-            window.location.href = 'login.html';
-        }
-    }
-
-
     /* ══════════════ AUTOMATIC SYSTEM-WIDE BANNER BOOTSTRAP ══════════════
        Ensures on whichever page is opened across the entire hospital system,
        the Complete Patient Identification Bar (.oc-demo-bar) and Top Menu Strip
@@ -1009,7 +1054,7 @@
         if (window.__pcBannerMounted) return;
         window.__pcBannerMounted = true;
 
-        var p = pcFile.patient();
+        var p = patient();
         if (!p) {
             var savedId = localStorage.getItem('pclinic_active_patient');
             if (savedId) {
@@ -1050,3 +1095,42 @@
     }
     setTimeout(autoMountPatientBar, 100);
     setTimeout(autoMountPatientBar, 400);
+
+    console.log('📁 PClinic file engine ready');
+})();
+
+
+    /* ══════════════ MOVED TOPBAR BUTTON HELPERS (THEME, ALERTS, DR. MUTUA, LOGOUT) ══════════════ */
+    function toggleThemeFromMenu() {
+        var current = localStorage.getItem('pclinic-theme') || 'light';
+        var next = current === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('pclinic-theme', next);
+        if (next === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.body.classList.add('dark-mode');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.body.classList.remove('dark-mode');
+        }
+        if (window.pcToast) pcToast('🎨 Switched to Apple ' + (next === 'dark' ? 'Dark' : 'Light') + ' Mode', 'info');
+        else alert('🎨 Switched to Apple ' + (next === 'dark' ? 'Dark' : 'Light') + ' Mode');
+    }
+
+    function showNotificationsModal() {
+        alert('🔔 Clinical Alerts & Notifications (3 Unread)\n\n1. [LAB] FBC test results ready for Patient 1003 (Nshuti Djuma)\n2. [PACS] CT Brain scan ready for reading\n3. [CASHIER] Bill BILL-2026-882 paid in full via RSSB/RAMA');
+    }
+
+    function openStaffProfileModal() {
+        alert('👨‍⚕️ Active Staff Account Profile\n\nName: Dr. Mutua (Doctor / Consultant)\nDepartment: SURGERY WARD 7 / NEUROLOGY\nEmail: d.mutua@pclinic.rw\nRole: Senior Specialist Physician\nStatus: Active Clinical Staff (Authenticated in Firebase Auth)');
+    }
+
+    function confirmLogout() {
+        if (confirm('Sign out of PClinic as Dr. Mutua?')) {
+            localStorage.removeItem('pclinic_active_patient');
+            if (window.pcToast) pcToast('🚪 Signing out...', 'info');
+            window.location.href = 'login.html';
+        }
+    }
+
+
+
