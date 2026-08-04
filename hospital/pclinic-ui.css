@@ -1246,191 +1246,147 @@ body.compact .patient-card, body.compact .card {
    PCLINIC TOP MENU STRIP & COMPREHENSIVE MODALS
    (Patient Demographics/Caretaker & System Settings/Language/Theme)
    ============================================================ */
+/* ============================================================
+   OPENCLINIC GA CHUK UNIFIED TOP MENU STRIP (.chuk-top-menu)
+   1. Distinct Action-Coded Button Colors (Replicating Screenshot 2026-08-04 at 17.38.06.png)
+   2. Left-Side Clinical Portals + Right-Corner Controls (Theme, Alerts, Dr. Mutua, Logout, Info)
+   ============================================================ */
 .chuk-top-menu {
     display: flex !important;
+    justify-content: space-between !important;
     align-items: center !important;
-    gap: 14px !important;
+    gap: 12px !important;
     padding: 8px 16px !important;
-    background: linear-gradient(135deg, rgba(240, 240, 245, 0.94) 0%, rgba(238, 240, 245, 0.88) 100%) !important;
+    background: #f0f0f5 !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-bottom: none !important;
     border-top-left-radius: 14px !important;
     border-top-right-radius: 14px !important;
-    font-size: 12.5px !important;
+    font-size: 12px !important;
     font-weight: 700 !important;
-    color: #0b57d0 !important;
-    overflow-x: auto !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
-}
-
-.chuk-top-menu a, .chuk-top-menu button.menu-link {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 5px !important;
-    color: #0b57d0 !important;
-    text-decoration: none !important;
-    cursor: pointer !important;
-    padding: 5px 10px !important;
-    border-radius: 8px !important;
-    border: none !important;
-    background: transparent !important;
-    font-family: inherit !important;
-    font-size: 12.5px !important;
-    font-weight: 700 !important;
-    transition: all 0.2s ease !important;
-    white-space: nowrap !important;
-}
-
-.chuk-top-menu a:hover, .chuk-top-menu button.menu-link:hover {
-    background: rgba(11, 87, 208, 0.12) !important;
-    color: #003399 !important;
-    transform: translateY(-1px) !important;
-}
-
-.chuk-top-menu a:active, .chuk-top-menu button.menu-link:active {
-    transform: scale(0.97) !important;
-}
-
-/* PATIENT PROFILE & SYSTEM SETTINGS MODAL SCRIM */
-.pc-modal-scrim {
-    position: fixed !important;
-    inset: 0 !important;
-    background: rgba(0, 0, 0, 0.55) !important;
-    backdrop-filter: blur(10px) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    z-index: 999999 !important;
-    padding: 20px !important;
-}
-
-.pc-modal-box {
-    background: #ffffff !important;
-    border-radius: 20px !important;
-    width: 780px !important;
-    max-width: 98% !important;
-    max-height: 88vh !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    color: #1d1d1f !important;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Helvetica, Arial, sans-serif !important;
-}
-
-.pc-modal-head {
-    padding: 16px 24px !important;
-    background: #f5f5f7 !important;
-    border-bottom: 1px solid #e5e5ea !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    font-weight: 800 !important;
-    font-size: 16px !important;
-    color: #1d1d1f !important;
-}
-
-.pc-modal-body {
-    padding: 24px !important;
-    overflow-y: auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 18px !important;
-}
-
-.pc-modal-foot {
-    padding: 14px 24px !important;
-    background: #f5f5f7 !important;
-    border-top: 1px solid #e5e5ea !important;
-    display: flex !important;
-    justify-content: flex-end !important;
-    gap: 10px !important;
-}
-
-.pc-sec-title {
-    font-size: 13px !important;
-    font-weight: 800 !important;
-    color: #0b57d0 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-    padding-bottom: 6px !important;
-    border-bottom: 1.5px solid #e2e8f0 !important;
-    margin-bottom: 4px !important;
-}
-
-.pc-form-grid {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 12px 18px !important;
-}
-
-@media(max-width: 650px) {
-    .pc-form-grid { grid-template-columns: 1fr !important; }
-}
-
-.pc-form-row {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
-}
-
-.pc-form-lbl {
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    color: #5f6368 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.3px !important;
-}
-
-.pc-form-input, .pc-form-select {
-    background: #f8fafc !important;
-    color: #1d1d1f !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 8px !important;
-    padding: 8px 12px !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    height: 36px !important;
-    outline: none !important;
     width: 100% !important;
-    transition: all 0.2s ease !important;
-}
-
-.pc-form-input:focus, .pc-form-select:focus {
-    background: #ffffff !important;
-    border-color: #0b57d0 !important;
-    box-shadow: 0 0 0 3px rgba(11, 87, 208, 0.16) !important;
-}
-
-/* TABS IN SYSTEM SETTINGS MODAL */
-.pc-tab-nav {
-    display: flex !important;
-    gap: 6px !important;
-    border-bottom: 1px solid #e5e5ea !important;
-    padding-bottom: 10px !important;
-    margin-bottom: 10px !important;
     flex-wrap: wrap !important;
 }
 
-.pc-tab-btn {
-    padding: 8px 16px !important;
-    border-radius: 8px !important;
-    border: 1px solid #cbd5e1 !important;
-    background: #f8fafc !important;
-    color: #475569 !important;
-    font-weight: 700 !important;
-    font-size: 12.5px !important;
+.chuk-menu-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    flex-wrap: wrap !important;
+}
+
+/* 🌟 RIGHT CORNER OF THE BAR: THEME, NOTIFICATION, DR. MUTUA, LOGOUT, INFO 🌟 */
+.chuk-menu-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    margin-left: auto !important;
+    flex-wrap: wrap !important;
+}
+
+/* DISTINCT BACKGROUND COLORS SPECIFIC FOR EACH ACTION (Screenshot 2026-08-04 at 17.38.06.png) */
+.chuk-top-menu .chk-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    text-decoration: none !important;
     cursor: pointer !important;
-    transition: all 0.2s ease !important;
+    padding: 5px 12px !important;
+    border-radius: 8px !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    font-family: inherit !important;
 }
 
-.pc-tab-btn.active {
-    background: #0b57d0 !important;
-    color: #ffffff !important;
-    border-color: #003399 !important;
+.chuk-top-menu .chk-btn:hover {
+    transform: translateY(-1.5px) scale(1.02) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+    text-decoration: none !important;
 }
 
+.chuk-top-menu .chk-btn:active {
+    transform: scale(0.96) !important;
+}
+
+/* 1. 👤 Patient (White/Slate Neutral) */
+.chk-btn.btn-patient {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+/* 2. 📋 Medical summary (Pink/Purple Pill - #f5eaff) */
+.chk-btn.btn-summary {
+    background: #f5eaff !important;
+    color: #5c2475 !important;
+    border: 1px solid rgba(175, 82, 222, 0.3) !important;
+}
+
+/* 3. 🏥 Nursing (Soft Green/Teal - #e9f9ee) */
+.chk-btn.btn-nursing {
+    background: #e9f9ee !important;
+    color: #1a7a32 !important;
+    border: 1px solid rgba(52, 199, 89, 0.3) !important;
+}
+
+/* 4. 💉 Applications (Soft Blue - #eaf2ff) */
+.chk-btn.btn-applications {
+    background: #eaf2ff !important;
+    color: #0066d6 !important;
+    border: 1px solid rgba(0, 113, 227, 0.3) !important;
+}
+
+/* 5. 📂 Documents (Lavender/Purple - #f3e8ff) */
+.chk-btn.btn-documents {
+    background: #f3e8ff !important;
+    color: #6b21a8 !important;
+    border: 1px solid rgba(147, 51, 234, 0.3) !important;
+}
+
+/* 6. ⚙️ System (Warm Slate/Gray - #f3f4f6) */
+.chk-btn.btn-system {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+    border: 1px solid #d1d1d6 !important;
+}
+
+/* 7. ☀️ Theme (Warm Yellow/Gold - #fef9c3) */
+.chk-btn.btn-theme {
+    background: #fef9c3 !important;
+    color: #854d0e !important;
+    border: 1px solid rgba(234, 179, 8, 0.35) !important;
+}
+
+/* 8. 🔔 3 Alerts (Soft Orange/Amber - #ffedd5) */
+.chk-btn.btn-alerts {
+    background: #ffedd5 !important;
+    color: #c2410c !important;
+    border: 1px solid rgba(249, 115, 22, 0.35) !important;
+}
+
+/* 9. 👨‍⚕️ Dr. Mutua (Indigo/Slate - #e0e7ff) */
+.chk-btn.btn-user {
+    background: #e0e7ff !important;
+    color: #3730a3 !important;
+    border: 1px solid rgba(99, 102, 241, 0.35) !important;
+}
+
+/* 10. 🚪 Logout (Soft Peach/Red - #ffebe9) */
+.chk-btn.btn-logout {
+    background: #ffebe9 !important;
+    color: #b91c1c !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+}
+
+/* 11. ❓ Info (Soft Neutral Slate - #f1f5f9) */
+.chk-btn.btn-info {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+}
 
 /* ============================================================
    REMOVE BREADCRUMB BAR EVERYWHERE PER USER INSTRUCTION

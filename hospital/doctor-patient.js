@@ -163,18 +163,23 @@
         menuDiv.id = 'pc_chuk_top_menu';
         menuDiv.className = 'chuk-top-menu noprint';
         menuDiv.innerHTML =
-            '<a onclick="if(window.pcFile)pcFile.openPatientProfileModal(); else alert(\'👤 Complete Patient Profile (ID ' + esc(pid) + ')\\nEmail: s.nsanzintwari@pclinic.rw\\nPhone: +250 788 456 789\\nCaretaker: UWASE MUKAMANA CLAUDINE (Spouse)\\nCaretaker Phone: +250 788 987 654\\nWard: ' + esc(dept) + '\\nInsurance: ' + esc(ins) + '\\nBlood Group: O+ | No known drug allergies\');">👤 Patient</a>' +
-            '<a onclick="window.location.href=\'medical-summary.html\' ">📋 Medical summary</a>' +
-            '<a onclick="window.location.href=\'nurse-dashboard.html\' ">🏥 Nursing</a>' +
-            '<a onclick="window.location.href=\'lab-request.html\' ">💉 Applications</a>' +
-            '<a onclick="window.location.href=\'opd-file.html\' ">📂 Documents</a>' +
-            '<a onclick="if(window.pcFile)pcFile.openSystemSettingsModal(); else alert(\'⚙️ System Preferences & Security Suite\\nLanguage: English / Français / Kinyarwanda\\nTheme: Apple Light / Dark / Auto\\nConnected to Local Common Server\');">⚙️ System</a>' +
-            '<!-- 🌟 MOVED TOPBAR BUTTONS IN FRONT OF INFO 🌟 -->' +
-            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.toggleThemeFromMenu(); else alert(\'☀️ Theme switch\');" title="Toggle Theme">☀️ Theme</a>' +
-            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.showNotificationsModal(); else alert(\'🔔 3 Alerts\');" title="Alerts">🔔 3</a>' +
-            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.openStaffProfileModal(); else alert(\'👨‍⚕️ Dr. Mutua\');" title="Staff Profile">👨‍⚕️ Dr. Mutua</a>' +
-            '<a class="topbar-moved-btn logout-btn" onclick="if(window.pcFile)pcFile.confirmLogout(); else alert(\'🚪 Signing out...\');" title="Sign out">🚪 Logout</a>' +
-            '<a onclick="alert(\'🏥 PClinic Clinical Suite • OpenClinic GA v5.346.01 / CHUK\\nReadiness Score: 100/100\\nConnected to Local Common Server (Hybrid localStorage + Firestore)\');">❓ Info</a>';
+            '<!-- LEFT SIDE: CLINICAL PORTALS (ACTION-CODED COLORS) -->' +
+            '<div class="chuk-menu-left">' +
+                '<a class="chk-btn btn-patient" onclick="if(window.pcFile)pcFile.openPatientProfileModal();">👤 Patient</a>' +
+                '<a class="chk-btn btn-summary" onclick="window.location.href=\'medical-summary.html\'">📋 Medical summary</a>' +
+                '<a class="chk-btn btn-nursing" onclick="window.location.href=\'nurse-dashboard.html\'">🏥 Nursing</a>' +
+                '<a class="chk-btn btn-applications" onclick="window.location.href=\'lab-request.html\'">💉 Applications</a>' +
+                '<a class="chk-btn btn-documents" onclick="window.location.href=\'opd-file.html\'">📂 Documents</a>' +
+                '<a class="chk-btn btn-system" onclick="if(window.pcFile)pcFile.openSystemSettingsModal();">⚙️ System</a>' +
+            '</div>' +
+            '<!-- 🌟 RIGHT CORNER: THEME, NOTIFICATION, DR. MUTUA, LOGOUT, INFO 🌟 -->' +
+            '<div class="chuk-menu-right">' +
+                '<a class="chk-btn btn-theme" onclick="if(window.pcFile)pcFile.toggleThemeFromMenu();" title="Toggle Theme">☀️ Theme</a>' +
+                '<a class="chk-btn btn-alerts" onclick="if(window.pcFile)pcFile.showNotificationsModal();" title="Alerts & Notifications">🔔 3</a>' +
+                '<a class="chk-btn btn-user" onclick="if(window.pcFile)pcFile.openStaffProfileModal();" title="Active Staff Profile">👨‍⚕️ Dr. Mutua</a>' +
+                '<a class="chk-btn btn-logout" onclick="if(window.pcFile)pcFile.confirmLogout();" title="Sign out">🚪 Logout</a>' +
+                '<a class="chk-btn btn-info" onclick="if(window.pcFile)pcFile.openSystemInfoModal();" title="System Info">❓ Info</a>' +
+            '</div>';
 
         if (el.parentNode) {
             el.parentNode.insertBefore(menuDiv, el);

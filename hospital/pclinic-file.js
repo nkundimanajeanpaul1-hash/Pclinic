@@ -787,18 +787,23 @@
         menuDiv.id = 'pc_chuk_top_menu';
         menuDiv.className = 'chuk-top-menu noprint';
         menuDiv.innerHTML =
-            '<a onclick="if(window.pcFile)pcFile.openPatientProfileModal();">👤 Patient</a>' +
-            '<a onclick="window.location.href=\'medical-summary.html\' ">📋 Medical summary</a>' +
-            '<a onclick="window.location.href=\'nurse-dashboard.html\' ">🏥 Nursing</a>' +
-            '<a onclick="window.location.href=\'lab-request.html\' ">💉 Applications</a>' +
-            '<a onclick="window.location.href=\'opd-file.html\' ">📂 Documents</a>' +
-            '<a onclick="if(window.pcFile)pcFile.openSystemSettingsModal();">⚙️ System</a>' +
-            '<!-- 🌟 MOVED TOPBAR BUTTONS IN FRONT OF INFO 🌟 -->' +
-            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.toggleThemeFromMenu();" title="Toggle Light/Dark Theme">☀️ Theme</a>' +
-            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.showNotificationsModal();" title="Clinical Notifications">🔔 3</a>' +
-            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.openStaffProfileModal();" title="Staff Account">👨‍⚕️ Dr. Mutua</a>' +
-            '<a class="topbar-moved-btn logout-btn" onclick="if(window.pcFile)pcFile.confirmLogout();" title="Sign Out">🚪 Logout</a>' +
-            '<a onclick="if(window.pcFile)pcFile.openSystemInfoModal();">❓ Info</a>';
+            '<!-- LEFT SIDE: CLINICAL PORTALS (ACTION-CODED COLORS) -->' +
+            '<div class="chuk-menu-left">' +
+                '<a class="chk-btn btn-patient" onclick="if(window.pcFile)pcFile.openPatientProfileModal();">👤 Patient</a>' +
+                '<a class="chk-btn btn-summary" onclick="window.location.href=\'medical-summary.html\'">📋 Medical summary</a>' +
+                '<a class="chk-btn btn-nursing" onclick="window.location.href=\'nurse-dashboard.html\'">🏥 Nursing</a>' +
+                '<a class="chk-btn btn-applications" onclick="window.location.href=\'lab-request.html\'">💉 Applications</a>' +
+                '<a class="chk-btn btn-documents" onclick="window.location.href=\'opd-file.html\'">📂 Documents</a>' +
+                '<a class="chk-btn btn-system" onclick="if(window.pcFile)pcFile.openSystemSettingsModal();">⚙️ System</a>' +
+            '</div>' +
+            '<!-- 🌟 RIGHT CORNER: THEME, NOTIFICATION, DR. MUTUA, LOGOUT, INFO 🌟 -->' +
+            '<div class="chuk-menu-right">' +
+                '<a class="chk-btn btn-theme" onclick="if(window.pcFile)pcFile.toggleThemeFromMenu();" title="Toggle Theme">☀️ Theme</a>' +
+                '<a class="chk-btn btn-alerts" onclick="if(window.pcFile)pcFile.showNotificationsModal();" title="Alerts & Notifications">🔔 3</a>' +
+                '<a class="chk-btn btn-user" onclick="if(window.pcFile)pcFile.openStaffProfileModal();" title="Active Staff Profile">👨‍⚕️ Dr. Mutua</a>' +
+                '<a class="chk-btn btn-logout" onclick="if(window.pcFile)pcFile.confirmLogout();" title="Sign out">🚪 Logout</a>' +
+                '<a class="chk-btn btn-info" onclick="if(window.pcFile)pcFile.openSystemInfoModal();" title="System Info">❓ Info</a>' +
+            '</div>';
 
         if (el.firstChild) {
             el.insertBefore(menuDiv, el.firstChild);
