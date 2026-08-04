@@ -494,7 +494,7 @@
         var old = document.getElementById(barId);
         if (old && old.parentNode) old.parentNode.removeChild(old);
 
-        // If rendering directly into .oc-demo-bar or #dcCtx, clear any existing duplicate banner or department
+        // Clear any existing duplicate banner or department
         if (el.classList && (el.classList.contains('oc-demo-bar') || el.id === 'dcCtx')) {
             el.innerHTML = '';
         }
@@ -510,43 +510,44 @@
         var dept = isCleared ? '' : ((p.department || 'SURGERY WARD 7').toUpperCase());
         var arch = isCleared ? '' : (p.archiveCode || 'ARCH-2026-655');
         var pid = isCleared ? '' : (p.id || '655055');
+        var ins = isCleared ? 'RSSB / RAMA' : (p.insurance || 'RSSB / RAMA');
 
         var div = document.createElement('div');
         div.id = barId;
         div.className = 'oc-demo-bar noprint';
         div.innerHTML =
             '<div style="display:flex;flex-direction:column;gap:6px;">' +
-                '<div class="demo-row"><span class="demo-lbl">Family name</span><input type="text" class="demo-input" id="ocSearchFamily" placeholder="Search family..." value="' + esc(name) + '" /></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input" id="ocSearchNatId" placeholder="National ID..." value="' + esc(natId) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Family name</span><input type="text" class="demo-input" id="ocSearchFamily" placeholder="e.g. NSHUTI..." value="' + esc(name) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input" id="ocSearchNatId" placeholder="e.g. 1 1986..." value="' + esc(natId) + '" /></div>' +
                 '<div class="demo-row">' +
                     '<span class="demo-lbl">Department</span>' +
                     '<div style="display:flex;gap:4px;width:68%;align-items:center;">' +
-                        '<button type="button" class="demo-btn" onclick="pcFile.openWardPicker()" title="Browse Patients by Ward / Department" style="padding:4px 8px;font-size:10.5px;white-space:nowrap;">🏥 Ward</button>' +
+                        '<button type="button" class="demo-btn" onclick="pcFile.openWardPicker()" title="Browse Patients by Ward / Department" style="padding:5px 10px;font-size:11px;white-space:nowrap;">🏥 Ward</button>' +
                         '<input type="text" class="demo-input readonly" id="ocDepartment" readonly value="' + esc(dept) + '" style="width:100%;" placeholder="Department..." />' +
                     '</div>' +
                 '</div>' +
             '</div>' +
             '<div style="display:flex;flex-direction:column;gap:6px;">' +
-                '<div class="demo-row"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input" id="ocSearchFirst" placeholder="Search first..." value="' + esc(first) + '" /></div>' +
-                '<div class="demo-row"><span class="demo-lbl">Record number</span><input type="text" class="demo-input" id="ocSearchMrn" placeholder="MRN..." value="' + esc(mrn) + '" /></div>' +
-                '<div class="demo-row" style="justify-content:flex-start;padding-top:2px;">' +
+                '<div class="demo-row"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input" id="ocSearchFirst" placeholder="e.g. DJUMA..." value="' + esc(first) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Record number</span><input type="text" class="demo-input" id="ocSearchMrn" placeholder="e.g. MRN 1003..." value="' + esc(mrn) + '" /></div>' +
+                '<div class="demo-row" style="justify-content:flex-start;padding-top:4px;">' +
                     '<span class="demo-status-pills">' +
-                        '<span title="Quick Action">⏱️</span>' +
-                        '<span title="Gender">' + esc(sex ? sex.charAt(0).toUpperCase() : '-') + '</span>' +
-                        '<span title="Inpatient Ward">🏥</span>' +
+                        '<span title="Insurance Status">🟢 ' + esc(ins) + '</span>' +
+                        '<span title="Ward Department">🏥 ' + esc(dept) + '</span>' +
+                        '<span title="Demographics">👤 ' + esc(sex ? (sex.charAt(0).toUpperCase() + ' · ' + ageStr) : '-') + '</span>' +
                     '</span>' +
                 '</div>' +
             '</div>' +
             '<div style="display:flex;flex-direction:column;gap:6px;">' +
-                '<div class="demo-row"><span class="demo-lbl">Date of birth</span><input type="text" class="demo-input readonly" readonly value="' + esc(dobStr) + '" style="width:50%;" placeholder="DD/MM/YYYY" /><span style="font-size:11px;font-weight:700;color:var(--tm);">' + (sex ? '(' + esc(sex) + ' - ' + esc(ageStr) + ')' : '') + '</span></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Date of birth</span><input type="text" class="demo-input readonly" readonly value="' + esc(dobStr) + '" style="width:55%;" placeholder="DD/MM/YYYY" /><span style="font-size:11px;font-weight:700;color:#5f6368;">' + (sex ? '(' + esc(sex) + ' - ' + esc(ageStr) + ')' : '') + '</span></div>' +
                 '<div class="demo-row"><span class="demo-lbl">Archive code</span><input type="text" class="demo-input readonly" id="ocArchiveCode" readonly value="' + esc(arch) + '" placeholder="Archive..." /></div>' +
                 '<div class="demo-row"><span class="demo-lbl">Insurance/RSSB</span>' +
                     '<select class="demo-input" id="ocInsurance">' +
-                        '<option value="RSSB / RAMA" selected>RSSB / RAMA</option>' +
-                        '<option value="MUTUELLE DE SANTE">MUTUELLE DE SANTE</option>' +
-                        '<option value="MMI">MMI</option>' +
-                        '<option value="RADIANT">RADIANT</option>' +
-                        '<option value="PRIVATE / CASH">PRIVATE / CASH</option>' +
+                        '<option value="RSSB / RAMA"' + (ins === 'RSSB / RAMA' ? ' selected' : '') + '>RSSB / RAMA</option>' +
+                        '<option value="MUTUELLE DE SANTE"' + (ins === 'MUTUELLE DE SANTE' ? ' selected' : '') + '>MUTUELLE DE SANTE</option>' +
+                        '<option value="MMI"' + (ins === 'MMI' ? ' selected' : '') + '>MMI</option>' +
+                        '<option value="RADIANT"' + (ins === 'RADIANT' ? ' selected' : '') + '>RADIANT</option>' +
+                        '<option value="PRIVATE / CASH"' + (ins === 'PRIVATE / CASH' ? ' selected' : '') + '>PRIVATE / CASH</option>' +
                     '</select></div>' +
                 '<div class="demo-row"><span class="demo-lbl">District</span>' +
                     '<select class="demo-input">' +
@@ -558,7 +559,7 @@
                     '</select></div>' +
             '</div>' +
             '<div style="display:flex;flex-direction:column;gap:6px;justify-content:space-between;">' +
-                '<div class="demo-row"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input" id="ocSearchId" placeholder="Person ID..." value="' + esc(pid) + '" /></div>' +
+                '<div class="demo-row"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input" id="ocSearchId" placeholder="e.g. 1003..." value="' + esc(pid) + '" /></div>' +
                 '<div class="demo-btn-group">' +
                     '<button type="button" class="demo-btn" onclick="pcFile.searchPatientRegistry()">Find</button>' +
                     '<button type="button" class="demo-btn clear-btn" onclick="pcFile.clearPatientBar()">Clear</button>' +
@@ -570,55 +571,20 @@
         } else {
             el.appendChild(div);
         }
-    }
 
-    function searchPatientRegistry() {
-        var fam = ($('#ocSearchFamily') ? $('#ocSearchFamily').value.trim().toLowerCase() : '');
-        var first = ($('#ocSearchFirst') ? $('#ocSearchFirst').value.trim().toLowerCase() : '');
-        var nat = ($('#ocSearchNatId') ? $('#ocSearchNatId').value.trim().toLowerCase() : '');
-        var mrn = ($('#ocSearchMrn') ? $('#ocSearchMrn').value.trim().toLowerCase() : '');
-        var pid = ($('#ocSearchId') ? $('#ocSearchId').value.trim().toLowerCase() : '');
-
-        var list = [];
-        try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
-        if (!list.length) {
-            try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
-        }
-
-        var matching = [];
-        if (!fam && !first && !nat && !mrn && !pid) {
-            matching = list;
-        } else {
-            matching = list.filter(function(p) {
-                var mFam = !fam || (p.lastName || '').toLowerCase().indexOf(fam) !== -1;
-                var mFirst = !first || (p.firstName || '').toLowerCase().indexOf(first) !== -1;
-                var mNat = !nat || (p.nationalId || '').toLowerCase().indexOf(nat) !== -1;
-                var mMrn = !mrn || String(p.mrn || '').toLowerCase().indexOf(mrn) !== -1;
-                var mPid = !pid || String(p.id || '').toLowerCase().indexOf(pid) !== -1;
-                return mFam && mFirst && mNat && mMrn && mPid;
-            });
-        }
-
-        if (!matching.length) {
-            if (window.pcToast) pcToast('No patients found matching search criteria', 'warning');
-            return;
-        }
-
-        openPatientPickerModal(matching, 'Patient Registry Search Results (' + matching.length + ' found)');
-    }
-
-    function clearPatientBar() {
-        try { localStorage.removeItem('pclinic_active_patient'); } catch(e){}
-        window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: null }));
-        if (window.pcToast) pcToast('🧹 Active patient selection cleared', 'info');
-        var old = document.getElementById('pc_common_demo_bar');
-        if (old) old.remove();
-        renderPatientIdentificationBar(document.querySelector('.oc-demo-bar') || document.body, {
-            _cleared: true, lastName: '', firstName: '', mrn: '', nationalId: '',
-            department: '', id: '', dob: '', gender: '', archiveCode: ''
+        // 🌟 SMART iOS 18 + PIXEL 9 PRO FEATURE: Pressing ENTER inside any input field instantly triggers search! 🌟
+        ['ocSearchFamily', 'ocSearchFirst', 'ocSearchNatId', 'ocSearchMrn', 'ocSearchId'].forEach(function(id) {
+            var inputEl = document.getElementById(id);
+            if (inputEl) {
+                inputEl.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        pcFile.searchPatientRegistry();
+                    }
+                });
+            }
         });
     }
-
 /* ══════════ EXPORTS ══════════ */
     window.pcFile = {
         patient: patient, nameOf: nameOf, age: age, esc: esc, uid: uid, staff: staff,

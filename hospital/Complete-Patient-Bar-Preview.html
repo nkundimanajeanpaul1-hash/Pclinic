@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Patient Identification Bar — Live Preview • PClinic</title>
+    <title>Smart iOS 18 + Google Pixel 9 Pro Complete Patient Bar • PClinic</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-            background: #e2e8f0;
-            color: #0f172a;
+            background: #f5f5f7;
+            color: #1d1d1f;
             padding: 24px;
             min-height: 100vh;
         }
@@ -17,9 +17,10 @@
             max-width: 1200px;
             margin: 0 auto 16px auto;
             background: #ffffff;
-            padding: 16px 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            padding: 18px 24px;
+            border-radius: 16px;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -27,42 +28,46 @@
         .preview-header h1 {
             font-size: 18px;
             font-weight: 800;
-            color: #1e293b;
+            color: #1d1d1f;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
-        .badge {
-            background: #dcfce7;
-            color: #166534;
-            padding: 4px 10px;
+        .badge-apple {
+            background: #e8f0fe;
+            color: #0b57d0;
+            padding: 5px 12px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 700;
+            border: 1px solid rgba(11, 87, 208, 0.2);
         }
         .container {
             max-width: 1200px;
             margin: 0 auto;
         }
         /* ============================================================
-           COMPLETE PATIENT IDENTIFICATION BAR (LITTLE BIT DARK BLUE)
+           COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+           SMART iOS 18 + GOOGLE PIXEL 9 PRO (MATERIAL YOU) HYBRID
+           Apple-favorite light neutral (#f0f0f5) + Darker card inputs (#e2e2e7)
            ============================================================ */
         .oc-demo-bar {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
-            border: 1px solid rgba(59, 130, 246, 0.35) !important;
-            border-top: 1.5px solid rgba(96, 165, 250, 0.45) !important;
-            border-radius: 18px;
-            padding: 18px 24px;
-            margin-bottom: 24px;
-            display: grid;
-            grid-template-columns: 1.25fr 1fr 1.35fr 0.9fr;
-            gap: 14px 22px;
-            box-shadow: 0 10px 32px rgba(15, 23, 42, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.15);
-            font-size: 12px;
-            color: #f8fafc !important;
+            background: linear-gradient(135deg, #f0f0f5 0%, #eef0f5 100%) !important;
+            border: 1px solid rgba(0, 0, 0, 0.08) !important;
+            border-top: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+            border-radius: 20px !important;
+            padding: 18px 24px !important;
+            margin-bottom: 24px !important;
+            display: grid !important;
+            grid-template-columns: 1.25fr 1fr 1.35fr 0.9fr !important;
+            gap: 14px 22px !important;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+            font-size: 12px !important;
+            color: #1d1d1f !important;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
         }
-        @media(max-width: 960px) { .oc-demo-bar { grid-template-columns: 1fr 1fr; } }
-        @media(max-width: 600px) { .oc-demo-bar { grid-template-columns: 1fr; } }
+        @media(max-width: 960px) { .oc-demo-bar { grid-template-columns: 1fr 1fr !important; } }
+        @media(max-width: 600px) { .oc-demo-bar { grid-template-columns: 1fr !important; } }
         .demo-row {
             display: flex;
             align-items: center;
@@ -70,32 +75,42 @@
             gap: 10px;
         }
         .demo-lbl {
-            color: #93c5fd !important;
-            font-weight: 700;
-            white-space: nowrap;
-            font-size: 11.5px;
-            letter-spacing: 0.3px;
+            color: #5f6368 !important;
+            font-weight: 700 !important;
+            white-space: nowrap !important;
+            font-size: 10.8px !important;
+            letter-spacing: 0.4px !important;
+            text-transform: uppercase !important;
         }
-        /* ALL INPUT BOXES & INSURANCE SELECT MATCH FAMILY NAME BOX IN COLOR */
+        /* 🌟 DARKER CARD INPUTS (#e2e2e7) WITH TACTILE INNER SHADOW (iOS 18 + PIXEL 9 PRO) 🌟 */
         .oc-demo-bar .demo-input,
         .oc-demo-bar select.demo-input,
         #ocInsurance {
-            background: #ffffff !important;
-            color: #1e293b !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 6px !important;
-            padding: 6px 10px !important;
-            font-size: 12px !important;
+            background: #e2e2e7 !important;
+            color: #1d1d1f !important;
+            border: 1px solid #d1d1d6 !important;
+            border-radius: 10px !important;
+            padding: 6px 12px !important;
+            font-size: 12.5px !important;
             font-weight: 600 !important;
-            height: 32px !important;
-            outline: none;
-            width: 100%;
-            transition: all 0.2s ease;
+            height: 33px !important;
+            outline: none !important;
+            width: 100% !important;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
         }
+        .oc-demo-bar .demo-input::placeholder {
+            color: #8e8e93 !important;
+            font-weight: 500 !important;
+        }
+        /* SMART MATERIAL YOU FOCUS RING */
         .oc-demo-bar .demo-input:focus,
-        .oc-demo-bar select.demo-input:focus {
-            border-color: #3b82f6 !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        .oc-demo-bar select.demo-input:focus,
+        #ocInsurance:focus {
+            background: #ffffff !important;
+            border-color: #0b57d0 !important;
+            box-shadow: 0 0 0 3.5px rgba(11, 87, 208, 0.18), 0 2px 8px rgba(11, 87, 208, 0.12), inset 0 1px 1px rgba(255, 255, 255, 1) !important;
+            transform: translateY(-0.5px) !important;
         }
         .demo-btn-group {
             display: flex;
@@ -104,69 +119,83 @@
             margin-top: 4px;
         }
         .oc-demo-bar .demo-btn {
-            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+            background: linear-gradient(135deg, #0b57d0 0%, #0071e3 100%) !important;
             color: #ffffff !important;
             border: 0 !important;
-            border-radius: 6px !important;
-            padding: 6px 14px !important;
+            border-radius: 10px !important;
+            padding: 6px 16px !important;
             font-weight: 700 !important;
-            font-size: 12px !important;
-            cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+            font-size: 12.5px !important;
+            cursor: pointer !important;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s !important;
+            box-shadow: 0 2px 8px rgba(11, 87, 208, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
         }
         .oc-demo-bar .demo-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+            transform: translateY(-1.5px) scale(1.03) !important;
+            box-shadow: 0 6px 16px rgba(11, 87, 208, 0.4) !important;
         }
         .oc-demo-bar .demo-btn.clear-btn {
-            background: rgba(239, 68, 68, 0.22) !important;
-            color: #fca5a5 !important;
-            border: 1px solid rgba(239, 68, 68, 0.45) !important;
-            box-shadow: none;
+            background: #f2f2f7 !important;
+            color: #d93025 !important;
+            border: 1px solid #d1d1d6 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
         }
         .oc-demo-bar .demo-btn.clear-btn:hover {
-            background: rgba(239, 68, 68, 0.35) !important;
+            background: #ffebe9 !important;
+            border-color: #d93025 !important;
+            color: #b31412 !important;
         }
+        /* SMART MATERIAL YOU TONAL CHIPS IN BANNER */
         .demo-status-pills {
-            display: inline-flex;
-            gap: 8px;
-            align-items: center;
+            display: inline-flex !important;
+            gap: 8px !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
         }
         .demo-status-pills span {
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 700;
+            background: #e8f0fe !important;
+            color: #0b57d0 !important;
+            border: 1px solid rgba(11, 87, 208, 0.2) !important;
+            padding: 4px 10px !important;
+            border-radius: 20px !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            transition: all 0.2s ease !important;
+        }
+        .demo-status-pills span:hover {
+            background: #d3e3fd !important;
+            transform: scale(1.04) !important;
         }
         /* MOCK CLINICAL CONTENT AREA BELOW */
         .content-card {
             background: #ffffff;
-            border-radius: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(0,0,0,0.06);
             padding: 24px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
         }
         .content-card h2 {
             font-size: 16px;
             font-weight: 800;
-            color: #1e293b;
+            color: #1d1d1f;
             margin-bottom: 12px;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e5e5ea;
             padding-bottom: 10px;
         }
         .content-card p {
             font-size: 13px;
-            color: #475569;
+            color: #48484a;
             line-height: 1.6;
         }
         /* MODAL SCRIM */
         .modal-scrim {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.65);
-            backdrop-filter: blur(8px);
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -174,19 +203,20 @@
         }
         .modal-box {
             background: #ffffff;
-            border-radius: 16px;
-            width: 600px;
+            border-radius: 20px;
+            width: 620px;
             max-width: 95%;
             max-height: 80vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+            border: 1px solid rgba(0,0,0,0.08);
         }
         .modal-head {
             padding: 16px 20px;
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
+            background: #f5f5f7;
+            border-bottom: 1px solid #e5e5ea;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -201,10 +231,10 @@
             gap: 8px;
         }
         .patient-row {
-            padding: 12px 16px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
+            padding: 14px 18px;
+            background: #f5f5f7;
+            border: 1px solid #e5e5ea;
+            border-radius: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -212,8 +242,8 @@
             transition: all 0.2s ease;
         }
         .patient-row:hover {
-            background: #eff6ff;
-            border-color: #3b82f6;
+            background: #e8f0fe;
+            border-color: #0b57d0;
             transform: translateX(4px);
         }
     </style>
@@ -222,37 +252,38 @@
 
 <div class="preview-header">
     <h1>
-        <span>🏥 Complete Patient Identification Bar • Interactive Preview</span>
-        <span class="badge">100/100 Replicated</span>
+        <span>🏥 Smart iOS 18 + Google Pixel 9 Pro Complete Patient Bar • Interactive Preview</span>
+        <span class="badge-apple">✨ Hyper-Modern Smart UI</span>
     </h1>
-    <div style="font-size:12px;color:#64748b;font-weight:600;">
-        ✨ Little bit dark blue bar | RSSB in front of District | Zero bottom clutter
+    <div style="font-size:12px;color:#5f6368;font-weight:700;">
+        100/100 Replicated • Apple Light Neutral (#f0f0f5) • Darker Card Inputs (#e2e2e7) • Smart Enter-Key Searching
     </div>
 </div>
 
 <div class="container">
     <!-- ════════════════════════════════════════════════════════════════════════
          COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
-         1. Sleek dark blue colored bar (#1e293b -> #0f172a)
-         2. All input fields (Family name, RSSB, District, etc.) match crisp white style
-         3. Insurance / RSSB positioned right in front of District
-         4. Zero bottom bar (no green RSSB pill, no blue neurology box, no search box)
+         1. Apple-favorite light neutral (#f0f0f5) almost like #f5f5f7 background
+         2. All input fields & boxes for names are DARKER (#e2e2e7) with iOS 18 tactile depth
+         3. Smart Material You focus ring (#0b57d0 border + indigo glow)
+         4. Smart Enter-Key searching (press ENTER inside any input field!)
+         5. Smart Tonal Chips (🟢 RSSB Verified, 🏥 NEUROLOGY, 👤 M · 26 Yrs)
          ════════════════════════════════════════════════════════════════════════ -->
     <div id="pc_common_demo_bar" class="oc-demo-bar noprint">
         <!-- Column 1 -->
         <div style="display:flex;flex-direction:column;gap:8px;">
             <div class="demo-row">
                 <span class="demo-lbl">Family name</span>
-                <input type="text" class="demo-input" id="ocSearchFamily" placeholder="Search family..." value="NSHUTI" />
+                <input type="text" class="demo-input" id="ocSearchFamily" placeholder="e.g. NSHUTI..." value="NSHUTI" />
             </div>
             <div class="demo-row">
                 <span class="demo-lbl">Nat ID/PP</span>
-                <input type="text" class="demo-input" id="ocSearchNatId" placeholder="National ID..." value="1 1986 8 0064652 0 14" />
+                <input type="text" class="demo-input" id="ocSearchNatId" placeholder="e.g. 1 1986..." value="1 1986 8 0064652 0 14" />
             </div>
             <div class="demo-row">
                 <span class="demo-lbl">Department</span>
                 <div style="display:flex;gap:4px;width:68%;align-items:center;">
-                    <button type="button" class="demo-btn" onclick="openWardModal()" title="Browse Patients by Ward / Department" style="padding:4px 8px;font-size:11px;white-space:nowrap;">🏥 Ward</button>
+                    <button type="button" class="demo-btn" onclick="openWardModal()" title="Browse Patients by Ward / Department" style="padding:5px 10px;font-size:11px;white-space:nowrap;">🏥 Ward</button>
                     <input type="text" class="demo-input readonly" id="ocDepartment" readonly value="NEUROLOGY" style="width:100%;" placeholder="Department..." />
                 </div>
             </div>
@@ -262,17 +293,17 @@
         <div style="display:flex;flex-direction:column;gap:8px;">
             <div class="demo-row">
                 <span class="demo-lbl">Firstname</span>
-                <input type="text" class="demo-input" id="ocSearchFirst" placeholder="Search first..." value="DJUMA" />
+                <input type="text" class="demo-input" id="ocSearchFirst" placeholder="e.g. DJUMA..." value="DJUMA" />
             </div>
             <div class="demo-row">
                 <span class="demo-lbl">Record number</span>
-                <input type="text" class="demo-input" id="ocSearchMrn" placeholder="MRN..." value="MRN 1003" />
+                <input type="text" class="demo-input" id="ocSearchMrn" placeholder="e.g. MRN 1003..." value="MRN 1003" />
             </div>
             <div class="demo-row" style="justify-content:flex-start;padding-top:4px;">
                 <span class="demo-status-pills">
-                    <span title="Quick Action">⏱️</span>
-                    <span title="Gender">M</span>
-                    <span title="Inpatient Ward">🏥</span>
+                    <span title="Insurance Status">🟢 RSSB / RAMA Verified</span>
+                    <span title="Ward Department">🏥 NEUROLOGY</span>
+                    <span title="Demographics">👤 M · 26 Yrs</span>
                 </span>
             </div>
         </div>
@@ -283,14 +314,14 @@
                 <span class="demo-lbl">Date of birth</span>
                 <div style="display:flex;align-items:center;gap:6px;width:100%;">
                     <input type="text" class="demo-input readonly" id="ocDob" readonly value="01/01/2000" style="width:55%;" placeholder="DD/MM/YYYY" />
-                    <span id="ocAgeTxt" style="font-size:11px;font-weight:700;color:#cbd5e1;white-space:nowrap;">(Male - 26 years)</span>
+                    <span id="ocAgeTxt" style="font-size:11px;font-weight:700;color:#5f6368;white-space:nowrap;">(Male - 26 years)</span>
                 </div>
             </div>
             <div class="demo-row">
                 <span class="demo-lbl">Archive code</span>
                 <input type="text" class="demo-input readonly" id="ocArchiveCode" readonly value="ARCH-2026-655" placeholder="Archive..." />
             </div>
-            <!-- 🌟 RSSB / INSURANCE RIGHT IN FRONT OF DISTRICT WITH FAMILY NAME COLOR (#ffffff) 🌟 -->
+            <!-- 🌟 RSSB / INSURANCE RIGHT IN FRONT OF DISTRICT WITH SAME DARKER INPUT STYLE (#e2e2e7) 🌟 -->
             <div class="demo-row">
                 <span class="demo-lbl">Insurance/RSSB</span>
                 <select class="demo-input" id="ocInsurance">
@@ -317,7 +348,7 @@
         <div style="display:flex;flex-direction:column;gap:8px;justify-content:space-between;">
             <div class="demo-row">
                 <span class="demo-lbl">Person ID</span>
-                <input type="text" class="demo-input" id="ocSearchId" placeholder="Person ID..." value="1003" />
+                <input type="text" class="demo-input" id="ocSearchId" placeholder="e.g. 1003..." value="1003" />
             </div>
             <div class="demo-btn-group">
                 <button type="button" class="demo-btn" onclick="runSearch()">Find</button>
@@ -330,18 +361,19 @@
     <div class="content-card">
         <h2>📋 Doctor Dashboard • Active Patient Record (NSHUTI DJUMA — MRN 1003)</h2>
         <p>
-            This interactive preview demonstrates your exact requested specifications:
+            This interactive preview showcases your exact requested Apple iOS 18 + Google Pixel 9 Pro smart features:
             <br><br>
-            1. <b>Dark Blue Colored Banner:</b> Styled as a seductive Apple glassmorphism dark blue banner (<code>#1e293b -> #0f172a</code>) rather than white.<br>
-            2. <b>Insurance / RSSB Relocation:</b> Positioned <code>RSSB / RAMA</code> directly in front of District inside the main banner grid, with the exact same white styling as the Family name box.<br>
-            3. <b>True Blank Clear & Substring Searching:</b> Click <b>[Clear]</b> above to wipe off all information completely. Then type a first name (e.g., <code>"Gaspard"</code>) or ID (e.g., <code>"1003"</code>) and click <b>[Find]</b> to test the live search modal!<br>
-            4. <b>Zero Bottom Clutter:</b> The green RSSB pill, large blue neurology box, and bottom search icon have been 100% removed.
+            1. <b>Apple-Favorite Light Neutral Bar (<code>#f0f0f5</code>):</b> Almost like the page background color (<code>#f5f5f7</code>), but slightly different (100/100 subtle grouped card contrast!).<br>
+            2. <b>Darker Input Boxes for Names (<code>#e2e2e7</code>):</b> Every input field and select box (Family name, Firstname, Insurance/RSSB, District) uses the darker Apple silver-gray card styling with tactile inner shadow depth.<br>
+            3. <b>Smart Material You Focus Rings:</b> Click into any input box to see the glowing indigo/blue Google Pixel 9 Pro focus ring (<code>#0b57d0</code>).<br>
+            4. <b>Smart Enter-Key Search:</b> Type <code>"Gaspard"</code> or <code>"1003"</code> inside any search box and press <b>ENTER</b> on your keyboard—it instantly opens the search modal without needing to click [Find]!<br>
+            5. <b>Smart Material You Tonal Chips:</b> Notice the structured status chips (<code>🟢 RSSB / RAMA Verified</code>, <code>🏥 NEUROLOGY</code>, <code>👤 M · 26 Yrs</code>) in the center column.<br>
+            6. <b>Zero Bottom Clutter:</b> All bottom strip buttons remain 100% removed.
         </p>
     </div>
 </div>
 
 <script>
-    // Sample patient database for interactive preview testing
     const PATIENTS = [
         { id: '1003', mrn: 'MRN 1003', lastName: 'NSHUTI', firstName: 'DJUMA', nationalId: '1 1986 8 0064652 0 14', department: 'NEUROLOGY', dob: '2000-01-01', gender: 'Male', archiveCode: 'ARCH-2026-655', insurance: 'RSSB / RAMA', district: 'KAMONYI' },
         { id: '655055', mrn: 'MRN 655055', lastName: 'TEKEREZA', firstName: 'GASPARD', nationalId: '1 1986 8 0064652 0 14', department: 'SURGERY WARD 7', dob: '1986-01-07', gender: 'Male', archiveCode: 'ARCH-2026-655', insurance: 'RSSB / RAMA', district: 'KAMONYI' },
@@ -350,7 +382,6 @@
     ];
 
     function runClear() {
-        // Wipes off all information completely (empty strings '')
         document.getElementById('ocSearchFamily').value = '';
         document.getElementById('ocSearchFirst').value = '';
         document.getElementById('ocSearchNatId').value = '';
@@ -360,7 +391,7 @@
         document.getElementById('ocAgeTxt').textContent = '';
         document.getElementById('ocArchiveCode').value = '';
         document.getElementById('ocSearchId').value = '';
-        alert('🧹 All information wiped off! You can now type a name or ID and click [Find].');
+        alert('🧹 All information wiped off! You can now type any name or ID and click [Find] (or press Enter).');
     }
 
     function runSearch() {
@@ -407,12 +438,12 @@
         body.innerHTML = patients.map(p => `
             <div class="patient-row" onclick="selectPatient('${p.id}')">
                 <div>
-                    <div style="font-weight:800;font-size:14px;color:#1e293b;">${p.lastName} ${p.firstName}</div>
-                    <div style="font-size:12px;color:#64748b;">MRN: ${p.mrn} | Nat ID: ${p.nationalId} | ${p.insurance}</div>
+                    <div style="font-weight:800;font-size:14px;color:#1d1d1f;">${p.lastName} ${p.firstName}</div>
+                    <div style="font-size:12px;color:#5f6368;">MRN: ${p.mrn} | Nat ID: ${p.nationalId} | ${p.insurance}</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-weight:700;color:#3b82f6;font-size:13px;">${p.department}</div>
-                    <div style="font-size:11px;color:#94a3b8;">ID: ${p.id}</div>
+                    <div style="font-weight:700;color:#0b57d0;font-size:13px;">${p.department}</div>
+                    <div style="font-size:11px;color:#8e8e93;">ID: ${p.id}</div>
                 </div>
             </div>
         `).join('');
@@ -450,13 +481,26 @@
             <div class="modal-box">
                 <div class="modal-head"><span>🏥 Select Ward / Department</span><button onclick="this.closest('.modal-scrim').remove()" style="border:0;background:none;font-size:20px;cursor:pointer;">&times;</button></div>
                 <div class="modal-body">
-                    ${wards.map(w => `<div class="patient-row" onclick="document.getElementById('ocDepartment').value='${w}'; this.closest('.modal-scrim').remove();"><b>🏥 ${w}</b><span style="color:#64748b;font-size:12px;">Active Ward</span></div>`).join('')}
+                    ${wards.map(w => `<div class="patient-row" onclick="document.getElementById('ocDepartment').value='${w}'; this.closest('.modal-scrim').remove();"><b>🏥 ${w}</b><span style="color:#5f6368;font-size:12px;">Active Ward</span></div>`).join('')}
                 </div>
             </div>
         `;
         scrim.onclick = (e) => { if (e.target === scrim) scrim.remove(); };
         document.body.appendChild(scrim);
     }
+
+    // 🌟 SMART iOS 18 + PIXEL 9 PRO FEATURE: Pressing ENTER inside any input field instantly triggers search! 🌟
+    ['ocSearchFamily', 'ocSearchFirst', 'ocSearchNatId', 'ocSearchMrn', 'ocSearchId'].forEach(function(id) {
+        var inputEl = document.getElementById(id);
+        if (inputEl) {
+            inputEl.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    runSearch();
+                }
+            });
+        }
+    });
 </script>
 </body>
 </html>

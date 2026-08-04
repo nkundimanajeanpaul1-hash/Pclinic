@@ -1033,171 +1033,133 @@ body.compact .patient-card, body.compact .card {
    OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR (COMMON)
    Seductive Apple Glassmorphism Design (macOS Sequoia / iOS 18)
    ============================================================ */
+/* ============================================================
+   OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR
+   Seductive Apple Favorite Light Neutral & Darker Input Boxes
+   (macOS Sequoia / iOS 18 - Replicating Screenshot 2026-08-04 at 12.23.03.png)
+   ============================================================ */
+/* ============================================================
+   OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   SMART iOS 18 + GOOGLE PIXEL 9 PRO (MATERIAL YOU) HYBRID UI
+   Replicating Screenshot 2026-08-04 at 12.23.03.png with Ultra-Polish
+   ============================================================ */
 .oc-demo-bar {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
-    -webkit-backdrop-filter: saturate(180%) blur(24px);
-    backdrop-filter: saturate(180%) blur(24px);
-    border: 1px solid rgba(59, 130, 246, 0.35) !important;
-    border-top: 1.5px solid rgba(96, 165, 250, 0.45) !important;
-    border-radius: 18px;
-    padding: 16px 22px;
-    margin-bottom: 20px;
-    display: grid;
-    grid-template-columns: 1.25fr 1fr 1.35fr 0.9fr;
-    gap: 12px 22px;
-    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.15);
-    font-size: 12px;
-    color: #f8fafc !important;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.oc-demo-bar:hover {
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.09), 0 4px 12px rgba(15, 23, 42, 0.04), inset 0 1px 1px rgba(255, 255, 255, 1);
-    transform: translateY(-1px);
-}
-[data-theme="dark"] .oc-demo-bar, body.dark-mode .oc-demo-bar {
-    background: linear-gradient(135deg, rgba(30, 36, 46, 0.88) 0%, rgba(22, 27, 34, 0.94) 100%) !important;
-    border-color: rgba(255, 255, 255, 0.14) !important;
-    border-top-color: rgba(255, 255, 255, 0.22) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
-}
-@media(max-width: 960px) {
-    .oc-demo-bar { grid-template-columns: 1fr 1fr; }
-}
-@media(max-width: 600px) {
-    .oc-demo-bar { grid-template-columns: 1fr; }
-}
-.demo-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-.demo-lbl {
-    color: #64748b;
-    font-weight: 700;
-    white-space: nowrap;
-    font-size: 11px;
-    letter-spacing: 0.3px;
-}
-[data-theme="dark"] .demo-lbl, body.dark-mode .demo-lbl {
-    color: #94a3b8 !important;
-}
-.demo-input {
-    padding: 5px 10px;
-    border: 1px solid rgba(203, 213, 225, 0.7);
-    border-radius: 8px;
-    background: #ffffff;
-    color: #0f172a;
-    font-weight: 700;
-    font-size: 12px;
-    width: 68%;
-    outline: none;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
-    transition: all 0.2s ease;
-}
-[data-theme="dark"] .demo-input, body.dark-mode .demo-input {
-    background: #1e293b !important;
-    border-color: rgba(255, 255, 255, 0.16) !important;
-    color: #f8fafc !important;
-}
-.demo-input.readonly {
-    background: rgba(241, 245, 249, 0.75);
-    border-color: rgba(226, 232, 240, 0.8);
-    color: #1e293b;
-    box-shadow: none;
-}
-[data-theme="dark"] .demo-input.readonly, body.dark-mode .demo-input.readonly {
-    background: rgba(0, 0, 0, 0.3) !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-    color: #e2e8f0 !important;
-}
-.demo-status-pills {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(0, 113, 227, 0.08);
-    padding: 4px 12px;
-    border-radius: 20px;
-    border: 1px solid rgba(0, 113, 227, 0.18);
-    color: #0071e3;
-    font-weight: 700;
-    font-size: 13px;
-    box-shadow: 0 1px 3px rgba(0, 113, 227, 0.08);
-}
-[data-theme="dark"] .demo-status-pills, body.dark-mode .demo-status-pills {
-    background: rgba(96, 165, 250, 0.15) !important;
-    border-color: rgba(96, 165, 250, 0.28) !important;
-    color: #60a5fa !important;
-}
-.demo-btn-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: flex-end;
-}
-.demo-btn {
-    padding: 6px 16px;
-    border-radius: 20px;
-    border: 1px solid rgba(0, 113, 227, 0.25);
-    background: linear-gradient(135deg, #0071e3 0%, #3b82f6 100%);
-    color: #ffffff;
-    font-weight: 700;
-    cursor: pointer;
-    font-size: 11.5px;
-    letter-spacing: 0.2px;
-    box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25);
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.demo-btn:hover {
-    transform: scale(1.06) translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 113, 227, 0.4);
-}
-.demo-btn.clear-btn {
-    background: #f8fafc;
-    color: #475569;
-    border-color: #cbd5e1;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-[data-theme="dark"] .demo-btn.clear-btn, body.dark-mode .demo-btn.clear-btn {
-    background: #262c36 !important;
-    color: #d1d5db !important;
-    border-color: #475569 !important;
-}
-.demo-btn.clear-btn:hover {
-    background: #ef4444 !important;
-    color: #ffffff !important;
-    border-color: #dc2626 !important;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    background: linear-gradient(135deg, #f0f0f5 0%, #eef0f5 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+    border-radius: 20px !important;
+    padding: 18px 24px !important;
+    margin-bottom: 24px !important;
+    display: grid !important;
+    grid-template-columns: 1.25fr 1fr 1.35fr 0.9fr !important;
+    gap: 14px 22px !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+    font-size: 12px !important;
+    color: #1d1d1f !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
-
-/* Little bit dark blue styling for Patient Identification Bar */
 .oc-demo-bar .demo-lbl {
-    color: #93c5fd !important;
+    color: #5f6368 !important;
     font-weight: 700 !important;
+    white-space: nowrap !important;
+    font-size: 10.8px !important;
+    letter-spacing: 0.4px !important;
+    text-transform: uppercase !important;
 }
-.oc-demo-bar .demo-input, .oc-demo-bar select.demo-input, #ocInsurance {
-    background: #ffffff !important;
-    color: #1e293b !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 6px !important;
-    padding: 5px 10px !important;
+
+/* 🌟 THE BOX FOR NAMES & INPUTS IS DARKER (#e2e2e7) WITH TACTILE INNER SHADOW (iOS 18 + PIXEL 9) 🌟 */
+.oc-demo-bar .demo-input,
+.oc-demo-bar select.demo-input,
+#ocInsurance {
+    background: #e2e2e7 !important;
+    color: #1d1d1f !important;
+    border: 1px solid #d1d1d6 !important;
+    border-radius: 10px !important;
+    padding: 6px 12px !important;
+    font-size: 12.5px !important;
     font-weight: 600 !important;
-    height: 30px !important;
+    height: 33px !important;
+    outline: none !important;
+    width: 100% !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
+
 .oc-demo-bar .demo-input::placeholder {
-    color: #94a3b8 !important;
+    color: #8e8e93 !important;
+    font-weight: 500 !important;
 }
+
+/* SMART MATERIAL YOU FOCUS RING (PIXEL 9 BLUE #0b57d0 + iOS 18 GLOW) */
+.oc-demo-bar .demo-input:focus,
+.oc-demo-bar select.demo-input:focus,
+#ocInsurance:focus {
+    background: #ffffff !important;
+    border-color: #0b57d0 !important;
+    box-shadow: 0 0 0 3.5px rgba(11, 87, 208, 0.18), 0 2px 8px rgba(11, 87, 208, 0.12), inset 0 1px 1px rgba(255, 255, 255, 1) !important;
+    transform: translateY(-0.5px) !important;
+}
+
+/* SMART ACTION BUTTONS (iOS 18 + MATERIAL YOU PIXEL 9 PRO) */
 .oc-demo-bar .demo-btn {
-    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    background: linear-gradient(135deg, #0b57d0 0%, #0071e3 100%) !important;
     color: #ffffff !important;
     border: 0 !important;
+    border-radius: 10px !important;
+    padding: 6px 16px !important;
     font-weight: 700 !important;
-    border-radius: 6px !important;
+    font-size: 12.5px !important;
     cursor: pointer !important;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s !important;
+    box-shadow: 0 2px 8px rgba(11, 87, 208, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
 }
+
+.oc-demo-bar .demo-btn:hover {
+    transform: translateY(-1.5px) scale(1.03) !important;
+    box-shadow: 0 6px 16px rgba(11, 87, 208, 0.4) !important;
+}
+
+.oc-demo-bar .demo-btn:active {
+    transform: scale(0.96) !important;
+}
+
 .oc-demo-bar .demo-btn.clear-btn {
-    background: rgba(239, 68, 68, 0.22) !important;
-    color: #fca5a5 !important;
-    border: 1px solid rgba(239, 68, 68, 0.45) !important;
+    background: #f2f2f7 !important;
+    color: #d93025 !important;
+    border: 1px solid #d1d1d6 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.oc-demo-bar .demo-btn.clear-btn:hover {
+    background: #ffebe9 !important;
+    border-color: #d93025 !important;
+    color: #b31412 !important;
+}
+
+/* SMART MATERIAL YOU TONAL CHIPS IN BANNER */
+.oc-demo-bar .demo-status-pills {
+    display: inline-flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+}
+
+.oc-demo-bar .demo-status-pills span {
+    background: #e8f0fe !important;
+    color: #0b57d0 !important;
+    border: 1px solid rgba(11, 87, 208, 0.2) !important;
+    padding: 4px 10px !important;
+    border-radius: 20px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    transition: all 0.2s ease !important;
+}
+
+.oc-demo-bar .demo-status-pills span:hover {
+    background: #d3e3fd !important;
+    transform: scale(1.04) !important;
 }
