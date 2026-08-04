@@ -169,6 +169,11 @@
             '<a onclick="window.location.href=\'lab-request.html\' ">💉 Applications</a>' +
             '<a onclick="window.location.href=\'opd-file.html\' ">📂 Documents</a>' +
             '<a onclick="if(window.pcFile)pcFile.openSystemSettingsModal(); else alert(\'⚙️ System Preferences & Security Suite\\nLanguage: English / Français / Kinyarwanda\\nTheme: Apple Light / Dark / Auto\\nConnected to Local Common Server\');">⚙️ System</a>' +
+            '<!-- 🌟 MOVED TOPBAR BUTTONS IN FRONT OF INFO 🌟 -->' +
+            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.toggleThemeFromMenu(); else alert(\'☀️ Theme switch\');" title="Toggle Theme">☀️ Theme</a>' +
+            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.showNotificationsModal(); else alert(\'🔔 3 Alerts\');" title="Alerts">🔔 3</a>' +
+            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.openStaffProfileModal(); else alert(\'👨‍⚕️ Dr. Mutua\');" title="Staff Profile">👨‍⚕️ Dr. Mutua</a>' +
+            '<a class="topbar-moved-btn logout-btn" onclick="if(window.pcFile)pcFile.confirmLogout(); else alert(\'🚪 Signing out...\');" title="Sign out">🚪 Logout</a>' +
             '<a onclick="alert(\'🏥 PClinic Clinical Suite • OpenClinic GA v5.346.01 / CHUK\\nReadiness Score: 100/100\\nConnected to Local Common Server (Hybrid localStorage + Firestore)\');">❓ Info</a>';
 
         if (el.parentNode) {

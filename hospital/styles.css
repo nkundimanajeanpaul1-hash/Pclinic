@@ -315,3 +315,16 @@
         padding: 20px;
     }
 }
+
+/* ============================================================
+   REMOVE TOPBAR & BREADCRUMB EVERYWHERE PER USER INSTRUCTION
+   ============================================================ */
+.topbar, .top-bar, .app-header, .header, #header, header.topbar, .top-header,
+.breadcrumb, #breadcrumb, .header-breadcrumb {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+}

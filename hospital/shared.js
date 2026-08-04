@@ -241,3 +241,19 @@
     }
 
 })();
+
+// Global topbar & breadcrumb removal across all clinical pages
+(function() {
+    function nukeOldHeaders() {
+        var oldHeaders = document.querySelectorAll('.topbar, .top-bar, .app-header, .header, #header, header.topbar, .top-header, .breadcrumb, #breadcrumb, .header-breadcrumb');
+        for (var i=0; i<oldHeaders.length; i++) {
+            if (oldHeaders[i] && oldHeaders[i].parentNode) oldHeaders[i].parentNode.removeChild(oldHeaders[i]);
+        }
+    }
+    nukeOldHeaders();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', nukeOldHeaders);
+    }
+    setTimeout(nukeOldHeaders, 50);
+    setTimeout(nukeOldHeaders, 300);
+})();

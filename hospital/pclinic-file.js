@@ -772,10 +772,11 @@
         if (old && old.parentNode) old.parentNode.removeChild(old);
 
         // Remove any breadcrumb bar everywhere because it takes big space
-        var allBcs = document.querySelectorAll('.breadcrumb, #breadcrumb, .header-breadcrumb');
+        var allBcs = document.querySelectorAll('.breadcrumb, #breadcrumb, .header-breadcrumb, .topbar, .top-bar, .app-header, .top-header');
         for (var idx=0; idx<allBcs.length; idx++) {
             if (allBcs[idx] && allBcs[idx].parentNode) allBcs[idx].parentNode.removeChild(allBcs[idx]);
         }
+
 
         // Remove old top menu if present to ensure fresh wiring
         var oldMenu = document.getElementById('pc_chuk_top_menu');
@@ -792,6 +793,11 @@
             '<a onclick="window.location.href=\'lab-request.html\' ">💉 Applications</a>' +
             '<a onclick="window.location.href=\'opd-file.html\' ">📂 Documents</a>' +
             '<a onclick="if(window.pcFile)pcFile.openSystemSettingsModal();">⚙️ System</a>' +
+            '<!-- 🌟 MOVED TOPBAR BUTTONS IN FRONT OF INFO 🌟 -->' +
+            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.toggleThemeFromMenu();" title="Toggle Light/Dark Theme">☀️ Theme</a>' +
+            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.showNotificationsModal();" title="Clinical Notifications">🔔 3</a>' +
+            '<a class="topbar-moved-btn" onclick="if(window.pcFile)pcFile.openStaffProfileModal();" title="Staff Account">👨‍⚕️ Dr. Mutua</a>' +
+            '<a class="topbar-moved-btn logout-btn" onclick="if(window.pcFile)pcFile.confirmLogout();" title="Sign Out">🚪 Logout</a>' +
             '<a onclick="if(window.pcFile)pcFile.openSystemInfoModal();">❓ Info</a>';
 
         if (el.firstChild) {
@@ -940,6 +946,10 @@
         openPatientProfileModal: openPatientProfileModal,
         openSystemSettingsModal: openSystemSettingsModal,
         openSystemInfoModal: openSystemInfoModal,
+        toggleThemeFromMenu: toggleThemeFromMenu,
+        showNotificationsModal: showNotificationsModal,
+        openStaffProfileModal: openStaffProfileModal,
+        confirmLogout: confirmLogout,
         clearPatientBar: clearPatientBar,
         read: read, write: write
     };
@@ -950,3 +960,36 @@
 
     console.log('📁 PClinic file engine ready');
 })();
+
+
+    /* ══════════════ MOVED TOPBAR BUTTON HELPERS (THEME, ALERTS, DR. MUTUA, LOGOUT) ══════════════ */
+    function toggleThemeFromMenu() {
+        var current = localStorage.getItem('pclinic-theme') || 'light';
+        var next = current === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('pclinic-theme', next);
+        if (next === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.body.classList.add('dark-mode');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.body.classList.remove('dark-mode');
+        }
+        if (window.pcToast) pcToast('🎨 Switched to Apple ' + (next === 'dark' ? 'Dark' : 'Light') + ' Mode', 'info');
+        else alert('🎨 Switched to Apple ' + (next === 'dark' ? 'Dark' : 'Light') + ' Mode');
+    }
+
+    function showNotificationsModal() {
+        alert('🔔 Clinical Alerts & Notifications (3 Unread)\n\n1. [LAB] FBC test results ready for Patient 1003 (Nshuti Djuma)\n2. [PACS] CT Brain scan ready for reading\n3. [CASHIER] Bill BILL-2026-882 paid in full via RSSB/RAMA');
+    }
+
+    function openStaffProfileModal() {
+        alert('👨‍⚕️ Active Staff Account Profile\n\nName: Dr. Mutua (Doctor / Consultant)\nDepartment: SURGERY WARD 7 / NEUROLOGY\nEmail: d.mutua@pclinic.rw\nRole: Senior Specialist Physician\nStatus: Active Clinical Staff (Authenticated in Firebase Auth)');
+    }
+
+    function confirmLogout() {
+        if (confirm('Sign out of PClinic as Dr. Mutua?')) {
+            localStorage.removeItem('pclinic_active_patient');
+            if (window.pcToast) pcToast('🚪 Signing out...', 'info');
+            window.location.href = 'login.html';
+        }
+    }

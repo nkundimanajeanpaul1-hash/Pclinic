@@ -1444,3 +1444,46 @@ body.compact .patient-card, body.compact .card {
     overflow: hidden !important;
     border: none !important;
 }
+
+
+/* ============================================================
+   REMOVE TOPBAR / HEADER EVERYWHERE PER USER INSTRUCTION
+   (Reclaims ~60px vertical screen space across all pages!)
+   ============================================================ */
+.topbar, .top-bar, .app-header, .header, #header, header.topbar, .top-header {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+}
+
+/* Style for moved Topbar Buttons inside CHUK Top Menu Strip */
+.chuk-top-menu .topbar-moved-btn {
+    background: rgba(11, 87, 208, 0.1) !important;
+    color: #0b57d0 !important;
+    border: 1px solid rgba(11, 87, 208, 0.25) !important;
+    border-radius: 6px !important;
+    padding: 2px 8px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.chuk-top-menu .topbar-moved-btn:hover {
+    background: #0b57d0 !important;
+    color: #ffffff !important;
+}
+
+.chuk-top-menu .topbar-moved-btn.logout-btn {
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #d93025 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.chuk-top-menu .topbar-moved-btn.logout-btn:hover {
+    background: #d93025 !important;
+    color: #ffffff !important;
+}
