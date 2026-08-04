@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
+    <script type="module" src="firebase-config.js"></script>
+    <script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Appointments • PClinic</title>
+    <link rel="icon" type="image/png" href="logo.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="shared.js" defer></script>
+    <script src="patient-data.js" defer></script>
+    <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
+<style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f0f2f5; --s1: #ffffff; --s2: #f8f9fa; --s3: #f1f3f6; --bd: #e4e7ec;
+            --tp: #1a1a2e; --ts: #2d2d44; --tm: #6b7280;
+            --ac: #2563eb; --acb: #eff6ff;
+            --green: #10b981; --greenb: #ecfdf5;
+            --orange: #f59e0b; --orangeb: #fffbeb;
+            --red: #ef4444; --redb: #fef2f2;
+            --gradient: linear-gradient(135deg, #2563eb, #7c3aed);
+            --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+            --shadow2: 0 4px 20px rgba(0,0,0,.08), 0 12px 40px rgba(0,0,0,.06);
+            --r: 10px; --r2: 14px;
+            --f: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        [data-theme="dark"] {
+            --bg: #0f1117; --s1: #1a1d27; --s2: #14171f; --s3: #222533; --bd: #2d3040;
+            --tp: #f0f2f5; --ts: #d1d5db; --tm: #9ca3af;
+            --ac: #3b82f6; --acb: #1e293b;
+        }
+        body { font-family: var(--f); background: var(--bg); color: var(--tp); font-size: 13px; line-height: 1.6; min-height: 100vh; }
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between; padding: 8px 24px;
+            background: rgba(255,255,255,0.85); backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 0.5px solid var(--bd); position: sticky; top: 0; z-index: 100; height: 56px;
+        }
+        [data-theme="dark"] .topbar { background: rgba(26,29,39,0.85); }
+        .tl { display: flex; align-items: center; gap: 10px; }
+        .logo-box { width: 32px; height: 32px; border-radius: 8px; background: var(--gradient); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .appname { font-size: 16px; font-weight: 700; color: var(--tp); }
+        .appname span { color: var(--ac); }
+        .appsub { font-size: 11px; color: var(--tm); margin-left: 2px; }
+        .tr { display: flex; align-items: center; gap: 6px; }
+        .tb-btn {
+            width: 32px; height: 32px; border-radius: 50%; border: 0.5px solid var(--bd);
+            background: var(--s1); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--tm); font-size: 15px; transition: var(--transition);
+        }
+        .tb-btn:hover { background: var(--s3); color: var(--tp); }
+        .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--tm); padding: 10px 24px 6px; }
+        .breadcrumb a { color: var(--ac); text-decoration: none; font-weight: 500; }
+        .breadcrumb .current { color: var(--ts); font-weight: 500; }
+        .greeting { padding: 12px 24px 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .greeting h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+        .greeting h1 .highlight { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .btn {
+            padding: 9px 18px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: none;
+            cursor: pointer; background: var(--gradient); color: #fff; display: inline-flex; align-items: center; gap: 6px;
+            font-family: var(--f); transition: var(--transition);
+        }
+        .btn:hover { filter: brightness(1.08); }
+        .filters { display: flex; gap: 10px; padding: 8px 24px; flex-wrap: wrap; }
+        .filters input, .filters select {
+            padding: 8px 12px; border-radius: 8px; border: 1px solid var(--bd); background: var(--s1);
+            color: var(--tp); font-size: 12.5px; font-family: var(--f);
+        }
+        .filters input { flex: 1; min-width: 180px; }
+        .card { margin: 8px 24px 24px; background: var(--s1); border: 0.5px solid var(--bd); border-radius: var(--r2); box-shadow: var(--shadow); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { text-align: left; font-size: 10.5px; font-weight: 700; color: var(--tm); text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 1px solid var(--bd); }
+        tbody td { padding: 12px 16px; font-size: 12.5px; border-bottom: 1px solid var(--bd); color: var(--ts); }
+        tbody tr:hover { background: var(--s2); }
+        tbody tr:last-child td { border-bottom: none; }
+        .badge { font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 10px; }
+        .badge.green { background: var(--greenb); color: var(--green); }
+        .badge.orange { background: var(--orangeb); color: var(--orange); }
+        .badge.red { background: var(--redb); color: var(--red); }
+        .badge.gray { background: var(--s3); color: var(--tm); }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--tm); }
+        .empty-state i { font-size: 32px; display: block; margin-bottom: 10px; opacity: 0.5; }
+        #toastContainer { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 999; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .toast { background: rgba(28,28,30,0.92); color: #fff; border-radius: 12px; padding: 10px 20px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; animation: toastPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+        .toast.success { background: var(--green); } .toast.error { background: var(--red); } .toast.info { background: var(--ac); }
+        @keyframes toastPop { from{opacity:0;transform:translateY(20px) scale(0.9);} to{opacity:1;transform:translateY(0) scale(1);} }
+        @keyframes toastOut { from{opacity:1;} to{opacity:0;transform:translateY(-20px) scale(0.9);} }
+        @media (max-width: 700px) {
+            .card, .filters, .greeting, .breadcrumb { padding-left: 16px; padding-right: 16px; margin-left: 0; margin-right: 0; }
+        }
+    </style>
+    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
+</head>
+<body>
+
+    <div class="topbar" style="display: none !important;">
+        <div class="tl">
+            <div class="logo-box"><img src="logo.png" alt="PClinic" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.style.display='none'" /></div>
+            <span class="appname">P<span>clinic</span></span>
+            <span class="appsub">Appointments</span>
+        </div>
+        <div class="tr">
+            <button class="tb-btn" onclick="toggleDarkMode()" title="Toggle Dark Mode"><i class="ti ti-moon" id="themeIcon"></i></button>
+            <div class="tb-btn" onclick="logout()" title="Logout"><i class="ti ti-logout"></i></div>
+        </div>
+    </div>
+
+    <div class="breadcrumb" style="display: none !important;">
+        <a href="hub.html">🏥 Hub</a>
+        <span style="color:var(--bd);">›</span>
+        <span class="current">Appointments</span>
+    </div>
+
+    <div class="greeting">
+        <div>
+            <h1>All <span class="highlight">Appointments</span></h1>
+            <p style="color:var(--tm); font-size:13px; margin-top:2px;">Every scheduled appointment, across every patient</p>
+        </div>
+        <button class="btn" onclick="window.location.href='reception-dashboard.html'"><i class="ti ti-plus"></i> Book via Reception</button>
+    </div>
+
+    <div class="filters">
+        <input type="text" id="searchInput" placeholder="🔍 Search by patient name or doctor..." oninput="renderAppointments()" />
+        <select id="statusFilter" onchange="renderAppointments()">
+            <option value="">All statuses</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead>
+                <tr><th>Date</th><th>Time</th><th>Patient</th><th>Doctor</th><th>Department</th><th>Priority</th><th>Status</th></tr>
+            </thead>
+            <tbody id="apptBody">
+                <tr><td colspan="7" style="text-align:center;color:var(--tm);padding:30px;">Loading…</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            function getAllAppointments() {
+                const patients = (typeof getPatients === 'function') ? getPatients() : [];
+                const list = [];
+                patients.forEach(p => {
+                    (p.appointments || []).forEach(a => {
+                        list.push({
+                            patientName: p.name || ((p.firstName || '') + ' ' + (p.lastName || '')).trim(),
+                            date: a.date, time: a.time, doctor: a.doctor, department: a.department,
+                            priority: a.priority, status: a.status || 'scheduled'
+                        });
+                    });
+                });
+                list.sort((a, b) => new Date(b.date + ' ' + (b.time || '')) - new Date(a.date + ' ' + (a.time || '')));
+                return list;
+            }
+
+            window.renderAppointments = function() {
+                const tbody = document.getElementById('apptBody');
+                const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+                const statusFilter = document.getElementById('statusFilter').value;
+
+                let all = getAllAppointments();
+                if (search) {
+                    all = all.filter(a => (a.patientName || '').toLowerCase().includes(search) || (a.doctor || '').toLowerCase().includes(search));
+                }
+                if (statusFilter) {
+                    all = all.filter(a => (a.status || '').toLowerCase() === statusFilter);
+                }
+
+                if (all.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="ti ti-calendar-off"></i>No appointments found. Book one from the Reception dashboard.</div></td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = all.map(a => {
+                    const statusClass = a.status === 'completed' ? 'green' : a.status === 'cancelled' ? 'red' : 'orange';
+                    return `<tr>
+                        <td>${a.date || '—'}</td>
+                        <td>${a.time || '—'}</td>
+                        <td>${a.patientName || '—'}</td>
+                        <td>${a.doctor || '—'}</td>
+                        <td>${a.department || '—'}</td>
+                        <td>${a.priority || 'Routine'}</td>
+                        <td><span class="badge ${statusClass}">${a.status || 'scheduled'}</span></td>
+                    </tr>`;
+                }).join('');
+            };
+
+            function tryRender(attempt) {
+                if (typeof getPatients === 'function') {
+                    renderAppointments();
+                } else if (attempt < 20) {
+                    setTimeout(() => tryRender(attempt + 1), 150);
+                } else {
+                    document.getElementById('apptBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red);padding:30px;">Could not load patient data.</td></tr>';
+                }
+            }
+            tryRender(0);
+            window.addEventListener('storage', renderAppointments);
+            window.addEventListener('patientsUpdated', renderAppointments);
+
+            window.showToast = function(msg, type) {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = 'toast' + (type ? ' ' + type : '');
+                toast.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span> ${msg}`;
+                container.appendChild(toast);
+                setTimeout(() => { toast.style.animation = 'toastOut 0.3s ease forwards'; setTimeout(() => toast.remove(), 300); }, 3000);
+            };
+            window.toggleDarkMode = function() {
+                const html = document.documentElement;
+                const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('pclinic-theme', next);
+                document.getElementById('themeIcon').className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
+            };
+            (function() {
+                const saved = (localStorage.getItem('pclinic-theme') || localStorage.getItem('pclinic_theme')) || 'light';
+                document.documentElement.setAttribute('data-theme', saved);
+                document.getElementById('themeIcon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
+            })();
+            window.logout = function() { window.pclinicLogout(); };
+
+            console.log('🏥 PClinic Appointments page loaded');
+        })();
+    </script>
+
+    <script>
+        requireAuth([]).then(function(staff) {
+            window.currentStaff = staff;
+        }).catch(function(err) {
+            console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+</body>
+</html>

@@ -6,15 +6,6 @@
 <title>PClinic — Hospital Management System</title>
 <meta name="description" content="PClinic is a modern, secure Electronic Medical Record (EMR) platform built for hospitals and clinics — patient records, clinical notes, prescriptions, lab, pharmacy, billing and more, all in one place." />
 <link rel="icon" type="image/png" href="logo.png" />
-<!-- Warm the connection to Firebase and pre-fetch the login page while the
-     visitor is still on the landing page, so clicking "Login" feels instant
-     instead of starting a cold 240 KB SDK download. -->
-<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-<link rel="dns-prefetch" href="https://www.gstatic.com">
-<link rel="prefetch" href="login.html" as="document">
-<link rel="prefetch" href="login-bg.jpg" as="image">
-<link rel="preload" as="image" href="hero-reception.jpg" fetchpriority="high">
-<link rel="prefetch" href="firebase-config.js" as="script" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
@@ -73,7 +64,7 @@
         position: fixed;
         inset: 0;
         z-index: 0;
-        background-image: url('hero-reception.jpg');
+        background-image: url('hospital-hero-bg.jpg');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -958,6 +949,6 @@
         console.log('🏥 PClinic Landing Page v2 — single page, popups, all portals wired to login');
     </script>
 
-
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2369a32fe82ae0f',t:'MTc4NTQzNzk4NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
 </body>
 </html>

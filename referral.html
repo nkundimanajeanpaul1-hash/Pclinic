@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PClinic — Referral Letter</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
+<link rel="stylesheet" href="pclinic-file.css">
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
+<script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');}catch(e){}})();</script>
+</head>
+<body class="pcf">
+
+<div class="pc-topbar noprint">
+    <div class="pc-brand">
+        <img class="pc-logo" src="logo-wide.png" alt="PClinic" width="118" height="30">
+        <span class="pc-appsub" id="appSub">Referral</span>
+    </div>
+    <div class="pc-tr">
+        <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
+        <div class="pc-chip"><span class="pc-avatar" id="userAvatar">··</span><span id="userName">…</span></div>
+        <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
+    </div>
+</div>
+
+<div class="pcf-wrap">
+    <div id="pcfRoot" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
+</div>
+
+<div class="pc-toasts noprint"></div>
+
+<script type="module" src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+<script src="patient-data.js"></script>
+<script src="pclinic-orders.js"></script>
+<script src="pclinic-catalog.js"></script>
+<script src="pclinic-file.js?v=20260804_CHUK_3ROW"></script>
+<script src="pclinic-vitals.js"></script>
+<script src="pclinic-filepage.js"></script>
+<script>
+pcFilePage.init({
+  "type": "referral",
+  "ref": "RF",
+  "title": "Referral Letter",
+  "sub": "Referral",
+  "docTitle": "Referral Letter",
+  "icon": "ti-send",
+  "histTitle": "Previous referrals",
+  "histUnit": "referral",
+  "newLabel": "New Referral Letter",
+  "dx": true,
+  "rdv": false,
+  "att": true,
+  "vitals": false,
+  "rx": false,
+  "fields": [
+    {
+      "id": "fac",
+      "label": "Refer to (facility)",
+      "ph": "e.g. CHUK",
+      "panel": "Referred to",
+      "icon": "ti-building-hospital"
+    },
+    {
+      "id": "dept",
+      "label": "Department / Specialist",
+      "ph": "Cardiology",
+      "panel": "Referred to"
+    },
+    {
+      "id": "urg",
+      "label": "Urgency",
+      "kind": "sel",
+      "panel": "Referred to",
+      "options": [
+        "Routine",
+        "Urgent",
+        "Emergency"
+      ]
+    },
+    {
+      "id": "transport",
+      "label": "Transport",
+      "kind": "sel",
+      "panel": "Referred to",
+      "options": [
+        "Own means",
+        "Ambulance",
+        "Ambulance with escort"
+      ]
+    },
+    {
+      "id": "reason",
+      "label": "Reason for referral",
+      "kind": "area",
+      "ph": "What you want the receiving team to do…",
+      "panel": "Clinical summary",
+      "icon": "ti-report-medical"
+    },
+    {
+      "id": "summary",
+      "label": "Clinical summary",
+      "kind": "area",
+      "ph": "History, findings, results so far…",
+      "panel": "Clinical summary"
+    },
+    {
+      "id": "given",
+      "label": "Treatment given so far",
+      "kind": "area",
+      "ph": "Drugs, fluids, procedures already done…",
+      "panel": "Clinical summary"
+    }
+  ]
+});
+</script>
+<script src="pclinic-handoff.js"></script>
+</body>
+</html>

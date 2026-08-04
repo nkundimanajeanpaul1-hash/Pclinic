@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy • PClinic</title>
+    
+    <!-- ═══ SHARED STYLES ═══ -->
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- ─── PATIENT DATA SYSTEM ─── -->          
+    
+    <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
+    <script type="module" src="firebase-config.js"></script>
+    <script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+<script src="pclinic-orders.js" defer></script>
+<script src="pclinic-worklist.js" defer></script>
+<script src="patient-data.js" defer></script>  
+    
+    <!-- Tabler Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+    
+    <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
+<style>
+        /* ─── RESET & VARIABLES ─── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --bg: #f2f4f8;
+            --s0: #f5f5f7;
+            --s1: #ffffff;
+            --s2: #ffffff;
+            --s3: #f2f2f4;
+            --bd: rgba(0,0,0,0.06);
+            --bds: rgba(0,0,0,0.08);
+            --tp: #1c1c1e;
+            --ts: #3a3a3c;
+            --tm: #8e8e93;
+            --ac: #0a8a73;
+            --ach: #066354;
+            --acb: #e5f7f3;
+            --acl: rgba(10,138,115,0.15);
+            --green: #34c759;
+            --greenb: #e9f9ee;
+            --greend: #1a7a32;
+            --orange: #ff9500;
+            --orangeb: #fff4e0;
+            --oranged: #7a4500;
+            --red: #ff3b30;
+            --redb: #ffebe9;
+            --redd: #8a1f1a;
+            --purple: #af52de;
+            --purpleb: #f5eaff;
+            --purpled: #5c2475;
+            --teal: #0a9b8f;
+            --tealbg: #e6f8f6;
+            --tealt: #03665e;
+            --r: 12px;
+            --r2: 16px;
+            --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+            --shadow2: 0 2px 12px rgba(0,0,0,.10), 0 8px 32px rgba(0,0,0,.06);
+            --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+            --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        body {
+            font-family: var(--f);
+            background: var(--bg);
+            color: var(--tp);
+            font-size: 13px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            background-image: radial-gradient(circle at 20% 30%, rgba(10,138,115,0.03) 0%, transparent 50%),
+                              radial-gradient(circle at 80% 70%, rgba(255,149,0,0.03) 0%, transparent 50%);
+        }
+
+        /* ─── SCROLLBAR ─── */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--bd); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--bds); }
+
+        /* ─── APP ─── */
+        .app { min-height: 100vh; display: flex; flex-direction: column; background: transparent; }
+
+        /* ─── TOPBAR ─── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            height: 56px;
+            background: rgba(255,255,255,0.72);
+            backdrop-filter: saturate(180%) blur(24px);
+            -webkit-backdrop-filter: saturate(180%) blur(24px);
+            border-bottom: 0.5px solid var(--bd);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+        }
+        .tl { display: flex; align-items: center; gap: 12px; }
+        .logo-box {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: linear-gradient(135deg, var(--ac), var(--ach));
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.2s var(--spring);
+        }
+        .logo-box:hover { transform: scale(1.05); }
+        .logo-box svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2.2; }
+        .appname { font-size: 15px; font-weight: 700; color: var(--tp); letter-spacing: -0.3px; }
+        .appname span { color: var(--ac); }
+        .appsub {
+            font-size: 10px; color: var(--tm); font-weight: 500;
+            background: rgba(0,0,0,0.04); padding: 2px 10px; border-radius: 30px;
+            border: 0.5px solid var(--bd);
+        }
+        .tr { display: flex; align-items: center; gap: 8px; position: relative; }
+        .tb-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 0.5px solid var(--bd);
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; position: relative;
+            transition: all 0.2s var(--spring);
+            color: var(--tm);
+        }
+        .tb-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
+        .tb-btn:active { transform: scale(0.92); }
+        .tb-btn i { font-size: 15px; }
+        .notif-dot {
+            position: absolute; top: 5px; right: 5px;
+            width: 7px; height: 7px; background: var(--red);
+            border-radius: 50%; border: 1.5px solid #fff;
+        }
+        .user-chip {
+            display: flex; align-items: center; gap: 8px;
+            padding: 4px 12px 4px 5px;
+            border: 0.5px solid var(--bd);
+            border-radius: 20px; cursor: pointer;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            transition: all 0.2s var(--spring);
+        }
+        .user-chip:hover { background: rgba(255,255,255,0.9); transform: scale(1.02); }
+        .user-chip:active { transform: scale(0.95); }
+        .ua {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: var(--ac); display: flex; align-items: center;
+            justify-content: center; font-size: 10px; font-weight: 700; color: #fff;
+        }
+        .uname { font-size: 12px; font-weight: 500; color: var(--tp); }
+
+        .clock-display {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--tm);
+            font-variant-numeric: tabular-nums;
+            min-width: 65px;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--tm);
+            padding: 8px 24px;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border-bottom: 0.5px solid var(--bd);
+        }
+        .breadcrumb a {
+            color: var(--ac);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .breadcrumb a:hover { color: var(--ach); text-decoration: underline; }
+        .breadcrumb .sep { opacity: 0.4; }
+
+        .search-row {
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 0.5px solid var(--bd);
+            padding: 10px 24px;
+            display: flex; align-items: center;
+            gap: 12px; flex-wrap: wrap;
+        }
+        .kpis {
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+        }
+        .kpi {
+            display: flex; align-items: center; gap: 5px;
+            padding: 5px 12px;
+            border: 0.5px solid var(--bd);
+            border-radius: 20px; cursor: pointer;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            font-size: 12px; font-weight: 500;
+            transition: all 0.2s var(--spring);
+        }
+        .kpi:hover { background: rgba(255,255,255,0.9); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .kpi:active { transform: scale(0.95); }
+        .kpi i { font-size: 14px; }
+        .kpi-ac { color: var(--ac); }
+        .kpi-org { color: var(--orange); }
+        .kpi-red { color: var(--red); }
+        .kpi-grn { color: var(--green); }
+        .kpi-num { font-weight: 700; font-size: 13px; }
+
+        .content-area { flex: 1; padding: 16px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+        .stat-row {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+        }
+        .sc {
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 0.5px solid var(--bd);
+            border-radius: var(--r2);
+            padding: 14px 16px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+        }
+        .sc:hover { transform: translateY(-2px); box-shadow: var(--shadow2); }
+        .sc-lbl { font-size: 10px; font-weight: 600; color: var(--tm); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; }
+        .sc-val { font-size: 24px; font-weight: 700; color: var(--tp); letter-spacing: -1px; line-height: 1; }
+        .sc-sub { font-size: 10px; color: var(--tm); margin-top: 3px; }
+        .sc-ic {
+            position: absolute; right: 12px; top: 12px;
+            width: 28px; height: 28px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sc-ic i { font-size: 15px; }
+
+        .cat-rail {
+            display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border-radius: var(--r);
+            padding: 6px 12px;
+            border: 0.5px solid var(--bd);
+        }
+        .cat-pill {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 20px;
+            border: 0.5px solid var(--bd);
+            background: rgba(255,255,255,0.4);
+            font-size: 12px; font-weight: 600; color: var(--ts);
+            cursor: pointer; white-space: nowrap;
+            transition: all 0.2s var(--spring);
+            flex-shrink: 0;
+        }
+        .cat-pill:hover { background: rgba(255,255,255,0.8); transform: scale(1.02); }
+        .cat-pill:active { transform: scale(0.95); }
+        .cat-pill.active {
+            background: var(--tp); color: #fff; border-color: var(--tp);
+        }
+        .cat-pill i { font-size: 14px; }
+        .cat-pill .ccount { font-size: 10px; opacity: 0.7; font-weight: 700; }
+
+        .panel {
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 0.5px solid var(--bd);
+            border-radius: var(--r2);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.2s ease;
+        }
+        .ph {
+            padding: 14px 18px;
+            border-bottom: 0.5px solid var(--bd);
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            flex-wrap: wrap;
+        }
+        .ph-l { font-size: 14px; font-weight: 650; color: var(--tp); letter-spacing: -0.2px; }
+        .ph-r { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .lock-icon {
+            display: inline-flex; align-items: center; gap: 4px;
+            color: var(--tm); font-size: 10px; font-weight: 500;
+        }
+        .lock-icon i { font-size: 12px; }
+
+        .toast {
+            margin: 0 16px 10px;
+            padding: 10px 16px;
+            background: var(--greenb);
+            color: var(--greend);
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid var(--green);
+        }
+        .toast.show { display: flex; animation: toastSlide 0.3s var(--spring); }
+        @keyframes toastSlide {
+            from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .toast i { font-size: 16px; }
+
+        .tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .tbl th {
+            font-size: 10px; font-weight: 600; color: var(--tm);
+            text-transform: uppercase; letter-spacing: 0.4px;
+            padding: 8px 14px; text-align: left;
+            border-bottom: 0.5px solid var(--bd);
+            background: rgba(0,0,0,0.02);
+        }
+        .tbl td {
+            padding: 10px 14px;
+            border-bottom: 0.5px solid var(--bd);
+            color: var(--tp);
+            vertical-align: middle;
+        }
+        .tbl tr:last-child td { border-bottom: none; }
+        .tbl tbody tr { transition: background 0.1s; }
+        .tbl tbody tr:hover td { background: rgba(0,0,0,0.02); }
+
+        .stock-bar {
+            width: 100%; height: 5px; background: var(--s3);
+            border-radius: 3px; overflow: hidden; margin-top: 3px;
+        }
+        .stock-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .sf-ok { background: var(--green); }
+        .sf-low { background: var(--orange); }
+        .sf-crit { background: var(--red); }
+
+        .item-row {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .item-ic {
+            width: 30px; height: 30px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .item-ic i { font-size: 15px; }
+        .item-name { font-weight: 600; color: var(--tp); }
+        .item-sub { font-size: 10px; color: var(--tm); margin-top: 1px; }
+
+        .badge {
+            font-size: 10px; font-weight: 600; padding: 2px 10px;
+            border-radius: 12px; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .b-red { background: var(--redb); color: var(--redd); }
+        .b-org { background: var(--orangeb); color: var(--oranged); }
+        .b-grn { background: var(--greenb); color: var(--greend); }
+        .b-blue { background: var(--acb); color: var(--ach); }
+        .b-teal { background: var(--tealbg); color: var(--tealt); }
+        .b-pur { background: var(--purpleb); color: var(--purpled); }
+        .b-amb { background: var(--orangeb); color: var(--oranged); }
+
+        .add-bar {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 18px;
+            border-top: 0.5px solid var(--bd);
+            background: rgba(0,0,0,0.02);
+            flex-wrap: wrap;
+        }
+        .add-bar i { font-size: 16px; color: var(--ac); }
+        .add-bar span { font-size: 12px; color: var(--tm); flex: 1; }
+        .btn-add {
+            display: flex; align-items: center; gap: 6px;
+            padding: 7px 16px;
+            background: var(--ac); color: #fff;
+            border: none; border-radius: 8px;
+            font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s var(--spring);
+            box-shadow: 0 2px 8px rgba(10,138,115,0.25);
+        }
+        .btn-add:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(10,138,115,0.35); }
+        .btn-add:active { transform: scale(0.95); }
+        .btn-add i { font-size: 14px; color: #fff; }
+
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 200;
+            align-items: flex-start; justify-content: center; padding-top: 60px;
+        }
+        .modal-overlay.show { display: flex; animation: overlayFade 0.3s ease; }
+        @keyframes overlayFade {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal {
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: saturate(180%) blur(32px);
+            -webkit-backdrop-filter: saturate(180%) blur(32px);
+            border-radius: 18px;
+            border: 0.5px solid rgba(255,255,255,0.3);
+            width: 540px; max-width: 94%; max-height: 85vh;
+            overflow: hidden; display: flex; flex-direction: column;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+            animation: modalSpring 0.4s var(--spring);
+        }
+        @keyframes modalSpring {
+            from { opacity: 0; transform: scale(0.92) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-header { padding: 14px 18px; border-bottom: 0.5px solid var(--bd); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        .modal-title { font-size: 14px; font-weight: 600; color: var(--tp); }
+        .modal-close {
+            width: 28px; height: 28px; border-radius: 50%; border: none;
+            background: rgba(0,0,0,0.04); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; font-size: 13px;
+            color: var(--tm); transition: all 0.2s var(--spring);
+        }
+        .modal-close:hover { background: rgba(0,0,0,0.08); transform: scale(1.1); }
+        .modal-close:active { transform: scale(0.9); }
+        .modal-body { padding: 18px; overflow-y: auto; flex: 1; }
+
+        .mfg { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .mff { grid-column: 1/-1; }
+        .msec {
+            font-size: 11px; font-weight: 600; color: var(--ts);
+            padding: 7px 0 5px; border-bottom: 0.5px solid var(--bd);
+            margin-bottom: 6px; grid-column: 1/-1;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .msec i { font-size: 14px; color: var(--ac); }
+        .fgl { display: flex; flex-direction: column; gap: 4px; }
+        .lbl { font-size: 10px; font-weight: 600; color: var(--tm); text-transform: uppercase; letter-spacing: 0.4px; }
+        .fi {
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 0.5px solid var(--bd);
+            border-radius: 8px; padding: 7px 10px; font-size: 12px;
+            color: var(--tp); outline: none; font-family: inherit;
+            transition: all 0.2s; width: 100%;
+        }
+        .fi:focus { border-color: var(--ac); box-shadow: 0 0 0 3px var(--acl); background: rgba(255,255,255,0.9); }
+        select.fi { cursor: pointer; }
+
+        .policy-note {
+            margin-top: 12px; padding: 10px 14px;
+            background: var(--orangeb); border-radius: 10px;
+            font-size: 11px; color: var(--oranged);
+            display: flex; align-items: flex-start; gap: 8px;
+            border-left: 3px solid var(--orange);
+        }
+        .policy-note i { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+        .mfa { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+        .mbtn-p {
+            padding: 8px 20px; background: var(--ac); color: #fff;
+            border: none; border-radius: 8px; font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s var(--spring);
+            box-shadow: 0 2px 8px rgba(10,138,115,0.25);
+        }
+        .mbtn-p:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(10,138,115,0.35); }
+        .mbtn-p:active { transform: scale(0.95); }
+        .mbtn-s {
+            padding: 8px 16px; background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 0.5px solid var(--bd);
+            border-radius: 8px; font-size: 12px; font-weight: 500;
+            cursor: pointer; font-family: inherit; color: var(--ts);
+            transition: all 0.2s var(--spring);
+        }
+        .mbtn-s:hover { background: rgba(255,255,255,0.9); transform: scale(1.02); }
+        .mbtn-s:active { transform: scale(0.95); }
+
+        .toast-container {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            z-index: 300; display: flex; flex-direction: column;
+            align-items: center; gap: 6px; pointer-events: none;
+            max-width: 90%;
+        }
+        .toast-msg {
+            background: rgba(28,28,30,0.92);
+            backdrop-filter: saturate(180%) blur(24px);
+            -webkit-backdrop-filter: saturate(180%) blur(24px);
+            color: #fff; border-radius: 12px; padding: 10px 20px;
+            font-size: 13px; font-weight: 500; pointer-events: auto;
+            opacity: 0; transform: translateY(20px) scale(0.95);
+            transition: all 0.4s var(--spring);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center;
+        }
+        .toast-msg.show { opacity: 1; transform: translateY(0) scale(1); }
+        .toast-msg.success { background: #065f46; }
+        .toast-msg.error { background: #991b1b; }
+        .toast-msg.warning { background: #92400e; }
+        .toast-msg.info { background: #1e40af; }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .loading-overlay.show { display: flex; }
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--bd);
+            border-top-color: var(--ac);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            font-size: 13px;
+            color: var(--tm);
+            font-weight: 500;
+        }
+
+        /* ─── BILLS SECTION ─── */
+        .bills-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 0.5px solid var(--bd);
+        }
+        .bills-section .ph {
+            background: rgba(255,255,255,0.4);
+            border-radius: var(--r);
+            padding: 10px 14px;
+            margin-bottom: 10px;
+        }
+        .bills-section .ph-l {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .bill-item-row {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 0.5px solid var(--bd);
+            gap: 10px;
+            font-size: 12px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .bill-item-row:hover {
+            background: rgba(0,0,0,0.02);
+        }
+        .bill-item-row .bill-patient {
+            flex: 1;
+            font-weight: 600;
+        }
+        .bill-item-row .bill-total {
+            font-weight: 700;
+            color: var(--greend);
+        }
+        .bill-item-row .bill-status {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 10px;
+        }
+        .bill-item-row .bill-status.pending {
+            background: var(--orangeb);
+            color: var(--oranged);
+        }
+        .bill-item-row .bill-status.paid {
+            background: var(--greenb);
+            color: var(--greend);
+        }
+        .bill-item-row .bill-actions button {
+            padding: 2px 10px;
+            font-size: 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .bill-item-row .bill-actions .btn-mark-paid {
+            background: var(--greenb);
+            color: var(--greend);
+        }
+        .bill-item-row .bill-actions .btn-mark-paid:hover {
+            background: var(--green);
+            color: #fff;
+        }
+        .bill-item-row .bill-actions .btn-view {
+            background: var(--acb);
+            color: var(--ach);
+        }
+        .bill-item-row .bill-actions .btn-view:hover {
+            background: var(--ac);
+            color: #fff;
+        }
+
+        /* ─── PRESCRIPTIONS SECTION ─── */
+        .prescriptions-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 0.5px solid var(--bd);
+        }
+        .prescriptions-section .ph {
+            background: rgba(255,255,255,0.4);
+            border-radius: var(--r);
+            padding: 10px 14px;
+            margin-bottom: 10px;
+        }
+        .rx-item-row {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 0.5px solid var(--bd);
+            gap: 10px;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        .rx-item-row:hover {
+            background: rgba(0,0,0,0.02);
+        }
+        .rx-item-row .rx-patient {
+            flex: 1;
+            font-weight: 600;
+        }
+        .rx-item-row .rx-med {
+            font-weight: 600;
+            color: var(--ac);
+            min-width: 120px;
+        }
+        .rx-item-row .rx-detail {
+            color: var(--tm);
+            font-size: 11px;
+        }
+        .rx-item-row .rx-status {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 10px;
+        }
+        .rx-item-row .rx-status.pending {
+            background: var(--orangeb);
+            color: var(--oranged);
+        }
+        .rx-item-row .rx-status.dispensed {
+            background: var(--greenb);
+            color: var(--greend);
+        }
+
+        /* ─── SHORTCUTS MODAL (shared) ─── */
+        .shortcuts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 4px 0;
+        }
+        .shortcut-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 0.5px solid var(--bd);
+        }
+        .shortcut-key {
+            background: var(--s3);
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: monospace;
+            color: var(--ts);
+        }
+        .shortcut-desc {
+            font-size: 12px;
+            color: var(--ts);
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 960px) {
+            .stat-row { grid-template-columns: repeat(3, 1fr); }
+            .mfg { grid-template-columns: 1fr; }
+            .cat-rail { padding: 4px 8px; }
+        }
+        @media (max-width: 640px) {
+            .topbar { padding: 0 12px; flex-wrap: wrap; height: auto; padding-top: 8px; padding-bottom: 8px; gap: 4px; }
+            .tr { margin-left: auto; }
+            .search-row { padding: 8px 12px; flex-direction: column; align-items: stretch; }
+            .search-wrap { min-width: unset; }
+            .kpis { justify-content: center; }
+            .content-area { padding: 12px; }
+            .stat-row { grid-template-columns: 1fr 1fr; }
+            .cat-pill { font-size: 10px; padding: 4px 10px; }
+            .tbl { font-size: 11px; }
+            .tbl th, .tbl td { padding: 6px 8px; }
+            .item-ic { width: 24px; height: 24px; }
+            .item-ic i { font-size: 13px; }
+            .modal { width: 96%; max-height: 90vh; margin-top: 20px; }
+            .modal-body { padding: 12px; }
+            .ph { flex-direction: column; align-items: flex-start; }
+            .add-bar { flex-direction: column; align-items: stretch; }
+            .add-bar span { text-align: center; }
+            .btn-add { justify-content: center; }
+            .breadcrumb { padding: 6px 12px; font-size: 10px; flex-wrap: wrap; }
+            .clock-display { font-size: 10px; min-width: 50px; }
+            .bill-item-row { flex-wrap: wrap; }
+            .rx-item-row { flex-wrap: wrap; }
+        }
+        @media (max-width: 480px) {
+            .topbar { padding: 4px 8px; }
+            .appname { font-size: 13px; }
+            .appsub { font-size: 9px; padding: 1px 6px; }
+            .uname { font-size: 10px; }
+            .ua { width: 20px; height: 20px; font-size: 8px; }
+            .stat-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .sc { padding: 10px 12px; }
+            .sc-val { font-size: 18px; }
+            .kpi { font-size: 10px; padding: 3px 8px; }
+            .kpi i { font-size: 12px; }
+            .kpi-num { font-size: 11px; }
+            .cat-pill { font-size: 9px; padding: 3px 8px; }
+            .cat-pill i { font-size: 12px; }
+            .tbl { font-size: 10px; }
+            .tbl th, .tbl td { padding: 4px 6px; }
+            .item-name { font-size: 11px; }
+            .item-sub { font-size: 9px; }
+            .badge { font-size: 9px; padding: 1px 8px; }
+            .btn-add, .mbtn-p, .mbtn-s { font-size: 10px; padding: 5px 12px; }
+            .shortcuts-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
+</head>
+<body>
+
+    <!-- ═══ LOADING OVERLAY ═══ -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading pharmacy data…</div>
+    </div>
+
+    <div class="app" id="app">
+
+        <!-- ═══ TOPBAR ═══ -->
+        <div class="topbar" style="display: none !important;">
+            <div class="tl">
+                <div class="logo-box"><img src="logo.png" alt="PClinic" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.outerHTML=\'<svg viewBox=&quot;0 0 24 24&quot; style=&quot;width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2&quot;><path d=&quot;M22 12h-4l-3 9L9 3l-3 9H2&quot;/></svg>\'" /></div>
+                <span class="appname">P<span>clinic</span></span>
+                <span class="appsub">Pharmacy</span>
+            </div>
+            <div class="tr">
+                <div class="clock-display" id="liveClock">--:--</div>
+                <div class="tb-btn" onclick="showToast('🔔 2 new notifications')"><i class="ti ti-bell"></i><div class="notif-dot"></div></div>
+                <div class="tb-btn" onclick="toggleDarkMode()"><i class="ti ti-moon" id="darkModeIcon"></i></div>
+                <div class="tb-btn" onclick="openShortcuts()"><i class="ti ti-help"></i></div>
+                <div class="tb-btn" onclick="showToast('⚙️ Settings')"><i class="ti ti-settings"></i></div>
+                <div class="user-chip" onclick="showToast('👤 RPh Susan Kiprop')">
+                    <div class="ua">SK</div>
+                    <span class="uname">RPh Susan Kiprop</span>
+                </div>
+                <div class="tb-btn" onclick="handleLogout()"><i class="ti ti-logout"></i></div>
+            </div>
+        </div>
+
+        <!-- ═══ BREADCRUMB ═══ -->
+        <div class="breadcrumb" style="display: none !important;">
+            <a href="hub.html">🏠 Home</a>
+            <span class="sep">›</span>
+            <a href="pharmacy-dashboard.html">Pharmacy</a>
+            <span class="sep">›</span>
+            <span style="color:var(--tp);font-weight:500;">Inventory Management</span>
+        </div>
+
+        <!-- ═══ SEARCH ROW ═══ -->
+        <div class="search-row">
+            <div class="search-wrap" id="searchWrap">
+                <i class="ti ti-search"></i>
+                <input id="searchInput" placeholder="Search medication or consumable name…" oninput="handleSmartSearch(this.value)" onkeydown="if(event.key==='Enter')doSearch(this.value)"/>
+                <div class="search-suggestions" id="suggestions"></div>
+            </div>
+            <div class="kpis">
+                <div class="kpi kpi-ac"><i class="ti ti-list-numbers"></i> <span class="kpi-num" id="kpiTotal">312</span> items</div>
+                <div class="kpi kpi-org"><i class="ti ti-box-off"></i> <span class="kpi-num">14</span> low</div>
+                <div class="kpi kpi-red"><i class="ti ti-calendar-x"></i> <span class="kpi-num">9</span> expiring</div>
+                <div class="kpi kpi-grn" onclick="openAddModal()"><i class="ti ti-plus"></i> <span>Add item</span></div>
+            </div>
+        </div>
+
+        <!-- ═══ CONTENT ═══ -->
+        <div class="content-area">
+
+            <!-- ─── STATS ─── -->
+            <div class="stat-row">
+                <div class="sc">
+                    <div class="sc-ic" style="background:var(--acb)"><i class="ti ti-pill" style="color:var(--ac)"></i></div>
+                    <div class="sc-lbl">Medications</div>
+                    <div class="sc-val">214</div>
+                    <div class="sc-sub">SKUs in catalog</div>
+                </div>
+                <div class="sc">
+                    <div class="sc-ic" style="background:var(--tealbg)"><i class="ti ti-bandage" style="color:var(--teal)"></i></div>
+                    <div class="sc-lbl">Consumables</div>
+                    <div class="sc-val">98</div>
+                    <div class="sc-sub">SKUs in catalog</div>
+                </div>
+                <div class="sc">
+                    <div class="sc-ic" style="background:var(--orangeb)"><i class="ti ti-box-off" style="color:var(--orange)"></i></div>
+                    <div class="sc-lbl">Below reorder</div>
+                    <div class="sc-val">14</div>
+                    <div class="sc-sub">Needs procurement</div>
+                </div>
+                <div class="sc">
+                    <div class="sc-ic" style="background:var(--redb)"><i class="ti ti-calendar-x" style="color:var(--red)"></i></div>
+                    <div class="sc-lbl">Expiring ≤60 days</div>
+                    <div class="sc-val">9</div>
+                    <div class="sc-sub">Flag for use first</div>
+                </div>
+                <div class="sc">
+                    <div class="sc-ic" style="background:var(--purpleb)"><i class="ti ti-lock" style="color:var(--purple)"></i></div>
+                    <div class="sc-lbl">Controlled items</div>
+                    <div class="sc-val">7</div>
+                    <div class="sc-sub">Register required</div>
+                </div>
+            </div>
+
+            <!-- ─── CATEGORY RAIL ─── -->
+            <div class="cat-rail" id="catRail">
+                <div class="cat-pill active" onclick="setCategory(this,'all')"><i class="ti ti-apps"></i>All items<span class="ccount">312</span></div>
+                <div class="cat-pill" onclick="setCategory(this,'analgesic')"><i class="ti ti-pill"></i>Analgesics<span class="ccount">22</span></div>
+                <div class="cat-pill" onclick="setCategory(this,'antibiotic')"><i class="ti ti-vaccine"></i>Antibiotics<span class="ccount">38</span></div>
+                <div class="cat-pill" onclick="setCategory(this,'cardiac')"><i class="ti ti-heart"></i>Cardiac<span class="ccount">24</span></div>
+                <div class="cat-pill" onclick="setCategory(this,'anaesthetic')"><i class="ti ti-injection"></i>Anaesthetics<span class="ccount">11</span></div>
+                <div class="cat-pill" onclick="setCategory(this,'iv')"><i class="ti ti-droplet"></i>IV fluids<span class="ccount">14</span></div>
+                <div class="cat-pill" onclick="setCategory(this,'antidiabetic')"><i class="ti ti-chart-line"></i>Antidiabetics<span class="ccount">10</span></div>
+                <div class="cat-pill" onclick="setCategory(this,'respiratory')"><i class="ti ti-lungs"></i>Respiratory<span class="ccount">12</span></div>
+                <div class="cat-pill" onclick="setCategory(this,'gi')"><i class="ti ti-stethoscope"></i>GI / antiemetic<span class="ccount">15</span></div>
+                <div class="cat-pill" onclick="setCategory(this,'consumable')"><i class="ti ti-bandage"></i>Consumables<span class="ccount">98</span></div>
+                <div class="cat-pill" onclick="setCategory(this,'controlled')"><i class="ti ti-lock"></i>Controlled<span class="ccount">7</span></div>
+            </div>
+
+            <!-- ─── INVENTORY PANEL ─── -->
+            <div class="panel">
+                <div class="ph">
+                    <span class="ph-l" id="panelTitle">All inventory items</span>
+                    <div class="ph-r">
+                        <span class="lock-icon"><i class="ti ti-lock"></i>Pharmacists can add stock — deletion is admin-only</span>
+                    </div>
+                </div>
+                <div id="toastInline" class="toast"><i class="ti ti-circle-check"></i><span id="toastMsg">Item added to catalog.</span></div>
+                <table class="tbl">
+                    <thead><tr><th style="width:32%">Item</th><th style="width:11%">Category</th><th style="width:9%">Form</th><th style="width:9%">In stock</th><th style="width:16%">Stock level</th><th style="width:9%">Expiry</th><th style="width:14%">Status</th></tr></thead>
+                    <tbody id="inventoryBody"></tbody>
+                </table>
+                <div class="add-bar">
+                    <i class="ti ti-info-circle"></i>
+                    <span>Add a new medication or consumable, or top up stock for an existing item.</span>
+                    <button class="btn-add" onclick="openAddModal()"><i class="ti ti-plus"></i>Add item</button>
+                </div>
+            </div>
+
+            <!-- ─── BILLS SECTION ─── -->
+            <div class="bills-section">
+                <div class="ph" style="background:rgba(255,255,255,0.5);border-radius:var(--r);padding:10px 14px;margin-bottom:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                        <span class="ph-l"><i class="ti ti-receipt" style="color:var(--ac);"></i> Medication Bills</span>
+                        <span style="font-size:11px;color:var(--tm);" id="billCount">0 pending bills</span>
+                    </div>
+                </div>
+                <div id="pharmacyBillsList">
+                    <p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">No medication bills found.</p>
+                </div>
+            </div>
+
+            <!-- ─── PRESCRIPTIONS SECTION ─── -->
+            <div class="prescriptions-section">
+                <div class="ph" style="background:rgba(255,255,255,0.5);border-radius:var(--r);padding:10px 14px;margin-bottom:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                        <span class="ph-l"><i class="ti ti-pill" style="color:var(--ac);"></i> Pending Prescriptions</span>
+                        <span style="font-size:11px;color:var(--tm);" id="rxCount">0 prescriptions</span>
+                    </div>
+                </div>
+                <div id="pcRxIncoming" style="margin-bottom:14px"></div>
+                <div id="pharmacyRxList">
+                    <p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">No pending prescriptions.</p>
+                </div>
+            </div>
+
+        </div><!-- /content-area -->
+
+        <!-- ═══ MODAL: ADD ITEM ─── -->
+        <div class="modal-overlay" id="addModal" onclick="if(event.target===this)closeAddModal()">
+            <div class="modal">
+                <div class="modal-header">
+                    <span class="modal-title">Add medication or consumable</span>
+                    <button class="modal-close" onclick="closeAddModal()"><i class="ti ti-x"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mfg">
+                        <div class="msec"><i class="ti ti-tag"></i>Item details</div>
+                        <div class="fgl mff"><div class="lbl">Item type</div>
+                            <select class="fi" id="addType"><option value="medication">Medication</option><option value="consumable">Consumable</option></select>
+                        </div>
+                        <div class="fgl"><div class="lbl">Item name</div><input class="fi" id="addName" placeholder="e.g. Ceftriaxone, IV cannula 18G"/></div>
+                        <div class="fgl"><div class="lbl">Category</div>
+                            <select class="fi" id="addCategory">
+                                <option>Analgesic</option><option>Antibiotic</option><option>Cardiac</option>
+                                <option>Anaesthetic</option><option>Antidiabetic</option><option>Respiratory</option>
+                                <option>GI / antiemetic</option><option>Antihypertensive</option><option>Anticoagulant</option>
+                                <option>IV fluid</option><option>Vaccine / biologic</option><option>Dermatological</option>
+                                <option>Ophthalmic / ENT</option><option>Vitamin / supplement</option><option>Controlled substance</option>
+                                <option>Wound care consumable</option><option>IV / injection consumable</option>
+                                <option>PPE consumable</option><option>Surgical consumable</option><option>Diagnostic consumable</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="fgl"><div class="lbl">Form / strength</div><input class="fi" id="addForm" placeholder="e.g. 1g vial, 500mg tablet"/></div>
+                        <div class="fgl"><div class="lbl">Unit of measure</div>
+                            <select class="fi" id="addUnit">
+                                <option>Tablet</option><option>Capsule</option><option>Vial</option><option>Ampoule</option>
+                                <option>Bottle</option><option>Bag</option><option>Box</option><option>Pair</option>
+                                <option>Roll</option><option>Each / piece</option><option>Tube</option><option>Sachet</option>
+                            </select>
+                        </div>
+                        <div class="msec"><i class="ti ti-box"></i>Stock entry</div>
+                        <div class="fgl"><div class="lbl">Quantity received</div><input class="fi" id="addQty" type="number" placeholder="e.g. 100"/></div>
+                        <div class="fgl"><div class="lbl">Batch number</div><input class="fi" id="addBatch" placeholder="e.g. B2026-114"/></div>
+                        <div class="fgl"><div class="lbl">Expiry date</div><input class="fi" type="date" id="addExpiry"/></div>
+                        <div class="fgl"><div class="lbl">Reorder level</div><input class="fi" type="number" id="addReorder" placeholder="e.g. 50"/></div>
+                        <div class="fgl"><div class="lbl">Unit cost (KES)</div><input class="fi" type="number" step="0.01" id="addCost" placeholder="e.g. 12.50"/></div>
+                        <div class="fgl"><div class="lbl">Supplier</div>
+                            <select class="fi" id="addSupplier">
+                                <option>KEMSA — Kenya Medical Supplies</option><option>Surgipharm Ltd</option>
+                                <option>Beta Healthcare</option><option>Universal Corporation</option><option>Other</option>
+                            </select>
+                        </div>
+                        <div class="fgl mff"><div class="lbl">Notes</div><input class="fi" id="addNotes" placeholder="Storage conditions, controlled status, special handling…"/></div>
+                    </div>
+                    <div class="policy-note">
+                        <i class="ti ti-shield-lock"></i>
+                        New items and stock additions are saved instantly to the catalog. Removing or deleting an item requires administrator approval and is not available from the pharmacist account.
+                    </div>
+                    <div class="mfa">
+                        <button class="mbtn-p" onclick="submitAddItem()">Add to catalog</button>
+                        <button class="mbtn-s" onclick="closeAddModal()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SHORTCUTS MODAL ═══ -->
+        <div class="modal-overlay" id="shortcutsModal" onclick="if(event.target===this)closeShortcuts()">
+            <div class="modal" style="max-width:440px;">
+                <div class="modal-header">
+                    <span class="modal-title"><i class="ti ti-help" style="margin-right:8px;"></i>Keyboard shortcuts</span>
+                    <button class="modal-close" onclick="closeShortcuts()"><i class="ti ti-x"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="shortcuts-grid">
+                        <div class="shortcut-item"><span class="shortcut-desc">Search</span><span class="shortcut-key">⌘F / Ctrl+F</span></div>
+                        <div class="shortcut-item"><span class="shortcut-desc">Add item</span><span class="shortcut-key">⌘N / Ctrl+N</span></div>
+                        <div class="shortcut-item"><span class="shortcut-desc">Close modal</span><span class="shortcut-key">ESC</span></div>
+                        <div class="shortcut-item"><span class="shortcut-desc">Dark mode</span><span class="shortcut-key">⌘D / Ctrl+D</span></div>
+                        <div class="shortcut-item"><span class="shortcut-desc">Refresh data</span><span class="shortcut-key">⌘R / Ctrl+R</span></div>
+                    </div>
+                    <p style="font-size:11px;color:var(--tm);margin-top:12px;text-align:center;">Press <kbd>?</kbd> to reopen this modal</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SHARED TOAST CONTAINER ═══ -->
+        <div class="toast-container" id="toastContainer"></div>
+
+    </div><!-- /app -->
+
+    <!-- ═══ SHARED JAVASCRIPT ═══ -->
+    <script src="shared.js" defer></script>
+
+    <script>
+        // ─── CATALOG DATA ───
+        var catalog = [
+            { n: "Paracetamol 500mg tablet", cat: "analgesic", catL: "Analgesic", form: "Tablet", stock: 1240, reorder: 300,
+                exp: "04/2027", price: 1.20 },
+            { n: "Paracetamol 1g IV infusion", cat: "analgesic", catL: "Analgesic", form: "IV bag", stock: 60, reorder: 40,
+                exp: "08/2026", price: 85 },
+            { n: "Ibuprofen 400mg tablet", cat: "analgesic", catL: "Analgesic", form: "Tablet", stock: 520, reorder: 150,
+                exp: "01/2027", price: 2.10 },
+            { n: "Diclofenac 50mg tablet", cat: "analgesic", catL: "Analgesic", form: "Tablet", stock: 310, reorder: 100,
+                exp: "11/2026", price: 2.80 },
+            { n: "Diclofenac 75mg/3mL injection", cat: "analgesic", catL: "Analgesic", form: "Ampoule", stock: 90,
+                reorder: 40, exp: "06/2027", price: 18 },
+            { n: "Aspirin 300mg tablet", cat: "analgesic", catL: "Analgesic", form: "Tablet", stock: 340, reorder: 100,
+                exp: "03/2027", price: 4.5 },
+            { n: "Tramadol 50mg tablet", cat: "controlled", catL: "Controlled substance", form: "Tablet", stock: 22,
+                reorder: 40, exp: "01/2027", price: 9, low: 1 },
+            { n: "Morphine sulphate 10mg/mL injection", cat: "controlled", catL: "Controlled substance", form: "Ampoule",
+                stock: 17, reorder: 30, exp: "02/2027", price: 120, low: 1 },
+            { n: "Pethidine 50mg/mL injection", cat: "controlled", catL: "Controlled substance", form: "Ampoule",
+                stock: 9, reorder: 20, exp: "09/2026", price: 95, low: 1, exsoon: 1 },
+            { n: "Codeine phosphate 30mg tablet", cat: "controlled", catL: "Controlled substance", form: "Tablet",
+                stock: 80, reorder: 30, exp: "05/2027", price: 6 },
+            { n: "Diazepam 5mg tablet", cat: "controlled", catL: "Controlled substance", form: "Tablet", stock: 140,
+                reorder: 40, exp: "12/2026", price: 3.2 },
+            { n: "Midazolam 5mg/mL injection", cat: "controlled", catL: "Controlled substance", form: "Ampoule",
+                stock: 35, reorder: 25, exp: "10/2026", price: 65 },
+            { n: "Ketamine 50mg/mL injection", cat: "controlled", catL: "Controlled substance", form: "Vial", stock: 14,
+                reorder: 20, exp: "07/2026", price: 210, low: 1, exsoon: 1 },
+            { n: "Amoxicillin 500mg capsule", cat: "antibiotic", catL: "Antibiotic", form: "Capsule", stock: 1180,
+                reorder: 300, exp: "08/2027", price: 3.1 },
+            { n: "Co-amoxiclav 625mg tablet", cat: "antibiotic", catL: "Antibiotic", form: "Tablet", stock: 410,
+                reorder: 120, exp: "03/2027", price: 14 },
+            { n: "Ceftriaxone 1g injection", cat: "antibiotic", catL: "Antibiotic", form: "Vial", stock: 15, reorder: 50,
+                exp: "07/2026", price: 95, low: 1, exsoon: 1 },
+            { n: "Ceftriaxone 2g injection", cat: "antibiotic", catL: "Antibiotic", form: "Vial", stock: 48, reorder: 40,
+                exp: "09/2026", price: 165 },
+            { n: "Cefuroxime 250mg tablet", cat: "antibiotic", catL: "Antibiotic", form: "Tablet", stock: 300,
+                reorder: 100, exp: "02/2027", price: 11 },
+            { n: "Cefuroxime 750mg injection", cat: "antibiotic", catL: "Antibiotic", form: "Vial", stock: 60,
+                reorder: 40, exp: "06/2027", price: 135 },
+            { n: "Azithromycin 500mg tablet", cat: "antibiotic", catL: "Antibiotic", form: "Tablet", stock: 220,
+                reorder: 80, exp: "10/2026", price: 32 },
+            { n: "Ciprofloxacin 500mg tablet", cat: "antibiotic", catL: "Antibiotic", form: "Tablet", stock: 380,
+                reorder: 100, exp: "05/2027", price: 8.5 },
+            { n: "Ciprofloxacin 200mg/100mL infusion", cat: "antibiotic", catL: "Antibiotic", form: "IV bag", stock: 55,
+                reorder: 30, exp: "04/2027", price: 220 },
+            { n: "Metronidazole 400mg tablet", cat: "antibiotic", catL: "Antibiotic", form: "Tablet", stock: 500,
+                reorder: 150, exp: "09/2027", price: 1.8 },
+            { n: "Metronidazole 500mg/100mL infusion", cat: "antibiotic", catL: "Antibiotic", form: "IV bag", stock: 75,
+                reorder: 40, exp: "03/2028", price: 95 },
+            { n: "Gentamicin 80mg/2mL injection", cat: "antibiotic", catL: "Antibiotic", form: "Ampoule", stock: 110,
+                reorder: 50, exp: "11/2027", price: 38 },
+            { n: "Doxycycline 100mg capsule", cat: "antibiotic", catL: "Antibiotic", form: "Capsule", stock: 260,
+                reorder: 80, exp: "06/2027", price: 4.2 },
+            { n: "Erythromycin 250mg tablet", cat: "antibiotic", catL: "Antibiotic", form: "Tablet", stock: 150,
+                reorder: 60, exp: "01/2027", price: 5.5 },
+            { n: "Vancomycin 500mg injection", cat: "antibiotic", catL: "Antibiotic", form: "Vial", stock: 25,
+                reorder: 25, exp: "08/2026", price: 680, exsoon: 1 },
+            { n: "Meropenem 1g injection", cat: "antibiotic", catL: "Antibiotic", form: "Vial", stock: 18, reorder: 20,
+                exp: "04/2027", price: 1450, low: 1 },
+            { n: "Penicillin G crystalline 5MU injection", cat: "antibiotic", catL: "Antibiotic", form: "Vial", stock: 60,
+                reorder: 40, exp: "07/2027", price: 155 },
+            { n: "Aspirin 75mg tablet (cardio)", cat: "cardiac", catL: "Cardiac", form: "Tablet", stock: 600,
+                reorder: 150, exp: "08/2027", price: 1.5 },
+            { n: "Atorvastatin 40mg tablet", cat: "cardiac", catL: "Cardiac", form: "Tablet", stock: 210, reorder: 60,
+                exp: "11/2027", price: 18 },
+            { n: "Atorstat 40mg tablet (generic)", cat: "cardiac", catL: "Cardiac", form: "Tablet", stock: 340,
+                reorder: 80, exp: "02/2028", price: 9.5 },
+            { n: "Digoxin 0.25mg tablet", cat: "cardiac", catL: "Cardiac", form: "Tablet", stock: 180, reorder: 60,
+                exp: "10/2026", price: 3.4 },
+            { n: "Furosemide 40mg tablet", cat: "cardiac", catL: "Cardiac", form: "Tablet", stock: 420, reorder: 120,
+                exp: "06/2027", price: 2.1 },
+            { n: "Furosemide 20mg/2mL injection", cat: "cardiac", catL: "Cardiac", form: "Ampoule", stock: 130,
+                reorder: 50, exp: "03/2027", price: 14 },
+            { n: "Bisoprolol 5mg tablet", cat: "cardiac", catL: "Cardiac", form: "Tablet", stock: 250, reorder: 80,
+                exp: "01/2028", price: 6.2 },
+            { n: "Amlodipine 5mg tablet", cat: "cardiac", catL: "Cardiac", form: "Tablet", stock: 480, reorder: 150,
+                exp: "09/2027", price: 3.8 },
+            { n: "Losartan 50mg tablet", cat: "cardiac", catL: "Cardiac", form: "Tablet", stock: 300, reorder: 100,
+                exp: "12/2027", price: 7.4 },
+            { n: "Enalapril 10mg tablet", cat: "cardiac", catL: "Cardiac", form: "Tablet", stock: 260, reorder: 90,
+                exp: "05/2027", price: 4.6 },
+            { n: "Warfarin 5mg tablet", cat: "cardiac", catL: "Cardiac", form: "Tablet", stock: 120, reorder: 50,
+                exp: "07/2027", price: 5.8 },
+            { n: "Heparin 5000IU/mL injection", cat: "cardiac", catL: "Cardiac", form: "Vial", stock: 55, reorder: 30,
+                exp: "04/2027", price: 210 },
+            { n: "Enoxaparin 40mg/0.4mL injection", cat: "cardiac", catL: "Cardiac", form: "Syringe", stock: 90,
+                reorder: 40, exp: "08/2027", price: 480 },
+            { n: "Amiodarone 200mg tablet", cat: "cardiac", catL: "Cardiac", form: "Tablet", stock: 140, reorder: 50,
+                exp: "10/2027", price: 22 },
+            { n: "Adrenaline (epinephrine) 1mg/mL injection", cat: "cardiac", catL: "Cardiac", form: "Ampoule", stock: 65,
+                reorder: 50, exp: "03/2027", price: 95 },
+            { n: "Atropine sulphate 1mg/mL injection", cat: "cardiac", catL: "Cardiac", form: "Ampoule", stock: 80,
+                reorder: 40, exp: "06/2027", price: 65 },
+            { n: "Lidocaine 2% injection (local)", cat: "anaesthetic", catL: "Anaesthetic", form: "Vial", stock: 95,
+                reorder: 40, exp: "09/2027", price: 42 },
+            { n: "Lidocaine 1% with adrenaline", cat: "anaesthetic", catL: "Anaesthetic", form: "Vial", stock: 70,
+                reorder: 35, exp: "05/2027", price: 55 },
+            { n: "Bupivacaine 0.5% (spinal)", cat: "anaesthetic", catL: "Anaesthetic", form: "Ampoule", stock: 45,
+                reorder: 30, exp: "02/2027", price: 180 },
+            { n: "Propofol 10mg/mL injection", cat: "anaesthetic", catL: "Anaesthetic", form: "Vial", stock: 40,
+                reorder: 25, exp: "11/2026", price: 320 },
+            { n: "Suxamethonium 50mg/mL injection", cat: "anaesthetic", catL: "Anaesthetic", form: "Ampoule", stock: 30,
+                reorder: 20, exp: "08/2026", price: 240, exsoon: 1 },
+            { n: "Halothane inhalation anaesthetic", cat: "anaesthetic", catL: "Anaesthetic", form: "Bottle", stock: 12,
+                reorder: 10, exp: "01/2028", price: 3200 },
+            { n: "Sodium chloride 0.9% 500mL (NS)", cat: "iv", catL: "IV fluid", form: "IV bag", stock: 340,
+                reorder: 150, exp: "05/2028", price: 95 },
+            { n: "Sodium chloride 0.9% 1000mL (NS)", cat: "iv", catL: "IV fluid", form: "IV bag", stock: 210,
+                reorder: 100, exp: "05/2028", price: 130 },
+            { n: "Ringer's lactate 500mL (RL)", cat: "iv", catL: "IV fluid", form: "IV bag", stock: 280, reorder: 120,
+                exp: "04/2028", price: 98 },
+            { n: "Dextrose 5% in water 500mL (D5W)", cat: "iv", catL: "IV fluid", form: "IV bag", stock: 200,
+                reorder: 100, exp: "03/2028", price: 92 },
+            { n: "Dextrose 10% 500mL", cat: "iv", catL: "IV fluid", form: "IV bag", stock: 85, reorder: 50,
+                exp: "02/2028", price: 105 },
+            { n: "Dextrose 50% 50mL ampoule", cat: "iv", catL: "IV fluid", form: "Ampoule", stock: 60, reorder: 30,
+                exp: "06/2027", price: 55 },
+            { n: "Half-strength saline 0.45% 500mL", cat: "iv", catL: "IV fluid", form: "IV bag", stock: 50,
+                reorder: 30, exp: "01/2028", price: 100 },
+            { n: "Dextrose saline 500mL", cat: "iv", catL: "IV fluid", form: "IV bag", stock: 65, reorder: 40,
+                exp: "04/2028", price: 108 },
+            { n: "Mannitol 20% 500mL", cat: "iv", catL: "IV fluid", form: "IV bag", stock: 30, reorder: 20,
+                exp: "09/2027", price: 340 },
+            { n: "Sodium bicarbonate 8.4% 50mL", cat: "iv", catL: "IV fluid", form: "Ampoule", stock: 40, reorder: 20,
+                exp: "07/2027", price: 60 },
+            { n: "Potassium chloride 20mEq/10mL", cat: "iv", catL: "IV fluid", form: "Ampoule", stock: 75, reorder: 40,
+                exp: "10/2027", price: 35 },
+            { n: "Calcium gluconate 10% 10mL", cat: "iv", catL: "IV fluid", form: "Ampoule", stock: 55, reorder: 30,
+                exp: "08/2027", price: 48 },
+            { n: "Magnesium sulphate 50% 5mL", cat: "iv", catL: "IV fluid", form: "Ampoule", stock: 90, reorder: 40,
+                exp: "11/2027", price: 30 },
+            { n: "Gelofusine 500mL (plasma expander)", cat: "iv", catL: "IV fluid", form: "IV bag", stock: 25,
+                reorder: 20, exp: "05/2027", price: 850 },
+            { n: "Albumin 20% 50mL", cat: "iv", catL: "IV fluid", form: "Vial", stock: 10, reorder: 15, exp: "12/2026",
+                price: 4200, low: 1 },
+            { n: "Insulin (Actrapid) soluble vial", cat: "antidiabetic", catL: "Antidiabetic", form: "Vial", stock: 3,
+                reorder: 30, exp: "09/2026", price: 650, low: 1, exsoon: 1 },
+            { n: "Insulin (Mixtard 30/70) vial", cat: "antidiabetic", catL: "Antidiabetic", form: "Vial", stock: 18,
+                reorder: 25, exp: "11/2026", price: 680, low: 1 },
+            { n: "Insulin glargine (Lantus) pen", cat: "antidiabetic", catL: "Antidiabetic", form: "Pen", stock: 22,
+                reorder: 20, exp: "03/2027", price: 1850 },
+            { n: "Metformin 500mg tablet", cat: "antidiabetic", catL: "Antidiabetic", form: "Tablet", stock: 520,
+                reorder: 150, exp: "08/2027", price: 1.9 },
+            { n: "Metformin 850mg tablet", cat: "antidiabetic", catL: "Antidiabetic", form: "Tablet", stock: 300,
+                reorder: 100, exp: "06/2027", price: 2.4 },
+            { n: "Glibenclamide 5mg tablet", cat: "antidiabetic", catL: "Antidiabetic", form: "Tablet", stock: 240,
+                reorder: 80, exp: "01/2027", price: 1.6 },
+            { n: "Gliclazide 80mg tablet", cat: "antidiabetic", catL: "Antidiabetic", form: "Tablet", stock: 160,
+                reorder: 60, exp: "04/2027", price: 3.2 },
+            { n: "Sitagliptin 100mg tablet", cat: "antidiabetic", catL: "Antidiabetic", form: "Tablet", stock: 95,
+                reorder: 40, exp: "10/2027", price: 42 },
+            { n: "Glucagon 1mg injection kit", cat: "antidiabetic", catL: "Antidiabetic", form: "Kit", stock: 12,
+                reorder: 10, exp: "05/2027", price: 2100 },
+            { n: "Glucose test strips", cat: "antidiabetic", catL: "Antidiabetic", form: "Box", stock: 80, reorder: 40,
+                exp: "12/2027", price: 850 },
+            { n: "Salbutamol 100mcg inhaler", cat: "respiratory", catL: "Respiratory", form: "Inhaler", stock: 140,
+                reorder: 50, exp: "07/2027", price: 280 },
+            { n: "Salbutamol nebuliser solution 5mg/mL", cat: "respiratory", catL: "Respiratory", form: "Bottle",
+                stock: 60, reorder: 30, exp: "03/2027", price: 320 },
+            { n: "Ipratropium bromide nebuliser", cat: "respiratory", catL: "Respiratory", form: "Bottle", stock: 45,
+                reorder: 25, exp: "05/2027", price: 380 },
+            { n: "Beclomethasone 100mcg inhaler", cat: "respiratory", catL: "Respiratory", form: "Inhaler", stock: 70,
+                reorder: 30, exp: "09/2027", price: 420 },
+            { n: "Prednisolone 5mg tablet", cat: "respiratory", catL: "Respiratory", form: "Tablet", stock: 300,
+                reorder: 100, exp: "06/2027", price: 1.4 },
+            { n: "Hydrocortisone 100mg injection", cat: "respiratory", catL: "Respiratory", form: "Vial", stock: 55,
+                reorder: 30, exp: "02/2027", price: 85 },
+            { n: "Dexamethasone 4mg/mL injection", cat: "respiratory", catL: "Respiratory", form: "Ampoule", stock: 90,
+                reorder: 40, exp: "08/2027", price: 35 },
+            { n: "Aminophylline 250mg/10mL injection", cat: "respiratory", catL: "Respiratory", form: "Ampoule",
+                stock: 40, reorder: 20, exp: "11/2026", price: 60 },
+            { n: "Oxygen — piped wall supply", cat: "respiratory", catL: "Respiratory", form: "Cylinder", stock: 18,
+                reorder: 10, exp: "—", price: 0 },
+            { n: "Omeprazole 20mg capsule", cat: "gi", catL: "GI / antiemetic", form: "Capsule", stock: 380,
+                reorder: 100, exp: "05/2027", price: 3.5 },
+            { n: "Pantoprazole 40mg injection", cat: "gi", catL: "GI / antiemetic", form: "Vial", stock: 60,
+                reorder: 30, exp: "09/2027", price: 95 },
+            { n: "Ranitidine 150mg tablet", cat: "gi", catL: "GI / antiemetic", form: "Tablet", stock: 140,
+                reorder: 60, exp: "03/2027", price: 2.2 },
+            { n: "Metoclopramide 10mg tablet", cat: "gi", catL: "GI / antiemetic", form: "Tablet", stock: 220,
+                reorder: 80, exp: "07/2027", price: 1.8 },
+            { n: "Ondansetron 4mg/2mL injection", cat: "gi", catL: "GI / antiemetic", form: "Ampoule", stock: 85,
+                reorder: 40, exp: "10/2027", price: 48 },
+            { n: "Hyoscine butylbromide 20mg injection", cat: "gi", catL: "GI / antiemetic", form: "Ampoule", stock: 70,
+                reorder: 30, exp: "04/2027", price: 32 },
+            { n: "Loperamide 2mg capsule", cat: "gi", catL: "GI / antiemetic", form: "Capsule", stock: 160,
+                reorder: 60, exp: "06/2027", price: 2.6 },
+            { n: "Oral rehydration salts (ORS) sachet", cat: "gi", catL: "GI / antiemetic", form: "Sachet", stock: 400,
+                reorder: 150, exp: "02/2028", price: 15 },
+            { n: "Activated charcoal 50g suspension", cat: "gi", catL: "GI / antiemetic", form: "Bottle", stock: 30,
+                reorder: 20, exp: "11/2027", price: 280 },
+            { n: "Folic acid 5mg tablet", cat: "gi", catL: "GI / antiemetic", form: "Tablet", stock: 500, reorder: 150,
+                exp: "01/2028", price: 0.8 },
+            { n: "Ferrous sulphate 200mg tablet", cat: "gi", catL: "GI / antiemetic", form: "Tablet", stock: 420,
+                reorder: 150, exp: "03/2028", price: 1.1 },
+            { n: "IV giving set (administration set)", cat: "consumable", catL: "IV / injection consumable",
+                form: "Each", stock: 180, reorder: 100, exp: "—", price: 180 },
+            { n: "IV cannula 18G", cat: "consumable", catL: "IV / injection consumable", form: "Each", stock: 240,
+                reorder: 100, exp: "—", price: 35 },
+            { n: "IV cannula 20G", cat: "consumable", catL: "IV / injection consumable", form: "Each", stock: 260,
+                reorder: 100, exp: "—", price: 35 },
+            { n: "IV cannula 22G (paediatric)", cat: "consumable", catL: "IV / injection consumable", form: "Each",
+                stock: 140, reorder: 80, exp: "—", price: 38 },
+            { n: "Syringe 2mL", cat: "consumable", catL: "IV / injection consumable", form: "Each", stock: 600,
+                reorder: 300, exp: "—", price: 8 },
+            { n: "Syringe 5mL", cat: "consumable", catL: "IV / injection consumable", form: "Each", stock: 520,
+                reorder: 250, exp: "—", price: 9 },
+            { n: "Syringe 10mL", cat: "consumable", catL: "IV / injection consumable", form: "Each", stock: 340,
+                reorder: 200, exp: "—", price: 11 },
+            { n: "Syringe 20mL", cat: "consumable", catL: "IV / injection consumable", form: "Each", stock: 180,
+                reorder: 100, exp: "—", price: 14 },
+            { n: "Needle 21G", cat: "consumable", catL: "IV / injection consumable", form: "Each", stock: 400,
+                reorder: 200, exp: "—", price: 5 },
+            { n: "Needle 23G", cat: "consumable", catL: "IV / injection consumable", form: "Each", stock: 380,
+                reorder: 200, exp: "—", price: 5 },
+            { n: "Three-way stopcock", cat: "consumable", catL: "IV / injection consumable", form: "Each", stock: 90,
+                reorder: 60, exp: "—", price: 65 },
+            { n: "Surgical gloves (pair), size M", cat: "consumable", catL: "PPE consumable", form: "Pair", stock: 4,
+                reorder: 200, exp: "—", price: 45, low: 1 },
+            { n: "Examination gloves (box of 100)", cat: "consumable", catL: "PPE consumable", form: "Box", stock: 60,
+                reorder: 40, exp: "—", price: 850 },
+            { n: "Surgical mask (box of 50)", cat: "consumable", catL: "PPE consumable", form: "Box", stock: 120,
+                reorder: 60, exp: "—", price: 650 },
+            { n: "N95 respirator mask", cat: "consumable", catL: "PPE consumable", form: "Each", stock: 200,
+                reorder: 100, exp: "—", price: 120 },
+            { n: "Surgical gown, disposable", cat: "consumable", catL: "PPE consumable", form: "Each", stock: 140,
+                reorder: 80, exp: "—", price: 280 },
+            { n: "Face shield", cat: "consumable", catL: "PPE consumable", form: "Each", stock: 50, reorder: 30,
+                exp: "—", price: 220 },
+            { n: "Gauze swab 10×10cm (pack of 100)", cat: "consumable", catL: "Wound care consumable", form: "Pack",
+                stock: 90, reorder: 50, exp: "—", price: 480 },
+            { n: "Cotton wool roll 500g", cat: "consumable", catL: "Wound care consumable", form: "Roll", stock: 65,
+                reorder: 40, exp: "—", price: 380 },
+            { n: "Crepe bandage 10cm", cat: "consumable", catL: "Wound care consumable", form: "Roll", stock: 140,
+                reorder: 80, exp: "—", price: 65 },
+            { n: "Elastic adhesive bandage (EAB) 7.5cm", cat: "consumable", catL: "Wound care consumable", form: "Roll",
+                stock: 80, reorder: 50, exp: "—", price: 120 },
+            { n: "Adhesive plaster tape 5cm", cat: "consumable", catL: "Wound care consumable", form: "Roll",
+                stock: 110, reorder: 60, exp: "—", price: 55 },
+            { n: "Sterile compress dressing 10×10cm", cat: "consumable", catL: "Wound care consumable", form: "Each",
+                stock: 200, reorder: 100, exp: "—", price: 25 },
+            { n: "Abdominal compress / pad", cat: "consumable", catL: "Wound care consumable", form: "Each", stock: 75,
+                reorder: 40, exp: "—", price: 95 },
+            { n: "Wound dressing — hydrocolloid", cat: "consumable", catL: "Wound care consumable", form: "Each",
+                stock: 40, reorder: 30, exp: "—", price: 280 },
+            { n: "Betadine (povidone iodine) 500mL", cat: "consumable", catL: "Wound care consumable", form: "Bottle",
+                stock: 35, reorder: 25, exp: "04/2027", price: 680 },
+            { n: "Hydrogen peroxide 500mL", cat: "consumable", catL: "Wound care consumable", form: "Bottle", stock: 28,
+                reorder: 20, exp: "06/2027", price: 320 },
+            { n: "Spirit / methylated alcohol 500mL", cat: "consumable", catL: "Wound care consumable", form: "Bottle",
+                stock: 50, reorder: 30, exp: "—", price: 280 },
+            { n: "Alcohol swabs (box of 100)", cat: "consumable", catL: "Wound care consumable", form: "Box",
+                stock: 160, reorder: 80, exp: "—", price: 380 },
+            { n: "Suture — silk 2-0 with needle", cat: "consumable", catL: "Surgical consumable", form: "Each",
+                stock: 120, reorder: 60, exp: "08/2027", price: 180 },
+            { n: "Suture — vicryl 3-0 with needle", cat: "consumable", catL: "Surgical consumable", form: "Each",
+                stock: 95, reorder: 50, exp: "09/2027", price: 280 },
+            { n: "Suture — nylon 4-0 with needle", cat: "consumable", catL: "Surgical consumable", form: "Each",
+                stock: 85, reorder: 50, exp: "10/2027", price: 220 },
+            { n: "Surgical blade no. 11", cat: "consumable", catL: "Surgical consumable", form: "Each", stock: 200,
+                reorder: 100, exp: "—", price: 25 },
+            { n: "Surgical blade no. 22", cat: "consumable", catL: "Surgical consumable", form: "Each", stock: 180,
+                reorder: 100, exp: "—", price: 25 },
+            { n: "Catheter — urinary Foley 16Fr", cat: "consumable", catL: "Surgical consumable", form: "Each",
+                stock: 70, reorder: 40, exp: "—", price: 320 },
+            { n: "Catheter — urinary Foley 18Fr", cat: "consumable", catL: "Surgical consumable", form: "Each",
+                stock: 60, reorder: 40, exp: "—", price: 320 },
+            { n: "Nasogastric tube 16Fr", cat: "consumable", catL: "Surgical consumable", form: "Each", stock: 55,
+                reorder: 30, exp: "—", price: 180 },
+            { n: "Chest tube / drain 28Fr", cat: "consumable", catL: "Surgical consumable", form: "Each", stock: 20,
+                reorder: 15, exp: "—", price: 850 },
+            { n: "Suction catheter 12Fr", cat: "consumable", catL: "Surgical consumable", form: "Each", stock: 90,
+                reorder: 50, exp: "—", price: 65 },
+            { n: "Surgical drape, sterile", cat: "consumable", catL: "Surgical consumable", form: "Each", stock: 60,
+                reorder: 40, exp: "—", price: 380 },
+            { n: "Endotracheal tube 7.5mm", cat: "consumable", catL: "Surgical consumable", form: "Each", stock: 35,
+                reorder: 20, exp: "—", price: 420 },
+            { n: "Laryngeal mask airway (LMA) size 4", cat: "consumable", catL: "Surgical consumable", form: "Each",
+                stock: 18, reorder: 15, exp: "—", price: 1850 },
+            { n: "Oxygen mask, adult", cat: "consumable", catL: "Surgical consumable", form: "Each", stock: 80,
+                reorder: 50, exp: "—", price: 220 },
+            { n: "Nasal cannula, adult", cat: "consumable", catL: "Surgical consumable", form: "Each", stock: 120,
+                reorder: 60, exp: "—", price: 120 },
+            { n: "Urine dipstick test strips", cat: "consumable", catL: "Diagnostic consumable", form: "Box", stock: 70,
+                reorder: 40, exp: "12/2027", price: 950 },
+            { n: "Pregnancy test kit (urine)", cat: "consumable", catL: "Diagnostic consumable", form: "Each",
+                stock: 140, reorder: 80, exp: "06/2027", price: 85 },
+            { n: "Rapid malaria test kit", cat: "consumable", catL: "Diagnostic consumable", form: "Each", stock: 200,
+                reorder: 100, exp: "03/2027", price: 120 },
+            { n: "HIV rapid test kit", cat: "consumable", catL: "Diagnostic consumable", form: "Each", stock: 180,
+                reorder: 100, exp: "08/2027", price: 150 }
+        ];
+
+        // ─── STATE ───
+        var activeCategory = 'all';
+        var searchTerm = '';
+
+        // ─── PHARMACY BILLS ───
+        function loadPharmacyBills() {
+            var container = document.getElementById('pharmacyBillsList');
+            if (!container) return;
+
+            var allBills = [];
+            var patients = typeof getPatients === 'function' ? getPatients() : [];
+            
+            patients.forEach(function(p) {
+                var bills = p.billingHistory || [];
+                bills.forEach(function(bill) {
+                    var hasMedication = bill.items && bill.items.some(function(item) {
+                        return item.category === 'Medication' || item.category === 'Consumable';
+                    });
+                    if (hasMedication) {
+                        allBills.push({
+                            patientId: p.id,
+                            patientName: (p.firstName || '') + ' ' + (p.lastName || ''),
+                            patientMrn: p.mrn || 'N/A',
+                            bill: bill
+                        });
+                    }
+                });
+            });
+
+            allBills.sort(function(a, b) {
+                return new Date(b.bill.timestamp) - new Date(a.bill.timestamp);
+            });
+
+            var pendingBills = allBills.filter(function(entry) {
+                return entry.bill.status !== 'Paid';
+            });
+
+            var countEl = document.getElementById('billCount');
+            if (countEl) countEl.textContent = pendingBills.length + ' pending bills';
+
+            if (allBills.length === 0) {
+                container.innerHTML = '<p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">No medication bills found.</p>';
+                return;
+            }
+
+            container.innerHTML = allBills.slice(0, 20).map(function(entry) {
+                var bill = entry.bill;
+                var itemsList = bill.items ? bill.items.map(function(item) {
+                    return item.description + ' (x' + item.quantity + ')';
+                }).join(', ') : 'No items';
+                
+                var statusClass = bill.status === 'Paid' ? 'paid' : 'pending';
+                var statusLabel = bill.status === 'Paid' ? '✅ Paid' : '⏳ Pending';
+                var total = bill.total || (bill.items ? bill.items.reduce(function(sum, i) { return sum + i.total; }, 0) : 0);
+                
+                var actions = '';
+                if (bill.status !== 'Paid') {
+                    actions = '<button class="btn-mark-paid" onclick="markBillPaid(' + entry.patientId + ', ' + bill.id + ')"><i class="ti ti-check"></i> Mark Paid</button>';
+                }
+                
+                return '<div class="bill-item-row">' +
+                    '<span class="bill-patient">' + entry.patientName + '</span>' +
+                    '<span style="font-size:10px;color:var(--tm);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + itemsList + '">' + itemsList + '</span>' +
+                    '<span class="bill-total">RWF ' + total.toLocaleString() + '</span>' +
+                    '<span class="bill-status ' + statusClass + '">' + statusLabel + '</span>' +
+                    '<div class="bill-actions">' +
+                        actions +
+                        '<button class="btn-view" onclick="showToast(\'📋 Viewing bill details\', \'info\')"><i class="ti ti-eye"></i></button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function markBillPaid(patientId, billId) {
+            if (!confirm('Mark this bill as paid? The cashier will be notified.')) return;
+            
+            try {
+                var patients = typeof getPatients === 'function' ? getPatients() : [];
+                var patient = patients.find(function(p) { return p.id === patientId; });
+                if (patient && patient.billingHistory) {
+                    var bill = patient.billingHistory.find(function(b) { return b.id === billId; });
+                    if (bill) {
+                        bill.status = 'Paid';
+                        bill.paymentDate = new Date().toISOString();
+                        bill.paymentMethod = 'Pharmacy';
+                        if (typeof updatePatient === 'function') {
+                            updatePatient(patientId, { billingHistory: patient.billingHistory });
+                        }
+                        showToast('✅ Bill marked as paid successfully!', 'success');
+                        loadPharmacyBills();
+                    } else {
+                        showToast('❌ Bill not found', 'error');
+                    }
+                } else {
+                    showToast('❌ Patient not found', 'error');
+                }
+            } catch(e) {
+                console.error('Error marking bill as paid:', e);
+                showToast('❌ Error processing payment: ' + e.message, 'error');
+            }
+        }
+
+        // ─── PHARMACY PRESCRIPTIONS ───
+        function loadPharmacyPrescriptions() {
+            var container = document.getElementById('pharmacyRxList');
+            if (!container) return;
+
+            var allPrescriptions = [];
+            
+            if (typeof getAllPendingPrescriptions === 'function') {
+                allPrescriptions = getAllPendingPrescriptions();
+            } else {
+                try {
+                    var patients = getPatients();
+                    patients.forEach(function(p) {
+                        var prescriptions = p.prescriptions || [];
+                        prescriptions.forEach(function(rx) {
+                            if (rx.status === 'Pending') {
+                                allPrescriptions.push({
+                                    patientId: p.id,
+                                    patientName: (p.firstName || '') + ' ' + (p.lastName || ''),
+                                    patientMrn: p.mrn || 'N/A',
+                                    prescription: rx
+                                });
+                            }
+                        });
+                    });
+                } catch(e) {
+                    console.warn('Could not load prescriptions:', e);
+                }
+            }
+
+            var countEl = document.getElementById('rxCount');
+            if (countEl) countEl.textContent = allPrescriptions.length + ' prescriptions';
+
+            if (allPrescriptions.length === 0) {
+                container.innerHTML = '<p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">No pending prescriptions.</p>';
+                return;
+            }
+
+            container.innerHTML = allPrescriptions.map(function(entry) {
+                var rx = entry.prescription;
+                return '<div class="rx-item-row">' +
+                    '<span class="rx-patient">' + entry.patientName + '</span>' +
+                    '<span class="rx-med">' + rx.medication + '</span>' +
+                    '<span class="rx-detail">' + rx.dosage + ' - ' + rx.frequency + '</span>' +
+                    '<span class="rx-detail">' + (rx.duration || '') + '</span>' +
+                    '<span class="rx-status pending">⏳ Pending</span>' +
+                    '<div class="bill-actions">' +
+                        '<button class="btn-mark-paid" onclick="dispensePrescription(' + entry.patientId + ', ' + rx.id + ')"><i class="ti ti-check"></i> Dispense</button>' +
+                        '<button class="btn-view" onclick="showToast(\'📋 Rx: ' + rx.medication + ' - ' + (rx.instructions || '') + '\', \'info\')"><i class="ti ti-eye"></i></button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function dispensePrescription(patientId, rxId) {
+            if (!confirm('Dispense this medication?')) return;
+            
+            try {
+                if (typeof dispensePrescription === 'function') {
+                    var result = dispensePrescription(patientId, rxId, 'Pharmacy');
+                    if (result) {
+                        showToast('✅ Prescription dispensed successfully!', 'success');
+                        loadPharmacyPrescriptions();
+                        if (typeof loadPharmacyBills === 'function') {
+                            loadPharmacyBills();
+                        }
+                    } else {
+                        showToast('❌ Failed to dispense prescription', 'error');
+                    }
+                } else {
+                    var patients = getPatients();
+                    var patient = patients.find(function(p) { return p.id === patientId; });
+                    if (patient && patient.prescriptions) {
+                        var rx = patient.prescriptions.find(function(p) { return p.id === rxId; });
+                        if (rx) {
+                            rx.status = 'Dispensed';
+                            rx.dispensedDate = new Date().toISOString();
+                            rx.dispensedBy = 'Pharmacy';
+                            if (typeof updatePatient === 'function') {
+                                updatePatient(patientId, { prescriptions: patient.prescriptions });
+                            }
+                            showToast('✅ Prescription dispensed successfully!', 'success');
+                            loadPharmacyPrescriptions();
+                        }
+                    }
+                }
+            } catch(e) {
+                console.error('Error dispensing prescription:', e);
+                showToast('❌ Error: ' + e.message, 'error');
+            }
+        }
+
+        // ─── HELPERS ───
+        function catIcon(cat) {
+            var map = {
+                analgesic: ['ti-pill', 'ac'],
+                antibiotic: ['ti-vaccine', 'blue'],
+                cardiac: ['ti-heart', 'red'],
+                anaesthetic: ['ti-injection', 'purple'],
+                iv: ['ti-droplet', 'teal'],
+                antidiabetic: ['ti-chart-line', 'orange'],
+                respiratory: ['ti-lungs', 'blue'],
+                gi: ['ti-stethoscope', 'green'],
+                consumable: ['ti-bandage', 'teal'],
+                controlled: ['ti-lock', 'purple']
+            };
+            return map[cat] || ['ti-pill', 'ac'];
+        }
+
+        function badgeClass(c) {
+            var m = { ac: 'b-blue', blue: 'b-blue', red: 'b-red', purple: 'b-pur', teal: 'b-teal', orange: 'b-amb',
+                green: 'b-grn' };
+            return m[c] || 'b-blue';
+        }
+
+        // ─── RENDER ───
+        function render() {
+            var body = document.getElementById('inventoryBody');
+            var filtered = catalog.filter(function(it) {
+                var catMatch = activeCategory === 'all' || it.cat === activeCategory;
+                var searchMatch = !searchTerm || it.n.toLowerCase().indexOf(searchTerm) > -1;
+                return catMatch && searchMatch;
+            });
+
+            var titles = {
+                all: 'All inventory items',
+                analgesic: 'Analgesics',
+                antibiotic: 'Antibiotics',
+                cardiac: 'Cardiac medications',
+                anaesthetic: 'Anaesthetics',
+                iv: 'IV fluids and electrolytes',
+                antidiabetic: 'Antidiabetics',
+                respiratory: 'Respiratory medications',
+                gi: 'GI and antiemetic medications',
+                consumable: 'Consumables',
+                controlled: 'Controlled substances'
+            };
+            var panelTitle = document.getElementById('panelTitle');
+            if (panelTitle) panelTitle.textContent = (titles[activeCategory] || 'Inventory') + ' (' + filtered.length + ')';
+            var kpiTotal = document.getElementById('kpiTotal');
+            if (kpiTotal) kpiTotal.textContent = catalog.length;
+
+            body.innerHTML = '';
+            if (filtered.length === 0) {
+                body.innerHTML =
+                    '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--tm)">No items match your filters.</td></tr>';
+                return;
+            }
+
+            filtered.slice(0, 60).forEach(function(it) {
+                var pct = Math.min(100, Math.round((it.stock / (it.reorder * 3)) * 100));
+                var sfClass = it.low ? 'sf-crit' : (pct < 45 ? 'sf-low' : 'sf-ok');
+                var statusBadge = it.low ?
+                    '<span class="badge b-red">Critical — reorder</span>' :
+                    (it.exsoon ?
+                        '<span class="badge b-org">Expiring soon</span>' :
+                        (pct < 45 ?
+                            '<span class="badge b-org">Low stock</span>' :
+                            '<span class="badge b-grn">Adequate</span>'
+                        )
+                    );
+                var ic = catIcon(it.cat);
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td><div class="item-row"><div class="item-ic" style="background:var(--' + ic[1] + '-bg)"><i class="ti ' +
+                    ic[0] + '" style="color:var(--' + ic[1] + ')" aria-hidden="true"></i></div><div><div class="item-name">' +
+                    it.n + '</div><div class="item-sub">' + (it.price ? ('KES ' + it.price.toFixed(2) + ' / unit') :
+                        'Utility — no unit cost') + '</div></div></div></td>' +
+                    '<td><span class="badge ' + badgeClass(ic[1]) + '">' + it.catL + '</span></td>' +
+                    '<td style="color:var(--t3)">' + it.form + '</td>' +
+                    '<td style="font-weight:650">' + it.stock + '</td>' +
+                    '<td><div class="stock-bar"><div class="stock-fill ' + sfClass + '" style="width:' + pct +
+                    '%"></div></div></td>' +
+                    '<td style="color:var(--t3);font-size:11px">' + it.exp + '</td>' +
+                    '<td>' + statusBadge + '</td>';
+                body.appendChild(tr);
+            });
+        }
+
+        // ─── SEARCH WITH SUGGESTIONS ───
+        function handleSmartSearch(query) {
+            searchTerm = query.trim().toLowerCase();
+            render();
+            var container = document.getElementById('suggestions');
+            if (!query.trim()) {
+                container.classList.remove('show');
+                return;
+            }
+            var matches = catalog.filter(function(it) {
+                return it.n.toLowerCase().indexOf(searchTerm) > -1;
+            }).slice(0, 6);
+            if (matches.length === 0) {
+                container.classList.remove('show');
+                return;
+            }
+            container.innerHTML = matches.map(function(it) {
+                return '<div class="suggestion-item" onclick="selectSuggestion(\'' + it.n.replace(/'/g, "\\'") +
+                    '\')"><span>💊</span><span><span class="highlight">' + it.n + '</span></span></div>';
+            }).join('');
+            container.classList.add('show');
+        }
+
+        function selectSuggestion(name) {
+            document.getElementById('searchInput').value = name;
+            document.getElementById('suggestions').classList.remove('show');
+            searchTerm = name.toLowerCase();
+            render();
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-wrap')) {
+                document.getElementById('suggestions').classList.remove('show');
+            }
+        });
+
+        function doSearch(val) {
+            searchTerm = val.trim().toLowerCase();
+            render();
+        }
+
+        // ─── CATEGORY FILTER ───
+        function setCategory(el, cat) {
+            document.querySelectorAll('.cat-pill').forEach(function(p) { p.classList.remove('active'); });
+            el.classList.add('active');
+            activeCategory = cat;
+            render();
+        }
+
+        // ─── ADD ITEM MODAL ───
+        function openAddModal() {
+            var el = document.getElementById('addModal');
+            if (el) el.classList.add('show');
+        }
+
+        function closeAddModal() {
+            var el = document.getElementById('addModal');
+            if (el) el.classList.remove('show');
+        }
+
+        function submitAddItem() {
+            var name = document.getElementById('addName').value.trim();
+            var type = document.getElementById('addType').value;
+            var category = document.getElementById('addCategory').value;
+            var form = document.getElementById('addForm').value.trim() || 'Each';
+            var qty = parseInt(document.getElementById('addQty').value) || 0;
+            if (!name) {
+                document.getElementById('addName').focus();
+                showToast('⚠️ Please enter an item name.', 'warning');
+                return;
+            }
+            var catMap = {
+                "Analgesic": "analgesic",
+                "Antibiotic": "antibiotic",
+                "Cardiac": "cardiac",
+                "Anaesthetic": "anaesthetic",
+                "Antidiabetic": "antidiabetic",
+                "Respiratory": "respiratory",
+                "GI / antiemetic": "gi",
+                "IV fluid": "iv",
+                "Controlled substance": "controlled"
+            };
+            var catKey = catMap[category] || 'consumable';
+            var newItem = {
+                n: name,
+                cat: catKey,
+                catL: category,
+                form: form,
+                stock: qty,
+                reorder: Math.max(10, Math.round(qty * 0.3)),
+                exp: '—',
+                price: 0
+            };
+            catalog.unshift(newItem);
+            closeAddModal();
+            document.getElementById('addName').value = '';
+            document.getElementById('addQty').value = '';
+            document.getElementById('addForm').value = '';
+            showToast('✅ "' + name + '" added to catalog with ' + qty + ' units.', 'success');
+            activeCategory = 'all';
+            document.querySelectorAll('.cat-pill').forEach(function(p) { p.classList.remove('active'); });
+            var allPill = document.querySelector('.cat-pill[onclick*="all"]');
+            if (allPill) allPill.classList.add('active');
+            render();
+        }
+
+        // ─── GLOBAL TOAST ───
+        function showToast(message, type) {
+            if (typeof window.showToast === 'function') {
+                window.showToast(message, type || 'info');
+            } else {
+                var container = document.getElementById('toastContainer');
+                if (!container) return;
+                var toast = document.createElement('div');
+                toast.className = 'toast-msg ' + (type || 'info');
+                var icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+                toast.textContent = (icons[type] || 'ℹ️') + ' ' + message;
+                container.appendChild(toast);
+                setTimeout(function() { toast.classList.add('show'); }, 10);
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    setTimeout(function() { toast.remove(); }, 400);
+                }, 3500);
+            }
+        }
+
+        // ─── DARK MODE TOGGLE ───
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            var icon = document.getElementById('darkModeIcon');
+            if (document.body.classList.contains('dark-mode')) {
+                if (icon) icon.className = 'ti ti-sun';
+                localStorage.setItem('pclinic-theme', 'dark');
+            } else {
+                if (icon) icon.className = 'ti ti-moon';
+                localStorage.setItem('pclinic-theme', 'light');
+            }
+        }
+
+        // ─── SHORTCUTS MODAL ───
+        function openShortcuts() {
+            var el = document.getElementById('shortcutsModal');
+            if (el) el.classList.add('show');
+        }
+
+        function closeShortcuts() {
+            var el = document.getElementById('shortcutsModal');
+            if (el) el.classList.remove('show');
+        }
+
+        // ─── LIVE CLOCK ───
+        function updateClock() {
+            var now = new Date();
+            var h = String(now.getHours()).padStart(2, '0');
+            var m = String(now.getMinutes()).padStart(2, '0');
+            var el = document.getElementById('liveClock');
+            if (el) el.textContent = h + ':' + m;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ─── LOGOUT ───
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userName');
+                showToast('👋 Logged out successfully', 'info');
+                setTimeout(function() {
+                    window.location.href = 'login.html';
+                }, 500);
+            }
+        }
+
+        // ─── KEYBOARD SHORTCUTS ───
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                var el = document.getElementById('searchInput');
+                if (el) el.focus();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                openAddModal();
+            }
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeShortcuts();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                toggleDarkMode();
+            }
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                openShortcuts();
+            }
+        });
+
+        // ─── HAPTIC FEEDBACK ───
+        document.addEventListener('click', function(e) {
+            if (navigator.vibrate) {
+                var target = e.target.closest('.cat-pill, .kpi, .btn-add, .mbtn-p, .mbtn-s, .tb-btn, .user-chip');
+                if (target) navigator.vibrate(8);
+            }
+        });
+
+        // ─── CHECK DARK MODE PREFERENCE ───
+        if ((localStorage.getItem('pclinic-theme') === 'dark' || localStorage.getItem('darkMode') === 'enabled')) {
+            document.body.classList.add('dark-mode');
+            var icon = document.getElementById('darkModeIcon');
+            if (icon) icon.className = 'ti ti-sun';
+        }
+
+        // ─── INIT ───
+        document.addEventListener('DOMContentLoaded', function() {
+            render();
+            setTimeout(function() {
+                loadPharmacyBills();
+                loadPharmacyPrescriptions();
+            }, 800);
+            console.log('🏥 PClinic Pharmacy — Fully Integrated');
+            console.log('📌 Bills loaded from patient-data.js');
+            console.log('📌 Prescriptions loaded from patient-data.js');
+            console.log('📌 Shortcuts: Ctrl+N (Add Item), Ctrl+F (Search), Ctrl+D (Dark), ? (Help), ESC (Close)');
+        });
+    </script>
+
+
+    <script>
+        requireAuth(['pharmacy']).then(function(staff) {
+            window.currentStaff = staff;
+            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
+        }).catch(function(err) {
+            console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+
+<script>
+// Live order queue from doctors — replaces the hardcoded demo rows.
+window.addEventListener('DOMContentLoaded', function () {
+    if (!window.pcWorklist) return;
+    pcWorklist.mount({ dept: 'pharmacy', target: '#pcRxIncoming', mode: 'cards', cols: 0 });
+});
+</script>
+</body>
+</html>
