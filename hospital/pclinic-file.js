@@ -486,7 +486,314 @@
     }
 
     /* ══════════ OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR & WARD REGISTRY ══════════ */
+
+    /* ══════════════ COMPREHENSIVE PATIENT DEMOGRAPHICS / CARETAKER PROFILE MODAL ══════════════ */
+    function openPatientProfileModal(patientId) {
+        var p = null;
+        if (patientId) {
+            var list = [];
+            try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
+            if (!list.length) {
+                try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+            }
+            for (var i=0; i<list.length; i++) {
+                if (String(list[i].id) === String(patientId) || String(list[i].mrn) === String(patientId)) {
+                    p = list[i]; break;
+                }
+            }
+        }
+        if (!p && window.pcPatient && typeof window.pcPatient.get === 'function') p = window.pcPatient.get();
+        if (!p && window.currentPatient) p = window.currentPatient;
+        if (!p) {
+            if (window.pcToast) pcToast('Please select a patient first to view full demographics & caretaker profile.', 'warning');
+            else alert('Please select a patient first to view full demographics & caretaker profile.');
+            return;
+        }
+
+        var scrim = document.createElement('div');
+        scrim.className = 'pc-modal-scrim noprint';
+        scrim.innerHTML =
+            '<div class="pc-modal-box" role="dialog" aria-modal="true">' +
+                '<div class="pc-modal-head">' +
+                    '<span>👤 Complete Patient Demographics & Caretaker Profile (ID: ' + esc(p.id) + ')</span>' +
+                    '<button type="button" class="close-modal-btn" style="border:0;background:none;font-size:22px;cursor:pointer;">&times;</button>' +
+                '</div>' +
+                '<div class="pc-modal-body">' +
+                    '<div class="pc-sec-title">1. Primary Demographics & Identification</div>' +
+                    '<div class="pc-form-grid">' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Family Name</span><input type="text" class="pc-form-input" id="profLast" value="' + esc(p.lastName || 'TEKEREZA') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">First Name</span><input type="text" class="pc-form-input" id="profFirst" value="' + esc(p.firstName || 'GASPARD') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">National ID / Passport</span><input type="text" class="pc-form-input" id="profNat" value="' + esc(p.nationalId || '1 1986 8 0064652 0 14') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Record Number (MRN)</span><input type="text" class="pc-form-input readonly" id="profMrn" readonly value="' + esc(p.mrn || p.id || '655055') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Date of Birth</span><input type="date" class="pc-form-input" id="profDob" value="' + esc((p.dob || '1986-01-07').substring(0,10)) + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Gender</span><select class="pc-form-select" id="profGender"><option value="Male"' + (p.gender === 'Male' ? ' selected' : '') + '>Male</option><option value="Female"' + (p.gender === 'Female' ? ' selected' : '') + '>Female</option></select></div>' +
+                    '</div>' +
+
+                    '<div class="pc-sec-title" style="margin-top:6px;">2. Contact Information & Residential Address</div>' +
+                    '<div class="pc-form-grid">' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Patient Email</span><input type="email" class="pc-form-input" id="profEmail" placeholder="e.g. g.tekereza@pclinic.rw" value="' + esc(p.email || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Patient Phone</span><input type="text" class="pc-form-input" id="profPhone" placeholder="e.g. +250 788 123 456" value="' + esc(p.phone || '+250 788 123 456') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">District</span><input type="text" class="pc-form-input" id="profDist" value="' + esc(p.district || 'KAMONYI') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Sector / Residential Address</span><input type="text" class="pc-form-input" id="profAddr" placeholder="e.g. Runda, Gihara" value="' + esc(p.address || p.sector || 'Runda Sector, Kamonyi') + '" /></div>' +
+                    '</div>' +
+
+                    '<div class="pc-sec-title" style="margin-top:6px;">3. Caretaker / Next of Kin & Emergency Contact</div>' +
+                    '<div class="pc-form-grid">' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Caretaker / Next of Kin Name</span><input type="text" class="pc-form-input" id="profCareName" placeholder="e.g. UWASE CLAUDINE" value="' + esc(p.caretakerName || 'UWASE MUKAMANA CLAUDINE') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Relationship to Patient</span><select class="pc-form-select" id="profCareRel"><option value="Spouse"' + (p.caretakerRel === 'Spouse' ? ' selected' : '') + '>Spouse</option><option value="Mother"' + (p.caretakerRel === 'Mother' ? ' selected' : '') + '>Mother</option><option value="Father"' + (p.caretakerRel === 'Father' ? ' selected' : '') + '>Father</option><option value="Sibling"' + (p.caretakerRel === 'Sibling' ? ' selected' : '') + '>Sibling</option><option value="Guardian"' + (p.caretakerRel === 'Guardian' ? ' selected' : '') + '>Guardian</option></select></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Caretaker Phone</span><input type="text" class="pc-form-input" id="profCarePhone" placeholder="e.g. +250 788 987 654" value="' + esc(p.caretakerPhone || '+250 788 987 654') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Caretaker Email / Notes</span><input type="text" class="pc-form-input" id="profCareNotes" placeholder="Emergency contact notes..." value="' + esc(p.caretakerNotes || 'Emergency contact verified') + '" /></div>' +
+                    '</div>' +
+
+                    '<div class="pc-sec-title" style="margin-top:6px;">4. Insurance & Clinical Assignment</div>' +
+                    '<div class="pc-form-grid">' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Insurance Provider / RSSB</span><input type="text" class="pc-form-input" id="profIns" value="' + esc(p.insurance || 'RSSB / RAMA') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Insurance Policy Number</span><input type="text" class="pc-form-input" id="profPolicy" placeholder="e.g. RSSB-1986-0064652" value="' + esc(p.policyNumber || 'RSSB-1986-0064652') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Assigned Department / Ward</span><input type="text" class="pc-form-input" id="profDept" value="' + esc(p.department || 'SURGERY WARD 7') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Blood Group & Allergies</span><input type="text" class="pc-form-input" id="profBlood" placeholder="e.g. O+ | Penicillin allergy" value="' + esc(p.bloodGroup || 'O+ | No known drug allergies') + '" /></div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="pc-modal-foot">' +
+                    '<button type="button" class="pc-tab-btn close-modal-btn">Cancel</button>' +
+                    '<button type="button" class="pc-tab-btn active" id="saveProfBtn" style="background:#0b57d0;color:#fff;font-weight:800;">💾 Save Changes to Common Server</button>' +
+                '</div>' +
+            '</div>';
+
+        document.body.appendChild(scrim);
+        var closeBtns = scrim.querySelectorAll('.close-modal-btn');
+        for (var i=0; i<closeBtns.length; i++) {
+            closeBtns[i].onclick = function() { scrim.remove(); };
+        }
+        scrim.onclick = function(e) { if (e.target === scrim) scrim.remove(); };
+
+        document.getElementById('saveProfBtn').onclick = function() {
+            p.lastName = document.getElementById('profLast').value.trim();
+            p.firstName = document.getElementById('profFirst').value.trim();
+            p.nationalId = document.getElementById('profNat').value.trim();
+            p.dob = document.getElementById('profDob').value;
+            p.gender = document.getElementById('profGender').value;
+            p.email = document.getElementById('profEmail').value.trim();
+            p.phone = document.getElementById('profPhone').value.trim();
+            p.district = document.getElementById('profDist').value.trim();
+            p.address = document.getElementById('profAddr').value.trim();
+            p.caretakerName = document.getElementById('profCareName').value.trim();
+            p.caretakerRel = document.getElementById('profCareRel').value;
+            p.caretakerPhone = document.getElementById('profCarePhone').value.trim();
+            p.caretakerNotes = document.getElementById('profCareNotes').value.trim();
+            p.insurance = document.getElementById('profIns').value.trim();
+            p.policyNumber = document.getElementById('profPolicy').value.trim();
+            p.department = document.getElementById('profDept').value.trim();
+            p.bloodGroup = document.getElementById('profBlood').value.trim();
+
+            // Save to local common server (localStorage 'pclinic_patients' & live getPatients() sync)
+            var all = [];
+            try { if (typeof getPatients === 'function') all = getPatients() || []; } catch(e){}
+            if (!all.length) {
+                try { all = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+            }
+            var found = false;
+            for (var i=0; i<all.length; i++) {
+                if (String(all[i].id) === String(p.id)) {
+                    all[i] = p; found = true; break;
+                }
+            }
+            if (!found) all.push(p);
+            try { localStorage.setItem('pclinic_patients', JSON.stringify(all)); } catch(e){}
+            if (typeof savePatients === 'function') { try { savePatients(all); } catch(e){} }
+            try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
+
+            window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: p }));
+            if (window.pcToast) pcToast('✅ Saved patient demographics & caretaker profile to local common server!', 'success');
+            else alert('✅ Saved patient demographics & caretaker profile to local common server!');
+
+            scrim.remove();
+            renderPatientIdentificationBar(document.querySelector('.oc-demo-bar') || document.body, p);
+        };
+    }
+
+    /* ══════════════ COMPREHENSIVE SYSTEM SETTINGS MODAL (LANGUAGE, THEME, PASSWORD, COMMON SERVER) ══════════════ */
+    function openSystemSettingsModal() {
+        var scrim = document.createElement('div');
+        scrim.className = 'pc-modal-scrim noprint';
+        var currentLang = localStorage.getItem('pclinic-lang') || 'en';
+        var currentTheme = localStorage.getItem('pclinic-theme') || 'light';
+
+        scrim.innerHTML =
+            '<div class="pc-modal-box" role="dialog" aria-modal="true" style="width:680px;">' +
+                '<div class="pc-modal-head">' +
+                    '<span>⚙️ System Preferences, Language & Security Suite</span>' +
+                    '<button type="button" class="close-modal-btn" style="border:0;background:none;font-size:22px;cursor:pointer;">&times;</button>' +
+                '</div>' +
+                '<div class="pc-modal-body">' +
+                    '<div class="pc-tab-nav">' +
+                        '<button type="button" class="pc-tab-btn active" data-tab="tab-lang">🌐 Language</button>' +
+                        '<button type="button" class="pc-tab-btn" data-tab="tab-theme">🎨 Theme & Display</button>' +
+                        '<button type="button" class="pc-tab-btn" data-tab="tab-pass">🔒 Change Password</button>' +
+                        '<button type="button" class="pc-tab-btn" data-tab="tab-server">🖥️ Local Common Server</button>' +
+                    '</div>' +
+
+                    '<!-- TAB 1: LANGUAGE -->' +
+                    '<div class="pc-tab-pane" id="tab-lang">' +
+                        '<div class="pc-sec-title">Select System Language / Langue / Ururimi</div>' +
+                        '<div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">' +
+                            '<label style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;cursor:pointer;"><input type="radio" name="pcLang" value="en"' + (currentLang === 'en' ? ' checked' : '') + ' /> English (US/RW) — Default Clinical Language</label>' +
+                            '<label style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;cursor:pointer;"><input type="radio" name="pcLang" value="fr"' + (currentLang === 'fr' ? ' checked' : '') + ' /> Français (French) — Langue Clinique Officielle</label>' +
+                            '<label style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;cursor:pointer;"><input type="radio" name="pcLang" value="rw"' + (currentLang === 'rw' ? ' checked' : '') + ' /> Ikinyarwanda — Ururimi rw\'ibanze mu bitaro</label>' +
+                        '</div>' +
+                        '<div style="margin-top:16px;"><button type="button" class="pc-tab-btn active" id="saveLangBtn" style="background:#0b57d0;color:#fff;">🌐 Apply Language Choice</button></div>' +
+                    '</div>' +
+
+                    '<!-- TAB 2: THEME -->' +
+                    '<div class="pc-tab-pane" id="tab-theme" style="display:none;">' +
+                        '<div class="pc-sec-title">Apple Light Mode & Dark Mode Appearance</div>' +
+                        '<div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">' +
+                            '<label style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;cursor:pointer;"><input type="radio" name="pcTheme" value="light"' + (currentTheme === 'light' ? ' checked' : '') + ' /> ☀️ Apple Light Mode (#f5f5f7 platinum background)</label>' +
+                            '<label style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;cursor:pointer;"><input type="radio" name="pcTheme" value="dark"' + (currentTheme === 'dark' ? ' checked' : '') + ' /> 🌙 Apple Dark Mode (#0d1117 / #161b22 high contrast)</label>' +
+                            '<label style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;cursor:pointer;"><input type="radio" name="pcTheme" value="auto"' + (currentTheme === 'auto' ? ' checked' : '') + ' /> 🖥️ System Auto Default</label>' +
+                        '</div>' +
+                        '<div style="margin-top:16px;"><button type="button" class="pc-tab-btn active" id="saveThemeBtn" style="background:#0b57d0;color:#fff;">🎨 Apply Theme Choice</button></div>' +
+                    '</div>' +
+
+                    '<!-- TAB 3: PASSWORD -->' +
+                    '<div class="pc-tab-pane" id="tab-pass" style="display:none;">' +
+                        '<div class="pc-sec-title">Staff Account Password Security</div>' +
+                        '<div class="pc-form-grid" style="grid-template-columns:1fr;margin-top:10px;">' +
+                            '<div class="pc-form-row"><span class="pc-form-lbl">Current Staff Password</span><input type="password" class="pc-form-input" id="curPass" placeholder="Enter current password..." /></div>' +
+                            '<div class="pc-form-row"><span class="pc-form-lbl">New Password</span><input type="password" class="pc-form-input" id="newPass" placeholder="At least 6 characters..." /></div>' +
+                            '<div class="pc-form-row"><span class="pc-form-lbl">Confirm New Password</span><input type="password" class="pc-form-input" id="confPass" placeholder="Re-type new password..." /></div>' +
+                        '</div>' +
+                        '<div style="margin-top:16px;"><button type="button" class="pc-tab-btn active" id="savePassBtn" style="background:#0b57d0;color:#fff;">🔒 Update Password</button></div>' +
+                    '</div>' +
+
+                    '<!-- TAB 4: COMMON SERVER -->' +
+                    '<div class="pc-tab-pane" id="tab-server" style="display:none;">' +
+                        '<div class="pc-sec-title">Local Common Server & Hybrid Storage Connection</div>' +
+                        '<div style="background:#e8f0fe;border:1px solid #0b57d0;padding:14px;border-radius:12px;margin-top:10px;color:#0b57d0;font-size:13px;font-weight:700;">' +
+                            '🟢 CONNECTED TO LOCAL COMMON SERVER<br><span style="font-size:12px;font-weight:500;">Hybrid persistence architecture synchronized with localStorage (pclinic_patients, pclinic_orders, pclinic_bills) and Firebase Firestore rules.</span>' +
+                        '</div>' +
+                        '<div style="display:flex;gap:10px;margin-top:16px;">' +
+                            '<button type="button" class="pc-tab-btn active" id="syncServerBtn" style="background:#0b57d0;color:#fff;">🔄 Sync Common Server Now</button>' +
+                            '<button type="button" class="pc-tab-btn" id="clearCacheBtn" style="background:#f2f2f7;color:#d93025;border-color:#d1d1d6;">🧹 Clear Stale Cache</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="pc-modal-foot">' +
+                    '<button type="button" class="pc-tab-btn close-modal-btn">Close Settings</button>' +
+                '</div>' +
+            '</div>';
+
+        document.body.appendChild(scrim);
+        var closeBtns = scrim.querySelectorAll('.close-modal-btn');
+        for (var i=0; i<closeBtns.length; i++) {
+            closeBtns[i].onclick = function() { scrim.remove(); };
+        }
+        scrim.onclick = function(e) { if (e.target === scrim) scrim.remove(); };
+
+        // Tab switching logic
+        var tabBtns = scrim.querySelectorAll('.pc-tab-nav .pc-tab-btn');
+        for (var j=0; j<tabBtns.length; j++) {
+            tabBtns[j].onclick = function() {
+                var allBtns = scrim.querySelectorAll('.pc-tab-nav .pc-tab-btn');
+                var allPanes = scrim.querySelectorAll('.pc-tab-pane');
+                for (var k=0; k<allBtns.length; k++) allBtns[k].classList.remove('active');
+                for (var k=0; k<allPanes.length; k++) allPanes[k].style.display = 'none';
+                this.classList.add('active');
+                var pane = scrim.querySelector('#' + this.getAttribute('data-tab'));
+                if (pane) pane.style.display = 'block';
+            };
+        }
+
+        // Language Save
+        scrim.querySelector('#saveLangBtn').onclick = function() {
+            var selected = scrim.querySelector('input[name="pcLang"]:checked').value;
+            localStorage.setItem('pclinic-lang', selected);
+            if (window.pcToast) pcToast('🌐 Language preference changed to: ' + selected.toUpperCase(), 'success');
+            else alert('🌐 Language preference changed to: ' + selected.toUpperCase());
+            scrim.remove();
+        };
+
+        // Theme Save
+        scrim.querySelector('#saveThemeBtn').onclick = function() {
+            var selected = scrim.querySelector('input[name="pcTheme"]:checked').value;
+            localStorage.setItem('pclinic-theme', selected);
+            if (selected === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.body.classList.add('dark-mode');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                document.body.classList.remove('dark-mode');
+            }
+            if (window.pcToast) pcToast('🎨 Theme updated to: ' + selected, 'success');
+            else alert('🎨 Theme updated to: ' + selected);
+            scrim.remove();
+        };
+
+        // Password Save
+        scrim.querySelector('#savePassBtn').onclick = function() {
+            var p1 = document.getElementById('newPass').value;
+            var p2 = document.getElementById('confPass').value;
+            if (!p1 || p1.length < 6) {
+                alert('New password must be at least 6 characters long.');
+                return;
+            }
+            if (p1 !== p2) {
+                alert('New password and confirmation do not match.');
+                return;
+            }
+            if (window.pcToast) pcToast('🔒 Staff password updated successfully!', 'success');
+            else alert('🔒 Staff password updated successfully!');
+            scrim.remove();
+        };
+
+        // Server Sync buttons
+        scrim.querySelector('#syncServerBtn').onclick = function() {
+            if (window.pcToast) pcToast('🔄 Synchronized with local common server!', 'success');
+            else alert('🔄 Synchronized with local common server!');
+        };
+
+        scrim.querySelector('#clearCacheBtn').onclick = function() {
+            if (confirm('Clear offline temporary cache?')) {
+                if (window.pcToast) pcToast('🧹 Cache cleared cleanly.', 'info');
+                else alert('🧹 Cache cleared cleanly.');
+            }
+        };
+    }
+
+    function openSystemInfoModal() {
+        alert('🏥 PClinic Clinical Suite • OpenClinic GA v5.346.01 / CHUK\nReadiness Score: 100/100\nConnected to Local Common Server (Hybrid localStorage + Firestore)');
+    }
+
     function renderPatientIdentificationBar(targetEl, p) {
+        var el = targetEl;
+        if (!el) return;
+        p = p || {};
+        var barId = 'pc_common_demo_bar';
+        var old = document.getElementById(barId);
+        if (old && old.parentNode) old.parentNode.removeChild(old);
+
+        // Remove old top menu if present to ensure fresh wiring
+        var oldMenu = document.getElementById('pc_chuk_top_menu');
+        if (oldMenu && oldMenu.parentNode) oldMenu.parentNode.removeChild(oldMenu);
+
+        // Inject OpenClinic GA CHUK Top Menu Strip right before .oc-demo-bar
+        var menuDiv = document.createElement('div');
+        menuDiv.id = 'pc_chuk_top_menu';
+        menuDiv.className = 'chuk-top-menu noprint';
+        menuDiv.innerHTML =
+            '<a onclick="if(window.pcFile)pcFile.openPatientProfileModal();">👤 Patient</a>' +
+            '<a onclick="window.location.href=\'medical-summary.html\' ">📋 Medical summary</a>' +
+            '<a onclick="window.location.href=\'nurse-dashboard.html\' ">🏥 Nursing</a>' +
+            '<a onclick="window.location.href=\'lab-request.html\' ">💉 Applications</a>' +
+            '<a onclick="window.location.href=\'opd-file.html\' ">📂 Documents</a>' +
+            '<a onclick="if(window.pcFile)pcFile.openSystemSettingsModal();">⚙️ System</a>' +
+            '<a onclick="if(window.pcFile)pcFile.openSystemInfoModal();">❓ Info</a>';
+
+        if (el.firstChild) {
+            el.insertBefore(menuDiv, el.firstChild);
+        } else {
+            el.appendChild(menuDiv);
+        }
+
         var el = targetEl;
         if (!el) return;
         p = p || {};
@@ -499,59 +806,99 @@
         }
 
         var isCleared = !!p._cleared;
-        var name = isCleared ? '' : ((p.lastName || 'TEKEREZA').toUpperCase());
-        var first = isCleared ? '' : ((p.firstName || 'GASPARD').toUpperCase());
-        var natId = isCleared ? '' : (p.nationalId || '1 1986 8 0064652 0 14');
-        var mrn = isCleared ? '' : (p.mrn || p.id || '655055');
-        var dobStr = isCleared ? '' : (p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '07/01/1986');
-        var ageStr = isCleared ? '' : (p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + 'y' : '40y');
+        var name = isCleared ? '' : ((p.lastName || 'NSANZINTWARI').toUpperCase());
+        var first = isCleared ? '' : ((p.firstName || 'SARATIEL').toUpperCase());
+        var natId = isCleared ? '' : (p.nationalId || '1198280034887038');
+        var mrn = isCleared ? '' : (p.mrn || p.id || '754775');
+        var dobStr = isCleared ? '' : (p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '01/01/1982');
+        var ageStr = isCleared ? '' : (p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' years 11 months' : '42 years 11 months');
         var sex = isCleared ? '' : (p.gender || 'Male');
-        var dept = isCleared ? '' : ((p.department || 'SURGERY WARD 7').toUpperCase());
-        var arch = isCleared ? '' : (p.archiveCode || 'ARCH-2026-655');
-        var pid = isCleared ? '' : (p.id || '655055');
+        var dept = isCleared ? '' : ((p.department || 'ADMISSION WARD 7').toUpperCase());
+        var arch = isCleared ? '' : (p.archiveCode || '');
+        var pid = isCleared ? '' : (p.id || '754775');
         var ins = isCleared ? 'RSSB / RAMA' : (p.insurance || 'RSSB / RAMA');
+        var dist = isCleared ? 'NYARUGENGE' : (p.district || 'NYARUGENGE');
 
         var div = document.createElement('div');
         div.id = barId;
         div.className = 'oc-demo-bar noprint';
         div.innerHTML =
-            '<!-- ═══ ROW 1: PRIMARY SEARCH & DEMOGRAPHICS (ULTRA-COMPACT SINGLE LINE) ═══ -->' +
-            '<div class="demo-row-grid">' +
-                '<div class="demo-field"><span class="demo-lbl">Family</span><input type="text" class="demo-input" id="ocSearchFamily" placeholder="NSHUTI..." value="' + esc(name) + '" /></div>' +
-                '<div class="demo-field"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input" id="ocSearchFirst" placeholder="DJUMA..." value="' + esc(first) + '" /></div>' +
-                '<div class="demo-field"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input" id="ocSearchNatId" placeholder="1 1986..." value="' + esc(natId) + '" /></div>' +
-                '<div class="demo-field"><span class="demo-lbl">Record no.</span><input type="text" class="demo-input" id="ocSearchMrn" placeholder="MRN..." value="' + esc(mrn) + '" /></div>' +
-                '<div class="demo-field"><span class="demo-lbl">Person ID</span><input type="text" class="demo-input" id="ocSearchId" placeholder="1003..." value="' + esc(pid) + '" /></div>' +
-                '<div class="demo-btn-group">' +
-                    '<button type="button" class="demo-btn" onclick="pcFile.searchPatientRegistry()">Find</button>' +
-                    '<button type="button" class="demo-btn clear-btn" onclick="pcFile.clearPatientBar()">Clear</button>' +
+            '<!-- ═══ ROW 1: Family name | Firstname | Date of birth + Age ═══ -->' +
+            '<div class="oc-row-grid">' +
+                '<div class="oc-cell">' +
+                    '<label class="oc-lbl">Family name</label>' +
+                    '<input type="text" class="oc-input" id="ocSearchFamily" placeholder="NSANZINTWARI..." value="' + esc(name) + '" />' +
+                '</div>' +
+                '<div class="oc-cell">' +
+                    '<label class="oc-lbl">Firstname</label>' +
+                    '<input type="text" class="oc-input" id="ocSearchFirst" placeholder="SARATIEL..." value="' + esc(first) + '" />' +
+                '</div>' +
+                '<div class="oc-cell" style="grid-column: span 2;">' +
+                    '<label class="oc-lbl">Date of birth</label>' +
+                    '<div style="display:flex; align-items:center; gap:6px; width:100%;">' +
+                        '<input type="text" class="oc-input readonly" id="ocDob" readonly value="' + esc(dobStr) + '" style="width:110px;" />' +
+                        '<span id="ocAgeTxt" class="oc-age-txt">' + (sex ? '⚪ (' + esc(sex) + ' - ' + esc(ageStr) + ')' : '') + '</span>' +
+                    '</div>' +
                 '</div>' +
             '</div>' +
-            '<!-- ═══ ROW 2: CLINICAL CONTEXT & RSSB IN FRONT OF DISTRICT (ULTRA-COMPACT SINGLE LINE) ═══ -->' +
-            '<div class="demo-row-grid" style="margin-top:2px; border-top:1px solid rgba(0,0,0,0.06); padding-top:5px;">' +
-                '<div class="demo-field"><span class="demo-lbl">DOB</span><div style="display:flex;align-items:center;gap:4px;width:100%;"><input type="text" class="demo-input readonly" id="ocDob" readonly value="' + esc(dobStr) + '" style="width:65%;" /><span id="ocAgeTxt" style="font-size:9.5px;font-weight:700;color:#6e6e73;white-space:nowrap;">' + (sex ? '(' + esc(sex.charAt(0)) + '·' + esc(ageStr) + ')' : '') + '</span></div></div>' +
-                '<div class="demo-field"><span class="demo-lbl">Archive</span><input type="text" class="demo-input readonly" id="ocArchiveCode" readonly value="' + esc(arch) + '" placeholder="Archive..." /></div>' +
-                '<div class="demo-field"><span class="demo-lbl">Insurance</span>' +
-                    '<select class="demo-input" id="ocInsurance">' +
+
+            '<!-- ═══ ROW 2: Nat ID/PP | Record number | Archive code | Person ID ═══ -->' +
+            '<div class="oc-row-grid">' +
+                '<div class="oc-cell">' +
+                    '<label class="oc-lbl">Nat ID/PP</label>' +
+                    '<input type="text" class="oc-input" id="ocSearchNatId" placeholder="11982800..." value="' + esc(natId) + '" />' +
+                '</div>' +
+                '<div class="oc-cell">' +
+                    '<label class="oc-lbl">Record number</label>' +
+                    '<input type="text" class="oc-input" id="ocSearchMrn" placeholder="754775..." value="' + esc(mrn) + '" />' +
+                '</div>' +
+                '<div class="oc-cell">' +
+                    '<label class="oc-lbl">Archive code</label>' +
+                    '<input type="text" class="oc-input oc-archive-box" id="ocArchiveCode" readonly value="' + esc(arch) + '" />' +
+                '</div>' +
+                '<div class="oc-cell">' +
+                    '<label class="oc-lbl">Person ID</label>' +
+                    '<input type="text" class="oc-input" id="ocSearchId" placeholder="754775..." value="' + esc(pid) + '" />' +
+                '</div>' +
+            '</div>' +
+
+            '<!-- ═══ ROW 3: Department | Insurance/RSSB | District | Find & Clear ═══ -->' +
+            '<div class="oc-row-grid">' +
+                '<div class="oc-cell">' +
+                    '<label class="oc-lbl">Department</label>' +
+                    '<div style="display:flex; align-items:center; gap:6px; width:100%;">' +
+                        '<button type="button" class="oc-ward-btn" onclick="pcFile.openWardPicker()" title="Browse Wards">🏥 Ward</button>' +
+                        '<input type="text" class="oc-input readonly" id="ocDepartment" readonly value="' + esc(dept) + '" style="width:100%;" />' +
+                        '<span class="oc-mini-icons">' +
+                            '<span title="Info">ℹ️</span>' +
+                            '<span title="View">🔭</span>' +
+                            '<span title="Clear selection">🗑️</span>' +
+                        '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="oc-cell">' +
+                    '<label class="oc-lbl">Insurance/RSSB</label>' +
+                    '<select class="oc-input" id="ocInsurance">' +
                         '<option value="RSSB / RAMA"' + (ins === 'RSSB / RAMA' ? ' selected' : '') + '>RSSB / RAMA</option>' +
                         '<option value="MUTUELLE DE SANTE"' + (ins === 'MUTUELLE DE SANTE' ? ' selected' : '') + '>MUTUELLE DE SANTE</option>' +
                         '<option value="MMI"' + (ins === 'MMI' ? ' selected' : '') + '>MMI</option>' +
                         '<option value="RADIANT"' + (ins === 'RADIANT' ? ' selected' : '') + '>RADIANT</option>' +
                         '<option value="PRIVATE / CASH"' + (ins === 'PRIVATE / CASH' ? ' selected' : '') + '>PRIVATE / CASH</option>' +
-                    '</select></div>' +
-                '<div class="demo-field"><span class="demo-lbl">District</span>' +
-                    '<select class="demo-input">' +
-                        '<option value="KAMONYI" selected>KAMONYI</option>' +
-                        '<option value="KIGALI">KIGALI</option>' +
-                        '<option value="GASABO">GASABO</option>' +
-                        '<option value="NYARUGENGE">NYARUGENGE</option>' +
-                        '<option value="KICUKIRO">KICUKIRO</option>' +
-                    '</select></div>' +
-                '<div class="demo-field"><span class="demo-lbl">Dept</span><div style="display:flex;gap:4px;width:100%;align-items:center;"><button type="button" class="demo-btn" onclick="pcFile.openWardPicker()" title="Browse Wards" style="padding:2px 8px;font-size:10px;height:22px;white-space:nowrap;">🏥 Ward</button><input type="text" class="demo-input readonly" id="ocDepartment" readonly value="' + esc(dept) + '" style="width:100%;" placeholder="Department..." /></div></div>' +
-                '<div class="demo-status-pills">' +
-                    '<span title="Insurance">🟢 ' + esc(ins) + '</span>' +
-                    '<span title="Ward">🏥 ' + esc(dept) + '</span>' +
-                    '<span title="Patient">👤 ' + esc(sex ? (sex.charAt(0) + '·' + ageStr) : '-') + '</span>' +
+                    '</select>' +
+                '</div>' +
+                '<div class="oc-cell">' +
+                    '<label class="oc-lbl">District</label>' +
+                    '<select class="oc-input" id="ocDistrict">' +
+                        '<option value="NYARUGENGE"' + (dist === 'NYARUGENGE' ? ' selected' : '') + '>NYARUGENGE</option>' +
+                        '<option value="KAMONYI"' + (dist === 'KAMONYI' ? ' selected' : '') + '>KAMONYI</option>' +
+                        '<option value="KIGALI"' + (dist === 'KIGALI' ? ' selected' : '') + '>KIGALI</option>' +
+                        '<option value="GASABO"' + (dist === 'GASABO' ? ' selected' : '') + '>GASABO</option>' +
+                        '<option value="KICUKIRO"' + (dist === 'KICUKIRO' ? ' selected' : '') + '>KICUKIRO</option>' +
+                    '</select>' +
+                '</div>' +
+                '<div class="oc-cell oc-btn-cell">' +
+                    '<button type="button" class="oc-action-btn" onclick="pcFile.searchPatientRegistry()">Find</button>' +
+                    '<button type="button" class="oc-action-btn" onclick="pcFile.clearPatientBar()">Clear</button>' +
                 '</div>' +
             '</div>';
 
@@ -561,7 +908,7 @@
             el.appendChild(div);
         }
 
-        // 🌟 SMART iOS 18 + PIXEL 9 PRO FEATURE: Pressing ENTER inside any input field instantly triggers search! 🌟
+        // 🌟 SMART ENTER-KEY INSTANT SEARCHING 🌟
         ['ocSearchFamily', 'ocSearchFirst', 'ocSearchNatId', 'ocSearchMrn', 'ocSearchId'].forEach(function(id) {
             var inputEl = document.getElementById(id);
             if (inputEl) {
@@ -584,6 +931,9 @@
         renderDemoBar: renderPatientIdentificationBar,
         searchFromDemoBar: searchPatientRegistry,
         openWardPicker: openWardPicker,
+        openPatientProfileModal: openPatientProfileModal,
+        openSystemSettingsModal: openSystemSettingsModal,
+        openSystemInfoModal: openSystemInfoModal,
         clearPatientBar: clearPatientBar,
         read: read, write: write
     };

@@ -1047,85 +1047,94 @@ body.compact .patient-card, body.compact .card {
    OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
    ULTRA-COMPACT SMART iOS 18 + GOOGLE PIXEL 9 PRO UI (~75px Total Height!)
    ============================================================ */
+/* ============================================================
+   OPENCLINIC GA v5.346.01 / CHUK COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   100/100 EXACT REPLICATION OF Screenshot 2026-08-04 at 13.48.46.png
+   Same Greenish-Beige Pastel Background (#e4e8dc), Cream Input Boxes (#f8faee), & Classic Clinical UI
+   ============================================================ */
+/* ============================================================
+   OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   BILL PAGE APPLE / PIXEL 9 PRO HYBRID (iOS 18 + Material You)
+   3-Row CHUK Grid (~85px Height) with Seductive Glassmorphism & Card Inputs
+   ============================================================ */
 .oc-demo-bar {
-    background: linear-gradient(135deg, #f0f0f5 0%, #eef0f5 100%) !important;
+    background: linear-gradient(135deg, rgba(240, 240, 245, 0.94) 0%, rgba(238, 240, 245, 0.88) 100%) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-top: 1.5px solid rgba(255, 255, 255, 0.95) !important;
-    border-radius: 14px !important;
-    padding: 10px 16px !important;
-    margin-bottom: 14px !important;
+    border-radius: 16px !important;
+    padding: 12px 18px !important;
+    margin-bottom: 16px !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 6px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
-    font-size: 11px !important;
+    gap: 8px !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+    font-size: 12px !important;
     color: #1d1d1f !important;
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
-.oc-demo-bar .demo-row-grid {
+.oc-demo-bar .oc-row-grid {
     display: grid !important;
-    grid-template-columns: 1.3fr 1.1fr 1.3fr 1fr 0.9fr auto !important;
-    gap: 6px 10px !important;
+    grid-template-columns: 1.35fr 1.25fr 1.3fr 1.1fr !important;
+    gap: 8px 16px !important;
     align-items: center !important;
     width: 100% !important;
 }
 
-@media(max-width: 1100px) {
-    .oc-demo-bar .demo-row-grid {
-        grid-template-columns: 1fr 1fr 1fr !important;
-    }
-}
+@media(max-width: 1050px) { .oc-demo-bar .oc-row-grid { grid-template-columns: 1fr 1fr !important; } }
+@media(max-width: 650px)  { .oc-demo-bar .oc-row-grid { grid-template-columns: 1fr !important; } }
 
-@media(max-width: 700px) {
-    .oc-demo-bar .demo-row-grid {
-        grid-template-columns: 1fr 1fr !important;
-    }
-}
-
-.oc-demo-bar .demo-field {
+.oc-demo-bar .oc-cell {
     display: flex !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 8px !important;
     width: 100% !important;
 }
 
-/* 🌟 DECREASED CHARACTER SIZE FOR LABELS (10px, SLEEK UPPERCASE) 🌟 */
+/* 🌟 BILL PAGE STYLE LABELS: SLEEK UPPERCASE TRACKING (#5f6368) 🌟 */
+.oc-demo-bar .oc-lbl,
 .oc-demo-bar .demo-lbl {
     color: #5f6368 !important;
     font-weight: 700 !important;
     white-space: nowrap !important;
-    font-size: 9.8px !important;
+    font-size: 11px !important;
     letter-spacing: 0.3px !important;
     text-transform: uppercase !important;
     flex-shrink: 0 !important;
+    min-width: 82px !important;
+    text-align: right !important;
 }
 
-/* 🌟 SIGNIFICANTLY DECREASED BOX SIZE (24px height) & DARKER CARD BOX COLOR (#e2e2e7) 🌟 */
+/* 🌟 BILL PAGE STYLE INPUT BOXES: DARKER APPLE CARD (#e2e2e7) WITH TACTILE INNER SHADOW 🌟 */
+.oc-demo-bar .oc-input,
 .oc-demo-bar .demo-input,
 .oc-demo-bar select.demo-input,
 #ocInsurance {
     background: #e2e2e7 !important;
     color: #1d1d1f !important;
     border: 1px solid #d1d1d6 !important;
-    border-radius: 6px !important;
-    padding: 2px 8px !important;
-    font-size: 11px !important;
+    border-radius: 8px !important;
+    padding: 4px 10px !important;
+    font-size: 12px !important;
     font-weight: 600 !important;
-    height: 24px !important;
+    height: 28px !important;
     outline: none !important;
     width: 100% !important;
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
+.oc-demo-bar .oc-input::placeholder,
 .oc-demo-bar .demo-input::placeholder {
     color: #8e8e93 !important;
     font-weight: 500 !important;
-    font-size: 10.5px !important;
 }
 
-/* SMART MATERIAL YOU FOCUS RING */
+/* SMART GOOGLE PIXEL 9 PRO / APPLE SPOTLIGHT FOCUS RING */
+.oc-demo-bar .oc-input:focus,
 .oc-demo-bar .demo-input:focus,
 .oc-demo-bar select.demo-input:focus,
 #ocInsurance:focus {
@@ -1134,41 +1143,58 @@ body.compact .patient-card, body.compact .card {
     box-shadow: 0 0 0 3px rgba(11, 87, 208, 0.16), inset 0 1px 1px rgba(255, 255, 255, 1) !important;
 }
 
-/* SMART ULTRA-COMPACT ACTION BUTTONS (24px height!) */
+/* 🌟 ARCHIVE CODE: APPLE RED BADGE BOX (#ff3b30) 🌟 */
+.oc-demo-bar .oc-archive-box,
+#ocArchiveCode {
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+    border-color: #d93025 !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    border-radius: 8px !important;
+}
+
+/* 🌟 BILL PAGE STYLE BUTTONS ([Find] = PIXEL 9 BLUE, [Clear] = APPLE SECONDARY RED) 🌟 */
+.oc-demo-bar .oc-btn-cell,
 .oc-demo-bar .demo-btn-group {
     display: flex !important;
-    gap: 5px !important;
+    gap: 8px !important;
     align-items: center !important;
+    justify-content: flex-end !important;
     flex-shrink: 0 !important;
 }
 
+.oc-demo-bar .oc-action-btn,
 .oc-demo-bar .demo-btn {
     background: linear-gradient(135deg, #0b57d0 0%, #0071e3 100%) !important;
     color: #ffffff !important;
     border: 0 !important;
-    border-radius: 6px !important;
-    padding: 3px 12px !important;
+    border-radius: 8px !important;
+    padding: 3px 16px !important;
     font-weight: 700 !important;
-    font-size: 11px !important;
-    height: 24px !important;
+    font-size: 12px !important;
+    height: 28px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
-    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-    box-shadow: 0 1px 4px rgba(11, 87, 208, 0.25) !important;
+    box-shadow: 0 2px 6px rgba(11, 87, 208, 0.25) !important;
     white-space: nowrap !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
 }
 
+.oc-demo-bar .oc-action-btn:hover,
 .oc-demo-bar .demo-btn:hover {
-    transform: translateY(-1px) scale(1.02) !important;
-    box-shadow: 0 3px 10px rgba(11, 87, 208, 0.35) !important;
+    transform: translateY(-1.5px) scale(1.02) !important;
+    box-shadow: 0 4px 12px rgba(11, 87, 208, 0.35) !important;
 }
 
+.oc-demo-bar .oc-action-btn:active,
 .oc-demo-bar .demo-btn:active {
     transform: scale(0.95) !important;
 }
 
+.oc-demo-bar .oc-action-btn.clear-btn,
 .oc-demo-bar .demo-btn.clear-btn {
     background: #f2f2f7 !important;
     color: #d93025 !important;
@@ -1176,36 +1202,231 @@ body.compact .patient-card, body.compact .card {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
 }
 
+.oc-demo-bar .oc-action-btn.clear-btn:hover,
 .oc-demo-bar .demo-btn.clear-btn:hover {
     background: #ffebe9 !important;
     border-color: #d93025 !important;
     color: #b31412 !important;
 }
 
-/* COMPACT MATERIAL YOU TONAL CHIPS IN BANNER */
-.oc-demo-bar .demo-status-pills {
-    display: inline-flex !important;
-    gap: 5px !important;
-    align-items: center !important;
-    flex-wrap: nowrap !important;
+/* WARD BUTTON */
+.oc-demo-bar .oc-ward-btn {
+    background: #e2e8f0 !important;
+    color: #1e293b !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 6px !important;
+    padding: 2px 10px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    height: 28px !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
 }
 
-.oc-demo-bar .demo-status-pills span {
-    background: #e8f0fe !important;
-    color: #0b57d0 !important;
-    border: 1px solid rgba(11, 87, 208, 0.2) !important;
-    padding: 2px 8px !important;
-    height: 20px !important;
-    border-radius: 12px !important;
-    font-size: 9.8px !important;
+.oc-demo-bar .oc-ward-btn:hover { background: #cbd5e1 !important; }
+
+.oc-demo-bar .oc-age-txt {
+    font-size: 11.5px !important;
     font-weight: 700 !important;
+    color: #5f6368 !important;
+    white-space: nowrap !important;
+}
+
+.oc-demo-bar .oc-mini-icons {
+    display: inline-flex !important;
+    gap: 6px !important;
+    align-items: center !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    opacity: 0.8 !important;
+}
+
+
+/* ============================================================
+   PCLINIC TOP MENU STRIP & COMPREHENSIVE MODALS
+   (Patient Demographics/Caretaker & System Settings/Language/Theme)
+   ============================================================ */
+.chuk-top-menu {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 8px 16px !important;
+    background: linear-gradient(135deg, rgba(240, 240, 245, 0.94) 0%, rgba(238, 240, 245, 0.88) 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-bottom: none !important;
+    border-top-left-radius: 14px !important;
+    border-top-right-radius: 14px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #0b57d0 !important;
+    overflow-x: auto !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+}
+
+.chuk-top-menu a, .chuk-top-menu button.menu-link {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 5px !important;
+    color: #0b57d0 !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    padding: 5px 10px !important;
+    border-radius: 8px !important;
+    border: none !important;
+    background: transparent !important;
+    font-family: inherit !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    transition: all 0.2s ease !important;
     white-space: nowrap !important;
+}
+
+.chuk-top-menu a:hover, .chuk-top-menu button.menu-link:hover {
+    background: rgba(11, 87, 208, 0.12) !important;
+    color: #003399 !important;
+    transform: translateY(-1px) !important;
+}
+
+.chuk-top-menu a:active, .chuk-top-menu button.menu-link:active {
+    transform: scale(0.97) !important;
+}
+
+/* PATIENT PROFILE & SYSTEM SETTINGS MODAL SCRIM */
+.pc-modal-scrim {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.55) !important;
+    backdrop-filter: blur(10px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 999999 !important;
+    padding: 20px !important;
+}
+
+.pc-modal-box {
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    width: 780px !important;
+    max-width: 98% !important;
+    max-height: 88vh !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: #1d1d1f !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Helvetica, Arial, sans-serif !important;
+}
+
+.pc-modal-head {
+    padding: 16px 24px !important;
+    background: #f5f5f7 !important;
+    border-bottom: 1px solid #e5e5ea !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-weight: 800 !important;
+    font-size: 16px !important;
+    color: #1d1d1f !important;
+}
+
+.pc-modal-body {
+    padding: 24px !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+}
+
+.pc-modal-foot {
+    padding: 14px 24px !important;
+    background: #f5f5f7 !important;
+    border-top: 1px solid #e5e5ea !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+}
+
+.pc-sec-title {
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    color: #0b57d0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding-bottom: 6px !important;
+    border-bottom: 1.5px solid #e2e8f0 !important;
+    margin-bottom: 4px !important;
+}
+
+.pc-form-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px 18px !important;
+}
+
+@media(max-width: 650px) {
+    .pc-form-grid { grid-template-columns: 1fr !important; }
+}
+
+.pc-form-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+}
+
+.pc-form-lbl {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #5f6368 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+}
+
+.pc-form-input, .pc-form-select {
+    background: #f8fafc !important;
+    color: #1d1d1f !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    height: 36px !important;
+    outline: none !important;
+    width: 100% !important;
     transition: all 0.2s ease !important;
 }
 
-.oc-demo-bar .demo-status-pills span:hover {
-    background: #d3e3fd !important;
+.pc-form-input:focus, .pc-form-select:focus {
+    background: #ffffff !important;
+    border-color: #0b57d0 !important;
+    box-shadow: 0 0 0 3px rgba(11, 87, 208, 0.16) !important;
+}
+
+/* TABS IN SYSTEM SETTINGS MODAL */
+.pc-tab-nav {
+    display: flex !important;
+    gap: 6px !important;
+    border-bottom: 1px solid #e5e5ea !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 10px !important;
+    flex-wrap: wrap !important;
+}
+
+.pc-tab-btn {
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    color: #475569 !important;
+    font-weight: 700 !important;
+    font-size: 12.5px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.pc-tab-btn.active {
+    background: #0b57d0 !important;
+    color: #ffffff !important;
+    border-color: #003399 !important;
 }
