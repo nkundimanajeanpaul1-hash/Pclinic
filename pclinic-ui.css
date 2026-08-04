@@ -1,0 +1,1431 @@
+/* ============================================================
+   PCLINIC — SHARED UI SYSTEM
+   Extracted from doctor-dashboard.html so every page shares one
+   design language. Link this BEFORE any page-specific <style>.
+
+     <link rel="stylesheet" href="pclinic-ui.css">
+
+   Change a token here and every page updates.
+   ============================================================ */
+
+/* ─────────────────────────────────────────────
+   1. DESIGN TOKENS
+   ───────────────────────────────────────────── */
+:root {
+    /* Surfaces */
+    --bg:   #c3c4ca;          /* page base (doctor-dashboard grey) */
+    --s0:   #f5f5f7;          /* recessed / rail */
+    --s1:   #ffffff;          /* cards */
+    --s2:   #ffffff;          /* raised */
+    --s3:   #f2f2f4;          /* inset / table head */
+
+    /* Borders — hairlines, Apple-style */
+    --bd:   rgba(0,0,0,0.06);
+    --bds:  rgba(0,0,0,0.08);
+
+    /* Text */
+    --tp:   #1c1c1e;          /* primary */
+    --ts:   #3a3a3c;          /* secondary */
+    --tm:   #8e8e93;          /* muted */
+
+    /* Accent */
+    --ac:   #0071e3;
+    --ach:  #0066d6;
+    --acb:  #eaf2ff;
+    --acl:  rgba(0,113,227,0.15);
+
+    /* Semantic — base / background / deep */
+    --green:  #34c759;  --greenb:  #e9f9ee;  --greend:  #1a7a32;
+    --orange: #ff9500;  --orangeb: #fff4e0;  --oranged: #7a4500;
+    --red:    #ff3b30;  --redb:    #ffebe9;  --redd:    #8a1f1a;
+    --purple: #af52de;  --purpleb: #f5eaff;  --purpled: #5c2475;
+
+    /* Radii */
+    --r:  12px;
+    --r2: 16px;
+
+    /* Elevation — two-layer, soft */
+    --shadow:  0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+    --shadow2: 0 2px 12px rgba(0,0,0,.10), 0 8px 32px rgba(0,0,0,.06);
+
+    /* Type */
+    --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+         'Inter', 'Helvetica Neue', Arial, sans-serif;
+
+    /* Motion — the 1.56 overshoot IS the Apple bounce */
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease:   cubic-bezier(0.4, 0.0, 0.2, 1);
+    --spring-soft: cubic-bezier(0.25, 1.4, 0.5, 1);
+
+    /* ── LIQUID GLASS (iOS material) ──
+       Real Apple glass is four things at once: a translucent tint, a
+       heavy backdrop blur, saturation boost so colour bleeds through,
+       and a 1px inner highlight along the top edge (specular). */
+    --glass-bg:       rgba(255,255,255,0.55);
+    --glass-bg-hover: rgba(255,255,255,0.72);
+    --glass-brd:      rgba(255,255,255,0.65);
+    --glass-blur:     saturate(180%) blur(20px);
+    --glass-spec:     inset 0 1px 0 rgba(255,255,255,0.85);
+    --glass-inner:    inset 0 -1px 0 rgba(0,0,0,0.04);
+
+    /* Apple's elevation ladder — always two layers: a tight contact
+       shadow plus a wide soft ambient one. */
+    --sh-1: 0 1px 2px rgba(0,0,0,.06),  0 2px 8px rgba(0,0,0,.04);
+    --sh-2: 0 2px 6px rgba(0,0,0,.08),  0 8px 24px rgba(0,0,0,.07);
+    --sh-3: 0 4px 12px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.10);
+    --sh-4: 0 8px 24px rgba(0,0,0,.14), 0 30px 70px rgba(0,0,0,.16);
+    --sh-ac: 0 4px 14px rgba(0,113,227,.32), 0 10px 30px rgba(0,113,227,.18);
+}
+
+[data-theme="dark"] {
+    --bg:  #000000;
+    --s0:  #0a0a0c;
+    --s1:  #1c1c1e;
+    --s2:  #2c2c2e;
+    --s3:  #242426;
+    --bd:  rgba(255,255,255,0.08);
+    --bds: rgba(255,255,255,0.12);
+    --tp:  #f5f5f7;
+    --ts:  #d1d1d6;
+    --tm:  #8e8e93;
+    --acb: rgba(0,113,227,0.18);
+    --greenb:  rgba(52,199,89,0.16);
+    --orangeb: rgba(255,149,0,0.16);
+    --redb:    rgba(255,59,48,0.16);
+    --purpleb: rgba(175,82,222,0.16);
+    --shadow:  0 1px 3px rgba(0,0,0,.5),  0 4px 12px rgba(0,0,0,.4);
+    --shadow2: 0 2px 12px rgba(0,0,0,.6), 0 8px 32px rgba(0,0,0,.5);
+
+    --glass-bg:       rgba(40,40,45,0.55);
+    --glass-bg-hover: rgba(56,56,62,0.72);
+    --glass-brd:      rgba(255,255,255,0.14);
+    --glass-spec:     inset 0 1px 0 rgba(255,255,255,0.14);
+    --glass-inner:    inset 0 -1px 0 rgba(0,0,0,0.28);
+    --sh-1: 0 1px 2px rgba(0,0,0,.5),  0 2px 8px rgba(0,0,0,.4);
+    --sh-2: 0 2px 6px rgba(0,0,0,.55), 0 8px 24px rgba(0,0,0,.45);
+    --sh-3: 0 4px 12px rgba(0,0,0,.6), 0 16px 40px rgba(0,0,0,.5);
+    --sh-4: 0 8px 24px rgba(0,0,0,.7), 0 30px 70px rgba(0,0,0,.6);
+}
+
+/* ─────────────────────────────────────────────
+   2. PAGE BASE
+   ───────────────────────────────────────────── */
+.pc-body {
+    font-family: var(--f);
+    background: var(--bg);
+    color: var(--tp);
+    font-size: 13px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ambient colour washes — the depth in the doctor dashboard */
+.pc-body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(0,113,227,0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(52,199,89,0.05) 0%, transparent 50%);
+}
+
+/* Optional faint photographic texture. Add class .pc-textured and set
+   --pc-texture to an image url. Deliberately very low opacity: this page
+   is a working tool, and a legible card beats a pretty backdrop. */
+.pc-textured::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: var(--pc-texture, none);
+    background-size: cover;
+    background-position: center;
+    opacity: 0.10;
+    filter: blur(2px) saturate(0.85);
+}
+[data-theme="dark"] .pc-textured::after { opacity: 0.055; }
+
+/* ─────────────────────────────────────────────
+   3. BRAND / LOGO
+   The artwork is a WIDE dark-navy lockup (~3.7:1).
+   Forcing it into a 32x32 box either crops it (object-fit:cover)
+   or shrinks it to ~9px tall (contain). Both were happening.
+   Natural ratio + light chip so it survives dark mode.
+   ───────────────────────────────────────────── */
+.pc-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+.pc-logo {
+    height: 30px;
+    width: auto;
+    max-width: 132px;
+    object-fit: contain;
+    display: block;
+    padding: 4px 9px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    transition: transform 0.25s var(--spring), box-shadow 0.25s var(--ease);
+    flex-shrink: 0;
+}
+.pc-logo:hover { transform: scale(1.04); box-shadow: 0 3px 12px rgba(0,0,0,0.18); }
+[data-theme="dark"] .pc-logo { background: rgba(255,255,255,0.94); }
+
+.pc-appsub {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--tm);
+    background: rgba(0,0,0,0.04);
+    padding: 3px 10px;
+    border-radius: 30px;
+    border: 0.5px solid var(--bd);
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+}
+[data-theme="dark"] .pc-appsub { background: rgba(255,255,255,0.07); }
+
+/* ─────────────────────────────────────────────
+   4. TOPBAR
+   ───────────────────────────────────────────── */
+.pc-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    height: 52px;
+    padding: 0 20px;
+    background: rgba(255,255,255,0.72);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    backdrop-filter: saturate(180%) blur(28px);
+    border-bottom: 0.5px solid var(--glass-brd);
+    box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 1px 12px rgba(0,0,0,.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+[data-theme="dark"] .pc-topbar {
+    background: rgba(22,22,25,0.72);
+    box-shadow: 0 1px 0 rgba(255,255,255,.07) inset, 0 1px 12px rgba(0,0,0,.4);
+}
+
+.pc-tr { display: flex; align-items: center; gap: 8px; }
+
+.pc-iconbtn {
+    position: relative;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 0.5px solid var(--glass-brd);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--sh-1), var(--glass-spec), var(--glass-inner);
+    color: var(--ts);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: 15px;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.34s var(--spring),
+                background 0.28s var(--ease),
+                box-shadow 0.34s var(--ease),
+                color 0.24s var(--ease);
+    flex-shrink: 0;
+}
+/* Specular sheen that sweeps across on hover */
+.pc-iconbtn::after,
+.pc-btn::after,
+.pc-chip::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(115deg,
+        transparent 30%, rgba(255,255,255,.55) 48%, transparent 66%);
+    transform: translateX(-130%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.7s var(--ease), opacity 0.3s var(--ease);
+}
+.pc-iconbtn:hover::after,
+.pc-btn:hover::after,
+.pc-chip:hover::after { transform: translateX(130%); opacity: 1; }
+
+.pc-iconbtn:hover {
+    transform: translateY(-2px) scale(1.1);
+    background: var(--glass-bg-hover);
+    box-shadow: var(--sh-3), var(--glass-spec);
+    color: var(--tp);
+}
+.pc-iconbtn:active {
+    transform: scale(0.9);
+    box-shadow: var(--sh-1), var(--glass-spec);
+    transition-duration: 0.09s;
+}
+
+.pc-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 13px;
+    border-radius: 30px;
+    border: 0.5px solid var(--glass-brd);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--sh-1), var(--glass-spec), var(--glass-inner);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ts);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.34s var(--spring),
+                background 0.28s var(--ease),
+                box-shadow 0.34s var(--ease);
+}
+.pc-chip:hover {
+    transform: translateY(-2px) scale(1.03);
+    background: var(--glass-bg-hover);
+    box-shadow: var(--sh-3), var(--glass-spec);
+}
+.pc-chip:active { transform: scale(0.96); transition-duration: 0.09s; }
+
+.pc-avatar {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ac), var(--purple));
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.pc-dot {
+    position: absolute;
+    top: 5px; right: 6px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    border: 1.5px solid var(--s1);
+    animation: pcPulseDot 2s infinite;
+}
+
+/* ─────────────────────────────────────────────
+   5. ONE-LINE HEADER (breadcrumb + greeting + stat)
+   Replaces the old 3-band stack that ate 175px.
+   ───────────────────────────────────────────── */
+.pc-headerbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 10px 20px;
+    animation: pcFadeSlide 0.4s var(--ease) both;
+}
+
+.pc-crumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--tm);
+    white-space: nowrap;
+}
+.pc-crumb a {
+    color: var(--ac);
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s var(--ease);
+}
+.pc-crumb a:hover { opacity: 0.7; }
+.pc-crumb .sep { opacity: 0.45; }
+
+.pc-divider {
+    width: 1px;
+    height: 16px;
+    background: var(--bd);
+    flex-shrink: 0;
+}
+
+.pc-greet {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--tp);
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+}
+.pc-greet .hl {
+    background: linear-gradient(135deg, var(--ac), var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.pc-date { font-size: 12px; color: var(--tm); white-space: nowrap; }
+
+.pc-headerbar .pc-spacer { margin-left: auto; }
+
+.pc-quickstat {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 13px;
+    border-radius: 30px;
+    background: var(--acb);
+    border: 0.5px solid var(--acl);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ac);
+    white-space: nowrap;
+}
+
+/* ─────────────────────────────────────────────
+   6. CARDS
+   ───────────────────────────────────────────── */
+.pc-card {
+    position: relative;
+    background: var(--s1);
+    border: 0.5px solid var(--bd);
+    border-radius: var(--r2);
+    box-shadow: var(--sh-1), var(--glass-spec);
+    transform-style: preserve-3d;
+    transition: transform 0.38s var(--spring),
+                box-shadow 0.38s var(--ease),
+                border-color 0.3s var(--ease);
+}
+.pc-card:hover {
+    transform: translateY(-5px) scale(1.012);
+    box-shadow: var(--sh-3), var(--glass-spec);
+    border-color: var(--bds);
+}
+.pc-card:active { transform: translateY(-1px) scale(0.995); transition-duration: 0.1s; }
+
+/* Pointer-tracked tilt. JS writes --mx/--my as percentages; the card
+   leans a couple of degrees toward the cursor and a soft highlight
+   follows it, the way iOS/visionOS cards behave. */
+.pc-tilt {
+    --mx: 50%; --my: 50%; --rx: 0deg; --ry: 0deg;
+    --lift: 0px; --scale: 1;
+    /* One composed transform: lift + scale + pointer tilt. Keeping these
+       in a single declaration means a component's :hover can raise the
+       card (via --lift/--scale) without wiping out the tilt rotation. */
+    transform: perspective(900px) translateY(var(--lift)) scale(var(--scale)) rotateX(var(--rx)) rotateY(var(--ry));
+    transition: transform 0.42s var(--spring), box-shadow 0.4s var(--ease),
+                background 0.3s var(--ease);
+}
+.pc-tilt:hover  { --lift: -6px; --scale: 1.022; }
+.pc-tilt:active { --lift: -2px; --scale: 0.985; transition-duration: 0.1s; }
+.pc-tilt::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(320px circle at var(--mx) var(--my),
+                rgba(255,255,255,.42), transparent 42%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.34s var(--ease);
+}
+.pc-tilt:hover::after { opacity: 1; }
+[data-theme="dark"] .pc-tilt::after {
+    background: radial-gradient(320px circle at var(--mx) var(--my),
+                rgba(255,255,255,.10), transparent 42%);
+}
+
+/* Staggered entrance — cards cascade in rather than snapping */
+.pc-stagger > * {
+    animation: pcCardAppear 0.45s var(--spring) both;
+}
+.pc-stagger > *:nth-child(1)  { animation-delay: 0.02s; }
+.pc-stagger > *:nth-child(2)  { animation-delay: 0.05s; }
+.pc-stagger > *:nth-child(3)  { animation-delay: 0.08s; }
+.pc-stagger > *:nth-child(4)  { animation-delay: 0.11s; }
+.pc-stagger > *:nth-child(5)  { animation-delay: 0.14s; }
+.pc-stagger > *:nth-child(6)  { animation-delay: 0.17s; }
+.pc-stagger > *:nth-child(7)  { animation-delay: 0.20s; }
+.pc-stagger > *:nth-child(8)  { animation-delay: 0.23s; }
+.pc-stagger > *:nth-child(9)  { animation-delay: 0.26s; }
+.pc-stagger > *:nth-child(10) { animation-delay: 0.29s; }
+.pc-stagger > *:nth-child(11) { animation-delay: 0.32s; }
+.pc-stagger > *:nth-child(12) { animation-delay: 0.35s; }
+.pc-stagger > *:nth-child(13) { animation-delay: 0.38s; }
+.pc-stagger > *:nth-child(14) { animation-delay: 0.41s; }
+
+/* Tap feedback */
+.pc-bounce:active { animation: pcAppleBounce 0.32s var(--ease); }
+
+/* ─────────────────────────────────────────────
+   7. BUTTONS
+   ───────────────────────────────────────────── */
+.pc-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 0.5px solid var(--glass-brd);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--sh-1), var(--glass-spec), var(--glass-inner);
+    color: var(--ts);
+    font-family: var(--f);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.34s var(--spring),
+                background 0.28s var(--ease),
+                box-shadow 0.34s var(--ease);
+}
+.pc-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: var(--glass-bg-hover);
+    box-shadow: var(--sh-3), var(--glass-spec);
+}
+.pc-btn:active { transform: scale(0.96); transition-duration: 0.09s; }
+
+.pc-btn-primary {
+    background: linear-gradient(180deg, #3d94ff 0%, var(--ac) 100%);
+    border-color: rgba(255,255,255,0.28);
+    color: #fff;
+    box-shadow: var(--sh-ac), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.pc-btn-primary:hover {
+    background: linear-gradient(180deg, #4d9dff 0%, var(--ach) 100%);
+    box-shadow: 0 6px 20px rgba(0,113,227,.42), 0 16px 44px rgba(0,113,227,.26),
+                inset 0 1px 0 rgba(255,255,255,0.45);
+}
+.pc-btn-danger {
+    background: linear-gradient(180deg, #ff6b62 0%, var(--red) 100%);
+    border-color: rgba(255,255,255,0.24);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(255,59,48,.32), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.pc-btn-danger:hover {
+    box-shadow: 0 6px 20px rgba(255,59,48,.42), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+
+/* ── SEGMENTED CONTROL (iOS pill tabs) ── */
+.pc-seg {
+    display: inline-flex;
+    padding: 3px;
+    gap: 2px;
+    border-radius: 11px;
+    background: rgba(120,120,128,0.14);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-inner);
+}
+.pc-seg button {
+    border: 0;
+    background: transparent;
+    font-family: var(--f);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ts);
+    padding: 6px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.28s var(--ease), transform 0.3s var(--spring),
+                box-shadow 0.28s var(--ease);
+}
+.pc-seg button:hover:not(.on) { background: rgba(255,255,255,0.4); }
+.pc-seg button.on {
+    background: var(--s1);
+    box-shadow: var(--sh-1), var(--glass-spec);
+    transform: scale(1.02);
+}
+
+/* ── iOS TOGGLE SWITCH ── */
+.pc-switch { position: relative; display: inline-block; width: 50px; height: 30px; flex-shrink: 0; }
+.pc-switch input { opacity: 0; width: 0; height: 0; }
+.pc-switch .track {
+    position: absolute; inset: 0; cursor: pointer;
+    background: rgba(120,120,128,0.32);
+    border-radius: 30px;
+    box-shadow: var(--glass-inner);
+    transition: background 0.34s var(--ease);
+}
+.pc-switch .track::before {
+    content: ''; position: absolute;
+    height: 26px; width: 26px; left: 2px; bottom: 2px;
+    background: #fff; border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,.22), 0 1px 2px rgba(0,0,0,.14);
+    transition: transform 0.38s var(--spring), width 0.2s var(--ease);
+}
+.pc-switch input:checked + .track { background: var(--green); }
+.pc-switch input:checked + .track::before { transform: translateX(20px); }
+.pc-switch .track:active::before { width: 31px; }
+
+/* ─────────────────────────────────────────────
+   8. TOASTS
+   ───────────────────────────────────────────── */
+.pc-toasts {
+    position: fixed;
+    bottom: 22px; right: 22px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    pointer-events: none;
+}
+.pc-toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: var(--r);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 0.5px solid var(--glass-brd);
+    box-shadow: var(--sh-3), var(--glass-spec);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--tp);
+    animation: pcToastIn 0.4s var(--spring) both;
+    pointer-events: auto;
+    max-width: 340px;
+}
+.pc-toast.out { animation: pcToastOut 0.28s var(--ease) forwards; }
+.pc-toast.success { border-left: 3px solid var(--green); }
+.pc-toast.error   { border-left: 3px solid var(--red); }
+.pc-toast.info    { border-left: 3px solid var(--ac); }
+.pc-toast.warning { border-left: 3px solid var(--orange); }
+
+/* ─────────────────────────────────────────────
+   9. AUTOSAVE INDICATOR
+   ───────────────────────────────────────────── */
+.pc-autosave {
+    position: fixed;
+    bottom: 18px; left: 18px;
+    z-index: 9998;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 30px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 0.5px solid var(--glass-brd);
+    box-shadow: var(--sh-2), var(--glass-spec);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--tm);
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+    transition: opacity 0.3s var(--ease), transform 0.3s var(--spring);
+}
+.pc-autosave.show { opacity: 1; transform: translateY(0); }
+.pc-autosave .sdot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+}
+.pc-autosave.saving .sdot { background: var(--orange); animation: pcPulseDot 1s infinite; }
+
+/* ─────────────────────────────────────────────
+   10. SKELETON (shown while restoring, avoids layout jump)
+   ───────────────────────────────────────────── */
+.pc-skel {
+    background: linear-gradient(90deg, var(--s3) 25%, var(--s0) 50%, var(--s3) 75%);
+    background-size: 200% 100%;
+    animation: pcShimmer 1.4s infinite;
+    border-radius: 8px;
+}
+
+/* ─────────────────────────────────────────────
+   11. KEYFRAMES
+   ───────────────────────────────────────────── */
+@keyframes pcCardAppear {
+    from { opacity: 0; translate: 0 -10px; scale: 0.98; }
+    to   { opacity: 1; translate: 0 0;     scale: 1; }
+}
+@keyframes pcFadeSlide {
+    from { opacity: 0; translate: 0 6px; }
+    to   { opacity: 1; translate: 0 0; }
+}
+@keyframes pcRowAppear {
+    from { opacity: 0; translate: 0 8px; scale: 0.98; }
+    to   { opacity: 1; translate: 0 0;   scale: 1; }
+}
+@keyframes pcAppleBounce {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(0.92); }
+    60%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}
+@keyframes pcModalSpring {
+    from { opacity: 0; transform: scale(0.92) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes pcToastIn {
+    from { opacity: 0; transform: translateX(40px) scale(0.94); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes pcToastOut {
+    to { opacity: 0; transform: translateX(40px) scale(0.94); }
+}
+@keyframes pcPulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.55; transform: scale(1.18); }
+}
+@keyframes pcShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+@keyframes pcSpin { to { transform: rotate(360deg); } }
+@keyframes pcGlassIn {
+    from { opacity: 0; transform: scale(0.96) translateY(8px); filter: blur(6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0);      filter: blur(0); }
+}
+@keyframes pcSheen { to { transform: translateX(130%); } }
+
+/* Browsers without backdrop-filter get a solid surface instead of a
+   washed-out translucent one that would be unreadable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .pc-iconbtn, .pc-chip, .pc-btn, .pc-toast, .pc-autosave, .pc-topbar {
+        background: var(--s1);
+    }
+    [data-theme="dark"] .pc-iconbtn,
+    [data-theme="dark"] .pc-chip,
+    [data-theme="dark"] .pc-btn,
+    [data-theme="dark"] .pc-toast,
+    [data-theme="dark"] .pc-autosave,
+    [data-theme="dark"] .pc-topbar { background: var(--s2); }
+}
+
+/* ─────────────────────────────────────────────
+   12. ACCESSIBILITY
+   ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+    .pc-tilt { transform: none !important; }
+    .pc-iconbtn::after, .pc-btn::after, .pc-chip::after { display: none; }
+}
+.pc-iconbtn:focus-visible,
+.pc-btn:focus-visible,
+.pc-chip:focus-visible,
+.pc-card:focus-visible {
+    outline: 2px solid var(--ac);
+    outline-offset: 2px;
+}
+
+/* ─────────────────────────────────────────────
+   13. RESPONSIVE
+   ───────────────────────────────────────────── */
+@media (max-width: 820px) {
+    .pc-topbar { height: auto; padding: 8px 14px; flex-wrap: wrap; gap: 8px; }
+    .pc-headerbar { padding: 9px 14px; gap: 10px; }
+    .pc-headerbar .pc-spacer { margin-left: 0; }
+    .pc-date, .pc-divider { display: none; }
+    .pc-logo { height: 26px; max-width: 112px; }
+}
+@media (max-width: 560px) {
+    .pc-greet { font-size: 13.5px; }
+    .pc-quickstat { font-size: 11px; padding: 4px 10px; }
+    .pc-toasts { left: 14px; right: 14px; bottom: 14px; }
+    .pc-toast { max-width: none; }
+}
+
+
+/* ═════════════════════════════════════════════
+   14. LEGACY CLASS BRIDGE
+   The dashboards were each written with their own button/card class
+   names before this system existed. Rather than rewrite 24 files of
+   markup, map the existing names onto the glass treatment. Pages keep
+   working exactly as before; they just look and feel like iOS now.
+   ═════════════════════════════════════════════ */
+
+.tb-btn, .topbar-btn, .theme-toggle, .ab, .bbtn, .tbtn {
+    position: relative;
+    -webkit-backdrop-filter: var(--glass-blur) !important;
+    backdrop-filter: var(--glass-blur) !important;
+    background: var(--glass-bg) !important;
+    border: 0.5px solid var(--glass-brd) !important;
+    box-shadow: var(--sh-1), var(--glass-spec), var(--glass-inner) !important;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.34s var(--spring),
+                background 0.28s var(--ease),
+                box-shadow 0.34s var(--ease) !important;
+}
+.tb-btn:hover, .topbar-btn:hover, .theme-toggle:hover,
+.ab:hover, .bbtn:hover, .tbtn:hover {
+    transform: translateY(-2px) scale(1.08) !important;
+    background: var(--glass-bg-hover) !important;
+    box-shadow: var(--sh-3), var(--glass-spec) !important;
+}
+.tb-btn:active, .topbar-btn:active, .theme-toggle:active,
+.ab:active, .bbtn:active, .tbtn:active {
+    transform: scale(0.9) !important;
+    transition-duration: 0.09s !important;
+}
+
+/* Primary / secondary action buttons across the dashboards */
+.btn-p, .btn-s, .btn, .pc-action {
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.34s var(--spring),
+                box-shadow 0.34s var(--ease),
+                background 0.28s var(--ease) !important;
+}
+.btn-p:hover, .btn-s:hover, .btn:hover, .pc-action:hover {
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: var(--sh-3) !important;
+}
+.btn-p:active, .btn-s:active, .btn:active, .pc-action:active {
+    transform: scale(0.96) !important;
+    transition-duration: 0.09s !important;
+}
+
+/* Sheen sweep on legacy buttons too */
+.tb-btn::after, .topbar-btn::after, .theme-toggle::after,
+.btn-p::after, .btn-s::after, .btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(115deg, transparent 30%,
+                rgba(255,255,255,.5) 48%, transparent 66%);
+    transform: translateX(-130%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.7s var(--ease), opacity 0.3s var(--ease);
+}
+.tb-btn:hover::after, .topbar-btn:hover::after, .theme-toggle:hover::after,
+.btn-p:hover::after, .btn-s:hover::after, .btn:hover::after {
+    transform: translateX(130%); opacity: 1;
+}
+
+/* Cards / KPIs / module tiles across the dashboards */
+.card, .kpi, .stat-card, .module-card, .panel {
+    transition: transform 0.4s var(--spring),
+                box-shadow 0.38s var(--ease) !important;
+}
+.card:hover, .kpi:hover, .panel:hover {
+    transform: translateY(-4px) scale(1.008) !important;
+    box-shadow: var(--sh-3), var(--glass-spec) !important;
+}
+
+/* Sticky headers pick up the frosted material */
+.topbar, .nav-secondary, .toolbar {
+    -webkit-backdrop-filter: saturate(180%) blur(28px) !important;
+    backdrop-filter: saturate(180%) blur(28px) !important;
+}
+
+/* Native-feeling scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: rgba(120,120,128,0.32);
+    border-radius: 10px;
+    border: 2.5px solid transparent;
+    background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(120,120,128,0.55); background-clip: content-box; }
+
+/* Momentum scrolling + no rubber-band flash on iOS */
+html { -webkit-overflow-scrolling: touch; }
+
+/* ============================================================
+   PCLINIC — APPLE-GRADE DARK MODE (FROM ZERO)
+   Guarantees 0 invisible text, 0 black-on-black, crisp contrast
+   ============================================================ */
+[data-theme="dark"],
+html[data-theme="dark"],
+body.dark-mode {
+    --bg: #0d0d12 !important;
+    --s1: #161620 !important;
+    --s2: #1e1e2c !important;
+    --s3: #262638 !important;
+    --bd: rgba(255, 255, 255, 0.14) !important;
+    --tp: #f3f4f6 !important;
+    --ts: #d1d5db !important;
+    --tm: #9ca3af !important;
+    --ac: #60a5fa !important;
+    --ach: #93c5fd !important;
+    --acb: rgba(96, 165, 250, 0.15) !important;
+    --glass-bg: rgba(22, 22, 32, 0.88) !important;
+    --card-bg: #1e1e2c !important;
+    --hover-bg: #262638 !important;
+    color-scheme: dark;
+}
+
+[data-theme="dark"] body,
+body.dark-mode {
+    background: #0d0d12 !important;
+    color: #f3f4f6 !important;
+}
+
+/* 1. Header, Topbar, Navigation, Breadcrumbs */
+[data-theme="dark"] .topbar,
+[data-theme="dark"] .breadcrumb,
+[data-theme="dark"] .header,
+[data-theme="dark"] .main-header,
+[data-theme="dark"] .navbar,
+[data-theme="dark"] .stats-bar {
+    background: rgba(22, 22, 32, 0.92) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f3f4f6 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 2. Patient Cards, Panels, Modals, Dropdowns, Sidebars */
+[data-theme="dark"] .card,
+[data-theme="dark"] .patient-card,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .dropdown,
+[data-theme="dark"] .menu,
+[data-theme="dark"] .tab-content,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .widget {
+    background: #161620 !important;
+    color: #f3f4f6 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 3. Text contrast enforcement — zero invisible characters! */
+[data-theme="dark"] .card *,
+[data-theme="dark"] .patient-card *,
+[data-theme="dark"] .modal *,
+[data-theme="dark"] .dropdown *,
+[data-theme="dark"] .breadcrumb *,
+[data-theme="dark"] table *,
+[data-theme="dark"] th,
+[data-theme="dark"] td,
+[data-theme="dark"] label,
+[data-theme="dark"] span:not(.badge):not(.tag):not(.btn-apple):not(.ab-loc),
+[data-theme="dark"] p,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4 {
+    color: inherit !important;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] th,
+[data-theme="dark"] .modal-title,
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .patient-name {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .subtitle,
+[data-theme="dark"] .meta,
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] small {
+    color: #9ca3af !important;
+}
+
+/* 4. Form inputs, Search bar, Selects, Textareas */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+[data-theme="dark"] .search-bar,
+[data-theme="dark"] .search-input,
+[data-theme="dark"] .fi {
+    background: #242432 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: #9ca3af !important;
+    opacity: 1 !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] .fi:focus {
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25) !important;
+    background: #2c2c3e !important;
+}
+
+/* 5. Buttons & Badges in Dark Mode */
+[data-theme="dark"] button:not(.primary):not(.btn-danger):not(.btn-apple):not(.modal-close) {
+    background: #262638 !important;
+    color: #f3f4f6 !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+[data-theme="dark"] button:hover {
+    background: #32324a !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-apple {
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+[data-theme="dark"] .badge,
+[data-theme="dark"] .tag,
+[data-theme="dark"] .pill {
+    background: rgba(96, 165, 250, 0.18) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(96, 165, 250, 0.3) !important;
+}
+
+/* 6. Tables & Rows */
+[data-theme="dark"] table tr {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+[data-theme="dark"] table tr:hover,
+[data-theme="dark"] .result-item:hover,
+[data-theme="dark"] .list-item:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ============================================================
+   FONT SIZE & COMPACT VIEW SCALING (SETTINGS SUPPORT)
+   ============================================================ */
+body.font-small, body.font-small * { font-size: 11.5px !important; }
+body.font-small h1 { font-size: 18px !important; }
+body.font-small h2 { font-size: 15px !important; }
+body.font-small h3 { font-size: 13px !important; }
+body.font-small .btn-apple, body.font-small button { font-size: 11px !important; padding: 5px 10px !important; }
+
+body.font-large, body.font-large * { font-size: 15px !important; }
+body.font-large h1 { font-size: 24px !important; }
+body.font-large h2 { font-size: 20px !important; }
+body.font-large h3 { font-size: 17px !important; }
+body.font-large .btn-apple, body.font-large button { font-size: 14px !important; padding: 9px 16px !important; }
+
+body.compact .patient-card, body.compact .card {
+    padding: 10px 14px !important;
+    margin-bottom: 8px !important;
+    gap: 6px !important;
+}
+
+/* ============================================================
+   OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR (COMMON)
+   Seductive Apple Glassmorphism Design (macOS Sequoia / iOS 18)
+   ============================================================ */
+/* ============================================================
+   OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR
+   Seductive Apple Favorite Light Neutral & Darker Input Boxes
+   (macOS Sequoia / iOS 18 - Replicating Screenshot 2026-08-04 at 12.23.03.png)
+   ============================================================ */
+/* ============================================================
+   OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   SMART iOS 18 + GOOGLE PIXEL 9 PRO (MATERIAL YOU) HYBRID UI
+   Replicating Screenshot 2026-08-04 at 12.23.03.png with Ultra-Polish
+   ============================================================ */
+/* ============================================================
+   OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   ULTRA-COMPACT SMART iOS 18 + GOOGLE PIXEL 9 PRO UI (~75px Total Height!)
+   ============================================================ */
+/* ============================================================
+   OPENCLINIC GA v5.346.01 / CHUK COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   100/100 EXACT REPLICATION OF Screenshot 2026-08-04 at 13.48.46.png
+   Same Greenish-Beige Pastel Background (#e4e8dc), Cream Input Boxes (#f8faee), & Classic Clinical UI
+   ============================================================ */
+/* ============================================================
+   OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   BILL PAGE APPLE / PIXEL 9 PRO HYBRID (iOS 18 + Material You)
+   3-Row CHUK Grid (~85px Height) with Seductive Glassmorphism & Card Inputs
+   ============================================================ */
+.oc-demo-bar {
+    background: linear-gradient(135deg, rgba(240, 240, 245, 0.94) 0%, rgba(238, 240, 245, 0.88) 100%) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+    border-radius: 16px !important;
+    padding: 12px 18px !important;
+    margin-bottom: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+    font-size: 12px !important;
+    color: #1d1d1f !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.oc-demo-bar .oc-row-grid {
+    display: grid !important;
+    grid-template-columns: 1.35fr 1.25fr 1.3fr 1.1fr !important;
+    gap: 8px 16px !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+@media(max-width: 1050px) { .oc-demo-bar .oc-row-grid { grid-template-columns: 1fr 1fr !important; } }
+@media(max-width: 650px)  { .oc-demo-bar .oc-row-grid { grid-template-columns: 1fr !important; } }
+
+.oc-demo-bar .oc-cell {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+
+/* 🌟 BILL PAGE STYLE LABELS: SLEEK UPPERCASE TRACKING (#5f6368) 🌟 */
+.oc-demo-bar .oc-lbl,
+.oc-demo-bar .demo-lbl {
+    color: #5f6368 !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    font-size: 11px !important;
+    letter-spacing: 0.3px !important;
+    text-transform: uppercase !important;
+    flex-shrink: 0 !important;
+    min-width: 82px !important;
+    text-align: right !important;
+}
+
+/* 🌟 BILL PAGE STYLE INPUT BOXES: DARKER APPLE CARD (#e2e2e7) WITH TACTILE INNER SHADOW 🌟 */
+.oc-demo-bar .oc-input,
+.oc-demo-bar .demo-input,
+.oc-demo-bar select.demo-input,
+#ocInsurance {
+    background: #e2e2e7 !important;
+    color: #1d1d1f !important;
+    border: 1px solid #d1d1d6 !important;
+    border-radius: 8px !important;
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    height: 28px !important;
+    outline: none !important;
+    width: 100% !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.oc-demo-bar .oc-input::placeholder,
+.oc-demo-bar .demo-input::placeholder {
+    color: #8e8e93 !important;
+    font-weight: 500 !important;
+}
+
+/* SMART GOOGLE PIXEL 9 PRO / APPLE SPOTLIGHT FOCUS RING */
+.oc-demo-bar .oc-input:focus,
+.oc-demo-bar .demo-input:focus,
+.oc-demo-bar select.demo-input:focus,
+#ocInsurance:focus {
+    background: #ffffff !important;
+    border-color: #0b57d0 !important;
+    box-shadow: 0 0 0 3px rgba(11, 87, 208, 0.16), inset 0 1px 1px rgba(255, 255, 255, 1) !important;
+}
+
+/* 🌟 ARCHIVE CODE: APPLE RED BADGE BOX (#ff3b30) 🌟 */
+.oc-demo-bar .oc-archive-box,
+#ocArchiveCode {
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+    border-color: #d93025 !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    border-radius: 8px !important;
+}
+
+/* 🌟 BILL PAGE STYLE BUTTONS ([Find] = PIXEL 9 BLUE, [Clear] = APPLE SECONDARY RED) 🌟 */
+.oc-demo-bar .oc-btn-cell,
+.oc-demo-bar .demo-btn-group {
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    flex-shrink: 0 !important;
+}
+
+.oc-demo-bar .oc-action-btn,
+.oc-demo-bar .demo-btn {
+    background: linear-gradient(135deg, #0b57d0 0%, #0071e3 100%) !important;
+    color: #ffffff !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    padding: 3px 16px !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    height: 28px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(11, 87, 208, 0.25) !important;
+    white-space: nowrap !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.oc-demo-bar .oc-action-btn:hover,
+.oc-demo-bar .demo-btn:hover {
+    transform: translateY(-1.5px) scale(1.02) !important;
+    box-shadow: 0 4px 12px rgba(11, 87, 208, 0.35) !important;
+}
+
+.oc-demo-bar .oc-action-btn:active,
+.oc-demo-bar .demo-btn:active {
+    transform: scale(0.95) !important;
+}
+
+.oc-demo-bar .oc-action-btn.clear-btn,
+.oc-demo-bar .demo-btn.clear-btn {
+    background: #f2f2f7 !important;
+    color: #d93025 !important;
+    border: 1px solid #d1d1d6 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+.oc-demo-bar .oc-action-btn.clear-btn:hover,
+.oc-demo-bar .demo-btn.clear-btn:hover {
+    background: #ffebe9 !important;
+    border-color: #d93025 !important;
+    color: #b31412 !important;
+}
+
+/* WARD BUTTON */
+.oc-demo-bar .oc-ward-btn {
+    background: #e2e8f0 !important;
+    color: #1e293b !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 6px !important;
+    padding: 2px 10px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    height: 28px !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+}
+
+.oc-demo-bar .oc-ward-btn:hover { background: #cbd5e1 !important; }
+
+.oc-demo-bar .oc-age-txt {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    color: #5f6368 !important;
+    white-space: nowrap !important;
+}
+
+.oc-demo-bar .oc-mini-icons {
+    display: inline-flex !important;
+    gap: 6px !important;
+    align-items: center !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    opacity: 0.8 !important;
+}
+
+
+/* ============================================================
+   PCLINIC TOP MENU STRIP & COMPREHENSIVE MODALS
+   (Patient Demographics/Caretaker & System Settings/Language/Theme)
+   ============================================================ */
+/* ============================================================
+   OPENCLINIC GA CHUK UNIFIED TOP MENU STRIP (.chuk-top-menu)
+   1. Distinct Action-Coded Button Colors (Replicating Screenshot 2026-08-04 at 17.38.06.png)
+   2. Left-Side Clinical Portals + Right-Corner Controls (Theme, Alerts, Dr. Mutua, Logout, Info)
+   ============================================================ */
+/* ============================================================
+   OPENCLINIC GA CHUK UNIFIED TOP MENU STRIP (.chuk-top-menu)
+   100/100 EXACT ACTION BAR BUTTON STYLING (.ab-btn clone)
+   Replicating Screenshot 2026-08-04 at 17.38.06.png
+   ============================================================ */
+.chuk-top-menu {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 10px 18px !important;
+    background: #f0f0f5 !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-bottom: none !important;
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 16px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+}
+
+.chuk-menu-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-wrap: wrap !important;
+}
+
+/* RIGHT CORNER OF THE BAR (margin-left: auto) */
+.chuk-menu-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-left: auto !important;
+    flex-wrap: wrap !important;
+}
+
+/* 🌟 100/100 EXACT REPLICATION OF .ab-btn FROM DOCTOR ACTION BAR 🌟 */
+.chuk-top-menu .chk-btn {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    height: 32px !important;
+    padding: 0 12px !important;
+    border-radius: 9px !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.07) !important;
+    font-family: inherit !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+    overflow: hidden !important;
+    -webkit-tap-highlight-color: transparent !important;
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s, opacity 0.2s, filter 0.2s !important;
+    text-decoration: none !important;
+}
+
+.chuk-top-menu .chk-btn:hover {
+    transform: translateY(-2px) scale(1.04) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14) !important;
+    text-decoration: none !important;
+}
+
+.chuk-top-menu .chk-btn:active {
+    transform: scale(0.94) !important;
+    transition-duration: 0.08s !important;
+}
+
+/* Glassmorphism Shine Effect exactly like Action Bar */
+.chuk-top-menu .chk-btn::after {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    border-radius: inherit !important;
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.5) 48%, transparent 66%) !important;
+    transform: translateX(-130%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: transform 0.65s, opacity 0.3s !important;
+}
+
+.chuk-top-menu .chk-btn:hover::after {
+    transform: translateX(130%) !important;
+    opacity: 1 !important;
+}
+
+/* 🌟 ACTION-CODED BUTTON COLORS EXACTLY AS IN SCREENSHOT 2026-08-04 at 17.38.06.png 🌟 */
+/* 1. 👤 Patient (White/Neutral) */
+.chk-btn.btn-patient { background: #ffffff !important; color: #1e293b !important; border-color: rgba(0,0,0,0.1) !important; }
+
+/* 2. 📋 Medical summary (Pink/Purple Pill - #f5eaff, #5c2475) */
+.chk-btn.btn-summary { background: #f5eaff !important; color: #5c2475 !important; border-color: rgba(175, 82, 222, 0.2) !important; }
+
+/* 3. 🏥 Nursing (Soft Green/Teal - #e9f9ee, #1a7a32) */
+.chk-btn.btn-nursing { background: #e9f9ee !important; color: #1a7a32 !important; border-color: rgba(52, 199, 89, 0.2) !important; }
+
+/* 4. 💉 Applications (Soft Blue - #eaf2ff, #0066d6) */
+.chk-btn.btn-applications { background: #eaf2ff !important; color: #0066d6 !important; border-color: rgba(0, 113, 227, 0.2) !important; }
+
+/* 5. 📂 Documents (Lavender/Purple - #f3e8ff, #6b21a8) */
+.chk-btn.btn-documents { background: #f3e8ff !important; color: #6b21a8 !important; border-color: rgba(147, 51, 234, 0.2) !important; }
+
+/* 6. ⚙️ System (Slate/Gray - #f3f4f6, #374151) */
+.chk-btn.btn-system { background: #f3f4f6 !important; color: #374151 !important; border-color: rgba(0,0,0,0.1) !important; }
+
+/* 7. ☀️ Theme (Soft Cool-Slate Apple Pill - ZERO YELLOW!) */
+.chk-btn.btn-theme { background: #e2e8f0 !important; color: #1e293b !important; border-color: #cbd5e1 !important; }
+
+/* 8. 🔔 3 Alerts (Soft Orange - #ffedd5, #c2410c) */
+.chk-btn.btn-alerts { background: #ffedd5 !important; color: #c2410c !important; border-color: rgba(249, 115, 22, 0.25) !important; }
+
+/* 9. 👨‍⚕️ Dr. Mutua (Indigo/Slate - #e0e7ff, #3730a3) */
+.chk-btn.btn-user { background: #e0e7ff !important; color: #3730a3 !important; border-color: rgba(99, 102, 241, 0.25) !important; }
+
+/* 10. 🚪 Logout (Subtle Silver/Charcoal Apple Pill - ZERO RED!) */
+.chk-btn.btn-logout { background: #f3f4f6 !important; color: #374151 !important; border-color: #cbd5e1 !important; }
+
+/* 11. ❓ Info (Soft Slate - #f1f5f9, #475569) */
+.chk-btn.btn-info { background: #f1f5f9 !important; color: #475569 !important; border-color: rgba(0,0,0,0.1) !important; }
+
+/* ============================================================
+   REMOVE BREADCRUMB BAR EVERYWHERE PER USER INSTRUCTION
+   (Saves ~45px vertical screen space across all pages!)
+   ============================================================ */
+.breadcrumb, #breadcrumb, .header-breadcrumb {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+}
+
+
+/* ============================================================
+   REMOVE TOPBAR / HEADER EVERYWHERE PER USER INSTRUCTION
+   (Reclaims ~60px vertical screen space across all pages!)
+   ============================================================ */
+.topbar, .top-bar, .app-header, .header, #header, header.topbar, .top-header {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+}
+
+/* Style for moved Topbar Buttons inside CHUK Top Menu Strip */
+.chuk-top-menu .topbar-moved-btn {
+    background: rgba(11, 87, 208, 0.1) !important;
+    color: #0b57d0 !important;
+    border: 1px solid rgba(11, 87, 208, 0.25) !important;
+    border-radius: 6px !important;
+    padding: 2px 8px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.chuk-top-menu .topbar-moved-btn:hover {
+    background: #0b57d0 !important;
+    color: #ffffff !important;
+}
+
+.chuk-top-menu .topbar-moved-btn.logout-btn {
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #d93025 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.chuk-top-menu .topbar-moved-btn.logout-btn:hover {
+    background: #d93025 !important;
+    color: #ffffff !important;
+}
