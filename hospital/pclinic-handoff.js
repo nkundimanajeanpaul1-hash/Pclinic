@@ -47,6 +47,9 @@
     }
 
     function strip(p) {
+        if (window.pcFile && typeof window.pcFile.renderDemoBar === 'function') {
+            return; // pcFile renders the Complete Patient Identification Bar, prevent duplicate handoff bar
+        }
         if (document.getElementById('pcHandoff')) return;
 
         var css = document.createElement('style');

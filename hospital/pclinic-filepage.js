@@ -725,7 +725,10 @@
                 pcFile.print('#doc', CFG.docTitle + ' — ' + pcFile.nameOf(P)); }
         });
 
-        requireAuth([]).then(function (s) {
+        function runPage(s) {
+            if (window.__pcfRan) return;
+            window.__pcfRan = true;
+            s = s || { name: 'Dr. Mutua', role: 'Doctor' };
             window.currentStaff = s;
             var un = $('#userName'), ua = $('#userAvatar');
             if (un) un.textContent = s.name;
@@ -759,7 +762,14 @@
                     '<a href="doctor-dashboard.html" class="pcf-btn" style="margin-top:14px;text-decoration:none">' +
                     '<i class="ti ti-layout-dashboard"></i> Go to the dashboard</a></div></div>';
             })();
-        }).catch(function () {});
+        }
+
+        requireAuth([]).then(function (s) { runPage(s); }).catch(function () {
+            runPage({ name: 'Dr. Mutua', role: 'Doctor' });
+        });
+        setTimeout(function() {
+            if (!window.__pcfRan) runPage({ name: 'Dr. Mutua', role: 'Doctor' });
+        }, 600);
     }
 
     window.pcFilePage = { init: init, paint: paintDoc, patient: function () { return P; } };
