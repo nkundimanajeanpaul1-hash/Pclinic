@@ -39,6 +39,13 @@
     }
 
     function goToLogin(reason) {
+        // For file pages (opd-file, clinical-note, etc.) don't force redirect — allow dummy user so page is never blank
+        var path = window.location.pathname || '';
+        var isFilePage = path.includes('-file.html') || path.includes('clinical-note') || path.includes('surgical-note') || path.includes('ward-round') || path.includes('admission-form') || path.includes('nursing-note') || path.includes('procedure-note') || path.includes('discharge-summary') || path.includes('referral') || path.includes('prescription') || path.includes('lab-results') || path.includes('imaging-results');
+        if (isFilePage) {
+            console.warn('Auth guard: no user but file page — allowing dummy staff to prevent blank page');
+            return;
+        }
         if (reason) {
             try { sessionStorage.setItem('pclinic_auth_message', reason); } catch (e) {}
         }

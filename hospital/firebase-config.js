@@ -17,7 +17,12 @@ import {
     where,
     orderBy,
     serverTimestamp,
-    enableIndexedDbPersistence
+    enableIndexedDbPersistence,
+    arrayUnion,
+    arrayRemove,
+    increment,
+    runTransaction,
+    writeBatch
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import {
     getAuth,
@@ -86,7 +91,12 @@ window.firebaseFunctions = {
     query,
     where,
     orderBy,
-    serverTimestamp
+    serverTimestamp,
+    arrayUnion,
+    arrayRemove,
+    increment,
+    runTransaction,
+    writeBatch
 };
 
 window.firebaseAuthFunctions = {

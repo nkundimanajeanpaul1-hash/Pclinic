@@ -1455,8 +1455,10 @@
         }
 
         function loadDarkModePreference() {
-            const saved = (localStorage.getItem('pclinic-theme') === 'dark' ? 'enabled' : localStorage.getItem('pclinic-theme') === 'light' ? 'disabled' : localStorage.getItem('opd_dark_mode'));
-            if (saved === 'enabled') {
+            const savedTheme = localStorage.getItem('pclinic-theme') || 
+                (localStorage.getItem('opd_dark_mode') === 'enabled' ? 'dark' : 
+                 localStorage.getItem('opd_dark_mode') === 'disabled' ? 'light' : 'light');
+            if (savedTheme === 'dark') {
                 isDarkMode = true;
                 document.body.classList.add('dark-mode');
                 const icon = document.querySelector('.dark-mode-toggle-btn i');

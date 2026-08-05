@@ -2376,7 +2376,7 @@ function toggleTheme(){
 }
 
 (function(){
-  var saved = (localStorage.getItem('pclinic-theme') || localStorage.getItem('theme')) || 'light';
+  var saved = (localStorage.getItem('pclinic-theme') || (localStorage.getItem('pclinic-theme') || localStorage.getItem('theme'))) || 'light';
   document.documentElement.setAttribute('data-theme', saved);
   document.getElementById('themeIcon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
 })();

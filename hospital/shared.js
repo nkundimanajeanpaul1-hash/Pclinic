@@ -218,9 +218,30 @@
         console.log('📌 Shortcuts: Ctrl+D (Dark Mode), Ctrl+/ (Help), Ctrl+L (Logout)');
     }
 
+    // ─── TABLE ROW DELETE (shared utility for static placeholder tables) ───
+    function deleteRow(btn) {
+        const row = btn && btn.closest('tr');
+        if (!row) return;
+        const label = (row.cells && row.cells[0] ? row.cells[0].textContent.trim() : '') || 'Row';
+        const tbody = row.parentElement;
+        row.remove();
+        showToast('🗑️ ' + label + ' removed', 'info');
+        if (tbody && tbody.tagName === 'TBODY' && tbody.querySelectorAll('tr').length === 0) {
+            const cols = (tbody.closest('table')?.querySelectorAll('thead th') || []).length || 1;
+            const empty = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = cols;
+            td.style.cssText = 'text-align:center; color:#888; padding:18px;';
+            td.textContent = 'No records';
+            empty.appendChild(td);
+            tbody.appendChild(empty);
+        }
+    }
+
     // ─── EXPOSE TO GLOBAL ───
     // Kept under its own name too, so a later page-level showToast can
     // delegate here without accidentally recursing into itself.
+    window.deleteRow = deleteRow;
     window.sharedShowToast = showToast;
     window.showToast = showToast;
     window.toggleDarkMode = toggleDarkMode;

@@ -215,7 +215,7 @@
                 document.getElementById('themeIcon').className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
             };
             (function() {
-                const saved = (localStorage.getItem('pclinic-theme') || localStorage.getItem('pclinic_theme')) || 'light';
+                const saved = (localStorage.getItem('pclinic-theme') || (localStorage.getItem('pclinic-theme') || localStorage.getItem('pclinic_theme'))) || 'light';
                 document.documentElement.setAttribute('data-theme', saved);
                 document.getElementById('themeIcon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
             })();

@@ -324,63 +324,27 @@
         });
     }
 
-    /* ══════════ ACTION BAR ON FILE PAGES ══════════
-       Every file page was a dead end — you had to go Back to order
-       anything. This puts the same actions on the page itself.      */
+    /* ══════════ ACTION BAR REMOVED — USER REQUESTED DELETION EVERYWHERE ══════════
+       The bar with Vital Signs | Lab Request | Imaging | Prescription | OPD File |
+       Clinical Note | Ward Round | Bill | Messages | Dashboard was showing on
+       login, hub and all pages. User asked to delete it completely.
+    */
     function actionBar() {
-        if ($('#pcFileBar')) return;
-        var p = patient();
-        var bar = document.createElement('div');
-        bar.id = 'pcFileBar';
-        bar.className = 'noprint';
-        var A = [
-            ['lab-request.html',      'Lab Request',     'ti-test-pipe',   '#0071e3', '#eaf2ff'],
-            ['imaging-request.html',  'Imaging',         'ti-radioactive', '#7a4500', '#fff4e0'],
-            ['prescription.html',     'Prescription',    'ti-pill',        '#1a7a32', '#e9f9ee'],
-            ['opd-file.html',         'OPD File',        'ti-folder-open', '#5c2475', '#f5eaff'],
-            ['clinical-note.html',    'Clinical Note',   'ti-notes',       '#5c2475', '#f5eaff'],
-            ['ward-round.html',       'Ward Round',      'ti-bed',         '#1a7a32', '#e9f9ee'],
-            ['billing.html',          'Bill',            'ti-receipt',     '#8a1f1a', '#ffebe9'],
-            ['messages.html',         'Messages',        'ti-mail',        '#8a1f1a', '#ffebe9']
-        ];
-        var here = location.pathname.split('/').pop();
-        bar.innerHTML =
-        '<button type="button" onclick="if(window.pcVitals) window.pcVitals.open();" class="fb-btn" style="--c:#e11d48;--b:#ffe4e6;cursor:pointer;border:none;" title="Open Vital Signs"><i class="ti ti-heart-rate-monitor"></i><span>Vital Signs</span></button>' +
-        A.map(function (a) {
-            var on = a[0] === here;
-            return '<a href="' + a[0] + (p ? '?patient=' + p.id : '') + '" class="fb-btn' +
-                   (on ? ' cur' : '') + '" style="--c:' + a[3] + ';--b:' + a[4] + '" title="' + a[1] + '">' +
-                   '<i class="ti ' + a[2] + '"></i><span>' + a[1] + '</span></a>';
-        }).join('') +
-        '<span style="flex:1"></span>' +
-        '<a href="doctor-dashboard.html" class="fb-btn" style="--c:#3a3a3c;--b:#fff">' +
-        '<i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a>';
-
-        var css = document.createElement('style');
-        css.textContent = `
-        #pcFileBar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 18px;
-            background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);
-            backdrop-filter:var(--glass-blur);border-bottom:.5px solid var(--glass-brd);
-            position:sticky;top:0;z-index:70}
-        .fb-btn{display:inline-flex;align-items:center;gap:6px;height:31px;padding:0 11px;border-radius:9px;
-            border:.5px solid rgba(0,0,0,.07);background:var(--b);color:var(--c);text-decoration:none;
-            font-size:11.5px;font-weight:600;white-space:nowrap;
-            box-shadow:0 1px 2px rgba(0,0,0,.05),inset 0 1px 0 rgba(255,255,255,.7);
-            transition:transform .26s cubic-bezier(.34,1.56,.64,1),box-shadow .26s}
-        .fb-btn:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.14)}
-        .fb-btn:active{transform:scale(.94)}
-        .fb-btn.cur{outline:2px solid currentColor;outline-offset:-2px}
-        .fb-btn i{font-size:14px}
-        @media(max-width:1000px){.fb-btn span{display:none}.fb-btn{padding:0 9px}}
-        @media print{#pcFileBar{display:none!important}}`;
-        document.head.appendChild(css);
-
-        var host = $('#pcHandoff') || $('.pc-headerbar') || $('.pc-topbar');
-        if (host && host.parentNode) host.parentNode.insertBefore(bar, host.nextSibling);
-        else document.body.insertBefore(bar, document.body.firstChild);
+        try {
+            var existing = document.getElementById('pcFileBar');
+            if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+            // Also remove any stray .fb-btn containers
+            document.querySelectorAll('#pcFileBar, .fb-btn').forEach(function(el){
+                if (el.id === 'pcFileBar' || el.closest && el.closest('#pcFileBar')) {
+                    if (el.parentNode && el.id === 'pcFileBar') el.parentNode.removeChild(el);
+                }
+            });
+        } catch(e){}
+        return;
     }
 
-    /* ══════════ MODAL SHEET ══════════
+    
+        /* ══════════ MODAL SHEET ══════════
        Diagnosis, RDV and attachments used to sit stacked in the left
        column. Measured: that made opd-file 1660px tall in a 900px
        viewport, so the doctor had to scroll away from Save to reach
@@ -763,7 +727,79 @@
         alert('🏥 PClinic Clinical Suite • OpenClinic GA v5.346.01 / CHUK\nReadiness Score: 100/100\nConnected to Local Common Server (Hybrid localStorage + Firestore)');
     }
 
-    function renderPatientIdentificationBar(targetEl, p) {
+    function createGlobalTopBar() {
+        var path = (window.location.pathname || '').toLowerCase();
+        var file = path.split('/').pop() || '';
+        var excluded = ['hub.html','login.html','index.html',''];
+        // Exclude hub, login, home
+        if (excluded.includes(file) || file === '' || path === '/' || path.endsWith('/index.html')) {
+            // Also check if page is explicitly hub/login/home via body class or title
+            if (file.includes('hub') || file.includes('login') || file === 'index.html' || file === '') return null;
+        }
+        // Don't create twice
+        if (document.getElementById('pc_chuk_top_menu')) return document.getElementById('pc_chuk_top_menu');
+
+        var master = document.getElementById('pcMasterHeader');
+        if (!master) {
+            master = document.createElement('div');
+            master.id = 'pcMasterHeader';
+            master.className = 'pc-master-header';
+            if (document.body.firstChild) document.body.insertBefore(master, document.body.firstChild);
+            else document.body.appendChild(master);
+        }
+
+        var menuDiv = document.createElement('div');
+        menuDiv.id = 'pc_chuk_top_menu';
+        menuDiv.className = 'chuk-top-menu noprint';
+        menuDiv.innerHTML =
+            '<div class="chuk-menu-left">' +
+                '<a class="chk-btn btn-patient" onclick="if(window.pcFile&&pcFile.openPatientProfileModal)pcFile.openPatientProfileModal();">👤 Patient</a>' +
+                '<a class="chk-btn btn-summary" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'754775\'; window.location.href=\'medical-summary.html?patient=\'+encodeURIComponent(id);">📋 Medical summary</a>' +
+                '<a class="chk-btn btn-nursing" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'754775\'; window.location.href=\'nurse-dashboard.html?patient=\'+encodeURIComponent(id);">🏥 Nursing</a>' +
+                '<a class="chk-btn btn-applications" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'754775\'; window.location.href=\'lab-request.html?patient=\'+encodeURIComponent(id);">💉 Applications</a>' +
+                '<a class="chk-btn btn-documents" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'754775\'; window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(id);">📂 Documents</a>' +
+                '<a class="chk-btn btn-system" onclick="if(window.pcFile&&pcFile.openSystemSettingsModal)pcFile.openSystemSettingsModal();">⚙️ System</a>' +
+            '</div>' +
+            '<div class="chuk-menu-center" style="flex:1;display:flex;justify-content:center;align-items:center;"><div id="pcGlobalClock" class="pc-global-clock" style="font-size:11px;font-weight:700;color:#1e293b;background:#e2e8f0;padding:4px 12px;border-radius:20px;display:flex;align-items:center;gap:6px;white-space:nowrap;">🕒 Loading...</div></div>' +
+            '<div class="chuk-menu-right">' +
+                '<a class="chk-btn btn-theme" onclick="if(window.pcFile&&pcFile.toggleThemeFromMenu)pcFile.toggleThemeFromMenu();">☀️ Theme</a>' +
+                '<a class="chk-btn btn-alerts" onclick="if(window.pcFile&&pcFile.showNotificationsModal)pcFile.showNotificationsModal();">🔔 3</a>' +
+                '<a class="chk-btn btn-user" onclick="if(window.pcFile&&pcFile.openStaffProfileModal)pcFile.openStaffProfileModal();">👨‍⚕️ Dr. Mutua</a>' +
+                '<a class="chk-btn btn-logout" onclick="if(window.pcFile&&pcFile.confirmLogout)pcFile.confirmLogout();">🚪 Logout</a>' +
+                '<a class="chk-btn btn-info" onclick="if(window.pcFile&&pcFile.openSystemInfoModal)pcFile.openSystemInfoModal();">❓ Info</a>' +
+            '</div>';
+
+        // Insert as first child of master header (very top of everything)
+        if (master.firstChild) master.insertBefore(menuDiv, master.firstChild);
+        else master.appendChild(menuDiv);
+
+        // Live clock: Day, Date, Month, Year, Hours, Minutes, Seconds
+        try {
+            if (!window.__pcGlobalClockInterval) {
+                function updatePcGlobalClock(){
+                    var el=document.getElementById('pcGlobalClock');
+                    if(!el) return;
+                    var now=new Date();
+                    var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                    var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    var dayName=days[now.getDay()];
+                    var day=String(now.getDate()).padStart(2,'0');
+                    var month=months[now.getMonth()];
+                    var year=now.getFullYear();
+                    var hh=String(now.getHours()).padStart(2,'0');
+                    var mm=String(now.getMinutes()).padStart(2,'0');
+                    var ss=String(now.getSeconds()).padStart(2,'0');
+                    el.textContent = dayName + ', ' + day + ' ' + month + ' ' + year + ' • ' + hh + ':' + mm + ':' + ss;
+                }
+                updatePcGlobalClock();
+                window.__pcGlobalClockInterval = setInterval(updatePcGlobalClock, 1000);
+            }
+        } catch(e){}
+
+        return menuDiv;
+    }
+
+        function renderPatientIdentificationBar(targetEl, p) {
         var el = targetEl;
         if (!el) return;
         p = p || {};
@@ -778,38 +814,11 @@
         }
 
 
-        // Remove old top menu if present to ensure fresh wiring
-        var oldMenu = document.getElementById('pc_chuk_top_menu');
-        if (oldMenu && oldMenu.parentNode) oldMenu.parentNode.removeChild(oldMenu);
-
-        // Inject OpenClinic GA CHUK Top Menu Strip right before .oc-demo-bar
-        var menuDiv = document.createElement('div');
-        menuDiv.id = 'pc_chuk_top_menu';
-        menuDiv.className = 'chuk-top-menu noprint';
-        menuDiv.innerHTML =
-            '<!-- LEFT SIDE: CLINICAL PORTALS (ACTION-CODED COLORS) -->' +
-            '<div class="chuk-menu-left">' +
-                '<a class="chk-btn btn-patient" onclick="if(window.pcFile)pcFile.openPatientProfileModal();">👤 Patient</a>' +
-                '<a class="chk-btn btn-summary" onclick="var p=window.pcFile&&pcFile.patient(); window.location.href=\'medical-summary.html?patient=\' + encodeURIComponent((p&&p.id)||\'754775\');">📋 Medical summary</a>' +
-                '<a class="chk-btn btn-nursing" onclick="var p=window.pcFile&&pcFile.patient(); window.location.href=\'nurse-dashboard.html?patient=\' + encodeURIComponent((p&&p.id)||\'754775\');">🏥 Nursing</a>' +
-                '<a class="chk-btn btn-applications" onclick="var p=window.pcFile&&pcFile.patient(); window.location.href=\'lab-request.html?patient=\' + encodeURIComponent((p&&p.id)||\'754775\');">💉 Applications</a>' +
-                '<a class="chk-btn btn-documents" onclick="var p=window.pcFile&&pcFile.patient(); window.location.href=\'opd-file.html?patient=\' + encodeURIComponent((p&&p.id)||\'754775\');">📂 Documents</a>' +
-                '<a class="chk-btn btn-system" onclick="if(window.pcFile)pcFile.openSystemSettingsModal();">⚙️ System</a>' +
-            '</div>' +
-            '<!-- 🌟 RIGHT CORNER: THEME, NOTIFICATION, DR. MUTUA, LOGOUT, INFO 🌟 -->' +
-            '<div class="chuk-menu-right">' +
-                '<a class="chk-btn btn-theme" onclick="if(window.pcFile)pcFile.toggleThemeFromMenu();" title="Toggle Theme">☀️ Theme</a>' +
-                '<a class="chk-btn btn-alerts" onclick="if(window.pcFile)pcFile.showNotificationsModal();" title="Alerts & Notifications">🔔 3</a>' +
-                '<a class="chk-btn btn-user" onclick="if(window.pcFile)pcFile.openStaffProfileModal();" title="Active Staff Profile">👨‍⚕️ Dr. Mutua</a>' +
-                '<a class="chk-btn btn-logout" onclick="if(window.pcFile)pcFile.confirmLogout();" title="Sign out">🚪 Logout</a>' +
-                '<a class="chk-btn btn-info" onclick="if(window.pcFile)pcFile.openSystemInfoModal();" title="System Info">❓ Info</a>' +
-            '</div>';
-
-        if (el.firstChild) {
-            el.insertBefore(menuDiv, el.firstChild);
-        } else {
-            el.appendChild(menuDiv);
-        }
+        // CHUK top menu is now GLOBAL top bar — keep existing, don't delete
+        // It will be created by createGlobalTopBar() on all pages except hub/login/home
+        // If it exists, keep it at very top
+        // No deletion here
+        
 
         var el = targetEl;
         if (!el) return;
@@ -919,7 +928,13 @@
                 '</div>' +
             '</div>';
 
-        if (el.firstChild) {
+        // Insert demo bar BELOW global top bar if global exists, otherwise at top
+        var globalBar = document.getElementById('pc_chuk_top_menu');
+        if (globalBar && globalBar.parentNode === el) {
+            // Insert demo bar right after global bar
+            if (globalBar.nextSibling) el.insertBefore(div, globalBar.nextSibling);
+            else el.appendChild(div);
+        } else if (el.firstChild) {
             el.insertBefore(div, el.firstChild);
         } else {
             el.appendChild(div);
@@ -938,6 +953,83 @@
             }
         });
     }
+
+    /* ══════════ DEMO BAR HELPERS — previously missing, caused ReferenceError ══════════ */
+    function searchPatientRegistry() {
+        try {
+            var f = document.getElementById('ocSearchFamily') ? document.getElementById('ocSearchFamily').value.trim() : '';
+            var fi = document.getElementById('ocSearchFirst') ? document.getElementById('ocSearchFirst').value.trim() : '';
+            var nat = document.getElementById('ocSearchNatId') ? document.getElementById('ocSearchNatId').value.trim() : '';
+            var mrn = document.getElementById('ocSearchMrn') ? document.getElementById('ocSearchMrn').value.trim() : '';
+            var pid = document.getElementById('ocSearchId') ? document.getElementById('ocSearchId').value.trim() : '';
+            var q = [f, fi, nat, mrn, pid].filter(Boolean).join(' ').trim();
+            if (!q) {
+                if (window.pcToast) pcToast('Enter at least one search field', 'info');
+                return;
+            }
+            // Try to search via global getPatients / searchPatients
+            var results = [];
+            try {
+                if (typeof searchPatients === 'function') results = searchPatients(q);
+                else if (typeof getPatients === 'function') {
+                    var all = getPatients() || [];
+                    var low = q.toLowerCase();
+                    results = all.filter(function(p){ return ((p.firstName||'')+' '+(p.lastName||'')+' '+(p.mrn||'')+' '+(p.nationalId||'')+' '+ (p.id||'')).toLowerCase().indexOf(low)!==-1; });
+                }
+            } catch(e){}
+            if (results && results.length) {
+                // Take first result and set as active patient
+                var best = results[0];
+                try { localStorage.setItem('pclinic_active_patient', String(best.id)); } catch(e){}
+                if (window.pcFile && pcFile.renderDemoBar) {
+                    var master = document.getElementById('pcMasterHeader') || document.body;
+                    pcFile.renderDemoBar(master, best);
+                }
+                if (window.pcToast) pcToast('Found ' + results.length + ' patient(s) — showing ' + (best.firstName||'') + ' ' + (best.lastName||''), 'success');
+                // Reload file content with new patient
+                var P = best;
+                if (typeof shell === 'function') { /* will be called by filepage */ }
+                // Dispatch event so filepage picks it up
+                try { localStorage.setItem('pclinic_active_patient', String(best.id)); } catch(e){}
+                window.dispatchEvent(new CustomEvent('pcPatientChanged', {detail: best}));
+                // Force reload of file page content if in file page context
+                if (window.pcFilePage && typeof window.pcFilePage.patient === 'function') {
+                    // patient() will now return new active
+                    location.reload();
+                }
+            } else {
+                if (window.pcToast) pcToast('No patients found for "' + q + '"', 'warning');
+            }
+        } catch(e){ console.error('searchPatientRegistry error', e); }
+    }
+    function clearPatientBar() {
+        try {
+            ['ocSearchFamily','ocSearchFirst','ocSearchNatId','ocSearchMrn','ocSearchId','ocArchiveCode'].forEach(function(id){
+                var el=document.getElementById(id); if(el) el.value='';
+            });
+            var dist=document.getElementById('ocDistrict'); if(dist) dist.selectedIndex=0;
+            var ins=document.getElementById('ocInsurance'); if(ins) ins.selectedIndex=0;
+            localStorage.removeItem('pclinic_active_patient');
+            // Reset to cleared sample
+            var cleared = { _cleared:true, id:'', mrn:'', lastName:'', firstName:'', nationalId:'', department:'', dob:'', gender:'', archiveCode:'', insurance:'RSSB / RAMA', district:'NYARUGENGE' };
+            var master = document.getElementById('pcMasterHeader') || document.body;
+            if (window.pcFile && pcFile.renderDemoBar) pcFile.renderDemoBar(master, cleared);
+            if (window.pcToast) pcToast('Cleared patient filter', 'info');
+        } catch(e){ console.error('clearPatientBar error', e); }
+    }
+    function openWardPicker() {
+        try {
+            var wards=['ADMISSION WARD 7','MEDICAL WARD','SURGICAL WARD','PAEDIATRIC WARD','MATERNITY','ICU','ISOLATION'];
+            var cur=document.getElementById('ocDepartment') ? document.getElementById('ocDepartment').value : '';
+            var choice=prompt('Select Ward:\n' + wards.map(function(w,i){ return (i+1)+'. '+w; }).join('\n') + '\n\nEnter number or name:', cur);
+            if(!choice) return;
+            var sel=wards[parseInt(choice,10)-1] || choice.toUpperCase();
+            var el=document.getElementById('ocDepartment'); if(el) el.value=sel;
+            if (window.pcToast) pcToast('Department set to ' + sel, 'success');
+        } catch(e){ console.error('openWardPicker error', e); }
+    }
+
+
 /* ══════════ EXPORTS ══════════ */
     window.pcFile = {
         patient: patient, nameOf: nameOf, age: age, esc: esc, uid: uid, staff: staff,
@@ -1006,7 +1098,44 @@
        (.chuk-top-menu) stay visible at the top exactly as it is!
        ════════════════════════════════════════════════════════════════════ */
     function autoMountPatientBar() {
-        if (window.__pcBannerMounted) return;
+        // Always use master header — ensures CHUK + ID bar are on top, file opens BELOW
+        var master = document.getElementById('pcMasterHeader');
+        if (!master) {
+            master = document.createElement('div');
+            master.id = 'pcMasterHeader';
+            master.className = 'pc-master-header';
+            // Insert at very top of body, before any existing content
+            if (document.body.firstChild) document.body.insertBefore(master, document.body.firstChild);
+            else document.body.appendChild(master);
+        }
+
+        // NEW GLOBAL TOP BAR — appears on every page except hub, login, home, on very top
+        try {
+            var path = (window.location.pathname || '').toLowerCase();
+            var file = path.split('/').pop() || '';
+            var isExcluded = file.includes('hub') || file.includes('login') || file === 'index.html' || file === '' || path === '/' || path.endsWith('/index.html') || file.includes('index old');
+            if (!isExcluded) {
+                if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
+            } else {
+                // Ensure no global bar on excluded pages
+                var oldGlobal = document.getElementById('pc_chuk_top_menu');
+                if (oldGlobal && oldGlobal.parentNode) oldGlobal.parentNode.removeChild(oldGlobal);
+            }
+        } catch(e){}
+
+        if (window.__pcBannerMounted && document.getElementById('pc_common_demo_bar')) {
+            // Already mounted, just refresh data
+            try {
+                var pExisting = pcFile.patient();
+                if (pExisting) {
+                    var existingBar = document.getElementById('pc_common_demo_bar');
+                    if (existingBar) {
+                        renderPatientIdentificationBar(master, pExisting);
+                    }
+                }
+            } catch(e){ console.warn('refresh render failed', e); }
+            return;
+        }
         window.__pcBannerMounted = true;
 
         var p = pcFile.patient();
@@ -1029,18 +1158,10 @@
             gender: 'Male', archiveCode: '', insurance: 'RSSB / RAMA', district: 'NYARUGENGE'
         };
 
-        var barContainer = document.getElementById('pc_common_demo_bar');
-        if (!barContainer) {
-            barContainer = document.createElement('div');
-            barContainer.id = 'pc_common_demo_bar';
-            barContainer.className = 'oc-demo-bar noprint';
-            var host = document.querySelector('.topbar, .top-bar, header');
-            if (host && host.parentNode) host.parentNode.insertBefore(barContainer, host.nextSibling);
-            else if (document.body.firstChild) document.body.insertBefore(barContainer, document.body.firstChild);
-            else document.body.appendChild(barContainer);
-        }
+        // Render both CHUK bar + ID bar INSIDE master header
+        try { renderPatientIdentificationBar(master, p); } catch(e){ console.warn('renderPatientIdentificationBar failed', e); }
 
-        renderPatientIdentificationBar(barContainer, p);
+        // pcFileBar deleted per user request — no move needed
     }
 
     if (document.readyState === 'loading') {
