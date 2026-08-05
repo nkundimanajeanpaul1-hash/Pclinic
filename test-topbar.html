@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Top Bar Test</title>
+<link rel="stylesheet" href="pclinic-ui.css">
+<link rel="stylesheet" href="pclinic-file.css">
+<style>
+body { margin:0; background:#c3c4ca; font-family: -apple-system, sans-serif; }
+.pc-master-header { max-width:1360px; margin:20px auto; background:#f0f0f5; border-radius:16px; padding:10px; }
+</style>
+</head>
+<body>
+<div class="pc-master-header" style="position:relative; top:auto;">
+<div class="chuk-top-menu" id="pc_chuk_top_menu" style="display:flex !important; justify-content:space-between; align-items:center; gap:12px; padding:10px 18px; background:#f0f0f5; border:1px solid rgba(0,0,0,0.08); border-radius:16px; width:100%; flex-wrap:wrap;">
+<div class="chuk-menu-left" style="display:flex; gap:6px; flex-wrap:wrap;">
+<a class="chk-btn btn-patient" style="background:#fff; color:#1e293b; padding:6px 12px; border-radius:9px; text-decoration:none; font-size:11.5px; font-weight:600; border:0.5px solid rgba(0,0,0,0.07);">👤 Patient</a>
+<a class="chk-btn btn-summary" style="background:#f5eaff; color:#5c2475; padding:6px 12px; border-radius:9px; font-size:11.5px; font-weight:600;">📋 Medical summary</a>
+<a class="chk-btn btn-nursing" style="background:#e9f9ee; color:#1a7a32; padding:6px 12px; border-radius:9px; font-size:11.5px; font-weight:600;">🏥 Nursing</a>
+<a class="chk-btn btn-applications" style="background:#eaf2ff; color:#0066d6; padding:6px 12px; border-radius:9px; font-size:11.5px; font-weight:600;">💉 Applications</a>
+<a class="chk-btn btn-documents" style="background:#f3e8ff; color:#6b21a8; padding:6px 12px; border-radius:9px; font-size:11.5px; font-weight:600;">📂 Documents</a>
+<a class="chk-btn btn-system" style="background:#f3f4f6; color:#374151; padding:6px 12px; border-radius:9px; font-size:11.5px; font-weight:600;">⚙️ System</a>
+</div>
+<div class="chuk-menu-center" style="flex:1; display:flex; justify-content:center;"><div id="pcGlobalClock" style="font-size:11px; font-weight:700; background:#e2e8f0; padding:4px 12px; border-radius:20px;">Tue, 05 Aug 2026 • 14:59:32</div></div>
+<div class="chuk-menu-right" style="display:flex; gap:6px; flex-wrap:wrap;">
+<a class="chk-btn" style="background:#e2e8f0; padding:6px 12px; border-radius:9px; font-size:11.5px;">☀️ Theme</a>
+<a class="chk-btn" style="background:#ffedd5; padding:6px 12px; border-radius:9px; font-size:11.5px;">🔔 3</a>
+<a class="chk-btn" style="background:#e0e7ff; padding:6px 12px; border-radius:9px; font-size:11.5px;">👨‍⚕️ Dr. Mutua</a>
+<a class="chk-btn" style="background:#f3f4f6; padding:6px 12px; border-radius:9px; font-size:11.5px;">🚪 Logout</a>
+<a class="chk-btn" style="background:#f1f5f9; padding:6px 12px; border-radius:9px; font-size:11.5px;">❓ Info</a>
+</div>
+</div>
+
+<div class="oc-demo-bar" style="margin-top:12px; background:linear-gradient(135deg, rgba(240,240,245,0.94) 0%, rgba(238,240,245,0.88) 100%); border-radius:16px; padding:12px 18px; display:flex; flex-direction:column; gap:8px;">
+<div style="display:grid; grid-template-columns: 1.35fr 1.25fr 1.3fr 1.1fr; gap:8px;">
+<div><label style="font-size:10px; font-weight:700; color:#5f6368;">FAMILY NAME</label><input value="NSHUTI" style="width:100%; background:#e2e2e7; border:1px solid #d1d1d6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600;"></div>
+<div><label style="font-size:10px; font-weight:700; color:#5f6368;">FIRSTNAME</label><input value="DJUMA" style="width:100%; background:#e2e2e7; border:1px solid #d1d1d6; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600;"></div>
+<div style="grid-column: span 2;"><label style="font-size:10px; font-weight:700; color:#5f6368;">DATE OF BIRTH</label><div style="display:flex; gap:6px;"><input value="01/01/2000" style="width:110px; background:#e2e2e7; border-radius:8px; padding:4px 10px;"><span>⚪ (Male - 26 years 11 months)</span></div></div>
+</div>
+</div>
+
+</div>
+
+<div style="max-width:1360px; margin:20px auto; background:white; border-radius:16px; padding:24px;">
+<h3>Clinical Progress Note</h3>
+<p>This is where OPD form opens BELOW both bars. In live preview, this whole page scrolls under the sticky master header.</p>
+</div>
+
+<script>
+function updateClock(){
+  var el=document.getElementById('pcGlobalClock');
+  if(!el) return;
+  var now=new Date();
+  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  el.textContent = days[now.getDay()] + ', ' + String(now.getDate()).padStart(2,'0') + ' ' + months[now.getMonth()] + ' ' + now.getFullYear() + ' • ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+}
+setInterval(updateClock,1000);
+updateClock();
+</script>
+</body>
+</html>
