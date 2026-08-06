@@ -4105,8 +4105,7 @@ input.fi:focus,
                 <!-- ─── TAB: ALL PATIENTS ─── -->
                 <div class="mp-body" id="tab-patients">
                     <div class="section-title">👥 All Patients</div>
-                    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
-                        <input class="fi" style="flex:1;min-width:150px;" placeholder="Filter patients..." id="patientFilter" oninput="renderPatientTable()"/>
+                    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
                         <select class="fi" style="width:auto;" id="statusFilter" onchange="renderPatientTable()">
                             <option value="all">All Status</option>
                             <option value="active">Active</option>

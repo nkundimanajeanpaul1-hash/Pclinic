@@ -77,22 +77,58 @@ function startRealtimeSync() {
         const patientsRef = collection(window.firebaseDB, COLLECTION_NAME);
         const q = query(patientsRef, orderBy('id', 'asc'));
         realtimeUnsubscribe = onSnapshot(q, (snapshot) => {
-            const patients = [];
+            const cloudPatients = [];
             snapshot.forEach((doc) => {
-                // Use doc.data() which now only contains field-level updates
                 const data = doc.data();
-                // Ensure id is present (Firestore doc ID is string, we store numeric id inside)
                 if (!data.id) data.id = parseInt(doc.id, 10) || doc.id;
-                patients.push(data);
+                cloudPatients.push(data);
             });
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
-            console.log('☁️ Synced', patients.length, 'patients from cloud');
+            // FIX: Don't overwrite local with empty cloud if local has data not yet synced
+            // This was causing reception page to show no patients after registration when Firestore was empty/blocked
+            var localRaw = localStorage.getItem(STORAGE_KEY);
+            var localPatients = [];
+            try { localPatients = localRaw ? JSON.parse(localRaw) : []; } catch(e){ localPatients=[]; }
+            
+            var finalPatients = cloudPatients;
+            if (cloudPatients.length === 0 && localPatients.length > 0) {
+                console.warn('⚠️ Cloud empty but local has ' + localPatients.length + ' patients - keeping local and will try to upload');
+                finalPatients = localPatients;
+                // Try to upload local patients that are not in cloud (best effort)
+                try {
+                    var existingIds = new Set(cloudPatients.map(function(p){ return String(p.id); }));
+                    var toUpload = localPatients.filter(function(p){ return !existingIds.has(String(p.id)); });
+                    if (toUpload.length > 0) {
+                        console.log('☁️ Uploading ' + toUpload.length + ' local patients to cloud...');
+                        var fns = window.firebaseFunctions;
+                        var db = window.firebaseDB;
+                        toUpload.forEach(function(pat){
+                            try {
+                                var ref = fns.doc(db, COLLECTION_NAME, String(pat.id));
+                                fns.setDoc(ref, pat).catch(function(err){ console.warn('Upload failed for', pat.id, err.message); });
+                            } catch(e){}
+                        });
+                    }
+                } catch(e){ console.warn('Upload local to cloud failed', e); }
+            } else if (cloudPatients.length > 0 && localPatients.length > 0) {
+                // Merge: keep cloud as source of truth but preserve any local-only that aren't in cloud yet (for offline)
+                var cloudIds = new Set(cloudPatients.map(function(p){ return String(p.id); }));
+                var localOnly = localPatients.filter(function(p){ return !cloudIds.has(String(p.id)); });
+                if (localOnly.length > 0) {
+                    console.log('🔄 Merging ' + localOnly.length + ' local-only patients with ' + cloudPatients.length + ' cloud patients');
+                    finalPatients = cloudPatients.concat(localOnly);
+                }
+            }
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(finalPatients));
+            console.log('☁️ Synced', finalPatients.length, 'patients (cloud:' + cloudPatients.length + ' local:' + localPatients.length + ')');
             window.dispatchEvent(new Event('storage'));
-            window.dispatchEvent(new CustomEvent('patientsUpdated', { detail: { count: patients.length } }));
+            window.dispatchEvent(new CustomEvent('patientsUpdated', { detail: { count: finalPatients.length } }));
         }, (error) => {
             console.error('❌ Firebase sync error:', error);
+            // On error, keep local data - don't clear
+            console.warn('Keeping local data due to sync error, local count:', getPatients().length);
         });
-        console.log('🔄 Real-time sync active');
+        console.log('🔄 Real-time sync active (with anti-blank fix)');
     } catch (e) {
         console.error('Error starting sync:', e);
     }
@@ -273,7 +309,7 @@ async function addPatient(patientData) {
     const nowIso = new Date().toISOString();
     const newPatient = {
         id: newId,
-        mrn: 'MRN ' + newId,
+        mrn: String(newId),
         name: fullName || (firstName + ' ' + lastName).trim(),
         firstName, lastName,
         dob: patientData.dob || '',
@@ -428,7 +464,7 @@ async function reindexPatients() {
     let cur = 1001;
     for (const p of patients) {
         p.id = cur;
-        p.mrn = 'MRN ' + cur;
+        p.mrn = String(cur);
         cur++;
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
@@ -757,15 +793,9 @@ function getPatientSummary(id) {
 function getPatientsForDepartment() { return getPatients(); }
 
 async function seedSamplePatients() {
-    const existing = getPatients();
-    if (existing.length > 0) { console.log('📊 Already have ' + existing.length + ' patients'); return; }
-    console.log('🌱 Seeding sample patients...');
-    const samples = [
-        { firstName: 'John', lastName: 'Smith', dob: '1985-06-15', gender: 'Male', phone: '+250 788 111 222', email: 'john.smith@email.com', address: '123 Main St, Kigali', emergencyContact: 'Jane Smith - Wife - +250 788 111 223', department: 'Cardiology', priority: 'medium' },
-        { firstName: 'Sarah', lastName: 'Johnson', dob: '1992-11-03', gender: 'Female', phone: '+250 788 333 444', email: 'sarah.j@email.com', address: '456 Oak Ave, Kigali', emergencyContact: 'Mike Johnson - Brother - +250 788 333 445', department: 'Neurology', priority: 'high' }
-    ];
-    for (const p of samples) await addPatient(p);
-    console.log('✅ Seeded ' + samples.length + ' sample patients');
+    // REMOVED per user request: no template patients
+    console.log('📊 seedSamplePatients disabled — no template patients');
+    return;
 }
 
 function getFirebaseStatus() {

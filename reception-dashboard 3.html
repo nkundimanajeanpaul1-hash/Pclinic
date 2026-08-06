@@ -4580,25 +4580,19 @@ function populateSurgeryPatients() {
 }
 
 // ─── INIT — 4 CARDS, NUMERIC ONLY MRN, COMMUNICATES EVERYWHERE ───
+// COMMON SERVER: reads patients from Firebase same as doctor dashboard via patient-data.js realtime sync
 function init(){
   // Set dates - NOT for DOB (DOB should be empty), only for appointments
-  // document.getElementById('bDob').value = todayStr(); // REMOVED per best practice
   document.getElementById('apptDate').value = todayStr();
   document.getElementById('apptTime').value = '09:00';
-  // Show next MRN (numbers only) - communicates everywhere via Firestore real-time sync
   if (typeof updateNextMrnDisplay === 'function') {
     updateNextMrnDisplay();
-    // Refresh MRN every 5 sec in case another reception creates patient on another computer
     setInterval(function(){ if(typeof updateNextMrnDisplay==='function') updateNextMrnDisplay(); }, 5000);
   }
   
-  // ─── LOAD CUSTOM INSURANCE PROVIDERS ───
   loadCustomProviders();
-  
-  // ─── LOAD APPOINTMENTS ───
   loadAppointments();
   
-  // User profile
   document.getElementById('uNameTop').textContent = USER.name;
   document.getElementById('uRoleTop').textContent = USER.role;
   document.getElementById('uNameDrop').textContent = USER.name;
@@ -4606,31 +4600,74 @@ function init(){
   document.getElementById('uiniSmall').textContent = ini(USER.name);
   document.getElementById('uiniDrop').textContent = ini(USER.name);
   
-  // Initialize data
-initRefs();
-loadQueue();
-loadAppointments();
-loadSurgeries();
-populateAppointmentPatients();
-populateSurgeryPatients();
+  initRefs();
+  loadQueue();
+  loadAppointments();
+  loadSurgeries();
+  populateAppointmentPatients();
+  populateSurgeryPatients();
   
-  // Render everything
   renderQueue();
   renderBeds();
   renderRefs();
   updateStats();
   
-  // Activity feed
   addFeed('note', '🏥 Reception dashboard ready');
   
-  // Auto-refresh
+  // ─── COMMON SERVER SYNC — SAME AS DOCTOR DASHBOARD ───
+  // patient-data.js handles Firebase Firestore realtime sync: collection('patients')
+  // It writes to localStorage 'pclinic_patients' and dispatches events
+  // We listen and reload queue to show patients from common server
+  function handleCommonServerSync(source, detail){
+    try {
+      var count = 0;
+      try { count = getPatients().length; } catch(e){}
+      console.log('☁️ Common server sync ['+source+'] — patients:', count, detail||'');
+      loadQueue();
+      renderQueue();
+      renderRefs();
+      updateStats();
+      populateAppointmentPatients();
+      populateSurgeryPatients();
+      if(typeof updateNextMrnDisplay==='function') updateNextMrnDisplay();
+      var status = document.getElementById('aQuickStats');
+      if(status && detail && detail.count!==undefined){
+        // optional toast only on real updates, not initial 0
+        if(detail.count>0) showToast('☁️ Synced '+detail.count+' patients from common server ('+source+')', 'info');
+      }
+    } catch(e){ console.warn('Sync handler failed', e); }
+  }
+
+  window.addEventListener('firebaseReady', function(){
+    console.log('🔥 Firebase ready event — loading from common server');
+    showToast('🔥 Connected to common server (Firebase)', 'success');
+    handleCommonServerSync('firebaseReady');
+  });
+  window.addEventListener('patientsUpdated', function(ev){
+    handleCommonServerSync('patientsUpdated', ev.detail);
+  });
+  window.addEventListener('storage', function(ev){
+    if(!ev || !ev.key || ev.key===null || ev.key.indexOf('pclinic_patients')>-1 || ev.key.indexOf('pclinic_queue')>-1){
+      handleCommonServerSync('storage');
+    }
+  });
+  // Also handle Firestore offline persistence already enabled in firebase-config.js
+  // Force initial check after 1.5s in case Firebase was already ready before listener
+  setTimeout(function(){
+    if(window.firebaseReady){
+      handleCommonServerSync('initial-delayed-check');
+    } else {
+      console.log('⏳ Waiting for common server... local patients:', getPatients().length);
+    }
+  }, 1500);
+
   setInterval(function(){ renderQueue(); renderBeds(); }, 30000);
   
-  console.log('🏥 RefCare HMS Reception Dashboard');
-  console.log('📊 Patients:', getPatients().length);
-  console.log('📊 Queue:', queue.length);
-  console.log('📅 Appointments:', appointments.length);
+  console.log('🏥 RefCare HMS Reception Dashboard — COMMON SERVER MODE');
+  console.log('📊 Local patients (pre-sync):', getPatients().length);
+  console.log('☁️ Firebase ready:', !!window.firebaseReady, 'DB:', !!window.firebaseDB);
   console.log('💡 Keyboard shortcuts: ⌘D (dark), ⌘/ (help), ⌘N (new patient)');
+  console.log('🔗 Same server as doctor dashboard: project pclinic-20d81, collection patients');
 }
 
 

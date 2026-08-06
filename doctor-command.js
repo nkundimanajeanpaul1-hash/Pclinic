@@ -362,6 +362,7 @@
         // doctor-patient.js owns a richer version of this strip (age,
         // phone, pulse, weight, clear button). If it is loaded, let it
         // render and do not fight over the same element.
+        if (window.pcFile && typeof window.pcFile.renderDemoBar === 'function') return;
         if (window.pcPatient && window.dpPick) return;
         var el = $('#dcCtx'); if (!el) return;
         var p = patient();

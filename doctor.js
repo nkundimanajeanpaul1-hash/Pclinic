@@ -1702,7 +1702,7 @@ function renderPatientTable(patients) {
     const tbody = document.getElementById('patientTableBody');
     if (!tbody) return;
 
-    const filter = document.getElementById('patientFilter')?.value?.toLowerCase() || '';
+    const filter = document.getElementById('ptSearch')?.value?.toLowerCase() || '';
     const statusFilter = document.getElementById('statusFilter')?.value || 'all';
 
     // Create cache key
@@ -2461,6 +2461,10 @@ function displayPatientCard(p) {
         function handleSmartSearch(query) {
             const q = query.toLowerCase().trim();
             const container = document.getElementById('suggestions');
+
+            // Single search box now also drives the All Patients table filter
+            if (typeof renderPatientTable === 'function') renderPatientTable();
+
             if (!q) { container.classList.remove('show'); return; }
 
             const patients = getPatients() || [];

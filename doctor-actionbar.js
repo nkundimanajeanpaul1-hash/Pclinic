@@ -455,7 +455,7 @@
     #patientFileContainer{display:none!important}
     .nav-tab[data-pc-duplicate]{display:none!important}
     @media(max-width:1200px){.ab-btn span{display:none}.ab-btn{padding:0 9px}.ab-btn i{font-size:16px}}
-    @media(max-width:640px){#dcBar{padding:7px 10px;gap:5px}.ab-sep{display:none}
+    @media(max-width:640px){#dcBar{padding:7px 10px;gap:0}.ab-sep{display:none}
         .ab-srow{flex-direction:column;gap:7px}}
     @media print{#dcBar,#dcCtx{display:none!important}}`;
     document.head.appendChild(css);
