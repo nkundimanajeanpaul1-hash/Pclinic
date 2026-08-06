@@ -810,6 +810,8 @@
         var ins = isCleared ? 'RSSB / RAMA' : (p.insurance || 'RSSB / RAMA');
         var dist = isCleared ? '' : (p.district || 'NYARUGENGE');
 
+        el.classList.add('has-oc-demo-bar');
+
         var div = document.createElement('div');
         div.id = barId;
         div.className = 'oc-demo-bar noprint';
@@ -917,6 +919,7 @@
         save: saveFile, list: listFiles,
         actionBar: actionBar, sheet: sheet, print: printDoc,
         renderDemoBar: renderPatientIdentificationBar,
+        createGlobalTopBar: createGlobalTopBar,
         searchFromDemoBar: searchPatientRegistry,
         openWardPicker: openWardPicker,
         openPatientProfileModal: openPatientProfileModal,
@@ -985,22 +988,36 @@
             if (document.body.firstChild) document.body.insertBefore(master, document.body.firstChild);
             else document.body.appendChild(master);
         }
+        var path = (window.location.pathname || '').toLowerCase();
+        var file = path.split('/').pop() || '';
+        var isExcluded = file.includes('hub') || file.includes('login') || file === 'index.html' || file === '' || path === '/' || path.endsWith('/index.html');
         try {
-            var path = (window.location.pathname || '').toLowerCase();
-            var file = path.split('/').pop() || '';
-            var isExcluded = file.includes('hub') || file.includes('login') || file === 'index.html' || file === '' || path === '/' || path.endsWith('/index.html');
             if (!isExcluded) {
-                if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
+                if (window.pcFile && typeof window.pcFile.createGlobalTopBar === 'function') window.pcFile.createGlobalTopBar();
             } else {
                 var oldGlobal = document.getElementById('pc_chuk_top_menu');
                 if (oldGlobal && oldGlobal.parentNode) oldGlobal.parentNode.removeChild(oldGlobal);
             }
         } catch(e){}
+
+        /* The Patient Identification Bar only belongs on a page that is
+           actually showing ONE patient's clinical file (OPD file, lab
+           request, prescription, notes, etc). Dashboards, hubs, list/queue
+           screens and login/index are never "inside" a single patient's
+           record, so the bar must never appear there. */
+        var nonClinicalPages = ['messages.html', 'appointments.html', 'queue.html'];
+        var isDashboardPage = isExcluded || file.indexOf('dashboard') !== -1 || nonClinicalPages.indexOf(file) !== -1;
+        if (isDashboardPage) {
+            var oldDemo = document.getElementById('pc_common_demo_bar');
+            if (oldDemo && oldDemo.parentNode) oldDemo.parentNode.removeChild(oldDemo);
+            return;
+        }
+
         if (window.__pcBannerMounted && document.getElementById('pc_common_demo_bar')) {
             try {
                 var pExisting = pcFile.patient();
                 if (pExisting) {
-                    renderPatientIdentificationBar(master, pExisting);
+                    pcFile.renderDemoBar(master, pExisting);
                 }
             } catch(e){ console.warn(e); }
             return;
@@ -1025,7 +1042,7 @@
             nationalId: '1198280034887038', department: 'ADMISSION WARD 7', dob: '1982-01-01',
             gender: 'Male', archiveCode: '', insurance: 'RSSB / RAMA', district: 'NYARUGENGE'
         };
-        try { renderPatientIdentificationBar(master, p); } catch(e){ console.warn(e); }
+        try { pcFile.renderDemoBar(master, p); } catch(e){ console.warn(e); }
     }
 
     

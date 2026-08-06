@@ -1058,6 +1058,11 @@ body.compact .patient-card, body.compact .card {
    3-Row CHUK Grid (~85px Height) with Seductive Glassmorphism & Card Inputs
    ============================================================ */
 .oc-demo-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     background: linear-gradient(135deg, rgba(240, 240, 245, 0.94) 0%, rgba(238, 240, 245, 0.88) 100%) !important;
     -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
     backdrop-filter: saturate(180%) blur(24px) !important;
@@ -1259,6 +1264,20 @@ body.compact .patient-card, body.compact .card {
    100/100 EXACT ACTION BAR BUTTON STYLING (.ab-btn clone)
    Replicating Screenshot 2026-08-04 at 17.38.06.png
    ============================================================ */
+/* Master header container — full-bleed edge-to-edge on dashboards & every
+   page that does NOT load pclinic-file.css. Clinical file pages (opd-file,
+   prescription, etc.) load pclinic-file.css AFTER this stylesheet, and its
+   .pc-master-header rule (max-width:1360px; margin:0 auto) intentionally
+   overrides this to box the header to match the file layout — do not add
+   !important here or that override will stop working. */
+#pcMasterHeader.pc-master-header {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 .chuk-top-menu {
     display: flex !important;
     justify-content: space-between !important;

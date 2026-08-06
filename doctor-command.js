@@ -64,6 +64,8 @@
     /* ── Patient context strip ── */
     .dc-ctx{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 16px;font-size:12px;
         background:rgba(0,113,227,.05);border-bottom:.5px solid rgba(0,0,0,.06)}
+    #dcCtx.dc-ctx:has(.oc-demo-bar),
+    #dcCtx.dc-ctx.has-oc-demo-bar{display:block;padding:0;background:transparent;border-bottom:0}
     .dc-ctx .nm{font-weight:800;font-size:13.5px}
     .dc-ctx .pill{padding:3px 10px;border-radius:30px;background:#fff;border:.5px solid rgba(0,0,0,.07);
         font-size:11px;font-weight:600}

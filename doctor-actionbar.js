@@ -360,8 +360,8 @@
     /* ══════════ STYLES ══════════ */
     var css = document.createElement('style');
     css.textContent = `
-    #dcBar{display:flex!important;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 14px}
-    .ab-sep{width:1px;height:20px;background:rgba(0,0,0,.1);margin:0 3px;flex-shrink:0}
+    #dcBar{display:flex!important;align-items:center;gap:0;flex-wrap:wrap;padding:8px 14px}
+    .ab-sep{width:1px;height:20px;background:rgba(0,0,0,.1);margin:0;flex-shrink:0}
     [data-theme="dark"] .ab-sep{background:rgba(255,255,255,.12)}
     .ab-btn{position:relative;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;
         border-radius:9px;border:.5px solid rgba(0,0,0,.07);background:var(--b);color:var(--c);
