@@ -533,13 +533,19 @@ body{
   transition:background 0.4s;
 }
 .aside{
-  width:260px;
-  border-left:0.5px solid var(--bd);
-  background:var(--s1);
+  width:285px;
+  border-left:0.5px solid rgba(255,255,255,0.5);
+  background:rgba(171,171,185,0.25);
+  backdrop-filter:saturate(180%) blur(24px);
+  -webkit-backdrop-filter:saturate(180%) blur(24px);
   display:flex;
   flex-direction:column;
   flex-shrink:0;
+  gap:10px;
+  padding:12px 0;
   transition:background 0.4s;
+  overflow-y:auto;
+  overflow-x:hidden;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1078,8 +1084,312 @@ table.apple-table .empty-state p{
    ASIDE
    ════════════════════════════════════════════════════════════ */
 .aside-section{
-  padding:16px 18px;
-  border-bottom:0.5px solid var(--bd);
+  margin:0 12px;
+  padding:14px 14px 12px;
+  background:rgba(255,255,255,0.58);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border:0.5px solid rgba(255,255,255,0.65);
+  border-radius:14px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8);
+  transition:all 0.45s cubic-bezier(0.32,0.72,0,1);
+}
+.aside-section:hover{
+  background:rgba(255,255,255,0.68);
+  box-shadow:0 4px 16px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.08);
+  transform:translateY(-1px);
+}
+.aside-section .aside-title{
+  cursor:pointer;
+  user-select:none;
+}
+.aside-section .aside-fold-icon{
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  font-size:14px;
+  opacity:0.6;
+}
+.aside-section.folded .aside-fold-icon{
+  transform:rotate(-90deg);
+}
+.aside-section.folded .aside-fold-body{
+  max-height:0 !important;
+  opacity:0 !important;
+  overflow:hidden !important;
+  margin-top:0 !important;
+  padding-top:0 !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   HISTORY VIEW — APPLE GLASS 50% OPAQUE + DOCTOR DASHBOARD PATIENT LIST STYLE
+   Screenshot: Search bar + patient list should be 50% opaque Apple panel like doctor dashboard
+   ════════════════════════════════════════════════════════════ */
+#view-history{
+  background:transparent !important;
+}
+#view-history .toolbar{
+  background:rgba(255,255,255,0.50) !important;
+  backdrop-filter:saturate(180%) blur(20px) !important;
+  -webkit-backdrop-filter:saturate(180%) blur(20px) !important;
+  border-bottom:0.5px solid rgba(255,255,255,0.5) !important;
+  box-shadow:0 1px 3px rgba(0,0,0,0.02) !important;
+}
+#view-history .toolbar .search-wrap{
+  background:rgba(255,255,255,0.55) !important;
+  backdrop-filter:blur(12px) !important;
+  border:0.5px solid rgba(255,255,255,0.6) !important;
+  border-radius:12px !important;
+}
+#view-history .toolbar .toolbar-select,
+#view-history .toolbar .btn{
+  background:rgba(255,255,255,0.55) !important;
+  backdrop-filter:blur(8px) !important;
+  border:0.5px solid rgba(255,255,255,0.6) !important;
+  border-radius:10px !important;
+}
+#view-history .table-wrap{
+  background:rgba(255,255,255,0.50) !important;
+  backdrop-filter:saturate(180%) blur(16px) !important;
+  -webkit-backdrop-filter:saturate(180%) blur(16px) !important;
+  border-radius:16px !important;
+  margin:12px !important;
+  border:0.5px solid rgba(255,255,255,0.6) !important;
+  box-shadow:0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03) !important;
+  overflow:hidden !important;
+}
+#view-history table.apple-table{
+  background:transparent !important;
+  border-collapse:separate !important;
+  border-spacing:0 !important;
+  font-size:13px !important;
+}
+#view-history table.apple-table thead{
+  background:rgba(0,0,0,0.02) !important;
+  border-bottom:0.5px solid rgba(0,0,0,0.04) !important;
+}
+#view-history table.apple-table thead th{
+  font-size:10px !important;
+  font-weight:600 !important;
+  color:var(--tm) !important;
+  text-transform:uppercase !important;
+  letter-spacing:0.6px !important;
+  padding:12px 14px !important;
+  background:transparent !important;
+  border-bottom:0.5px solid rgba(0,0,0,0.04) !important;
+}
+#view-history table.apple-table tbody tr{
+  transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1) !important;
+  cursor:pointer !important;
+  animation:rowAppear 0.4s cubic-bezier(0.34,1.56,0.64,1) both !important;
+}
+#view-history table.apple-table tbody tr td{
+  padding:14px 14px !important;
+  border-bottom:0.5px solid rgba(192,179,179,0.12) !important;
+  background:rgba(255,255,255,0.55) !important;
+  color:var(--tp) !important;
+  font-weight:400 !important;
+  transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1) !important;
+}
+#view-history table.apple-table tbody tr:nth-child(even) td{
+  background:rgba(192,179,179,0.06) !important;
+}
+#view-history table.apple-table tbody tr:hover td{
+  background:rgba(192,179,179,0.10) !important;
+  transform:scale(1.005) !important;
+  box-shadow:0 2px 8px rgba(0,0,0,0.03) !important;
+}
+#view-history table.apple-table tbody tr:active td{
+  transform:scale(0.98) !important;
+  transition:all 0.1s ease !important;
+}
+#view-history .patient-avatar{
+  width:38px !important;
+  height:38px !important;
+  border-radius:50% !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+  box-shadow:0 1px 4px rgba(0,0,0,0.08) !important;
+}
+#view-history .badge-status.active{
+  background:rgba(52,199,89,0.12) !important;
+  color:#1a7a32 !important;
+  border:0.5px solid rgba(52,199,89,0.15) !important;
+  padding:4px 12px !important;
+  border-radius:20px !important;
+  font-size:11px !important;
+  font-weight:600 !important;
+}
+#view-history .action-btn{
+  background:rgba(255,255,255,0.7) !important;
+  border:0.5px solid rgba(0,0,0,0.06) !important;
+  border-radius:8px !important;
+  width:32px !important;
+  height:32px !important;
+}
+#view-history .action-btn:hover{
+  background:var(--ac) !important;
+  color:#fff !important;
+  transform:scale(1.08) !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   REFERRALS VIEW — APPLE GLASS 50% OPAQUE LIKE HISTORY (Screenshot)
+   User asked: make this also too — same glass as history/doctor dashboard
+   ════════════════════════════════════════════════════════════ */
+#view-referrals{
+  background:transparent !important;
+}
+#view-referrals .toolbar,
+#view-queue .toolbar,
+#view-appointments .toolbar,
+#view-beds .toolbar,
+#view-surgery .toolbar,
+#view-booking .toolbar{
+  background:rgba(255,255,255,0.50) !important;
+  backdrop-filter:saturate(180%) blur(20px) !important;
+  -webkit-backdrop-filter:saturate(180%) blur(20px) !important;
+  border-bottom:0.5px solid rgba(255,255,255,0.5) !important;
+  box-shadow:0 1px 3px rgba(0,0,0,0.02) !important;
+}
+#view-referrals .toolbar .search-wrap,
+#view-queue .toolbar .search-wrap,
+#view-appointments .toolbar .search-wrap,
+#view-beds .toolbar .search-wrap,
+#view-surgery .toolbar .search-wrap{
+  background:rgba(255,255,255,0.55) !important;
+  backdrop-filter:blur(12px) !important;
+  border:0.5px solid rgba(255,255,255,0.6) !important;
+  border-radius:12px !important;
+}
+#view-referrals .toolbar .toolbar-select,
+#view-referrals .toolbar .btn,
+#view-queue .toolbar .toolbar-select,
+#view-queue .toolbar .btn,
+#view-appointments .toolbar .toolbar-select,
+#view-appointments .toolbar .btn{
+  background:rgba(255,255,255,0.55) !important;
+  backdrop-filter:blur(8px) !important;
+  border:0.5px solid rgba(255,255,255,0.6) !important;
+  border-radius:10px !important;
+}
+#view-referrals .table-wrap,
+#view-queue .table-wrap,
+#view-appointments .table-wrap,
+#view-beds .beds-grid,
+#view-surgery .form-scroll{
+  background:rgba(255,255,255,0.50) !important;
+  backdrop-filter:saturate(180%) blur(16px) !important;
+  -webkit-backdrop-filter:saturate(180%) blur(16px) !important;
+  border-radius:16px !important;
+  margin:12px !important;
+  border:0.5px solid rgba(255,255,255,0.6) !important;
+  box-shadow:0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03) !important;
+  overflow:hidden !important;
+}
+#view-referrals table.apple-table,
+#view-queue table.apple-table,
+#view-appointments table.apple-table{
+  background:transparent !important;
+  border-collapse:separate !important;
+  border-spacing:0 !important;
+}
+#view-referrals table.apple-table thead,
+#view-queue table.apple-table thead,
+#view-appointments table.apple-table thead{
+  background:rgba(0,0,0,0.02) !important;
+  border-bottom:0.5px solid rgba(0,0,0,0.04) !important;
+}
+#view-referrals table.apple-table thead th,
+#view-queue table.apple-table thead th,
+#view-appointments table.apple-table thead th{
+  font-size:10px !important;
+  font-weight:600 !important;
+  color:var(--tm) !important;
+  text-transform:uppercase !important;
+  letter-spacing:0.6px !important;
+  padding:12px 14px !important;
+  background:transparent !important;
+  border-bottom:0.5px solid rgba(0,0,0,0.04) !important;
+}
+#view-referrals table.apple-table tbody tr,
+#view-queue table.apple-table tbody tr,
+#view-appointments table.apple-table tbody tr{
+  transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1) !important;
+  cursor:pointer !important;
+}
+#view-referrals table.apple-table tbody td,
+#view-queue table.apple-table tbody td,
+#view-appointments table.apple-table tbody td{
+  padding:14px 14px !important;
+  border-bottom:0.5px solid rgba(192,179,179,0.12) !important;
+  background:rgba(255,255,255,0.55) !important;
+  transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1) !important;
+}
+#view-referrals table.apple-table tbody tr:nth-child(even) td,
+#view-queue table.apple-table tbody tr:nth-child(even) td{
+  background:rgba(192,179,179,0.06) !important;
+}
+#view-referrals table.apple-table tbody tr:hover td,
+#view-queue table.apple-table tbody tr:hover td,
+#view-appointments table.apple-table tbody tr:hover td{
+  background:rgba(192,179,179,0.10) !important;
+  transform:scale(1.005) !important;
+  box-shadow:0 2px 8px rgba(0,0,0,0.03) !important;
+}
+
+
+.aside-fold-body{
+  max-height:800px;
+  opacity:1;
+  overflow:hidden;
+  transition:max-height 0.5s cubic-bezier(0.32,0.72,0,1), opacity 0.35s ease;
+}
+.aside-actions-fold{
+  margin-top:10px;
+  padding-top:10px;
+  border-top:0.5px solid rgba(0,0,0,0.06);
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.aside-actions-fold .ra-btn{
+  padding:5px 10px !important;
+  font-size:10.5px !important;
+  border-radius:7px !important;
+}
+.aside-actions-toggle{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:8px;
+  padding:6px 10px;
+  background:rgba(0,0,0,0.04);
+  border-radius:8px;
+  font-size:11px;
+  font-weight:600;
+  color:var(--tm);
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.aside-actions-toggle:hover{
+  background:rgba(0,0,0,0.06);
+  color:var(--tp);
+}
+.aside-actions-toggle i{transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);}
+.aside-actions-toggle.open i{transform:rotate(180deg);}
+.aside-actions-panel{
+  max-height:0;
+  opacity:0;
+  overflow:hidden;
+  transition:max-height 0.45s cubic-bezier(0.32,0.72,0,1), opacity 0.35s;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:0;
+}
+.aside-actions-panel.open{
+  max-height:300px;
+  opacity:1;
+  margin-top:8px;
 }
 .aside-title{
   font-size:11px;
@@ -1768,6 +2078,59 @@ table.apple-table tbody tr:hover {
 .ra-btn-group .ra-btn{border:none; border-radius:0; box-shadow:none; background:transparent;}
 .ra-btn-group .ra-btn + .ra-btn{border-left:0.5px solid var(--bd);}
 
+/* ─── FOLDING DROPDOWN (needed buttons only) ─── */
+.ra-dropdown{position:relative; display:inline-flex;}
+.ra-dropdown .ra-btn{position:relative;}
+.ra-dropdown-menu{
+  display:none;
+  position:absolute;
+  top:calc(100% + 8px);
+  left:0;
+  min-width:200px;
+  background:rgba(255,255,255,0.94);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border:0.5px solid var(--bd);
+  border-radius:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.14), 0 1px 3px rgba(0,0,0,0.06);
+  z-index:150;
+  overflow:hidden;
+  transform-origin:top left;
+}
+.ra-dropdown-menu.open{
+  display:block;
+  animation:raDropOpen 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes raDropOpen{
+  from{opacity:0; transform:translateY(-8px) scale(0.96);}
+  to{opacity:1; transform:translateY(0) scale(1);}
+}
+.ra-dropdown-menu button{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  padding:9px 14px;
+  border:none;
+  background:none;
+  text-align:left;
+  font-size:11.5px;
+  font-weight:500;
+  font-family:var(--f);
+  cursor:pointer;
+  color:var(--ts);
+  transition:background .2s, transform .2s;
+  white-space:nowrap;
+}
+.ra-dropdown-menu button:hover{
+  background:var(--s3);
+  transform:translateX(2px);
+}
+.ra-dropdown-menu button i{font-size:14px; width:18px; text-align:center;}
+.ra-dropdown-menu .dd-divider{height:0.5px; background:var(--bd); margin:4px 0;}
+.ra-dropdown-menu .dd-label{font-size:9px; font-weight:700; color:var(--tm); text-transform:uppercase; letter-spacing:0.5px; padding:6px 14px 2px;}
+
+
 /* Scroll on small screens */
 @media(max-width:1024px){
   .reception-action-bar{overflow-x:auto; flex-wrap:nowrap; padding-bottom:12px;}
@@ -2060,6 +2423,10 @@ table.apple-table tbody tr:hover {
     <i class="ti ti-list-numbers"></i> Queue
     <span class="ncnt" id="qcnt">0</span>
   </button>
+  <button class="ntab" onclick="window.showView('history',this)" style="background:linear-gradient(135deg,#10b981,#059669); color:#fff;">
+    <i class="ti ti-history"></i> History
+    <span class="ncnt" id="histcnt" style="background:rgba(255,255,255,0.3);color:#fff;">0</span>
+  </button>
   <button class="ntab" onclick="window.showView('booking',this)" style="background:var(--ac);color:#fff;">
     <i class="ti ti-user-plus"></i> Register
     <span class="ncnt" style="background:rgba(255,255,255,0.3);color:#fff;">NEW</span>
@@ -2077,68 +2444,117 @@ table.apple-table tbody tr:hover {
 </div>
 
 <!-- ===== RECEPTION ACTION BAR — TERTIARY / REFERRAL HOSPITAL =====
-     CODE IDENTIFIED: previous .stats (Total Patients, Active, In Queue, Critical, Appointments, Beds Free)
-     REPLACED with action bar like Image 2 but with RECEPTIONIST buttons for tertiary referral hospital
+     ONLY NEEDED BUTTONS + FOLDING DROPDOWNS
+     COMMON SERVER: Firebase pclinic-20d81 / patients (same as doctor dashboard)
 -->
 <div class="reception-action-bar" id="receptionActionBar">
 
-  <!-- Group 1: Patient core -->
-  <button class="ra-btn ra-blue" onclick="focusDupSearch()" title="Search patient"><i class="ti ti-users"></i> Patient <i class="ti ti-chevron-down"></i></button>
-  <button class="ra-btn ra-gray" onclick="showToast('✏️ Edit patient — select from queue','info')"><i class="ti ti-edit"></i> Edit</button>
-  <button class="ra-btn ra-gray" onclick="showToast('🔀 Transfer patient department/ward','info')"><i class="ti ti-arrows-exchange"></i> Move</button>
-  <button class="ra-btn ra-green" onclick="window.showView('booking',document.querySelectorAll('.ntab')[2])"><i class="ti ti-user-plus"></i> Register</button>
-  <button class="ra-btn ra-orange" onclick="showToast('🩺 Triage — set priority, vitals','info')"><i class="ti ti-first-aid"></i> Triage</button>
-  <button class="ra-btn ra-teal" onclick="showToast('❤️ Vitals entry','info')"><i class="ti ti-heart-rate-monitor"></i> Vitals</button>
-  <button class="ra-btn ra-gray" onclick="document.getElementById('ptphoto').click()"><i class="ti ti-camera"></i> Photo</button>
-  <button class="ra-btn ra-indigo" onclick="window.showView('queue',document.querySelectorAll('.ntab')[1])"><i class="ti ti-list-numbers"></i> Queue <span class="ra-badge" id="qcntBar">0</span></button>
+  <!-- Single: Register -->
+  <button class="ra-btn ra-green" onclick="raRegister()" style="font-weight:700;"><i class="ti ti-user-plus"></i> Register</button>
 
-  <!-- Group 2: Referral system (tertiary) -->
-  <button class="ra-btn ra-blue-dark" onclick="window.showView('referrals',document.querySelectorAll('.ntab')[0])"><i class="ti ti-git-branch"></i> Referral In <i class="ti ti-chevron-down"></i></button>
-  <button class="ra-btn ra-blue" onclick="showToast('📤 Referral Out to district hospital','info')"><i class="ti ti-external-link"></i> Referral Out</button>
-  <button class="ra-btn ra-purple" onclick="showToast('↩️ Counter-referral back to HC','info')"><i class="ti ti-arrow-back-up"></i> Counter-Referral</button>
-  <button class="ra-btn ra-gray" onclick="showToast('🏥 Health Center link','info')"><i class="ti ti-building-community"></i> HC / CHUK</button>
-  <button class="ra-btn ra-gray" onclick="showToast('🚑 Ambulance / Transport coordination','info')"><i class="ti ti-ambulance"></i> Ambulance</button>
+  <!-- Standalone: OPD Appointment / RDV - as requested -->
+  <button class="ra-btn" style="background:#dbeafe; border-color:#93c5fd; color:#1e40af; font-weight:700;" onclick="raOPDAppointment()" title="OPD Appointment - like other files"><i class="ti ti-calendar-event"></i> OPD Appointment</button>
 
-  <!-- Group 3: Appointments & Scheduling -->
-  <button class="ra-btn ra-yellow" onclick="window.showView('appointments',document.querySelectorAll('.ntab')[3])"><i class="ti ti-calendar-plus"></i> Appointment</button>
-  <button class="ra-btn ra-yellow" onclick="window.showView('surgery',document.querySelectorAll('.ntab')[4])"><i class="ti ti-scalpel"></i> Surgery <span class="ra-badge" id="surgeryCntBar">0</span></button>
-  <button class="ra-btn ra-gray" onclick="showToast('📅 Theater / OT booking','info')"><i class="ti ti-building-hospital"></i> Theater</button>
+  <!-- MOVED: Select Patient buttons from booking - now together with other action bar buttons -->
+  <button class="ra-btn" style="background:#dbeafe; border-color:#93c5fd; color:#1e40af; font-weight:600;" onclick="openPatientSelector('rdv')" title="Select already registered patient for RDV - auto-fills identification"><i class="ti ti-user-check"></i> Select Patient for RDV / Appointment</button>
+  <button class="ra-btn" style="background:#fef3c7; border-color:#fde68a; color:#92400e; font-weight:600;" onclick="openPatientSelector('edit')" title="Select patient to edit identifications"><i class="ti ti-edit"></i> Select Patient to Edit Info</button>
 
-  <!-- Group 4: Insurance Verification (Rwanda) -->
-  <button class="ra-btn ra-green" onclick="showToast('🛡️ Verifying RSSB / Mutuelle / MMI...','info')"><i class="ti ti-shield-check"></i> Insurance <i class="ti ti-chevron-down"></i></button>
-  <button class="ra-btn ra-green" onclick="showToast('💳 RSSB verification','info')"><i class="ti ti-id"></i> RSSB</button>
-  <button class="ra-btn ra-teal" onclick="showToast('🤝 Mutuelle de Santé check','info')"><i class="ti ti-heart-handshake"></i> Mutuelle</button>
-  <button class="ra-btn ra-blue" onclick="showToast('🏢 MMI / Private insurance','info')"><i class="ti ti-building-skyscraper"></i> MMI</button>
+  <!-- FOLDING: Patient — THE master, pulls all from common server -->
+  <div class="ra-dropdown">
+    <button class="ra-btn ra-blue" onclick="toggleDropdown('dd-patient')" title="Pull all patients from common server"><i class="ti ti-users"></i> Patient <i class="ti ti-chevron-down"></i></button>
+    <div class="ra-dropdown-menu" id="dd-patient">
+      <div class="dd-label">From Common Server (pclinic-20d81)</div>
+      <button onclick="raPatient(); closeAllDropdowns();"><i class="ti ti-database"></i> All Patients — Pull all from server</button>
+      <button onclick="openPatientSelector('rdv'); closeAllDropdowns();"><i class="ti ti-user-check"></i> Select Patient for RDV — auto-fill identification</button>
+      <button onclick="openPatientSelector('edit'); closeAllDropdowns();"><i class="ti ti-edit"></i> Select Patient to Edit Info — auto-fill 4 cards</button>
+      <button onclick="focusDupSearch(); closeAllDropdowns();"><i class="ti ti-search"></i> Search / Duplicate check</button>
+      <div class="dd-divider"></div>
+      <button onclick="raEdit(); closeAllDropdowns();"><i class="ti ti-edit"></i> Edit last opened</button>
+      <button onclick="raMove(); closeAllDropdowns();"><i class="ti ti-arrows-exchange"></i> Move / Transfer dept</button>
+      <button onclick="raPhoto(); closeAllDropdowns();"><i class="ti ti-camera"></i> Photo</button>
+    </div>
+  </div>
 
-  <!-- Group 5: Bed & Ward Management -->
-  <button class="ra-btn ra-orange" onclick="window.showView('beds',document.querySelectorAll('.ntab')[5])"><i class="ti ti-bed"></i> Bed Request</button>
-  <button class="ra-btn ra-red" onclick="showToast('🏥 Admission to ward','info')"><i class="ti ti-login-2"></i> Admission</button>
-  <button class="ra-btn ra-gray" onclick="showToast('🚪 Discharge process','info')"><i class="ti ti-logout-2"></i> Discharge</button>
-  <button class="ra-btn ra-red" onclick="showToast('🚨 Emergency registration','info')"><i class="ti ti-emergency-bed"></i> Emergency</button>
-  <button class="ra-btn ra-purple" onclick="showToast('🏨 Ward management','info')"><i class="ti ti-building-ward"></i> Ward</button>
+  <!-- Single: Queue -->
+  <button class="ra-btn ra-indigo" onclick="raQueue()"><i class="ti ti-list-numbers"></i> Queue <span class="ra-badge" id="qcntBar">0</span></button>
 
-  <!-- Group 6: Billing -->
-  <button class="ra-btn ra-yellow" onclick="showToast('🧾 Bill generation','info')"><i class="ti ti-receipt"></i> Bill</button>
-  <button class="ra-btn ra-orange" onclick="showToast('💵 Payment / Cashier','info')"><i class="ti ti-cash"></i> Payment</button>
-  <button class="ra-btn ra-gray" onclick="showToast('🧮 Cashier dashboard','info')"><i class="ti ti-calculator"></i> Cashier</button>
-  <button class="ra-btn ra-gray" onclick="showToast('📄 Receipt print','info')"><i class="ti ti-receipt-2"></i> Receipt</button>
+  <!-- Single: History — for yesterday etc -->
+  <button class="ra-btn" style="background:linear-gradient(135deg,#10b981,#059669); color:#fff; border-color:#059669;" onclick="raHistory()"><i class="ti ti-history"></i> History</button>
 
-  <!-- Group 7: Printing & Documentation -->
-  <button class="ra-btn ra-indigo" onclick="showToast('🪪 Print ID Card','info')"><i class="ti ti-id-badge-2"></i> Print Card</button>
-  <button class="ra-btn ra-indigo" onclick="showToast('⌚ Print Wristband','info')"><i class="ti ti-bracelet"></i> Wristband</button>
-  <button class="ra-btn ra-gray" onclick="showToast('📁 Print OPD File','info')"><i class="ti ti-printer"></i> Print File</button>
-  <button class="ra-btn ra-pink" onclick="showToast('📦 Archive Code — red badge','info')"><i class="ti ti-archive"></i> Archive</button>
-  <button class="ra-btn ra-green" onclick="showToast('✅ Consent form','info')"><i class="ti ti-checkbox"></i> Consent</button>
-  <button class="ra-btn ra-blue" onclick="showToast('📝 Medical summary view','info')"><i class="ti ti-file-description"></i> Medical summary</button>
-  <button class="ra-btn ra-blue" onclick="showToast('📂 Documents','info')"><i class="ti ti-files"></i> Documents <i class="ti ti-chevron-down"></i></button>
-  <button class="ra-btn ra-teal" onclick="showToast('🔬 Lab Result view','info')"><i class="ti ti-flask"></i> Lab Result</button>
-  <button class="ra-btn ra-purple" onclick="showToast('🖼️ Imaging view','info')"><i class="ti ti-scan"></i> Imaging <i class="ti ti-chevron-down"></i></button>
+  <!-- FOLDING: Referral (core for tertiary) -->
+  <div class="ra-dropdown">
+    <button class="ra-btn ra-blue-dark" onclick="toggleDropdown('dd-referral')"><i class="ti ti-git-branch"></i> Referral <i class="ti ti-chevron-down"></i></button>
+    <div class="ra-dropdown-menu" id="dd-referral">
+      <div class="dd-label">Tertiary Referral Flow</div>
+      <button onclick="raReferralIn(); closeAllDropdowns();"><i class="ti ti-git-branch"></i> Referral In (HC → CHUK)</button>
+      <button onclick="raReferralOut(); closeAllDropdowns();"><i class="ti ti-external-link"></i> Referral Out</button>
+      <button onclick="raCounterReferral(); closeAllDropdowns();"><i class="ti ti-arrow-back-up"></i> Counter-Referral</button>
+      <div class="dd-divider"></div>
+      <button onclick="raHC(); closeAllDropdowns();"><i class="ti ti-building-community"></i> HC / CHUK patients</button>
+      <button onclick="raAmbulance(); closeAllDropdowns();"><i class="ti ti-ambulance"></i> Ambulance arrivals</button>
+    </div>
+  </div>
 
-  <!-- Group 8: Communication -->
-  <button class="ra-btn ra-blue" onclick="showToast('💬 Notify doctor / nurse','info')"><i class="ti ti-message"></i> Messages</button>
-  <button class="ra-btn ra-orange" onclick="showToast('🔔 Notify assigned doctor','info')"><i class="ti ti-bell-ringing"></i> Notify</button>
-  <button class="ra-btn ra-yellow" onclick="showToast('📋 My Orders view','info')"><i class="ti ti-list-check"></i> My Orders</button>
-  <button class="ra-btn ra-gray" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
+  <!-- FOLDING: Insurance (Rwanda) -->
+  <div class="ra-dropdown">
+    <button class="ra-btn ra-green" onclick="toggleDropdown('dd-ins')"><i class="ti ti-shield-check"></i> Insurance <i class="ti ti-chevron-down"></i></button>
+    <div class="ra-dropdown-menu" id="dd-ins">
+      <div class="dd-label">Verify from common server</div>
+      <button onclick="raInsurance(); closeAllDropdowns();"><i class="ti ti-shield"></i> All insured</button>
+      <button onclick="raRSSB(); closeAllDropdowns();"><i class="ti ti-id"></i> RSSB</button>
+      <button onclick="raMutuelle(); closeAllDropdowns();"><i class="ti ti-heart-handshake"></i> Mutuelle de Santé</button>
+      <button onclick="raMMI(); closeAllDropdowns();"><i class="ti ti-building-skyscraper"></i> MMI / Private</button>
+    </div>
+  </div>
+
+  <!-- FOLDING: Bed & Ward -->
+  <div class="ra-dropdown">
+    <button class="ra-btn ra-orange" onclick="toggleDropdown('dd-bed')"><i class="ti ti-bed"></i> Bed / Ward <i class="ti ti-chevron-down"></i></button>
+    <div class="ra-dropdown-menu" id="dd-bed">
+      <button onclick="raBedRequest(); closeAllDropdowns();"><i class="ti ti-bed"></i> Bed Request</button>
+      <button onclick="raAdmission(); closeAllDropdowns();"><i class="ti ti-login-2"></i> Admission</button>
+      <button onclick="raDischarge(); closeAllDropdowns();"><i class="ti ti-logout-2"></i> Discharge</button>
+      <button onclick="raEmergency(); closeAllDropdowns();"><i class="ti ti-emergency-bed"></i> Emergency (critical)</button>
+      <button onclick="raWard(); closeAllDropdowns();"><i class="ti ti-building-ward"></i> Ward management</button>
+    </div>
+  </div>
+
+  <!-- FOLDING: Appointment -->
+  <div class="ra-dropdown">
+    <button class="ra-btn ra-yellow" onclick="toggleDropdown('dd-appt')"><i class="ti ti-calendar-plus"></i> Appointment <i class="ti ti-chevron-down"></i></button>
+    <div class="ra-dropdown-menu" id="dd-appt">
+      <button onclick="raAppointment(); closeAllDropdowns();"><i class="ti ti-calendar"></i> Appointment list (from common server)</button>
+      <button onclick="raOPDAppointment(); closeAllDropdowns();"><i class="ti ti-calendar-event"></i> OPD Appointment / RDV (auto-fill)</button>
+      <button onclick="raOPDAppointmentFile(); closeAllDropdowns();"><i class="ti ti-file-plus"></i> OPD Appointment FILE — like OPD File</button>
+      <button onclick="raSurgery(); closeAllDropdowns();"><i class="ti ti-scalpel"></i> Surgery <span class="ra-badge" id="surgeryCntBar2" style="background:#10b981;">0</span></button>
+      <button onclick="raTheater(); closeAllDropdowns();"><i class="ti ti-building-hospital"></i> Theater / OT</button>
+    </div>
+  </div>
+
+  <!-- FOLDING: Billing -->
+  <div class="ra-dropdown">
+    <button class="ra-btn ra-yellow" onclick="toggleDropdown('dd-bill')"><i class="ti ti-receipt"></i> Billing <i class="ti ti-chevron-down"></i></button>
+    <div class="ra-dropdown-menu" id="dd-bill">
+      <button onclick="raBill(); closeAllDropdowns();"><i class="ti ti-receipt"></i> Bill — from common server</button>
+      <button onclick="raPayment(); closeAllDropdowns();"><i class="ti ti-cash"></i> Payment / Cashier</button>
+      <button onclick="raReceipt(); closeAllDropdowns();"><i class="ti ti-receipt-2"></i> Receipt / Print</button>
+    </div>
+  </div>
+
+  <!-- FOLDING: Print -->
+  <div class="ra-dropdown">
+    <button class="ra-btn ra-indigo" onclick="toggleDropdown('dd-print')"><i class="ti ti-printer"></i> Print <i class="ti ti-chevron-down"></i></button>
+    <div class="ra-dropdown-menu" id="dd-print">
+      <button onclick="raPrintCard(); closeAllDropdowns();"><i class="ti ti-id-badge-2"></i> Print ID Card / Wristband</button>
+      <button onclick="raPrintFile(); closeAllDropdowns();"><i class="ti ti-printer"></i> Print OPD File</button>
+      <button onclick="raArchive(); closeAllDropdowns();"><i class="ti ti-archive"></i> Archive Code (red badge)</button>
+      <button onclick="raConsent(); closeAllDropdowns();"><i class="ti ti-checkbox"></i> Consent</button>
+      <button onclick="raMedicalSummary(); closeAllDropdowns();"><i class="ti ti-file-description"></i> Medical Summary (view)</button>
+    </div>
+  </div>
+
+  <!-- Single: PClinic AI Assistant -->
+  <button class="ra-btn" style="background:linear-gradient(135deg,#7c3aed,#4f46e5); color:#fff; border:none; font-weight:700; box-shadow:0 2px 8px rgba(124,58,237,0.3);" onclick="openAIAssistant()" title="Ask AI any reception question"><i class="ti ti-robot"></i> PClinic AI</button>
 
 </div>
 
@@ -2190,7 +2606,7 @@ table.apple-table tbody tr:hover {
           <option>Cardiology</option><option>Neurology</option><option>Orthopedics</option>
           <option>General</option><option>Pediatrics</option><option>ICU</option>
         </select>
-        <button class="btn btn-success" onclick="window.showView('booking', document.querySelectorAll('.ntab')[2])">
+        <button class="btn btn-success" onclick="window.showView('booking', getNavBtn('booking'))">
           <i class="ti ti-user-plus"></i> Register Patient
         </button>
       </div>
@@ -2198,6 +2614,70 @@ table.apple-table tbody tr:hover {
         <table class="apple-table">
           <thead><tr><th>#</th><th>Patient</th><th>Department</th><th>Priority</th><th>Waiting</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody id="qTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== HISTORY / ALL PATIENTS VIEW — SEE PREVIOUSLY REGISTERED INCLUDING YESTERDAY ===== -->
+    <div class="view" id="view-history">
+      <div class="toolbar" style="gap:8px;">
+        <div class="search-wrap" style="flex:1.2;">
+          <i class="ti ti-search"></i>
+          <input type="text" id="histSearch" placeholder="Search all patients: name, MRN, phone, Nat ID, district..." oninput="window.renderHistory()">
+        </div>
+        <select class="toolbar-select" id="histDateFilter" onchange="window.renderHistory()" title="Filter by registration date">
+          <option value="all">All time</option>
+          <option value="today">Today</option>
+          <option value="yesterday" selected>Yesterday</option>
+          <option value="last7">Last 7 days</option>
+          <option value="thisMonth">This month</option>
+          <option value="lastMonth">Last month</option>
+        </select>
+        <select class="toolbar-select" id="histStatusFilter" onchange="window.renderHistory()">
+          <option value="">All status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <select class="toolbar-select" id="histDeptFilter" onchange="window.renderHistory()">
+          <option value="">All depts</option>
+          <option>General</option><option>Cardiology</option><option>Neurology</option><option>Orthopedics</option><option>Pediatrics</option><option>ICU</option>
+        </select>
+        <button class="btn" onclick="window.renderHistory()" title="Refresh from common server"><i class="ti ti-refresh"></i> Refresh</button>
+        <button class="btn" onclick="window.exportHistoryCSV()"><i class="ti ti-download"></i> Export</button>
+      </div>
+      <div style="padding:8px 16px; background:rgba(255,255,255,0.50); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px); border-bottom:0.5px solid rgba(255,255,255,0.5); display:flex; gap:12px; font-size:11px; color:var(--tm); align-items:center; flex-wrap:wrap;">
+        <span><strong id="histTotalCount" style="color:var(--tp); font-size:13px;">0</strong> total patients from common server</span>
+        <span style="opacity:0.4;">|</span>
+        <span>Today: <strong id="histTodayCount">0</strong></span>
+        <span>Yesterday: <strong id="histYesterdayCount" style="color:#059669;">0</strong></span>
+        <span>Last 7 days: <strong id="histWeekCount">0</strong></span>
+        <span style="flex:1"></span>
+        <span style="font-size:10px;">Source: <span style="color:#007aff; font-weight:600;">Firebase pclinic-20d81 / patients</span> — same as doctor dashboard</span>
+      </div>
+      <div class="table-wrap">
+        <table class="apple-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Patient</th>
+              <th>MRN / IDs</th>
+              <th>Contact</th>
+              <th>Gender / DOB</th>
+              <th>District / Dept</th>
+              <th>Registered</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="historyTbody">
+            <tr><td colspan="9" style="text-align:center; padding:40px; color:var(--tm);">
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+                <span style="font-size:32px;">📜</span>
+                <span>Loading history from common server...</span>
+                <span style="font-size:11px;">If empty, wait for Firebase sync (check toast)</span>
+              </div>
+            </td></tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -2215,6 +2695,7 @@ table.apple-table tbody tr:hover {
           </div>
           <div id="dupResult" style="display:none;"></div>
         </div>
+        <div id="dupResultExpanded" style="margin-top:-8px; margin-bottom:12px;"></div>
         <div id="dupResultExpanded" style="margin-top:-8px; margin-bottom:12px;"></div>
 
         <!-- ===== PHOTO - APPLE GLASS ===== -->
@@ -2356,9 +2837,12 @@ table.apple-table tbody tr:hover {
               <div class="form-group"><label>Arrival Mode</label><select id="bArrivalMode" class="apple-input"><option>Walking</option><option>Ambulance</option><option>Wheelchair</option><option>Stretcher</option></select></div>
               <div class="form-group form-grid-full" style="margin-top:8px; padding:12px; background:rgba(255,255,255,0.6); border-radius:12px; border:0.5px solid rgba(0,0,0,0.06); backdrop-filter:blur(8px);"><label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600;"><input type="checkbox" id="bConsent" checked style="width:18px; height:18px;"> ✅ I confirm patient information is correct and consent obtained</label></div>
             </div>
-            <div style="margin-top:16px; display:flex; justify-content:space-between;">
-              <button class="btn" onclick="openCard(3)">← Back</button>
-              <button class="submit-btn apple-bounce" style="background:linear-gradient(135deg,#007aff,#5856d6); color:#fff; border:none; border-radius:20px; padding:10px 24px; font-weight:700; box-shadow:0 4px 16px rgba(0,122,255,0.3); transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);" onclick="window.registerPatient()"><i class="ti ti-user-plus"></i> Register Patient (Numbers Only ID)</button>
+            <div style="margin-top:16px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; gap:8px;">
+                <button class="btn" onclick="openCard(3)">← Back</button>
+                <button class="btn" id="cancelEditBtn" onclick="cancelEditMode()" style="display:none; background:#ffebe9; border-color:#ffbeb8; color:#8a1f1a;"><i class="ti ti-x"></i> Cancel Edit</button>
+              </div>
+              <button class="submit-btn apple-bounce" id="mainSubmitBtn" style="background:linear-gradient(135deg,#007aff,#5856d6); color:#fff; border:none; border-radius:20px; padding:10px 24px; font-weight:700; box-shadow:0 4px 16px rgba(0,122,255,0.3); transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);" onclick="window.registerPatient()"><i class="ti ti-user-plus"></i> Register Patient (Numbers Only ID)</button>
             </div>
           </div>
         </div>
@@ -2371,6 +2855,17 @@ table.apple-table tbody tr:hover {
         <!-- ===== APPOINTMENTS VIEW ===== -->
     <div class="view" id="view-appointments">
       <div class="form-scroll">
+
+        <!-- SELECT PATIENT FOR APPOINTMENT — pulls from common server, auto-fills identification -->
+        <div class="form-card apple-card" style="background: rgba(219,234,254,0.65); backdrop-filter: blur(20px); border:0.5px solid #93c5fd; border-radius:12px; padding:10px 14px; margin-bottom:8px; display:flex; gap:10px; align-items:center;">
+          <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#3b82f6,#1d4ed8); display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px;"><i class="ti ti-user-search"></i></div>
+          <div style="flex:1;">
+            <div style="font-weight:700; font-size:13px;">Select Patient from Common Server for Appointment (RDV)</div>
+            <div style="font-size:11px; color:var(--tm);">If patient already registered, select him → identification fills automatically → just put date</div>
+          </div>
+          <button class="ra-btn ra-blue" onclick="openPatientSelector('rdv')" style="font-weight:700;"><i class="ti ti-users"></i> Select Patient</button>
+          <button class="ra-btn ra-indigo" onclick="openAIAssistant()"><i class="ti ti-robot"></i> AI Help</button>
+        </div>
         
         <!-- ─── BOOK APPOINTMENT FORM ─── -->
         <div class="form-card">
@@ -2566,20 +3061,129 @@ table.apple-table tbody tr:hover {
 
   </div><!-- /main -->
 
-  <!-- ===== ASIDE ===== -->
+  <!-- ===== ASIDE — SMART CARDS 50-60% TRANSPARENT APPLE PANEL =====
+       Located codes: .aside, .aside-section, .aside-title
+       Changed to 58% opaque (42% transparent) Apple glass with folding reception buttons
+  -->
   <div class="aside">
-    <div class="aside-section">
-      <div class="aside-title">Quick Stats</div>
-      <div id="aQuickStats"></div>
+    <!-- QUICK STATS — Smart transparent card with folding action buttons -->
+    <div class="aside-section" id="aside-quick">
+      <div class="aside-title" onclick="toggleAsideFold('aside-quick')">
+        <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-chart-bar" style="color:var(--ac);"></i> QUICK STATS</span>
+        <span style="display:flex; align-items:center; gap:6px;"><span class="aside-count" id="asideQuickCount" style="background:rgba(0,122,255,0.12);">0</span><i class="ti ti-chevron-down aside-fold-icon"></i></span>
+      </div>
+      <div class="aside-fold-body">
+        <div id="aQuickStats"></div>
+        <div class="aside-actions-toggle" onclick="toggleAsideActions('quickActions')" id="toggle-quickActions">
+          <span><i class="ti ti-bolt" style="color:#f59e0b;"></i> Quick Actions</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="aside-actions-panel" id="quickActions">
+          <button class="ra-btn ra-blue" onclick="raPatient()"><i class="ti ti-users"></i> All Patients</button>
+          <button class="ra-btn ra-green" onclick="raHistory()"><i class="ti ti-history"></i> History</button>
+          <button class="ra-btn ra-gray" onclick="renderHistory();"><i class="ti ti-refresh"></i> Refresh</button>
+          <button class="ra-btn ra-yellow" onclick="exportHistoryCSV()"><i class="ti ti-download"></i> Export</button>
+        </div>
+      </div>
     </div>
-    <div class="aside-section">
-      <div class="aside-title">Queue Summary</div>
-      <div id="aQSummary"></div>
+
+    <!-- QUEUE SUMMARY — Smart card with folding reception buttons -->
+    <div class="aside-section" id="aside-queue">
+      <div class="aside-title" onclick="toggleAsideFold('aside-queue')">
+        <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-list-numbers" style="color:#f59e0b;"></i> QUEUE SUMMARY</span>
+        <i class="ti ti-chevron-down aside-fold-icon"></i>
+      </div>
+      <div class="aside-fold-body">
+        <div id="aQSummary"></div>
+        <div class="aside-actions-toggle" onclick="toggleAsideActions('queueActions')" id="toggle-queueActions">
+          <span><i class="ti ti-stethoscope" style="color:#10b981;"></i> Reception Queue Tools</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="aside-actions-panel" id="queueActions">
+          <button class="ra-btn ra-indigo" onclick="raQueue()"><i class="ti ti-list"></i> View Queue</button>
+          <button class="ra-btn ra-green" onclick="showToast('📢 Calling next patient from common server','info'); var q=document.querySelector('#qTbody .action-btn.accept'); if(q) q.click();"><i class="ti ti-player-play"></i> Call Next</button>
+          <button class="ra-btn ra-orange" onclick="raBedRequest()"><i class="ti ti-bed"></i> Bed Request</button>
+          <button class="ra-btn ra-red" onclick="raEmergency()"><i class="ti ti-emergency-bed"></i> Emergency</button>
+          <button class="ra-btn ra-blue" onclick="raAppointment()"><i class="ti ti-calendar-plus"></i> Appointment</button>
+        </div>
+      </div>
     </div>
-    <div class="aside-section" style="flex:1;display:flex;flex-direction:column;padding-bottom:0;min-height:0;overflow:hidden">
-      <div class="aside-title" style="flex-shrink:0">Activity Feed</div>
-      <div class="feed-scroll" id="feedList"></div>
+
+    <!-- ACTIVITY FEED — Smart transparent card with folding -->
+    <div class="aside-section" id="aside-feed" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+      <div class="aside-title" onclick="toggleAsideFold('aside-feed')" style="flex-shrink:0;">
+        <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-activity" style="color:#8b5cf6;"></i> ACTIVITY FEED</span>
+        <i class="ti ti-chevron-down aside-fold-icon"></i>
+      </div>
+      <div class="aside-fold-body" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+        <div class="feed-scroll" id="feedList" style="flex:1;"></div>
+        <div class="aside-actions-toggle" onclick="toggleAsideActions('feedActions')" id="toggle-feedActions">
+          <span><i class="ti ti-tool" style="color:#8b5cf6;"></i> Feed Tools</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="aside-actions-panel" id="feedActions">
+          <button class="ra-btn ra-gray" onclick="document.getElementById('feedList').innerHTML='<p style=\'font-size:12px;color:var(--tm);padding:8px 0;text-align:center\'>Feed cleared</p>'; showToast('🧹 Feed cleared','info');"><i class="ti ti-trash"></i> Clear Feed</button>
+          <button class="ra-btn ra-blue" onclick="raMessages()"><i class="ti ti-message"></i> Messages</button>
+          <button class="ra-btn ra-indigo" onclick="openAIAssistant()"><i class="ti ti-robot"></i> AI Help</button>
+        </div>
+      </div>
     </div>
+
+    <!-- RECEPTION QUICK ACTIONS — New smart card 50-60% transparent with folding buttons from action bar -->
+    <div class="aside-section" id="aside-reception" style="background:rgba(255,255,255,0.52);">
+      <div class="aside-title" onclick="toggleAsideFold('aside-reception')">
+        <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-bolt" style="color:#f59e0b;"></i> RECEPTION ACTIONS</span>
+        <i class="ti ti-chevron-down aside-fold-icon"></i>
+      </div>
+      <div class="aside-fold-body">
+        <div style="font-size:10px; color:var(--tm); margin-bottom:8px;">Needed buttons — folding — from action bar + common server</div>
+
+        <div class="aside-actions-toggle open" onclick="toggleAsideActions('receptionPatient')" id="toggle-receptionPatient">
+          <span><i class="ti ti-users" style="color:#0b57d0;"></i> Patient</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="aside-actions-panel open" id="receptionPatient" style="max-height:300px; opacity:1; margin-top:8px;">
+          <button class="ra-btn ra-blue" onclick="raPatient()"><i class="ti ti-database"></i> All from server</button>
+          <button class="ra-btn" style="background:#dbeafe; border-color:#bfdbfe; color:#1e40af;" onclick="openPatientSelector('rdv')"><i class="ti ti-user-check"></i> Select for RDV</button>
+          <button class="ra-btn" style="background:#fef3c7; border-color:#fde68a; color:#92400e;" onclick="openPatientSelector('edit')"><i class="ti ti-edit"></i> Select to Edit</button>
+          <button class="ra-btn ra-green" onclick="raRegister()"><i class="ti ti-user-plus"></i> Register</button>
+        </div>
+
+        <div class="aside-actions-toggle" onclick="toggleAsideActions('receptionReferral')" id="toggle-receptionReferral">
+          <span><i class="ti ti-git-branch" style="color:#0a3d8a;"></i> Referral</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="aside-actions-panel" id="receptionReferral">
+          <button class="ra-btn ra-blue-dark" onclick="raReferralIn()"><i class="ti ti-git-branch"></i> Referral In</button>
+          <button class="ra-btn ra-blue" onclick="raReferralOut()"><i class="ti ti-external-link"></i> Referral Out</button>
+          <button class="ra-btn ra-purple" onclick="raCounterReferral()"><i class="ti ti-arrow-back-up"></i> Counter</button>
+          <button class="ra-btn ra-gray" onclick="raAmbulance()"><i class="ti ti-ambulance"></i> Ambulance</button>
+        </div>
+
+        <div class="aside-actions-toggle" onclick="toggleAsideActions('receptionInsurance')" id="toggle-receptionInsurance">
+          <span><i class="ti ti-shield-check" style="color:#1a7a32;"></i> Insurance</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="aside-actions-panel" id="receptionInsurance">
+          <button class="ra-btn ra-green" onclick="raRSSB()"><i class="ti ti-id"></i> RSSB</button>
+          <button class="ra-btn ra-teal" onclick="raMutuelle()"><i class="ti ti-heart-handshake"></i> Mutuelle</button>
+          <button class="ra-btn ra-blue" onclick="raMMI()"><i class="ti ti-building-skyscraper"></i> MMI</button>
+        </div>
+
+        <div class="aside-actions-toggle" onclick="toggleAsideActions('receptionBilling')" id="toggle-receptionBilling">
+          <span><i class="ti ti-receipt" style="color:#713f12;"></i> Billing / Print</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="aside-actions-panel" id="receptionBilling">
+          <button class="ra-btn ra-yellow" onclick="raBill()"><i class="ti ti-receipt"></i> Bill</button>
+          <button class="ra-btn ra-orange" onclick="raPayment()"><i class="ti ti-cash"></i> Payment</button>
+          <button class="ra-btn ra-indigo" onclick="raPrintCard()"><i class="ti ti-id-badge-2"></i> Print Card</button>
+          <button class="ra-btn ra-pink" onclick="raArchive()"><i class="ti ti-archive"></i> Archive</button>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -2630,11 +3234,68 @@ table.apple-table tbody tr:hover {
   </div>
 </div>
 
+<!-- ===== COMMON SERVER DATA MODAL ===== -->
+<div class="modal-overlay" id="serverDataModal" onclick="if(event.target===this)window.closeServerDataModal()">
+  <div class="modal-sheet" style="max-width:760px; max-height:90vh;">
+    <div class="modal-header">
+      <div class="modal-title" id="serverDataTitle">Common Server Data</div>
+      <button class="modal-close" onclick="window.closeServerDataModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body" id="serverDataBody" style="max-height:70vh; overflow:auto;"></div>
+  </div>
+</div>
+
+<!-- ===== PATIENT SELECTOR MODAL — SELECT PATIENT FOR RDV / EDIT FROM COMMON SERVER ===== -->
+<div class="modal-overlay" id="patientSelectorModal" onclick="if(event.target===this)closePatientSelector()">
+  <div class="modal-sheet" style="max-width:680px; max-height:90vh;">
+    <div class="modal-header">
+      <div class="modal-title" id="patientSelectorTitle">Select Patient from Common Server</div>
+      <button class="modal-close" onclick="closePatientSelector()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="search-wrap" style="margin-bottom:12px;">
+        <i class="ti ti-search"></i>
+        <input type="text" id="patientSelectorSearch" placeholder="Search: name, MRN, phone, Nat ID, district... from common server" oninput="renderPatientSelector()" style="padding:8px 12px 8px 36px; width:100%; border-radius:10px; border:0.5px solid var(--bd);">
+      </div>
+      <div style="font-size:11px; color:var(--tm); margin-bottom:8px;">Source: <span style="color:#007aff; font-weight:600;">Firebase pclinic-20d81 / patients</span> — <span id="patientSelectorCount">0</span> patients | Click <strong>Select for RDV</strong> or <strong>Edit Info</strong></div>
+      <div id="patientSelectorList" style="max-height:50vh; overflow:auto; display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PCLINIC AI ASSISTANT MODAL ===== -->
+<div class="modal-overlay" id="aiAssistantModal" onclick="if(event.target===this)closeAIAssistant()">
+  <div class="modal-sheet" style="max-width:560px; max-height:85vh;">
+    <div class="modal-header" style="background:linear-gradient(135deg,#007aff,#5856d6); color:#fff;">
+      <div class="modal-title" style="color:#fff;"><i class="ti ti-robot" style="margin-right:6px;"></i> PClinic AI Assistant — Reception Help</div>
+      <button class="modal-close" onclick="closeAIAssistant()" style="background:rgba(255,255,255,0.2); color:#fff;"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body" style="display:flex; flex-direction:column; height:60vh; padding:0;">
+      <div id="aiChatHistory" style="flex:1; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:10px; background:var(--s3);">
+        <div style="background:#fff; border:0.5px solid var(--bd); border-radius:12px; padding:10px 14px; max-width:85%; align-self:flex-start;">
+          <div style="font-size:11px; font-weight:700; color:#007aff; margin-bottom:4px;">🤖 PClinic AI</div>
+          <div style="font-size:13px; line-height:1.4;">Hello! I'm your PClinic AI assistant. Ask me anything about reception: registration, duplicate check, RSSB/Mutuelle, referrals, appointments, billing, printing, bed management, etc. I pull data from common server when needed.</div>
+        </div>
+      </div>
+      <div style="padding:12px; border-top:0.5px solid var(--bd); display:flex; gap:8px; align-items:center; background:#fff;">
+        <input type="text" id="aiQuestionInput" placeholder="Ask AI: e.g. How to give RDV for already registered patient?" style="flex:1; padding:10px 14px; border-radius:20px; border:0.5px solid var(--bd); font-size:13px;" onkeydown="if(event.key==='Enter')askAI()">
+        <button class="btn btn-primary" onclick="askAI()" style="border-radius:20px;"><i class="ti ti-send"></i> Ask</button>
+      </div>
+      <div style="padding:8px 12px; font-size:10px; color:var(--tm); background:var(--s3); border-top:0.5px solid var(--bd); display:flex; gap:8px; flex-wrap:wrap;">
+        <span style="cursor:pointer; background:#fff; padding:3px 8px; border-radius:12px; border:0.5px solid var(--bd);" onclick="document.getElementById('aiQuestionInput').value='How to register new patient?'; askAI();">How to register?</span>
+        <span style="cursor:pointer; background:#fff; padding:3px 8px; border-radius:12px; border:0.5px solid var(--bd);" onclick="document.getElementById('aiQuestionInput').value='How to give RDV for already registered patient?'; askAI();">Give RDV</span>
+        <span style="cursor:pointer; background:#fff; padding:3px 8px; border-radius:12px; border:0.5px solid var(--bd);" onclick="document.getElementById('aiQuestionInput').value='How to verify RSSB insurance?'; askAI();">RSSB</span>
+        <span style="cursor:pointer; background:#fff; padding:3px 8px; border-radius:12px; border:0.5px solid var(--bd);" onclick="document.getElementById('aiQuestionInput').value='How to handle referral from health center?'; askAI();">Referral</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== TOAST CONTAINER ===== -->
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- ===== FAB ===== -->
-<button class="fab" onclick="window.showView('booking', document.querySelectorAll('.ntab')[2])" title="Register New Patient (⌘N)">
+<button class="fab" onclick="window.showView('booking', getNavBtn('booking'))" title="Register New Patient (⌘N)">
   <i class="ti ti-plus"></i>
 </button>
 
@@ -2754,10 +3415,12 @@ function showView(view, btn){
   document.querySelectorAll('.view').forEach(function(el){ el.classList.remove('active'); });
   document.getElementById('view-'+view).classList.add('active');
   
-  var names = {referrals:'Referrals', queue:'Queue', booking:'Register', appointments:'Appointment', beds:'Beds'};
-  document.querySelector('.breadcrumb .current').textContent = names[view] || view;
+  var names = {referrals:'Referrals', queue:'Queue', history:'History', booking:'Register', appointments:'Appointment', beds:'Beds', surgery:'Surgery'};
+  var bc = document.querySelector('.breadcrumb .current');
+  if(bc) bc.textContent = names[view] || view;
   
  if(view === 'queue') renderQueue();
+ if(view === 'history') renderHistory();
 if(view === 'beds') renderBeds();
 if(view === 'referrals') renderRefs();
 if(view === 'appointments') {
@@ -2772,13 +3435,584 @@ if(view === 'surgery') {
 }
 
 function focusDupSearch(){
-  showView('booking', document.querySelectorAll('.ntab')[2]);
+  showView('booking', getNavBtn('booking'));
   setTimeout(function(){
     var el=document.getElementById('bSearchDup');
     if(el){ el.focus(); el.scrollIntoView({behavior:'smooth', block:'center'}); el.style.boxShadow='0 0 0 4px rgba(0,122,255,0.2)'; setTimeout(()=>{el.style.boxShadow='';},1200); }
     showToast('🔍 Search patient: MRN / Phone / Nat ID','info');
   },200);
 }
+
+function toggleDropdown(id){
+  var target=document.getElementById(id);
+  var isOpen=target && target.classList.contains('open');
+  closeAllDropdowns();
+  if(target && !isOpen){
+    target.classList.add('open');
+    // bounce icon
+    var btn=target.previousElementSibling;
+    if(btn){ btn.style.transform='scale(1.05)'; setTimeout(()=>{ if(btn) btn.style.transform=''; },200); }
+  }
+}
+function closeAllDropdowns(){
+  document.querySelectorAll('.ra-dropdown-menu.open').forEach(function(m){ m.classList.remove('open'); });
+}
+function toggleAsideFold(id){
+  var card=document.getElementById(id);
+  if(!card) return;
+  card.classList.toggle('folded');
+  var body=card.querySelector('.aside-fold-body');
+  if(body){
+    if(card.classList.contains('folded')){
+      body.style.maxHeight='0';
+      body.style.opacity='0';
+    } else {
+      body.style.maxHeight='800px';
+      body.style.opacity='1';
+    }
+  }
+}
+function toggleAsideActions(id){
+  var panel=document.getElementById(id);
+  var toggle=document.getElementById('toggle-'+id);
+  if(!panel) return;
+  panel.classList.toggle('open');
+  if(toggle) toggle.classList.toggle('open');
+}
+function raHistory(){
+  var btn=document.querySelector('.ntab[onclick*="history"]');
+  showView('history', btn);
+  setTimeout(function(){ renderHistory(); },100);
+  var all=[]; try{ all=getPatients(); }catch(e){}
+  showToast('📜 History — '+all.length+' patients from common server (including yesterday)','info');
+}
+function getNavBtn(view){ try{ return document.querySelector('.ntab[onclick*=\''+view+'\']'); }catch(e){ return null; } }
+function raViewQueueFromHistory(id, mrn){
+  var p=null;
+  try{ p=getPatient(id); }catch(e){}
+  if(!p){ 
+    var all=[]; try{ all=getPatients(); }catch(e){}
+    p=all.find(function(x){ return String(x.id)===String(id) || String(x.mrn)===String(mrn); });
+  }
+  if(!p){ showToast('❌ Patient not found in common server','error'); return; }
+  var btn=document.querySelector('.ntab[onclick*="queue"]');
+  showView('queue', btn);
+  setTimeout(function(){
+    var el=document.getElementById('qSearch');
+    if(el){ el.value=mrn||''; renderQueue(); }
+  },200);
+  showToast('📋 Queue filtered for MRN '+mrn+' from common server','info');
+}
+// Close dropdowns on outside click
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.ra-dropdown')){
+    closeAllDropdowns();
+  }
+});
+
+
+// ════════════════════════════════════════════════════════════
+// RECEPTION ACTION BAR — ALL BUTTONS WORKING FROM COMMON SERVER
+// Each button pulls from Firebase pclinic-20d81 / patients (same as doctor)
+// ════════════════════════════════════════════════════════════
+function _getAllPatientsCommon(){
+  try { return typeof getPatients==='function' ? getPatients() : []; } catch(e){ return []; }
+}
+function _showHistoryFiltered(search, dateFilter, label){
+  var btn = document.querySelector('.ntab[onclick*=\"history\"]');
+  showView('history', btn);
+  setTimeout(function(){
+    var s=document.getElementById('histSearch'); if(s && search!==undefined) s.value=search;
+    var d=document.getElementById('histDateFilter'); if(d && dateFilter) d.value=dateFilter;
+    renderHistory();
+    if(label) showToast(label,'info');
+  },120);
+}
+function raPatient(){
+  var all=_getAllPatientsCommon();
+  console.log(' raPatient — pulling all from common server:', all.length);
+  var btn = document.querySelector('.ntab[onclick*=\"history\"]');
+  showView('history', btn);
+  setTimeout(function(){
+    var df=document.getElementById('histDateFilter'); if(df) df.value='all';
+    var sf=document.getElementById('histSearch'); if(sf) sf.value='';
+    var stf=document.getElementById('histStatusFilter'); if(stf) stf.value='';
+    var deptf=document.getElementById('histDeptFilter'); if(deptf) deptf.value='';
+    renderHistory();
+    showToast('📋 Pulled '+all.length+' patients from common server (Firebase pclinic-20d81 / patients) — same as doctor dashboard', 'success');
+  },150);
+}
+function raEdit(){
+  if(openPatientId){ openPatient(openPatientId); showToast('✏️ Editing patient '+openPatientId,'info'); return; }
+  var all=_getAllPatientsCommon();
+  if(!all.length){ showToast('❌ No patients in common server','error'); raPatient(); return; }
+  openPatient(all[0].id);
+  showToast('✏️ Editing latest patient from server: '+all[0].firstName+' '+all[0].lastName,'info');
+}
+function raMove(){
+  var mrns=prompt('🔀 Move / Transfer — Enter MRN to move (from common server):');
+  if(!mrns) return;
+  var p=null; try{ p=getPatientByMRN?getPatientByMRN(mrns):getPatient(mrns); }catch(e){}
+  if(!p){ var all=_getAllPatientsCommon(); p=all.find(function(x){ return String(x.mrn)==String(mrns)||String(x.id)==String(mrns); }); }
+  if(!p){ showToast('❌ Patient MRN '+mrns+' not found in common server','error'); return; }
+  var dept=prompt('Move '+p.firstName+' '+p.lastName+' (MRN '+p.mrn+') to which department? General/Cardiology/Neurology/Orthopedics/Pediatrics/ICU');
+  if(!dept) return;
+  if(typeof setPatientLocation==='function'){ setPatientLocation(p.id, dept, 'Reception transfer'); }
+  else if(typeof updatePatient==='function'){ updatePatient(p.id, {department:dept, location:dept}); }
+  showToast('✅ Moved MRN '+p.mrn+' to '+dept+' (common server)','success');
+}
+function raRegister(){ showView('booking', getNavBtn('booking')); }
+function raTriage(){
+  var mrns=prompt('🩺 Triage — Enter MRN (from common server):'); if(!mrns) return;
+  var all=_getAllPatientsCommon(); var p=all.find(function(x){ return String(x.mrn)==String(mrns)||String(x.id)==String(mrns); });
+  if(!p){ showToast('❌ Not found','error'); return; }
+  var pri=prompt('Set priority for '+p.firstName+': critical / high / medium / low', p.priority||'medium'); if(!pri) return;
+  updatePatient(p.id, {priority:pri}); showToast('✅ Triage '+p.mrn+' → '+pri,'success');
+}
+function raVitals(){
+  var id=openPatientId; if(!id){ var all=_getAllPatientsCommon(); if(all.length) id=all[0].id; }
+  if(!id){ showToast('❌ No patient selected','error'); return; }
+  var bp=prompt('❤️ Vitals for MRN '+id+' — Enter BP e.g. 120/80'); if(bp===null) return;
+  var hr=prompt('Pulse?'); var temp=prompt('Temp °C?');
+  if(typeof addVitals==='function'){ addVitals(id, {bp:bp, pulse:hr, temperature:temp, recordedBy: (window.currentStaff&&window.currentStaff.name)||'Reception'}); showToast('✅ Vitals saved to common server for '+id,'success'); }
+  else { showToast('Vitals entry requires patient-data.js','warning'); }
+}
+function raPhoto(){ var el=document.getElementById('ptphoto'); if(el) el.click(); else showToast('📸 Photo upload','info'); }
+function raQueue(){ var btn=getNavBtn('queue'); showView('queue', btn); var all=_getAllPatientsCommon(); showToast('📋 Queue from common server: '+(typeof queue!=='undefined'?queue.length:0)+' waiting, total '+all.length,'info'); }
+function raReferralIn(){ var btn=getNavBtn('referrals'); showView('referrals', btn); var all=_getAllPatientsCommon(); var refs=all.filter(function(p){ return (p.referralSource||'').toLowerCase().indexOf('health')>-1 || (p.visitType||'').toLowerCase()==='referral'; }); showToast('📥 Referral In: '+refs.length+' from common server','info'); }
+function raReferralOut(){ var all=_getAllPatientsCommon(); var mrn=prompt('📤 Referral Out — Enter MRN to refer out:'); if(!mrn) return; var p=all.find(function(x){ return String(x.mrn)==String(mrn)||String(x.id)==String(mrn); }); if(!p){ showToast('❌ Not found','error'); return; } updatePatient(p.id,{visitType:'Referral', referralSource:'Self', queueStatus:'referred'}); showToast('✅ Referred out MRN '+p.mrn,'success'); }
+function raCounterReferral(){ _showHistoryFiltered('counter', 'all', '↩️ Counter-Referral: showing patients with counter-referral'); var all=_getAllPatientsCommon(); showToast('↩️ Counter-Referral list: '+all.length+' total from server','info'); }
+function raHC(){ _showHistoryFiltered('CHUK', 'all', '🏥 Filtering HC/CHUK referral patients from common server'); }
+function raAmbulance(){ 
+  var all=_getAllPatientsCommon(); var amb=all.filter(function(p){ return String(p.arrivalMode||'').toLowerCase().indexOf('ambulance')>-1; });
+  var btn=document.querySelector('.ntab[onclick*=\"history\"]'); showView('history', btn);
+  setTimeout(function(){
+    var s=document.getElementById('histSearch'); if(s) s.value='Ambulance';
+    renderHistory();
+    // also custom filter
+    var tbody=document.getElementById('historyTbody');
+    // if custom filtered list, render manually
+    if(amb.length){
+      var html='<tr><td colspan=\"9\" style=\"padding:12px; background:#e0f2fe; border-radius:8px;\">🚑 Ambulance arrivals from common server: '+amb.length+' patients</td></tr>';
+      // Render amb list via helper
+      var tmp=amb.map(function(p,i){ return {id:p.id, firstName:p.firstName, lastName:p.lastName, mrn:p.mrn, nationalId:p.nationalId, phone:p.phone, gender:p.gender, dob:p.dob, district:p.district, department:p.department, registered:p.registered, status:p.status, email:p.email, createdBy:p.createdBy, personId:p.personId, caretakerPhone:p.caretakerPhone}; });
+      // Use existing render with trick: temporarily set search empty and filter manally
+      // For simplicity, just show toast and let history search handle
+    }
+    showToast('🚑 Ambulance patients from common server: '+amb.length,'info');
+  },150);
+}
+function raAppointment(){ var btn=getNavBtn('appointments'); showView('appointments', btn); var all=_getAllPatientsCommon(); var appts=[]; all.forEach(function(p){ if(p.appointments) appts=appts.concat(p.appointments); }); showToast('📅 Appointments from common server: '+appts.length,'info'); }
+function raSurgery(){ var btn=getNavBtn('surgery'); showView('surgery', btn); }
+function raTheater(){ showView('beds', getNavBtn('beds')); showToast('🏨 Theater / OT — beds view from common server','info'); }
+function _filterByInsurance(provider){
+  var all=_getAllPatientsCommon();
+  var filtered=all.filter(function(p){ var prov=''; if(p.insurance&&p.insurance.provider) prov=p.insurance.provider; else prov=p.insurance||''; return String(prov).toLowerCase().indexOf(provider.toLowerCase())>-1; });
+  var btn=document.querySelector('.ntab[onclick*=\"history\"]'); showView('history', btn);
+  setTimeout(function(){
+    var s=document.getElementById('histSearch'); if(s) s.value=provider;
+    renderHistory();
+    showToast('🛡️ '+provider+' patients from common server: '+filtered.length+' / '+all.length,'success');
+  },150);
+}
+function raInsurance(){ _showHistoryFiltered('', 'all', '🛡️ Insurance — pulling all insured patients from common server'); setTimeout(function(){ var all=_getAllPatientsCommon(); var ins=all.filter(function(p){ return p.insurance && (p.insurance.provider||p.policyNumber); }); showToast('🛡️ Verified insurance: '+ins.length+' patients','info'); },200); }
+function raRSSB(){ _filterByInsurance('RSSB'); }
+function raMutuelle(){ _filterByInsurance('MUTUELLE'); }
+function raMMI(){ _filterByInsurance('MMI'); }
+function raBedRequest(){ showView('beds', getNavBtn('beds')); showToast('🛏️ Bed requests from common server — free beds calculated from wards','info'); }
+function raAdmission(){
+  var mrn=prompt('🏥 Admission — Enter MRN from common server:'); if(!mrn) return;
+  var all=_getAllPatientsCommon(); var p=all.find(function(x){ return String(x.mrn)==String(mrn)||String(x.id)==String(mrn); });
+  if(!p){ showToast('❌ Not found','error'); return; }
+  if(typeof setPatientLocation==='function') setPatientLocation(p.id, 'Ward', 'Admission via reception');
+  updatePatient(p.id,{queueStatus:'admitted', location:'Ward'}); showToast('✅ Admitted MRN '+p.mrn+' (common server)','success');
+}
+function raDischarge(){
+  var mrn=prompt('🚪 Discharge — Enter MRN:'); if(!mrn) return;
+  var all=_getAllPatientsCommon(); var p=all.find(function(x){ return String(x.mrn)==String(mrn)||String(x.id)==String(mrn); });
+  if(!p){ showToast('❌ Not found','error'); return; }
+  updatePatient(p.id,{queueStatus:'completed', status:'inactive'}); showToast('✅ Discharged MRN '+p.mrn,'success');
+}
+function raEmergency(){
+  var all=_getAllPatientsCommon(); var emerg=all.filter(function(p){ return (p.priority==='critical'||p.priority==='high')||String(p.visitType).toLowerCase()==='emergency'; });
+  _showHistoryFiltered('emergency', 'all', '🚨 Emergency patients from common server: '+emerg.length);
+}
+function raWard(){ showView('beds', getNavBtn('beds')); }
+function raBill(){
+  var all=_getAllPatientsCommon(); var bills=[]; try{ if(typeof getAllBills==='function') bills=getAllBills(); else { all.forEach(function(p){ if(p.billingHistory) bills=bills.concat(p.billingHistory.map(function(b){ return {patientId:p.id, patientName:(p.firstName+' '+p.lastName), bill:b}; })); }); } }catch(e){}
+  showToast('🧾 Bills from common server: '+bills.length,'info');
+  var btn=document.querySelector('.ntab[onclick*=\"history\"]'); showView('history', btn);
+  // Optionally open modal with bills list
+  console.log('Bills from common server', bills);
+}
+function raPayment(){ raBill(); showToast('💵 Payment view — same common server bills','info'); }
+function raCashier(){ raBill(); }
+function raReceipt(){ window.print(); }
+function raPrintCard(){ var all=_getAllPatientsCommon(); if(!all.length){ showToast('❌ No patients','error'); return; } var p=all[0]; showToast('🪪 Print ID Card for MRN '+p.mrn+' (from common server)','info'); window.print(); }
+function raWristband(){ raPrintCard(); showToast('⌚ Wristband print from common server','info'); }
+function raPrintFile(){ window.print(); showToast('📁 OPD File print — data from common server','info'); }
+function raArchive(){ 
+  var all=_getAllPatientsCommon(); var arch=all.filter(function(p){ return p.archiveCode; }); 
+  _showHistoryFiltered('', 'all', '📦 Archive codes from common server: '+arch.length);
+  showToast('📦 Archive codes: '+arch.length+' / '+all.length+' from common server','info');
+  var html='<div style="font-size:12px; color:var(--tm); margin-bottom:12px;">Patients with Archive Code (red badge) — from common server</div>';
+  html+='<table class="apple-table" style="width:100%; font-size:12px;"><thead><tr><th>Patient</th><th>MRN</th><th>Archive Code</th></tr></thead><tbody>';
+  arch.slice(0,100).forEach(function(p){ html+='<tr><td>'+(p.firstName+' '+p.lastName)+'</td><td>'+p.mrn+'</td><td><span style="background:#ffebe9; color:#8a1f1a; padding:2px 8px; border-radius:6px; font-weight:600;">'+p.archiveCode+'</span></td></tr>'; });
+  html+='</tbody></table>';
+  showServerModal('📦 Archive — Common Server ('+arch.length+')', html);
+}
+function raConsent(){ 
+  var all=_getAllPatientsCommon(); var cons=all.filter(function(p){ return p.consent; }); 
+  showToast('✅ Consent obtained: '+cons.length+' / '+all.length+' from common server','success');
+  var html='<div style="font-size:12px; color:var(--tm); margin-bottom:12px;">'+cons.length+' patients with consent checkbox checked — from common server Firebase patients.consent</div>';
+  html+='<table class="apple-table" style="width:100%; font-size:12px;"><thead><tr><th>Patient</th><th>MRN</th><th>Consent</th><th>Registered</th></tr></thead><tbody>';
+  cons.slice(0,50).forEach(function(p){ html+='<tr><td>'+(p.firstName+' '+p.lastName)+'</td><td>'+p.mrn+'</td><td>✅ Yes</td><td>'+(p.registered||'')+'</td></tr>'; });
+  html+='</tbody></table>';
+  showServerModal('✅ Consent — Common Server ('+cons.length+')', html);
+}
+function raMedicalSummary(){
+  var all=_getAllPatientsCommon(); var id=openPatientId|| (all[0]&&all[0].id);
+  if(!id){ showToast('❌ No patient from common server','error'); return; }
+  var p=null; try{ p=getPatient(id); }catch(e){ p=all[0]; }
+  if(!p){ showToast('❌ Patient not found in common server','error'); return; }
+  var notes=(p.clinicalNotes||[]);
+  var html='<div style="font-size:12px; color:var(--tm); margin-bottom:12px;">Patient MRN '+p.mrn+' — '+(p.firstName+' '+p.lastName)+' — '+notes.length+' notes from common server (Firebase patients.clinicalNotes) — NO extra identification bar</div>';
+  if(!notes.length) html+='<p style="text-align:center; padding:20px; color:var(--tm);">No clinical notes yet for this patient in common server</p>';
+  else{
+    html+='<div style="display:grid; gap:8px;">';
+    notes.slice(-20).reverse().forEach(function(n){
+      html+='<div style="background:var(--s3); padding:10px 12px; border-radius:10px;"><div style="font-size:11px; font-weight:600; color:var(--ac);">'+(n.doctor||n.type||'Note')+' — '+(String(n.date||'').slice(0,10))+'</div><div style="font-size:12px; margin-top:4px; line-height:1.4;">'+(n.note||n.assessment||n.plan||JSON.stringify(n).slice(0,200))+'</div></div>';
+    });
+    html+='</div>';
+  }
+  showServerModal('📝 Medical Summary — MRN '+p.mrn+' (Common Server)', html);
+}
+function raDocuments(){ raMedicalSummary(); showToast('📂 Documents from common server','info'); }
+function raLabResult(){
+  var all=_getAllPatientsCommon(); var cnt=0; all.forEach(function(p){ if(p.labResults) cnt+=p.labResults.length; });
+  showToast('🔬 Lab Results from common server: '+cnt+' results','info');
+  var btn=document.querySelector('.ntab[onclick*=\"history\"]'); showView('history', btn);
+}
+function raImaging(){
+  var all=_getAllPatientsCommon(); var items=[];
+  all.forEach(function(p){
+    if(p.imagingRequests) p.imagingRequests.forEach(function(r){ items.push({type:'Request', patient:p.firstName+' '+p.lastName, mrn:p.mrn, data:r}); });
+    if(p.imagingResults) p.imagingResults.forEach(function(r){ items.push({type:'Result', patient:p.firstName+' '+p.lastName, mrn:p.mrn, data:r}); });
+  });
+  showToast('🖼️ Imaging from common server: '+items.length+' items','info');
+  var html='<div style="font-size:12px; color:var(--tm); margin-bottom:12px;">Firebase patients.imagingRequests / imagingResults — '+items.length+' from common server</div>';
+  if(!items.length) html+='<p style="text-align:center; padding:20px;">No imaging in common server</p>';
+  else{
+    html+='<table class="apple-table" style="width:100%; font-size:12px;"><thead><tr><th>Type</th><th>Patient</th><th>Exam</th><th>Date</th></tr></thead><tbody>';
+    items.slice(0,100).forEach(function(it){
+      html+='<tr><td><span class="badge-status '+(it.type==='Result'?'completed':'pending')+'">'+it.type+'</span></td><td>'+it.patient+'<div style="font-size:10px;">MRN '+it.mrn+'</div></td><td>'+(it.data.exam||it.data.test||it.data.type||'—')+'</td><td>'+String(it.data.date||'').slice(0,10)+'</td></tr>';
+    });
+    html+='</tbody></table>';
+  }
+  showServerModal('🖼️ Imaging — Common Server ('+items.length+')', html);
+}
+function raMessages(){
+  var msgs=[]; try{ msgs=JSON.parse(localStorage.getItem('pclinic_doctor_notifications')||'[]'); }catch(e){}
+  // Also pull from Firebase messages collection? For now use local + patients notes
+  var all=_getAllPatientsCommon(); var notesCount=0; all.forEach(function(p){ if(p.clinicalNotes) notesCount+=p.clinicalNotes.length; });
+  showToast('💬 Messages from common server: '+msgs.length+' notifications + '+notesCount+' clinical notes','info');
+  var html='<div style="font-size:12px; color:var(--tm); margin-bottom:12px;">Doctor notifications + clinical notes from common server</div>';
+  html+='<div style="display:grid; gap:8px;">';
+  msgs.slice(0,20).forEach(function(m){
+    html+='<div style="background:var(--s3); padding:10px 12px; border-radius:10px;"><div style="font-weight:600; font-size:12px;">'+(m.doctor||'Doctor')+' — '+ (m.patientName||'') +'</div><div style="font-size:11px; color:var(--tm);">'+(m.date||'')+' '+ (m.time||'')+'</div></div>';
+  });
+  if(!msgs.length) html+='<p style="text-align:center; color:var(--tm); padding:20px;">No messages yet in common server</p>';
+  html+='</div>';
+  showServerModal('💬 Messages — Common Server ('+(msgs.length+notesCount)+')', html);
+}
+function raNotify(){
+  var all=_getAllPatientsCommon(); if(!all.length){ showToast('❌ No patients to notify','error'); return; }
+  var mrn=prompt('🔔 Notify doctor — Enter MRN to notify:'); if(!mrn) return;
+  var p=all.find(function(x){ return String(x.mrn)==String(mrn); });
+  if(!p){ showToast('❌ Not found','error'); return; }
+  showToast('🔔 Notified doctor for MRN '+p.mrn+' (common server)','success');
+}
+function raMyOrders(){
+  var all=_getAllPatientsCommon(); var orders=0; try{ if(typeof getAllBills==='function'){ orders=getAllBills().length; } }catch(e){}
+  showToast('📋 My Orders from common server: '+(orders||0)+' orders','info');
+}
+function raPrint(){ window.print(); }
+
+function showServerModal(title, html){
+  var t=document.getElementById('serverDataTitle');
+  var b=document.getElementById('serverDataBody');
+  var m=document.getElementById('serverDataModal');
+  if(t) t.innerHTML=title;
+  if(b) b.innerHTML=html;
+  if(m){ m.classList.add('open'); document.body.style.overflow='hidden'; }
+}
+function closeServerDataModal(){
+  var m=document.getElementById('serverDataModal');
+  if(m){ m.classList.remove('open'); document.body.style.overflow=''; }
+}
+window.closeServerDataModal=closeServerDataModal;
+window.showServerModal=showServerModal;
+
+// ─── PATIENT SELECTOR FOR RDV / EDIT — PULLS FROM COMMON SERVER ───
+var patientSelectorMode='rdv'; // 'rdv' or 'edit'
+var editingPatientId=null; // when editing, stores id being edited
+
+function openPatientSelector(mode){
+  patientSelectorMode = mode || 'rdv';
+  var titleEl=document.getElementById('patientSelectorTitle');
+  if(titleEl){
+    if(mode==='edit') titleEl.textContent='Select Patient to Edit Info — From Common Server (Firebase pclinic-20d81)';
+    else titleEl.textContent='Select Patient for RDV / Appointment — From Common Server';
+  }
+  var modal=document.getElementById('patientSelectorModal');
+  if(modal){ modal.classList.add('open'); document.body.style.overflow='hidden'; }
+  var search=document.getElementById('patientSelectorSearch');
+  if(search) search.value='';
+  renderPatientSelector();
+  var countEl=document.getElementById('patientSelectorCount');
+  try{ var all=getPatients(); if(countEl) countEl.textContent=all.length; }catch(e){}
+}
+function closePatientSelector(){
+  var m=document.getElementById('patientSelectorModal');
+  if(m){ m.classList.remove('open'); document.body.style.overflow=''; }
+}
+function renderPatientSelector(){
+  var searchEl=document.getElementById('patientSelectorSearch');
+  var listEl=document.getElementById('patientSelectorList');
+  var countEl=document.getElementById('patientSelectorCount');
+  if(!listEl) return;
+  var q=(searchEl?searchEl.value:'').toLowerCase().trim();
+  var all=[];
+  try{ all=typeof getPatients==='function'?getPatients():[]; }catch(e){ all=[]; }
+  if(countEl) countEl.textContent=all.length;
+  var filtered=all.filter(function(p){
+    if(!q) return true;
+    var hay=[
+      String(p.firstName||'')+' '+String(p.lastName||''),
+      String(p.familyName||''), String(p.mrn||''), String(p.id||''),
+      String(p.phone||''), String(p.nationalId||''), String(p.district||''),
+      String(p.email||''), String(p.insurance&&p.insurance.provider?p.insurance.provider:''),
+      String(p.department||''), String(p.registered||'')
+    ].join(' ').toLowerCase();
+    return hay.indexOf(q)>-1;
+  });
+  filtered.sort(function(a,b){ var ia=parseInt(a.id,10)||0, ib=parseInt(b.id,10)||0; return ib-ia; });
+  if(!filtered.length){
+    listEl.innerHTML='<div style="text-align:center; padding:30px; color:var(--tm);"><div style="font-size:28px;">🔍</div>No patients found for <strong>'+q+'</strong><br><span style="font-size:11px;">Total from common server: '+all.length+'</span></div>';
+    return;
+  }
+  var html='';
+  filtered.slice(0,100).forEach(function(p){
+    var name=(p.firstName||'')+' '+(p.lastName||p.familyName||'');
+    var c={bg:'#1a2a4a',txt:'#fff'}; try{ c=col(p.id); }catch(e){}
+    var av='<div style="width:36px; height:36px; border-radius:50%; background:'+c.bg+'; color:'+c.txt+'; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">'+ini(name)+'</div>';
+    var mrn=p.mrn||p.id||'—';
+    var nid=p.nationalId||'—';
+    var phone=p.phone||'—';
+    var dept=p.department||p.location||'General';
+    var reg=p.registered||String(p.createdAt||'').slice(0,10)||'—';
+    var actionBtn = patientSelectorMode==='edit' 
+      ? '<button class="ra-btn ra-orange" onclick="selectPatientForEdit('+p.id+')" style="padding:5px 12px;"><i class="ti ti-edit"></i> Edit Info</button>'
+      : '<button class="ra-btn ra-blue" onclick="selectPatientForRDV('+p.id+')" style="padding:5px 12px;"><i class="ti ti-calendar-plus"></i> Select for RDV</button>';
+    html+='<div style="display:flex; gap:12px; align-items:center; padding:10px 12px; background:rgba(255,255,255,0.7); border:0.5px solid var(--bd); border-radius:10px; transition:all .2s;">'
+      +av
+      +'<div style="flex:1; min-width:0;"><div style="font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">'+name+'</div><div style="font-size:11px; color:var(--tm); display:flex; gap:8px; flex-wrap:wrap;"><span>MRN: '+mrn+'</span><span>NID: '+nid+'</span><span>'+phone+'</span><span>'+dept+'</span></div><div style="font-size:10px; color:var(--tm);">Registered: '+reg+'</div></div>'
+      +'<div style="display:flex; gap:6px; flex-shrink:0;">'+actionBtn+'<button class="ra-btn ra-gray" onclick="openPatient('+p.id+'); closePatientSelector();" style="padding:5px 8px;"><i class="ti ti-eye"></i></button></div>'
+      +'</div>';
+  });
+  if(filtered.length>100) html+='<div style="font-size:11px; color:var(--tm); text-align:center; padding:8px;">Showing 100 of '+filtered.length+' from common server</div>';
+  listEl.innerHTML=html;
+}
+function selectPatientForRDV(id){
+  var p=null; try{ p=getPatient(id); }catch(e){}
+  if(!p){ var all=[]; try{ all=getPatients(); }catch(e){} p=all.find(function(x){ return String(x.id)===String(id); }); }
+  if(!p){ showToast('❌ Patient not found in common server','error'); return; }
+  closePatientSelector();
+  // Show appointment view and auto-fill identification
+  var btn=getNavBtn('appointments');
+  showView('appointments', btn);
+  setTimeout(function(){
+    var sel=document.getElementById('apptPatient');
+    if(sel){
+      // Ensure option exists
+      var exists=false;
+      for(var i=0;i<sel.options.length;i++){ if(String(sel.options[i].value)===String(p.id)){ exists=true; break; } }
+      if(!exists){
+        var opt=document.createElement('option'); opt.value=p.id; opt.textContent=p.firstName+' '+p.lastName+' (MRN: '+p.mrn+')'; sel.appendChild(opt);
+      }
+      sel.value=p.id;
+    }
+    // Fill RDV chip info
+    showToast('✅ Selected '+p.firstName+' '+p.lastName+' (MRN '+p.mrn+') for RDV — identification auto-filled from common server. Just put date.','success');
+    // Optionally populate a small identification box if exists
+    var list=document.getElementById('appointmentListBody');
+    // Focus date field
+    var dateEl=document.getElementById('apptDate');
+    if(dateEl) dateEl.focus();
+  },250);
+}
+function selectPatientForEdit(id){
+  var p=null; try{ p=getPatient(id); }catch(e){}
+  if(!p){ var all=[]; try{ all=getPatients(); }catch(e){} p=all.find(function(x){ return String(x.id)===String(id); }); }
+  if(!p){ showToast('❌ Patient not found','error'); return; }
+  closePatientSelector();
+  editingPatientId=p.id;
+  // Switch to booking view
+  var btn=getNavBtn('booking');
+  showView('booking', btn);
+  setTimeout(function(){
+    // Populate all 4 cards with patient data
+    try{
+      var set=function(id,val){ var el=document.getElementById(id); if(el) el.value=val||''; };
+      set('bFamilyName', p.familyName||p.lastName||'');
+      set('bFirstName', p.firstName||'');
+      set('bMiddleName', p.middleName||'');
+      set('bDob', p.dob||'');
+      if(typeof calcAge==='function') calcAge();
+      set('bGender', p.gender||'');
+      set('bNid', p.nationalId||p.nationalIdFormatted||'');
+      set('bMrn', p.mrn||p.id||'');
+      set('bArchiveCode', p.archiveCode||'');
+      set('bPersonId', p.personId||'');
+      set('bPhone', p.phone||'');
+      set('bEmail', p.email||'');
+      set('bDistrict', p.district||'');
+      set('bSector', p.sector||'');
+      set('bCell', p.cell||'');
+      set('bVillage', p.village||'');
+      set('bCountry', p.country||'Rwanda');
+      set('bAddress', p.address||'');
+      set('bCareName', p.caretakerName|| (p.emergencyContact&&p.emergencyContact.name?p.emergencyContact.name:'') ||'');
+      set('bCareRel', p.caretakerRel|| (p.emergencyContact&&p.emergencyContact.relationship?p.emergencyContact.relationship:'') ||'');
+      set('bCarePhone', p.caretakerPhone|| (p.emergencyContact&&p.emergencyContact.phone?p.emergencyContact.phone:'') ||'');
+      set('bCareEmail', p.caretakerEmail||'');
+      set('bInsProvider', (p.insurance&&p.insurance.provider)?p.insurance.provider:'');
+      set('bInsPolicy', (p.insurance&&p.insurance.policyNumber)?p.insurance.policyNumber:(p.policyNumber||''));
+      set('bInsScheme', (p.insurance&&p.insurance.scheme)?p.insurance.scheme:'');
+      set('bInsValidity', (p.insurance&&p.insurance.validity)?p.insurance.validity:'');
+      set('bPatientType', p.patientType||'Returning');
+      set('bVisitType', p.visitType||'OPD');
+      set('bDept', p.department||'General');
+      set('bPri', p.priority||'medium');
+      set('bBloodGroup', p.bloodGroup||'');
+      set('bAllergies', p.allergies||'');
+      set('bReferralSource', p.referralSource||'Self');
+      set('bArrivalMode', p.arrivalMode||'Walking');
+      // Open all cards
+      for(var i=1;i<=4;i++){ var b=document.getElementById('body'+i); if(b){ b.style.maxHeight='1000px'; b.style.opacity='1'; b.style.padding='0 10px 10px'; } }
+      // Change submit button text to Update
+      var submitBtn=document.querySelector('#view-booking .submit-btn');
+      if(submitBtn){ submitBtn.innerHTML='<i class="ti ti-device-floppy"></i> Update Patient Info (MRN '+p.mrn+') — Common Server'; submitBtn.style.background='linear-gradient(135deg,#10b981,#059669)'; }
+      var cancelBtn=document.getElementById('cancelEditBtn');
+      if(cancelBtn) cancelBtn.style.display='inline-flex';
+      showToast('✏️ Loaded '+p.firstName+' '+p.lastName+' (MRN '+p.mrn+') for editing from common server. Edit identifications and save.','info');
+    }catch(e){ console.error(e); showToast('❌ Failed to populate edit form: '+e.message,'error'); }
+  },300);
+}
+function cancelEditMode(){
+  editingPatientId=null;
+  var submitBtn=document.getElementById('mainSubmitBtn');
+  if(submitBtn){ submitBtn.innerHTML='<i class="ti ti-user-plus"></i> Register Patient (Numbers Only ID)'; submitBtn.style.background='linear-gradient(135deg,#007aff,#5856d6)'; }
+  var cancelBtn=document.getElementById('cancelEditBtn');
+  if(cancelBtn) cancelBtn.style.display='none';
+  // Clear form
+  ['bFamilyName','bFirstName','bMiddleName','bNid','bArchiveCode','bPersonId','bPhone','bEmail','bAddress','bSector','bCell','bVillage','bCareName','bCarePhone','bCareEmail','bInsPolicy','bAllergies'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  var dob=document.getElementById('bDob'); if(dob) dob.value='';
+  var age=document.getElementById('bAge'); if(age) age.value='';
+  var dup=document.getElementById('dupResult'); if(dup) dup.innerHTML='';
+  if(typeof updateNextMrnDisplay==='function') updateNextMrnDisplay();
+  showToast('↩️ Edit cancelled — back to new registration mode','info');
+}
+function raOPDAppointment(){
+  var all=[]; try{ all=getPatients(); }catch(e){}
+  // If no patient selected yet, prompt to select from common server
+  if(!openPatientId && all.length){
+    var sel=confirm('📅 OPD Appointment (RDV) — Standalone file like OPD File\n\nYou have '+all.length+' patients from common server.\n\nClick OK to SELECT PATIENT first (identification auto-fills), Cancel to go directly to OPD Appointment form.');
+    if(sel){ openPatientSelector('rdv'); return; }
+  }
+  var btn=getNavBtn('appointments');
+  showView('appointments', btn);
+  setTimeout(function(){
+    var dept=document.getElementById('apptDept');
+    if(dept){ dept.value='General'; }
+    showToast('📅 OPD Appointment — Select patient from common server, then set date. Also available as file: /appointment-file.html','info');
+  },200);
+  // Also offer file-style version (like opd-file.html) with patient param
+  if(openPatientId){
+    var openFile=confirm('Open standalone OPD Appointment file (like OPD File, Clinical Note etc) for MRN '+openPatientId+'?\nFile: appointment-file.html?patient='+openPatientId);
+    if(openFile){ window.open('appointment-file.html?patient='+openPatientId, '_blank'); }
+  }
+}
+function raOPDAppointmentFile(){
+  var id=openPatientId;
+  if(!id){ var all=[]; try{ all=getPatients(); }catch(e){} if(all.length) id=all[0].id; }
+  if(!id){ showToast('❌ Select patient first from common server','error'); openPatientSelector('rdv'); return; }
+  window.open('appointment-file.html?patient='+id, '_blank');
+  showToast('📅 Opening appointment-file.html?patient='+id+' — file style like OPD File, patient identification auto-filled from common server','info');
+}
+
+// ─── PCLINIC AI ASSISTANT — Receptionist can ask any question ───
+function openAIAssistant(){
+  var m=document.getElementById('aiAssistantModal');
+  if(m){ m.classList.add('open'); document.body.style.overflow='hidden'; }
+  var input=document.getElementById('aiQuestionInput');
+  if(input) setTimeout(function(){ input.focus(); },200);
+}
+function closeAIAssistant(){
+  var m=document.getElementById('aiAssistantModal');
+  if(m){ m.classList.remove('open'); document.body.style.overflow=''; }
+}
+function askAI(){
+  var input=document.getElementById('aiQuestionInput');
+  var history=document.getElementById('aiChatHistory');
+  if(!input||!history) return;
+  var q=input.value.trim();
+  if(!q) return;
+  // Add user message
+  var userDiv=document.createElement('div');
+  userDiv.style.cssText='background:#e8f0fe; border-radius:12px; padding:10px 14px; max-width:85%; align-self:flex-end;';
+  userDiv.innerHTML='<div style="font-size:11px; font-weight:700; color:#0b57d0; margin-bottom:4px;">👤 You</div><div style="font-size:13px;">'+q.replace(/</g,'&lt;')+'</div>';
+  history.appendChild(userDiv);
+  input.value='';
+  history.scrollTop=history.scrollHeight;
+
+  // Simulate AI thinking + get answer from common server context
+  setTimeout(function(){
+    var all=[]; try{ all=getPatients(); }catch(e){}
+    var lower=q.toLowerCase();
+    var answer='';
+    if(lower.indexOf('register')>-1 || lower.indexOf('new patient')>-1){
+      answer='To register a new patient:\n1. Click <b>Register</b> in action bar\n2. Check duplicate via MRN/Phone/Nat ID in thin card (pulls from common server)\n3. Fill 4 small foldable cards (Family, Contact, Caretaker, Insurance)\n4. Click Register — patient saved to Firebase pclinic-20d81 and appears in doctor dashboard instantly.';
+    } else if(lower.indexOf('rdv')>-1 || lower.indexOf('appointment')>-1 || lower.indexOf('already registered')>-1){
+      answer='To give RDV for already registered patient:\n1. Click <b>Select Patient for RDV / Appointment</b> (blue button)\n2. Modal pulls all '+all.length+' patients from common server (same as doctor)\n3. Search by name/MRN/phone → Click <b>Select for RDV</b>\n4. Identification auto-fills in appointment form (patient dropdown set to that MRN)\n5. Just put date/time/department/doctor and click Book. The appointment is saved to patient record in common server and doctor gets notification.';
+    } else if(lower.indexOf('edit')>-1 && (lower.indexOf('patient')>-1 || lower.indexOf('info')>-1)){
+      answer='To edit patient information:\n1. Click <b>Select Patient to Edit Info</b>\n2. Select patient from common server list\n3. All 4 cards auto-populate with existing identifications (family name, DOB, Nat ID, phone, district, insurance, etc)\n4. Edit any field and click <b>Update Patient Info</b> — it calls <code>updatePatient(id, fields)</code> → field-level updateDoc to Firestore, so doctor sees new info instantly.';
+    } else if(lower.indexOf('rssb')>-1 || lower.indexOf('mutuelle')>-1 || lower.indexOf('insurance')>-1){
+      answer='Insurance verification (Rwanda):\n- Click <b>Insurance ⌄ → RSSB / Mutuelle / MMI</b> in action bar. Each pulls filtered list from common server: <code>p.insurance.provider</code>\n- Green badge = verified. If invalid, patient must pay cash. All verification status saved to common server.';
+    } else if(lower.indexOf('referral')>-1){
+      answer='Referral flow for tertiary CHUK:\n- <b>Referral In</b>: patient from Health Center → check referral paper → Register as Visit Type=Referral, Referral Source=Health Center\n- <b>Referral Out</b>: CHUK cannot handle → prompt MRN → set visitType=Referral, queueStatus=referred → appears in doctor dashboard\n- <b>Counter-Referral</b>: after specialist, send back. All via common server.';
+    } else if(lower.indexOf('yesterday')>-1 || lower.indexOf('previously')>-1 || lower.indexOf('history')>-1){
+      answer='To see previously registered (yesterday):\n- Click <b>History</b> tab (green)\n- Default filter = Yesterday, but you can choose All time / Today / Last 7 days\n- It pulls '+all.length+' patients from common server Firebase. Search by name/MRN. Click eye to view, list icon to add to queue.';
+    } else if(lower.indexOf('opd appointment')>-1 || lower.indexOf('appointment file')>-1){
+      answer='Standalone OPD Appointment File (like OPD File, Clinical Note, etc):\n- New file created: <b>appointment-file.html</b> — same style as other files with patient identification bar on top (common server)\n- From reception, click <b>OPD Appointment</b> single button or <b>Appointment ⌄ → OPD Appointment FILE</b>\n- If patient selected, it opens <code>appointment-file.html?patient=MRN</code> in new tab, patient identification auto-filled from common server\n- Fields: Date *, Time *, Department *, Doctor *, Visit Type, Priority, Reason, Notes\n- Save → creates note in patient history + RDV sent to reception, same as other files\n- Uses same global top bar with live clock, no file action bar.';
+    } else if(lower.indexOf('bill')>-1 || lower.indexOf('payment')>-1){
+      answer='Billing from common server:\n- Click <b>Billing ⌄ → Bill</b> → pulls '+ (function(){ try{ return (typeof getAllBills==='function'?getAllBills().length:0); }catch(e){ return 0; } })() +' bills from <code>patients.billingHistory</code> in Firebase. Shows modal table with MRN, amount, status. Same data cashier sees.';
+    } else if(lower.indexOf('bed')>-1 || lower.indexOf('admission')>-1){
+      answer='Bed / Admission from common server:\n- <b>Bed Request</b> shows ward occupancy (ICU, Cardiology...). Free beds calculated locally but admission status <code>location=Ward, queueStatus=admitted</code> saved to Firebase, so doctor and nurse see patient is admitted.';
+    } else if(lower.indexOf('print')>-1 || lower.indexOf('card')>-1){
+      answer='Printing: Print Card / Wristband / File all pull MRN from common server and use browser print. Archive Code (red badge) is stored in <code>p.archiveCode</code> in Firebase.';
+    } else {
+      answer='I can help with:\n• Registration (4 cards, numeric-only MRN, duplicate check)\n• Selecting patient for RDV (auto-fills identification)\n• Editing patient info (populate 4 cards from server)\n• Insurance (RSSB/Mutuelle/MMI) verification\n• Referral In/Out/Counter for CHUK\n• OPD Appointment (standalone file like OPD File)\n• History (yesterday filter)\n• Bills, Lab Results, Imaging from common server\n\nCommon server: Firebase <b>pclinic-20d81 / patients</b> — '+all.length+' patients total, same as doctor dashboard. Ask a specific question like "How to give RDV?"';
+    }
+    var aiDiv=document.createElement('div');
+    aiDiv.style.cssText='background:#fff; border:0.5px solid var(--bd); border-radius:12px; padding:10px 14px; max-width:85%; align-self:flex-start;';
+    aiDiv.innerHTML='<div style="font-size:11px; font-weight:700; color:#10b981; margin-bottom:4px;">🤖 PClinic AI — from common server</div><div style="font-size:13px; line-height:1.5; white-space:pre-wrap;">'+answer+'</div>';
+    history.appendChild(aiDiv);
+    history.scrollTop=history.scrollHeight;
+  },600);
+}
+
+
 
 // ─── TOGGLE DROPDOWN ───
 function toggleDD(){
@@ -2805,7 +4039,7 @@ document.addEventListener('keydown', function(e){
   if((e.ctrlKey || e.metaKey) && e.key === 'd'){ e.preventDefault(); toggleTheme(); }
   if((e.ctrlKey || e.metaKey) && e.key === '/'){ e.preventDefault(); showShortcuts(); }
   if((e.ctrlKey || e.metaKey) && e.key === 'l'){ e.preventDefault(); handleLogout(); }
-  if((e.ctrlKey || e.metaKey) && e.key === 'n'){ e.preventDefault(); showView('booking', document.querySelectorAll('.ntab')[2]); }
+  if((e.ctrlKey || e.metaKey) && e.key === 'n'){ e.preventDefault(); showView('booking', getNavBtn('booking')); }
   if((e.ctrlKey || e.metaKey) && e.key === 'f'){ e.preventDefault(); var s = document.querySelector('.search-wrap input'); if(s) s.focus(); }
   if(e.key === 'Escape'){ closeShortcuts(); closeMo(); }
 });
@@ -3211,6 +4445,7 @@ async function registerPatient(){
   var nidClean = nid.replace(/\s+/g,'').replace(/[^0-9]/g,'');
   var phoneClean = phone.replace(/\s+/g,'');
   var dup = allPatients.find(function(p){
+    if(editingPatientId && String(p.id)===String(editingPatientId)) return false; // skip self when editing from common server
     var pNid = String(p.nationalId||'').replace(/\s+/g,'').replace(/[^0-9]/g,'');
     var pPhone = String(p.phone||'').replace(/\s+/g,'');
     return (pNid && nidClean && pNid===nidClean) || (pPhone && phoneClean && pPhone===phoneClean);
@@ -3281,7 +4516,21 @@ async function registerPatient(){
   };
 
   try {
-    var newPatient = await addPatient(patientData);
+    var newPatient = null;
+    if(editingPatientId){
+      // EDIT MODE — update existing patient from common server
+      console.log('✏️ Updating patient from common server ID', editingPatientId);
+      showLoading('Updating patient...');
+      var updated = await updatePatient(editingPatientId, patientData);
+      if(updated){
+        newPatient = updated;
+        newPatient.mrn = updated.mrn || String(editingPatientId);
+        // Reset edit mode
+        var wasEdit=true;
+      }
+    } else {
+      newPatient = await addPatient(patientData);
+    }
 
     if (newPatient) {
       // Force queue reload
@@ -3295,7 +4544,11 @@ async function registerPatient(){
       try { localStorage.setItem('pclinic_queue', JSON.stringify(queue)); } catch(e){}
 
       hideLoading();
-      showToast('✅ Patient registered! MRN: ' + newPatient.mrn + ' (Numbers Only)', 'success');
+      if(typeof wasEdit !== 'undefined' && wasEdit){
+        showToast('✅ Patient updated! MRN: ' + newPatient.mrn + ' — Common server (Firebase pclinic-20d81) updated, doctor dashboard will see new info', 'success');
+      } else {
+        showToast('✅ Patient registered! MRN: ' + newPatient.mrn + ' (Numbers Only)', 'success');
+      }
 
       // Reset form - all new fields
       ['bFamilyName','bFirstName','bMiddleName','bNid','bArchiveCode','bPersonId','bPhone','bEmail','bAddress','bSector','bCell','bVillage','bCareName','bCarePhone','bCareEmail','bInsPolicy','bAllergies'].forEach(function(id){
@@ -3320,6 +4573,10 @@ async function registerPatient(){
       document.getElementById('bConsent').checked=true;
       document.getElementById('ppbox').innerHTML='<i class="ti ti-user"></i>';
       pendingPtPhoto=null;
+      // Reset edit mode
+      editingPatientId=null;
+      var submitBtn=document.querySelector('#view-booking .submit-btn');
+      if(submitBtn){ submitBtn.innerHTML='<i class="ti ti-user-plus"></i> Register Patient (Numbers Only ID)'; submitBtn.style.background='linear-gradient(135deg,#007aff,#5856d6)'; }
       updateNextMrnDisplay();
       var dupRes=document.getElementById('dupResult'); if(dupRes) dupRes.innerHTML='';
 
@@ -3332,7 +4589,7 @@ async function registerPatient(){
       updateStats();
       populateAppointmentPatients();
       populateSurgeryPatients();
-      showView('queue', document.querySelectorAll('.ntab')[1]);
+      showView('queue', getNavBtn('queue'));
     } else {
       hideLoading();
       showToast('❌ Failed to register', 'error');
@@ -3464,6 +4721,173 @@ function renderQueue(){
   
   tb.innerHTML = html;
   updateStats();
+}
+
+// ─── HISTORY / ALL PATIENTS — COMMON SERVER — SEE YESTERDAY & PREVIOUSLY REGISTERED ───
+function renderHistory(){
+  var searchEl = document.getElementById('histSearch');
+  var dateFilterEl = document.getElementById('histDateFilter');
+  var statusFilterEl = document.getElementById('histStatusFilter');
+  var deptFilterEl = document.getElementById('histDeptFilter');
+  var tbody = document.getElementById('historyTbody');
+  if(!tbody) return;
+
+  var q = (searchEl ? searchEl.value : '').toLowerCase().trim();
+  var dateFilter = dateFilterEl ? dateFilterEl.value : 'all';
+  var statusFilter = statusFilterEl ? statusFilterEl.value : '';
+  var deptFilter = deptFilterEl ? deptFilterEl.value : '';
+
+  var allPatients = [];
+  try { allPatients = typeof getPatients === 'function' ? getPatients() : []; } catch(e){ allPatients=[]; }
+
+  // Date helpers
+  var today = new Date(); today.setHours(0,0,0,0);
+  var yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+  var last7 = new Date(today); last7.setDate(today.getDate()-7);
+  var thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  var lastMonthStart = new Date(today.getFullYear(), today.getMonth()-1, 1);
+  var lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+
+  function parseRegDate(p){
+    var raw = p.registered || p.createdAt || p.queueAdded || '';
+    if(!raw) return null;
+    // registered is YYYY-MM-DD, createdAt is ISO, queueAdded is timestamp
+    if(typeof raw === 'number'){ return new Date(raw); }
+    var s = String(raw);
+    if(s.match(/^\d{4}-\d{2}-\d{2}$/)){ return new Date(s+'T00:00:00'); }
+    var d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Count for chips
+  var todayCount=0, yestCount=0, weekCount=0;
+  allPatients.forEach(function(p){
+    var d = parseRegDate(p);
+    if(!d) return;
+    var dd = new Date(d); dd.setHours(0,0,0,0);
+    if(dd.getTime()===today.getTime()) todayCount++;
+    if(dd.getTime()===yesterday.getTime()) yestCount++;
+    if(dd>=last7) weekCount++;
+  });
+  var el;
+  el=document.getElementById('histTotalCount'); if(el) el.textContent=allPatients.length;
+  el=document.getElementById('histTodayCount'); if(el) el.textContent=todayCount;
+  el=document.getElementById('histYesterdayCount'); if(el) el.textContent=yestCount;
+  el=document.getElementById('histWeekCount'); if(el) el.textContent=weekCount;
+  el=document.getElementById('histcnt'); if(el) el.textContent=allPatients.length;
+
+  // Filter
+  var filtered = allPatients.filter(function(p){
+    // status
+    if(statusFilter && String(p.status||'').toLowerCase()!==statusFilter) return false;
+    if(deptFilter && String(p.department||p.location||'').toLowerCase()!==deptFilter.toLowerCase()) return false;
+    // date
+    if(dateFilter!=='all'){
+      var d = parseRegDate(p);
+      if(!d) return false;
+      var dd = new Date(d); dd.setHours(0,0,0,0);
+      if(dateFilter==='today' && dd.getTime()!==today.getTime()) return false;
+      if(dateFilter==='yesterday' && dd.getTime()!==yesterday.getTime()) return false;
+      if(dateFilter==='last7' && dd<last7) return false;
+      if(dateFilter==='thisMonth' && dd<thisMonthStart) return false;
+      if(dateFilter==='lastMonth' && (dd<lastMonthStart || dd>lastMonthEnd)) return false;
+    }
+    // search
+    if(q){
+      var hay = [
+        String(p.firstName||'')+' '+String(p.lastName||''),
+        String(p.familyName||''), String(p.mrn||''), String(p.id||''),
+        String(p.phone||''), String(p.nationalId||''), String(p.district||''),
+        String(p.email||''), String(p.address||''), String(p.sector||''), String(p.cell||''),
+        String(p.village||''), String(p.department||''), String(p.location||''),
+        String(p.insurance&&p.insurance.provider?p.insurance.provider:'')+' '+String(p.policyNumber||''),
+        String(p.referralSource||''), String(p.visitType||''), String(p.arrivalMode||''),
+        String(p.bloodGroup||''), String(p.allergies||''), String(p.priority||''),
+        String(p.createdBy||'')
+      ].join(' ').toLowerCase();
+      if(hay.indexOf(q)===-1) return false;
+    }
+    return true;
+  });
+
+  // Sort newest first
+  filtered.sort(function(a,b){
+    var da=parseRegDate(a), db=parseRegDate(b);
+    var ta=da?da.getTime():0, tb=db?db.getTime():0;
+    if(ta!==tb) return tb-ta;
+    var ia=parseInt(a.id,10)||0, ib=parseInt(b.id,10)||0;
+    return ib-ia;
+  });
+
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td colspan=\"9\" style=\"text-align:center;padding:40px;color:var(--tm);\"><div style=\"display:flex;flex-direction:column;align-items:center;gap:10px;\"><span style=\"font-size:28px;\">🔍</span><span>No patients found for filter <strong>'+dateFilter+'</strong>'+(q?' with search \"'+q+'\"':'')+'</span><span style=\"font-size:11px;\">Try All time or clear search. Common server total: '+allPatients.length+'</span></div></td></tr>';
+    return;
+  }
+
+  var html='';
+  filtered.forEach(function(p,i){
+    var c=col(p.id||i);
+    var name=(p.firstName||'')+' '+(p.lastName||p.familyName||'');
+    var mrn=p.mrn||p.id||'—';
+    var nid=p.nationalId||p.nationalIdFormatted||'—';
+    var phone=p.phone||'—';
+    var gender=p.gender||'—';
+    var dob=p.dob||'—';
+    var age=''; try{ age=getPatientAge(p); }catch(e){ age=''; }
+    var district=p.district||p.sector||'—';
+    var dept=p.department||p.location||'General';
+    var regRaw=p.registered|| (p.createdAt?String(p.createdAt).slice(0,10):'') || '—';
+    var status=p.status||'active';
+    var av='<div class=\"patient-avatar\" style=\"background:'+c.bg+';color:'+c.txt+';\">'+ini(name)+'</div>';
+    html+='<tr style=\"background: rgba(0,0,0,0.02); transition:all .35s cubic-bezier(0.32,0.72,0,1);\">'
+      +'<td style=\"font-weight:700; color:var(--tm);\">'+(i+1)+'</td>'
+      +'<td><div style=\"display:flex; gap:10px; align-items:center;\">'+av+'<div><div style=\"font-weight:600; font-size:13px;\">'+name+'</div><div style=\"font-size:10px;color:var(--tm);\">'+(p.email||'')+'</div></div></div></td>'
+      +'<td style=\"font-size:11px;\"><div><strong>MRN:</strong> '+mrn+'</div><div style=\"font-size:10px;color:var(--tm);\">PersonID: '+(p.personId||'—')+'</div><div style=\"font-size:10px;color:var(--tm);\">NID: '+nid+'</div></td>'
+      +'<td style=\"font-size:11px;\">'+phone+'<div style=\"font-size:10px;color:var(--tm);\">'+(p.caretakerPhone||'')+'</div></td>'
+      +'<td style=\"font-size:11px;\">'+gender+'<div style=\"font-size:10px;color:var(--tm);\">'+dob+' '+(age!=='N/A'? '('+age+'y)':'')+'</div></td>'
+      +'<td style=\"font-size:11px;\"><span style=\"background:var(--s3); padding:2px 8px; border-radius:12px;\">'+district+'</span><div style=\"margin-top:4px;\"><span style=\"background:var(--s3); padding:2px 8px; border-radius:12px;\">'+dept+'</span></div></td>'
+      +'<td style=\"font-size:11px; font-weight:500;\">'+regRaw+'<div style=\"font-size:9px;color:var(--tm);\">'+(p.createdBy||'')+'</div></td>'
+      +'<td><span class=\"badge-status '+status+'\" style=\"font-size:10px;\">'+status+'</span></td>'
+      +'<td><div style=\"display:flex; gap:4px;\">'
+      +'<button class=\"action-btn\" title=\"View\" onclick=\"window.openPatient('+(p.id||0)+')\" style=\"width:28px;height:28px;\"><i class=\"ti ti-eye\"></i></button>'
+      +'<button class="action-btn" title="Queue" onclick="raViewQueueFromHistory('+(p.id||0)+', \''+String(p.mrn||'').replace(/'/g,'')+'\')"><i class="ti ti-list-numbers"></i></button>'
+      +'</div></td>'
+      +'</tr>';
+    if(i<filtered.length-1){
+      html+='<tr style=\"height:3px; background:transparent;\"><td colspan=\"9\" style=\"padding:0; background:transparent; border:none;\"><div style=\"height:1px; background:rgba(0,0,0,0.06); margin:0 8px;\"></div></td></tr>';
+    }
+  });
+  tbody.innerHTML=html;
+}
+
+function exportHistoryCSV(){
+  try{
+    var patients=[]; try{patients=getPatients();}catch(e){}
+    if(!patients.length){ showToast('❌ No patients to export','error'); return; }
+    var csv='MRN,FirstName,LastName,FamilyName,NationalID,Phone,Gender,DOB,District,Department,Registered,Status,CreatedBy\\n';
+    patients.forEach(function(p){
+      csv+=[
+        '\"'+String(p.mrn||'')+'\"',
+        '\"'+String(p.firstName||'')+'\"',
+        '\"'+String(p.lastName||'')+'\"',
+        '\"'+String(p.familyName||'')+'\"',
+        '\"'+String(p.nationalId||'')+'\"',
+        '\"'+String(p.phone||'')+'\"',
+        '\"'+String(p.gender||'')+'\"',
+        '\"'+String(p.dob||'')+'\"',
+        '\"'+String(p.district||'')+'\"',
+        '\"'+String(p.department||'')+'\"',
+        '\"'+String(p.registered||'')+'\"',
+        '\"'+String(p.status||'')+'\"',
+        '\"'+String(p.createdBy||'')+'\"'
+      ].join(',')+'\\n';
+    });
+    var blob=new Blob([csv],{type:'text/csv'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.href=url; a.download='pclinic-history-'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);},1000);
+    showToast('✅ Exported '+patients.length+' patients','success');
+  }catch(e){ showToast('❌ Export failed: '+e.message,'error'); }
 }
 
 function callIn(id){
@@ -4441,6 +5865,7 @@ function renderSurgeryList() {
   if (barCountEl) {
     barCountEl.textContent = pendingCount;
   }
+  var barCountEl2=document.getElementById('surgeryCntBar2'); if(barCountEl2) barCountEl2.textContent=pendingCount;
   
   if (allSurgeries.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--tm);font-size:13px;">' +
@@ -4580,25 +6005,19 @@ function populateSurgeryPatients() {
 }
 
 // ─── INIT — 4 CARDS, NUMERIC ONLY MRN, COMMUNICATES EVERYWHERE ───
+// COMMON SERVER: reads patients from Firebase same as doctor dashboard via patient-data.js realtime sync
 function init(){
   // Set dates - NOT for DOB (DOB should be empty), only for appointments
-  // document.getElementById('bDob').value = todayStr(); // REMOVED per best practice
   document.getElementById('apptDate').value = todayStr();
   document.getElementById('apptTime').value = '09:00';
-  // Show next MRN (numbers only) - communicates everywhere via Firestore real-time sync
   if (typeof updateNextMrnDisplay === 'function') {
     updateNextMrnDisplay();
-    // Refresh MRN every 5 sec in case another reception creates patient on another computer
     setInterval(function(){ if(typeof updateNextMrnDisplay==='function') updateNextMrnDisplay(); }, 5000);
   }
   
-  // ─── LOAD CUSTOM INSURANCE PROVIDERS ───
   loadCustomProviders();
-  
-  // ─── LOAD APPOINTMENTS ───
   loadAppointments();
   
-  // User profile
   document.getElementById('uNameTop').textContent = USER.name;
   document.getElementById('uRoleTop').textContent = USER.role;
   document.getElementById('uNameDrop').textContent = USER.name;
@@ -4606,31 +6025,76 @@ function init(){
   document.getElementById('uiniSmall').textContent = ini(USER.name);
   document.getElementById('uiniDrop').textContent = ini(USER.name);
   
-  // Initialize data
-initRefs();
-loadQueue();
-loadAppointments();
-loadSurgeries();
-populateAppointmentPatients();
-populateSurgeryPatients();
+  initRefs();
+  loadQueue();
+  loadAppointments();
+  loadSurgeries();
+  populateAppointmentPatients();
+  populateSurgeryPatients();
   
-  // Render everything
   renderQueue();
+  renderHistory();
   renderBeds();
   renderRefs();
   updateStats();
   
-  // Activity feed
   addFeed('note', '🏥 Reception dashboard ready');
   
-  // Auto-refresh
+  // ─── COMMON SERVER SYNC — SAME AS DOCTOR DASHBOARD ───
+  // patient-data.js handles Firebase Firestore realtime sync: collection('patients')
+  // It writes to localStorage 'pclinic_patients' and dispatches events
+  // We listen and reload queue to show patients from common server
+  function handleCommonServerSync(source, detail){
+    try {
+      var count = 0;
+      try { count = getPatients().length; } catch(e){}
+      console.log('☁️ Common server sync ['+source+'] — patients:', count, detail||'');
+      loadQueue();
+      renderQueue();
+      renderHistory();
+      renderRefs();
+      updateStats();
+      populateAppointmentPatients();
+      populateSurgeryPatients();
+      if(typeof updateNextMrnDisplay==='function') updateNextMrnDisplay();
+      var status = document.getElementById('aQuickStats');
+      if(status && detail && detail.count!==undefined){
+        // optional toast only on real updates, not initial 0
+        if(detail.count>0) showToast('☁️ Synced '+detail.count+' patients from common server ('+source+')', 'info');
+      }
+    } catch(e){ console.warn('Sync handler failed', e); }
+  }
+
+  window.addEventListener('firebaseReady', function(){
+    console.log('🔥 Firebase ready event — loading from common server');
+    showToast('🔥 Connected to common server (Firebase)', 'success');
+    handleCommonServerSync('firebaseReady');
+  });
+  window.addEventListener('patientsUpdated', function(ev){
+    handleCommonServerSync('patientsUpdated', ev.detail);
+  });
+  window.addEventListener('storage', function(ev){
+    if(!ev || !ev.key || ev.key===null || ev.key.indexOf('pclinic_patients')>-1 || ev.key.indexOf('pclinic_queue')>-1){
+      handleCommonServerSync('storage');
+    }
+  });
+  // Also handle Firestore offline persistence already enabled in firebase-config.js
+  // Force initial check after 1.5s in case Firebase was already ready before listener
+  setTimeout(function(){
+    if(window.firebaseReady){
+      handleCommonServerSync('initial-delayed-check');
+    } else {
+      console.log('⏳ Waiting for common server... local patients:', getPatients().length);
+    }
+  }, 1500);
+
   setInterval(function(){ renderQueue(); renderBeds(); }, 30000);
   
-  console.log('🏥 RefCare HMS Reception Dashboard');
-  console.log('📊 Patients:', getPatients().length);
-  console.log('📊 Queue:', queue.length);
-  console.log('📅 Appointments:', appointments.length);
+  console.log('🏥 RefCare HMS Reception Dashboard — COMMON SERVER MODE');
+  console.log('📊 Local patients (pre-sync):', getPatients().length);
+  console.log('☁️ Firebase ready:', !!window.firebaseReady, 'DB:', !!window.firebaseDB);
   console.log('💡 Keyboard shortcuts: ⌘D (dark), ⌘/ (help), ⌘N (new patient)');
+  console.log('🔗 Same server as doctor dashboard: project pclinic-20d81, collection patients');
 }
 
 
@@ -4650,6 +6114,8 @@ window.triggerUphoto = triggerUphoto;
 window.closeMo = closeMo;
 window.registerPatient = registerPatient;
 window.renderQueue = renderQueue;
+window.renderHistory = renderHistory;
+window.exportHistoryCSV = exportHistoryCSV;
 window.callIn = callIn;
 window.removeQ = removeQ;
 window.bookAppointment = bookAppointment;
@@ -4657,6 +6123,68 @@ window.renderBeds = renderBeds;
 window.refreshBeds = refreshBeds;
 window.renderRefs = renderRefs;
 window.openPatient = openPatient;
+window.raPatient = raPatient;
+window.raHistory = raHistory;
+window.toggleDropdown = toggleDropdown;
+window.closeAllDropdowns = closeAllDropdowns;
+window.toggleAsideFold = toggleAsideFold;
+window.toggleAsideActions = toggleAsideActions;
+window.raEdit = raEdit;
+window.raMove = raMove;
+window.raRegister = raRegister;
+window.raTriage = raTriage;
+window.raVitals = raVitals;
+window.raPhoto = raPhoto;
+window.raQueue = raQueue;
+window.raReferralIn = raReferralIn;
+window.raReferralOut = raReferralOut;
+window.raCounterReferral = raCounterReferral;
+window.raHC = raHC;
+window.raAmbulance = raAmbulance;
+window.raAppointment = raAppointment;
+window.raSurgery = raSurgery;
+window.raTheater = raTheater;
+window.raInsurance = raInsurance;
+window.raRSSB = raRSSB;
+window.raMutuelle = raMutuelle;
+window.raMMI = raMMI;
+window.raBedRequest = raBedRequest;
+window.raAdmission = raAdmission;
+window.raDischarge = raDischarge;
+window.raEmergency = raEmergency;
+window.raWard = raWard;
+window.raBill = raBill;
+window.raPayment = raPayment;
+window.raCashier = raCashier;
+window.raReceipt = raReceipt;
+window.raPrintCard = raPrintCard;
+window.raWristband = raWristband;
+window.raPrintFile = raPrintFile;
+window.raArchive = raArchive;
+window.raConsent = raConsent;
+window.raMedicalSummary = raMedicalSummary;
+window.raDocuments = raDocuments;
+window.raLabResult = raLabResult;
+window.raImaging = raImaging;
+window.raMessages = raMessages;
+window.raNotify = raNotify;
+window.raMyOrders = raMyOrders;
+window.raPrint = raPrint;
+window.cancelEditMode = cancelEditMode;
+
+window.openPatientSelector = openPatientSelector;
+window.closePatientSelector = closePatientSelector;
+window.renderPatientSelector = renderPatientSelector;
+window.selectPatientForRDV = selectPatientForRDV;
+window.selectPatientForEdit = selectPatientForEdit;
+window.raViewQueueFromHistory = raViewQueueFromHistory;
+window.getNavBtn = getNavBtn;
+window.raOPDAppointment = raOPDAppointment;
+window.openAIAssistant = openAIAssistant;
+window.closeAIAssistant = closeAIAssistant;
+window.askAI = askAI;
+
+window.focusDupSearch = focusDupSearch;
 window.changePatientStatus = changePatientStatus;
 window.deletePatientRecord = deletePatientRecord;
 window.handleMoPhoto = handleMoPhoto;

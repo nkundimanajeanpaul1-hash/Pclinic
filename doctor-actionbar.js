@@ -360,7 +360,7 @@
     /* ══════════ STYLES ══════════ */
     var css = document.createElement('style');
     css.textContent = `
-    #dcBar{display:flex!important;align-items:center;gap:0;flex-wrap:wrap;padding:8px 14px}
+    #dcBar{display:flex!important;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 14px}
     .ab-sep{width:1px;height:20px;background:rgba(0,0,0,.1);margin:0;flex-shrink:0}
     [data-theme="dark"] .ab-sep{background:rgba(255,255,255,.12)}
     .ab-btn{position:relative;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;
@@ -455,7 +455,7 @@
     #patientFileContainer{display:none!important}
     .nav-tab[data-pc-duplicate]{display:none!important}
     @media(max-width:1200px){.ab-btn span{display:none}.ab-btn{padding:0 9px}.ab-btn i{font-size:16px}}
-    @media(max-width:640px){#dcBar{padding:7px 10px;gap:0}.ab-sep{display:none}
+    @media(max-width:640px){#dcBar{padding:7px 10px;gap:6px}.ab-sep{display:none}
         .ab-srow{flex-direction:column;gap:7px}}
     @media print{#dcBar,#dcCtx{display:none!important}}`;
     document.head.appendChild(css);

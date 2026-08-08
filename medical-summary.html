@@ -409,13 +409,15 @@
 
     <!-- ═══ COMPLETE 30-ITEM MEDICAL SUMMARY TABLE (FROM PHOTO 1 & 2) ═══ -->
     <div class="summary-wrapper">
-        <div class="summary-title-strip">
-            <span>Home  ▸  Medical summary</span>
-            <span style="color:var(--tm);font-size:12px;font-weight:500;">30 Clinical Records Available</span>
+        <div class="summary-title-strip" id="medSummaryFoldHeader" onclick="toggleMedicalSummaryFold()" style="cursor:pointer; user-select:none;">
+            <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-chevron-down" id="medSummaryChevron" style="transition:transform 0.3s; transform:rotate(0deg);"></i> Medical summary</span>
+            <span style="color:var(--tm);font-size:12px;font-weight:500; display:flex; align-items:center; gap:8px;"><span id="medSummaryCount">30 Clinical Records Available</span> <i class="ti ti-fold" style="font-size:14px;" title="Click to unfold"></i></span>
         </div>
+        <div id="medSummaryFoldBody" style="max-height:2000px; opacity:1; overflow:hidden; transition: max-height 0.5s cubic-bezier(0.32,0.72,0,1), opacity 0.4s;">
         <table class="oc-table">
             <tbody id="summaryTableBody"></tbody>
         </table>
+        </div>
     </div>
 </div>
 
@@ -591,6 +593,81 @@
 
     window.addEventListener('DOMContentLoaded', init);
     window.closeMedicalSummary = closeMedicalSummary;
+})();
+
+    function toggleMedicalSummaryFold(){
+      var body=document.getElementById('medSummaryFoldBody');
+      var chev=document.getElementById('medSummaryChevron');
+      var count=document.getElementById('medSummaryCount');
+      if(!body) return;
+      var style=window.getComputedStyle(body);
+      var isOpen = body.style.maxHeight!=='0px' && body.style.opacity!=='0' && style.maxHeight!=='0px';
+      if(isOpen && body.style.maxHeight!=='0px'){
+        // Actually check if open
+        if(body.dataset.open==='false'){
+          body.style.maxHeight='2000px'; body.style.opacity='1'; body.dataset.open='true';
+          if(chev) chev.style.transform='rotate(0deg)';
+          if(count) count.textContent='30 Clinical Records Available — all medical summary of the patient';
+        } else {
+          body.style.maxHeight='0px'; body.style.opacity='0'; body.dataset.open='false';
+          if(chev) chev.style.transform='rotate(-90deg)';
+          if(count) count.textContent='Medical summary folded — click to unfold';
+        }
+      } else {
+        // toggle based on dataset
+        var isCurrentlyOpen = body.dataset.open!=='false';
+        if(isCurrentlyOpen){
+          body.style.maxHeight='0px'; body.style.opacity='0'; body.dataset.open='false';
+          if(chev) chev.style.transform='rotate(-90deg)';
+          if(count) count.textContent='Medical summary folded — click to unfold';
+        } else {
+          body.style.maxHeight='2000px'; body.style.opacity='1'; body.dataset.open='true';
+          if(chev) chev.style.transform='rotate(0deg)';
+          if(count) count.textContent='30 Clinical Records Available — all medical summary of the patient';
+        }
+      }
+    }
+    window.toggleMedicalSummaryFold=toggleMedicalSummaryFold;
+    
+    document.addEventListener('DOMContentLoaded', function(){
+      var body=document.getElementById('medSummaryFoldBody');
+      if(body){ body.dataset.open='true'; body.style.maxHeight='2000px'; body.style.opacity='1'; }
+    });
+
+<script>
+// Hide extra patient identification bar if global top bar already shows it (to avoid duplicate on Medical Summary button)
+(function(){
+  function hideExtraBar(){
+    var master=document.getElementById('pcMasterHeader');
+    var demoBars=document.querySelectorAll('.oc-demo-bar');
+    // If we have more than one demo bar, keep only one in master header, hide others
+    if(demoBars.length>1){
+      // Keep first inside master header if exists, hide others
+      demoBars.forEach(function(bar, idx){
+        if(idx>0) bar.style.display='none';
+      });
+    }
+    // If master header exists and has patient bar, hide the page's own .oc-demo-bar to avoid duplicate
+    if(master && master.querySelector('.oc-demo-bar')){
+      var pageBar=document.querySelector('.wrap > .oc-demo-bar, .wrap .oc-demo-bar');
+      // Actually the page's own bar is direct child of .wrap, not inside master
+      // Hide it if master already has one
+      var allBars=document.querySelectorAll('.oc-demo-bar');
+      if(allBars.length>1){
+        // Hide the one NOT inside master header
+        allBars.forEach(function(bar){
+          if(!master.contains(bar)){
+            bar.style.display='none';
+            console.log('🗑️ Deleted extra patient identification bar on Medical Summary (as requested)');
+          }
+        });
+      }
+    }
+  }
+  // Run after a delay to let pclinic-file.js inject its bar
+  setTimeout(hideExtraBar, 800);
+  setTimeout(hideExtraBar, 2000);
+  document.addEventListener('firebaseReady', function(){ setTimeout(hideExtraBar, 500); });
 })();
 </script>
 </body>

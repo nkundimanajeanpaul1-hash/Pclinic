@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PClinic — Appointment File</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
+<link rel="stylesheet" href="pclinic-file.css">
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
+<script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');}catch(e){}})();</script>
+</head>
+<body class="pcf">
+
+<div class="pc-topbar noprint" style="display: none !important;">
+    <div class="pc-brand">
+        <img class="pc-logo" src="logo-wide.png" alt="PClinic" width="118" height="30">
+        <span class="pc-appsub" id="appSub">Appointment File</span>
+    </div>
+    <div class="pc-tr">
+        <button class="pc-iconbtn" onclick="if(window.pcVitals) pcVitals.open();" title="Vital Signs" style="width:auto;padding:0 12px;display:inline-flex;align-items:center;gap:6px;background:rgba(225,29,72,0.08);color:#e11d48;border-radius:18px;font-weight:600;font-size:13px;height:32px;border:none;cursor:pointer;"><i class="ti ti-heart-rate-monitor"></i> Vital Signs</button>
+        <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
+        <div class="pc-chip"><span class="pc-avatar" id="userAvatar">··</span><span id="userName">…</span></div>
+        <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
+    </div>
+</div>
+
+<div class="pcf-wrap">
+    <div id="pcfRoot" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
+</div>
+
+<div class="pc-toasts noprint"></div>
+
+<script type="module" src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+<script src="patient-data.js"></script>
+<script src="pclinic-orders.js"></script>
+<script src="pclinic-catalog.js"></script>
+<script src="pclinic-file.js?v=20260804_CHUK_3ROW"></script>
+<script src="pclinic-vitals.js"></script>
+<script src="pclinic-filepage.js"></script>
+<script>
+pcFilePage.init({
+  "type": "appointment",
+  "ref": "APPT",
+  "title": "Appointment File",
+  "sub": "OPD Appointment / RDV",
+  "docTitle": "Out-Patient Appointment (RDV)",
+  "icon": "ti-calendar-plus",
+  "histTitle": "Appointment history",
+  "histUnit": "appointment",
+  "newLabel": "New Appointment / RDV",
+  "dx": false,
+  "rdv": false,
+  "att": true,
+  "vitals": false,
+  "rx": false,
+  "fields": [
+    {
+      "id": "patient_identification",
+      "label": "Patient Identification (auto-filled from common server when you select patient)",
+      "kind": "area",
+      "ph": "This will be auto-filled when you select a patient via Select Patient button in reception dashboard. Common server: Firebase pclinic-20d81 / patients",
+      "panel": "Patient Identification",
+      "icon": "ti-users",
+      "rows": 2
+    },
+    {
+      "id": "appointment_date",
+      "label": "Appointment Date *",
+      "kind": "date",
+      "panel": "RDV Details",
+      "icon": "ti-calendar-event"
+    },
+    {
+      "id": "appointment_time",
+      "label": "Time *",
+      "kind": "text",
+      "ph": "e.g. 09:00 or 14:30",
+      "panel": "RDV Details"
+    },
+    {
+      "id": "department",
+      "label": "Department *",
+      "kind": "sel",
+      "options": ["General", "Cardiology", "Neurology", "Orthopedics", "Pediatrics", "ICU", "Emergency", "Maternity", "Dermatology", "ENT"],
+      "panel": "RDV Details"
+    },
+    {
+      "id": "doctor",
+      "label": "Doctor / Specialist *",
+      "kind": "sel",
+      "options": ["Dr. Amina Uwase", "Dr. Jean Habimana", "Dr. Claire Mugisha", "Dr. Eric Nkurunziza", "Dr. Grace Ineza", "Dr. Samuel Bizimana", "Dr. Mutua"],
+      "panel": "RDV Details"
+    },
+    {
+      "id": "visit_type",
+      "label": "Visit Type",
+      "kind": "sel",
+      "options": ["OPD", "Follow-up", "Referral", "ANC", "Maternity", "Emergency", "Chronic"],
+      "panel": "RDV Details"
+    },
+    {
+      "id": "priority",
+      "label": "Priority",
+      "kind": "sel",
+      "options": ["low", "medium", "high", "critical"],
+      "panel": "RDV Details"
+    },
+    {
+      "id": "reason",
+      "label": "Reason for Appointment / Chief Complaint",
+      "kind": "area",
+      "ph": "e.g. Follow-up for hypertension, review lab results, etc.",
+      "panel": "Clinical",
+      "icon": "ti-notes",
+      "rows": 3
+    },
+    {
+      "id": "notes",
+      "label": "Reception Notes (insurance, referral source, arrival mode)",
+      "kind": "area",
+      "ph": "e.g. RSSB verified, referral from Ruhengeri District Hospital, arrival by ambulance...",
+      "panel": "Notes",
+      "icon": "ti-file-description",
+      "rows": 3
+    }
+  ]
+});
+</script>
+<script src="pclinic-handoff.js"></script>
+</body>
+</html>

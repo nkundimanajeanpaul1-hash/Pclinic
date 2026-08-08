@@ -367,8 +367,10 @@
         var el = $('#dcCtx'); if (!el) return;
         var p = patient();
         if (!p) {
-            el.innerHTML = '<span class="none"><i class="ti ti-user-off"></i> No patient selected — ' +
-                           'choose one from All Patients to enable ordering.</span>';
+            // No "no patient selected" banner here anymore — the
+            // identification bar already shows the empty/cleared state,
+            // and overwriting #dcCtx here was clobbering it in a race
+            // with doctor-patient.js's renderCtx(). Leave #dcCtx as-is.
             return;
         }
         var v = (p.vitals && p.vitals.length) ? p.vitals[p.vitals.length - 1] : null;
