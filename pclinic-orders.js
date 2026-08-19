@@ -429,12 +429,7 @@
                         var legacyRequestId = String(lab.id || (pIdStr + '-' + lIdx));
                         var exists = orders.some(function (o) {
                             if (String(o.patientId).replace(/^MOD-/i, '').trim() !== pIdStr || o.dept !== 'lab') return false;
-                            if (String(o.legacyRequestId || '') === legacyRequestId) return true;
-                            var existingNames = (o.items || []).map(function (it) { return String(it.name || '').toLowerCase(); });
-                            return requestTests.every(function (testName) {
-                                var wanted = String(testName).toLowerCase();
-                                return existingNames.some(function (name) { return name === wanted; });
-                            });
+                            return String(o.legacyRequestId || '') === legacyRequestId;
                         });
                         if (!exists) {
                             var tariff = getTariff();
