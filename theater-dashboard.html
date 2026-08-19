@@ -1170,7 +1170,7 @@
             }
         }
     </style>
-    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
+    <script src="pclinic-file.js?v=20260814_RAD" defer></script>
 </head>
 <body>
 
@@ -1406,7 +1406,7 @@
             </div>
             <div class="modal-body">
                 <div class="fg">
-                    <div class="fgl"><div class="lbl">Patient Name *</div><input class="fi" id="bookPatient" placeholder="e.g. John Kamau" /></div>
+                    <div class="fgl"><div class="lbl">Patient Name *</div><input class="fi" id="bookPatient" placeholder="Patient name" /></div>
                     <div class="fgl"><div class="lbl">MRN</div><input class="fi" id="bookMRN" placeholder="e.g. 00-1882" /></div>
                     <div class="fgl"><div class="lbl">Procedure *</div><input class="fi" id="bookProcedure" placeholder="e.g. CABG" /></div>
                     <div class="fgl"><div class="lbl">Procedure Type</div>
@@ -1422,10 +1422,10 @@
                     </div>
                     <div class="fgl"><div class="lbl">Surgeon *</div>
                         <select class="fi" id="bookSurgeon">
-                            <option>Dr. David Mutua</option>
+                            
                             <option>Dr. Eric Nkurunziza</option>
                             <option>Dr. Grace Ineza</option>
-                            <option>Dr. Anne Ndirangu</option>
+                            
                             <option>Dr. Samuel Bizimana</option>
                         </select>
                     </div>
@@ -1433,7 +1433,7 @@
                         <select class="fi" id="bookAnaesthetist">
                             <option>Dr. James Ochieng</option>
                             <option>Dr. Sarah Wanjiru</option>
-                            <option>Dr. Peter Omondi</option>
+                            
                             <option>Not assigned</option>
                         </select>
                     </div>
@@ -1482,211 +1482,10 @@
     <!-- ═══ JAVASCRIPT ═══ -->
     <script>
         // ─── DATA ───
-        const surgeries = [{
-            id: 1,
-            patient: 'John Kamau',
-            mrn: '00-1882',
-            procedure: 'CABG × 3',
-            type: 'Cardiac',
-            surgeon: 'Dr. David Mutua',
-            anaesthetist: 'Dr. James Ochieng',
-            theater: 'Theater 1',
-            date: '2026-06-30',
-            time: '08:00',
-            duration: 180,
-            priority: 'Emergency',
-            status: 'in-progress',
-            notes: 'Urgent revascularization. LIMA prepared.'
-        }, {
-            id: 2,
-            patient: 'Grace Wanjiru',
-            mrn: '00-2047',
-            procedure: 'Lumbar Discectomy',
-            type: 'Neurology',
-            surgeon: 'Dr. Grace Ineza',
-            anaesthetist: 'Dr. Sarah Wanjiru',
-            theater: 'Theater 2',
-            date: '2026-06-30',
-            time: '09:00',
-            duration: 90,
-            priority: 'Routine',
-            status: 'scheduled',
-            notes: 'L4-L5 disc herniation. Pre-op clearance obtained.'
-        }, {
-            id: 3,
-            patient: 'Samuel Otieno',
-            mrn: '00-2918',
-            procedure: 'Total Knee Replacement',
-            type: 'Orthopedic',
-            surgeon: 'Dr. Eric Nkurunziza',
-            anaesthetist: 'Dr. Peter Omondi',
-            theater: 'Theater 3',
-            date: '2026-06-30',
-            time: '10:30',
-            duration: 120,
-            priority: 'Urgent',
-            status: 'scheduled',
-            notes: 'Severe osteoarthritis. Custom implant ordered.'
-        }, {
-            id: 4,
-            patient: 'Amina Hassan',
-            mrn: '00-3301',
-            procedure: 'Cholecystectomy',
-            type: 'General Surgery',
-            surgeon: 'Dr. David Mutua',
-            anaesthetist: 'Dr. James Ochieng',
-            theater: 'Theater 1',
-            date: '2026-06-29',
-            time: '14:00',
-            duration: 60,
-            priority: 'Routine',
-            status: 'completed',
-            notes: 'Laparoscopic, uneventful. Discharged next day.'
-        }, {
-            id: 5,
-            patient: 'Peter Omondi',
-            mrn: '00-4412',
-            procedure: 'Craniotomy',
-            type: 'Neurology',
-            surgeon: 'Dr. Grace Ineza',
-            anaesthetist: 'Dr. Sarah Wanjiru',
-            theater: 'Theater 2',
-            date: '2026-06-29',
-            time: '08:00',
-            duration: 240,
-            priority: 'Emergency',
-            status: 'completed',
-            notes: 'Trauma from RTA. Subdural haematoma evacuation.'
-        }, {
-            id: 6,
-            patient: 'Mary Adhiambo',
-            mrn: '00-3104',
-            procedure: 'Hysterectomy',
-            type: 'Gynecology',
-            surgeon: 'Dr. Anne Ndirangu',
-            anaesthetist: 'Dr. Peter Omondi',
-            theater: 'Theater 3',
-            date: '2026-06-30',
-            time: '14:00',
-            duration: 90,
-            priority: 'Routine',
-            status: 'scheduled',
-            notes: 'Uterine fibroids. Abdominal approach.'
-        }, {
-            id: 7,
-            patient: 'David Mugabo',
-            mrn: '00-5512',
-            procedure: 'PCI with Stent',
-            type: 'Cardiac',
-            surgeon: 'Dr. David Mutua',
-            anaesthetist: 'Dr. James Ochieng',
-            theater: 'Theater 1',
-            date: '2026-06-30',
-            time: '13:00',
-            duration: 120,
-            priority: 'Urgent',
-            status: 'in-progress',
-            notes: 'Acute coronary syndrome. Drug-eluting stent planned.'
-        }, {
-            id: 8,
-            patient: 'Faith Njeri',
-            mrn: '00-2215',
-            procedure: 'Cataract Surgery',
-            type: 'Ophthalmology',
-            surgeon: 'Dr. Samuel Bizimana',
-            anaesthetist: 'Dr. Sarah Wanjiru',
-            theater: 'Theater 4',
-            date: '2026-06-28',
-            time: '09:00',
-            duration: 45,
-            priority: 'Routine',
-            status: 'completed',
-            notes: 'Phacoemulsification. IOL implanted.'
-        }, {
-            id: 9,
-            patient: 'Tom Maina',
-            mrn: '00-4411',
-            procedure: 'Appendectomy',
-            type: 'General Surgery',
-            surgeon: 'Dr. David Mutua',
-            anaesthetist: 'Not assigned',
-            theater: 'Theater 1',
-            date: '2026-06-30',
-            time: '07:00',
-            duration: 45,
-            priority: 'Routine',
-            status: 'completed',
-            notes: 'Laparoscopic. Uncomplicated.'
-        }, {
-            id: 10,
-            patient: 'Alice Mutoni',
-            mrn: '00-6612',
-            procedure: 'Hip Replacement',
-            type: 'Orthopedic',
-            surgeon: 'Dr. Eric Nkurunziza',
-            anaesthetist: 'Dr. Peter Omondi',
-            theater: 'Theater 3',
-            date: '2026-07-01',
-            time: '09:00',
-            duration: 150,
-            priority: 'Routine',
-            status: 'scheduled',
-            notes: 'Right total hip replacement. Implant available.'
-        }, {
-            id: 11,
-            patient: 'Jean Pierre',
-            mrn: '00-7711',
-            procedure: 'TURP',
-            type: 'Urology',
-            surgeon: 'Dr. Samuel Bizimana',
-            anaesthetist: 'Dr. James Ochieng',
-            theater: 'Theater 4',
-            date: '2026-07-01',
-            time: '13:00',
-            duration: 90,
-            priority: 'Routine',
-            status: 'scheduled',
-            notes: 'Benign prostatic hyperplasia. Pre-op workup done.'
-        }, {
-            id: 12,
-            patient: 'Grace Uwase',
-            mrn: '00-8812',
-            procedure: 'C-section',
-            type: 'Gynecology',
-            surgeon: 'Dr. Anne Ndirangu',
-            anaesthetist: 'Dr. Sarah Wanjiru',
-            theater: 'Theater 2',
-            date: '2026-06-29',
-            time: '10:00',
-            duration: 60,
-            priority: 'Emergency',
-            status: 'completed',
-            notes: 'Emergency C-section. Healthy baby delivered.'
-        }];
+        const surgeries = []; // ⛔ NO TEMPLATE DATA — populated from the Common Server once the theater board is rebuilt
 
-        const theaters = [
-            { id: 1, name: 'Theater 1', status: 'in-use', currentSurgery: 'CABG × 3', surgeon: 'Dr. David Mutua',
-                nextSurgery: 'PCI with Stent', utilization: 85 },
-            { id: 2, name: 'Theater 2', status: 'available', currentSurgery: null, surgeon: null,
-                nextSurgery: 'Lumbar Discectomy', utilization: 60 },
-            { id: 3, name: 'Theater 3', status: 'in-use', currentSurgery: 'Total Knee Replacement',
-                surgeon: 'Dr. Eric Nkurunziza', nextSurgery: 'Hysterectomy', utilization: 75 },
-            { id: 4, name: 'Theater 4', status: 'cleaning', currentSurgery: null, surgeon: null, nextSurgery: null,
-                utilization: 40 }
-        ];
+        const surgeons = []; // ⛔ NO TEMPLATE DATA — from pclinic_staff once rebuilt
 
-        const surgeons = [
-            { name: 'Dr. David Mutua', specialty: 'Cardiothoracic Surgery', surgeriesWeek: 8, surgeriesToday: 3,
-                status: 'available' },
-            { name: 'Dr. Eric Nkurunziza', specialty: 'Orthopedic Surgery', surgeriesWeek: 6, surgeriesToday: 2,
-                status: 'in-surgery' },
-            { name: 'Dr. Grace Ineza', specialty: 'Neurosurgery', surgeriesWeek: 5, surgeriesToday: 1,
-                status: 'available' },
-            { name: 'Dr. Anne Ndirangu', specialty: 'Gynecology', surgeriesWeek: 4, surgeriesToday: 1,
-                status: 'available' },
-            { name: 'Dr. Samuel Bizimana', specialty: 'Ophthalmology & Urology', surgeriesWeek: 3, surgeriesToday: 0,
-                status: 'available' }
-        ];
 
         const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
         const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];

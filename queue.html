@@ -92,7 +92,7 @@
             .card, .stats-grid, .greeting, .breadcrumb { padding-left: 16px; padding-right: 16px; margin-left: 0; margin-right: 0; }
         }
     </style>
-    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
+    <script src="pclinic-file.js?v=20260814_RAD" defer></script>
 </head>
 <body>
 
@@ -226,7 +226,7 @@
     </script>
 
     <script>
-        requireAuth([]).then(function(staff) {
+        requireAuth(['reception','doctor','nurse']).then(function(staff) {
             window.currentStaff = staff;
         }).catch(function(err) {
             console.warn('Auth guard redirect:', err && err.message);

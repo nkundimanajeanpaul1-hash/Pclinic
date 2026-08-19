@@ -1378,7 +1378,7 @@
             }
         }
     </style>
-    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
+    <script src="pclinic-file.js?v=20260814_RAD" defer></script>
 </head>
 <body>
 
@@ -1755,121 +1755,34 @@
         }
 
         // ─── DATA ───
-        const staffData = [
-            { id: 1, name: 'Dr. David Mutua', role: 'Doctor', dept: 'Cardiology', email: 'd.mutua@pclinic.rw',
-                phone: '+254 712 345 678', status: 'active', initials: 'DM', color: '#5856d6', salary: 180000 },
-            { id: 2, name: 'Dr. Grace Ineza', role: 'Doctor', dept: 'Neurology', email: 'g.ineza@pclinic.rw',
-                phone: '+254 722 987 654', status: 'active', initials: 'GI', color: '#0071e3', salary: 175000 },
-            { id: 3, name: 'Nurse Alice Achieng', role: 'Nurse', dept: 'Cardiology', email: 'a.achieng@pclinic.rw',
-                phone: '+254 733 456 789', status: 'active', initials: 'AA', color: '#34c759', salary: 65000 },
-            { id: 4, name: 'Dr. Eric Nkurunziza', role: 'Doctor', dept: 'Orthopedics', email: 'e.nkurunziza@pclinic.rw',
-                phone: '+254 710 654 321', status: 'active', initials: 'EN', color: '#af52de', salary: 190000 },
-            { id: 5, name: 'Nurse Jean Habimana', role: 'Nurse', dept: 'Pediatrics', email: 'j.habimana@pclinic.rw',
-                phone: '+254 788 123 456', status: 'on-leave', initials: 'JH', color: '#ff9500', salary: 62000 },
-            { id: 6, name: 'Receptionist Faith Njeri', role: 'Receptionist', dept: 'General', email: 'f.njeri@pclinic.rw',
-                phone: '+254 700 111 222', status: 'active', initials: 'FN', color: '#007080', salary: 45000 },
-            { id: 7, name: 'MLT Martin Odhiambo', role: 'Lab Technician', dept: 'Laboratory',
-                email: 'm.odhiambo@pclinic.rw', phone: '+254 722 345 678', status: 'active', initials: 'MO',
-                color: '#b5006e', salary: 58000 },
-            { id: 8, name: 'Radiologist Anne Ndirangu', role: 'Radiologist', dept: 'Radiology',
-                email: 'a.ndirangu@pclinic.rw', phone: '+254 733 987 654', status: 'active', initials: 'AN',
-                color: '#8a6200', salary: 120000 },
-            { id: 9, name: 'Pharmacist Susan Kiprop', role: 'Pharmacist', dept: 'Pharmacy', email: 's.kiprop@pclinic.rw',
-                phone: '+254 710 222 333', status: 'active', initials: 'SK', color: '#1a7a32', salary: 75000 },
-            { id: 10, name: 'Finance Officer Rose Nkusi', role: 'Finance Officer', dept: 'Finance',
-                email: 'r.nkusi@pclinic.rw', phone: '+254 788 555 666', status: 'active', initials: 'RN',
-                color: '#3a3a3c', salary: 85000 },
-            { id: 11, name: 'Admin Peter Mwangi', role: 'Admin', dept: 'Administration', email: 'p.mwangi@pclinic.rw',
-                phone: '+254 700 777 888', status: 'inactive', initials: 'PM', color: '#6e6e73', salary: 70000 },
-            { id: 12, name: 'Nurse Mary Adhiambo', role: 'Nurse', dept: 'ICU', email: 'm.adhiambo@pclinic.rw',
-                phone: '+254 722 999 000', status: 'on-leave', initials: 'MA', color: '#ff3b30', salary: 68000 }
-        ];
+        const staffData = [];
+        // ⛔ NO TEMPLATE DATA — staff comes from the Common Server (pclinic_staff)
+        function loadStaffFromServer() {
+            try {
+                const list = JSON.parse(localStorage.getItem('pclinic_staff') || '[]');
+                staffData.length = 0;
+                list.forEach(function (s, i) {
+                    const nm = s.name || ((s.firstName || '') + ' ' + (s.lastName || '')).trim() || ('Staff ' + (i + 1));
+                    const parts = nm.split(/\s+/);
+                    staffData.push({ id: s.id || s.staffId || ('st' + i), name: nm, role: s.role || 'Staff',
+                        dept: s.department || s.dept || 'General', email: s.email || '—', phone: s.phone || '—',
+                        status: s.status || 'active', initials: ((parts[0] || 'S').charAt(0) + ((parts[1] || '').charAt(0) || '')).toUpperCase(),
+                        color: '#0071e3', salary: s.salary || 0 });
+                });
+            } catch (e) {}
+        }
 
-        const leaveRequests = [
-            { id: 1, employee: 'Nurse Jean Habimana', type: 'Annual Leave', from: '2026-06-30', to: '2026-07-04',
-                days: 5, status: 'pending' },
-            { id: 2, employee: 'Dr. Grace Ineza', type: 'Sick Leave', from: '2026-06-29', to: '2026-06-30', days: 2,
-                status: 'approved' },
-            { id: 3, employee: 'Nurse Mary Adhiambo', type: 'Annual Leave', from: '2026-06-28', to: '2026-07-10',
-                days: 13, status: 'approved' },
-            { id: 4, employee: 'MLT Martin Odhiambo', type: 'Study Leave', from: '2026-07-05', to: '2026-07-12',
-                days: 8, status: 'pending' },
-            { id: 5, employee: 'Receptionist Faith Njeri', type: 'Sick Leave', from: '2026-06-25', to: '2026-06-26',
-                days: 2, status: 'completed' },
-            { id: 6, employee: 'Dr. David Mutua', type: 'Annual Leave', from: '2026-07-15', to: '2026-07-22', days: 8,
-                status: 'pending' },
-            { id: 7, employee: 'Pharmacist Susan Kiprop', type: 'Compensatory Leave', from: '2026-06-29', to: '2026-06-29',
-                days: 1, status: 'approved' },
-            { id: 8, employee: 'Radiologist Anne Ndirangu', type: 'Annual Leave', from: '2026-07-01', to: '2026-07-03',
-                days: 3, status: 'rejected' }
-        ];
+        const leaveRequests = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
 
-        const deptCounts = [
-            { dept: 'Cardiology', count: 5 },
-            { dept: 'Neurology', count: 3 },
-            { dept: 'Orthopedics', count: 4 },
-            { dept: 'General', count: 6 },
-            { dept: 'Pediatrics', count: 4 },
-            { dept: 'ICU', count: 5 },
-            { dept: 'Radiology', count: 3 },
-            { dept: 'Laboratory', count: 4 },
-            { dept: 'Pharmacy', count: 3 },
-            { dept: 'Finance', count: 2 },
-            { dept: 'HR', count: 2 },
-            { dept: 'Administration', count: 1 }
-        ];
+        const deptCounts = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
 
-        const recentActivity = [
-            { employee: 'Dr. David Mutua', action: 'Leave request submitted', dept: 'Cardiology',
-                date: '2026-06-29 09:30', status: 'pending' },
-            { employee: 'Nurse Jean Habimana', action: 'Leave approved', dept: 'Pediatrics', date: '2026-06-29 08:45',
-                status: 'approved' },
-            { employee: 'MLT Martin Odhiambo', action: 'New staff joined', dept: 'Laboratory', date: '2026-06-28 16:20',
-                status: 'completed' },
-            { employee: 'Finance Officer Rose Nkusi', action: 'Payroll processed', dept: 'Finance',
-                date: '2026-06-28 14:00', status: 'completed' },
-            { employee: 'Dr. Grace Ineza', action: 'Leave request rejected', dept: 'Neurology',
-                date: '2026-06-27 11:30', status: 'rejected' }
-        ];
+        const recentActivity = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
 
-        const rosterData = [
-            { employee: 'Dr. D. Mutua', shifts: ['M', 'M', 'A', 'A', 'N', 'O', 'O'] },
-            { employee: 'Nurse A. Achieng', shifts: ['M', 'M', 'M', 'M', 'O', 'O', 'O'] },
-            { employee: 'Dr. G. Ineza', shifts: ['O', 'O', 'N', 'N', 'N', 'O', 'O'] },
-            { employee: 'Nurse J. Habimana', shifts: ['A', 'A', 'A', 'O', 'O', 'O', 'O'] },
-            { employee: 'MLT M. Odhiambo', shifts: ['M', 'M', 'M', 'M', 'M', 'O', 'O'] },
-            { employee: 'Dr. E. Nkurunziza', shifts: ['O', 'O', 'M', 'M', 'M', 'O', 'O'] },
-            { employee: 'Radiologist A. Ndirangu', shifts: ['A', 'A', 'A', 'A', 'A', 'O', 'O'] },
-            { employee: 'Pharmacist S. Kiprop', shifts: ['M', 'M', 'M', 'O', 'O', 'O', 'O'] }
-        ];
+        const rosterData = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
 
-        const payrollData = [
-            { employee: 'Dr. David Mutua', role: 'Doctor', dept: 'Cardiology', base: 180000, allowances: 25000,
-                deductions: 18000, status: 'paid' },
-            { employee: 'Dr. Grace Ineza', role: 'Doctor', dept: 'Neurology', base: 175000, allowances: 20000,
-                deductions: 15000, status: 'paid' },
-            { employee: 'Nurse Alice Achieng', role: 'Nurse', dept: 'Cardiology', base: 65000, allowances: 8000,
-                deductions: 5000, status: 'paid' },
-            { employee: 'Dr. Eric Nkurunziza', role: 'Doctor', dept: 'Orthopedics', base: 190000, allowances: 30000,
-                deductions: 20000, status: 'pending' },
-            { employee: 'Nurse Jean Habimana', role: 'Nurse', dept: 'Pediatrics', base: 62000, allowances: 5000,
-                deductions: 4000, status: 'paid' },
-            { employee: 'Receptionist Faith Njeri', role: 'Receptionist', dept: 'General', base: 45000, allowances: 3000,
-                deductions: 3000, status: 'paid' },
-            { employee: 'MLT Martin Odhiambo', role: 'Lab Technician', dept: 'Laboratory', base: 58000, allowances: 5000,
-                deductions: 4000, status: 'paid' },
-            { employee: 'Radiologist Anne Ndirangu', role: 'Radiologist', dept: 'Radiology', base: 120000,
-                allowances: 15000, deductions: 12000, status: 'pending' }
-        ];
+        const payrollData = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
 
-        const recruitmentData = [
-            { position: 'Cardiologist', dept: 'Cardiology', applicants: 5, status: 'open', posted: '2026-06-15' },
-            { position: 'ICU Nurse', dept: 'ICU', applicants: 8, status: 'reviewing', posted: '2026-06-20' },
-            { position: 'Radiology Technician', dept: 'Radiology', applicants: 3, status: 'open', posted: '2026-06-22' },
-            { position: 'Pharmacist', dept: 'Pharmacy', applicants: 4, status: 'closed', posted: '2026-06-01' },
-            { position: 'Finance Analyst', dept: 'Finance', applicants: 2, status: 'open', posted: '2026-06-25' },
-            { position: 'Lab Manager', dept: 'Laboratory', applicants: 2, status: 'reviewing', posted: '2026-06-18' }
-        ];
+        const recruitmentData = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
 
         let currentStaffFilter = 'all';
 
@@ -2245,6 +2158,7 @@
         });
 
         // ─── INIT ───
+        loadStaffFromServer();
         console.log('👥 PClinic HR & Staff Management Dashboard — Apple-Style Enhanced');
         console.log('📌 Shortcuts: Ctrl+D (Dark Mode), Ctrl+/ (Help), Ctrl+L (Logout)');
         renderStaff();

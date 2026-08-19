@@ -10,6 +10,18 @@
    ============================================================ */
 
 /* ── extracted from doctor-dashboard.html, inline block 1 ── */
+// ─── SAFE RENDERING HELPERS ───
+function pcEsc(value) {
+    var div = document.createElement('div');
+    div.textContent = value == null ? '' : String(value);
+    return div.innerHTML;
+}
+function pcSafeStatus(value) {
+    var allowed = ['active','inactive','critical','stable','pending','completed','cancelled'];
+    value = String(value || '').toLowerCase();
+    return allowed.indexOf(value) !== -1 ? value : 'inactive';
+}
+
 // ─── UPDATE EXAM OPTIONS ───
 function updateExamOptions() {
     const category = document.getElementById('imgCategory').value;
@@ -258,7 +270,7 @@ function submitImagingRequest() {
     
     // Close imaging and return to patient file
    setTimeout(() => {
-    window.parent.postMessage({ type: 'CLOSE_LAB' }, '*');
+    window.parent.postMessage({ type: 'CLOSE_LAB' }, window.location.origin);
 }, 1500);
 
 // ─── CLEAR IMAGING FORM ───
@@ -269,7 +281,7 @@ function clearImagingForm() {
     document.getElementById('imgOtherReason').value = '';
     document.getElementById('otherReasonContainer').style.display = 'none';
     document.getElementById('imgClinicalNotes').value = '';
-    document.getElementById('imgRequestingDoctor').value = 'Dr. Mutua';
+    document.getElementById('imgRequestingDoctor').value = ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff');
     document.getElementById('imgRequestDate').value = new Date().toISOString().slice(0, 10);
     document.getElementById('customExamInput').value = '';
     document.getElementById('customExamContainer').style.display = 'none';
@@ -1002,7 +1014,7 @@ function saveDiagnosis() {
             return d.code + ' - ' + d.name;
         }).join('\n');
         var noteData = {
-            doctor: 'Dr. Mutua',
+            doctor: ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff'),
             note: 'Diagnoses:\n' + diagnosisText,
             type: 'Diagnosis',
             status: 'Active',
@@ -1038,7 +1050,7 @@ function saveClinicalSections() {
     if (physicalExam) notes.push('Physical Examination: ' + physicalExam);
     if (notes.length > 0) {
         var noteData = {
-            doctor: 'Dr. Mutua',
+            doctor: ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff'),
             note: notes.join('\n\n'),
             type: 'Clinical Summary',
             status: 'Active',
@@ -1334,7 +1346,7 @@ function savePrescription() {
         }).join('\n');
         
         var noteData = {
-            doctor: 'Dr. Mutua',
+            doctor: ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff'),
             note: 'Prescriptions:\n' + rxText,
             type: 'Prescription',
             status: 'Active',
@@ -1418,21 +1430,21 @@ function displayPatientFile(patient) {
                 <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
                     <!-- Avatar -->
                     <div style="width: 72px; height: 72px; border-radius: 50%; background: ${c.bg}; color: ${c.txt}; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; flex-shrink: 0; box-shadow: 0 4px 16px ${c.bg}50;">
-                        ${patient.photo ? `<img src="${patient.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>` : initials}
+                        ${pcEsc(initials)}
                     </div>
                     
                     <!-- Patient Details -->
                     <div style="flex: 1;">
                         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                            <h2 style="font-size: 22px; font-weight: 700; color: var(--tp); margin: 0; letter-spacing: -0.3px;">${patient.firstName || ''} ${patient.lastName || ''}</h2>
+                            <h2 style="font-size: 22px; font-weight: 700; color: var(--tp); margin: 0; letter-spacing: -0.3px;">${pcEsc(patient.firstName || '')} ${pcEsc(patient.lastName || '')}</h2>
                             <span class="badge b-stable" style="font-size: 11px;">● Active</span>
-                            <span class="badge b-info" style="font-size: 11px;">${patient.mrn || 'N/A'}</span>
+                            <span class="badge b-info" style="font-size: 11px;">${pcEsc(patient.mrn || 'N/A')}</span>
                         </div>
                         <div style="display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap; font-size: 13px; color: var(--tm);">
-                            <span><i class="ti ti-calendar"></i> ${patient.dob || '--'} (${age} yrs)</span>
-                            <span><i class="ti ti-gender-male"></i> ${patient.gender || '--'}</span>
-                            <span><i class="ti ti-phone"></i> ${patient.phone || '--'}</span>
-                            <span><i class="ti ti-building-hospital"></i> ${patient.department || 'General'}</span>
+                            <span><i class="ti ti-calendar"></i> ${pcEsc(patient.dob || '--')} (${pcEsc(age)} yrs)</span>
+                            <span><i class="ti ti-gender-male"></i> ${pcEsc(patient.gender || '--')}</span>
+                            <span><i class="ti ti-phone"></i> ${pcEsc(patient.phone || '--')}</span>
+                            <span><i class="ti ti-building-hospital"></i> ${pcEsc(patient.department || 'General')}</span>
                         </div>
                     </div>
 
@@ -1460,12 +1472,9 @@ function displayPatientFile(patient) {
                         <button class="btn-apple" data-color="prescription" onclick="event.stopPropagation();openPrescriptionModal(currentPatient)"><i class="ti ti-pill"></i> Prescription</button>
                         <button class="btn-apple" data-color="physio"       onclick="event.stopPropagation();openPhysioRequestModal(currentPatient)"><i class="ti ti-accessible"></i> Physio Request</button>
                         <button class="btn-apple" data-color="ward"       onclick="event.stopPropagation();openWardRoundModal(currentPatient)"><i class="ti ti-bed"></i> Ward Round</button>
-                        <button class="btn-apple" data-color="photos"     onclick="document.getElementById('patientPhotoInput').click()"><i class="ti ti-photo"></i> Photos</button>
-                        <button class="btn-apple" data-color="video"      onclick="document.getElementById('patientVideoInput').click()"><i class="ti ti-video"></i> Video</button>
                         <button class="btn-apple" data-color="print"      onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
                         <button class="btn-apple" data-color="close"      onclick="closePatientFile()"><i class="ti ti-x"></i> Close</button>
-                        <input type="file" id="patientPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePatientMedia(event)"/>
-                        <input type="file" id="patientVideoInput" accept="video/*" style="display:none" onchange="handlePatientVideo(event)"/>
+                        <span style="font-size:10px;color:var(--tm);">Media disabled in emergency security mode</span>
                     </div>
                 </div>
             </div>
@@ -1701,66 +1710,27 @@ var patientTableFilterKey = '';
 function renderPatientTable(patients) {
     const tbody = document.getElementById('patientTableBody');
     if (!tbody) return;
-
-    const filter = document.getElementById('patientFilter')?.value?.toLowerCase() || '';
-    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
-
-    // Create cache key
-    const cacheKey = filter + '|' + statusFilter + '|' + (patients ? patients.length : 0);
-    
-    // Only re-render if filter changed
-    if (patientTableCache && patientTableFilterKey === cacheKey) {
-        // Just update the count
-        const data = patients || getPatients() || [];
-        document.getElementById('patientCount').textContent = data.length;
-        return;
-    }
-
+    const filter = (document.getElementById('ptSearch') && document.getElementById('ptSearch').value || '').toLowerCase();
+    const statusFilter = (document.getElementById('statusFilter') && document.getElementById('statusFilter').value) || 'all';
     let data = patients || getPatients() || [];
-
-    // Apply filters
-    if (filter) {
-        data = data.filter(p =>
-            (p.firstName + ' ' + p.lastName).toLowerCase().includes(filter) ||
-            (p.mrn || '').toLowerCase().includes(filter)
-        );
+    if (filter) data = data.filter(function(p){ return ((String(p.firstName||'')+' '+String(p.lastName||'')).toLowerCase().includes(filter) || String(p.mrn||'').toLowerCase().includes(filter)); });
+    if (statusFilter !== 'all') data = data.filter(function(p){ return String(p.status||'active') === statusFilter; });
+    var count = document.getElementById('patientCount'); if (count) count.textContent = String(data.length);
+    tbody.replaceChildren();
+    if (!data.length) {
+        var emptyRow=document.createElement('tr');var emptyCell=document.createElement('td');emptyCell.colSpan=7;emptyCell.style.cssText='text-align:center;padding:30px;color:var(--tm)';emptyCell.textContent='No patients found.';emptyRow.appendChild(emptyCell);tbody.appendChild(emptyRow);return;
     }
-
-    if (statusFilter !== 'all') {
-        data = data.filter(p => (p.status || 'active') === statusFilter);
-    }
-
-    document.getElementById('patientCount').textContent = data.length;
-
-    if (data.length === 0) {
-        const emptyHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--tm);">No patients found.</td></tr>`;
-        tbody.innerHTML = emptyHTML;
-        patientTableCache = emptyHTML;
-        patientTableFilterKey = cacheKey;
-        return;
-    }
-
-    // Build HTML efficiently using for loop (faster than map for large datasets)
-    var html = '';
-    for (var i = 0; i < data.length; i++) {
-        var p = data[i];
-        html += `<tr onclick="selectPatient(${p.id})" style="cursor:pointer;">
-            <td><strong>${p.firstName || ''} ${p.lastName || ''}</strong></td>
-            <td><span class="badge b-info">${p.mrn || 'N/A'}</span></td>
-            <td>${p.dob || 'N/A'} (${getAge(p.dob)})</td>
-            <td>${p.gender || 'N/A'}</td>
-            <td>${p.phone || 'N/A'}</td>
-            <td><span class="badge ${(p.status || 'active') === 'active' ? 'b-stable' : 'b-warn'}">${p.status || 'active'}</span></td>
-            <td>
-                <button class="btn-s" style="padding:2px 10px;font-size:10px;" onclick="event.stopPropagation();selectPatient(${p.id})"><i class="ti ti-eye"></i> View</button>
-                <button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--acb);color:var(--ac);" onclick="event.stopPropagation();addNoteForPatient(${p.id})"><i class="ti ti-notes"></i> Note</button>
-            </td>
-        </tr>`;
-    }
-    
-    tbody.innerHTML = html;
-    patientTableCache = html;
-    patientTableFilterKey = cacheKey;
+    data.forEach(function(p){
+        var row=document.createElement('tr');row.style.cursor='pointer';row.addEventListener('click',function(){selectPatient(p.id);});
+        function cell(text){var td=document.createElement('td');td.textContent=String(text==null?'':text);return td;}
+        var name=cell('');var strong=document.createElement('strong');strong.textContent=String(p.firstName||'')+' '+String(p.lastName||'');name.appendChild(strong);row.appendChild(name);
+        row.appendChild(cell(p.mrn||'N/A'));row.appendChild(cell(String(p.dob||'N/A')+' ('+String(getAge(p.dob))+')'));row.appendChild(cell(p.gender||'N/A'));row.appendChild(cell(p.phone||'N/A'));row.appendChild(cell(pcSafeStatus(p.status)));
+        var actions=document.createElement('td');
+        var view=document.createElement('button');view.type='button';view.className='btn-s';view.textContent='View';view.addEventListener('click',function(e){e.stopPropagation();selectPatient(p.id);});
+        var note=document.createElement('button');note.type='button';note.className='btn-s';note.textContent='Note';note.addEventListener('click',function(e){e.stopPropagation();addNoteForPatient(p.id);});actions.appendChild(view);actions.appendChild(note);row.appendChild(actions);tbody.appendChild(row);
+    });
+    patientTableCache = null;
+    patientTableFilterKey = '';
 }
 
 
@@ -1843,6 +1813,7 @@ function selectPatient(id) {
         return;
     }
     currentPatient = p;
+    try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
     displayClinicalNotes(p);
     fillForms(p);
     displayPrescriptionHistory(p);
@@ -2396,13 +2367,7 @@ function displayPatientCard(p) {
 
     card.classList.add('show');
 
-    // Photo
-    if (p.photo) {
-        const photoEl = document.getElementById('pc-photo');
-        if (photoEl) {
-            photoEl.innerHTML = `<img src="${p.photo}" alt=""><div class="upload-badge">📷</div>`;
-        }
-    }
+    // Patient media is intentionally not rendered in emergency security mode.
 
     // Update vitals
     updateDoctorVitals(p);
@@ -2449,7 +2414,7 @@ function displayPatientCard(p) {
             const wardDateEl = document.getElementById('wardDate');
             if (wardDateEl) wardDateEl.value = new Date().toISOString().split('T')[0];
             const wardDoctorEl = document.getElementById('wardDoctor');
-            if (wardDoctorEl && !wardDoctorEl.value) wardDoctorEl.value = 'Dr. Mutua';
+            if (wardDoctorEl && !wardDoctorEl.value) wardDoctorEl.value = ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff');
             const wardBedEl = document.getElementById('wardBed');
             if (wardBedEl && p.bed) wardBedEl.value = p.bed;
 
@@ -2461,6 +2426,10 @@ function displayPatientCard(p) {
         function handleSmartSearch(query) {
             const q = query.toLowerCase().trim();
             const container = document.getElementById('suggestions');
+
+            // Single search box now also drives the All Patients table filter
+            if (typeof renderPatientTable === 'function') renderPatientTable();
+
             if (!q) { container.classList.remove('show'); return; }
 
             const patients = getPatients() || [];
@@ -2497,41 +2466,15 @@ function displayPatientCard(p) {
 
         // ─── PATIENT MEDIA ───
         function handlePatientMedia(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (!file.type.startsWith('image/')) {
-                showToast('⚠️ Please select an image file.', 'warning');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                patientMedia.photos.push(ev.target.result);
-                document.getElementById('photoCount').textContent = patientMedia.photos.length;
-                if (currentPatient) {
-                    try { updatePatient(currentPatient.id, { photo: ev.target.result }); } catch(e) {}
-                    displayPatientCard(currentPatient);
-                }
-                showToast('📸 Patient photo uploaded', 'success');
-                e.target.value = '';
-            };
-            reader.readAsDataURL(file);
+            if (e && e.target) e.target.value = '';
+            showToast('🔒 Patient media uploads are disabled until secure object storage is configured.', 'warning');
+            return false;
         }
 
         function handlePatientVideo(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (!file.type.startsWith('video/')) {
-                showToast('⚠️ Please select a video file.', 'warning');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                patientMedia.videos.push(ev.target.result);
-                document.getElementById('videoCount').textContent = patientMedia.videos.length;
-                showToast('🎥 Patient video uploaded', 'success');
-                e.target.value = '';
-            };
-            reader.readAsDataURL(file);
+            if (e && e.target) e.target.value = '';
+            showToast('🔒 Patient media uploads are disabled until secure object storage is configured.', 'warning');
+            return false;
         }
 
 
@@ -2637,6 +2580,20 @@ function switchTab(name, btn) {
     if (name === 'lab') {
         if (currentPatient) fillForms(currentPatient);
         showToast('🧪 Opening Lab Request Form', 'info');
+    }
+    if (name === 'lab-results') {
+        // Real results for the SELECTED patient only — read-only (no doctor entry)
+        if (currentPatient) {
+            refreshLabResults();
+            displayLabRequests(currentPatient);
+            displayLabResults(currentPatient);
+        } else {
+            showToast('🔒 Select a patient first — results are shown for the selected patient only', 'warning');
+            var labResList = document.getElementById('labResultsList');
+            if (labResList) labResList.innerHTML = '<p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">🔒 No patient selected. Choose a patient from the list first.</p>';
+            var labReqList = document.getElementById('labRequestsList');
+            if (labReqList) labReqList.innerHTML = '<p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">🔒 No patient selected.</p>';
+        }
     }
     
 
@@ -2916,7 +2873,7 @@ function updateSchedule() {
 
             try {
                 const roundData = {
-                    doctor: document.getElementById('wardDoctor').value.trim() || 'Dr. Mutua',
+                    doctor: document.getElementById('wardDoctor').value.trim() || ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff'),
                     location: document.getElementById('wardLocation').value.trim() || (currentPatient.department || 'General'),
                     bed: document.getElementById('wardBed').value.trim() || '',
                     roundDate: document.getElementById('wardDate').value || new Date().toISOString().split('T')[0],
@@ -2991,7 +2948,7 @@ function updateSchedule() {
             const dateEl = document.getElementById('wardDate');
             if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
             const doctorEl = document.getElementById('wardDoctor');
-            if (doctorEl) doctorEl.value = 'Dr. Mutua';
+            if (doctorEl) doctorEl.value = ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff');
         }
 
         function updateWardVitalsSnapshot(patient) {
@@ -3143,7 +3100,7 @@ function updateSchedule() {
 
             try {
                 const noteData = {
-                    doctor: 'Dr. Mutua',
+                    doctor: ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff'),
                     note: 'Subjective: ' + (subjective || 'N/A') + '\nObjective: ' + (objective || 'N/A') + '\nPlan: ' + (plan || 'N/A'),
                     type: document.getElementById('notesType').value,
                     status: 'Active',
@@ -3538,10 +3495,55 @@ function navigateToLabResults() {
     showToast('📊 Opening Lab Results', 'info');
 }
 
+// ─── INSTANT LIVE SYNC FOR LAB RESULTS TABLE IN DOCTOR DASHBOARD ───
+function refreshLabResults() {
+    try {
+        if (!currentPatient) return;
+        var pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+        var found = pts.find(function(p){ return String(p.id) === String(currentPatient.id); });
+        if (found) {
+            currentPatient = found;
+            var cleanData = {
+                id: currentPatient.id,
+                firstName: currentPatient.firstName || '',
+                lastName: currentPatient.lastName || '',
+                mrn: currentPatient.mrn || '',
+                labRequests: Array.isArray(currentPatient.labRequests) ? currentPatient.labRequests : [],
+                labResults: Array.isArray(currentPatient.labResults) ? currentPatient.labResults : []
+            };
+            localStorage.setItem('pclinic_lab_patient_data', JSON.stringify(cleanData));
+            var iframe = document.getElementById('labResultsIframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({
+                    type: 'LOAD_PATIENT',
+                    patient: cleanData
+                }, window.location.origin);
+            }
+        }
+    } catch(e) {
+        console.warn('refreshLabResults sync error:', e);
+    }
+}
 
+window.addEventListener('storage', function(e) {
+    if (!e.key || e.key === 'pclinic_patients' || e.key === 'pclinic_orders' || e.key === 'pclinic_lab_patient_data') {
+        refreshLabResults();
+        refreshLabResultsPanel();
+    }
+});
+window.addEventListener('labResultsUpdated', function() { refreshLabResults(); refreshLabResultsPanel(); });
+window.addEventListener('ordersUpdated', function() { refreshLabResults(); refreshLabResultsPanel(); });
+window.addEventListener('patientsUpdated', function() { refreshLabResults(); refreshLabResultsPanel(); });
 
-
-
+// Re-render the Lab Results tab panel (requests + verified results) on live lab updates
+function refreshLabResultsPanel() {
+    try {
+        if (currentPatient) {
+            displayLabRequests(currentPatient);
+            displayLabResults(currentPatient);
+        }
+    } catch(e) { console.warn('refreshLabResultsPanel:', e); }
+}
 
 // ─── OPEN LAB RESULTS BELOW PATIENT CARD ───
 function openLabResultsPage(patient) {
@@ -3550,7 +3552,16 @@ function openLabResultsPage(patient) {
         return;
     }
     
-    const selectedPatient = patient || currentPatient;
+    // ─── ALWAYS PULL THE FRESHEST RECORD FROM THE COMMON SERVER ───
+    let selectedPatient = patient || currentPatient;
+    try {
+        const freshPatients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+        const fresh = freshPatients.find(p => String(p.id) === String(selectedPatient.id));
+        if (fresh) {
+            selectedPatient = fresh;
+            currentPatient = fresh;
+        }
+    } catch(e) {}
     
     // ─── SAVE PATIENT DATA TO LOCALSTORAGE ───
     try {
@@ -3621,7 +3632,7 @@ function openLabResultsPage(patient) {
                     iframe.contentWindow.postMessage({
                         type: 'LOAD_PATIENT',
                         patient: patientData
-                    }, '*');
+                    }, window.location.origin);
                     console.log('✅ Patient data sent to lab results:', patientData.firstName, patientData.lastName);
                 }
             } catch (e) {
@@ -3657,6 +3668,7 @@ function closeLabResultsPage() {
 
 // ─── LISTEN FOR LAB REQUEST SUBMISSIONS ───
 window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
     if (event.data && event.data.type === 'LAB_REQUEST_SUBMITTED') {
         const patientId = event.data.patientId;
         console.log('📨 Lab request submitted notification received for patient:', patientId);
@@ -3679,6 +3691,7 @@ window.addEventListener('message', function(event) {
 
 // ─── MESSAGE HANDLER (LAB RESULTS) ───
 window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
     if (event.data && event.data.type === 'CLOSE_LAB_RESULTS') {
         closeLabResultsPage();
     }
@@ -3768,7 +3781,7 @@ function openImagingResultsPage(patient) {
                     iframe.contentWindow.postMessage({
                         type: 'LOAD_PATIENT',
                         patient: patientData
-                    }, '*');
+                    }, window.location.origin);
                     console.log('✅ Patient data sent to imaging results:', patientData.firstName, patientData.lastName);
                 }
             } catch (e) {
@@ -3792,6 +3805,7 @@ function closeImagingResultsPage() {
 
 // ─── LISTEN: CLOSE_IMAGING_RESULTS ───
 window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
     if (event.data && event.data.type === 'CLOSE_IMAGING_RESULTS') {
         closeImagingResultsPage();
     }
@@ -3799,6 +3813,7 @@ window.addEventListener('message', function(event) {
 
 // ─── LISTEN: IMAGING_RESULT_SAVED (refresh currentPatient) ───
 window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
     if (event.data && event.data.type === 'IMAGING_RESULT_SAVED') {
         const patientId = event.data.patientId;
         console.log('📨 Imaging result saved notification for patient:', patientId);
@@ -3859,6 +3874,26 @@ function openLabResults() {
 
 
 
+
+// ─── QUICK ACTION OPENER (Doctor Dashboard quick-action cards) ───
+// Opens any page EXACTLY like the Bill page opens: full overlay for the
+// selected patient (pcPatient.open), or navigation carrying ?patient=.
+window.pcQuick = function(page) {
+    try {
+        if (window.pcPatient && typeof window.pcPatient.open === 'function') {
+            window.pcPatient.open(page);
+            return;
+        }
+    } catch(e){}
+    var pid = (currentPatient && currentPatient.id) || '';
+    try { pid = pid || localStorage.getItem('pclinic_active_patient') || ''; } catch(e){}
+    if (pid) {
+        var sep = page.indexOf('?') !== -1 ? '&' : '?';
+        window.location.href = page + sep + 'patient=' + encodeURIComponent(pid);
+    } else {
+        window.location.href = page;
+    }
+};
 
 // ─── OPEN LAB REQUEST BELOW PATIENT CARD ───
 function openLabRequestPage(patient) {
@@ -3921,15 +3956,19 @@ function openLabRequestPage(patient) {
         container = document.createElement('div');
         container.id = 'labRequestContainer';
         container.style.cssText = `
-            margin-top: 16px;
-            padding: 0;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 16px 0 0 0 !important;
+            padding: 0 !important;
             background: var(--s1);
             border-radius: 12px;
             border: 0.5px solid var(--bd);
             box-shadow: var(--shadow);
-            overflow: hidden;
+            overflow: visible !important;
             display: none;
-            height: 800px;
+            height: auto !important;
+            min-height: 950px; min-height: 950px;
+            box-sizing: border-box !important;
         `;
         const patientCard = document.getElementById('patient-card');
         if (patientCard) {
@@ -3959,8 +3998,10 @@ function openLabRequestPage(patient) {
     
     container.innerHTML = `
         <iframe id="labRequestIframe" src="lab-request.html" style="
-            width: 100%;
-            height: 800px;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 950px; min-height: 950px;
+            box-sizing: border-box !important;
             border: none;
             margin: 0;
             padding: 0;
@@ -3984,7 +4025,7 @@ function openLabRequestPage(patient) {
                         iframe.contentWindow.postMessage({
                             type: 'LOAD_PATIENT',
                             patient: patientData
-                        }, '*');
+                        }, window.location.origin);
                         console.log('✅ Patient data sent to lab request:', patientData.firstName, patientData.lastName);
                     }
                 } catch (e) {
@@ -4025,6 +4066,7 @@ function closeLabRequestPage() {
 
 // ─── MESSAGE HANDLER (LAB REQUEST) ───
 window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
     if (event.data && event.data.type === 'CLOSE_LAB') {
         closeLabRequestPage();
     }
@@ -4034,6 +4076,7 @@ window.addEventListener('message', function(event) {
 
 // ─── MESSAGE HANDLER (LAB RESULTS) ───
 window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
     if (event.data && event.data.type === 'CLOSE_LAB_RESULTS') {
         closeLabResultsPage();
     }
@@ -4276,7 +4319,7 @@ function submitModalLabRequest() {
         priority: priority,
         sampleType: sampleType,
         clinicalDetails: notes || 'Lab tests requested',
-        requestedBy: 'Dr. Mutua',
+        requestedBy: ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff'),
         status: 'Pending',
         timestamp: new Date().toISOString()
     };
@@ -4665,72 +4708,105 @@ function toggleVitalsHistory() {
 
         /**
          * Display Lab Requests with status filter
+         * ✅ LIVE STATUS: reads the real pclinic_orders so the doctor sees
+         *    Pending → Verified (lab released) → Cancelled exactly as the lab updates it.
+         * ⛔ NO result editing by the doctor — results come from the laboratory only.
          */
         function displayLabRequests(patient) {
             const container = document.getElementById('labRequestsList');
             const count = document.getElementById('labRequestCount');
-            
             if (!container) return;
 
-            const requests = patient?.labRequests || [];
-            const filter = document.getElementById('labRequestStatusFilter')?.value || 'all';
-            
-            const filtered = filter === 'all' ? requests : requests.filter(r => r.status === filter);
-            
-            if (count) {
-                count.textContent = filtered.length + ' request' + (filtered.length !== 1 ? 's' : '');
+            let p = patient || currentPatient;
+            if (!p) {
+                container.innerHTML = '<p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">🔒 No patient selected.</p>';
+                return;
             }
+            // Always read the freshest copy from the Common Server
+            try {
+                const pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                const fresh = pts.find(x => String(x.id) === String(p.id));
+                if (fresh) {
+                    p = fresh;
+                    if (currentPatient && String(currentPatient.id) === String(fresh.id)) currentPatient = fresh;
+                }
+            } catch(e){}
+
+            const requests = Array.isArray(p.labRequests) ? p.labRequests : [];
+            const filter = document.getElementById('labRequestStatusFilter') ? document.getElementById('labRequestStatusFilter').value : 'all';
+
+            // Real order status from pclinic_orders (Lab Dashboard is the authority)
+            let realOrders = [];
+            try {
+                realOrders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]').filter(function(o) {
+                    return String(o.patientId).replace(/^MOD-/i, '') === String(p.id).replace(/^MOD-/i, '') &&
+                           (o.type === 'lab' || o.dept === 'lab');
+                });
+            } catch(e){}
+
+            function liveStatus(req) {
+                if (req.status === 'Cancelled' || req.status === 'cancelled') return 'cancelled';
+                const reqTests = (Array.isArray(req.tests) ? req.tests : []).map(t => String(t).toLowerCase());
+                for (let i = 0; i < realOrders.length; i++) {
+                    const o = realOrders[i];
+                    const items = (o.items || []).map(it => String(it.name || '').toLowerCase());
+                    const anyMatch = reqTests.some(rt => items.some(it => it.includes(rt) || rt.includes(it)));
+                    if (anyMatch) {
+                        if (o.status === 'completed' || o.status === 'Completed') return 'completed';
+                        if (o.status === 'cancelled' || o.status === 'Cancelled') return 'cancelled';
+                    }
+                }
+                return 'pending';
+            }
+
+            const withStatus = requests.map(function(req) {
+                return { req: req, live: liveStatus(req) };
+            });
+
+            const filtered = filter === 'all' ? withStatus : withStatus.filter(x => x.live === filter);
+
+            if (count) count.textContent = filtered.length + ' request' + (filtered.length !== 1 ? 's' : '');
 
             if (filtered.length === 0) {
                 container.innerHTML = '<p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">No lab requests found.</p>';
                 return;
             }
 
-            const sorted = [...filtered].reverse();
+            const sorted = filtered.reverse();
 
-            container.innerHTML = sorted.map(function(req) {
+            container.innerHTML = sorted.map(function(x) {
+                const req = x.req;
+                const live = x.live;
                 const date = req.timestamp ? new Date(req.timestamp).toLocaleString() : 'No date';
-                const isPending = req.status === 'Pending';
-                const isCompleted = req.status === 'Completed';
-                const isCancelled = req.status === 'Cancelled';
-                
-                let statusBadge = '';
-                if (isPending) {
-                    statusBadge = `<span class="lr-status-pending">❓ Pending</span>`;
-                } else if (isCompleted) {
-                    statusBadge = `<span class="lr-status-completed">✅ Completed</span>`;
-                } else if (isCancelled) {
-                    statusBadge = `<span class="lr-status-cancelled">❌ Cancelled</span>`;
+                const tests = req.tests ? req.tests.join(', ') : 'No tests selected';
+
+                let badge = '';
+                if (live === 'completed') {
+                    badge = '<span style="background:#e9f9ee;color:#1a7a32;font-weight:700;font-size:10.5px;padding:3px 10px;border-radius:20px;">✅ Verified by Lab</span>';
+                } else if (live === 'cancelled') {
+                    badge = '<span style="background:#ffebe9;color:#8a1f1a;font-weight:700;font-size:10.5px;padding:3px 10px;border-radius:20px;">❌ Cancelled</span>';
                 } else {
-                    statusBadge = `<span class="lr-status-pending">❓ Pending</span>`;
+                    badge = '<span style="background:#fff4e0;color:#7a4500;font-weight:700;font-size:10.5px;padding:3px 10px;border-radius:20px;">⏳ Pending at Lab</span>';
                 }
-                
-          const tests = req.tests ? req.tests.join(', ') : 'No tests selected';
-                
-               let actions = '';
-if (isPending) {
-    actions = `
-        <button class="btn-add-result" onclick="openResultEntryModal('${req.id}')"><i class="ti ti-edit"></i> Add Result</button>
-        <button class="btn-cancel-request" onclick="cancelLabRequest('${req.id}')"><i class="ti ti-x"></i></button>
-        <button class="btn-delete-request" onclick="deleteLabRequest('${req.id}')" style="background:var(--redb);color:var(--redd);padding:2px 10px;border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.2s var(--spring);font-family:inherit;">
-            <i class="ti ti-trash"></i> Delete
-        </button>
-    `;
-} else if (isCompleted) {
-    actions = `<button class="btn-s" style="padding:2px 8px;font-size:9px;" onclick="printLabRequest('${req.id}')"><i class="ti ti-printer"></i></button>`;
-}
-                return `<div class="lab-request-item">
-                    <div>
-                        <div class="req-test-name">${tests}</div>
-                        <div class="req-details">${req.priority || 'Routine'} • ${req.sampleType || 'N/A'}</div>
-                    </div>
-                    <div class="req-details">
-                        <div>${date}</div>
-                    </div>
-                    <div>${statusBadge}</div>
-                    <div class="req-details">👨‍⚕️ ${req.requestedBy || 'Unknown'}</div>
-                    <div class="req-actions">${actions}</div>
-                </div>`;
+
+                let actions = '';
+                if (live === 'pending') {
+                    actions =
+                        '<button onclick="cancelLabRequest(\'' + req.id + '\')" title="Cancel request" style="background:#fff;border:0.5px solid rgba(0,0,0,0.14);color:#3a3a3c;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">✕ Cancel</button>' +
+                        '<button onclick="deleteLabRequest(\'' + req.id + '\')" title="Delete request" style="background:#ffebe9;color:#8a1f1a;border:0.5px solid rgba(138,31,26,0.25);padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:6px;">🗑 Delete</button>';
+                } else if (live === 'completed') {
+                    actions = '<button onclick="openLabResultsPage(currentPatient)" style="background:#eaf2ff;color:#0071e3;border:0.5px solid rgba(0,113,227,0.3);padding:4px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">📊 View Results</button>';
+                }
+
+                return '<div style="display:flex;align-items:center;gap:12px;background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:12px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);flex-wrap:wrap;">' +
+                    '<div style="flex:1;min-width:180px;">' +
+                        '<div style="font-weight:800;color:#1d1d1f;font-size:12.5px;">' + tests + '</div>' +
+                        '<div style="font-size:11px;color:#6e6e73;margin-top:2px;">' + (req.priority || 'Routine') + ' • ' + (req.sampleType || 'N/A') + ' • ' + (req.requestedBy || 'Unknown') + '</div>' +
+                    '</div>' +
+                    '<div style="font-size:11px;color:#6e6e73;white-space:nowrap;">' + date + '</div>' +
+                    badge +
+                    '<div style="white-space:nowrap;">' + actions + '</div>' +
+                '</div>';
             }).join('');
         }
 
@@ -4825,188 +4901,146 @@ function deleteLabRequest(requestId) {
     }
 }
 
-        /**
-         * Open Result Entry Modal
-         */
-        function openResultEntryModal(requestId) {
-            // Ensure modal exists
-            if (!document.getElementById('result-entry-modal')) {
-                createResultEntryModal();
-            }
-            
-            const modal = document.getElementById('result-entry-modal');
-            if (!modal) {
-                showToast('❌ Modal not found', 'error');
+        async function acknowledgeCriticalLabResult(orderId, button) {
+            if (!orderId || !window.pclinicCloudFunctions) {
+                showToast('❌ Critical-result acknowledgement service is unavailable.', 'error');
                 return;
             }
-            
-            document.getElementById('resultRequestId').value = requestId;
-            
-            // Find the request to get test names
-            if (currentPatient && currentPatient.labRequests) {
-                const req = currentPatient.labRequests.find(r => String(r.id) === String(requestId));
-                if (req) {
-                    document.getElementById('resultTestName').textContent = req.tests.join(', ');
-                    document.getElementById('resultPatientName').textContent = req.patientName || 'Unknown';
-                }
-            }
-            
-            modal.classList.add('show');
-        }
-
-        /**
-         * Create Result Entry Modal
-         */
-        function createResultEntryModal() {
-            if (document.getElementById('result-entry-modal')) return;
-            
-            const modalHTML = `
-                <div class="modal-overlay result-entry-modal" id="result-entry-modal">
-                    <div class="modal">
-                        <div class="modal-header">
-                            <div class="modal-title">🧪 Enter Lab Results</div>
-                            <button class="modal-close" onclick="closeResultEntryModal()"><i class="ti ti-x"></i></button>
-                        </div>
-                        <div class="modal-body">
-                            <form class="result-entry-form" id="resultEntryForm">
-                                <input type="hidden" id="resultRequestId" value="">
-                                
-                                <div style="margin-bottom:12px;padding:10px;background:var(--acb);border-radius:8px;">
-                                    <div style="font-size:12px;font-weight:600;color:var(--ac);">Patient: <span id="resultPatientName">--</span></div>
-                                    <div style="font-size:12px;color:var(--tm);">Test: <span id="resultTestName">--</span></div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Result Value *</label>
-                                        <input type="text" id="resultValue" placeholder="e.g. 13.2" required/>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Unit</label>
-                                        <input type="text" id="resultUnit" placeholder="e.g. g/dL"/>
-                                    </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Reference Range *</label>
-                                        <input type="text" id="resultRange" placeholder="e.g. 12.0-16.0" required/>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Status</label>
-                                        <select id="resultStatus">
-                                            <option value="normal">✅ Normal</option>
-                                            <option value="high">⬆️ High</option>
-                                            <option value="low">⬇️ Low</option>
-                                            <option value="critical">⚠️ Critical</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Notes (Optional)</label>
-                                    <input type="text" id="resultNotes" placeholder="Any additional notes..."/>
-                                </div>
-                                <div class="form-actions">
-                                    <button type="button" class="btn-p" onclick="saveLabResult()" style="flex:1;"><i class="ti ti-check"></i> Save Result</button>
-                                    <button type="button" class="btn-s" onclick="closeResultEntryModal()">Cancel</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = modalHTML;
-            document.body.appendChild(tempDiv.firstElementChild);
-            
-            document.getElementById('result-entry-modal').addEventListener('click', function(e) {
-                if (e.target === this) closeResultEntryModal();
-            });
-        }
-
-
-      
-
-        /**
-         * Close Result Entry Modal
-         */
-        function closeResultEntryModal() {
-            const modal = document.getElementById('result-entry-modal');
-            if (modal) modal.classList.remove('show');
-            const form = document.getElementById('resultEntryForm');
-            if (form) form.reset();
-        }
-
-        /**
-         * Save Lab Result
-         */
-        function saveLabResult() {
-    const requestId = document.getElementById('resultRequestId').value;
-    const value = document.getElementById('resultValue').value.trim();
-    const unit = document.getElementById('resultUnit').value.trim();
-    const range = document.getElementById('resultRange').value.trim();
-    const status = document.getElementById('resultStatus').value;
-    const notes = document.getElementById('resultNotes').value.trim();
-    
-    if (!value) {
-        showToast('⚠️ Please enter a result value', 'warning');
-        return;
-    }
-    
-    if (!range) {
-        showToast('⚠️ Please enter reference range', 'warning');
-        return;
-    }
-    
-    try {
-        if (!currentPatient || !currentPatient.labRequests) {
-            showToast('❌ Request not found', 'error');
-            return;
-        }
-        
-        const req = currentPatient.labRequests.find(r => String(r.id) === String(requestId));
-        if (!req) {
-            showToast('❌ Request not found', 'error');
-            return;
-        }
-        
-        const labResult = {
-            test: req.tests.join(', '),
-            value: value,
-            unit: unit || '',
-            range: range,
-            status: status,
-            notes: notes,
-            requestId: requestId,
-            date: new Date().toISOString()
-        };
-        
-        req.status = 'Completed';
-        req.result = labResult;
-        
-        if (!currentPatient.labResults) currentPatient.labResults = [];
-        currentPatient.labResults.push(labResult);
-        
-        if (typeof updatePatient === 'function') {
+            if (!window.confirm('Confirm that you have reviewed and clinically acknowledged this critical laboratory result?')) return;
+            var original = button ? button.textContent : '';
+            if (button) { button.disabled = true; button.textContent = 'Acknowledging…'; }
             try {
-                updatePatient(currentPatient.id, { 
-                    labRequests: currentPatient.labRequests,
-                    labResults: currentPatient.labResults
-                });
-            } catch(e) {}
+                await window.pclinicCloudFunctions.call('labAcknowledgeCritical', { orderId: String(orderId) });
+                if (button) { button.textContent = '✓ Critical result acknowledged'; button.style.background = '#e9f9ee'; button.style.color = '#1a7a32'; }
+                showToast('✅ Critical laboratory result acknowledged and audited.', 'success');
+            } catch (error) {
+                console.error('Critical lab acknowledgement failed:', error);
+                if (button) { button.disabled = false; button.textContent = original || 'Acknowledge critical result'; }
+                showToast('❌ Acknowledgement failed: ' + String(error && error.message || error), 'error');
+            }
         }
-        
-        showToast('✅ Lab result saved successfully!', 'success');
-        closeResultEntryModal();
-        
-        displayLabRequests(currentPatient);
-        displayLabResults(currentPatient);
-        
-    } catch(e) {
-        console.error('Error saving lab result:', e);
-        showToast('❌ Error saving lab result', 'error');
-    }
-}
+        window.acknowledgeCriticalLabResult = acknowledgeCriticalLabResult;
+
+        /**
+         * Display Verified Lab Results (READ-ONLY for the doctor)
+         * ⛔ The doctor CANNOT enter or edit results — the laboratory releases them.
+         * ✅ Renders real verified results from the Lab Dashboard (orders + labResults)
+         *    including the Microbiology Culture & Sensitivity antibiotic table.
+         */
+        function displayLabResults(patient) {
+            var container = document.getElementById('labResultsList');
+            if (!container) return;
+
+            var p = patient || currentPatient;
+            if (!p) {
+                container.innerHTML = '<p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">🔒 No patient selected.</p>';
+                return;
+            }
+            // Always read the freshest copy from the Common Server
+            try {
+                var pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                var fresh = pts.find(function(x){ return String(x.id) === String(p.id); });
+                if (fresh) {
+                    p = fresh;
+                    if (currentPatient && String(currentPatient.id) === String(fresh.id)) currentPatient = fresh;
+                }
+            } catch(e){}
+
+            var pidRaw = String(p.id).replace(/^MOD-/i, '');
+
+            // 1. Completed lab orders with verified results (Lab Dashboard authority)
+            var orders = [];
+            try {
+                orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]').filter(function(o) {
+                    return String(o.patientId).replace(/^MOD-/i, '') === pidRaw &&
+                           (o.type === 'lab' || o.dept === 'lab') &&
+                           (o.status === 'completed' || o.status === 'Completed');
+                });
+            } catch(e){}
+
+            // 2. Structured results stored on the patient record
+            var storedResults = Array.isArray(p.labResults) ? p.labResults : [];
+
+            var cards = '';
+
+            orders.forEach(function(o) {
+                var results = Array.isArray(o.results) ? o.results : [];
+                var isCriticalOrder = o.critical === true || results.some(function(result) { return String(result.flag || '').indexOf('Critical') !== -1; });
+                var dateStr = o.completedAt ? new Date(o.completedAt).toLocaleString() : 'Verified';
+                var chips = results.map(function(r) {
+                    var flag = r.flag || 'Normal';
+                    var bg = '#e9f9ee', fg = '#1a7a32';
+                    if (String(flag).indexOf('High') !== -1 || String(flag).indexOf('Low') !== -1) { bg = '#fff4e0'; fg = '#7a4500'; }
+                    if (String(flag).indexOf('Critical') !== -1) { bg = '#ffebe9'; fg = '#8a1f1a'; }
+                    return '<span style="display:inline-flex;align-items:center;gap:6px;background:' + bg + ';border:0.5px solid rgba(0,0,0,0.08);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;color:#1d1d1f;">' +
+                        escDisp(r.test || 'Test') + ': <strong style="color:' + fg + ';">' + escDisp(r.value || '--') + '</strong> <span style="color:#6e6e73;font-weight:600;">' + escDisp(flag) + '</span>' +
+                    '</span>';
+                }).join('');
+                if (!results.length) {
+                    var itemNames = (o.items || []).map(function(it){ return it.name; }).join(', ');
+                    chips = '<span style="font-size:11px;color:#6e6e73;">' + escDisp(itemNames || 'Laboratory panel') + ' — awaiting report detail</span>';
+                }
+                cards += '<div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:12px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">' +
+                        '<div><span style="font-weight:800;color:#1d1d1f;font-size:12.5px;">🧪 ' + escDisp((o.items || []).map(function(it){ return it.name; }).join(', ') || 'Laboratory results') + '</span>' +
+                        '<span style="margin-left:8px;font-size:11px;color:#6e6e73;">' + dateStr + '</span></div>' +
+                        '<span style="background:' + (isCriticalOrder ? '#ffebe9' : '#e9f9ee') + ';color:' + (isCriticalOrder ? '#8a1f1a' : '#1a7a32') + ';font-weight:800;font-size:10.5px;padding:3px 10px;border-radius:20px;">' + (isCriticalOrder ? '⚠ CRITICAL — ACTION REQUIRED' : '✓ VERIFIED') + '</span>' +
+                    '</div>' +
+                    '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + chips + '</div>' +
+                    '<div style="font-size:10.5px;color:#6e6e73;margin-top:6px;">Verified by: ' + escDisp(o.completedBy || 'PClinic MOD Laboratory') + '</div>' +
+                    '<div style="margin-top:8px;display:flex;gap:7px;flex-wrap:wrap;"><button onclick="openLabResultsPage(currentPatient)" style="background:#eaf2ff;color:#0071e3;border:0.5px solid rgba(0,113,227,0.3);padding:4px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">📊 Open Cumulative Flow Sheet</button>' +
+                    (isCriticalOrder ? '<button onclick="acknowledgeCriticalLabResult(\'' + String(o.id).replace(/'/g, "\\'") + '\',this)" style="background:#ffebe9;color:#8a1f1a;border:0.5px solid rgba(138,31,26,.3);padding:4px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">✓ Acknowledge critical result</button>' : '') + '</div>' +
+                '</div>';
+            });
+
+            // 3. Microbiology Culture & Sensitivity reports (patient.labResults entries with antibiotics)
+            storedResults.forEach(function(r) {
+                if (!r || !Array.isArray(r.antibiotics) || !r.antibiotics.length) return;
+                var atbRows = r.antibiotics.map(function(a, i) {
+                    var atbName = Array.isArray(a) ? (a[1] || 'Antibiotic') : (a.name || a.antibiotic || 'Antibiotic');
+                    var sens = Array.isArray(a) ? (a[2] || 'Sensitive') : (a.sensitivity || 'Sensitive');
+                    var sensFg = String(sens).toLowerCase() === 'resistant' ? '#8a1f1a' : '#0071e3';
+                    return '<tr><td style="padding:6px 12px;border:0.5px solid #d8d8dc;font-weight:700;">' + (i + 1) + '</td>' +
+                           '<td style="padding:6px 12px;border:0.5px solid #d8d8dc;">' + escDisp(atbName) + '</td>' +
+                           '<td style="padding:6px 12px;border:0.5px solid #d8d8dc;text-align:center;"><strong style="color:' + sensFg + ';">' + escDisp(sens) + '</strong></td></tr>';
+                }).join('');
+                cards += '<div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
+                        '<div><div style="font-weight:800;color:#1d1d1f;font-size:13px;">🧫 MICROBIOLOGY — Culture and Sensitivity</div>' +
+                        '<div style="font-size:11px;color:#6e6e73;margin-top:2px;">' + escDisp(r.incubationNote || '') + '</div></div>' +
+                        '<span style="background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:10.5px;padding:3px 10px;border-radius:20px;">✓ VERIFIED</span>' +
+                    '</div>' +
+                    '<div style="display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;color:#3a3a3c;margin-bottom:10px;">' +
+                        '<span><strong>Sample Type:</strong> ' + escDisp(r.sampleType || '—') + '</span>' +
+                        '<span><strong>Organism Isolated:</strong> ' + escDisp(r.organism || '—') + '</span>' +
+                        '<span><strong>Colony Count:</strong> ' + escDisp(r.colonyCount || '—') + '</span>' +
+                        '<span><strong>Reported:</strong> ' + (r.date ? new Date(r.date).toLocaleDateString('en-GB') : '—') + '</span>' +
+                    '</div>' +
+                    '<table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:8px;">' +
+                        '<thead><tr style="background:#f5f5f7;">' +
+                            '<th style="padding:6px 12px;border:0.5px solid #d8d8dc;text-align:left;width:10%;">S. No.</th>' +
+                            '<th style="padding:6px 12px;border:0.5px solid #d8d8dc;text-align:left;">Antibiotic</th>' +
+                            '<th style="padding:6px 12px;border:0.5px solid #d8d8dc;width:24%;">Sensitivity</th>' +
+                        '</tr></thead><tbody>' + atbRows + '</tbody></table>' +
+                    '<div style="font-size:10.5px;color:#6e6e73;">Verified by: ' + escDisp(r.verifiedBy || 'PClinic MOD Laboratory') + '</div>' +
+                    '<div style="margin-top:8px;"><button onclick="openLabResultsPage(currentPatient)" style="background:#eaf2ff;color:#0071e3;border:0.5px solid rgba(0,113,227,0.3);padding:4px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">📊 Open Cumulative Flow Sheet</button></div>' +
+                '</div>';
+            });
+
+            if (!cards) {
+                cards = '<p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">' +
+                        'No verified results yet for this patient.<br>' +
+                        '<span style="font-size:11px;">Results appear here automatically once the laboratory verifies and releases them.</span></p>';
+            }
+            container.innerHTML = cards;
+        }
+
+        function escDisp(v) {
+            var d = document.createElement('div');
+            d.textContent = v == null ? '' : String(v);
+            return d.innerHTML;
+        }
+
 
         /**
          * Print Lab Request
@@ -5796,7 +5830,7 @@ setInterval(function() {
                 '🏥 Current: ' + (currentPatient.department || 'General');
 
             // Auto-fill doctor name (from logged-in user)
-            const doctorName = document.querySelector('.uname')?.textContent || 'Dr. Mutua';
+            const doctorName = document.querySelector('.uname')?.textContent || ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff');
             document.getElementById('transferFromDoctor').value = doctorName;
 
             // Reset form
@@ -6208,7 +6242,7 @@ function openAdmissionFormFromDashboard(patient) {
                                 iframe.contentWindow.postMessage({
                                     type: 'OPEN_ADMISSION',
                                     patient: selectedPatient
-                                }, '*');
+                                }, window.location.origin);
                             } else {
                                 // Fallback: try to evaluate the script content
                                 try {
@@ -6257,6 +6291,7 @@ function closeAdmissionFormFromDashboard() {
 
 // Listen for messages from the admission form (for closing)
 window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
     if (event.data && event.data.type === 'CLOSE_ADMISSION') {
         closeAdmissionFormFromDashboard();
     }
@@ -6312,16 +6347,17 @@ function openPrescriptionModal(patient) {
     }
     
     modal.style.display = 'flex';
-    modal.innerHTML = '<iframe id="prescriptionFrame" src="prescription.html" style="width:min(900px,95vw);height:90vh;border:none;border-radius:16px;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,0.3);"></iframe>';
+    modal.innerHTML = '<iframe id="prescriptionFrame" src="prescription.html" style="width:100% !important;max-width:100% !important;height:92vh;margin:0 !important;box-sizing:border-box !important;border:none;border-radius:16px;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,0.3);"></iframe>';
     
     const frame = document.getElementById('prescriptionFrame');
     frame.onload = function() {
-        frame.contentWindow.postMessage({ type: 'LOAD_PATIENT', patient: selectedPatient }, '*');
+        frame.contentWindow.postMessage({ type: 'LOAD_PATIENT', patient: selectedPatient }, window.location.origin);
     };
 }
 
 // Listen for the prescription iframe asking to close, or asking for patient data
 window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
     if (!event.data || !event.data.type) return;
     if (event.data.type === 'CLOSE_PRESCRIPTION') {
         const modal = document.getElementById('prescriptionModalContainer');
@@ -6329,7 +6365,7 @@ window.addEventListener('message', function(event) {
     } else if (event.data.type === 'REQUEST_PATIENT_DATA') {
         const frame = document.getElementById('prescriptionFrame');
         if (frame && frame.contentWindow && currentPatient) {
-            frame.contentWindow.postMessage({ type: 'LOAD_PATIENT', patient: currentPatient }, '*');
+            frame.contentWindow.postMessage({ type: 'LOAD_PATIENT', patient: currentPatient }, window.location.origin);
         }
     }
 });
@@ -6433,6 +6469,7 @@ function closeWardRoundModal() {
 
 // ─── MESSAGE HANDLER ───
 window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
     if (!event.data || !event.data.type) return;
     
     // Close ward round
@@ -6467,7 +6504,7 @@ window.addEventListener('message', function(event) {
             frame.contentWindow.postMessage({ 
                 type: 'PATIENT_DATA_RESPONSE', 
                 patient: currentPatient 
-            }, '*');
+            }, window.location.origin);
             console.log('✅ Sent patient data response:', currentPatient.firstName, currentPatient.lastName);
         } else {
             console.log('❌ Could not send patient data response - no frame or patient');
@@ -6497,15 +6534,19 @@ function openOpdFileModal(patient) {
         container = document.createElement('div');
         container.id = 'opdFileContainer';
         container.style.cssText = `
-            margin-top: 16px;
-            padding: 0;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 16px 0 0 0 !important;
+            padding: 0 !important;
             background: var(--s1);
             border-radius: 12px;
             border: 0.5px solid var(--bd);
             box-shadow: var(--shadow);
-            overflow: hidden;
+            overflow: visible !important;
             display: none;
-            height: 800px;
+            height: auto !important;
+            min-height: 950px; min-height: 950px;
+            box-sizing: border-box !important;
         `;
         const patientCard = document.getElementById('patient-card');
         if (patientCard) {
@@ -6521,8 +6562,10 @@ function openOpdFileModal(patient) {
     // ─── USE SIMPLE IFRAME WITH PATIENT ID PARAM ───
     container.innerHTML = `
         <iframe id="opdIframe" src="opd-file.html?patient=${encodeURIComponent(selectedPatient.id)}" style="
-            width: 100%;
-            height: 800px;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 950px; min-height: 950px;
+            box-sizing: border-box !important;
             border: none;
             margin: 0;
             padding: 0;
@@ -6544,7 +6587,7 @@ function openOpdFileModal(patient) {
                     iframe.contentWindow.postMessage({
                         type: 'LOAD_PATIENT',
                         patient: selectedPatient
-                    }, '*');
+                    }, window.location.origin);
                     console.log('✅ Patient data sent to iframe:', selectedPatient.firstName, selectedPatient.lastName);
                 } catch (e) {
                     console.log('❌ Error sending data to iframe:', e);
@@ -6572,6 +6615,7 @@ function closeOpdFileModal() {
 
 // ─── MESSAGE HANDLER (OPD FILE) ───
 window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
     if (event.data && event.data.type === 'CLOSE_OPD_FILE') {
         closeOpdFileModal();
     }

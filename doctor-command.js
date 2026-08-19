@@ -64,6 +64,8 @@
     /* ── Patient context strip ── */
     .dc-ctx{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 16px;font-size:12px;
         background:rgba(0,113,227,.05);border-bottom:.5px solid rgba(0,0,0,.06)}
+    #dcCtx.dc-ctx:has(.oc-demo-bar),
+    #dcCtx.dc-ctx.has-oc-demo-bar{display:block;padding:0;background:transparent;border-bottom:0}
     .dc-ctx .nm{font-weight:800;font-size:13.5px}
     .dc-ctx .pill{padding:3px 10px;border-radius:30px;background:#fff;border:.5px solid rgba(0,0,0,.07);
         font-size:11px;font-weight:600}
@@ -360,12 +362,15 @@
         // doctor-patient.js owns a richer version of this strip (age,
         // phone, pulse, weight, clear button). If it is loaded, let it
         // render and do not fight over the same element.
+        if (window.pcFile && typeof window.pcFile.renderDemoBar === 'function') return;
         if (window.pcPatient && window.dpPick) return;
         var el = $('#dcCtx'); if (!el) return;
         var p = patient();
         if (!p) {
-            el.innerHTML = '<span class="none"><i class="ti ti-user-off"></i> No patient selected — ' +
-                           'choose one from All Patients to enable ordering.</span>';
+            // No "no patient selected" banner here anymore — the
+            // identification bar already shows the empty/cleared state,
+            // and overwriting #dcCtx here was clobbering it in a race
+            // with doctor-patient.js's renderCtx(). Leave #dcCtx as-is.
             return;
         }
         var v = (p.vitals && p.vitals.length) ? p.vitals[p.vitals.length - 1] : null;

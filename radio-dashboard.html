@@ -15,14 +15,14 @@
     <script type="module" src="firebase-config.js"></script>
     <script src="auth-guard.js"></script>
 <script src="pclinic-state.js"></script>
-<script src="pclinic-orders.js" defer></script>
-<script src="pclinic-worklist.js" defer></script>
+<script src="pclinic-radiology.js" defer></script>
 <script src="patient-data.js" defer></script>  
     
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
     
-    <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
+    <link rel="stylesheet" href="pclinic-ui.css?v=20260814_RAD">
+    <link rel="stylesheet" href="pclinic-apple.css">
 <style>
         /* ─── RESET & VARIABLES ─── */
         * {
@@ -98,201 +98,6 @@
             display: flex;
             flex-direction: column;
             background: var(--g0);
-        }
-
-        /* ─── TOP NAV ─── */
-        .tb1 {
-            background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: saturate(180%) blur(24px);
-            -webkit-backdrop-filter: saturate(180%) blur(24px);
-            border-bottom: 0.5px solid var(--g2);
-            padding: 0 24px;
-            display: flex;
-            align-items: center;
-            height: 56px;
-            gap: 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .logo-a {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-right: 20px;
-            flex-shrink: 0;
-            cursor: pointer;
-        }
-        .logo-box {
-            width: 30px;
-            height: 30px;
-            background: var(--t1);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s;
-        }
-        .logo-box:hover {
-            transform: scale(1.05);
-        }
-        .logo-box svg {
-            width: 16px;
-            height: 16px;
-            stroke: #fff;
-            fill: none;
-            stroke-width: 2.2;
-        }
-        .logo-nm {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--t1);
-            letter-spacing: -0.4px;
-        }
-        .logo-nm span {
-            color: var(--rad);
-        }
-        .rad-badge {
-            font-size: 10px;
-            background: var(--rad-bg);
-            color: var(--rad-t);
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-weight: 600;
-            margin-left: 6px;
-            letter-spacing: 0.3px;
-        }
-
-        .tabs1 {
-            display: flex;
-            align-items: center;
-            flex: 1;
-            height: 100%;
-            overflow-x: auto;
-            gap: 2px;
-        }
-        .tabs1::-webkit-scrollbar {
-            height: 0;
-        }
-        .t1tab {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 0 14px;
-            height: 100%;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--t3);
-            cursor: pointer;
-            border-bottom: 2.5px solid transparent;
-            white-space: nowrap;
-            flex-shrink: 0;
-            transition: color 0.15s, border-color 0.15s;
-            position: relative;
-        }
-        .t1tab:hover {
-            color: var(--t1);
-        }
-        .t1tab.active {
-            color: var(--rad);
-            border-bottom-color: var(--rad);
-        }
-        .t1tab i {
-            font-size: 15px;
-        }
-        .t1tab .cnt {
-            font-size: 9px;
-            background: var(--orange-bg);
-            color: var(--orange-t);
-            padding: 1px 6px;
-            border-radius: 10px;
-            font-weight: 700;
-            margin-left: 3px;
-        }
-        .t1tab .cnt.red {
-            background: var(--red-bg);
-            color: var(--red-t);
-        }
-
-        .tr {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            margin-left: 12px;
-        }
-        .ic-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 0.5px solid var(--g2);
-            background: var(--w);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            position: relative;
-            transition: all 0.15s;
-        }
-        .ic-btn:hover {
-            background: var(--g0);
-            transform: scale(1.05);
-        }
-        .ic-btn i {
-            font-size: 14px;
-            color: var(--t2);
-        }
-        .nd {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 7px;
-            height: 7px;
-            background: var(--red);
-            border-radius: 50%;
-            border: 1.5px solid var(--w);
-        }
-        .user-chip {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            padding: 3px 12px 3px 4px;
-            border: 0.5px solid var(--g2);
-            border-radius: 20px;
-            cursor: pointer;
-            background: var(--w);
-            transition: all 0.15s;
-        }
-        .user-chip:hover {
-            background: var(--g0);
-        }
-        .ua {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background: var(--rad);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 700;
-            color: #fff;
-        }
-        .user-chip span {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--t1);
-        }
-
-        /* ═══ NEW: CLOCK ═══ */
-        .clock-display {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--t3);
-            font-variant-numeric: tabular-nums;
-            min-width: 65px;
-            text-align: center;
-            letter-spacing: 0.3px;
         }
 
         /* ═══ NEW: BREADCRUMB ═══ */
@@ -1292,23 +1097,6 @@
             }
         }
         @media (max-width: 992px) {
-            .tb1 {
-                padding: 0 16px;
-                flex-wrap: wrap;
-                height: auto;
-                padding-top: 8px;
-                padding-bottom: 8px;
-                gap: 6px;
-            }
-            .tabs1 {
-                order: 3;
-                width: 100%;
-                flex: none;
-                height: 34px;
-            }
-            .tr {
-                margin-left: 0;
-            }
             .body {
                 padding: 12px 16px 30px;
             }
@@ -1329,10 +1117,6 @@
                 padding: 4px 16px;
                 font-size: 10px;
                 flex-wrap: wrap;
-            }
-            .clock-display {
-                font-size: 10px;
-                min-width: 50px;
             }
         }
         @media (max-width: 768px) {
@@ -1412,35 +1196,6 @@
             }
         }
         @media (max-width: 480px) {
-            .tb1 {
-                padding: 6px 10px;
-            }
-            .logo-nm {
-                font-size: 13px;
-            }
-            .rad-badge {
-                font-size: 8px;
-                padding: 1px 6px;
-            }
-            .t1tab {
-                font-size: 10px;
-                padding: 0 8px;
-            }
-            .t1tab i {
-                font-size: 12px;
-            }
-            .tr .ic-btn {
-                width: 26px;
-                height: 26px;
-            }
-            .user-chip span {
-                font-size: 10px;
-            }
-            .ua {
-                width: 20px;
-                height: 20px;
-                font-size: 8px;
-            }
             .body {
                 padding: 8px 10px 20px;
             }
@@ -1509,7 +1264,7 @@
             }
         }
     </style>
-    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
+    <script src="pclinic-file.js?v=20260814_RAD" defer></script>
 </head>
 <body>
 
@@ -1521,62 +1276,8 @@
 
     <div class="app" id="app">
 
-        <!-- ─── TOP NAV ─── -->
-        <div class="tb1">
-            <div class="logo-a">
-                <div class="logo-box"><img src="logo.png" alt="PClinic" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.outerHTML=\'<svg viewBox=&quot;0 0 24 24&quot; style=&quot;width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2&quot;><path d=&quot;M22 12h-4l-3 9L9 3l-3 9H2&quot;/></svg>\'" /></div>
-                <span class="logo-nm">P<span>clinic</span></span>
-                <span class="rad-badge">Radiology</span>
-            </div>
-
-            <div class="tabs1">
-                <div class="t1tab active" onclick="switchView(this,'overview')"><i class="ti ti-chart-bar"></i>Overview</div>
-                <div class="t1tab" onclick="switchView(this,'request')"><i class="ti ti-file-plus"></i>New request</div>
-                <div class="t1tab" onclick="switchView(this,'worklist')"><i class="ti ti-list"></i>Worklist<span class="cnt">14</span></div>
-                <div class="t1tab" onclick="switchView(this,'viewer')"><i class="ti ti-photo"></i>Image viewer</div>
-                <div class="t1tab" onclick="switchView(this,'report')"><i class="ti ti-pencil"></i>Report writer</div>
-                <div class="t1tab" onclick="switchView(this,'signed')"><i class="ti ti-check"></i>Signed reports<span class="cnt red">2</span></div>
-            </div>
-
-            <div class="tr">
-                <!-- ═══ NEW: LIVE CLOCK ═══ -->
-                <div class="clock-display" id="liveClock">--:--</div>
-                
-                <div class="ic-btn" onclick="showToast('🔔 3 new notifications','info')"><i class="ti ti-bell"></i><div class="nd"></div></div>
-                
-                <!-- ═══ NEW: DARK MODE TOGGLE ═══ -->
-                <div class="ic-btn" onclick="toggleDarkMode()"><i class="ti ti-moon" id="darkModeIcon"></i></div>
-                
-                <!-- ═══ NEW: SHORTCUTS HELP ═══ -->
-                <div class="ic-btn" onclick="openShortcuts()"><i class="ti ti-help"></i></div>
-                
-                <div class="ic-btn" onclick="showToast('⚙️ Settings opened','info')"><i class="ti ti-settings"></i></div>
-                <div class="user-chip" onclick="showToast('👤 Dr. Anne Ndirangu — Radiologist','info')">
-                    <div class="ua">AN</div>
-                    <span>Dr. A. Ndirangu</span>
-                </div>
-                <div class="ic-btn" onclick="handleLogout()"><i class="ti ti-logout"></i></div>
-            </div>
-        </div>
-
-        <!-- ═══ BREADCRUMB ═══ -->
-        <div class="breadcrumb" style="display:flex;justify-content:space-between;align-items:center;" style="display: none !important;">
-            <div>
-                <a href="hub.html"><i class="ti ti-home"></i> Home</a>
-                <span class="sep">›</span>
-                <a href="radio-dashboard.html">Radiology</a>
-                <span class="sep">›</span>
-                <span style="color:var(--t1);font-weight:500;">Dashboard</span>
-            </div>
-            <div style="display:flex;gap:8px;font-size:12px;">
-                <a href="doctor-dashboard.html" class="btn-apple" style="text-decoration:none;"><i class="ti ti-user-check"></i> Doctor Dashboard</a>
-                <a href="imaging-request.html" class="btn-apple" style="text-decoration:none;"><i class="ti ti-radio"></i> New Imaging Request</a>
-                <a href="imaging-results.html" class="btn-apple" style="text-decoration:none;"><i class="ti ti-photo-scan"></i> PACS DXViewer</a>
-            </div>
-        </div>
-
         <!-- ─── SECONDARY NAV ─── -->
-        <div class="tb2" id="tb2">
+        <div class="tb2" id="tb2" style="display:none">
             <div class="t2tab active"><i class="ti ti-home"></i>Dashboard</div>
         </div>
 
@@ -1587,10 +1288,10 @@
                 <input id="globalSearch" placeholder="Search patient name, MRN, or accession number…" oninput="filterTable(this.value)">
             </div>
             <div class="kpis">
-                <div class="kpi kpi-blue" onclick="openModal('pending')"><i class="ti ti-hourglass"></i><span>14 pending</span></div>
-                <div class="kpi kpi-org" onclick="openModal('stat')"><i class="ti ti-zap"></i><span>3 STAT</span></div>
-                <div class="kpi kpi-red" onclick="openModal('unsigned')"><i class="ti ti-pencil"></i><span>2 unsigned</span></div>
-                <div class="kpi kpi-grn" onclick="openModal('done')"><i class="ti ti-check"></i><span>22 reported today</span></div>
+                <div class="kpi kpi-blue" onclick="openModal('pending')"><i class="ti ti-hourglass"></i><span id="kpiPendingN">0 pending</span></div>
+                <div class="kpi kpi-org" onclick="openModal('stat')"><i class="ti ti-zap"></i><span id="kpiStatN">0 STAT</span></div>
+                <div class="kpi kpi-red" onclick="openModal('unsigned')"><i class="ti ti-pencil"></i><span id="kpiUnsignedN">0 unsigned</span></div>
+                <div class="kpi kpi-grn" onclick="openModal('done')"><i class="ti ti-check"></i><span id="kpiDoneN">0 reported today</span></div>
             </div>
         </div>
 
@@ -1603,32 +1304,32 @@
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--rad-bg)"><i class="ti ti-radio" style="color:var(--rad)"></i></div>
                         <div class="sc-lbl">Studies today</div>
-                        <div class="sc-val">36</div>
-                        <div class="sc-sub">+5 since 6 AM</div>
+                        <div class="sc-val" id="stStudies">0</div>
+                        <div class="sc-sub" id="stStudiesSub">Common Server live</div>
                     </div>
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--orange-bg)"><i class="ti ti-hourglass" style="color:var(--orange)"></i></div>
                         <div class="sc-lbl">Pending review</div>
-                        <div class="sc-val">14</div>
-                        <div class="sc-sub">Oldest: 2 hrs</div>
+                        <div class="sc-val" id="stPending">0</div>
+                        <div class="sc-sub" id="stPendingSub">Common Server live</div>
                     </div>
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--green-bg)"><i class="ti ti-check" style="color:var(--green)"></i></div>
                         <div class="sc-lbl">Reported today</div>
-                        <div class="sc-val">22</div>
-                        <div class="sc-sub">Avg TAT: 41 min</div>
+                        <div class="sc-val" id="stReported">0</div>
+                        <div class="sc-sub" id="stReportedSub">Common Server live</div>
                     </div>
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--red-bg)"><i class="ti ti-alert-triangle" style="color:var(--red)"></i></div>
                         <div class="sc-lbl">Critical findings</div>
-                        <div class="sc-val">1</div>
-                        <div class="sc-sub">Notified to ward</div>
+                        <div class="sc-val" id="stCritical">0</div>
+                        <div class="sc-sub" id="stCriticalSub">Common Server live</div>
                     </div>
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--purple-bg)"><i class="ti ti-zap" style="color:var(--purple)"></i></div>
                         <div class="sc-lbl">STAT requests</div>
-                        <div class="sc-val">3</div>
-                        <div class="sc-sub">All in progress</div>
+                        <div class="sc-val" id="stStat">0</div>
+                        <div class="sc-sub" id="stStatSub">Common Server live</div>
                     </div>
                 </div>
 
@@ -1662,250 +1363,24 @@
                     </div>
                     <table class="tbl">
                         <thead><tr><th style="width:12%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Modality</th><th style="width:16%">Study</th><th style="width:10%">Time</th><th style="width:10%">Priority</th><th style="width:18%">Status</th></tr></thead>
-                        <tbody>
-                            <tr onclick="switchView(document.querySelector('[onclick*=\\'report\\']'),'report')">
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-041</td>
-                                <td>John Kamau · 00-1882</td>
-                                <td><span class="badge b-rad">X-Ray</span></td>
-                                <td>Chest PA</td>
-                                <td>08:05</td>
-                                <td><span class="badge b-red">STAT</span></td>
-                                <td><span class="badge b-org">Awaiting report</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-040</td>
-                                <td>Grace Wanjiru · 00-2047</td>
-                                <td><span class="badge b-pur">CT</span></td>
-                                <td>CT chest with contrast</td>
-                                <td>07:50</td>
-                                <td><span class="badge b-org">Urgent</span></td>
-                                <td><span class="badge b-org">In acquisition</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-039</td>
-                                <td>Amina Hassan · 00-3301</td>
-                                <td><span class="badge b-blue">Ultrasound</span></td>
-                                <td>Obstetric US — 28 wks</td>
-                                <td>07:40</td>
-                                <td><span class="badge b-blue">Routine</span></td>
-                                <td><span class="badge b-grn">Reported</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-038</td>
-                                <td>Samuel Otieno · 00-2918</td>
-                                <td><span class="badge b-pur">MRI</span></td>
-                                <td>MRI lumbar spine</td>
-                                <td>07:20</td>
-                                <td><span class="badge b-blue">Routine</span></td>
-                                <td><span class="badge b-grn">Reported</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-037</td>
-                                <td>Mary Adhiambo · 00-3104</td>
-                                <td><span class="badge b-rad">Mammography</span></td>
-                                <td>Bilateral screening</td>
-                                <td>07:05</td>
-                                <td><span class="badge b-blue">Routine</span></td>
-                                <td><span class="badge b-pur">Pending review</span></td>
-                            </tr>
-                        </tbody>
+                        <tbody id="recentBody"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- ===== VIEW: NEW REQUEST ===== -->
+            <!-- ===== VIEW: REQUEST POLICY ===== -->
             <div id="v-request" style="display:none">
                 <div class="panel">
-                    <div class="ph"><span class="ph-l"><i class="ti ti-file-plus"></i> New imaging request — select modality</span></div>
+                    <div class="ph"><span class="ph-l"><i class="ti ti-shield-lock"></i> Imaging request policy</span><span class="badge b-org">Restricted workflow</span></div>
                     <div class="pb">
-                        <div class="fg" style="margin-bottom:12px">
-                            <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" placeholder="Peter Omondi — MRN 00-4412" id="reqPatient"/></div>
-                            <div class="fgl"><div class="lbl">Requesting clinician</div><input class="fi" placeholder="Dr. Mutua — Cardiology" id="reqClinician"/></div>
-                            <div class="fgl"><div class="lbl">Ward / department</div><input class="fi" placeholder="Ward 4B / OPD / Emergency" id="reqWard"/></div>
-                            <div class="fgl"><div class="lbl">Priority</div>
-                                <select class="fi" id="reqPriority">
-                                    <option>Routine</option>
-                                    <option>Urgent</option>
-                                    <option>STAT — immediate</option>
-                                </select>
+                        <div style="max-width:760px;margin:16px auto;padding:22px;border:1px solid #f0ad4e;border-radius:16px;background:#fff7e6;color:#8a5a00;">
+                            <div style="font-size:17px;font-weight:800;margin-bottom:8px;">Radiology receives and processes approved imaging orders</div>
+                            <p style="font-size:13px;line-height:1.55;margin:0;">Imaging requests must be created by an authorized doctor, nurse or reception workflow. Radiology staff start acquisition, complete the study, write the report and finalise it through the secure worklist.</p>
+                            <div style="margin-top:14px;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,.72);font-size:12px;"><b>Selected patient:</b> <span id="reqPolicyPatient">No patient selected</span></div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px;">
+                                <button type="button" class="btn-p" onclick="radioNav('worklist')"><i class="ti ti-list"></i> Open worklist</button>
+                                <button type="button" class="btn-s" onclick="radioSelectPatient()"><i class="ti ti-user-search"></i> Select patient</button>
                             </div>
-                        </div>
-
-                        <div class="modality-grid" id="mod-grid">
-                            <div class="mod-card sel" onclick="selectModality(this,'xray')"><i class="ti ti-bone"></i><span>X-Ray</span></div>
-                            <div class="mod-card" onclick="selectModality(this,'ct')"><i class="ti ti-rotate"></i><span>CT scan</span></div>
-                            <div class="mod-card" onclick="selectModality(this,'mri')"><i class="ti ti-magnet"></i><span>MRI</span></div>
-                            <div class="mod-card" onclick="selectModality(this,'us')"><i class="ti ti-wave-sine"></i><span>Ultrasound</span></div>
-                            <div class="mod-card" onclick="selectModality(this,'mammo')"><i class="ti ti-repeat"></i><span>Mammography</span></div>
-                            <div class="mod-card" onclick="selectModality(this,'fluoro')"><i class="ti ti-video"></i><span>Fluoroscopy</span></div>
-                            <div class="mod-card" onclick="selectModality(this,'nucmed')"><i class="ti ti-atom"></i><span>Nuclear medicine</span></div>
-                            <div class="mod-card" onclick="selectModality(this,'pet')"><i class="ti ti-snowflake"></i><span>PET scan</span></div>
-                            <div class="mod-card" onclick="selectModality(this,'angio')"><i class="ti ti-ruler"></i><span>Angiography</span></div>
-                            <div class="mod-card" onclick="selectModality(this,'dexa')"><i class="ti ti-bone"></i><span>DEXA / bone density</span></div>
-                            <div class="mod-card" onclick="selectModality(this,'endo')"><i class="ti ti-stethoscope"></i><span>Endoscopy</span></div>
-                            <div class="mod-card" onclick="selectModality(this,'other')"><i class="ti ti-dots"></i><span>Other</span></div>
-                        </div>
-
-                        <!-- Study lists for each modality -->
-                        <div id="study-lists">
-                            <!-- X-Ray -->
-                            <div class="study-list show" id="study-xray">
-                                <div class="sec"><i class="ti ti-bone"></i>X-Ray — select study</div>
-                                <div class="study-item"><input type="radio" name="study" id="x1" checked/><label for="x1">Chest PA</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="x2"/><label for="x2">Chest lateral</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="x3"/><label for="x3">Abdomen — erect / supine</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="x4"/><label for="x4">Skull AP/lateral</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="x5"/><label for="x5">Cervical spine</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="x6"/><label for="x6">Thoracic / lumbar spine</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="x7"/><label for="x7">Pelvis AP</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="x8"/><label for="x8">Upper limb — wrist / forearm / arm</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="x9"/><label for="x9">Lower limb — ankle / tibia-fibula / femur</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="x10"/><label for="x10">KUB (kidney-ureter-bladder)</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="x11"/><label for="x11">Paranasal sinuses</label></div>
-                                <div class="add-other"><input class="fi" placeholder="Other X-ray study not listed…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-
-                            <!-- CT -->
-                            <div class="study-list" id="study-ct">
-                                <div class="sec"><i class="ti ti-rotate"></i>CT scan — select study</div>
-                                <div class="study-item"><input type="radio" name="study" id="c1"/><label for="c1">CT head — plain</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="c2"/><label for="c2">CT head with contrast</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="c3"/><label for="c3">CT chest with contrast</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="c4"/><label for="c4">CT abdomen and pelvis</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="c5"/><label for="c5">CT angiography (CTA)</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="c6"/><label for="c6">CT pulmonary angiogram (CTPA)</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="c7"/><label for="c7">CT urogram (KUB)</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="c8"/><label for="c8">CT spine</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="c9"/><label for="c9">CT temporal bones</label></div>
-                                <div class="add-other"><input class="fi" placeholder="Other CT study not listed…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-
-                            <!-- MRI -->
-                            <div class="study-list" id="study-mri">
-                                <div class="sec"><i class="ti ti-magnet"></i>MRI — select study</div>
-                                <div class="study-item"><input type="radio" name="study" id="m1"/><label for="m1">MRI brain — plain</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="m2"/><label for="m2">MRI brain with contrast</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="m3"/><label for="m3">MRI cervical spine</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="m4"/><label for="m4">MRI lumbar spine</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="m5"/><label for="m5">MRI knee</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="m6"/><label for="m6">MRI shoulder</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="m7"/><label for="m7">MRI abdomen</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="m8"/><label for="m8">MRI pelvis</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="m9"/><label for="m9">MRCP (biliary tree)</label></div>
-                                <div class="add-other"><input class="fi" placeholder="Other MRI study not listed…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-
-                            <!-- Ultrasound -->
-                            <div class="study-list" id="study-us">
-                                <div class="sec"><i class="ti ti-wave-sine"></i>Ultrasound — select study</div>
-                                <div class="study-item"><input type="radio" name="study" id="u1"/><label for="u1">Abdominal ultrasound</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="u2"/><label for="u2">Pelvic ultrasound</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="u3"/><label for="u3">Obstetric ultrasound — dating / anomaly / growth</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="u4"/><label for="u4">Renal / urinary tract ultrasound</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="u5"/><label for="u5">Thyroid ultrasound</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="u6"/><label for="u6">Breast ultrasound</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="u7"/><label for="u7">Scrotal / testicular ultrasound</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="u8"/><label for="u8">Doppler — carotid</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="u9"/><label for="u9">Doppler — lower limb venous (DVT)</label></div>
-                                <div class="add-other"><input class="fi" placeholder="Other ultrasound study not listed…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-
-                            <!-- Mammography -->
-                            <div class="study-list" id="study-mammo">
-                                <div class="sec"><i class="ti ti-repeat"></i>Mammography — select study</div>
-                                <div class="study-item"><input type="radio" name="study" id="ma1"/><label for="ma1">Bilateral screening mammogram</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="ma2"/><label for="ma2">Diagnostic mammogram — unilateral</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="ma3"/><label for="ma3">Mammogram with tomosynthesis</label></div>
-                                <div class="add-other"><input class="fi" placeholder="Other mammography study…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-
-                            <!-- Fluoroscopy -->
-                            <div class="study-list" id="study-fluoro">
-                                <div class="sec"><i class="ti ti-video"></i>Fluoroscopy — select study</div>
-                                <div class="study-item"><input type="radio" name="study" id="f1"/><label for="f1">Barium swallow</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="f2"/><label for="f2">Barium meal / follow-through</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="f3"/><label for="f3">Barium enema</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="f4"/><label for="f4">Hysterosalpingogram (HSG)</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="f5"/><label for="f5">Micturating cystourethrogram (MCUG)</label></div>
-                                <div class="add-other"><input class="fi" placeholder="Other fluoroscopy study…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-
-                            <!-- Nuclear Medicine -->
-                            <div class="study-list" id="study-nucmed">
-                                <div class="sec"><i class="ti ti-atom"></i>Nuclear medicine — select study</div>
-                                <div class="study-item"><input type="radio" name="study" id="n1"/><label for="n1">Bone scan (whole body)</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="n2"/><label for="n2">Thyroid scan / uptake</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="n3"/><label for="n3">Renal scan (DTPA/MAG3)</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="n4"/><label for="n4">Myocardial perfusion scan</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="n5"/><label for="n5">HIDA scan (hepatobiliary)</label></div>
-                                <div class="add-other"><input class="fi" placeholder="Other nuclear medicine study…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-
-                            <!-- PET -->
-                            <div class="study-list" id="study-pet">
-                                <div class="sec"><i class="ti ti-snowflake"></i>PET scan — select study</div>
-                                <div class="study-item"><input type="radio" name="study" id="p1"/><label for="p1">PET-CT whole body — oncology staging</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="p2"/><label for="p2">PET-CT brain</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="p3"/><label for="p3">PET-CT cardiac viability</label></div>
-                                <div class="add-other"><input class="fi" placeholder="Other PET study…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-
-                            <!-- Angiography -->
-                            <div class="study-list" id="study-angio">
-                                <div class="sec"><i class="ti ti-ruler"></i>Angiography — select study</div>
-                                <div class="study-item"><input type="radio" name="study" id="a1"/><label for="a1">Coronary angiography</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="a2"/><label for="a2">Cerebral angiography</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="a3"/><label for="a3">Peripheral angiography (lower limb)</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="a4"/><label for="a4">Renal angiography</label></div>
-                                <div class="add-other"><input class="fi" placeholder="Other angiography study…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-
-                            <!-- DEXA -->
-                            <div class="study-list" id="study-dexa">
-                                <div class="sec"><i class="ti ti-bone"></i>DEXA / bone density — select study</div>
-                                <div class="study-item"><input type="radio" name="study" id="d1"/><label for="d1">DEXA — lumbar spine and hip</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="d2"/><label for="d2">DEXA — forearm</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="d3"/><label for="d3">Whole body DEXA — body composition</label></div>
-                                <div class="add-other"><input class="fi" placeholder="Other DEXA study…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-
-                            <!-- Endoscopy -->
-                            <div class="study-list" id="study-endo">
-                                <div class="sec"><i class="ti ti-stethoscope"></i>Endoscopy — select study</div>
-                                <div class="study-item"><input type="radio" name="study" id="e1"/><label for="e1">Upper GI endoscopy (OGD)</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="e2"/><label for="e2">Colonoscopy</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="e3"/><label for="e3">Sigmoidoscopy</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="e4"/><label for="e4">ERCP</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="e5"/><label for="e5">Bronchoscopy</label></div>
-                                <div class="study-item"><input type="radio" name="study" id="e6"/><label for="e6">Cystoscopy</label></div>
-                                <div class="add-other"><input class="fi" placeholder="Other endoscopy study…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-
-                            <!-- Other -->
-                            <div class="study-list" id="study-other">
-                                <div class="sec"><i class="ti ti-dots"></i>Other imaging — not listed above</div>
-                                <div class="add-other"><input class="fi" placeholder="Describe the modality and study required…"/><button class="btn-s" onclick="addCustomStudy(this)"><i class="ti ti-plus"></i>Add</button></div>
-                            </div>
-                        </div>
-
-                        <div class="fg" style="margin-top:12px">
-                            <div class="sec"><i class="ti ti-clipboard"></i>Clinical details</div>
-                            <div class="fgl ff"><div class="lbl">Clinical indication</div><textarea class="ta" style="min-height:50px" placeholder="History, examination findings, working diagnosis…"></textarea></div>
-                            <div class="fgl"><div class="lbl">Relevant allergies</div><input class="fi" placeholder="Contrast allergy, iodine, shellfish…"/></div>
-                            <div class="fgl"><div class="lbl">Renal function (if contrast)</div><input class="fi" placeholder="Creatinine / eGFR…"/></div>
-                            <div class="fgl"><div class="lbl">Pregnancy status (if applicable)</div>
-                                <select class="fi">
-                                    <option>Not applicable</option>
-                                    <option>Not pregnant</option>
-                                    <option>Pregnant — radiologist to confirm necessity</option>
-                                    <option>Unknown — LMP to be confirmed</option>
-                                </select>
-                            </div>
-                            <div class="fgl"><div class="lbl">Date requested</div><input class="fi" type="date" value="2026-06-29"/></div>
-                        </div>
-                        <div class="fa">
-                            <button class="btn-p" onclick="submitRequest()"><i class="ti ti-upload"></i> Submit imaging request</button>
-                            <button class="btn-s" onclick="showToast('Request cancelled','warning')">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -1935,63 +1410,8 @@
                         </div>
                     </div>
                     <table class="tbl" id="worklistTable">
-                        <thead><tr><th style="width:12%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:13%">Modality</th><th style="width:18%">Study</th><th style="width:10%">Requested</th><th style="width:10%">Priority</th><th style="width:17%">Status</th></tr></thead>
-                        <tbody id="worklistBody">
-                            <tr onclick="switchView(document.querySelector('[onclick*=\\'report\\']'),'report')">
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-041</td>
-                                <td>John Kamau</td>
-                                <td><span class="badge b-rad">X-Ray</span></td>
-                                <td>Chest PA</td>
-                                <td>08:05</td>
-                                <td><span class="badge b-red">STAT</span></td>
-                                <td><span class="badge b-org">Awaiting report</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-040</td>
-                                <td>Grace Wanjiru</td>
-                                <td><span class="badge b-pur">CT</span></td>
-                                <td>CT chest contrast</td>
-                                <td>07:50</td>
-                                <td><span class="badge b-org">Urgent</span></td>
-                                <td><span class="badge b-org">In acquisition</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-037</td>
-                                <td>Mary Adhiambo</td>
-                                <td><span class="badge b-rad">Mammography</span></td>
-                                <td>Bilateral screening</td>
-                                <td>07:05</td>
-                                <td><span class="badge b-blue">Routine</span></td>
-                                <td><span class="badge b-pur">Pending review</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-035</td>
-                                <td>Peter Omondi</td>
-                                <td><span class="badge b-blue">Ultrasound</span></td>
-                                <td>Abdominal US</td>
-                                <td>06:50</td>
-                                <td><span class="badge b-blue">Routine</span></td>
-                                <td><span class="badge b-org">Awaiting report</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-033</td>
-                                <td>Faith Njeri</td>
-                                <td><span class="badge b-pur">MRI</span></td>
-                                <td>MRI knee</td>
-                                <td>06:30</td>
-                                <td><span class="badge b-blue">Routine</span></td>
-                                <td><span class="badge b-org">In acquisition</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-030</td>
-                                <td>Tom Maina</td>
-                                <td><span class="badge b-rad">X-Ray</span></td>
-                                <td>Wrist AP/lat</td>
-                                <td>06:10</td>
-                                <td><span class="badge b-blue">Routine</span></td>
-                                <td><span class="badge b-pur">Pending review</span></td>
-                            </tr>
-                        </tbody>
+                        <thead><tr><th style="width:22%">Patient</th><th style="width:26%">Study</th><th style="width:10%">Priority</th><th style="width:16%">Requested by</th><th style="width:12%">Status</th><th style="width:14%">Actions</th></tr></thead>
+                        <tbody id="worklistBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -2000,48 +1420,15 @@
             <div id="v-viewer" style="display:none">
                 <div class="panel">
                     <div class="ph">
-                        <span class="ph-l"><i class="ti ti-photo"></i> Image viewer — RAD-0629-038 · Samuel Otieno · MRI lumbar spine</span>
-                        <span class="badge b-pur">12 slices</span>
+                        <span class="ph-l"><i class="ti ti-photo"></i> Image viewer — <span id="viewerHead">PACS not configured</span></span>
+                        <span class="badge b-org" id="viewerBadge">Configuration required</span>
                     </div>
                     <div class="pb">
-                        <div class="thumbs">
-                            <div class="thumb active" onclick="setSlice(1)">T1<br>Sag</div>
-                            <div class="thumb" onclick="setSlice(2)">T2<br>Sag</div>
-                            <div class="thumb" onclick="setSlice(3)">T2<br>Ax L4</div>
-                            <div class="thumb" onclick="setSlice(4)">T2<br>Ax L5</div>
-                            <div class="thumb upload" onclick="showToast('📤 Upload DICOM files','info')"><i style="font-size:14px" class="ti ti-upload"></i></div>
-                        </div>
-                        <div class="viewer-area">
-                            <div class="viewer-img">
-                                <div class="viewer-tag" id="sliceTag">T1 Sagittal · Slice 6 / 24</div>
-                                <div class="viewer-ph"><i class="ti ti-photo"></i><span>MRI lumbar spine — scroll to page through slices</span></div>
-                            </div>
-                            <div class="viewer-controls">
-                                <button class="vc-btn" onclick="stepSlice(-1)"><i class="ti ti-chevron-left"></i></button>
-                                <div class="vc-slider"><input type="range" id="sliceSlider" min="1" max="24" value="6" oninput="sliderMove(this.value)"/></div>
-                                <button class="vc-btn" onclick="stepSlice(1)"><i class="ti ti-chevron-right"></i></button>
-                                <span class="vc-count" id="vcCount">Slice 6 / 24</span>
-                            </div>
-                        </div>
-                        <div style="font-size:11px;color:var(--t3);margin-bottom:4px">Use the slider or arrows to scroll through the MRI / CT image stack, slice by slice.</div>
-
-                        <div class="sec" style="margin-top:14px"><i class="ti ti-video"></i>Cine clip — ultrasound / fluoroscopy / angiography</div>
-                        <div class="video-area">
-                            <div class="video-img">
-                                <div class="viewer-ph"><i class="ti ti-player-play"></i><span>Obstetric ultrasound — 28 weeks · cine clip</span></div>
-                            </div>
-                            <div class="video-controls">
-                                <button class="vc-btn" onclick="togglePlay()"><i class="ti ti-player-play" id="playIcon"></i></button>
-                                <div class="timebar" onclick="seekVideo(event)">
-                                    <div class="timebar-fill" id="timeFill" style="width:38%"></div>
-                                </div>
-                                <span class="time-lbl" id="timeLabel">00:11 / 00:29</span>
-                                <button class="vc-btn"><i class="ti ti-volume"></i></button>
-                            </div>
-                        </div>
-                        <div class="upload-zone" onclick="showToast('📤 Drop DICOM files here or click to upload','info')">
-                            <i class="ti ti-cloud-upload"></i>
-                            <span>Drop DICOM files, image series, or video clips here, or click to upload from modality</span>
+                        <div style="max-width:680px;margin:40px auto;text-align:center;padding:34px 26px;border:1px solid rgba(255,149,0,.35);border-radius:18px;background:#fff7e6;color:#8a5a00;">
+                            <div style="font-size:42px;margin-bottom:10px;"><i class="ti ti-server-off"></i></div>
+                            <div style="font-size:17px;font-weight:800;">Real DICOM viewer is not configured</div>
+                            <p style="font-size:13px;line-height:1.55;margin:10px 0 0;">The previous fake image stack was removed. Connect an approved DICOMweb/Orthanc PACS endpoint before clinical images can be viewed. PClinic will never represent placeholder images as patient images.</p>
+                            <div style="margin-top:16px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.65);font-size:12px;font-weight:700;">Required: QIDO-RS, WADO-RS and secure PACS authentication.</div>
                         </div>
                     </div>
                 </div>
@@ -2051,7 +1438,7 @@
             <div id="v-report" style="display:none">
                 <div class="panel">
                     <div class="ph">
-                        <span class="ph-l"><i class="ti ti-pencil"></i> Report writer — RAD-0629-041 · John Kamau</span>
+                        <span class="ph-l"><i class="ti ti-pencil"></i> Report writer — <span id="rptHead">select a study</span></span>
                         <div class="ph-r">
                             <span class="badge b-red">STAT</span>
                             <button class="prt" onclick="generatePDF()"><i class="ti ti-file-pdf"></i>Generate PDF</button>
@@ -2059,43 +1446,44 @@
                     </div>
                     <div class="pb">
                         <div class="fg" style="margin-bottom:10px">
-                            <div class="fgl"><div class="lbl">Patient</div><input class="fi" value="John Kamau — MRN 00-1882"/></div>
-                            <div class="fgl"><div class="lbl">Accession number</div><input class="fi" value="RAD-0629-041" readonly style="color:var(--rad-t);font-weight:600"/></div>
-                            <div class="fgl"><div class="lbl">Modality and study</div><input class="fi" value="X-Ray — Chest PA"/></div>
-                            <div class="fgl"><div class="lbl">Date of study</div><input class="fi" type="date" value="2026-06-29"/></div>
-                            <div class="fgl"><div class="lbl">Referring clinician</div><input class="fi" value="Dr. David Mutua — Cardiology"/></div>
-                            <div class="fgl"><div class="lbl">Clinical indication</div><input class="fi" value="SpO2 89%, suspected pulmonary oedema"/></div>
+                            <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="rptPatient" readonly value=""/></div>
+                            <div class="fgl"><div class="lbl">Accession number</div><input class="fi" id="rptAcc" readonly value="" style="color:var(--rad-t);font-weight:600"/></div>
+                            <div class="fgl"><div class="lbl">Modality and study</div><input class="fi" id="rptModStudy" readonly value=""/></div>
+                            <div class="fgl"><div class="lbl">Date of study</div><input class="fi" type="date" id="rptDate" value=""/></div>
+                            <div class="fgl"><div class="lbl">Referring clinician</div><input class="fi" id="rptClinician" readonly value=""/></div>
+                            <div class="fgl"><div class="lbl">Clinical indication</div><input class="fi" id="rptIndication" value=""/></div>
                         </div>
                         <div class="sec"><i class="ti ti-eye"></i>Findings</div>
-                        <textarea class="ta" style="min-height:90px" id="findingsText">The heart is enlarged with a cardiothoracic ratio of approximately 0.58. There is bilateral perihilar haziness with Kerley B lines, consistent with pulmonary venous congestion. Bilateral pleural effusions are noted, right greater than left. No pneumothorax. No focal consolidation. Bony structures are unremarkable.</textarea>
+                        <textarea class="ta" style="min-height:90px" id="findingsText" placeholder="Describe the findings of this study…"></textarea>
                         <div class="sec" style="margin-top:10px"><i class="ti ti-clipboard"></i>Impression</div>
-                        <textarea class="ta" style="min-height:55px" id="impressionText">Findings are consistent with cardiac decompensation and pulmonary oedema. Cardiomegaly with bilateral pleural effusions. Clinical correlation with cardiac markers and BNP recommended.</textarea>
+                        <textarea class="ta" style="min-height:55px" id="impressionText" placeholder="Final impression / conclusion…"></textarea>
                         <div class="fg" style="margin-top:10px">
-                            <div class="fgl"><div class="lbl">Comparison with prior studies</div><input class="fi" placeholder="e.g. No prior chest imaging available for comparison"/></div>
-                            <div class="fgl"><div class="lbl">Recommendation</div><input class="fi" value="Echocardiogram recommended for further cardiac assessment"/></div>
+                            <div class="fgl"><div class="lbl">Comparison with prior studies</div><input class="fi" id="rptComparison" placeholder="e.g. No prior chest imaging available for comparison"/></div>
+                            <div class="fgl"><div class="lbl">Recommendation</div><input class="fi" id="rptRecommend" placeholder="Recommendation…"/></div>
                         </div>
-                        <div class="signoff-box"><i class="ti ti-alert-triangle"></i>Critical finding — cardiomegaly with pulmonary oedema. Direct verbal notification to the referring clinician is required before final sign-off.</div>
+                        <div class="signoff-box" id="criticalBox" style="display:none"><i class="ti ti-alert-triangle"></i>Critical finding flagged — direct verbal notification to the referring clinician is required before final sign-off.</div>
                         <div class="fg" style="margin-top:12px">
                             <div class="sec"><i class="ti ti-pen"></i>Sign-off</div>
-                            <div class="fgl"><div class="lbl">Reporting radiologist</div><input class="fi" value="Dr. Anne Ndirangu"/></div>
-                            <div class="fgl"><div class="lbl">Date and time of report</div><input class="fi" type="datetime-local" value="2026-06-29T09:10"/></div>
-                            <div class="fgl"><div class="lbl">Verbal notification given to</div><input class="fi" placeholder="Dr. Mutua, notified at…"/></div>
+                            <div class="fgl"><div class="lbl">Reporting radiologist</div><input class="fi" id="rptRadiologist" readonly value=""/></div>
+                            <div class="fgl"><div class="lbl">Date and time of report</div><input class="fi" type="datetime-local" id="rptDateTime" value=""/></div>
+                            <div class="fgl"><div class="lbl">Verbal notification given to</div><input class="fi" id="rptNotifiedTo" placeholder="Notified to, at…"/></div>
+                            <div class="fgl"><div class="lbl">Critical finding</div>
+                                <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--red-t);cursor:pointer;padding-top:6px;"><input type="checkbox" id="rptCritical" style="width:16px;height:16px;accent-color:#ff3b30;" onchange="document.getElementById('criticalBox').style.display = this.checked ? 'flex' : 'none'"/> Flag as critical (notify ward immediately)</label>
+                            </div>
                             <div class="fgl"><div class="lbl">Report status</div>
                                 <select class="fi" id="reportStatus">
-                                    <option>Draft</option>
-                                    <option>Preliminary — pending verification</option>
-                                    <option>Final — signed</option>
-                                    <option>Addendum issued</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="final">Final — signed and immutable</option>
                                 </select>
                             </div>
                         </div>
                         <div class="fa">
                             <button class="btn-p" onclick="signReport()"><i class="ti ti-pen"></i> Sign and finalise report</button>
-                            <button class="btn-s" onclick="showToast('💾 Draft saved','success')"><i class="ti ti-device-floppy"></i> Save draft</button>
+                            <button class="btn-s" onclick="saveReport(true)"><i class="ti ti-device-floppy"></i> Save draft</button>
                             <button class="prt" onclick="generatePDF()"><i class="ti ti-file-pdf"></i>Generate PDF</button>
                         </div>
                         <div style="margin-top:8px;font-size:11px;color:var(--t4);display:flex;align-items:center;gap:5px">
-                            <i class="ti ti-upload"></i>Once signed, this report and its PDF are automatically routed to Dr. David Mutua's doctor dashboard.
+                            <i class="ti ti-upload"></i>Once signed, the report is saved to the Common Server and the referring clinician is notified on the doctor dashboard.
                         </div>
                     </div>
                 </div>
@@ -2106,52 +1494,11 @@
                 <div class="panel">
                     <div class="ph">
                         <span class="ph-l"><i class="ti ti-check"></i> Signed reports — release and print</span>
-                        <span style="font-size:11px;background:var(--red-bg);color:var(--red-t);padding:2px 8px;border-radius:10px;font-weight:600">2 awaiting signature</span>
+                        <span style="font-size:11px;background:var(--red-bg);color:var(--red-t);padding:2px 8px;border-radius:10px;font-weight:600" id="signedAwait">0 awaiting signature</span>
                     </div>
                     <table class="tbl">
                         <thead><tr><th style="width:12%">Acc. no.</th><th style="width:18%">Patient</th><th style="width:13%">Modality</th><th style="width:16%">Study</th><th style="width:10%">Signed</th><th style="width:13%">Radiologist</th><th style="width:9%">Status</th><th style="width:9%">Action</th></tr></thead>
-                        <tbody>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-039</td>
-                                <td>Amina Hassan</td>
-                                <td><span class="badge b-blue">Ultrasound</span></td>
-                                <td>Obstetric US</td>
-                                <td>08:15</td>
-                                <td>Dr. Ndirangu</td>
-                                <td><span class="badge b-grn">Signed</span></td>
-                                <td><button class="btn-s" style="padding:4px 9px;font-size:10px;display:flex;align-items:center;gap:3px" onclick="generatePDF()"><i class="ti ti-file-pdf"></i>PDF</button></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-038</td>
-                                <td>Samuel Otieno</td>
-                                <td><span class="badge b-pur">MRI</span></td>
-                                <td>MRI lumbar spine</td>
-                                <td>08:00</td>
-                                <td>Dr. Ndirangu</td>
-                                <td><span class="badge b-grn">Signed</span></td>
-                                <td><button class="btn-s" style="padding:4px 9px;font-size:10px;display:flex;align-items:center;gap:3px" onclick="generatePDF()"><i class="ti ti-file-pdf"></i>PDF</button></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-037</td>
-                                <td>Mary Adhiambo</td>
-                                <td><span class="badge b-rad">Mammography</span></td>
-                                <td>Bilateral screening</td>
-                                <td>—</td>
-                                <td>Pending</td>
-                                <td><span class="badge b-pur">Awaiting signature</span></td>
-                                <td><button class="btn-p" style="padding:4px 9px;font-size:10px" onclick="switchView(document.querySelector('[onclick*=\\'report\\']'),'report')">Review</button></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--rad-t)">RAD-0629-035</td>
-                                <td>Peter Omondi</td>
-                                <td><span class="badge b-blue">Ultrasound</span></td>
-                                <td>Abdominal US</td>
-                                <td>—</td>
-                                <td>Pending</td>
-                                <td><span class="badge b-pur">Awaiting signature</span></td>
-                                <td><button class="btn-p" style="padding:4px 9px;font-size:10px" onclick="switchView(document.querySelector('[onclick*=\\'report\\']),'report')">Review</button></td>
-                            </tr>
-                        </tbody>
+                        <tbody id="signedBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -2173,18 +1520,22 @@
         <div class="modal-bg" id="shortcutsModal" onclick="if(event.target===this)closeShortcuts()">
             <div class="modal" style="max-width:440px;">
                 <div class="mh">
-                    <span><i class="ti ti-help" style="margin-right:8px;"></i>Keyboard shortcuts</span>
+                    <span><i class="ti ti-help" style="margin-right:8px;"></i>Radiology help &amp; shortcuts</span>
                     <button class="mc" onclick="closeShortcuts()"><i class="ti ti-x"></i></button>
                 </div>
                 <div class="mb">
                     <div class="shortcuts-grid">
-                        <div class="shortcut-item"><span class="shortcut-desc">Search</span><span class="shortcut-key">⌘F / Ctrl+F</span></div>
-                        <div class="shortcut-item"><span class="shortcut-desc">Switch views</span><span class="shortcut-key">Ctrl+1-6</span></div>
+                        <div class="shortcut-item"><span class="shortcut-desc">Search tables</span><span class="shortcut-key">⌘F / Ctrl+F</span></div>
+                        <div class="shortcut-item"><span class="shortcut-desc">Switch views</span><span class="shortcut-key">Ctrl+1–6</span></div>
                         <div class="shortcut-item"><span class="shortcut-desc">Close modal</span><span class="shortcut-key">ESC</span></div>
-                        <div class="shortcut-item"><span class="shortcut-desc">Dark mode</span><span class="shortcut-key">⌘D / Ctrl+D</span></div>
-                        <div class="shortcut-item"><span class="shortcut-desc">Refresh data</span><span class="shortcut-key">⌘R / Ctrl+R</span></div>
+                        <div class="shortcut-item"><span class="shortcut-desc">Toggle theme</span><span class="shortcut-key">⌘D / Ctrl+D</span></div>
+                        <div class="shortcut-item"><span class="shortcut-desc">Open help</span><span class="shortcut-key">?</span></div>
                     </div>
-                    <p style="font-size:11px;color:var(--t4);margin-top:12px;text-align:center;">Press <kbd>?</kbd> to reopen this modal</p>
+                    <div style="margin-top:14px;padding:11px 13px;border-radius:11px;background:var(--g0);font-size:11.5px;line-height:1.55;color:var(--t3);">
+                        <b>Workflow:</b> open Worklist → start study → mark acquisition complete → write report → save draft or finalise → clinician receives the final report.<br>
+                        <b>Patient safety:</b> the report writer opens only from the matching acquired order. Changing patient clears the previous order/report context.<br>
+                        <b>Images:</b> the Image viewer remains unavailable until an approved PACS/DICOMweb endpoint is configured.
+                    </div>
                 </div>
             </div>
         </div>
@@ -2197,423 +1548,17 @@
     <!-- ═══ SHARED JAVASCRIPT ═══ -->
     <script src="shared.js" defer></script>
 
-    <script>
-        // ─── VIEW MANAGEMENT ───
-        const views = ['overview', 'request', 'worklist', 'viewer', 'report', 'signed'];
-
-        function switchView(el, name) {
-            // Update main tabs
-            document.querySelectorAll('.t1tab').forEach(t => t.classList.remove('active'));
-            if (el && el.classList) el.classList.add('active');
-
-            // Show/hide views
-            views.forEach(v => {
-                const d = document.getElementById('v-' + v);
-                if (d) d.style.display = (v === name) ? 'block' : 'none';
-            });
-
-            // Update secondary nav
-            const subNavs = {
-                overview: [{ l: 'Dashboard', i: 'ti ti-home' }],
-                request: [{ l: 'New request', i: 'ti ti-file-plus' }],
-                worklist: [{ l: 'All pending', i: 'ti ti-list' }, { l: 'STAT only', i: 'ti ti-zap' }, { l: 'By modality', i: 'ti ti-chart-bar' }],
-                viewer: [{ l: 'Image stack', i: 'ti ti-photo' }, { l: 'Cine clips', i: 'ti ti-video' }],
-                report: [{ l: 'Write report', i: 'ti ti-pencil' }, { l: 'Templates', i: 'ti ti-copy' }],
-                signed: [{ l: 'Release queue', i: 'ti ti-upload' }, { l: 'Printed today', i: 'ti ti-printer' }]
-            };
-            const tb2 = document.getElementById('tb2');
-            tb2.innerHTML = '';
-            (subNavs[name] || []).forEach((t, i) => {
-                const d = document.createElement('div');
-                d.className = 't2tab' + (i === 0 ? ' active' : '');
-                d.innerHTML = '<i class="' + t.i + '"></i>' + t.l;
-                d.onclick = (function(el2) {
-                    return function() {
-                        document.querySelectorAll('#tb2 .t2tab').forEach(x => x.classList.remove('active'));
-                        el2.classList.add('active');
-                    };
-                })(d);
-                tb2.appendChild(d);
-            });
-
-            showToast('📂 Switched to ' + name.charAt(0).toUpperCase() + name.slice(1), 'info');
-        }
-
-        // ─── MODALITY SELECTION ───
-        function selectModality(el, mod) {
-            document.querySelectorAll('.mod-card').forEach(m => m.classList.remove('sel'));
-            el.classList.add('sel');
-            document.querySelectorAll('.study-list').forEach(s => s.classList.remove('show'));
-            const t = document.getElementById('study-' + mod);
-            if (t) t.classList.add('show');
-        }
-
-        // ─── CUSTOM STUDY ADD ───
-        function addCustomStudy(btn) {
-            const input = btn.parentElement.querySelector('input');
-            if (!input || !input.value.trim()) {
-                showToast('⚠️ Please enter a study name', 'warning');
-                return;
-            }
-            const list = btn.parentElement.parentElement;
-            const item = document.createElement('div');
-            item.className = 'study-item';
-            const id = 'custom-' + Date.now();
-            item.innerHTML =
-                `<input type="radio" name="study" id="${id}" checked/><label for="${id}">${input.value.trim()} (custom)</label>`;
-            list.insertBefore(item, btn.parentElement);
-            input.value = '';
-            showToast('✅ Custom study added', 'success');
-        }
-
-        // ─── SUBMIT REQUEST ───
-        function submitRequest() {
-            const patient = document.getElementById('reqPatient')?.value || 'Unknown';
-            const clinician = document.getElementById('reqClinician')?.value || 'Unknown';
-            const priority = document.getElementById('reqPriority')?.value || 'Routine';
-            const selectedMod = document.querySelector('.mod-card.sel span')?.textContent || 'Unknown';
-            const selectedStudy = document.querySelector('input[name="study"]:checked');
-            const study = selectedStudy ? selectedStudy.parentElement.textContent.trim() : 'Not selected';
-
-            showToast(
-                `📤 Request submitted for ${patient} — ${selectedMod} (${study}) — ${priority}. Notifying ${clinician}.`,
-                'success'
-            );
-        }
-
-        // ─── WORKLIST FILTER ───
-        function filterWorklist() {
-            const modality = document.getElementById('worklistModality').value;
-            const priority = document.getElementById('worklistPriority').value;
-            const rows = document.querySelectorAll('#worklistBody tr');
-            let visible = 0;
-
-            rows.forEach(row => {
-                const modBadge = row.querySelector('.badge');
-                const modText = modBadge ? modBadge.textContent.trim() : '';
-                const priorityCell = row.querySelector('td:nth-child(6)');
-                const priorityText = priorityCell ? priorityCell.textContent.trim() : '';
-
-                let show = true;
-                if (modality !== 'all' && modText !== modality) show = false;
-                if (priority !== 'all' && priorityText !== priority) show = false;
-
-                row.style.display = show ? '' : 'none';
-                if (show) visible++;
-            });
-
-            showToast(`🔍 Filtered: ${visible} studies visible`, 'info');
-        }
-
-        // ─── IMAGE VIEWER ───
-        let currentSlice = 6;
-
-        function setSlice(n) {
-            document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-            const th = document.querySelector(`.thumb[onclick*="setSlice(${n})"]`);
-            if (th) th.classList.add('active');
-            currentSlice = n;
-            updateSliceDisplay();
-        }
-
-        function stepSlice(d) {
-            currentSlice = Math.max(1, Math.min(24, currentSlice + d));
-            document.getElementById('sliceSlider').value = currentSlice;
-            updateSliceDisplay();
-        }
-
-        function sliderMove(v) {
-            currentSlice = parseInt(v);
-            updateSliceDisplay();
-        }
-
-        function updateSliceDisplay() {
-            document.getElementById('sliceTag').textContent = 'T1 Sagittal · Slice ' + currentSlice + ' / 24';
-            document.getElementById('vcCount').textContent = 'Slice ' + currentSlice + ' / 24';
-        }
-
-        // ─── CINE PLAYER ───
-        let isPlaying = false;
-
-        function togglePlay() {
-            isPlaying = !isPlaying;
-            const icon = document.getElementById('playIcon');
-            if (isPlaying) {
-                icon.className = 'ti ti-player-pause';
-                showToast('▶️ Playing cine clip', 'info');
-                let progress = 38;
-                const interval = setInterval(() => {
-                    if (!isPlaying) { clearInterval(interval); return; }
-                    progress += 0.5;
-                    if (progress > 100) {
-                        progress = 0;
-                        isPlaying = false;
-                        icon.className = 'ti ti-player-play';
-                        clearInterval(interval);
-                        showToast('⏹️ Cine clip finished', 'info');
-                    }
-                    document.getElementById('timeFill').style.width = progress + '%';
-                    document.getElementById('timeLabel').textContent =
-                        formatTime(progress / 100 * 29) + ' / 00:29';
-                }, 100);
-            } else {
-                icon.className = 'ti ti-player-play';
-                showToast('⏸️ Cine paused', 'info');
-            }
-        }
-
-        function formatTime(seconds) {
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
-            return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-        }
-
-        function seekVideo(e) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const pct = ((e.clientX - rect.left) / rect.width) * 100;
-            document.getElementById('timeFill').style.width = Math.min(100, Math.max(0, pct)) + '%';
-            const secs = (pct / 100) * 29;
-            document.getElementById('timeLabel').textContent = formatTime(secs) + ' / 00:29';
-            showToast('⏩ Seeked to ' + formatTime(secs), 'info');
-        }
-
-        // ─── SIGN REPORT ───
-        function signReport() {
-            const status = document.getElementById('reportStatus')?.value || 'Final — signed';
-            if (status === 'Draft') {
-                showToast('⚠️ Cannot sign a draft. Please select Final status.', 'warning');
-                return;
-            }
-            showToast('✅ Report signed and finalised. PDF generated and sent to referring clinician.', 'success');
-        }
-
-        // ─── GENERATE PDF ───
-        function generatePDF() {
-            showToast('📄 Generating PDF...', 'info');
-            setTimeout(() => {
-                showToast('✅ PDF generated! Ready for download.', 'success');
-            }, 1500);
-        }
-
-        // ─── MODAL ───
-        const modalData = {
-            pending: {
-                title: '⏳ Pending studies — 14',
-                rows: [
-                    ['RAD-0629-041', 'John Kamau', 'Chest PA', 'STAT', '08:05'],
-                    ['RAD-0629-040', 'Grace Wanjiru', 'CT chest', 'Urgent', '07:50'],
-                    ['RAD-0629-037', 'Mary Adhiambo', 'Mammography', 'Routine', '07:05'],
-                    ['RAD-0629-035', 'Peter Omondi', 'Abdominal US', 'Routine', '06:50'],
-                    ['RAD-0629-033', 'Faith Njeri', 'MRI knee', 'Routine', '06:30']
-                ]
-            },
-            stat: {
-                title: '⚡ STAT requests — 3 active',
-                rows: [
-                    ['RAD-0629-041', 'John Kamau', 'Chest PA', 'Awaiting report'],
-                    ['RAD-0629-029', 'Tom Maina', 'CT head', 'In acquisition'],
-                    ['RAD-0629-026', 'Amina Hassan', 'Abdominal US', 'Awaiting report']
-                ]
-            },
-            unsigned: {
-                title: '✏️ Unsigned reports — 2',
-                rows: [
-                    ['RAD-0629-037', 'Mary Adhiambo', 'Mammography — bilateral screening'],
-                    ['RAD-0629-035', 'Peter Omondi', 'Abdominal ultrasound']
-                ]
-            },
-            done: {
-                title: '✅ Reported today — 22 studies',
-                rows: [
-                    ['RAD-0629-039', 'Amina Hassan', 'Obstetric US', '08:15'],
-                    ['RAD-0629-038', 'Samuel Otieno', 'MRI lumbar spine', '08:00'],
-                    ['RAD-0629-030', 'Tom Maina', 'Wrist X-ray', '07:40'],
-                    ['…', '19 more studies', 'Signed', 'Today']
-                ]
-            }
-        };
-
-        function openModal(type) {
-            const data = modalData[type];
-            if (!data) return;
-            document.getElementById('modalTitle').textContent = data.title;
-            let html = '<table class="tbl" style="width:100%"><tbody>';
-            data.rows.forEach(r => {
-                html += '<tr>' + r.map(c => '<td style="font-size:12px;padding:6px 8px">' + c + '</td>').join('') +
-                    '</tr>';
-            });
-            html += '</tbody></table>';
-            document.getElementById('modalBody').innerHTML = html;
-            document.getElementById('modalBg').classList.add('show');
-        }
-
-        function closeModal() {
-            document.getElementById('modalBg').classList.remove('show');
-        }
-
-        // ─── GLOBAL SEARCH ───
-        function filterTable(query) {
-            const q = query.toLowerCase().trim();
-            const allTables = document.querySelectorAll('table tbody');
-            allTables.forEach(tbody => {
-                const rows = tbody.querySelectorAll('tr');
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = (!q || text.includes(q)) ? '' : 'none';
-                });
-            });
-            if (q) {
-                showToast('🔍 Found results for "' + q + '"', 'info');
-            }
-        }
-
-        // ─── TOAST NOTIFICATIONS ───
-        // If shared.js has showToast, use it. Otherwise, fallback.
-        if (typeof showToast === 'undefined') {
-            window.showToast = function(message, type) {
-                const container = document.getElementById('toastContainer');
-                if (!container) return;
-                const toast = document.createElement('div');
-                toast.className = 'toast ' + (type || 'info');
-                const icons = {
-                    success: '✅',
-                    error: '❌',
-                    warning: '⚠️',
-                    info: 'ℹ️'
-                };
-                toast.innerHTML = (icons[type] || 'ℹ️') + ' ' + message;
-                container.appendChild(toast);
-                setTimeout(() => toast.classList.add('show'), 10);
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 400);
-                }, 3500);
-            };
-        }
-
-        // ─── DARK MODE TOGGLE ───
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            const icon = document.getElementById('darkModeIcon');
-            if (document.body.classList.contains('dark-mode')) {
-                icon.className = 'ti ti-sun';
-                localStorage.setItem('pclinic-theme', 'dark');
-            } else {
-                icon.className = 'ti ti-moon';
-                localStorage.setItem('pclinic-theme', 'light');
-            }
-        }
-
-        // ─── SHORTCUTS MODAL ───
-        function openShortcuts() {
-            document.getElementById('shortcutsModal').classList.add('show');
-        }
-
-        function closeShortcuts() {
-            document.getElementById('shortcutsModal').classList.remove('show');
-        }
-
-        // ─── LIVE CLOCK ───
-        function updateClock() {
-            const now = new Date();
-            const h = String(now.getHours()).padStart(2, '0');
-            const m = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('liveClock').textContent = h + ':' + m;
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        // ─── LOGOUT ───
-        function handleLogout() {
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userName');
-                showToast('👋 Logged out successfully', 'info');
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 500);
-            }
-        }
-
-        // ─── KEYBOARD SHORTCUTS ───
-        document.addEventListener('keydown', function(e) {
-            // Escape to close modal
-            if (e.key === 'Escape') {
-                closeModal();
-                closeShortcuts();
-            }
-
-            // Ctrl+1-6 to switch views
-            if (e.ctrlKey && e.key >= '1' && e.key <= '6') {
-                e.preventDefault();
-                const idx = parseInt(e.key) - 1;
-                const tabs = document.querySelectorAll('.t1tab');
-                if (tabs[idx]) tabs[idx].click();
-            }
-
-            // Ctrl+F to focus search
-            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-                e.preventDefault();
-                document.getElementById('globalSearch').focus();
-            }
-
-            // Ctrl+D / Cmd+D - Dark mode
-            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-                e.preventDefault();
-                toggleDarkMode();
-            }
-
-            // ? - Shortcuts help
-            if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
-                e.preventDefault();
-                openShortcuts();
-            }
-        });
-
-        // ─── CHECK DARK MODE PREFERENCE ───
-        if ((localStorage.getItem('pclinic-theme') === 'dark' || (localStorage.getItem('pclinic-theme') === 'dark' || localStorage.getItem('darkMode') === 'enabled'))) {
-            document.body.classList.add('dark-mode');
-            document.getElementById('darkModeIcon').className = 'ti ti-sun';
-        }
-
-        // ─── HAPTIC FEEDBACK ───
-        document.addEventListener('click', function(e) {
-            if (navigator.vibrate) {
-                const target = e.target.closest('.btn-p, .btn-s, .t1tab, .kpi, .ov-c, .mod-card, .ic-btn, .user-chip');
-                if (target) navigator.vibrate(8);
-            }
-        });
-
-        // ─── INIT ───
-        // Ensure overview is visible on load
-        document.querySelectorAll('.t1tab').forEach(t => t.classList.remove('active'));
-        document.querySelector('.t1tab[onclick*="overview"]')?.classList.add('active');
-
-        console.log('🏥 PClinic Radiology Department — Fully Interactive Apple-Style UI');
-        console.log('📌 Tips:');
-        console.log('  • Ctrl+1-6 → Switch views');
-        console.log('  • Ctrl+F → Focus search');
-        console.log('  • Ctrl+D → Toggle dark mode');
-        console.log('  • ? → Open shortcuts help');
-        console.log('  • Escape → Close modal');
-    </script>
+    <script src="radio-dashboard.js" defer></script>
 
 
-    <script>
-        requireAuth(['radio']).then(function(staff) {
-            window.currentStaff = staff;
-            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
-        }).catch(function(err) {
-            console.warn('Auth guard redirect:', err && err.message);
-        });
-    </script>
-
-<script>
-// Live order queue from doctors — replaces the hardcoded demo rows.
-window.addEventListener('DOMContentLoaded', function () {
-    if (!window.pcWorklist) return;
-    pcWorklist.mount({ dept: 'radiology', target: '#worklistBody', mode: 'table', cols: 7 });
-});
-</script>
+    <!-- ═══ PATIENT GATE LOCK (radiology views) ═══ -->
+    <div id="gateLock" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(245,245,247,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);align-items:center;justify-content:center;padding:20px;">
+        <div style="max-width:420px;width:100%;background:rgba(255,255,255,.85);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);border:.5px solid rgba(0,0,0,.12);border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,.28);padding:28px 24px;text-align:center;">
+            <div style="font-size:42px;">🔒</div>
+            <div style="font-weight:800;font-size:16px;margin-top:8px;">No patient selected</div>
+            <div style="color:#6e6e73;font-size:12.5px;margin-top:6px;">This radiology view works on the selected patient. Pick a patient to unlock New imaging request, Report writer and the Image viewer.</div>
+            <button onclick="window.radioSelectPatient && window.radioSelectPatient()" style="margin-top:16px;border:0;border-radius:22px;padding:10px 22px;background:linear-gradient(180deg,#0a84ff,#0071e3);color:#fff;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,113,227,.35);">👤 Select patient</button>
+        </div>
+    </div>
 </body>
 </html>

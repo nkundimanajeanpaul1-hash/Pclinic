@@ -175,9 +175,19 @@ function loadCategories(){
     pcTariff.all().forEach(function(t){ depts[t.dept]=1; });
     var bar = document.getElementById('catBar');
     bar.innerHTML='';
+    var keys = Object.keys(depts);
+    if (!keys.length) {
+        // ⛔ NO TEMPLATE CATALOG: the tariff is admin-managed and starts empty
+        var box = document.getElementById('svcList');
+        if (box) box.innerHTML = '<div style="padding:18px;text-align:center;color:var(--tm);font-size:12px;">' +
+            'No services in the price list yet.<br>' +
+            '<span style="font-size:11px;">The Admin adds laboratory exams in <b>Admin → Lab Exams</b> — they appear here immediately.</span></div>';
+        return;
+    }
     var names = {consultation:'Consultation',procedure:'Procedures',lab:'Laboratory',
-                 radiology:'Imaging',admission:'Admission',physio:'Physio',theatre:'Theatre'};
-    Object.keys(depts).forEach(function(d,i){
+                 radiology:'Imaging',admission:'Admission',physio:'Physio',theatre:'Theatre',
+                 pharmacy:'Pharmacy'};
+    keys.forEach(function(d,i){
         var b=document.createElement('button');
         b.textContent = names[d]||d;
         if(i===0) b.className='on';
@@ -187,7 +197,7 @@ function loadCategories(){
         };
         bar.appendChild(b);
     });
-    renderServices(Object.keys(depts)[0]);
+    renderServices(keys[0]);
 }
 
 function renderServices(dept){
@@ -304,8 +314,9 @@ function renderBills(){
 window.addEventListener('billsUpdated',renderBills);
 window.addEventListener('patientsUpdated',loadPatients);
 
-requireAuth([]).then(function(staff){
+requireAuth(['cashier','finance']).then(function(staff){
     window.currentStaff=staff;
+    window.__billBooted = true;
     document.getElementById('userName').textContent=staff.name;
     document.getElementById('userAvatar').textContent=(staff.name||'??').substring(0,2).toUpperCase();
     loadPatients(); loadCategories(); renderCart(); renderBills();
@@ -313,9 +324,26 @@ requireAuth([]).then(function(staff){
     var pid=new URLSearchParams(location.search).get('patient');
     if(pid){ var s=document.getElementById('patientSel'); s.value=pid; }
 }).catch(function(){});
+
+// ── OFFLINE/LOCAL FALLBACK: never leave the page blank if the auth
+//    guard cannot resolve (local Common Server mode, no Firebase).
+setTimeout(function(){
+    try {
+        if (!window.__billBooted) {
+            window.__billBooted = true;
+            document.getElementById('userName').textContent = 'Local Server Mode';
+            loadPatients(); loadCategories(); renderCart(); renderBills();
+        }
+    } catch(e){}
+}, 2500);
+
+// ── LIVE: admin adds/edits/deletes exams in Admin → Lab Exams →
+//    this catalogue refreshes immediately (Common Server tariff). ──
+window.addEventListener('tariffUpdated', function(){ loadCategories(); });
+window.addEventListener('storage', function(){ loadCategories(); });
 })();
 </script>
-<script src="pclinic-file.js?v=20260804_CHUK_3ROW"></script>
+<script src="pclinic-file.js?v=20260814_RAD"></script>
 <script src="pclinic-handoff.js"></script>
 </body>
 </html>

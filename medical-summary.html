@@ -7,11 +7,12 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PClinic • OpenClinic GA Medical Summary</title>
+    <title>PClinic • PClinic Medical Summary</title>
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
     <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
     <link rel="stylesheet" href="pclinic-file.css">
+    <link rel="stylesheet" href="pclinic-apple.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -68,177 +69,48 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ─── OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR ─── */
-        .oc-demo-bar {
-            background: #e2e8f0;
-            border: 1px solid var(--bd);
-            border-radius: 12px;
-            padding: 12px 18px;
-            margin-bottom: 16px;
-            display: grid;
-            grid-template-columns: 1.2fr 1fr 1.3fr 0.9fr;
-            gap: 10px 18px;
-            box-shadow: var(--shadow);
-            font-size: 12px;
-        }
-
-        [data-theme="dark"] .oc-demo-bar {
-            background: #1e242e !important;
-        }
-
-        .demo-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-
-        .demo-lbl {
-            color: var(--tm);
-            font-weight: 700;
-            white-space: nowrap;
-            font-size: 11.5px;
-        }
-
-        .demo-input {
-            padding: 3px 8px;
-            border: 1px solid var(--bd);
-            border-radius: 6px;
-            background: var(--s1);
-            color: var(--tp);
-            font-weight: 700;
-            font-size: 12px;
-            width: 65%;
-            outline: none;
-        }
-
-        .demo-input.readonly {
-            background: rgba(255,255,255,0.6);
-            border-color: transparent;
-        }
-
-        [data-theme="dark"] .demo-input.readonly {
-            background: rgba(0,0,0,0.3) !important;
-        }
-
-        .demo-btn-group {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            justify-content: flex-end;
-        }
-
-        .demo-btn {
-            padding: 4px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--bd);
-            background: var(--s1);
-            color: var(--tp);
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 11.5px;
-            transition: all 0.15s ease;
-        }
-
-        .demo-btn:hover {
-            background: var(--ac);
-            color: #fff;
-            border-color: var(--ac);
-        }
-
-        /* ─── HEADER BAR ─── */
-        .oc-header {
-            background: var(--s1);
-            border: 1px solid var(--bd);
-            border-radius: 14px;
-            padding: 12px 20px;
-            margin-bottom: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow);
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .oc-header-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .oc-header-title {
-            font-size: 16px;
-            font-weight: 800;
-            color: var(--green-dark);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-apple {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 18px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            background: var(--s2);
-            color: var(--tp);
-            border: 1px solid var(--bd);
-            text-decoration: none;
-            font-family: inherit;
-        }
-
-        .btn-apple:hover {
-            background: var(--s3);
-            border-color: var(--ac);
-        }
-
-        .btn-apple.green {
-            background: var(--green);
-            color: #ffffff;
-            border-color: var(--green-dark);
-        }
-
-        .btn-apple.green:hover {
-            background: var(--green-dark);
-        }
-
-        .btn-apple.blue {
-            background: var(--ac);
-            color: #ffffff;
-            border-color: var(--ach);
-        }
-
-        .btn-apple.blue:hover {
-            background: var(--ach);
-        }
-
-        /* ─── MEDICAL SUMMARY TABLE ─── */
         .summary-wrapper {
-            background: var(--s1);
-            border: 1px solid var(--bd);
-            border-radius: 14px;
-            box-shadow: var(--shadow);
+            position: relative;
+            background: rgba(255, 255, 255, 0.72);
+            -webkit-backdrop-filter: saturate(180%) blur(24px);
+            backdrop-filter: saturate(180%) blur(24px);
+            border: 0.5px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
             overflow: hidden;
             margin-bottom: 24px;
+            transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.45s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .summary-wrapper:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06), 0 16px 44px rgba(0,0,0,0.10);
+        }
+        .summary-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            background: linear-gradient(160deg,
+                rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 28%, rgba(255,255,255,0) 55%);
         }
 
         .summary-title-strip {
-            padding: 12px 18px;
-            background: #f1f5f9;
-            border-bottom: 1px solid var(--bd);
+            position: relative;
+            padding: 14px 20px;
+            background: rgba(0, 113, 227, 0.08);
+            -webkit-backdrop-filter: saturate(180%) blur(18px);
+            backdrop-filter: saturate(180%) blur(18px);
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.07);
             font-weight: 800;
             font-size: 13.5px;
-            color: var(--tp);
+            color: #0071e3;
+            letter-spacing: -0.01em;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
+        .summary-title-strip i { color: #0071e3; }
 
         [data-theme="dark"] .summary-title-strip {
             background: #1e242e !important;
@@ -251,16 +123,22 @@
         }
 
         table.oc-table td {
-            padding: 10px 16px;
-            border-bottom: 1px solid var(--bd);
+            position: relative;
+            padding: 11px 18px;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
             color: var(--tp);
             vertical-align: middle;
         }
 
         table.oc-table tr:last-child td { border-bottom: none; }
 
+        table.oc-table tbody tr {
+            transition: background 0.3s cubic-bezier(0.25,0.1,0.25,1), transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
         table.oc-table tr:hover {
-            background: rgba(0, 113, 227, 0.05);
+            background: rgba(0, 113, 227, 0.06);
+            transform: scale(1.004);
         }
 
         .form-bullet {
@@ -275,28 +153,48 @@
         }
 
         .new-link {
-            color: var(--ac);
-            font-weight: 700;
+            color: #ffffff;
+            font-weight: 800;
             text-decoration: none;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 8px;
-            transition: background 0.15s ease;
+            justify-content: center;
+            gap: 5px;
+            height: 30px;
+            padding: 0 16px;
+            border-radius: 980px;
+            background: linear-gradient(180deg, #0a84ff, #0071e3);
+            font-size: 11.5px;
+            letter-spacing: -0.01em;
+            box-shadow: 0 2px 8px rgba(0, 113, 227, 0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s cubic-bezier(0.34,1.56,0.64,1);
+            -webkit-tap-highlight-color: transparent;
         }
 
         .new-link:hover {
-            background: var(--acb);
-            text-decoration: underline;
+            transform: translateY(-2px) scale(1.06);
+            box-shadow: 0 10px 26px rgba(0, 113, 227, 0.45);
+            text-decoration: none;
+        }
+        .new-link:active {
+            transform: scale(0.93);
+            transition-duration: 0.08s;
         }
 
         .rec-date {
-            font-family: monospace;
-            font-weight: 700;
-            color: var(--green-dark);
-            margin-left: 14px;
+            display: inline-flex;
+            align-items: center;
+            height: 22px;
+            padding: 0 10px;
+            margin-left: 8px;
+            border-radius: 980px;
+            background: rgba(0, 112, 128, 0.10);
+            color: #007080;
+            font-family: inherit;
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
         }
 
         .toast-container {
@@ -323,99 +221,25 @@
         }
     </style>
 </head>
-<body>
+<body class="apple-ui apple-mesh">
 
-<div class="wrap">
-    <!-- ═══ OPENCLINIC GA COMPLETE PATIENT IDENTIFICATION BAR ═══ -->
-    <div class="oc-demo-bar">
-        <!-- Col 1 -->
-        <div style="display:flex;flex-direction:column;gap:6px;">
-            <div class="demo-row"><span class="demo-lbl">Family name</span><input type="text" class="demo-input" id="ocSearchFamily" placeholder="Search family..." value="TEKEREZA" /></div>
-            <div class="demo-row"><span class="demo-lbl">Nat ID/PP</span><input type="text" class="demo-input" id="ocSearchNatId" placeholder="National ID..." value="1 1986 8 0064652 0 14" /></div>
-            <div class="demo-row">
-                <span class="demo-lbl">Department</span>
-                <div style="display:flex;gap:4px;width:68%;align-items:center;">
-                    <button type="button" class="demo-btn" onclick="if(window.pcFile&&pcFile.openWardPicker)pcFile.openWardPicker();" title="Browse Patients by Ward / Department" style="padding:4px 8px;font-size:10.5px;white-space:nowrap;">🏥 Ward</button>
-                    <input type="text" class="demo-input readonly" id="demoDept" readonly value="SURGERY WARD 7" style="width:100%;" />
-                </div>
-            </div>
-        </div>
-
-        <!-- Col 2 -->
-        <div style="display:flex;flex-direction:column;gap:6px;">
-            <div class="demo-row"><span class="demo-lbl">Firstname</span><input type="text" class="demo-input" id="ocSearchFirst" placeholder="Search first..." value="GASPARD" /></div>
-            <div class="demo-row"><span class="demo-lbl">Record number</span><input type="text" class="demo-input" id="ocSearchMrn" placeholder="MRN..." value="655055" /></div>
-            <div class="demo-row" style="justify-content:flex-start;padding-top:2px;">
-                <span class="demo-status-pills">
-                    <span title="Quick Action">⏱️</span><span title="Gender Male">M</span><span title="Inpatient Ward">🏥</span>
-                </span>
-            </div>
-        </div>
-
-        <!-- Col 3 -->
-        <div style="display:flex;flex-direction:column;gap:6px;">
-            <div class="demo-row">
-                <span class="demo-lbl">Date of birth</span>
-                <input type="text" class="demo-input readonly" id="demoDob" readonly value="07/01/1986" style="width:50%;" />
-                <span id="demoAgeSex" style="font-size:11px;font-weight:700;color:var(--tm);">(Male - 40 years 7 months)</span>
-            </div>
-            <div class="demo-row">
-                <span class="demo-lbl">Archive code</span>
-                <input type="text" class="demo-input readonly" id="ocArchiveCode" readonly value="ARCH-2026-655" />
-            </div>
-            <div class="demo-row">
-                <span class="demo-lbl">District</span>
-                <select class="demo-input" id="demoDistrict">
-                    <option value="KAMONYI" selected>KAMONYI</option>
-                    <option value="KIGALI">KIGALI</option>
-                    <option value="GASABO">GASABO</option>
-                    <option value="NYARUGENGE">NYARUGENGE</option>
-                    <option value="KICUKIRO">KICUKIRO</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Col 4 -->
-        <div style="display:flex;flex-direction:column;gap:6px;justify-content:space-between;">
-            <div class="demo-row">
-                <span class="demo-lbl">Person ID</span>
-                <input type="text" class="demo-input" id="ocSearchId" placeholder="Person ID..." value="655055" />
-            </div>
-            <div class="demo-btn-group">
-                <button type="button" class="demo-btn" onclick="if(window.pcFile&&pcFile.searchFromDemoBar)pcFile.searchFromDemoBar();else if(window.openPatientSearch)openPatientSearch();">Find</button>
-                <button type="button" class="demo-btn clear-btn" onclick="if(window.pcFile&&pcFile.clearPatientBar)pcFile.clearPatientBar();else if(window.dpClear)dpClear();">Clear</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══ HEADER BAR ═══ -->
-    <div class="oc-header">
-        <div class="oc-header-left">
-            <img src="logo-wide.png" alt="PClinic" width="112" height="28" />
-            <span class="oc-header-title">
-                <i class="ti ti-file-text"></i>
-                <span>OpenClinic GA • Medical Summary (30 Examinations)</span>
-            </span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <a href="global-examinations.html" class="btn-apple blue" title="Global examinations"><i class="ti ti-clipboard-list"></i> Global examinations</a>
-            <a href="doctor-dashboard.html" class="btn-apple" title="Doctor Console"><i class="ti ti-user-check"></i> Doctor</a>
-            <a href="lab-request.html" class="btn-apple" title="Lab Request"><i class="ti ti-test-pipe"></i> Lab Request</a>
-            <a href="imaging-request.html" class="btn-apple" title="Imaging Request"><i class="ti ti-radio"></i> Imaging</a>
-            <button class="btn-apple" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
-            <button class="btn-apple" onclick="closeMedicalSummary()"><i class="ti ti-arrow-left"></i> Close</button>
-        </div>
-    </div>
-
+<div class="wrap apple-rise">
     <!-- ═══ COMPLETE 30-ITEM MEDICAL SUMMARY TABLE (FROM PHOTO 1 & 2) ═══ -->
     <div class="summary-wrapper">
-        <div class="summary-title-strip">
-            <span>Home  ▸  Medical summary</span>
-            <span style="color:var(--tm);font-size:12px;font-weight:500;">30 Clinical Records Available</span>
+        <div class="summary-title-strip" id="medSummaryFoldHeader" onclick="toggleMedicalSummaryFold()" style="cursor:pointer; user-select:none;">
+            <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-chevron-down" id="medSummaryChevron" style="transition:transform 0.3s; transform:rotate(0deg);"></i> Medical summary</span>
+            <span style="color:var(--tm);font-size:12px;font-weight:500; display:flex; align-items:center; gap:8px;"><span id="medSummaryCount">30 Clinical Records Available</span> <i class="ti ti-fold" style="font-size:14px;" title="Click to unfold"></i></span>
         </div>
-        <table class="oc-table">
+        <div id="medSummaryFoldBody" style="max-height:2000px; opacity:1; overflow:hidden; transition: max-height 0.5s cubic-bezier(0.32,0.72,0,1), opacity 0.4s;">
+        <div id="medSummaryLock" style="display:none; text-align:center; padding:48px 20px; color:var(--tm); font-size:13px;">
+            <div style="width:64px;height:64px;margin:0 auto 14px;border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:30px;background:rgba(0,113,227,0.08);box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);">🔒</div>
+            <div style="font-weight:800;font-size:15px;color:var(--tp);letter-spacing:-0.01em;">No patient selected</div>
+            <span style="font-size:11.5px;line-height:1.6;">Choose the patient in the identification bar above (Find / search) —<br>the 30 Medical Summary forms open only for that patient.</span>
+        </div>
+        <table class="oc-table" id="medSummaryFormsTable">
             <tbody id="summaryTableBody"></tbody>
         </table>
+        </div>
     </div>
 </div>
 
@@ -423,7 +247,7 @@
 
 <script src="pclinic-catalog.js"></script>
 <script src="pclinic-orders.js"></script>
-<script src="pclinic-file.js?v=20260804_CHUK_3ROW"></script>
+<script src="pclinic-file.js?v=20260814_RAD"></script>
 <script src="pclinic-vitals.js"></script>
 <script src="pclinic-handoff.js"></script>
 <script>
@@ -433,37 +257,41 @@
     let currentPatient = null;
 
     // EXACT 30 MEDICAL SUMMARY FORMS FROM PHOTO 1 & 2
+    // ═══ THE 30 MEDICAL SUMMARY FORMS — every one linked to a real page.
+    // 'type' = the Common Server record type (pclinic_files) used to show
+    // the last recorded date for THIS patient. All pages pull the patient
+    // from the Common Server and save their records back to it. ═══
     const SUMMARY_ITEMS = [
-        { title: 'Clinical Progress',                     target: 'clinical-note.html',        date: '' },
-        { title: 'Daily note',                            target: 'clinical-note.html',        date: '' },
-        { title: 'Death certificate in ICD-11',           target: 'medical-certificate.html',  date: '' },
-        { title: 'Discharge malnutrition ward',           target: 'discharge-summary.html',    date: '' },
-        { title: 'ECG',                                   target: 'imaging-request.html',      date: '' },
-        { title: 'Follow-up malnutrition',                target: 'opd-file.html',             date: '' },
-        { title: 'Follow-up of the psychiatric patient',  target: 'opd-file.html',             date: '' },
-        { title: 'Fysiotherapy order',                    target: 'physio-request.html',       date: '' },
-        { title: 'Inpatient admission form (NDH model)',  target: 'admission-form.html',       date: '' },
-        { title: 'Inpatient discharge form (RMH model)',  target: 'discharge-summary.html',    date: '' },
-        { title: 'Inpatient follow-up form (HPRC model)', target: 'ward-round.html',           date: '' },
-        { title: 'Intensive care surveillance',           target: 'ward-round.html',           date: '' },
-        { title: 'MSAS - Register Injection',             target: 'nursing-note.html',         date: '' },
-        { title: 'MSAS - Register pansement',             target: 'procedure-note.html',       date: '' },
-        { title: 'MSHP - Blood transfusion receiver registry', target: 'nursing-note.html',    date: '' },
-        { title: 'MSPLS - HC - Deaths registry',          target: 'medical-report.html',       date: '' },
-        { title: 'Outpatient consultation (RMH)',         target: 'opd-file.html',             date: '' },
-        { title: 'Patient transfer',                      target: 'referral.html',             date: '' },
-        { title: 'Pediatric triage (CPTAS)',              target: 'admission-form.html',       date: '' },
-        { title: 'Physiotherapy evaluation form',         target: 'physio-request.html',       date: '' },
-        { title: 'Pre-anaesthesia record (KIRA model)',   target: 'surgical-note.html',        date: '01/08/2026' },
-        { title: 'Progress Note',                         target: 'clinical-note.html',        date: '' },
-        { title: 'Psychiatric care',                      target: 'opd-file.html',             date: '' },
-        { title: 'Referral letter',                       target: 'referral.html',             date: '' },
-        { title: 'Stomatology surgery protocol',          target: 'surgical-note.html',        date: '' },
-        { title: 'Surgery protocol',                      target: 'surgical-note.html',        date: '' },
-        { title: 'Surveillance during anaestesia',        target: 'surgical-note.html',        date: '01/08/2026' },
-        { title: 'Surveillance protocol',                 target: 'nursing-note.html',         date: '01/08/2026' },
-        { title: 'Vital signs',                           target: 'vitals-action',             date: '' },
-        { title: 'Warning',                               target: 'messages.html',             date: '' }
+        { title: 'Clinical Progress',                     target: 'clinical-note.html',        type: 'clinical' },
+        { title: 'Daily note',                            target: 'clinical-note.html',        type: 'clinical' },
+        { title: 'Death certificate in ICD-11',           target: 'medical-certificate.html',  type: null },
+        { title: 'Discharge malnutrition ward',           target: 'discharge-summary.html',    type: null },
+        { title: 'ECG',                                   target: 'ecg-form.html',             type: 'ecg' },
+        { title: 'Follow-up malnutrition',                target: 'malnutrition-followup.html', type: 'malnut' },
+        { title: 'Follow-up of the psychiatric patient',  target: 'psychiatric-care.html',     type: 'psych' },
+        { title: 'Fysiotherapy order',                    target: 'physio-request.html',       type: 'physio' },
+        { title: 'Inpatient admission form (NDH model)',  target: 'admission-form.html',       type: 'admission' },
+        { title: 'Inpatient discharge form (RMH model)',  target: 'discharge-summary.html',    type: null },
+        { title: 'Inpatient follow-up form (HPRC model)', target: 'ward-round.html',           type: 'ward' },
+        { title: 'Intensive care surveillance',           target: 'icu-surveillance.html',     type: 'icu' },
+        { title: 'MSAS - Register Injection',             target: 'injection-registry.html',   type: 'injection' },
+        { title: 'MSAS - Register pansement',             target: 'pansement-registry.html',   type: 'pansement' },
+        { title: 'MSHP - Blood transfusion receiver registry', target: 'transfusion-registry.html', type: 'transfusion' },
+        { title: 'MSPLS - HC - Deaths registry',          target: 'deaths-registry.html',      type: 'death' },
+        { title: 'Outpatient consultation (RMH)',         target: 'opd-file.html',             type: 'opd' },
+        { title: 'Patient transfer',                      target: 'transfer-form.html',        type: null },
+        { title: 'Pediatric triage (CPTAS)',              target: 'triage-form.html',          type: 'triage' },
+        { title: 'Physiotherapy evaluation form',         target: 'physio-request.html',       type: 'physio' },
+        { title: 'Pre-anaesthesia record (KIRA model)',   target: 'surgical-note.html',        type: 'surgical' },
+        { title: 'Progress Note',                         target: 'clinical-note.html',        type: 'clinical' },
+        { title: 'Psychiatric care',                      target: 'psychiatric-care.html',     type: 'psych' },
+        { title: 'Referral letter',                       target: 'referral.html',             type: null },
+        { title: 'Stomatology surgery protocol',          target: 'surgical-note.html',        type: 'surgical' },
+        { title: 'Surgery protocol',                      target: 'surgical-note.html',        type: 'surgical' },
+        { title: 'Surveillance during anaestesia',        target: 'surgical-note.html',        type: 'surgical' },
+        { title: 'Surveillance protocol',                 target: 'nursing-note.html',         type: 'nursing' },
+        { title: 'Vital signs',                           target: 'vitals-action',             type: null },
+        { title: 'Warning',                               target: 'messages.html',             type: null }
     ];
 
     function init() {
@@ -484,73 +312,93 @@
             const pid = urlParams.get('patient') || localStorage.getItem('pclinic_active_patient');
             if (pid) {
                 const pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
-                const found = pts.find(p => String(p.id) === String(pid));
+                const found = pts.find(p => String(p.id) === String(pid) || String(p.mrn) === String(pid));
                 if (found) {
                     currentPatient = found;
-                    updatePatientIdentification(found);
                     return;
                 }
             }
         } catch(e) {}
 
         try {
-            if (window.parent && window.parent.currentPatient) {
+            if (window.parent && window.parent.currentPatient && window.parent.currentPatient.id) {
                 currentPatient = window.parent.currentPatient;
-                updatePatientIdentification(currentPatient);
                 return;
             }
         } catch(e) {}
 
-        // Default matching the photo TEKEREZA GASPARD
-        currentPatient = {
-            id: '655055',
-            lastName: 'TEKEREZA',
-            firstName: 'GASPARD',
-            nationalId: '1 1986 8 0064652 0 14',
-            mrn: '655055',
-            dob: '1986-01-07',
-            gender: 'Male',
-            department: 'SURGERY WARD 7',
-            district: 'KAMONYI',
-            archiveCode: 'ARCH-2026-655'
-        };
-        updatePatientIdentification(currentPatient);
+        // ⛔ NO TEMPLATE DATA: no patient → the forms stay locked
+        currentPatient = null;
     }
 
-    function updatePatientIdentification(p) {
-        document.getElementById('demoFamily').value = (p.lastName || 'TEKEREZA').toUpperCase();
-        document.getElementById('demoFirst').value = (p.firstName || 'GASPARD').toUpperCase();
-        document.getElementById('demoNatId').value = p.nationalId || '1 1986 8 0064652 0 14';
-        document.getElementById('demoMrn').value = p.mrn || p.id || '655055';
-        document.getElementById('demoPersonId').value = p.id || '655055';
-        document.getElementById('demoArchive').value = p.archiveCode || 'ARCH-2026-655';
-        document.getElementById('demoDept').value = (p.department || 'SURGERY WARD 7').toUpperCase();
-        const dobStr = p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '07/01/1986';
-        const age = p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' years' : '40 years 7 months';
-        document.getElementById('demoDob').value = dobStr;
-        document.getElementById('demoAgeSex').textContent = `(${p.gender || 'Male'} - ${age})`;
+    /* ── 🔒 PATIENT GATE: the 30 Medical Summary forms open ONLY for the
+          patient sitting in the identification bar ── */
+    function applyPatientGate() {
+        const p = currentPatient;
+        const table = document.getElementById('medSummaryFormsTable');
+        const lock  = document.getElementById('medSummaryLock');
+        const count = document.getElementById('medSummaryCount');
+
+        if (p && p.id) {
+            if (table) table.style.display = '';
+            if (lock)  lock.style.display = 'none';
+            if (count) count.textContent = '30 Clinical Records Available';
+        } else {
+            if (table) table.style.display = 'none';
+            if (lock)  lock.style.display = 'block';
+            if (count) count.textContent = '🔒 No patient selected';
+        }
     }
 
     function renderSummaryTable() {
         const tbody = document.getElementById('summaryTableBody');
         tbody.innerHTML = SUMMARY_ITEMS.map((item, idx) => {
-            const dateBadge = item.date ? `<span class="rec-date">${item.date}</span>` : '';
+            // 📅 PULL FROM COMMON SERVER: the latest record of this type for
+            // the selected patient (pclinic_files — the shared document store)
+            let dateBadge = '';
+            if (currentPatient && currentPatient.id && item.type) {
+                try {
+                    const docs = (window.pcFile && typeof pcFile.list === 'function')
+                        ? pcFile.list(currentPatient.id, item.type)
+                        : (function(){ try { return JSON.parse(localStorage.getItem('pclinic_files') || '[]'); } catch(e){ return []; } })()
+                              .filter(d => String(d.patientId) === String(currentPatient.id) && d.type === item.type);
+                    if (docs && docs.length) {
+                        const last = docs.reduce((a, b) => (new Date(a.at || a.timestamp || 0) > new Date(b.at || b.timestamp || 0) ? a : b));
+                        const d = last.at || last.timestamp;
+                        if (d) dateBadge = `<span class="rec-date">Last: ${new Date(d).toLocaleDateString('en-GB')}</span>`;
+                    }
+                } catch(e) {}
+            }
             return `
             <tr>
                 <td>
                     <span class="form-bullet">▸</span>
                     <span class="form-name">${escapeHtml(item.title)}</span>
                 </td>
-                <td style="text-align:right;width:180px;">
+                <td style="text-align:right;width:200px;">
                     <a class="new-link" onclick="launchForm('${item.target}', '${escapeHtml(item.title)}')">New</a>
                     ${dateBadge}
                 </td>
             </tr>`;
         }).join('');
+        applyPatientGate();
     }
 
+    // ─── TAPTIC FEEDBACK (iOS-style haptics on supported devices) ───
+    document.addEventListener('click', function(e) {
+        try {
+            if (navigator.vibrate && (e.target.closest('.new-link') || e.target.closest('.summary-title-strip'))) {
+                navigator.vibrate(10);
+            }
+        } catch(err) {}
+    });
+
     window.launchForm = function(target, title) {
-        const p = currentPatient || { id: '655055' };
+        if (!currentPatient || !currentPatient.id) {
+            showToast('🔒 Select a patient first — the identification bar must show the patient before opening a form.', 'warning');
+            return;
+        }
+        const p = currentPatient;
         try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
 
         if (target === 'vitals-action') {
@@ -568,7 +416,7 @@
     window.closeMedicalSummary = function() {
         try {
             if (window.parent && window.parent !== window) {
-                window.parent.postMessage({ type: 'CLOSE_MODAL' }, '*');
+                window.parent.postMessage({ type: 'CLOSE_MODAL' }, window.location.origin);
                 return;
             }
         } catch(e) {}
@@ -589,9 +437,70 @@
         setTimeout(() => t.remove(), 3000);
     }
 
-    window.addEventListener('DOMContentLoaded', init);
+    window.addEventListener('DOMContentLoaded', function () {
+        requireAuth(['doctor','nurse']).then(init).catch(function () {});
+    });
+    window.addEventListener('pcPatientChanged', function(e) {
+        if (e.detail && e.detail.id) {
+            // Patient picked from the identification bar / another dashboard
+            currentPatient = e.detail;
+        } else {
+            // ⛔ Explicit CLEAR → lock the forms (do NOT re-read the URL patient)
+            currentPatient = null;
+        }
+        renderSummaryTable();
+    });
+    window.addEventListener('storage', function() {
+        loadPatient();
+        renderSummaryTable();
+    });
+    window.addEventListener('patientsUpdated', function() {
+        loadPatient();
+        renderSummaryTable();
+    });
     window.closeMedicalSummary = closeMedicalSummary;
 })();
+
+    function toggleMedicalSummaryFold(){
+      var body=document.getElementById('medSummaryFoldBody');
+      var chev=document.getElementById('medSummaryChevron');
+      var count=document.getElementById('medSummaryCount');
+      if(!body) return;
+      var style=window.getComputedStyle(body);
+      var isOpen = body.style.maxHeight!=='0px' && body.style.opacity!=='0' && style.maxHeight!=='0px';
+      if(isOpen && body.style.maxHeight!=='0px'){
+        // Actually check if open
+        if(body.dataset.open==='false'){
+          body.style.maxHeight='2000px'; body.style.opacity='1'; body.dataset.open='true';
+          if(chev) chev.style.transform='rotate(0deg)';
+          if(count) count.textContent='30 Clinical Records Available — all medical summary of the patient';
+        } else {
+          body.style.maxHeight='0px'; body.style.opacity='0'; body.dataset.open='false';
+          if(chev) chev.style.transform='rotate(-90deg)';
+          if(count) count.textContent='Medical summary folded — click to unfold';
+        }
+      } else {
+        // toggle based on dataset
+        var isCurrentlyOpen = body.dataset.open!=='false';
+        if(isCurrentlyOpen){
+          body.style.maxHeight='0px'; body.style.opacity='0'; body.dataset.open='false';
+          if(chev) chev.style.transform='rotate(-90deg)';
+          if(count) count.textContent='Medical summary folded — click to unfold';
+        } else {
+          body.style.maxHeight='2000px'; body.style.opacity='1'; body.dataset.open='true';
+          if(chev) chev.style.transform='rotate(0deg)';
+          if(count) count.textContent='30 Clinical Records Available — all medical summary of the patient';
+        }
+      }
+    }
+    window.toggleMedicalSummaryFold=toggleMedicalSummaryFold;
+    
+    document.addEventListener('DOMContentLoaded', function(){
+      var body=document.getElementById('medSummaryFoldBody');
+      if(body){ body.dataset.open='true'; body.style.maxHeight='2000px'; body.style.opacity='1'; }
+    });
 </script>
+
+
 </body>
 </html>

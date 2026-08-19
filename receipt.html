@@ -232,7 +232,7 @@ window.payFull=function(){
     takePayment();
 };
 
-requireAuth([]).then(function(staff){
+requireAuth(['cashier','finance']).then(function(staff){
     window.currentStaff=staff;
     document.getElementById('userName').textContent=staff.name;
     document.getElementById('userAvatar').textContent=(staff.name||'??').substring(0,2).toUpperCase();
@@ -240,6 +240,6 @@ requireAuth([]).then(function(staff){
 }).catch(function(){});
 })();
 </script>
-<script src="pclinic-file.js?v=20260804_CHUK_3ROW"></script>
+<script src="pclinic-file.js?v=20260814_RAD"></script>
 </body>
 </html>

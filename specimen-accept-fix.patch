@@ -1,0 +1,558 @@
+diff --git a/functions/index.js b/functions/index.js
+index d3a1182..ca6c096 100644
+--- a/functions/index.js
++++ b/functions/index.js
+@@ -12,6 +12,17 @@ const {
+   validateFinalReport,
+   reportIdForOrder,
+ } = require('./radiology-domain.cjs');
++const {
++  normalizePatientId,
++  normalizeOrderId,
++  normalizeSpecimenAction,
++  normalizeOrderStatus,
++  isLaboratoryOrder,
++  transitionDisposition,
++  findLegacyRequest,
++  legacyOrderIdForRequest,
++  materializeLegacyOrder,
++} = require('./lab-domain.cjs');
+ 
+ initializeApp();
+ setGlobalOptions({ region: 'africa-south1', maxInstances: 20 });
+@@ -21,6 +32,15 @@ function fail(code, message) {
+   throw new HttpsError(code, message);
+ }
+ 
++function timestampToIso(value, fallback) {
++  if (value && typeof value.toDate === 'function') {
++    try { return value.toDate().toISOString(); } catch (error) { /* use fallback */ }
++  }
++  if (value instanceof Date) return value.toISOString();
++  if (typeof value === 'string' && value) return value;
++  return fallback;
++}
++
+ async function requireStaff(request, allowedRoles) {
+   if (!request.auth || !request.auth.uid) fail('unauthenticated', 'Sign-in is required.');
+   const snap = await db.collection('users').doc(request.auth.uid).get();
+@@ -123,6 +143,225 @@ function reportPayload(staff, order, report, existing, status) {
+   };
+ }
+ 
++/*
++ * Atomically accept/accession or reject one selected patient's laboratory
++ * order group. This callable is required for recovered patient.labRequests,
++ * because those legacy requests do not yet have an /orders document and the
++ * browser is intentionally forbidden from inventing one as Laboratory staff.
++ */
++// Callable functions normally enable CORS automatically. Keep it explicit
++// because the dashboard is hosted on Cloudflare Pages, not Firebase Hosting.
++exports.labSpecimenTransition = onCall({ cors: true }, async (request) => {
++  const staff = await requireStaff(request, ['lab']);
++  const data = request.data || {};
++
++  let patientId;
++  let action;
++  try {
++    patientId = normalizePatientId(data.patientId);
++    action = normalizeSpecimenAction(data.action);
++  } catch (error) {
++    fail('invalid-argument', error.message);
++  }
++  if (!patientId) fail('invalid-argument', 'A patient ID is required.');
++
++  let accessionNo;
++  let reason;
++  let notes;
++  try {
++    accessionNo = cleanText(data.accessionNo, 120, false, 'accessionNo');
++    reason = cleanText(data.reason, 1000, false, 'reason');
++    notes = cleanText(data.notes, 2000, false, 'notes');
++  } catch (error) {
++    fail('invalid-argument', error.message);
++  }
++  if (action === 'accession' && !accessionNo) fail('invalid-argument', 'An accession number is required.');
++  if (action === 'reject' && !reason) fail('invalid-argument', 'A specimen rejection reason is required.');
++
++  if (!Array.isArray(data.orders) || data.orders.length < 1 || data.orders.length > 25) {
++    fail('invalid-argument', 'Submit between 1 and 25 laboratory orders.');
++  }
++
++  const seenOrderIds = new Set();
++  const entries = data.orders.map((entry) => {
++    let orderId;
++    const entryPatientId = normalizePatientId(entry && entry.patientId);
++    try { orderId = normalizeOrderId(entry && entry.orderId); }
++    catch (error) { fail('invalid-argument', error.message); }
++    if (entryPatientId !== patientId) fail('invalid-argument', 'Every order must belong to the selected patient.');
++    if (seenOrderIds.has(orderId)) fail('invalid-argument', 'The specimen request contains a duplicate order.');
++    seenOrderIds.add(orderId);
++    return {
++      orderId,
++      legacyOrder: entry && entry.legacyOrder && typeof entry.legacyOrder === 'object' ? entry.legacyOrder : null,
++      ref: db.collection('orders').doc(orderId),
++    };
++  });
++
++  const patientRef = db.collection('patients').doc(patientId);
++  return db.runTransaction(async (tx) => {
++    // Firestore transactions require reads before writes. Read the patient as
++    // well as every candidate order so legacy materialisation is verified
++    // against the authoritative patient.labRequests array.
++    const snapshots = await Promise.all([
++      tx.get(patientRef),
++      ...entries.map((entry) => tx.get(entry.ref)),
++    ]);
++    const patientSnap = snapshots[0];
++    if (!patientSnap.exists) fail('not-found', 'The selected patient was not found.');
++    const patient = patientSnap.data() || {};
++    const patientRequests = Array.isArray(patient.labRequests) ? patient.labRequests.slice() : [];
++    let patientRequestsChanged = false;
++    const now = Timestamp.now();
++    const transitionedAt = now.toDate().toISOString();
++    const responses = [];
++
++    entries.forEach((entry, index) => {
++      const orderSnap = snapshots[index + 1];
++      let order;
++      let legacyRequest = null;
++      let legacyRequestIndex = -1;
++
++      if (orderSnap.exists) {
++        order = { id: orderSnap.id, ...orderSnap.data() };
++      } else {
++        if (!entry.legacyOrder) {
++          fail('not-found', `Laboratory order ${entry.orderId} was not found on the common server.`);
++        }
++        legacyRequest = findLegacyRequest(patient, entry.legacyOrder);
++        if (!legacyRequest) {
++          fail('failed-precondition', `Recovered request ${entry.orderId} could not be verified against the patient's laboratory requests.`);
++        }
++        legacyRequestIndex = patientRequests.indexOf(legacyRequest);
++        const expectedLegacyOrderId = legacyOrderIdForRequest(patientId, legacyRequest, legacyRequestIndex);
++        if (entry.orderId !== expectedLegacyOrderId) {
++          fail('failed-precondition', 'The recovered laboratory order ID does not match the verified patient request.');
++        }
++        try {
++          order = materializeLegacyOrder(entry.orderId, patientId, patient, legacyRequest);
++        } catch (error) {
++          fail('failed-precondition', error.message);
++        }
++      }
++
++      if (!isLaboratoryOrder(order)) fail('failed-precondition', 'The selected order is not a laboratory order.');
++      if (normalizePatientId(order.patientId) !== patientId) {
++        fail('failed-precondition', 'Order and selected patient IDs do not match.');
++      }
++
++      let disposition;
++      try {
++        disposition = transitionDisposition(order.status, action, !!order.accessionNo);
++      } catch (error) {
++        fail('failed-precondition', error.message);
++      }
++
++      const nextStatus = action === 'reject' ? 'cancelled' : 'in-progress';
++      const actorFields = action === 'reject' ? {
++        cancelReason: reason,
++        cancelledAt: now,
++        cancelledBy: staff.name,
++        cancelledById: staff.staffId,
++      } : {
++        accessionNo,
++        accessionNotes: notes,
++        accessionedAt: now,
++        accessionedBy: staff.name,
++        accessionedById: staff.staffId,
++      };
++
++      if (disposition === 'apply') {
++        const patch = {
++          status: nextStatus,
++          updatedAt: now,
++          updatedBy: staff.name,
++          updatedById: staff.staffId,
++          ...actorFields,
++          history: FieldValue.arrayUnion({
++            at: now,
++            by: staff.name,
++            byId: staff.staffId,
++            action: action === 'reject' ? `laboratory specimen rejected: ${reason}` : `laboratory specimen accessioned: ${accessionNo}`,
++          }),
++        };
++        tx.set(
++          entry.ref,
++          orderSnap.exists ? patch : { ...order, ...patch, id: entry.orderId },
++          { merge: true }
++        );
++
++        if (legacyRequest && legacyRequestIndex >= 0) {
++          patientRequests[legacyRequestIndex] = {
++            ...patientRequests[legacyRequestIndex],
++            status: action === 'reject' ? 'Rejected' : 'In-Progress',
++            ...(action === 'reject' ? {
++              rejectionReason: reason,
++              rejectedAt: transitionedAt,
++              rejectedBy: staff.name,
++              rejectedById: staff.staffId,
++            } : {
++              accessionNo,
++              accessionedAt: transitionedAt,
++              accessionedBy: staff.name,
++              accessionedById: staff.staffId,
++            }),
++          };
++          patientRequestsChanged = true;
++        }
++
++        if (action === 'reject') {
++          messageInTransaction(
++            tx,
++            staff,
++            order,
++            `Laboratory specimen rejected for ${order.patientName || 'patient'} — ${reason}`,
++            'urgent',
++            'lab-specimen'
++          );
++        }
++        auditInTransaction(
++          tx,
++          staff,
++          action === 'reject' ? 'laboratory.specimen.reject' : 'laboratory.specimen.accession',
++          'order',
++          entry.orderId,
++          patientId,
++          { accessionNo: action === 'accession' ? accessionNo : null, reason: action === 'reject' ? reason : null }
++        );
++      }
++
++      responses.push({
++        orderId: entry.orderId,
++        patientId,
++        status: disposition === 'already-applied' ? normalizeOrderStatus(order.status) : nextStatus,
++        accessionNo: action === 'accession' ? (order.accessionNo || accessionNo) : null,
++        transitionedAt: disposition === 'already-applied'
++          ? timestampToIso(order.accessionedAt || order.cancelledAt, transitionedAt)
++          : transitionedAt,
++        transitionedBy: disposition === 'already-applied'
++          ? String(order.accessionedBy || order.cancelledBy || staff.name)
++          : staff.name,
++        transitionedById: disposition === 'already-applied'
++          ? String(order.accessionedById || order.cancelledById || staff.staffId)
++          : staff.staffId,
++        reason: action === 'reject' ? (order.cancelReason || reason) : null,
++        migratedLegacyOrder: !orderSnap.exists,
++        alreadyApplied: disposition === 'already-applied',
++      });
++    });
++
++    if (patientRequestsChanged) {
++      tx.update(patientRef, {
++        labRequests: patientRequests,
++        updatedAt: now,
++        updatedBy: staff.name,
++        updatedById: staff.staffId,
++      });
++    }
++    return { orders: responses };
++  });
++});
++
+ exports.radiologyTransition = onCall(async (request) => {
+   const staff = await requireStaff(request, ['radio']);
+   const orderId = cleanText(request.data && request.data.orderId, 300, true, 'orderId');
+diff --git a/functions/lab-domain.cjs b/functions/lab-domain.cjs
+new file mode 100644
+index 0000000..321eb5e
+--- /dev/null
++++ b/functions/lab-domain.cjs
+@@ -0,0 +1,143 @@
++'use strict';
++
++const SPECIMEN_ACTIONS = new Set(['accession', 'reject']);
++const ACTIVE_ORDER_STATES = new Set(['pending', 'in-progress']);
++
++function text(value, max = 500) {
++  return String(value == null ? '' : value).trim().slice(0, max);
++}
++
++function normalizePatientId(value) {
++  return text(value, 200).replace(/^MOD-/i, '').trim();
++}
++
++function normalizeOrderId(value) {
++  const id = text(value, 300);
++  if (!id || id.includes('/')) throw new Error('A valid Firestore order ID is required.');
++  return id;
++}
++
++function normalizeSpecimenAction(value) {
++  const action = text(value, 30).toLowerCase();
++  if (!SPECIMEN_ACTIONS.has(action)) throw new Error('Unknown specimen action.');
++  return action;
++}
++
++function normalizeOrderStatus(value) {
++  const status = text(value || 'pending', 40).toLowerCase();
++  if (status === 'in progress' || status === 'in_progress') return 'in-progress';
++  if (status === 'rejected') return 'cancelled';
++  return status;
++}
++
++function isLaboratoryOrder(order) {
++  return !!order && (text(order.dept, 40).toLowerCase() === 'lab' || text(order.type, 40).toLowerCase() === 'lab');
++}
++
++function transitionDisposition(statusValue, action, hasAccession) {
++  const status = normalizeOrderStatus(statusValue);
++  if (action === 'accession') {
++    if (status === 'in-progress' && hasAccession) return 'already-applied';
++    if (ACTIVE_ORDER_STATES.has(status)) return 'apply';
++    throw new Error(status === 'completed'
++      ? 'A completed laboratory order cannot be accessioned again.'
++      : 'Only a pending or in-progress laboratory order can be accessioned.');
++  }
++  if (status === 'cancelled') return 'already-applied';
++  if (ACTIVE_ORDER_STATES.has(status)) return 'apply';
++  throw new Error('Only a pending or in-progress laboratory order can be rejected.');
++}
++
++function requestTests(request) {
++  if (!request || typeof request !== 'object') return [];
++  const raw = Array.isArray(request.tests)
++    ? request.tests
++    : [request.testName || request.item || request.test].filter(Boolean);
++  return raw.map((value) => text(value && value.name ? value.name : value, 250)).filter(Boolean);
++}
++
++function sameTestSet(left, right) {
++  const normalize = (values) => values.map((value) => text(value, 250).toLowerCase()).filter(Boolean).sort();
++  const a = normalize(left);
++  const b = normalize(right);
++  return a.length > 0 && a.length === b.length && a.every((value, index) => value === b[index]);
++}
++
++function findLegacyRequest(patient, legacyOrder) {
++  const requests = patient && Array.isArray(patient.labRequests) ? patient.labRequests : [];
++  const legacyRequestId = text(legacyOrder && legacyOrder.legacyRequestId, 300);
++  if (legacyRequestId) {
++    const exact = requests.find((request) => text(request && request.id, 300) === legacyRequestId);
++    if (exact) return exact;
++  }
++
++  // Old requests did not always have an ID. Permit a fallback only when both
++  // the complete test set and the original request time agree.
++  const wantedTests = Array.isArray(legacyOrder && legacyOrder.items)
++    ? legacyOrder.items.map((item) => text(item && item.name, 250)).filter(Boolean)
++    : [];
++  const wantedAt = text(legacyOrder && legacyOrder.orderedAt, 100);
++  if (!wantedTests.length || !wantedAt) return null;
++  return requests.find((request) => {
++    const at = text(request && (request.timestamp || request.date || request.orderedAt), 100);
++    return at === wantedAt && sameTestSet(requestTests(request), wantedTests);
++  }) || null;
++}
++
++function legacyOrderIdForRequest(patientId, request, requestIndex) {
++  const normalizedPatientId = normalizePatientId(patientId);
++  const sourceId = request && request.id != null && String(request.id).trim()
++    ? String(request.id)
++    : `${normalizedPatientId}-${requestIndex}`;
++  const safeSourceId = sourceId.replace(/[^a-zA-Z0-9_-]/g, '');
++  return `LAB-LEGACY-${normalizedPatientId}-${safeSourceId}`;
++}
++
++function codeForTest(name) {
++  const compact = text(name, 250).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 18);
++  return `LAB-${compact || 'TEST'}`;
++}
++
++function materializeLegacyOrder(orderId, patientId, patient, request) {
++  const tests = requestTests(request);
++  if (!tests.length) throw new Error('The matching legacy laboratory request has no tests.');
++  const priorityValue = text(request.priority || 'routine', 30).toLowerCase();
++  const priority = ['routine', 'urgent', 'stat'].includes(priorityValue) ? priorityValue : 'routine';
++  const patientName = text(
++    patient.name || `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || request.patientName,
++    200
++  );
++  return {
++    id: orderId,
++    patientId,
++    patientName,
++    type: 'lab',
++    dept: 'lab',
++    items: tests.map((name) => ({ code: codeForTest(name), name, qty: 1, price: 0 })),
++    priority,
++    notes: text(request.notes || request.clinicalDetails || request.clinicalNotes, 2000),
++    status: normalizeOrderStatus(request.status || 'pending'),
++    total: 0,
++    billed: false,
++    billId: null,
++    orderedBy: text(request.orderedBy || request.requestedBy, 150),
++    orderedById: text(request.orderedById || request.requestedById, 100),
++    orderedAt: text(request.timestamp || request.date || request.orderedAt, 100) || new Date(0).toISOString(),
++    legacyRequestId: text(request.id, 300),
++    legacyMigrated: true,
++  };
++}
++
++module.exports = {
++  normalizePatientId,
++  normalizeOrderId,
++  normalizeSpecimenAction,
++  normalizeOrderStatus,
++  isLaboratoryOrder,
++  transitionDisposition,
++  requestTests,
++  sameTestSet,
++  findLegacyRequest,
++  legacyOrderIdForRequest,
++  materializeLegacyOrder,
++};
+diff --git a/functions/package.json b/functions/package.json
+index 9ea8fb0..5f2b251 100644
+--- a/functions/package.json
++++ b/functions/package.json
+@@ -7,7 +7,7 @@
+   },
+   "scripts": {
+     "test": "npm run test:unit",
+-    "test:unit": "node --test test/radiology-domain.test.cjs",
++    "test:unit": "node --test test/radiology-domain.test.cjs test/lab-domain.test.cjs",
+     "test:integration": "node --test test/radiology-integration.test.cjs",
+     "test:emulator": "../tests/node_modules/.bin/firebase emulators:exec --config ../firebase.json --project demo-pclinic --only firestore \"node --test test/radiology-integration.test.cjs\""
+   },
+diff --git a/functions/test/lab-domain.test.cjs b/functions/test/lab-domain.test.cjs
+new file mode 100644
+index 0000000..ed8a490
+--- /dev/null
++++ b/functions/test/lab-domain.test.cjs
+@@ -0,0 +1,69 @@
++'use strict';
++
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const {
++  normalizePatientId,
++  normalizeOrderId,
++  normalizeSpecimenAction,
++  normalizeOrderStatus,
++  transitionDisposition,
++  findLegacyRequest,
++  legacyOrderIdForRequest,
++  materializeLegacyOrder,
++} = require('../lab-domain.cjs');
++
++test('normalizes specimen identifiers and actions', () => {
++  assert.equal(normalizePatientId(' MOD-1007 '), '1007');
++  assert.equal(normalizeOrderId('ord-safe_123'), 'ord-safe_123');
++  assert.equal(normalizeSpecimenAction('ACCESSION'), 'accession');
++  assert.equal(normalizeOrderStatus('In Progress'), 'in-progress');
++  assert.throws(() => normalizeOrderId('orders/not-safe'), /valid Firestore order ID/);
++  assert.throws(() => normalizeSpecimenAction('complete'), /Unknown specimen action/);
++});
++
++test('allows active specimen transitions and makes retries idempotent', () => {
++  assert.equal(transitionDisposition('pending', 'accession', false), 'apply');
++  assert.equal(transitionDisposition('in-progress', 'accession', false), 'apply');
++  assert.equal(transitionDisposition('in-progress', 'accession', true), 'already-applied');
++  assert.equal(transitionDisposition('cancelled', 'reject', false), 'already-applied');
++  assert.throws(() => transitionDisposition('completed', 'accession', false), /cannot be accessioned/);
++});
++
++test('verifies and materializes a real legacy patient request', () => {
++  const request = {
++    id: 172345,
++    tests: ['CBC', 'Creatinine'],
++    priority: 'Urgent',
++    status: 'Pending',
++    requestedBy: 'Dr Example',
++    requestedById: '41054',
++    timestamp: '2026-08-17T08:00:00.000Z',
++  };
++  const patient = { id: 1007, firstName: 'Aline', lastName: 'Test', labRequests: [request] };
++  const legacy = {
++    legacyRequestId: '172345',
++    orderedAt: request.timestamp,
++    items: [{ name: 'CBC' }, { name: 'Creatinine' }],
++  };
++  assert.equal(findLegacyRequest(patient, legacy), request);
++  assert.equal(legacyOrderIdForRequest('1007', request, 0), 'LAB-LEGACY-1007-172345');
++  const order = materializeLegacyOrder('LAB-LEGACY-1007-172345', '1007', patient, request);
++  assert.equal(order.patientId, '1007');
++  assert.equal(order.patientName, 'Aline Test');
++  assert.equal(order.status, 'pending');
++  assert.equal(order.priority, 'urgent');
++  assert.deepEqual(order.items.map((item) => item.name), ['CBC', 'Creatinine']);
++  assert.equal(order.legacyMigrated, true);
++});
++
++test('does not match an unverified legacy request', () => {
++  const patient = {
++    labRequests: [{ id: 'one', tests: ['CBC'], timestamp: '2026-08-17T08:00:00.000Z' }],
++  };
++  assert.equal(findLegacyRequest(patient, {
++    legacyRequestId: 'different',
++    orderedAt: '2026-08-17T09:00:00.000Z',
++    items: [{ name: 'HIV' }],
++  }), null);
++});
+diff --git a/pclinic-lab.js b/pclinic-lab.js
+index e0b6fb2..a45a79e 100644
+--- a/pclinic-lab.js
++++ b/pclinic-lab.js
+@@ -831,6 +831,11 @@
+             var orderDomId = safeDomId(orderId);
+             var failed = order._syncFailed === true;
+             var completed = String(order.status || '').toLowerCase() === 'completed' && !failed;
++            // These attributes are used both inside each parameter row and by
++            // the order-level comments box below. Defining them at order scope
++            // prevents the ReferenceError that previously stopped every repaint.
++            var readonlyAttr = completed ? ' readonly' : '';
++            var disabledAttr = completed ? ' disabled' : '';
+             var items = Array.isArray(order.items) ? order.items : [];
+             var parameterRows = '';
+             var parameterCount = 0;
+@@ -845,19 +850,17 @@
+                     var rowId = orderDomId + '_' + safeDomId(parameter.orderItemCode) + '_' + safeDomId(parameter.code) + '_' + parameterIndex;
+                     var value = existing.value == null ? '' : existing.value;
+                     var flag = existing.flag || 'Normal';
+-                    var readonly = completed ? ' readonly' : '';
+-                    var disabled = completed ? ' disabled' : '';
+                     parameterRows +=
+                         '<div class="lab-result-entry-row" style="display:grid;grid-template-columns:minmax(210px,1.4fr) minmax(115px,.65fr) minmax(150px,.8fr) minmax(125px,.65fr);gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:' + (parameterCount % 2 ? '#f8fafc' : '#fff') + ';border:1px solid rgba(0,0,0,.06);margin-bottom:6px;">' +
+                           '<div><div style="font-size:12.5px;font-weight:800;color:#1d1d1f;">' + esc(parameter.test || parameter.name) + '</div>' +
+                             '<div style="font-size:10.5px;color:#64748b;margin-top:2px;">Code ' + esc(parameter.code || '—') + (parameter.unit ? ' • ' + esc(parameter.unit) : '') + '</div></div>' +
+                           '<div style="font-size:11.5px;color:#475569;font-weight:600;">' + (parameter.range ? esc(parameter.range) : 'No fixed range') + '</div>' +
+-                          '<input id="lab_value_' + rowId + '" class="lab-order-result-input" type="text" value="' + esc(value) + '" placeholder="Enter measured value"' + readonly +
++                          '<input id="lab_value_' + rowId + '" class="lab-order-result-input" type="text" value="' + esc(value) + '" placeholder="Enter measured value"' + readonlyAttr +
+                             ' data-code="' + esc(parameter.code) + '" data-name="' + esc(parameter.name) + '" data-unit="' + esc(parameter.unit) + '" data-range="' + esc(parameter.range) + '"' +
+                             ' data-order-item-code="' + esc(parameter.orderItemCode) + '" data-order-item-name="' + esc(parameter.orderItemName) + '"' +
+                             ' data-flag-id="lab_flag_' + rowId + '" oninput="pcLabEngine.autoFlagResult(this)"' +
+                             ' style="width:100%;height:36px;background:' + (completed ? '#f1f5f9' : '#fff') + ';border:1px solid ' + (completed ? '#cbd5e1' : '#007080') + ';border-radius:8px;padding:0 11px;font-weight:750;font-size:13px;color:#1d1d1f;" />' +
+-                          '<select id="lab_flag_' + rowId + '" class="lab-order-result-flag"' + disabled +
++                          '<select id="lab_flag_' + rowId + '" class="lab-order-result-flag"' + disabledAttr +
+                             ' style="width:100%;height:36px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:8px;padding:0 8px;font-size:11.5px;font-weight:750;">' +
+                             '<option value="Normal"' + (flag === 'Normal' ? ' selected' : '') + '>✓ Normal</option>' +
+                             '<option value="↑ High"' + (String(flag).indexOf('High') !== -1 ? ' selected' : '') + '>↑ High</option>' +
+@@ -887,7 +890,7 @@
+               '<div style="padding:16px 20px;">' +
+                 '<div style="font-size:12px;font-weight:800;color:#004a52;margin-bottom:8px;">REQUESTED TESTS — ENTER EVERY REQUIRED RESULT</div>' + parameterRows +
+                 '<label style="display:block;font-size:11px;font-weight:800;color:#475569;margin:12px 0 5px;">Laboratory comments / interpretation</label>' +
+-                '<textarea class="lab-order-comments"' + readonly + ' placeholder="Optional validated comment for the requesting clinician" style="width:100%;min-height:64px;resize:vertical;border:1px solid #cbd5e1;border-radius:9px;padding:9px 11px;font:12px inherit;background:' + (completed ? '#f1f5f9' : '#fff') + ';">' + esc(order.labComments || '') + '</textarea>' +
++                '<textarea class="lab-order-comments"' + readonlyAttr + ' placeholder="Optional validated comment for the requesting clinician" style="width:100%;min-height:64px;resize:vertical;border:1px solid #cbd5e1;border-radius:9px;padding:9px 11px;font:12px inherit;background:' + (completed ? '#f1f5f9' : '#fff') + ';">' + esc(order.labComments || '') + '</textarea>' +
+               '</div>' +
+               '<div style="padding:13px 20px;background:#f8f9fa;border-top:1px solid rgba(0,0,0,.09);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
+                 '<div style="font-size:11.5px;color:#64748b;max-width:650px;">Final release is committed on the common server, written to the patient record, audited, and sent to the requesting doctor. Critical flags create an urgent alert.</div>' +
+@@ -951,6 +954,9 @@
+         if (code.indexOf('permission-denied') !== -1) return 'Your account is not permitted to perform this laboratory action. Confirm that you are signed in with an active Laboratory role.';
+         if (code.indexOf('unauthenticated') !== -1) return 'Your session expired. Sign in again before continuing.';
+         if (code.indexOf('unavailable') !== -1) return 'The common server is currently unreachable. Check the connection and retry; nothing was saved.';
++        if (code.indexOf('internal') !== -1 || /^internal$/i.test(message)) {
++            return 'The Laboratory Cloud Function is missing, unreachable, or crashed. Deploy labSpecimenTransition to Firebase project pclinic-20d81 and inspect the Functions logs; nothing was saved.';
++        }
+         if (code.indexOf('already-exists') !== -1) return 'This result is already final and cannot be overwritten.';
+         return message;
+     }

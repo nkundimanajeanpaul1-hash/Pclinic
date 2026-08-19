@@ -128,7 +128,7 @@
         location.href = page + q;
     }
 
-    /* ══════════════ 3. CONTEXT STRIP REPLACED WITH OPENCLINIC GA PATIENT BANNER ══════════════ */
+    /* ══════════════ 3. CONTEXT STRIP REPLACED WITH PCLINIC PATIENT BANNER ══════════════ */
     function renderCtx() {
         var el = $('#dcCtx');
         if (!el) return;
@@ -140,19 +140,19 @@
             return;
         }
 
-        // Complete standalone fallback that matches 100/100 EXACT OpenClinic GA CHUK 3-Row Grid (~85px height) & Top Menu
+        // Complete standalone fallback that matches 100/100 EXACT PClinic CHUK 3-Row Grid (~85px height) & Top Menu
         p = p || {};
         var isCleared = !!p._cleared || !p.id;
-        var name = isCleared ? '' : ((p.lastName || p.name || 'NSANZINTWARI').toUpperCase());
-        var first = isCleared ? '' : ((p.firstName || 'SARATIEL').toUpperCase());
-        var natId = isCleared ? '' : (p.nationalId || '1198280034887038');
-        var mrn = isCleared ? '' : (p.mrn || p.id || '754775');
-        var dobStr = isCleared ? '' : (p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '01/01/1982');
-        var ageStr = isCleared ? '' : (p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' years 11 months' : '42 years 11 months');
-        var sex = isCleared ? '' : (p.gender || 'Male');
-        var dept = isCleared ? '' : ((p.department || 'ADMISSION WARD 7').toUpperCase());
+        var name = isCleared ? '' : ((p.lastName || p.name || '').toUpperCase());
+        var first = isCleared ? '' : ((p.firstName || '').toUpperCase());
+        var natId = isCleared ? '' : (p.nationalId || '');
+        var mrn = isCleared ? '' : (p.mrn || p.id || '');
+        var dobStr = isCleared ? '' : (p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '');
+        var ageStr = isCleared ? '' : (p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' years' : '');
+        var sex = isCleared ? '' : (p.gender || '');
+        var dept = isCleared ? '' : ((p.department || '').toUpperCase());
         var arch = isCleared ? '' : (p.archiveCode || '');
-        var pid = isCleared ? '' : (p.id || '754775');
+        var pid = isCleared ? '' : (p.id || '');
         var ins = isCleared ? 'RSSB / RAMA' : (p.insurance || 'RSSB / RAMA');
         var dist = isCleared ? 'NYARUGENGE' : (p.district || 'NYARUGENGE');
 
@@ -165,18 +165,18 @@
         menuDiv.innerHTML =
             '<!-- LEFT SIDE: CLINICAL PORTALS (ACTION-CODED COLORS) -->' +
             '<div class="chuk-menu-left">' +
-                '<a class="chk-btn btn-patient" onclick="if(window.pcFile)pcFile.openPatientProfileModal();">👤 Patient</a>' +
-                '<a class="chk-btn btn-summary" onclick="window.location.href=\'medical-summary.html\'">📋 Medical summary</a>' +
-                '<a class="chk-btn btn-nursing" onclick="window.location.href=\'nurse-dashboard.html\'">🏥 Nursing</a>' +
-                '<a class="chk-btn btn-applications" onclick="window.location.href=\'lab-request.html\'">💉 Applications</a>' +
-                '<a class="chk-btn btn-documents" onclick="window.location.href=\'opd-file.html\'">📂 Documents</a>' +
-                '<a class="chk-btn btn-system" onclick="if(window.pcFile)pcFile.openSystemSettingsModal();">⚙️ System</a>' +
+                '<a class="chk-btn btn-patient" onclick="if(window.pcPatientMenu)window.pcPatientMenu(this);else if(window.pcFile)pcFile.openPatientProfileModal();">👤 Patient <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>' +
+                '<a class="chk-btn btn-summary" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; window.location.href=\'medical-summary.html?patient=\'+encodeURIComponent(id);">📋 Medical summary</a>' +
+                '<a class="chk-btn btn-nursing" onclick="if(window.pcNursingMenu)window.pcNursingMenu(this);else window.location.href=\'nurse-dashboard.html\';">🏥 Nursing <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>' +
+                '<a class="chk-btn btn-applications" onclick="if(window.pcApplicationsMenu)window.pcApplicationsMenu(this);else window.location.href=\'lab-request.html\';">💉 Applications <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>' +
+                '<a class="chk-btn btn-documents" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(id);">📂 Documents</a>' +
+                '<a class="chk-btn btn-system" onclick="if(window.pcSystemMenu)window.pcSystemMenu(this);else if(window.pcFile)pcFile.openSystemSettingsModal();">⚙️ System <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>' +
             '</div>' +
-            '<!-- 🌟 RIGHT CORNER: THEME, NOTIFICATION, DR. MUTUA, LOGOUT, INFO 🌟 -->' +
+            '<!-- 🌟 RIGHT CORNER: THEME, NOTIFICATION, STAFF, LOGOUT, INFO 🌟 -->' +
             '<div class="chuk-menu-right">' +
                 '<a class="chk-btn btn-theme" onclick="if(window.pcFile)pcFile.toggleThemeFromMenu();" title="Toggle Theme">☀️ Theme</a>' +
-                '<a class="chk-btn btn-alerts" onclick="if(window.pcFile)pcFile.showNotificationsModal();" title="Alerts & Notifications">🔔 3</a>' +
-                '<a class="chk-btn btn-user" onclick="if(window.pcFile)pcFile.openStaffProfileModal();" title="Active Staff Profile">👨‍⚕️ Dr. Mutua</a>' +
+                '<a class="chk-btn btn-alerts" onclick="if(window.pcFile)pcFile.showNotificationsModal();" title="Alerts & Notifications">🔔</a>' +
+                '<a class="chk-btn btn-user" onclick="if(window.pcFile)pcFile.openStaffProfileModal();" title="Active Staff Profile">👨‍⚕️ ' + ((window.currentStaff && window.currentStaff.name) ? window.currentStaff.name : 'Staff') + '</a>' +
                 '<a class="chk-btn btn-logout" onclick="if(window.pcFile)pcFile.confirmLogout();" title="Sign out">🚪 Logout</a>' +
                 '<a class="chk-btn btn-info" onclick="if(window.pcFile)pcFile.openSystemInfoModal();" title="System Info">❓ Info</a>' +
             '</div>';
@@ -191,11 +191,11 @@
             '<div class="oc-row-grid">' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Family name</label>' +
-                    '<input type="text" class="oc-input" id="ocSearchFamily" placeholder="NSANZINTWARI..." value="' + esc(name) + '" />' +
+                    '<input type="text" class="oc-input" id="ocSearchFamily" placeholder="Family name..." value="' + esc(name) + '" />' +
                 '</div>' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Firstname</label>' +
-                    '<input type="text" class="oc-input" id="ocSearchFirst" placeholder="SARATIEL..." value="' + esc(first) + '" />' +
+                    '<input type="text" class="oc-input" id="ocSearchFirst" placeholder="Firstname..." value="' + esc(first) + '" />' +
                 '</div>' +
                 '<div class="oc-cell" style="grid-column: span 2;">' +
                     '<label class="oc-lbl">Date of birth</label>' +
@@ -210,11 +210,11 @@
             '<div class="oc-row-grid">' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Nat ID/PP</label>' +
-                    '<input type="text" class="oc-input" id="ocSearchNatId" placeholder="11982800..." value="' + esc(natId) + '" />' +
+                    '<input type="text" class="oc-input" id="ocSearchNatId" placeholder="National ID..." value="' + esc(natId) + '" />' +
                 '</div>' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Record number</label>' +
-                    '<input type="text" class="oc-input" id="ocSearchMrn" placeholder="754775..." value="' + esc(mrn) + '" />' +
+                    '<input type="text" class="oc-input" id="ocSearchMrn" placeholder="MRN..." value="' + esc(mrn) + '" />' +
                 '</div>' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Archive code</label>' +
@@ -222,7 +222,7 @@
                 '</div>' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Person ID</label>' +
-                    '<input type="text" class="oc-input" id="ocSearchId" placeholder="754775..." value="' + esc(pid) + '" />' +
+                    '<input type="text" class="oc-input" id="ocSearchId" placeholder="Person ID..." value="' + esc(pid) + '" />' +
                 '</div>' +
             '</div>' +
 
@@ -445,9 +445,13 @@
         var slot = document.createElement('span');
         slot.id = 'dpBarExtra';
         slot.style.cssText = 'display:flex;gap:8px;align-items:center';
+        // ⛔ ON THE ADMIN BAR the "Patient" button is a duplicate of Bar 1's
+        // Patient button — skip it there, keep only Note + History.
+        var isAdminBar = bar.getAttribute('data-admin-complete') === '1';
         slot.innerHTML =
+            (isAdminBar ? '' :
             '<button class="dc-btn" onclick="dpPick()" title="Switch patient">' +
-                '<i class="ti ti-user-search"></i><span>Patient</span></button>' +
+                '<i class="ti ti-user-search"></i><span>Patient</span></button>') +
             '<button class="dc-btn" onclick="dpOpenNote()" title="Clinical note">' +
                 '<i class="ti ti-notes"></i><span>Note</span></button>' +
             '<button class="dc-btn" onclick="dpOpenHistory()" title="Full history">' +

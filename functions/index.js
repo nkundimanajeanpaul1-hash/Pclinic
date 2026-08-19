@@ -362,6 +362,237 @@ exports.labSpecimenTransition = onCall({ cors: true }, async (request) => {
   });
 });
 
+/*
+ * Finalise and release one laboratory order's results to the requesting
+ * doctor. Mirrors labSpecimenTransition's legacy-recovery handling: a
+ * recovered patient.labRequests entry with no /orders document yet is
+ * verified and migrated atomically in the same transaction that releases
+ * the result, so it is never possible to release a result that cannot be
+ * traced back to a real, verified request.
+ */
+exports.labFinalize = onCall({ cors: true }, async (request) => {
+  const staff = await requireStaff(request, ['lab']);
+  const data = request.data || {};
+
+  let orderId;
+  let patientId;
+  try {
+    orderId = normalizeOrderId(data.orderId);
+    patientId = normalizePatientId(data.patientId);
+  } catch (error) {
+    fail('invalid-argument', error.message);
+  }
+  if (!patientId) fail('invalid-argument', 'A patient ID is required.');
+
+  if (!Array.isArray(data.results) || data.results.length < 1) {
+    fail('invalid-argument', 'At least one laboratory result is required.');
+  }
+
+  let results;
+  let comments;
+  try {
+    results = data.results.map((row) => ({
+      code: cleanText(row && row.code, 60, false, 'code'),
+      orderItemCode: cleanText(row && row.orderItemCode, 60, false, 'orderItemCode'),
+      orderItemName: cleanText(row && row.orderItemName, 200, false, 'orderItemName'),
+      test: cleanText(row && row.test, 200, true, 'test'),
+      value: cleanText(row && row.value, 200, true, 'value'),
+      unit: cleanText(row && row.unit, 40, false, 'unit'),
+      refRange: cleanText(row && row.refRange, 100, false, 'refRange'),
+      flag: cleanText(row && row.flag, 40, false, 'flag') || 'Normal',
+    }));
+    comments = cleanText(data.comments, 2000, false, 'comments');
+  } catch (error) {
+    fail('invalid-argument', error.message);
+  }
+  const microbiology = data.microbiology && typeof data.microbiology === 'object' ? data.microbiology : null;
+  const critical = results.some((row) => String(row.flag).indexOf('Critical') !== -1);
+  const legacyOrder = data.legacyOrder && typeof data.legacyOrder === 'object' ? data.legacyOrder : null;
+
+  const orderRef = db.collection('orders').doc(orderId);
+  const patientRef = db.collection('patients').doc(patientId);
+  const resultId = orderId;
+  const messageId = ('lab-result-' + orderId).replace(/\//g, '_');
+  const messageRef = db.collection('messages').doc(messageId);
+  const alertRef = db.collection('criticalAlerts').doc(resultId);
+
+  return db.runTransaction(async (tx) => {
+    const [orderSnap, patientSnap] = await Promise.all([tx.get(orderRef), tx.get(patientRef)]);
+    if (!patientSnap.exists) fail('not-found', 'The selected patient was not found.');
+    const patient = patientSnap.data() || {};
+    const patientRequests = Array.isArray(patient.labRequests) ? patient.labRequests.slice() : [];
+
+    let order;
+    let legacyRequest = null;
+    let legacyRequestIndex = -1;
+
+    if (orderSnap.exists) {
+      order = { id: orderSnap.id, ...orderSnap.data() };
+    } else {
+      if (!legacyOrder) fail('not-found', `Laboratory order ${orderId} was not found on the common server.`);
+      legacyRequest = findLegacyRequest(patient, legacyOrder);
+      if (!legacyRequest) {
+        fail('failed-precondition', `Recovered request ${orderId} could not be verified against the patient's laboratory requests.`);
+      }
+      legacyRequestIndex = patientRequests.indexOf(legacyRequest);
+      const expectedLegacyOrderId = legacyOrderIdForRequest(patientId, legacyRequest, legacyRequestIndex);
+      if (orderId !== expectedLegacyOrderId) {
+        fail('failed-precondition', 'The recovered laboratory order ID does not match the verified patient request.');
+      }
+      try {
+        order = materializeLegacyOrder(orderId, patientId, patient, legacyRequest);
+      } catch (error) {
+        fail('failed-precondition', error.message);
+      }
+    }
+
+    if (!isLaboratoryOrder(order)) fail('failed-precondition', 'The selected order is not a laboratory order.');
+    if (normalizePatientId(order.patientId) !== patientId) {
+      fail('failed-precondition', 'Order and selected patient IDs do not match.');
+    }
+    const status = normalizeOrderStatus(order.status);
+    if (status === 'completed') fail('already-exists', 'This result is already final and cannot be overwritten.');
+    if (status === 'cancelled') fail('failed-precondition', 'A cancelled order cannot be released.');
+
+    const now = Timestamp.now();
+    const completedAt = now.toDate().toISOString();
+
+    const patch = {
+      status: 'completed',
+      labState: 'final',
+      resultId,
+      results,
+      labComments: comments,
+      microbiology,
+      critical,
+      completedAt: now,
+      completedBy: staff.name,
+      completedById: staff.staffId,
+      history: FieldValue.arrayUnion({ at: now, by: staff.name, byId: staff.staffId, action: 'laboratory result finalised' }),
+    };
+    tx.set(orderRef, orderSnap.exists ? patch : { ...order, ...patch, id: orderId }, { merge: true });
+
+    const patientPatch = {
+      labResults: FieldValue.arrayUnion({
+        id: resultId,
+        orderId,
+        patientId,
+        tests: results,
+        comments,
+        microbiology,
+        sampleType: (microbiology && microbiology.sampleType) || '',
+        organism: (microbiology && microbiology.organism) || '',
+        colonyCount: (microbiology && microbiology.colonyCount) || '',
+        incubationNote: (microbiology && microbiology.incubationNote) || '',
+        antibiotics: (microbiology && microbiology.antibiotics) || [],
+        critical,
+        status: 'final',
+        verifiedBy: staff.name,
+        verifiedById: staff.staffId,
+        date: completedAt,
+      }),
+      updatedAt: now,
+      updatedBy: staff.name,
+      updatedById: staff.staffId,
+    };
+    if (legacyRequest && legacyRequestIndex >= 0) {
+      patientRequests[legacyRequestIndex] = {
+        ...patientRequests[legacyRequestIndex],
+        status: 'Completed',
+        completedAt,
+        completedBy: staff.name,
+        completedById: staff.staffId,
+      };
+      patientPatch.labRequests = patientRequests;
+    }
+    tx.update(patientRef, patientPatch);
+
+    tx.set(messageRef, {
+      id: messageId,
+      text: (critical ? 'CRITICAL — ' : '') + `Laboratory results finalised for ${order.patientName || 'patient'}: ` +
+        (order.items || []).map((item) => item.name).join(', '),
+      toRoles: order.orderedById ? [] : ['doctor'],
+      toStaffId: order.orderedById || null,
+      priority: critical ? 'urgent' : 'normal',
+      patientId: order.patientId,
+      patientName: order.patientName || '',
+      orderId,
+      resultId,
+      category: 'lab-result',
+      fromName: staff.name,
+      fromId: staff.staffId,
+      fromRole: staff.role,
+      at: now,
+      readBy: [],
+    });
+
+    if (critical) {
+      tx.set(alertRef, {
+        id: resultId,
+        resultId,
+        orderId,
+        patientId: String(order.patientId),
+        patientName: String(order.patientName || ''),
+        orderedById: String(order.orderedById || ''),
+        acknowledged: false,
+        status: 'notified',
+        notifiedAt: now,
+        notifiedById: staff.staffId,
+        notifiedByName: staff.name,
+        createdAt: now,
+      });
+    }
+
+    auditInTransaction(tx, staff, 'laboratory.result.finalise', 'order', orderId, patientId, { critical });
+
+    return {
+      orderId,
+      resultId,
+      status: 'final',
+      critical,
+      completedAt,
+      completedBy: staff.name,
+      completedById: staff.staffId,
+      results,
+      microbiology,
+    };
+  });
+});
+
+/*
+ * Doctor-side acknowledgement of a critical laboratory result alert.
+ * Mirrors radiologyAcknowledgeCritical: only the requesting clinician
+ * (or an admin) may acknowledge, and it is idempotent on retry.
+ */
+exports.labAcknowledgeCritical = onCall(async (request) => {
+  const staff = await requireStaff(request, ['doctor']);
+  const resultId = cleanText(request.data && request.data.resultId, 500, true, 'resultId');
+  const alertRef = db.collection('criticalAlerts').doc(resultId);
+  const orderRef = db.collection('orders').doc(resultId);
+
+  return db.runTransaction(async (tx) => {
+    const [alertSnap, orderSnap] = await Promise.all([tx.get(alertRef), tx.get(orderRef)]);
+    if (!alertSnap.exists) fail('not-found', 'Critical laboratory alert was not found.');
+    const alert = alertSnap.data();
+    const order = orderSnap.exists ? orderSnap.data() : {};
+    if (staff.role !== 'admin' && String(order.orderedById || alert.orderedById || '') !== staff.staffId) {
+      fail('permission-denied', 'Only the requesting clinician can acknowledge this alert.');
+    }
+    if (alert.acknowledged === true) return { resultId, acknowledged: true };
+    const now = Timestamp.now();
+    tx.update(alertRef, {
+      acknowledged: true,
+      status: 'acknowledged',
+      acknowledgedAt: now,
+      acknowledgedByUid: staff.uid,
+      acknowledgedById: staff.staffId,
+      acknowledgedByName: staff.name,
+    });
+    auditInTransaction(tx, staff, 'laboratory.critical.acknowledge', 'criticalAlert', resultId, alert.patientId, {});
+    return { resultId, acknowledged: true };
+  });
+});
+
 exports.radiologyTransition = onCall(async (request) => {
   const staff = await requireStaff(request, ['radio']);
   const orderId = cleanText(request.data && request.data.orderId, 300, true, 'orderId');

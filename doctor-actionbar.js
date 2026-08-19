@@ -260,6 +260,7 @@
         setTimeout(function () { $('#abF', ov).focus(); }, 130);
     }
     window.abFindPatient = openPatientSearch;
+    window.openPatientSearch = openPatientSearch;
 
     /* ══════════ DROPDOWN MENUS ══════════ */
     function showMenu(btn, items) {

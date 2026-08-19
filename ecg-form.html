@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PClinic — ECG</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
+<link rel="stylesheet" href="pclinic-file.css">
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
+<script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');}catch(e){}})();</script>
+</head>
+<body class="pcf">
+
+<div class="pc-topbar noprint" style="display: none !important;">
+    <div class="pc-brand">
+        <img class="pc-logo" src="logo-wide.png" alt="PClinic" width="118" height="30">
+        <span class="pc-appsub" id="appSub">ECG</span>
+    </div>
+    <div class="pc-tr">
+        <button class="pc-iconbtn" onclick="if(window.pcVitals) pcVitals.open();" title="Vital Signs" style="width:auto;padding:0 12px;display:inline-flex;align-items:center;gap:6px;background:rgba(225,29,72,0.08);color:#e11d48;border-radius:18px;font-weight:600;font-size:13px;height:32px;border:none;cursor:pointer;"><i class="ti ti-heart-rate-monitor"></i> Vital Signs</button>
+        <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
+        <div class="pc-chip"><span class="pc-avatar" id="userAvatar">··</span><span id="userName">…</span></div>
+        <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
+    </div>
+</div>
+
+<div class="pcf-wrap">
+    <div id="pcfRoot" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
+</div>
+
+<div class="pc-toasts noprint"></div>
+
+<script type="module" src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
+<script src="pclinic-state.js"></script>
+<script src="patient-data.js"></script>
+<script src="pclinic-orders.js"></script>
+<script src="pclinic-catalog.js"></script>
+<script src="pclinic-file.js?v=20260814_RAD"></script>
+<script src="pclinic-vitals.js"></script>
+<script src="pclinic-filepage.js"></script>
+<script>
+pcFilePage.init({
+  "type": "ecg",
+  "ref": "ECG",
+  "title": "ECG",
+  "sub": "ECG",
+  "docTitle": "ECG — Electrocardiogram Record",
+  "icon": "ti-activity",
+  "histTitle": "Previous ECG records",
+  "histUnit": "ECG",
+  "newLabel": "New ECG Record",
+  "dx": false,
+  "rdv": false,
+  "att": false,
+  "vitals": true,
+  "rx": false,
+  "fields": [
+    {
+        "id": "indication",
+        "label": "Indication",
+        "ph": "e.g. Chest pain, palpitations, pre-op\u2026",
+        "panel": "ECG",
+        "icon": "ti-activity"
+    },
+    {
+        "id": "rhythm",
+        "label": "Rhythm",
+        "kind": "sel",
+        "options": [
+            "Sinus rhythm",
+            "Sinus tachycardia",
+            "Sinus bradycardia",
+            "Atrial fibrillation",
+            "Atrial flutter",
+            "Supraventricular tachycardia",
+            "Ventricular tachycardia",
+            "Other"
+        ],
+        "panel": "ECG"
+    },
+    {
+        "id": "rate",
+        "label": "Heart rate (bpm)",
+        "ph": "e.g. 78",
+        "panel": "ECG"
+    },
+    {
+        "id": "pr",
+        "label": "PR interval (ms)",
+        "ph": "e.g. 160",
+        "panel": "ECG"
+    },
+    {
+        "id": "qrs",
+        "label": "QRS duration (ms)",
+        "ph": "e.g. 90",
+        "panel": "ECG"
+    },
+    {
+        "id": "qtc",
+        "label": "QT / QTc (ms)",
+        "ph": "e.g. 400 / 415",
+        "panel": "ECG"
+    },
+    {
+        "id": "axis",
+        "label": "Axis",
+        "kind": "sel",
+        "options": [
+            "Normal",
+            "Left axis deviation",
+            "Right axis deviation",
+            "Indeterminate"
+        ],
+        "panel": "ECG"
+    },
+    {
+        "id": "st",
+        "label": "ST / T changes",
+        "ph": "e.g. None, inferolateral ST elevation\u2026",
+        "panel": "ECG"
+    },
+    {
+        "id": "interpretation",
+        "label": "Interpretation & conclusion",
+        "kind": "area",
+        "ph": "Electrocardiographic interpretation\u2026",
+        "rows": 6,
+        "panel": "ECG"
+    }
+]
+});
+</script>
+<script src="pclinic-handoff.js"></script>
+</body>
+</html>

@@ -1252,7 +1252,7 @@
             .banner-btn .followup-date-badge { display: none; }
         }
     </style>
-    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
+    <script src="pclinic-file.js?v=20260814_RAD" defer></script>
 </head>
 <body>
 
@@ -1360,64 +1360,6 @@
     (function(){
         console.log('🚀 OPD File Script Starting...');
 
-        const samplePatient = {
-            id: 1001,
-            mrn: 'MRN 1001',
-            firstName: 'NKUNDIMANA',
-            lastName: 'Jean Paul',
-            dob: '2000-06-15',
-            gender: 'Male',
-            phone: '+250 788 111 222',
-            email: 'jeanpaul@email.com',
-            department: 'Cardiology',
-            status: 'active',
-            chiefComplaint: 'Chest pain and shortness of breath for 3 days',
-            medicalHistory: 'Hypertension diagnosed 2019. Family history of heart disease.',
-            physicalExam: 'BP 145/90, HR 88, regular rhythm. Mild edema in lower extremities.',
-            managementPlan: 'Start Losartan 50mg daily. Monitor BP weekly. Follow up in 2 weeks.',
-            followupDate: '2026-07-25',
-            followupNotes: 'Review BP and adjust medication if needed',
-            consentGiven: false,
-            consentDate: '',
-            consentSignature: '',
-            consentFile: null,
-            attachments: [
-                { id: 1, name: 'Lab_Results_2026-07-11.pdf', size: '245 KB', type: 'PDF' },
-                { id: 2, name: 'ECG_Report.jpg', size: '1.2 MB', type: 'Image' }
-            ],
-            diagnoses: [
-                { code: 'I10', name: 'Essential Hypertension', category: 'Cardiovascular', color: '#af52de' },
-                { code: 'I25.10', name: 'Atherosclerotic Heart Disease', category: 'Cardiovascular', color: '#af52de' }
-            ],
-            clinicalSectionsUpdated: '2026-07-11T08:30:00',
-            diagnosisUpdated: '2026-07-11T08:30:00',
-            managementUpdated: '2026-07-11T08:30:00',
-            followupUpdated: '2026-07-11T08:30:00',
-            opdHistory: [
-                { 
-                    id: 1, 
-                    type: 'Clinical Summary',
-                    content: 'Chief Complaint: Chest pain\nMedical History: Hypertension\nPhysical Exam: BP 145/90',
-                    doctor: 'Dr. Mutua',
-                    timestamp: '2026-07-11T08:30:00'
-                },
-                { 
-                    id: 2, 
-                    type: 'Diagnosis',
-                    content: 'Added: I10 - Essential Hypertension',
-                    doctor: 'Dr. Mutua',
-                    timestamp: '2026-07-11T09:00:00'
-                },
-                { 
-                    id: 3, 
-                    type: 'Management Plan',
-                    content: 'Start Losartan 50mg daily. Monitor BP weekly. Follow up in 2 weeks.',
-                    doctor: 'Dr. Mutua',
-                    timestamp: '2026-07-11T09:30:00'
-                }
-            ]
-        };
-
         let historyOpen = false;
         let isDarkMode = false;
         let consentFileData = null;
@@ -1500,22 +1442,10 @@
         function updateConsentStatus() {}
 
         function uploadConsentFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                consentFileData = {
-                    name: file.name,
-                    size: (file.size / 1024).toFixed(1) + ' KB',
-                    type: file.type,
-                    data: e.target.result
-                };
-                document.getElementById('consentFilePreview').style.display = 'block';
-                document.getElementById('consentFileName').textContent = file.name;
-                showToast('✅ Consent file uploaded: ' + file.name, 'success');
-            };
-            reader.readAsDataURL(file);
+            if (event && event.target) event.target.value = '';
+            consentFileData = null;
+            showToast('🔒 Consent attachments are disabled until secure object storage is configured.', 'warning');
+            return false;
         }
 
         function removeConsentFile() {
@@ -1543,7 +1473,7 @@
             }
             
             patient.consentGiven = checked;
-            patient.consentSignature = signature || 'Dr. Mutua';
+            patient.consentSignature = signature || ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff');
             patient.consentDate = date || new Date().toISOString().split('T')[0];
             
             if (consentFileData) {
@@ -1551,7 +1481,7 @@
             }
             
             const content = checked ? 
-                `Consent signed by ${signature || 'Dr. Mutua'} on ${date}\n${consentFileData ? 'Attached: ' + consentFileData.name : ''}` :
+                `Consent signed by ${signature || ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff')} on ${date}\n${consentFileData ? 'Attached: ' + consentFileData.name : ''}` :
                 'Consent withdrawn';
             
             addToHistory(patient, 'Consent', content);
@@ -1738,7 +1668,7 @@
             
             const now = new Date();
             const today = now.toISOString().split('T')[0];
-            const doctorName = doctor || 'Dr. Mutua';
+            const doctorName = doctor || ((window.currentStaff && window.currentStaff.name) || 'PClinic Staff');
             
             const existingIndex = patient.opdHistory.findIndex(h => {
                 const hDate = h.timestamp ? h.timestamp.split('T')[0] : '';
@@ -2212,6 +2142,34 @@
                                 </div>
                             </div>
 
+                            <!-- Differential Diagnosis Area -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title" style="color:#5c2475;">
+                                        <i class="ti ti-list-search"></i> Differential diagnosis & working impression
+                                    </div>
+                                    <button class="btn-p" onclick="opdSaveDifferentialDiagnosis()" style="padding:4px 14px;font-size:10px;background:#5c2475;box-shadow:0 2px 8px rgba(92,36,117,0.15);">
+                                        <i class="ti ti-check"></i> Save
+                                    </button>
+                                </div>
+                                <div>
+                                    <label class="lbl"><i class="ti ti-list-search"></i> Differential diagnosis area (working impression, rule-outs, clinical differentials)</label>
+                                    <textarea class="ta-auto" id="opdDifferentialDiagnosis" rows="2" oninput="autoExpand(this)" placeholder="e.g. 1. Rule out severe malaria (P. falciparum)  2. Acute typhoid fever  3. Viral respiratory syndrome...">${patient.differentialDiagnosis || ''}</textarea>
+                                </div>
+                                <div class="section-divider">
+                                    <span style="font-size:9px;color:var(--tm);">
+                                        <i class="ti ti-clock"></i> Last updated: ${patient.differentialDiagnosisUpdated ? new Date(patient.differentialDiagnosisUpdated).toLocaleString() : 'Never'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Clinical decision support is disabled pending validation. -->
+                            <div class="card" role="status" style="background:#fff7e6 !important;border:1px solid #f0ad4e !important;">
+                                <div style="font-size:12px;color:#8a5a00;font-weight:700;line-height:1.5;">
+                                    ⚠️ Clinical AI treatment recommendations are disabled pending formal clinical and pharmacy validation. Use approved hospital guidance and document the responsible clinician's decision.
+                                </div>
+                            </div>
+
                             <!-- Diagnosis -->
                             <div class="card">
                                 <div class="card-header">
@@ -2292,23 +2250,25 @@
                         <!-- ─── RIGHT COLUMN ─── -->
                         <div>
 
-                            <!-- ─── MANAGEMENT PLAN ─── -->
+
+
+                            <!-- ─── MANAGEMENT AREA ─── -->
                             <div class="card">
                                 <div class="card-header">
                                     <div class="card-title" style="color:var(--green);">
-                                        <i class="ti ti-notes"></i> Management Plan
+                                        <i class="ti ti-clipboard-check"></i> Management area
                                     </div>
-                                    <button class="btn-p" onclick="opdSaveManagementPlan()" style="padding:4px 14px;font-size:10px;background:var(--green);box-shadow:0 2px 8px rgba(52,199,89,0.15);">
+                                    <button class="btn-p" onclick="opdSaveManagementArea()" style="padding:4px 14px;font-size:10px;background:var(--green);box-shadow:0 2px 8px rgba(52,199,89,0.15);">
                                         <i class="ti ti-check"></i> Save
                                     </button>
                                 </div>
                                 <div>
-                                    <label class="lbl"><i class="ti ti-list"></i> Treatment & Management Plan</label>
-                                    <textarea class="ta-auto" id="opdManagementPlan" rows="3" oninput="autoExpand(this)" placeholder="e.g. Start medication, lifestyle changes, follow-up schedule...">${patient.managementPlan || ''}</textarea>
+                                    <label class="lbl"><i class="ti ti-clipboard-check"></i> Management area (Treatment orders, prescriptions, nursing care & follow-up schedule)</label>
+                                    <textarea class="ta-auto" id="opdManagementArea" rows="4" oninput="autoExpand(this)" placeholder="e.g. 1. Admit to Ward 7  2. IV Ceftriaxone 1g 12h  3. Paracetamol 1g PO PRN  4. Monitor BP & T q4h...">${patient.managementArea || ''}</textarea>
                                 </div>
                                 <div class="section-divider">
                                     <span style="font-size:9px;color:var(--tm);">
-                                        <i class="ti ti-clock"></i> Last updated: ${patient.managementUpdated ? new Date(patient.managementUpdated).toLocaleString() : 'Never'}
+                                        <i class="ti ti-clock"></i> Last updated: ${patient.managementAreaUpdated ? new Date(patient.managementAreaUpdated).toLocaleString() : 'Never'}
                                     </span>
                                 </div>
                             </div>
@@ -2348,6 +2308,10 @@
             const chiefComplaint = document.getElementById('opdChiefComplaint').value.trim();
             const medicalHistory = document.getElementById('opdMedicalHistory').value.trim();
             const physicalExam = document.getElementById('opdPhysicalExam').value.trim();
+            const differentialDiagnosis = document.getElementById('opdDifferentialDiagnosis') ? document.getElementById('opdDifferentialDiagnosis').value.trim() : '';
+            const managementArea = document.getElementById('opdManagementArea') ? document.getElementById('opdManagementArea').value.trim() : '';
+            patient.differentialDiagnosis = differentialDiagnosis;
+            patient.managementArea = managementArea;
             
             patient.chiefComplaint = chiefComplaint;
             patient.medicalHistory = medicalHistory;
@@ -2360,6 +2324,36 @@
             updatePatientInDashboard(patient);
             opdDisplayPatientFile(patient);
             showToast('✅ Clinical summary saved!', 'success');
+        }
+
+
+
+        function opdTriggerAIAssistant() {
+            showToast('⚠️ Clinical AI treatment recommendations are disabled pending formal clinical validation.', 'warning');
+            return false;
+        }
+
+        function opdSaveDifferentialDiagnosis() {
+            if (!currentPatient) return;
+            const ddx = document.getElementById('opdDifferentialDiagnosis') ? document.getElementById('opdDifferentialDiagnosis').value.trim() : '';
+            currentPatient.differentialDiagnosis = ddx;
+            currentPatient.differentialDiagnosisUpdated = new Date().toISOString();
+            addToHistory(currentPatient, 'Differential Diagnosis', ddx);
+            updatePatientInDashboard(currentPatient);
+            opdDisplayPatientFile(currentPatient);
+            showToast('✅ Differential diagnosis saved!', 'success');
+        }
+
+        function opdSaveManagementArea() {
+            if (!currentPatient) return;
+            const ma = document.getElementById('opdManagementArea') ? document.getElementById('opdManagementArea').value.trim() : '';
+            currentPatient.managementArea = ma;
+            currentPatient.managementPlan = ma;
+            currentPatient.managementAreaUpdated = new Date().toISOString();
+            addToHistory(currentPatient, 'Management Area', ma);
+            updatePatientInDashboard(currentPatient);
+            opdDisplayPatientFile(currentPatient);
+            showToast('✅ Management area saved!', 'success');
         }
 
         function opdSaveManagementPlan() {
@@ -2454,7 +2448,7 @@
                 container.innerHTML = '';
             }
             showToast('📋 Patient file closed', 'info');
-            window.postMessage({ type: 'CLOSE_OPD_FILE' }, '*');
+            window.postMessage({ type: 'CLOSE_OPD_FILE' }, window.location.origin);
         }
 
         function opdLoadPatient(patient) {
@@ -2469,7 +2463,7 @@
             } else if (currentPatient) {
                 opdDisplayPatientFile(currentPatient);
             } else {
-                opdLoadPatient(samplePatient);
+                showToast('🔒 No patient selected — please select a patient first', 'warning');
             }
         }
 
@@ -2492,6 +2486,21 @@
                 }
             }
             
+            // ⛔ NO TEMPLATE DATA — resolve ONLY the real Common Server patient (?patient= / active patient)
+            try {
+                const pid = urlParams.get('patient') || localStorage.getItem('pclinic_active_patient');
+                if (pid) {
+                    const pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                    const found = pts.find(p => String(p.id) === String(pid) || String(p.mrn) === String(pid));
+                    if (found) {
+                        opdLoadPatient(found);
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('Error resolving Common Server patient:', e);
+            }
+            
             try {
                 if (window.parent && window.parent.currentPatient) {
                     const patient = window.parent.currentPatient;
@@ -2504,10 +2513,12 @@
                 console.log('Could not access parent patient data:', e);
             }
             
-            opdLoadPatient(samplePatient);
+            showToast('🔒 No patient selected — please select a patient first', 'warning');
         });
 
         window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
+            if (window.parent !== window && event.source !== window.parent) return;
             if (event.data && event.data.type === 'LOAD_PATIENT') {
                 const patient = event.data.patient;
                 if (patient && patient.id) {
@@ -2557,7 +2568,7 @@
     </script>
 
     <script>
-        requireAuth([]).then(function(staff) {
+        requireAuth(['doctor','nurse']).then(function(staff) {
             window.currentStaff = staff;
             console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
         }).catch(function(err) {
@@ -2565,5 +2576,6 @@
         });
     </script>
 <script src="pclinic-handoff.js"></script>
+<script src="pclinic-ai-assistant.js"></script>
 </body>
 </html>

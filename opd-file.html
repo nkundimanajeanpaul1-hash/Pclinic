@@ -38,8 +38,9 @@
 <script src="patient-data.js"></script>
 <script src="pclinic-orders.js"></script>
 <script src="pclinic-catalog.js"></script>
-<script src="pclinic-file.js?v=20260804_CHUK_3ROW"></script>
+<script src="pclinic-file.js?v=20260814_RAD"></script>
 <script src="pclinic-vitals.js"></script>
+<script src="pclinic-ai-assistant.js"></script>
 <script src="pclinic-filepage.js"></script>
 <script>
 pcFilePage.init({
@@ -83,12 +84,22 @@ pcFilePage.init({
       "icon": "ti-clipboard-heart"
     },
     {
-      "id": "plan",
-      "label": "Management plan",
+      "id": "ddx",
+      "label": "Differential diagnosis & clinical working impression",
       "kind": "area",
-      "ph": "Investigations, treatment, advice…",
-      "panel": "Plan",
-      "icon": "ti-clipboard-check"
+      "ph": "e.g. 1. Rule out severe malaria (P. falciparum)  2. Acute typhoid fever  3. Viral respiratory syndrome…",
+      "panel": "Differential diagnosis",
+      "icon": "ti-list-search",
+      "rows": 3
+    },
+    {
+      "id": "management",
+      "label": "Management area (Treatment orders, prescriptions, nursing care & follow-up schedule)",
+      "kind": "area",
+      "ph": "e.g. 1. Admit to Ward 7  2. IV Ceftriaxone 1g 12h  3. Paracetamol 1g PO PRN  4. Monitor BP & T q4h…",
+      "panel": "Management area",
+      "icon": "ti-clipboard-check",
+      "rows": 4
     }
   ]
 });

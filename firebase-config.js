@@ -2,7 +2,7 @@
 // FIREBASE CONFIGURATION — PClinic (Auth Edition)
 // ============================================================
 
-import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {
     getFirestore,
     collection,
@@ -17,7 +17,9 @@ import {
     where,
     orderBy,
     serverTimestamp,
-    enableIndexedDbPersistence,
+    clearIndexedDbPersistence,
+    terminate,
+    deleteField,
     arrayUnion,
     arrayRemove,
     increment,
@@ -27,12 +29,15 @@ import {
 import {
     getAuth,
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
     setPersistence,
-    browserLocalPersistence
+    browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+import {
+    getFunctions,
+    httpsCallable
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-functions.js";
 
 // ─── YOUR FIREBASE CONFIG ───
 const firebaseConfig = {
@@ -57,22 +62,34 @@ function staffIdToEmail(staffId) {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const cloudFunctions = getFunctions(app, 'africa-south1');
 
-setPersistence(auth, browserLocalPersistence).catch((err) => {
-    console.warn('⚠️ Could not set auth persistence:', err);
-});
-
-// ─── ENABLE OFFLINE MODE (works without internet!) ───
+// Session-only auth is safer on shared clinic devices: closing the tab/browser
+// does not intentionally retain the staff session across a new work session.
 try {
-    await enableIndexedDbPersistence(db);
-    console.log('✅ Firebase offline mode enabled');
+    await setPersistence(auth, browserSessionPersistence);
 } catch (err) {
-    if (err.code === 'failed-precondition') {
-        console.warn('⚠️ Multiple tabs open, offline mode limited to one tab');
-    } else if (err.code === 'unimplemented') {
-        console.warn('⚠️ Browser does not support offline mode');
+    console.warn('⚠️ Could not set session-only auth persistence:', err);
+}
+
+// ─── EMERGENCY PRIVACY MODE ───
+// Persistent Firestore caching is intentionally disabled for clinical data.
+// The default Firestore cache is memory-only. A future offline mode must use
+// an encrypted, user-bound store with expiry, revocation and conflict handling.
+async function clearClinicalFirebaseCache() {
+    try {
+        // clearIndexedDbPersistence requires the instance to be terminated.
+        // This helper is used only while signing out, immediately before the
+        // browser leaves the page; the next page creates a fresh instance.
+        await terminate(db);
+        await clearIndexedDbPersistence(db);
+        return true;
+    } catch (err) {
+        console.warn('Could not clear old Firestore persistence. Close other PClinic tabs and clear site data.', err);
+        return false;
     }
 }
+window.pclinicClearFirebaseCache = clearClinicalFirebaseCache;
 
 // ─── EXPOSE FIREBASE GLOBALLY ───
 window.firebaseApp = app;
@@ -92,6 +109,7 @@ window.firebaseFunctions = {
     where,
     orderBy,
     serverTimestamp,
+    deleteField,
     arrayUnion,
     arrayRemove,
     increment,
@@ -101,19 +119,17 @@ window.firebaseFunctions = {
 
 window.firebaseAuthFunctions = {
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
     signOut,
     onAuthStateChanged
 };
 
-// Needed by the admin tool to spin up a throwaway secondary Firebase
-// app instance when creating new staff accounts, so creating a new
-// user doesn't kick the admin out of their own session.
-window.firebaseAppFactory = {
-    initializeApp,
-    deleteApp,
-    getAuth,
-    firebaseConfig
+window.pclinicCloudFunctions = {
+    region: 'africa-south1',
+    call: async function (name, data) {
+        const callable = httpsCallable(cloudFunctions, name);
+        const response = await callable(data || {});
+        return response.data;
+    }
 };
 
 window.pclinicStaffIdToEmail = staffIdToEmail;

@@ -1,110 +1,58 @@
-# Upload these 21 files to `hospital/`
+# PClinic Emergency Security Release — Read First
 
-You already uploaded the new `index.html` — but **not the two images it needs**,
-so the home page is currently broken: plain navy background, no logo.
+This branch is a containment release for a clinic project that may contain real patient data.
+It is **not** a declaration that the application is production-ready.
 
-Everything in this folder goes into the **`hospital/`** folder of your repo,
-the same place you uploaded `index.html`. Do not create a subfolder.
+## Before using the app
 
----
+1. Pause real-patient data entry.
+2. In Firebase Console, verify the rules that are actually deployed.
+3. Run the emulator tests in `tests/`.
+4. Publish `firestore.rules` only after the tests pass and you confirm at least one active admin profile exists.
+5. Rotate all staff passwords and delete every legacy `initialPassword` field from `/users/{uid}`.
+6. Clear PClinic site data on all clinic devices and close every old PClinic tab.
+7. Make the GitHub repository private.
+8. Review Firebase Auth users and disable unknown/orphaned accounts.
 
-## Step 1 — Fix the broken home page (do this first, 1 minute)
+## Controls added in this release
 
-The two urgent files are:
+- no date-based or public Firestore access;
+- explicit active staff profiles and validated roles;
+- HR, inventory, finance, and cashier cannot read monolithic clinical patient documents;
+- browser staff creation, password viewing, and permanent deletion are disabled;
+- legacy plaintext password fields are scrubbed when an administrator loads the staff table;
+- logout signs out of Firebase and clears PClinic browser stores;
+- persistent Firestore cache is disabled and old cache cleanup is attempted on logout;
+- patient creation and updates fail closed when Firestore does not confirm the write;
+- stale local patient records are never automatically uploaded;
+- patient media, attachments, browser backup/restore, and CSV patient exports are disabled;
+- clinical AI/dose recommendations are disabled;
+- wildcard `postMessage` targets were replaced and message origins are checked;
+- public obsolete/preview pages were removed;
+- high-risk reception and shared UI rendering paths now use safe DOM/text handling;
+- the patient-counter preview no longer consumes a Firestore ID every five seconds;
+- radiology orders, drafts, final reports, addenda and critical acknowledgments use the central server;
+- final radiology reports are signed by trusted backend functions and are immutable;
+- the fake image stack was removed and will remain unavailable until an approved PACS/DICOMweb endpoint is configured.
 
-- `hero-reception.jpg` — the background photo
-- `logo-nav.png` — your PClinic logo
+See `RADIOLOGY_SETUP.md` before deploying the radiology workflow.
 
-**How:**
-1. Go to https://github.com/nkundimanajeanpaul1-hash/Pclinic/tree/main/hospital
-2. Click **Add file** → **Upload files**
-3. Drag in `hero-reception.jpg` and `logo-nav.png`
-4. Commit message: `Add landing page images`
-5. Click **Commit changes**
+## Important remaining limitation
 
-Reload the page — the background and logo will appear.
+The current patient document is still monolithic. Several clinical roles must retain broad update access for the existing app to function. The next release must split demographics, encounters, notes, prescriptions, results, and billing into explicitly authorized collections.
 
----
+## Deploy rules with Firebase CLI
 
-## Step 2 — Upload the rest (the actual bug fixes)
-
-None of the Tier 1 / Tier 2 fixes are on GitHub yet. I checked:
-
-| Fix | Status on GitHub right now |
-|---|---|
-| Sync race in `patient-data.js` | ❌ still the old broken version |
-| `deleteRow()` in admin dashboard | ❌ still missing — buttons still throw |
-| Verified `firestore.rules` | ❌ still the old draft with the lockout bug |
-| Unified dark-mode key (16 files) | ❌ not uploaded |
-
-**How:** same as above — drag in **all remaining 19 files** at once.
-
-Commit message:
+```bash
+npm --prefix functions install
+npm --prefix functions test
+npm --prefix functions run test:emulator
+npm --prefix tests install
+npm --prefix tests run test:static
+npm --prefix tests run test:rules
+firebase deploy --only firestore:rules,functions,hosting
 ```
-Tier 1 + 2: security rules, sync fix, deleteRow, unified theme
-```
 
-GitHub replaces files with the same name automatically. You do **not**
-need to delete anything first.
+Use a staging Firebase project first. Never test security rules against production patient data.
 
----
-
-## Full file list (21)
-
-**Images (2) — urgent**
-`hero-reception.jpg`, `logo-nav.png`
-
-**Security (2)**
-`firestore.rules`, `SECURITY_SETUP.md`
-
-**Bug fixes (17)**
-`patient-data.js`, `admin-dashboard.html`, `hub.html`,
-`Finance-dashboard.html`, `appointments.html`, `beds-dashboard.html`,
-`cashier-dashboard.html`, `doctor-dashboard.html`, `imaging-results.html`,
-`lab-results.html`, `nurse-dashboard.html`, `opd_file.html`,
-`pharmacy-dashboard.html`, `physio-dashboard.html`, `queue.html`,
-`radio-dashboard.html`, `reception-dashboard.html`
-
-> `doctor-dashboard.html` is 489 KB. If the upload stalls, do it on its own.
-
----
-
-## Files I did NOT include
-
-These are unchanged on GitHub, so there is no reason to re-upload them:
-`auth-guard.js`, `firebase-config.js`, `shared.js`, `styles.css`,
-`login.html`, `logo.png`, and 9 other HTML pages.
-
-Also not included: `PClinic-Evaluation.md`, `TIER-1-2-COMPLETE.md`,
-`HOW-TO-PUSH.md`, the `tests/` folder, and `scripts/`. Useful to you,
-but not needed for the app to run. Upload them later if you want the
-audit trail in the repo.
-
----
-
-## ⚠️ Two things to deal with after uploading
-
-### 1. Your repository is PUBLIC
-
-Anyone can read your code, including `firebase-config.js`. The API key
-itself is fine to expose (Firebase web keys are public identifiers), but
-a public health-system repo invites scrutiny you probably don't want yet.
-
-**Settings → General → scroll to Danger Zone → Change visibility → Private**
-
-### 2. The rules still are not published to Firebase
-
-Uploading `firestore.rules` to GitHub does **nothing** to your database.
-It's just a text file until you publish it:
-
-1. https://console.firebase.google.com/u/0/project/pclinic-20d81/firestore/rules
-2. Delete everything in the editor
-3. Paste the full contents of `firestore.rules`
-4. **Publish**
-
-Until then, the old *"allow everyone until Aug 29 2026"* rule is live and
-your patient data is readable and writable by anyone on the internet.
-
-**After publishing:** log in as a non-admin staff member and open a
-patient record. If it loads, you're good. If you get a permission error,
-tell me and I'll debug it.
+See `SECURITY_SETUP.md` and `EMERGENCY_REMEDIATION.md` for the complete process.

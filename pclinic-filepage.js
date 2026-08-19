@@ -49,8 +49,12 @@
             var id = 'f_' + f.id;
             var lbl = '<label class="pcf-lbl" for="' + id + '">' + esc(f.label) + '</label>';
             if (f.kind === 'area') {
-                return '<div class="fw">' + lbl + '<textarea id="' + id + '" placeholder="' +
+                var areaHtml = '<div class="fw">' + lbl + '<textarea id="' + id + '" placeholder="' +
                     esc(f.ph || '') + '"' + (f.rows ? ' rows="' + f.rows + '"' : '') + '></textarea></div>';
+            if (f.id === 'ddx') {
+                areaHtml += '<div class="pcf-ai-banner noprint" role="status" style="margin:10px 0 16px;padding:10px 14px;border:1px solid #f0ad4e;border-radius:12px;background:#fff7e6;color:#8a5a00;font-size:12px;font-weight:700;">⚠️ Clinical AI treatment recommendations are disabled pending formal clinical and pharmacy validation.</div>';
+            }
+            return areaHtml;
             }
             if (f.kind === 'sel') {
                 return '<div>' + lbl + '<select class="pcf-in" id="' + id + '">' +
@@ -127,11 +131,11 @@
 
         // 🌟 100/100 EXACT BILL PAGE 2-COLUMN LAYOUT (1.35fr 1fr) FOR ALL NOTES & FORMS 🌟
         $('#pcfRoot').innerHTML =
-        '<div class="pcf-bill-layout" style="display:grid; grid-template-columns: 1.35fr 1fr; gap:16px; align-items:start; width:100%;">' +
+        '<div class="pcf-bill-layout" style="display:block; width:100% !important; max-width:100% !important; box-sizing:border-box; margin:0; padding:0;">' +
 
           '<!-- LEFT COLUMN (1.35fr): ACTIVE CLINICAL FORM (#viewFile ALWAYS VISIBLE LIKE BILL PAGE) -->' +
           '<div id="viewFile" style="display:flex; flex:1; min-height:0; flex-direction:column; gap:9px;">' +
-            '<div class="pcf-panel" style="background:#ffffff; border-radius:16px; border:1px solid rgba(0,0,0,0.08); padding:20px 24px; box-shadow:0 4px 20px rgba(0,0,0,0.05);">' +
+            '<div class="pcf-panel" style="background:var(--glass-bg, rgba(255, 255, 255, 0.82)); border-radius:16px; border:1px solid rgba(0,0,0,0.08); padding:20px 24px; box-shadow:0 4px 20px rgba(0,0,0,0.05);">' +
               '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid #e5e7eb;">' +
                 '<h2 style="font-size:15px; font-weight:800; color:#1d1d1f; display:flex; align-items:center; gap:8px;">' +
                   '<i class="ti ' + esc(c.icon || 'ti-file-description') + '" style="color:#0b57d0;"></i> ' + esc(c.docTitle || c.title) +
@@ -152,17 +156,18 @@
             '</div>' +
             '<div class="pcf-pane"><div class="pcf-doc" id="doc"></div></div>' +
           '</div>' +
-        '</div>' +
+            '</div>' +
+          '</div>' +
 
           '<!-- RIGHT COLUMN (1fr): VISIT HISTORY & PAST RECORDS (#viewHistory ALWAYS VISIBLE LIKE BILL PAGE) -->' +
           '<div id="viewHistory" style="display:block;">' +
-            '<div class="pcf-panel" style="background:#ffffff; border-radius:16px; border:1px solid rgba(0,0,0,0.08); padding:20px 24px; box-shadow:0 4px 20px rgba(0,0,0,0.05);">' +
+            '<div class="pcf-panel" style="background:var(--glass-bg, rgba(255, 255, 255, 0.82)); border-radius:16px; border:1px solid rgba(0,0,0,0.08); padding:20px 24px; box-shadow:0 4px 20px rgba(0,0,0,0.05);">' +
               '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid #e5e7eb;">' +
                 '<h2 style="font-size:15px; font-weight:800; color:#1d1d1f; display:flex; align-items:center; gap:8px;">' +
                   '<i class="ti ti-history" style="color:#0b57d0;"></i> ' + esc(c.histTitle || (c.title + ' History')) +
                   ' <span class="count" id="histCount" style="background:#f1f5f9; color:#475569; padding:2px 8px; border-radius:12px; font-size:11px;">0</span>' +
                 '</h2>' +
-                '<button type="button" class="pcf-btn sm" id="btnNew" style="background:#e8f0fe; color:#0b57d0; border:1px solid rgba(11,87,208,0.25); font-weight:700; border-radius:8px; padding:4px 10px; font-size:11px; cursor:pointer;"><i class="ti ti-plus"></i> ' + esc(c.newLabel || 'New Note') + '</button>' +
+                '<button type="button" class="pcf-btn sm" id="btnNew" style="background:#e8f0fe; color:#0b57d0; border:1px solid rgba(11,87,208,0.25); font-weight:700; border-radius:8px; padding:4px 10px; font-size:11px; cursor:pointer;"><i class="ti ti-plus"></i> ' + esc('+ New for Today') + '</button>' +
               '</div>' +
               '<div class="pcf-hist" id="histList" style="max-height:600px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>' +
             '</div>' +
@@ -469,7 +474,7 @@
         if (!list.length) {
             box.innerHTML = '<div class="pcf-empty"><i class="ti ' + (CFG.icon || 'ti-file-text') + '"></i>' +
                 'No ' + esc(CFG.title.toLowerCase()) + ' recorded yet.<br>' +
-                '<span style="font-size:11px">Start the first one below.</span></div>';
+                '<span style="font-size:12px;display:block;margin-top:12px;"><button type="button" class="pcf-btn primary sm" onclick="document.getElementById(\'btnNew\').click()" style="cursor:pointer;padding:8px 16px;"><i class="ti ti-plus"></i> + New for Today</button></span></div>';
             return;
         }
         box.innerHTML = list.map(function (f, i) {
@@ -500,9 +505,8 @@
     }
 
     function showFileView(on) {
-        // In 100/100 Bill Page 2-Column Layout, BOTH #viewFile and #viewHistory remain visible!
-        var h = $('#viewHistory'); if (h) h.style.display = 'block';
-        var f = $('#viewFile'); if (f) f.style.display = 'flex';
+        var h = $('#viewHistory'); if (h) h.style.display = on ? 'none' : 'block';
+        var f = $('#viewFile');    if (f) f.style.display = on ? 'flex' : 'none';
     }
 
     function openFile(f) {
@@ -741,7 +745,61 @@
     }
 
     /* ══════════ INIT ══════════ */
+    /* ══════════════════════════════════════════════════════════════
+       APPLE DESIGN POLISH — injected at runtime for EVERY form page
+       (the 9 new Medical Summary forms + all existing file pages).
+       • Liquid-glass panels with refractive edge light
+       • Spring physics buttons + press scaling
+       • iOS-style inputs with blue focus rings
+       • Frosted history rows with spring hover
+       • Taptic-style haptics on tap
+       ══════════════════════════════════════════════════════════════ */
+    function ensureApplePolish() {
+        if (document.getElementById('pc_apple_polish')) return;
+        var st = document.createElement('style');
+        st.id = 'pc_apple_polish';
+        st.textContent =
+            /* page backdrop: gradient mesh */
+            'body.pcf { background: radial-gradient(1200px 700px at 12% 8%, rgba(0,113,227,0.07), transparent 55%), radial-gradient(1100px 680px at 88% 14%, rgba(0,112,128,0.07), transparent 55%), radial-gradient(900px 640px at 55% 100%, rgba(175,82,222,0.05), transparent 55%), var(--bg,#f5f5f7) !important; }' +
+            /* liquid glass panels */
+            '.pcf-panel { position:relative; background: rgba(255,255,255,0.72) !important; -webkit-backdrop-filter:saturate(180%) blur(24px) !important; backdrop-filter:saturate(180%) blur(24px) !important; border:0.5px solid rgba(255,255,255,0.6) !important; border-radius:22px !important; box-shadow:0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06) !important; transition:transform .45s cubic-bezier(.34,1.56,.64,1), box-shadow .45s cubic-bezier(.34,1.56,.64,1); }' +
+            '.pcf-panel:hover { transform:translateY(-3px); box-shadow:0 2px 6px rgba(0,0,0,0.06), 0 16px 44px rgba(0,0,0,0.10) !important; }' +
+            '.pcf-panel::before { content:\'\'; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:linear-gradient(160deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 28%, rgba(255,255,255,0) 55%); }' +
+            '.pcf-panel h2 { position:relative; letter-spacing:-0.01em; }' +
+            /* iOS inputs */
+            '.pcf-in, .pcf-panel input:not([type=checkbox]):not([type=radio]), .pcf-panel select, .pcf-panel textarea { border-radius:12px !important; border:0.5px solid rgba(0,0,0,0.10) !important; background:rgba(255,255,255,0.85) !important; transition:border-color .2s cubic-bezier(.25,.1,.25,1), box-shadow .2s cubic-bezier(.25,.1,.25,1), background .2s !important; }' +
+            '.pcf-in:focus, .pcf-panel input:focus, .pcf-panel select:focus, .pcf-panel textarea:focus { border-color:#0071e3 !important; box-shadow:0 0 0 4px rgba(0,113,227,0.14) !important; background:#ffffff !important; }' +
+            /* spring pill buttons */
+            '.pcf-btn { border-radius:980px !important; transition:transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s cubic-bezier(.34,1.56,.64,1), background .25s !important; }' +
+            '.pcf-btn:hover { transform:translateY(-2px) scale(1.04) !important; box-shadow:0 8px 22px rgba(0,0,0,0.12) !important; }' +
+            '.pcf-btn:active { transform:scale(0.95) !important; transition-duration:.08s !important; }' +
+            '.pcf-btn.primary { background:linear-gradient(180deg,#0a84ff,#0071e3) !important; color:#ffffff !important; box-shadow:0 2px 8px rgba(0,113,227,0.35), inset 0 1px 0 rgba(255,255,255,0.25) !important; }' +
+            '.pcf-btn.primary:hover { box-shadow:0 10px 26px rgba(0,113,227,0.45) !important; }' +
+            /* frosted history rows */
+            '.pcf-hrow { background:rgba(255,255,255,0.6); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border:0.5px solid rgba(0,0,0,0.05); border-radius:16px; margin-bottom:8px; transition:transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s cubic-bezier(.34,1.56,.64,1); }' +
+            '.pcf-hrow:hover { transform:translateY(-2px) scale(1.01); box-shadow:0 8px 22px rgba(0,0,0,0.10); }' +
+            /* document preview card */
+            '#doc { background:rgba(255,255,255,0.78) !important; -webkit-backdrop-filter:saturate(180%) blur(20px) !important; backdrop-filter:saturate(180%) blur(20px) !important; border-radius:20px !important; box-shadow:0 10px 36px rgba(0,0,0,0.08) !important; }' +
+            /* dark mode vibrancy */
+            '[data-theme="dark"] .pcf-panel { background:rgba(30,30,34,0.66) !important; border-color:rgba(255,255,255,0.08) !important; }' +
+            '[data-theme="dark"] .pcf-panel::before { background:linear-gradient(160deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 60%); }' +
+            '[data-theme="dark"] .pcf-in, [data-theme="dark"] .pcf-panel input, [data-theme="dark"] .pcf-panel select, [data-theme="dark"] .pcf-panel textarea { background:rgba(28,28,32,0.85) !important; border-color:rgba(255,255,255,0.14) !important; color:#f3f4f6 !important; }' +
+            '[data-theme="dark"] #doc { background:rgba(28,28,32,0.8) !important; }' +
+            /* reduced motion (Apple accessibility) */
+            '@media (prefers-reduced-motion: reduce) { .pcf-panel, .pcf-btn, .pcf-hrow { animation:none !important; transition:opacity .15s ease !important; } }';
+        document.head.appendChild(st);
+
+        /* ── TAPTIC HAPTICS on every form-page tap ── */
+        document.addEventListener('click', function (e) {
+            try {
+                if (!navigator.vibrate) return;
+                if (e.target.closest('.pcf-btn') || e.target.closest('.pcf-hrow')) navigator.vibrate(10);
+            } catch (err) {}
+        });
+    }
+
     function init(cfg) {
+        ensureApplePolish();
         CFG = cfg;
         document.title = 'PClinic — ' + cfg.title;
         var sub = $('#appSub'); if (sub) sub.textContent = cfg.sub || cfg.title;
@@ -760,25 +818,61 @@
         function runPage(s) {
             if (window.__pcfRan) return;
             window.__pcfRan = true;
-            s = s || { name: 'Dr. Mutua', role: 'Doctor' };
+            if (!s || !s.uid) {
+                window.location.replace('login.html');
+                return;
+            }
             window.currentStaff = s;
             var un = $('#userName'), ua = $('#userAvatar');
             if (un) un.textContent = s.name;
             if (ua) ua.textContent = (s.name || '??').substring(0, 2).toUpperCase();
 
             window.addEventListener('message', function (e) {
+            if (e.origin !== window.location.origin) return;
+                if (window.parent !== window && e.source !== window.parent) return;
                 if (e.data && e.data.type === 'LOAD_PATIENT' && e.data.patient && e.data.patient.id) {
                     try { localStorage.setItem('pclinic_active_patient', String(e.data.patient.id)); } catch (err) {}
                     P = e.data.patient;
                     shell();
                     renderHistory();
+                    showFileView(false);
                 }
             });
+
+            function resolvePatientFromUrl() {
+                try {
+                    var q = new URLSearchParams(window.location.search).get('patient');
+                    if (!q) return null;
+                    var list = [];
+                    try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
+                    if (!list.length) {
+                        try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+                    }
+                    for (var i = 0; i < list.length; i++) {
+                        if (String(list[i].id) === String(q) || String(list[i].mrn) === String(q)) return list[i];
+                    }
+                } catch(e){}
+                return null;
+            }
+
+            function lockNoPatient() {
+                // ⛔ NO TEMPLATE DATA: without a selected patient the form stays
+                // locked and nothing can be saved for a fake patient.
+                var root = document.getElementById('pcfRoot');
+                if (!root) return;
+                root.innerHTML =
+                    '<div style="max-width:520px;margin:60px auto;text-align:center;color:#6e6e73;background:rgba(255,255,255,0.85);border:0.5px solid rgba(0,0,0,0.1);border-radius:16px;padding:34px 24px;">' +
+                        '<div style="font-size:34px;margin-bottom:10px;">🔒</div>' +
+                        '<div style="font-weight:800;font-size:14px;color:#1d1d1f;">No patient selected</div>' +
+                        '<div style="font-size:12px;margin-top:6px;">Choose the patient in the identification bar above (Find / search) — ' + esc(CFG.title) + ' opens only for the selected patient.</div>' +
+                    '</div>';
+            }
 
             var tries = 0;
             (function wait() {
                 try { P = (window.pcFile && pcFile.patient) ? pcFile.patient() : null; } catch(e){ P=null; }
-                if (P) {
+                if (!P || !P.id) P = resolvePatientFromUrl();
+                if (P && P.id) {
                     // Always render CHUK + ID bar into master header, so file opens BELOW
                     var headerTarget = document.getElementById('pcMasterHeader') || document.getElementById('pcfRoot');
                     if (!headerTarget) headerTarget = '#pcfRoot';
@@ -787,31 +881,31 @@
                     }
                     shell();
                     renderHistory();
+                    showFileView(false);
                     return;
                 }
                 if (++tries < 20) return setTimeout(wait, 200);
-                // Fallback: use sample patient so page is never blank (your screenshot showed blank gray)
-                P = P || {
-                    id: '754775', mrn: '754775', lastName: 'NSANZINTWARI', firstName: 'SARATIEL',
-                    nationalId: '1198280034887038', department: 'ADMISSION WARD 7', dob: '1982-01-01',
-                    gender: 'Male', archiveCode: '', insurance: 'RSSB / RAMA', district: 'NYARUGENGE',
-                    phone: '+250 788 123 456', address: 'Runda', email: ''
-                };
-                try {
-                    var ht = document.getElementById('pcMasterHeader') || document.getElementById('pcfRoot');
-                    if (typeof pcFile.renderDemoBar === 'function') pcFile.renderDemoBar(ht, P);
-                } catch(e) {}
-                shell();
-                renderHistory();
+                // ⛔ NO SAMPLE PATIENT: locked state instead
+                lockNoPatient();
             })();
         }
 
-        requireAuth([]).then(function (s) { runPage(s); }).catch(function () {
-            runPage({ name: 'Dr. Mutua', role: 'Doctor' });
+        var guard = typeof window.requireAuth === 'function'
+            ? window.requireAuth
+            : (typeof requireAuth === 'function' ? requireAuth : null);
+        if (!guard) {
+            // Fail closed if the Auth guard did not load. Never render a
+            // clinical page with a fabricated staff identity.
+            window.location.replace('login.html');
+            return;
+        }
+        guard(Array.isArray(CFG.allowedRoles) ? CFG.allowedRoles : ['doctor', 'nurse']).then(function (staff) {
+            runPage(staff);
+        }).catch(function () {
+            // auth-guard.js performs the redirect. Keep the clinical shell
+            // locked while navigation completes.
+            lockNoPatient();
         });
-        setTimeout(function() {
-            if (!window.__pcfRan) runPage({ name: 'Dr. Mutua', role: 'Doctor' });
-        }, 600);
     }
 
     window.pcFilePage = { init: init, paint: paintDoc, patient: function () { return P; } };

@@ -1,0 +1,42 @@
+PCLINIC LABORATORY FIX — CHANGED FILES
+
+HOW TO REPLACE
+1. Back up your existing Pclinic project.
+2. Extract this ZIP.
+3. Copy every extracted file into the root of your existing Pclinic project.
+4. Keep the same folder structure (especially functions/ and functions/test/).
+5. Approve overwrite/replace when prompted.
+6. If you installed an earlier bundle, replace the files again. The current
+   version adds the server-authoritative specimen accession/rejection function.
+
+FILES TO REPLACE
+- doctor-dashboard.html
+- doctor.js
+- firestore.rules
+- functions/index.js
+- functions/package.json
+- lab-request.html
+- lab-results.html
+- pclinic-lab.js
+- pclinic-orders.js
+- tests/firestore.rules.test.mjs
+
+NEW FILES TO ADD
+- functions/lab-domain.cjs
+- functions/test/lab-domain.test.cjs
+- LABORATORY_SETUP.md
+
+REQUIRED DEPLOYMENT
+firebase login
+firebase use pclinic-20d81
+firebase deploy --only functions:labSpecimenTransition,functions:labFinalize,functions:labAcknowledgeCritical,firestore:rules
+firebase deploy --only hosting
+
+Or deploy everything:
+firebase deploy
+
+IMPORTANT
+Do not deploy hosting alone. The labSpecimenTransition function is required to
+safely accession or reject recovered legacy laboratory requests that have no
+/orders document. labFinalize is required for their final result release.
+After deployment, hard-refresh the laboratory dashboard before retesting.

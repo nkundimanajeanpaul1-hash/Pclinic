@@ -423,3 +423,438 @@ body.pcf::before {
 .pcf-grid.single .pcf-doc .dtitle { font-size: 14.5px; }
 .pcf-grid.single .pcf-doc .pinfo { font-size: 12px; padding: 12px 14px; gap: 6px 22px; }
 .pcf-grid.single .pcf-doc .sec p { font-size: 12.5px; line-height: 1.75; }
+
+
+/* === APPLE COLOR 50% TRANSPARENT BACKGROUND FOR ONLY BAR 3 (#dcBar) === */
+#dcBar.dc-bar, .dc-bar {
+    background: rgba(245, 245, 247, 0.50) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+    backdrop-filter: saturate(180%) blur(20px) !important;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.12) !important;
+}
+[data-theme="dark"] #dcBar.dc-bar, [data-theme="dark"] .dc-bar {
+    background: rgba(28, 28, 30, 0.50) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+
+/* ============================================================
+   100% FULL-WIDTH EDGE-TO-EDGE LAYOUT + SIDE-BY-SIDE EDIT FORM & PREVIEW
+   Guarantees Out-Patient Consultation and all pages/documents span 100% full width
+   from left corner to right corner, and restores side-by-side preview and edit mode.
+   ============================================================ */
+.pcf-wrap,
+#pcfRoot,
+.pcf-bill-layout,
+.patient-file-container,
+#opdFileContainer,
+#patientFileContainer,
+iframe#opdIframe,
+iframe#prescriptionFrame,
+iframe#labResultsIframe,
+iframe#imagingResultsIframe,
+iframe#labRequestIframe {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* 1. Ensure .pcf-bill-layout is 100% full width block so History or File view takes full width */
+.pcf-bill-layout {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#viewFile,
+#viewHistory {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 2. Restore Side-by-Side Edit Form (#workPane) and Live Document Preview (#doc) expanding 100% full width */
+.pcf-grid.wide {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) !important;
+    gap: 24px !important;
+    align-items: start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.pcf-grid,
+.pcf-grid.single {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 950px) {
+    .pcf-grid.wide {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* ============================================================
+   HIGHLY APPLE-FEATURED DESIGN FOR ALL CLINICAL NOTES & FORMS (LIKE BILLING.HTML)
+   Features:
+     • Apple Frosted Glass panels (var(--glass-bg), blur(24px), subtle border, specular highlights)
+     • Apple ambient background radial-gradient light wash (body::before)
+     • Buttery smooth scrolling (scroll-behavior: smooth)
+     • Apple navigation Back buttons & spring physics hover animations
+   ============================================================ */
+
+/* Buttery smooth scrolling across all clinical note/form pages */
+html, body, .pcf-wrap, #pcfRoot, .pcf-hist, .pcf-bill-layout, .pcf-panel {
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    -webkit-font-smoothing: antialiased !important;
+}
+
+/* Ambient blue & green light wash in background like billing.html */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background: radial-gradient(circle at 20% 30%, rgba(0, 113, 227, 0.05) 0, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(52, 199, 89, 0.05) 0, transparent 50%) !important;
+}
+
+/* Apple Frosted Glass panels for all note/form panels */
+.pcf-panel,
+#workPane,
+#viewHistory .pcf-panel,
+.pcf-sheet,
+.patient-file-container,
+#opdFileContainer,
+#patientFileContainer {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.78)) !important;
+    -webkit-backdrop-filter: var(--glass-blur, saturate(180%) blur(24px)) !important;
+    backdrop-filter: var(--glass-blur, saturate(180%) blur(24px)) !important;
+    border: 0.5px solid var(--glass-brd, rgba(255, 255, 255, 0.82)) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.07), 0 1px 4px -1px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+[data-theme="dark"] .pcf-panel,
+[data-theme="dark"] #workPane,
+[data-theme="dark"] #viewHistory .pcf-panel,
+[data-theme="dark"] .pcf-sheet,
+[data-theme="dark"] .patient-file-container,
+[data-theme="dark"] #opdFileContainer,
+[data-theme="dark"] #patientFileContainer {
+    background: var(--glass-bg, rgba(28, 28, 30, 0.78)) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Apple Form Controls (smooth focus rings, rounded inputs, spring hover transitions) */
+.pcf-in,
+.pcf-textarea,
+.pcf-select,
+.pcf-panel input,
+.pcf-panel textarea,
+.pcf-panel select {
+    border-radius: 12px !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.12) !important;
+    background: var(--s1, rgba(255, 255, 255, 0.9)) !important;
+    color: var(--tp, #1d1d1f) !important;
+    font-family: inherit !important;
+    transition: border-color 0.2s, box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.pcf-in:focus,
+.pcf-textarea:focus,
+.pcf-select:focus,
+.pcf-panel input:focus,
+.pcf-panel textarea:focus,
+.pcf-panel select:focus {
+    border-color: #0071e3 !important;
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15) !important;
+}
+
+/* Apple Buttons & Navigation Back Buttons with hover elevation & spring press */
+.pcf-btn,
+.pcf-cmd button,
+#btnNew,
+#btnBack,
+#btnPrint,
+#editBtn,
+#saveBtn {
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s, background 0.2s !important;
+}
+
+.pcf-btn:hover,
+.pcf-cmd button:hover,
+#btnNew:hover,
+#btnBack:hover,
+#btnPrint:hover,
+#editBtn:hover,
+#saveBtn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+.pcf-btn:active,
+.pcf-cmd button:active,
+#btnNew:active,
+#btnBack:active,
+#btnPrint:active,
+#editBtn:active,
+#saveBtn:active {
+    transform: scale(0.95) !important;
+    transition-duration: 0.08s !important;
+}
+
+
+/* ============================================================
+   1. UNIVERSAL SMOOTH SCROLLING TO THE BOTTOM FOR ALL PAGES & DOCUMENTS
+   Overrides height: 100vh and overflow: hidden so every page scrolls smoothly
+   from top to bottom without refusing.
+   ============================================================ */
+html, body, body.pcf, .app {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: auto !important;
+    overflow-x: hidden !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.pcf-wrap,
+#pcfRoot,
+.pcf-bill-layout,
+#viewFile,
+#viewHistory,
+.pcf-grid,
+#workPane,
+.pcf-pane,
+#doc,
+.pcf-hist,
+.content-area,
+.main-panel,
+.patient-file-container,
+#opdFileContainer,
+#patientFileContainer {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+/* ============================================================
+   2. 100% FULL-SCREEN EDGE-TO-EDGE FOR ALL DOCUMENTS, NOTES & FORMS
+   Ensures all documents (.wrap, .container, .page, .grid) and notes extend
+   100% full screen width from left corner to right corner.
+   ============================================================ */
+.wrap,
+.container,
+.pcf-wrap,
+#pcfRoot,
+.pcf-bill-layout,
+.grid,
+.wtbl,
+.patient-file-container,
+#opdFileContainer,
+#patientFileContainer,
+#app,
+.content-area,
+.main-panel,
+.modal-content,
+.sheet-content,
+iframe#opdIframe,
+iframe#prescriptionFrame,
+iframe#labResultsIframe,
+iframe#imagingResultsIframe,
+iframe#labRequestIframe {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+
+/* ============================================================
+   SOFT GRAY-TINTED WRITING AREAS (LIKE APPOINTMENT SCREENSHOT)
+   Makes input boxes and textareas stand out with a soft grey-blue tint
+   that turns crisp white with an Apple blue glow on focus.
+   ============================================================ */
+.pcf-in,
+.pcf-textarea,
+.pcf-select,
+.pcf-panel input,
+.pcf-panel textarea,
+.pcf-panel select,
+.ta-auto,
+.fi,
+.ta,
+.oc-input,
+textarea,
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+    background: #ebeef3 !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.12) !important;
+    border-radius: 12px !important;
+    padding: 10px 14px !important;
+    color: #1d1d1f !important;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.pcf-in:focus,
+.pcf-textarea:focus,
+.pcf-select:focus,
+.pcf-panel input:focus,
+.pcf-panel textarea:focus,
+.pcf-panel select:focus,
+.ta-auto:focus,
+.fi:focus,
+.ta:focus,
+.oc-input:focus,
+textarea:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus {
+    background: #ffffff !important;
+    border-color: #0071e3 !important;
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15) !important;
+}
+
+[data-theme="dark"] .pcf-in,
+[data-theme="dark"] .pcf-textarea,
+[data-theme="dark"] .ta-auto,
+[data-theme="dark"] .fi,
+[data-theme="dark"] .ta,
+[data-theme="dark"] textarea,
+[data-theme="dark"] input[type="text"] {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f3f4f6 !important;
+}
+
+
+/* ============================================================
+   APPLE PLATINUM SYSTEM BACKGROUND (#f5f5f7) & FROSTED GLASS PANELS
+   Replaces harsh plain white with macOS/iOS Platinum background
+   and frosted glass panels.
+   ============================================================ */
+body.pcf, html, body {
+    background: var(--bg, #f5f5f7) !important;
+}
+
+[data-theme="dark"] body.pcf, [data-theme="dark"] html, [data-theme="dark"] body {
+    background: #0d1117 !important;
+}
+
+.pcf-panel,
+#workPane,
+#viewHistory .pcf-panel,
+.pcf-sheet,
+.patient-file-container,
+#opdFileContainer,
+#patientFileContainer {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(242, 246, 252, 0.80)) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 36px -4px rgba(0, 0, 0, 0.07), 0 2px 6px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="dark"] .pcf-panel,
+[data-theme="dark"] #workPane,
+[data-theme="dark"] #viewHistory .pcf-panel,
+[data-theme="dark"] .pcf-sheet,
+[data-theme="dark"] .patient-file-container,
+[data-theme="dark"] #opdFileContainer,
+[data-theme="dark"] #patientFileContainer {
+    background: linear-gradient(135deg, rgba(28, 28, 30, 0.84), rgba(22, 24, 28, 0.80)) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 14px 44px -4px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ============================================================
+   HIGHLY APPLE-FEATURED CLINICAL REPORT PREVIEW (#doc / .pcf-doc)
+   Transforms post-save preview from plain white to an Apple Report Card
+   ============================================================ */
+#doc,
+.pcf-doc,
+.pcf-doc-preview {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(242, 247, 255, 0.88)) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
+    border: 0.5px solid rgba(0, 113, 227, 0.18) !important;
+    border-top: 4px solid #0071e3 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 14px 44px -8px rgba(0, 0, 0, 0.09), 0 2px 8px -2px rgba(0, 113, 227, 0.06) !important;
+    padding: 28px 32px !important;
+    color: #1d1d1f !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+#doc .sec,
+.pcf-doc .sec,
+.pcf-doc-section {
+    background: rgba(0, 113, 227, 0.04) !important;
+    border: 0.5px solid rgba(0, 113, 227, 0.1) !important;
+    border-radius: 14px !important;
+    padding: 14px 18px !important;
+    margin-bottom: 14px !important;
+    transition: background 0.2s !important;
+}
+
+#doc .sec:hover,
+.pcf-doc .sec:hover {
+    background: rgba(0, 113, 227, 0.07) !important;
+}
+
+#doc h3,
+.pcf-doc h3,
+#doc .sec-title,
+.pcf-doc .sec-title {
+    color: #0071e3 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+[data-theme="dark"] #doc,
+[data-theme="dark"] .pcf-doc {
+    background: linear-gradient(135deg, rgba(32, 34, 40, 0.94), rgba(24, 26, 32, 0.90)) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    border-top-color: #0b57d0 !important;
+    color: #f3f4f6 !important;
+    box-shadow: 0 16px 48px -8px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] #doc .sec,
+[data-theme="dark"] .pcf-doc .sec {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] #doc h3,
+[data-theme="dark"] .pcf-doc h3 {
+    color: #60a5fa !important;
+}
+

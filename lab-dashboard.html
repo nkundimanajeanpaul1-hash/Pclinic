@@ -14,6 +14,7 @@
 <script src="pclinic-state.js"></script>
 <script src="pclinic-orders.js" defer></script>
 <script src="pclinic-worklist.js" defer></script>
+<script src="pclinic-lab.js" defer></script>
 <script src="shared.js" defer></script>
 
 <!-- ─── PATIENT DATA SYSTEM ─── -->          
@@ -81,6 +82,10 @@
             -webkit-font-smoothing: antialiased;
             background-image: radial-gradient(circle at 20% 30%, rgba(0, 112, 128, 0.03) 0%, transparent 50%),
                 radial-gradient(circle at 80% 70%, rgba(52, 199, 89, 0.03) 0%, transparent 50%);
+        }
+
+        #dcBar, .dc-bar {
+            display: none !important;
         }
 
         /* ─── SCROLLBAR ─── */
@@ -360,88 +365,258 @@
             flex-wrap: nowrap;
         }
         .nav-tab {
-            padding: 6px 14px;
-            font-size: 12px;
-            font-weight: 500;
-            border-radius: 8px;
-            border: none;
-            background: transparent;
-            color: var(--tm);
-            cursor: pointer;
-            display: flex;
+            position: relative;
+            display: inline-flex;
             align-items: center;
             gap: 6px;
-            white-space: nowrap;
-            transition: all 0.2s var(--spring);
+            height: 32px;
+            padding: 0 13px;
+            border-radius: 9px;
+            border: 0.5px solid rgba(0, 0, 0, 0.08);
             font-family: inherit;
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s, opacity 0.2s, filter 0.2s;
         }
         .nav-tab:hover {
-            background: rgba(255, 255, 255, 0.5);
-            color: var(--tp);
-            transform: translateY(-1px);
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+            filter: brightness(0.97);
         }
         .nav-tab:active {
-            transform: scale(0.95);
+            transform: scale(0.97);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
-        .nav-tab.active {
-            background: var(--acb);
-            color: var(--ac);
+
+        /* ─── FUNCTIONAL COLOR TINTS FOR EACH NAV TAB ─── */
+        .nav-tab[data-tab="overview"] {
+            background: #eaf2ff !important;
+            color: #0071e3 !important;
+            border-color: rgba(0, 113, 227, 0.28) !important;
         }
+        .nav-tab[data-tab="specimen"] {
+            background: #e6f6f8 !important;
+            color: #007080 !important;
+            border-color: rgba(0, 112, 128, 0.3) !important;
+        }
+        .nav-tab[data-tab="worklist"] {
+            background: #fff4e0 !important;
+            color: #b85d00 !important;
+            border-color: rgba(255, 149, 0, 0.35) !important;
+        }
+        .nav-tab[data-tab="results"] {
+            background: #e9f9ee !important;
+            color: #1a7a32 !important;
+            border-color: rgba(52, 199, 89, 0.35) !important;
+        }
+        .nav-tab[data-tab="pathology"] {
+            background: #f5eaff !important;
+            color: #5c2475 !important;
+            border-color: rgba(175, 82, 222, 0.35) !important;
+        }
+        .nav-tab[data-tab="microbio"] {
+            background: #fdf0f7 !important;
+            color: #b5006e !important;
+            border-color: rgba(181, 0, 110, 0.35) !important;
+        }
+        .nav-tab[data-tab="bloodbank"] {
+            background: #ffebe9 !important;
+            color: #8a1f1a !important;
+            border-color: rgba(255, 59, 48, 0.35) !important;
+        }
+        .nav-tab[data-tab="qc"] {
+            background: #eef2ff !important;
+            color: #4338ca !important;
+            border-color: rgba(67, 56, 202, 0.35) !important;
+        }
+        .nav-tab[data-tab="reports"] {
+            background: #fef9c3 !important;
+            color: #854d0e !important;
+            border-color: rgba(133, 77, 14, 0.35) !important;
+        }
+
+        /* ─── ACTIVE STATE (RICH VIBRANT SOLID BUTTON) ─── */
+        .nav-tab.active[data-tab="overview"] {
+            background: #007080 !important;
+            color: #ffffff !important;
+            border-color: #004a52 !important;
+            box-shadow: 0 3px 10px rgba(0, 112, 128, 0.35) !important;
+        }
+        .nav-tab.active[data-tab="specimen"] {
+            background: #007080 !important;
+            color: #ffffff !important;
+            border-color: #004a52 !important;
+            box-shadow: 0 3px 10px rgba(0, 112, 128, 0.35) !important;
+        }
+        .nav-tab.active[data-tab="worklist"] {
+            background: #ff9500 !important;
+            color: #ffffff !important;
+            border-color: #995900 !important;
+            box-shadow: 0 3px 10px rgba(255, 149, 0, 0.35) !important;
+        }
+        .nav-tab.active[data-tab="results"] {
+            background: #1a7a32 !important;
+            color: #ffffff !important;
+            border-color: #0e4c1e !important;
+            box-shadow: 0 3px 10px rgba(26, 122, 50, 0.35) !important;
+        }
+        .nav-tab.active[data-tab="pathology"] {
+            background: #7a249d !important;
+            color: #ffffff !important;
+            border-color: #4b1462 !important;
+            box-shadow: 0 3px 10px rgba(122, 36, 157, 0.35) !important;
+        }
+        .nav-tab.active[data-tab="microbio"] {
+            background: #b5006e !important;
+            color: #ffffff !important;
+            border-color: #720045 !important;
+            box-shadow: 0 3px 10px rgba(181, 0, 110, 0.35) !important;
+        }
+        .nav-tab.active[data-tab="bloodbank"] {
+            background: #d32f2f !important;
+            color: #ffffff !important;
+            border-color: #8b0000 !important;
+            box-shadow: 0 3px 10px rgba(211, 47, 47, 0.35) !important;
+        }
+        .nav-tab.active[data-tab="qc"] {
+            background: #4338ca !important;
+            color: #ffffff !important;
+            border-color: #2e1065 !important;
+            box-shadow: 0 3px 10px rgba(67, 56, 202, 0.35) !important;
+        }
+        .nav-tab.active[data-tab="reports"] {
+            background: #b45309 !important;
+            color: #ffffff !important;
+            border-color: #78350f !important;
+            box-shadow: 0 3px 10px rgba(180, 83, 9, 0.35) !important;
+        }
+
         .nav-tab i {
             font-size: 14px;
+            flex-shrink: 0;
         }
         .nav-tab .ncnt {
             background: var(--red);
             color: #fff;
             font-size: 10px;
-            font-weight: 600;
-            padding: 1px 6px;
+            font-weight: 700;
+            padding: 1px 7px;
             border-radius: 99px;
             min-width: 16px;
             text-align: center;
+        }
+
+        /* ─── SELECTED PATIENT MODE (Doctor Dashboard style gating) ─── */
+        .nav-tab.tab-locked {
+            opacity: 0.42 !important;
+            filter: grayscale(1) !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+        }
+        .nav-tab.tab-locked:hover {
+            transform: none !important;
+            filter: grayscale(1) !important;
+        }
+        .nav-tab.tab-locked::after {
+            content: ' 🔒';
+            font-size: 11px;
+        }
+        tr.row-selected td {
+            background: #e6f6f8 !important;
+        }
+        tr.row-selected td:first-child {
+            border-left: 3px solid #007080;
+        }
+        .btn-select-lab {
+            height: 30px;
+            padding: 0 14px;
+            border-radius: 9px;
+            border: 0.5px solid rgba(0, 113, 227, 0.4);
+            background: #eaf2ff;
+            color: #0071e3;
+            font-family: inherit;
+            font-weight: 800;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+            transition: background 0.15s, color 0.15s, transform 0.15s;
+        }
+        .btn-select-lab:hover {
+            background: #0071e3;
+            color: #ffffff;
+        }
+        .btn-ov-view {
+            height: 30px;
+            width: 34px;
+            border-radius: 9px;
+            border: 0.5px solid rgba(0, 0, 0, 0.12);
+            background: #ffffff;
+            color: #1c1c1e;
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            margin-left: 6px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: background 0.15s;
+        }
+        .btn-ov-view:hover {
+            background: #f5f5f7;
         }
 
         /* ─── SUB NAV (dynamic) ─── */
         .sub-nav {
             display: flex;
             align-items: center;
-            gap: 2px;
-            padding: 0 24px;
-            background: rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            gap: 6px;
+            padding: 6px 24px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-bottom: 0.5px solid var(--bd);
-            height: 38px;
+            height: 44px;
             overflow-x: auto;
         }
         .sub-tab {
-            padding: 0 12px;
-            height: 100%;
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--tm);
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            white-space: nowrap;
-            transition: all 0.2s var(--spring);
-            display: flex;
+            position: relative;
+            display: inline-flex;
             align-items: center;
-            gap: 5px;
-            background: none;
-            border-top: none;
-            border-left: none;
-            border-right: none;
+            gap: 6px;
+            height: 28px;
+            padding: 0 13px;
+            border-radius: 8px;
+            border: 0.5px solid rgba(0, 0, 0, 0.08);
+            background: #ffffff;
             font-family: inherit;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--ts);
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s, background 0.2s;
         }
         .sub-tab:hover {
-            color: var(--tp);
+            background: #f8f9fa;
+            border-color: rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
         }
         .sub-tab.active {
-            color: var(--ac);
-            border-bottom-color: var(--ac);
+            background: var(--ac, #007080) !important;
+            color: #ffffff !important;
+            border-color: #004a52 !important;
+            box-shadow: 0 2px 8px rgba(0, 112, 128, 0.28) !important;
+            font-weight: 700;
         }
         .sub-tab i {
             font-size: 13px;
+            flex-shrink: 0;
         }
 
         /* ─── SEARCH ROW ─── */
@@ -551,49 +726,66 @@
             flex-wrap: wrap;
         }
         .kpi {
-            display: flex;
+            position: relative;
+            display: inline-flex;
             align-items: center;
-            gap: 5px;
-            padding: 5px 12px;
-            border: 0.5px solid var(--bd);
-            border-radius: 20px;
+            gap: 6px;
+            height: 32px;
+            padding: 0 13px;
+            border-radius: 9px;
+            border: 0.5px solid rgba(0, 0, 0, 0.08);
+            font-family: inherit;
+            font-size: 11.5px;
+            font-weight: 700;
             cursor: pointer;
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.2s var(--spring);
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s, opacity 0.2s, filter 0.2s;
         }
         .kpi:hover {
-            background: rgba(255, 255, 255, 0.9);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+            filter: brightness(0.98);
         }
         .kpi:active {
-            transform: scale(0.95);
+            transform: scale(0.97);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
         .kpi i {
             font-size: 14px;
+            flex-shrink: 0;
         }
         .kpi-lab {
-            color: var(--ac);
+            background: #e6f6f8 !important;
+            color: #007080 !important;
+            border-color: rgba(0, 112, 128, 0.3) !important;
         }
         .kpi-org {
-            color: var(--orange);
+            background: #fff4e0 !important;
+            color: #b85d00 !important;
+            border-color: rgba(255, 149, 0, 0.35) !important;
         }
         .kpi-red {
-            color: var(--red);
+            background: #ffebe9 !important;
+            color: #8a1f1a !important;
+            border-color: rgba(255, 59, 48, 0.35) !important;
         }
         .kpi-grn {
-            color: var(--green);
+            background: #e9f9ee !important;
+            color: #1a7a32 !important;
+            border-color: rgba(52, 199, 89, 0.35) !important;
         }
         .kpi-pur {
-            color: var(--purple);
+            background: #f5eaff !important;
+            color: #5c2475 !important;
+            border-color: rgba(175, 82, 222, 0.35) !important;
         }
         .kpi-num {
-            font-weight: 700;
+            font-weight: 800;
             font-size: 13px;
+            margin-right: 1px;
         }
 
         /* ─── CONTENT AREA ─── */
@@ -1540,7 +1732,7 @@
             }
         }
     </style>
-    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
+    <script src="pclinic-file.js?v=20260814_RAD" defer></script>
 </head>
 <body>
 
@@ -1617,11 +1809,11 @@
             </div>
         </div>
         <div class="kpis">
-            <div class="kpi kpi-lab" onclick="openModal('pending')"><i class="ti ti-hourglass"></i> <span class="kpi-num">18</span> pending</div>
-            <div class="kpi kpi-org" onclick="openModal('critical')"><i class="ti ti-alert-triangle"></i> <span class="kpi-num">3</span> critical</div>
-            <div class="kpi kpi-red" onclick="openModal('overdue')"><i class="ti ti-clock-x"></i> <span class="kpi-num">2</span> overdue</div>
-            <div class="kpi kpi-grn" onclick="openModal('verified')"><i class="ti ti-circle-check"></i> <span class="kpi-num">41</span> verified</div>
-            <div class="kpi kpi-pur" onclick="openModal('stat')"><i class="ti ti-bolt"></i> <span class="kpi-num">4</span> STAT</div>
+            <div class="kpi kpi-lab" onclick="openModal('pending')"><i class="ti ti-hourglass"></i> <span class="kpi-num" id="kpi-pending-num">0</span> pending</div>
+            <div class="kpi kpi-org" onclick="openModal('critical')"><i class="ti ti-alert-triangle"></i> <span class="kpi-num" id="kpi-critical-num">0</span> critical</div>
+            <div class="kpi kpi-red" onclick="openModal('overdue')"><i class="ti ti-clock-x"></i> <span class="kpi-num" id="kpi-overdue-num">0</span> overdue</div>
+            <div class="kpi kpi-grn" onclick="openModal('verified')"><i class="ti ti-circle-check"></i> <span class="kpi-num" id="kpi-verified-num">0</span> verified</div>
+            <div class="kpi kpi-pur" onclick="openModal('stat')"><i class="ti ti-bolt"></i> <span class="kpi-num" id="kpi-stat-num">0</span> STAT</div>
         </div>
     </div>
 
@@ -1631,208 +1823,121 @@
         <!-- ─── PANEL: OVERVIEW ─── -->
         <div id="panel-overview" class="main-panel">
             <div class="panel-body show" id="sub-overview-default">
-                <div style="margin-bottom:10px;">
-                    <div style="font-size:16px;font-weight:600;color:var(--tp);margin-bottom:2px;">Laboratory dashboard</div>
-                    <div style="font-size:12px;color:var(--tm);">Monday, 29 Jun 2026 · Haematology & Chemistry</div>
+                <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-size:16px;font-weight:700;color:var(--tp);margin-bottom:2px;">Laboratory dashboard • Active Specimen Worklist</div>
+                        <div style="font-size:12px;color:var(--tm);">Live Patient Master Row Queue • Click ✓ Select (or search above) — all buttons unlock once a patient is selected</div>
+                    </div>
+                    <button class="btn-s" style="font-size:11.5px;display:flex;align-items:center;gap:5px;" onclick="pcLabEngine.repaint(); showToast('🔄 Worklist refreshed', 'info')"><i class="ti ti-refresh" style="font-size:13px;"></i> Refresh Queue</button>
                 </div>
-                <div class="stat-row">
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--acb)"><i class="ti ti-test-pipe" style="color:var(--ac)"></i></div>
-                        <div class="sc-lbl">Specimens today</div>
-                        <div class="sc-val">63</div>
-                        <div class="sc-sub">+8 since 6 AM</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--orangeb)"><i class="ti ti-hourglass" style="color:var(--orange)"></i></div>
-                        <div class="sc-lbl">Pending results</div>
-                        <div class="sc-val">18</div>
-                        <div class="sc-sub">Oldest: 3 hrs</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--greenb)"><i class="ti ti-circle-check" style="color:var(--green)"></i></div>
-                        <div class="sc-lbl">Verified today</div>
-                        <div class="sc-val">41</div>
-                        <div class="sc-sub">Avg TAT: 52 min</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--redb)"><i class="ti ti-alert-triangle" style="color:var(--red)"></i></div>
-                        <div class="sc-lbl">Critical values</div>
-                        <div class="sc-val">3</div>
-                        <div class="sc-sub">Notified to ward</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--purpleb)"><i class="ti ti-bolt" style="color:var(--purple)"></i></div>
-                        <div class="sc-lbl">STAT requests</div>
-                        <div class="sc-val">4</div>
-                        <div class="sc-sub">All in progress</div>
-                    </div>
-                </div>
-                <div class="ov-grid" style="margin-top:12px;">
-                    <div class="ov-card" onclick="switchTab('specimen', document.querySelector('[data-tab=\\'specimen\\']')); switchSub('specimen-form')">
-                        <div class="ov-ic" style="background:var(--acb)"><i class="ti ti-test-pipe" style="color:var(--ac)"></i></div>
-                        <div class="ov-lbl">Receive specimen</div>
-                        <div class="ov-desc">Log and accession</div>
-                    </div>
-                    <div class="ov-card" onclick="switchTab('results', document.querySelector('[data-tab=\\'results\\']')); switchSub('results-entry')">
-                        <div class="ov-ic" style="background:var(--blue-bg)"><i class="ti ti-pencil" style="color:var(--blue)"></i></div>
-                        <div class="ov-lbl">Enter results</div>
-                        <div class="ov-desc">Haematology, biochem…</div>
-                    </div>
-                    <div class="ov-card" onclick="switchTab('pathology', document.querySelector('[data-tab=\\'pathology\\']')); switchSub('pathology-form')">
-                        <div class="ov-ic" style="background:var(--purpleb)"><i class="ti ti-microscope" style="color:var(--purple)"></i></div>
-                        <div class="ov-lbl">Histopathology</div>
-                        <div class="ov-desc">Biopsy and cytology</div>
-                    </div>
-                    <div class="ov-card" onclick="switchTab('microbio', document.querySelector('[data-tab=\\'microbio\\']')); switchSub('microbio-form')">
-                        <div class="ov-ic" style="background:var(--orangeb)"><i class="ti ti-virus" style="color:var(--orange)"></i></div>
-                        <div class="ov-lbl">Microbiology</div>
-                        <div class="ov-desc">Culture and sensitivity</div>
-                    </div>
-                    <div class="ov-card" onclick="switchTab('bloodbank', document.querySelector('[data-tab=\\'bloodbank\\']')); switchSub('bloodbank-xmatch')">
-                        <div class="ov-ic" style="background:var(--redb)"><i class="ti ti-droplet" style="color:var(--red)"></i></div>
-                        <div class="ov-lbl">Blood bank</div>
-                        <div class="ov-desc">Crossmatch, inventory</div>
-                    </div>
-                    <div class="ov-card" onclick="switchTab('qc', document.querySelector('[data-tab=\\'qc\\']')); switchSub('qc-form')">
-                        <div class="ov-ic" style="background:var(--greenb)"><i class="ti ti-chart-line" style="color:var(--green)"></i></div>
-                        <div class="ov-lbl">Quality control</div>
-                        <div class="ov-desc">Daily QC entry</div>
-                    </div>
-                    <div class="ov-card" onclick="switchTab('reports', document.querySelector('[data-tab=\\'reports\\']')); switchSub('reports-queue')">
-                        <div class="ov-ic" style="background:var(--amber-bg)"><i class="ti ti-printer" style="color:var(--amber)"></i></div>
-                        <div class="ov-lbl">Print reports</div>
-                        <div class="ov-desc">Verified results</div>
-                    </div>
-                    <div class="ov-card" onclick="switchTab('worklist', document.querySelector('[data-tab=\\'worklist\\']')); switchSub('worklist-view')">
-                        <div class="ov-ic" style="background:var(--s3)"><i class="ti ti-list-check" style="color:var(--tm)"></i></div>
-                        <div class="ov-lbl">Full worklist</div>
-                        <div class="ov-desc">All pending tests</div>
-                    </div>
-                </div>
-                <div style="margin-top:14px;">
-                    <div class="section-title" style="border-bottom: none; padding-bottom: 0;">Recent specimen activity</div>
+                <div style="margin-top:4px;">
                     <table class="wtbl">
-                        <thead><tr><th style="width:12%">Acc. no.</th><th style="width:22%">Patient</th><th style="width:14%">Test panel</th><th style="width:12%">Specimen</th><th style="width:12%">Received</th><th style="width:12%">Priority</th><th style="width:16%">Status</th></tr></thead>
+                        <thead><tr><th style="width:12%">Acc. no.</th><th style="width:21%">Patient</th><th style="width:13%">Test panel</th><th style="width:11%">Specimen</th><th style="width:11%">Received</th><th style="width:11%">Priority</th><th style="width:13%">Status</th><th style="width:8%">Action</th></tr></thead>
                         <tbody id="pcLabWorklist">
-                            <tr onclick="switchTab('results', document.querySelector('[data-tab=\\'results\\']')); switchSub('results-entry')">
-                                <td style="font-weight:600;color:var(--ac)">LAB-0629-063</td>
-                                <td>John Kamau · 00-1882</td>
-                                <td>Cardiac markers</td>
-                                <td>Serum</td>
-                                <td>08:02</td>
-                                <td><span class="badge b-red">STAT</span></td>
-                                <td><span class="badge b-org">In progress</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--ac)">LAB-0629-062</td>
-                                <td>Grace Wanjiru · 00-2047</td>
-                                <td>FBC + LFTs</td>
-                                <td>EDTA + SST</td>
-                                <td>07:58</td>
-                                <td><span class="badge b-org">Urgent</span></td>
-                                <td><span class="badge b-org">In progress</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--ac)">LAB-0629-061</td>
-                                <td>Amina Hassan · 00-3301</td>
-                                <td>Antenatal screen</td>
-                                <td>EDTA + Urine</td>
-                                <td>07:45</td>
-                                <td><span class="badge b-blue">Routine</span></td>
-                                <td><span class="badge b-grn">Verified</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:600;color:var(--ac)">LAB-0629-060</td>
-                                <td>Samuel Otieno · 00-2918</td>
-                                <td>Coagulation screen</td>
-                                <td>Citrate</td>
-                                <td>07:40</td>
-                                <td><span class="badge b-red">STAT</span></td>
-                                <td><span class="badge b-grn">Verified</span></td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- ─── PANEL: SPECIMEN ─── -->
+        <!-- ─── PANEL: SPECIMEN (100/100 SIMPLE & SMART APPLE PLATINUM GLASS ACCESSIONING) ─── -->
         <div id="panel-specimen" class="main-panel" style="display:none;">
             <div class="panel-body show" id="sub-specimen-form">
-                <div class="panel-header">
-                    <span class="panel-title">Specimen receipt and accessioning</span>
-                    <div class="panel-actions">
-                        <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print label</button>
+                <!-- Top Header & 1-Click Common Server Patient Queue Selector -->
+                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:18px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <div style="font-size:17px;font-weight:800;color:#004a52;">🧪 Simple & Smart Specimen Accessioning</div>
+                        <div style="font-size:12px;font-weight:600;color:#64748b;margin-top:2px;">1-Click Patient Order Queue & Automatic Tube Verification</div>
                     </div>
-                </div>
-                <div class="fg" style="margin-bottom:12px;">
-                    <div class="fgl"><div class="lbl">Accession number</div><input class="fi" value="LAB-0629-064" readonly style="color:var(--ac);font-weight:600;" /></div>
-                    <div class="fgl"><div class="lbl">Date and time received</div><input class="fi" type="datetime-local" value="2026-06-29T08:40" /></div>
-                </div>
-                <div class="fg">
-                    <div class="section-title"><i class="ti ti-user"></i>Patient details</div>
-                    <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" placeholder="Peter Omondi — MRN 00-4412" id="specPatient" /></div>
-                    <div class="fgl"><div class="lbl">Requesting clinician</div><input class="fi" placeholder="Dr. Mutua — Cardiology" /></div>
-                    <div class="fgl"><div class="lbl">Ward or department</div><input class="fi" placeholder="Ward 4B / OPD / Emergency" /></div>
-                    <div class="fgl"><div class="lbl">Requesting facility</div><input class="fi" value="KNH — Cardiology" /></div>
-                    <div class="section-title"><i class="ti ti-test-pipe"></i>Specimen information</div>
-                    <div class="fgl"><div class="lbl">Specimen type</div>
-                        <select class="fi">
-                            <option>Venous blood — EDTA (purple)</option>
-                            <option>Venous blood — SST (gold)</option>
-                            <option>Venous blood — citrate (blue)</option>
-                            <option>Venous blood — fluoride (grey)</option>
-                            <option>Arterial blood — ABG</option>
-                            <option selected>Urine — midstream</option>
-                            <option>Urine — catheter</option>
-                            <option>CSF</option>
-                            <option>Stool</option>
-                            <option>Sputum</option>
-                            <option>Wound swab</option>
-                            <option>Cervical swab</option>
-                            <option>Tissue biopsy</option>
-                            <option>Pleural fluid</option>
-                            <option>Ascitic fluid</option>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <label style="font-size:12px;font-weight:700;color:#1d1d1f;">Select Patient from Order Queue:</label>
+                        <select id="specSmartPatientSelect" class="fi" style="height:38px;padding:0 14px;border-radius:10px;font-weight:700;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.3);cursor:pointer;" onchange="pcLabEngine.selectSpecimenPatient(this.value)">
+                            <option value="">Awaiting orders in queue…</option>
                         </select>
                     </div>
-                    <div class="fgl"><div class="lbl">Volume received</div><input class="fi" placeholder="e.g. 5 mL, 10 mL" /></div>
-                    <div class="fgl"><div class="lbl">Specimen condition</div>
-                        <select class="fi">
-                            <option>Acceptable</option>
-                            <option>Haemolysed — noted</option>
-                            <option>Lipaemic — noted</option>
-                            <option>Clotted — rejected</option>
-                            <option>Insufficient volume — rejected</option>
-                            <option>Wrong tube — rejected</option>
-                            <option>Unlabelled — rejected</option>
-                        </select>
-                    </div>
-                    <div class="fgl"><div class="lbl">Collection time</div><input class="fi" type="datetime-local" value="2026-06-29T08:30" /></div>
-                    <div class="section-title"><i class="ti ti-flask"></i>Tests requested</div>
-                    <div class="fgl ff"><div class="lbl">Test panel</div>
-                        <select class="fi" multiple style="min-height:90px;">
-                            <option selected>FBC — full blood count</option>
-                            <option>U/E/Cr — urea, electrolytes, creatinine</option>
-                            <option selected>LFTs — liver function tests</option>
-                            <option>Troponin I</option><option>CK-MB</option><option>BNP / NT-proBNP</option>
-                            <option>Fasting glucose</option><option>HbA1c</option>
-                            <option>Lipid profile</option><option>Thyroid function (TSH / FT4)</option>
-                            <option>Coagulation screen (PT / aPTT)</option>
-                            <option>Blood culture</option><option>Malaria RDT / thick film</option>
-                            <option>HIV rapid test</option><option>Hepatitis B surface Ag</option>
-                            <option>RPR / VDRL (syphilis)</option><option>Urinalysis + microscopy</option>
-                        </select>
-                    </div>
-                    <div class="fgl"><div class="lbl">Priority</div>
-                        <select class="fi"><option>Routine</option><option>Urgent</option><option selected>STAT — immediate</option></select>
-                    </div>
-                    <div class="fgl"><div class="lbl">Received by (MLT)</div><input class="fi" value="MLT Martin Odhiambo" /></div>
-                    <div class="fgl ff"><div class="lbl">Rejection reason or notes</div><textarea class="ta" style="min-height:45px;" placeholder="Notes on specimen quality, special handling, referral laboratory…"></textarea></div>
                 </div>
-                <div class="fa">
-                    <button class="btn-p" onclick="showToast('✅ Specimen accessioned', 'success')">Accept and accession</button>
-                    <button class="btn-s" style="background:var(--redb);color:var(--redd);border-color:var(--redb);" onclick="showToast('⚠️ Specimen rejected', 'warning')">Reject specimen</button>
-                    <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print barcode label</button>
+
+                <!-- 3-Card Apple Glass Grid -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
+                    <!-- CARD 1: PATIENT & ORDER IDENTIFICATION -->
+                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
+                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
+                            <span>👤</span> PATIENT & ORDER IDENTIFICATION
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;">Patient Name & MRN</div>
+                            <div id="spec_pat_name" style="font-size:15px;font-weight:800;color:#1d1d1f;margin-top:2px;">Awaiting patient selection…</div>
+                            <div id="spec_pat_mrn" style="font-size:12px;font-weight:600;color:#007080;margin-top:2px;">MRN MOD-001 • STAT Order</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;">Requesting Clinician & Department</div>
+                            <div id="spec_doc_name" style="font-size:13px;font-weight:700;color:#3a3a3c;margin-top:2px;">—</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;">Auto-Generated Accession Barcode</div>
+                            <div style="margin-top:6px;" id="spec_barcode_box"></div>
+                            <div id="spec_acc_no" style="font-size:11px;font-weight:700;color:#1d1d1f;margin-top:2px;">ACC: LAB-MOD-001-2026</div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: 1-CLICK SPECIMEN TUBE & CONDITION PILLS -->
+                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
+                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
+                            <span>🧪</span> SPECIMEN TUBE & CONDITION
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">1-Click Tube Type (Auto-matched to test)</div>
+                            <div id="spec_tube_pills" style="display:flex;flex-wrap:wrap;gap:6px;">
+                                <button type="button" class="tube-pill active" onclick="pcLabEngine.toggleTubePill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid #007080;background:#e6f6f8;color:#007080;font-weight:700;font-size:11.5px;cursor:pointer;">🟣 EDTA (Whole Blood)</button>
+                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🟡 SST (Serum Gold)</button>
+                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🔵 Citrate (Blue)</button>
+                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🟡 Urine Midstream</button>
+                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🔴 Culture Swab</button>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Specimen Condition Verification</div>
+                            <div id="spec_cond_pills" style="display:flex;flex-wrap:wrap;gap:6px;">
+                                <button type="button" class="cond-pill active" onclick="pcLabEngine.toggleCondPill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid #1a7a32;background:#e9f9ee;color:#1a7a32;font-weight:700;font-size:11.5px;cursor:pointer;">✅ Acceptable (Good)</button>
+                                <button type="button" class="cond-pill" onclick="pcLabEngine.toggleCondPill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">⚠️ Haemolysed</button>
+                                <button type="button" class="cond-pill" onclick="pcLabEngine.toggleCondPill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">⚠️ Clotted</button>
+                                <button type="button" class="cond-pill" onclick="pcLabEngine.toggleCondPill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">❌ Unlabelled</button>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;">Received By</div>
+                            <div style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-top:2px;">MLT Martin Odhiambo • PClinic MOD</div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: DOCTOR-ORDERED DIAGNOSTIC PANEL -->
+                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
+                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
+                            <span>📋</span> DOCTOR-ORDERED DIAGNOSTIC PANEL
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Auto-Loaded from Doctor Dashboard</div>
+                            <div id="spec_ordered_tests" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;">
+                                <!-- Dynamically filled with check-chips -->
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;margin-bottom:4px;">Clinical Notes / Special Handling</div>
+                            <input type="text" id="spec_notes_in" placeholder="Fasting specimen confirmed..." style="width:100%;height:34px;background:#ebeef3;border:0.5px solid rgba(0,0,0,0.14);border-radius:8px;padding:0 12px;font-size:12px;color:#1d1d1f;" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Action Bar -->
+                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div style="font-size:12.5px;color:#64748b;">
+                        <strong>ℹ️ Smart 1-Click Accessioning:</strong> Clicking accept logs the barcode and automatically sets order status to <strong>In-Progress</strong>.
+                    </div>
+                    <div style="display:flex;gap:12px;">
+                        <button type="button" onclick="pcLabEngine.printBarcodeLabel()" style="height:40px;padding:0 18px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.16);background:#fff;font-weight:700;font-size:12.5px;cursor:pointer;">🖨️ Print Barcode Label</button>
+                        <button type="button" onclick="pcLabEngine.rejectSpecimen()" style="height:40px;padding:0 18px;border-radius:10px;border:0.5px solid rgba(255,59,48,0.3);background:#ffebe9;color:#8a1f1a;font-weight:700;font-size:12.5px;cursor:pointer;">⚠️ Reject Specimen</button>
+                        <button type="button" onclick="pcLabEngine.acceptAndAccession()" style="height:40px;padding:0 26px;border-radius:10px;border:0;background:#007080;color:#fff;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 3px 10px rgba(0,112,128,0.3);">✅ Accept & Accession Specimen</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1847,65 +1952,16 @@
                             <option>All departments</option><option>Haematology</option><option>Chemistry</option>
                             <option>Microbiology</option><option>Blood bank</option><option>Serology</option>
                         </select>
-                        <select class="fi" style="width:auto;font-size:11px;">
+                        <select class="fi" id="labPrioFilter" style="width:auto;font-size:11px;" onchange="pcLabEngine.repaint()">
                             <option>All priorities</option><option>STAT</option><option>Urgent</option><option>Routine</option>
                         </select>
-                        <button class="btn-s" style="font-size:11px;display:flex;align-items:center;gap:4px;" onclick="showToast('🔄 Worklist refreshed', 'info')"><i class="ti ti-refresh" style="font-size:12px;"></i> Refresh</button>
+                        <button class="btn-s" style="font-size:11px;display:flex;align-items:center;gap:4px;" onclick="pcLabEngine.repaint(); showToast('🔄 Worklist refreshed', 'info')"><i class="ti ti-refresh" style="font-size:12px;"></i> Refresh</button>
                     </div>
                 </div>
+                <div id="wlScopeNote" style="margin-bottom:10px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
                 <table class="wtbl">
-                    <thead><tr><th style="width:13%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Test</th><th style="width:11%">Dept</th><th style="width:10%">Requested</th><th style="width:10%">TAT</th><th style="width:11%">Priority</th><th style="width:11%">Status</th></tr></thead>
-                    <tbody>
-                        <tr onclick="switchTab('results', document.querySelector('[data-tab=\\'results\\']')); switchSub('results-entry')">
-                            <td style="font-weight:600;color:var(--ac)">LAB-0629-063</td>
-                            <td>John Kamau</td>
-                            <td>Troponin I</td>
-                            <td>Chemistry</td>
-                            <td>08:02</td>
-                            <td style="color:var(--redd);font-weight:600;">52 min</td>
-                            <td><span class="badge b-red">STAT</span></td>
-                            <td><span class="badge b-org">Running</span></td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600;color:var(--ac)">LAB-0629-063</td>
-                            <td>John Kamau</td>
-                            <td>CK-MB</td>
-                            <td>Chemistry</td>
-                            <td>08:02</td>
-                            <td style="color:var(--redd);font-weight:600;">52 min</td>
-                            <td><span class="badge b-red">STAT</span></td>
-                            <td><span class="badge b-org">Running</span></td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600;color:var(--ac)">LAB-0629-062</td>
-                            <td>Grace Wanjiru</td>
-                            <td>FBC</td>
-                            <td>Haematology</td>
-                            <td>07:58</td>
-                            <td style="color:var(--oranged);font-weight:600;">48 min</td>
-                            <td><span class="badge b-org">Urgent</span></td>
-                            <td><span class="badge b-org">Running</span></td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600;color:var(--ac)">LAB-0629-062</td>
-                            <td>Grace Wanjiru</td>
-                            <td>LFTs</td>
-                            <td>Chemistry</td>
-                            <td>07:58</td>
-                            <td style="color:var(--oranged);font-weight:600;">48 min</td>
-                            <td><span class="badge b-org">Urgent</span></td>
-                            <td><span class="badge b-blue">Pending</span></td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600;color:var(--ac)">LAB-0629-058</td>
-                            <td>Peter Omondi</td>
-                            <td>PT / aPTT</td>
-                            <td>Haematology</td>
-                            <td>07:15</td>
-                            <td style="color:var(--redd);font-weight:600;">91 min</td>
-                            <td><span class="badge b-red">STAT</span></td>
-                            <td><span class="badge b-blue">Pending</span></td>
-                        </tr>
+                    <thead><tr><th style="width:13%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Test</th><th style="width:11%">Dept</th><th style="width:10%">Requested</th><th style="width:10%">TAT</th><th style="width:11%">Priority</th><th style="width:11%">Status</th><th style="width:14%">Actions</th></tr></thead>
+                    <tbody id="pcLabQueueTable">
                     </tbody>
                 </table>
             </div>
@@ -1915,101 +1971,17 @@
         <div id="panel-results" class="main-panel" style="display:none;">
             <div class="panel-body show" id="sub-results-entry">
                 <div class="panel-header">
-                    <span class="panel-title">Result entry — LAB-0629-063 · John Kamau</span>
+                    <span class="panel-title">Completed and verified laboratory results</span>
                     <div class="panel-actions">
-                        <span class="badge b-red">STAT</span>
-                        <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print report</button>
+                        <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print list</button>
                     </div>
                 </div>
-                <div class="specimen-strip">
-                    <div class="ss-cell"><div class="ss-lbl">Patient</div><div class="ss-val">John Kamau</div></div>
-                    <div class="ss-cell"><div class="ss-lbl">MRN</div><div class="ss-val">00-1882</div></div>
-                    <div class="ss-cell"><div class="ss-lbl">Received</div><div class="ss-val">08:02 · 29 Jun</div></div>
-                    <div class="ss-cell"><div class="ss-lbl">Requesting clinician</div><div class="ss-val">Dr. Mutua · Cardiology</div></div>
-                </div>
-                <!-- Result sections -->
-                <div class="section-title"><i class="ti ti-heart"></i>Cardiac markers</div>
-                <div class="result-row">
-                    <div class="result-test">Troponin I</div>
-                    <div class="result-range">&lt;0.04 ng/mL</div>
-                    <div class="result-val"><input value="2.87" oninput="flagResult(this,0,0.04,999)" /></div>
-                    <div class="result-indicator flag-hi">↑↑ H</div>
-                </div>
-                <div class="result-row">
-                    <div class="result-test">CK-MB</div>
-                    <div class="result-range">&lt;25 U/L</div>
-                    <div class="result-val"><input value="148" oninput="flagResult(this,0,25,999)" /></div>
-                    <div class="result-indicator flag-hi">↑ H</div>
-                </div>
-                <div class="result-row">
-                    <div class="result-test">BNP</div>
-                    <div class="result-range">&lt;100 pg/mL</div>
-                    <div class="result-val"><input value="890" oninput="flagResult(this,0,100,9999)" /></div>
-                    <div class="result-indicator flag-hi">↑↑ H</div>
-                </div>
-                <div class="section-title"><i class="ti ti-flask"></i>Chemistry — U/E/Cr</div>
-                <div class="result-row">
-                    <div class="result-test">Sodium</div>
-                    <div class="result-range">135–145 mmol/L</div>
-                    <div class="result-val"><input value="138" oninput="flagResult(this,135,145,999)" /></div>
-                    <div class="result-indicator flag-ok">N</div>
-                </div>
-                <div class="result-row">
-                    <div class="result-test">Potassium</div>
-                    <div class="result-range">3.5–5.0 mmol/L</div>
-                    <div class="result-val"><input value="5.6" oninput="flagResult(this,3.5,5.0,99)" /></div>
-                    <div class="result-indicator flag-hi">↑ H</div>
-                </div>
-                <div class="result-row">
-                    <div class="result-test">Urea</div>
-                    <div class="result-range">2.5–7.5 mmol/L</div>
-                    <div class="result-val"><input value="6.8" oninput="flagResult(this,2.5,7.5,99)" /></div>
-                    <div class="result-indicator flag-ok">N</div>
-                </div>
-                <div class="result-row">
-                    <div class="result-test">Creatinine</div>
-                    <div class="result-range">53–97 µmol/L</div>
-                    <div class="result-val"><input value="88" oninput="flagResult(this,53,97,999)" /></div>
-                    <div class="result-indicator flag-ok">N</div>
-                </div>
-                <div class="section-title"><i class="ti ti-droplet"></i>Haematology — FBC</div>
-                <div class="result-row">
-                    <div class="result-test">Haemoglobin</div>
-                    <div class="result-range">13.0–17.0 g/dL</div>
-                    <div class="result-val"><input value="11.2" oninput="flagResult(this,13,17,99)" /></div>
-                    <div class="result-indicator flag-lo">↓ L</div>
-                </div>
-                <div class="result-row">
-                    <div class="result-test">WBC</div>
-                    <div class="result-range">4.0–11.0 ×10⁹/L</div>
-                    <div class="result-val"><input value="13.8" oninput="flagResult(this,4,11,99)" /></div>
-                    <div class="result-indicator flag-hi">↑ H</div>
-                </div>
-                <div class="result-row">
-                    <div class="result-test">Platelets</div>
-                    <div class="result-range">150–400 ×10⁹/L</div>
-                    <div class="result-val"><input value="287" oninput="flagResult(this,150,400,9999)" /></div>
-                    <div class="result-indicator flag-ok">N</div>
-                </div>
-                <div style="padding:8px 0;border-top:0.5px solid var(--bd);margin-top:4px;">
-                    <div class="lbl" style="margin-bottom:5px;">Comments and interpretation</div>
-                    <textarea class="ta" style="min-height:55px;">Markedly elevated troponin I and CK-MB consistent with acute myocardial injury. Elevated BNP suggests cardiac decompensation. Mild hyperkalaemia noted — clinical correlation advised. Critical values reported to Dr. Mutua at 08:55, 29 Jun 2026.</textarea>
-                </div>
-                <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
-                    <div class="fgl" style="flex:1;"><div class="lbl">Performed by</div><input class="fi" value="MLT Martin Odhiambo" /></div>
-                    <div class="fgl" style="flex:1;"><div class="lbl">Authorised by</div><input class="fi" placeholder="Senior MLT / Pathologist…" /></div>
-                    <div class="fgl" style="min-width:130px;"><div class="lbl">Authorisation date/time</div><input class="fi" type="datetime-local" value="2026-06-29T09:05" /></div>
-                </div>
-                <div style="margin-top:8px;padding:8px 12px;background:var(--redb);border-radius:8px;font-size:11px;color:var(--redd);display:flex;align-items:center;gap:7px;">
-                    <i class="ti ti-alert-triangle" style="font-size:14px;"></i>
-                    Critical values detected — Troponin I 2.87 ng/mL, Potassium 5.6 mmol/L. Verbal notification to requesting clinician is required before release.
-                </div>
-                <div class="fa">
-                    <button class="btn-p" onclick="showToast('✅ Results verified and released', 'success')">Verify and release</button>
-                    <button class="btn-s" onclick="showToast('💾 Draft saved', 'info')">Save draft</button>
-                    <button class="btn-s" style="color:var(--oranged);" onclick="showToast('⚠️ Flagged for review', 'warning')">Flag for review</button>
-                    <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print</button>
-                </div>
+                <div id="resScopeNote" style="margin-bottom:10px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
+                <table class="wtbl">
+                    <thead><tr><th style="width:13%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Test</th><th style="width:11%">Dept</th><th style="width:11%">Status</th><th style="width:12%">Flags</th><th style="width:10%">State</th><th style="width:9%">Action</th></tr></thead>
+                    <tbody id="pcLabResultsTable">
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -2025,9 +1997,10 @@
                 <div class="path-card">
                     <div class="path-head"><i class="ti ti-clipboard-list"></i>Case identification</div>
                     <div class="path-body">
+                        <div id="pathScopeNote" style="margin-bottom:10px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
                         <div class="fg">
                             <div class="fgl"><div class="lbl">Histology number</div><input class="fi" value="HIST-0629-014" /></div>
-                            <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" placeholder="Patient…" /></div>
+                            <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="path_patient_name" placeholder="Selected patient…" readonly /></div>
                             <div class="fgl"><div class="lbl">Specimen type</div>
                                 <select class="fi">
                                     <option>Excision biopsy</option>
@@ -2044,7 +2017,7 @@
                                 </select>
                             </div>
                             <div class="fgl"><div class="lbl">Anatomical site</div><input class="fi" placeholder="e.g. Right breast, 2 o'clock, 3 cm from nipple" /></div>
-                            <div class="fgl"><div class="lbl">Clinician and department</div><input class="fi" placeholder="Dr. Mutua — Surgery" /></div>
+                            <div class="fgl"><div class="lbl">Clinician and department</div><input class="fi" placeholder="Clinician name" /></div>
                             <div class="fgl"><div class="lbl">Date specimen taken</div><input class="fi" type="date" value="2026-06-29" /></div>
                         </div>
                     </div>
@@ -2083,91 +2056,101 @@
             </div>
         </div>
 
-        <!-- ─── PANEL: MICROBIOLOGY ─── -->
+        <!-- ─── PANEL: MICROBIOLOGY (100/100 LOOK-ALIKE CULTURE & SENSITIVITY ENGINE — APPLE FAVORITE BLUE/SLATE COLORS, ZERO GREEN) ─── -->
         <div id="panel-microbio" class="main-panel" style="display:none;">
             <div class="panel-body show" id="sub-microbio-form">
-                <div class="panel-header">
-                    <span class="panel-title">Microbiology — culture and sensitivity</span>
-                    <div class="panel-actions">
-                        <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print</button>
+                <!-- Top Header & 1-Click Patient Selector -->
+                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:18px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <div style="font-size:17px;font-weight:800;color:#0071e3;">🧫 Microbiology • Culture and Sensitivity</div>
+                        <div style="font-size:12px;font-weight:600;color:#64748b;margin-top:2px;">100/100 Look-Alike Editable Repertoire • Live Doctor Dashboard Sync</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <label style="font-size:12px;font-weight:700;color:#1d1d1f;">Select Culture Order:</label>
+                        <select id="micSmartPatientSelect" class="fi" style="height:38px;padding:0 14px;border-radius:10px;font-weight:700;color:#0071e3;background:#eaf2ff;border:0.5px solid rgba(0,113,227,0.3);cursor:pointer;" onchange="pcLabEngine.selectMicrobioPatient(this.value)">
+                            <option value="">Awaiting microbiology cultures…</option>
+                        </select>
                     </div>
                 </div>
-                <div class="fg">
-                    <div class="fgl"><div class="lbl">Accession number</div><input class="fi" placeholder="LAB-0629-…" /></div>
-                    <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" placeholder="Patient…" /></div>
-                    <div class="fgl"><div class="lbl">Specimen type</div>
-                        <select class="fi">
-                            <option>Blood culture</option>
-                            <option>Urine — MSU</option>
-                            <option>Wound swab</option>
-                            <option>Sputum</option>
-                            <option>Stool</option>
-                            <option>CSF</option>
-                            <option>Pleural fluid</option>
-                            <option>Cervical swab</option>
-                            <option>Urethral swab</option>
-                            <option>Ear swab</option>
-                            <option>Eye swab</option>
-                        </select>
+
+                <!-- 100/100 Replica Culture & Sensitivity Header Banner (Exactly Like Screenshot) -->
+                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.14);box-shadow:0 4px 16px rgba(0,0,0,0.05);padding:24px;margin-bottom:20px;">
+                    <div style="text-align:center;border-bottom:2px solid #0071e3;padding-bottom:14px;margin-bottom:18px;">
+                        <h2 style="font-size:20px;font-weight:800;color:#1d1d1f;letter-spacing:0.5px;text-transform:uppercase;">MICROBIOLOGY</h2>
+                        <div style="font-size:15px;font-weight:800;color:#0071e3;margin-top:3px;">Culture and Sensitivity</div>
+                        <div style="margin-top:8px;">
+                            <input type="text" id="mic_incubation_note" value="Sterile after 48 Hours. Incubation at 37°C." style="text-align:center;width:100%;max-width:450px;border:0.5px solid rgba(0,0,0,0.12);border-radius:8px;padding:4px 12px;font-size:12.5px;font-weight:600;color:#3a3a3c;background:#f5f5f7;" />
+                        </div>
                     </div>
-                    <div class="fgl"><div class="lbl">Date inoculated</div><input class="fi" type="date" value="2026-06-29" /></div>
-                    <div class="section-title"><i class="ti ti-flask"></i>Direct microscopy</div>
-                    <div class="fgl"><div class="lbl">Gram stain result</div><input class="fi" placeholder="e.g. Gram-positive cocci in clusters, many PMNs" /></div>
-                    <div class="fgl"><div class="lbl">Wet preparation</div><input class="fi" placeholder="e.g. Candida hyphae present / not seen" /></div>
-                    <div class="fgl ff"><div class="lbl">ZN stain (AFB)</div><input class="fi" placeholder="e.g. No AFB seen (×100 fields) / AFB 2+ scanty" /></div>
-                    <div class="section-title"><i class="ti ti-virus"></i>Culture results — day <input type="number" class="fi" value="2" style="width:50px;display:inline-block;margin-left:4px;" /></div>
-                    <div class="fgl"><div class="lbl">Growth</div>
-                        <select class="fi">
-                            <option>No growth after 48 hours</option>
-                            <option>No growth after 5 days</option>
-                            <option>Scanty growth</option>
-                            <option>Moderate growth</option>
-                            <option>Heavy growth</option>
-                            <option>Contamination suspected</option>
-                        </select>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:13px;color:#1d1d1f;">
+                        <!-- Left Metadata Column -->
+                        <div style="display:flex;flex-direction:column;gap:8px;background:#f8f9fa;padding:16px;border-radius:12px;border:0.5px solid rgba(0,0,0,0.08);">
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <span style="font-weight:600;color:#64748b;">Date of Sample Collection:</span>
+                                <input type="date" id="mic_date_coll" value="2024-12-03" class="fi" style="width:140px;height:30px;font-weight:700;background:#ebeef3;" />
+                            </div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <span style="font-weight:600;color:#64748b;">Date of Reporting:</span>
+                                <input type="date" id="mic_date_rep" value="2024-12-06" class="fi" style="width:140px;height:30px;font-weight:700;background:#ebeef3;" />
+                            </div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+                                <span style="font-weight:600;color:#64748b;">Official System Barcode:</span>
+                                <div id="mic_barcode_box"></div>
+                            </div>
+                        </div>
+
+                        <!-- Right Metadata Column -->
+                        <div style="display:flex;flex-direction:column;gap:8px;background:#f8f9fa;padding:16px;border-radius:12px;border:0.5px solid rgba(0,0,0,0.08);">
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <span style="font-weight:600;color:#64748b;">Sample Type:</span>
+                                <input type="text" id="mic_sample_type" value="Blood" class="fi" style="width:180px;height:30px;font-weight:700;background:#ebeef3;" />
+                            </div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <span style="font-weight:600;color:#64748b;">Organism Isolated:</span>
+                                <input type="text" id="mic_organism" value="E.coli" class="fi" style="width:180px;height:30px;font-weight:800;color:#0071e3;background:#ebeef3;" />
+                            </div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <span style="font-weight:600;color:#64748b;">Colony Count:</span>
+                                <input type="text" id="mic_colony_count" value="100 Cfu/ml." class="fi" style="width:180px;height:30px;font-weight:700;background:#ebeef3;" />
+                            </div>
+                        </div>
                     </div>
-                    <div class="fgl"><div class="lbl">Organism identified</div><input class="fi" placeholder="e.g. Escherichia coli, Staphylococcus aureus…" /></div>
-                    <div class="fgl"><div class="lbl">Colony count</div><input class="fi" placeholder="e.g. &gt;10⁵ CFU/mL (significant)" /></div>
-                    <div class="fgl"><div class="lbl">Identification method</div>
-                        <select class="fi">
-                            <option>Biochemical — API strip</option>
-                            <option>VITEK 2</option>
-                            <option>MALDI-TOF</option>
-                            <option>Chromogenic agar</option>
-                            <option>Manual biochemical</option>
-                        </select>
-                    </div>
-                    <div class="section-title"><i class="ti ti-chart-bar"></i>Antibiotic sensitivity (Kirby-Bauer)</div>
-                    <div class="fgl ff">
-                        <div class="lbl" style="margin-bottom:5px;">Sensitivity results</div>
-                        <table class="wtbl" style="font-size:11px;">
-                            <thead><tr><th>Antibiotic</th><th>Zone (mm)</th><th>Interpretation</th></tr></thead>
-                            <tbody id="abTbody">
-                                <tr>
-                                    <td><input class="fi" style="font-size:11px;" value="Amoxicillin-clavulanate" /></td>
-                                    <td><input class="fi" type="number" style="width:60px;font-size:11px;" value="22" /></td>
-                                    <td><select class="fi" style="font-size:11px;"><option>Sensitive (S)</option><option>Intermediate (I)</option><option>Resistant (R)</option></select></td>
-                                </tr>
-                                <tr>
-                                    <td><input class="fi" style="font-size:11px;" value="Ciprofloxacin" /></td>
-                                    <td><input class="fi" type="number" style="width:60px;font-size:11px;" value="28" /></td>
-                                    <td><select class="fi" style="font-size:11px;"><option selected>Sensitive (S)</option></select></td>
-                                </tr>
-                                <tr>
-                                    <td><input class="fi" style="font-size:11px;" value="Gentamicin" /></td>
-                                    <td><input class="fi" type="number" style="width:60px;font-size:11px;" value="18" /></td>
-                                    <td><select class="fi" style="font-size:11px;"><option selected>Sensitive (S)</option></select></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <button class="btn-s" style="margin-top:7px;font-size:11px;display:flex;align-items:center;gap:4px;" onclick="addAbRow()"><i class="ti ti-plus" style="font-size:12px;"></i>Add antibiotic</button>
-                    </div>
-                    <div class="fgl ff"><div class="lbl">Comments and recommendation</div><textarea class="ta" style="min-height:50px;" placeholder="ESBL suspected — report to clinician; empirical therapy guidance…"></textarea></div>
                 </div>
-                <div class="fa">
-                    <button class="btn-p" onclick="showToast('✅ Microbiology results released', 'success')">Verify and release</button>
-                    <button class="btn-s" onclick="showToast('💾 Draft saved', 'info')">Save draft</button>
-                    <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print</button>
+
+                <!-- 100/100 Replica 20-Antibiotic Sensitivity Table (S. No., Antibiotic, Sensitivity) -->
+                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.04);overflow:hidden;margin-bottom:18px;">
+                    <div style="padding:14px 20px;background:#eaf2ff;border-bottom:1.5px solid #0071e3;display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:13.5px;font-weight:800;color:#0071e3;">ANTIBIOTIC SUSCEPTIBILITY PROFILE (100/100 EDITABLE REPERTOIRE)</span>
+                        <span style="font-size:11.5px;font-weight:700;color:#3a3a3c;">MLT Martin Odhiambo • MOD Clinical Authority</span>
+                    </div>
+                    <table class="wtbl" style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f8f9fa;border-bottom:1.5px solid rgba(0,0,0,0.14);text-align:left;color:#1c1c1e;">
+                                <th style="padding:11px 16px;width:10%;font-weight:800;">S. No.</th>
+                                <th style="padding:11px 16px;width:55%;font-weight:800;">Antibiotic</th>
+                                <th style="padding:11px 16px;width:35%;font-weight:800;color:#0071e3;">Sensitivity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pcLabMicroTable">
+                            <!-- Dynamically populated with the exact 20 antibiotics + custom rows -->
+                        </tbody>
+                    </table>
+                    <div style="padding:12px 20px;background:#f8f9fa;border-top:1px solid rgba(0,0,0,0.1);display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:12px;color:#64748b;"><strong>➕ Unlisted Antibiotics:</strong> Add custom antibiotics tested on disk diffusion or VITEK 2 AST card.</span>
+                        <button type="button" onclick="pcLabEngine.addCustomAntibioticRow()" style="height:34px;padding:0 16px;border-radius:8px;border:0.5px solid #0071e3;background:#eaf2ff;color:#0071e3;font-weight:700;font-size:12px;cursor:pointer;">➕ Add Antibiotic (Not Listed)</button>
+                    </div>
+                </div>
+
+                <!-- Footer Action Bar -->
+                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div style="font-size:12.5px;color:#64748b;">
+                        <strong>ℹ️ Live Doctor Dashboard Sync:</strong> Saving immediately updates the patient's record and Doctor Dashboard flow sheet.
+                    </div>
+                    <div style="display:flex;gap:12px;">
+                        <button type="button" onclick="pcLabEngine.printMicrobioReportModal()" style="height:40px;padding:0 20px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.16);background:#f5f5f7;color:#1d1d1f;font-weight:700;font-size:12.5px;cursor:pointer;">🖨️ Print Official MOD C&S Certificate</button>
+                        <button type="button" onclick="pcLabEngine.saveAndReleaseMicrobioReport()" style="height:40px;padding:0 26px;border-radius:10px;border:0;background:#0071e3;color:#fff;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 3px 12px rgba(0,113,227,0.35);">💾 Save & Officially Release C&S Report to Doctor Dashboard</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2187,14 +2170,15 @@
                     <button class="bb-tab" onclick="switchBB(this,'bb-inv')"><i class="ti ti-box"></i> Blood inventory</button>
                 </div>
                 <div id="bb-xmatch" class="bb-panel show">
+                    <div id="bbScopeNote" style="margin-bottom:10px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
                     <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" placeholder="John Kamau — MRN 00-1882" /></div>
+                        <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="bb_xm_patient" placeholder="Selected patient…" readonly /></div>
                         <div class="fgl"><div class="lbl">Request date and time</div><input class="fi" type="datetime-local" value="2026-06-29T09:00" /></div>
                         <div class="fgl"><div class="lbl">Patient blood group</div><select class="fi"><option>O+</option><option>O−</option><option>A+</option><option>A−</option><option>B+</option><option>B−</option><option>AB+</option><option>AB−</option><option>Unknown — test first</option></select></div>
                         <div class="fgl"><div class="lbl">Units requested</div><input class="fi" type="number" value="2" min="1" /></div>
                         <div class="fgl"><div class="lbl">Product type</div><select class="fi"><option>Whole blood</option><option>Packed red cells (PRC)</option><option>Fresh frozen plasma (FFP)</option><option>Platelets concentrate</option><option>Cryoprecipitate</option></select></div>
                         <div class="fgl"><div class="lbl">Clinical indication</div><input class="fi" placeholder="e.g. Haemoglobin 7.2 g/dL — surgical patient" /></div>
-                        <div class="fgl"><div class="lbl">Requesting clinician</div><input class="fi" value="Dr. David Mutua" /></div>
+                        <div class="fgl"><div class="lbl">Requesting clinician</div><input class="fi" value="" placeholder="Requesting clinician" /></div>
                         <div class="fgl"><div class="lbl">Required by (time)</div><input class="fi" type="datetime-local" value="2026-06-29T12:00" /></div>
                         <div class="section-title"><i class="ti ti-flask"></i>Crossmatch result</div>
                         <div class="fgl"><div class="lbl">Compatibility test</div><select class="fi"><option>Compatible — issue approved</option><option>Incompatible — hold</option><option>Weak reaction — further testing</option><option>Pending</option></select></div>
@@ -2210,7 +2194,7 @@
                 </div>
                 <div id="bb-group" class="bb-panel">
                     <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" placeholder="Patient…" /></div>
+                        <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="bb_grp_patient" placeholder="Selected patient…" readonly /></div>
                         <div class="fgl"><div class="lbl">Sample accession</div><input class="fi" placeholder="LAB-0629-…" /></div>
                         <div class="section-title"><i class="ti ti-dna"></i>ABO grouping</div>
                         <div class="fgl"><div class="lbl">Anti-A reaction</div><select class="fi"><option>Positive (agglutination)</option><option>Negative</option></select></div>
@@ -2239,41 +2223,79 @@
             </div>
         </div>
 
-        <!-- ─── PANEL: QC ─── -->
+        <!-- ─── PANEL: QC (SIMPLE, FUNCTIONAL & APPLE FAVORITE COLORS — NO GREEN) ─── -->
         <div id="panel-qc" class="main-panel" style="display:none;">
             <div class="panel-body show" id="sub-qc-form">
-                <div class="panel-header">
-                    <span class="panel-title">Quality control — daily entry</span>
-                    <div class="panel-actions">
-                        <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print QC sheet</button>
+                <!-- Top Header & 1-Click Analyzer Pill Selector -->
+                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px 24px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <div style="font-size:17px;font-weight:800;color:#0071e3;">🔬 Daily Quality Control & Instrument Calibration</div>
+                        <div style="font-size:12px;font-weight:600;color:#64748b;margin-top:2px;">1-Click Analyzer Selection • Westgard Multi-Rule Compliance</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700;">Select Laboratory Analyzer:</div>
+                        <div id="qc_analyzer_pills" style="display:flex;flex-wrap:wrap;gap:6px;">
+                            <button type="button" class="qc-pill active" onclick="pcLabEngine.selectQcAnalyzer('sysmex', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid #0071e3;background:#eaf2ff;color:#0071e3;font-weight:700;font-size:11.5px;cursor:pointer;">🔬 Sysmex XN-550</button>
+                            <button type="button" class="qc-pill" onclick="pcLabEngine.selectQcAnalyzer('cobas', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">⚗️ Cobas C311</button>
+                            <button type="button" class="qc-pill" onclick="pcLabEngine.selectQcAnalyzer('vitek', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🧫 VITEK 2</button>
+                            <button type="button" class="qc-pill" onclick="pcLabEngine.selectQcAnalyzer('acltop', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🩸 ACL TOP</button>
+                            <button type="button" class="qc-pill" onclick="pcLabEngine.selectQcAnalyzer('all', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">⚡ ALL INSTRUMENTS</button>
+                        </div>
                     </div>
                 </div>
-                <div class="fg" style="margin-bottom:12px;">
-                    <div class="fgl"><div class="lbl">QC date</div><input class="fi" type="date" value="2026-06-29" /></div>
-                    <div class="fgl"><div class="lbl">Shift</div><select class="fi"><option>Morning (06:00–14:00)</option><option>Afternoon (14:00–22:00)</option><option>Night (22:00–06:00)</option></select></div>
-                    <div class="fgl"><div class="lbl">Performed by</div><input class="fi" value="MLT Martin Odhiambo" /></div>
-                    <div class="fgl"><div class="lbl">Supervisor review</div><input class="fi" placeholder="Senior MLT / Pathologist…" /></div>
+
+                <!-- Sleek Apple Platinum Status Summary Banner (1 Single Banner, No Clutter, With Barcode) -->
+                <div style="background:#f5f5f7;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);padding:18px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+                    <div>
+                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;">ACTIVE ANALYZER & SHIFT</div>
+                        <div id="qc_banner_name" style="font-size:16px;font-weight:800;color:#1d1d1f;margin-top:2px;">Sysmex XN-550 Haematology Analyser • SN-882190</div>
+                        <div id="qc_banner_shift" style="font-size:12px;font-weight:600;color:#0071e3;margin-top:2px;">Morning Shift (06:00–14:00) • Calibrated Valid 30 Days</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;">WESTGARD MULTI-RULE COMPLIANCE</div>
+                        <div style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;background:#eaf2ff;color:#0071e3;font-weight:800;font-size:12.5px;padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,113,227,0.3);">
+                            <span>✓ IN CONTROL • 0 RULE VIOLATIONS</span>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;">QC BARCODE CERTIFICATE</div>
+                        <div style="margin-top:4px;" id="qc_barcode_box"></div>
+                        <div id="qc_acc_id" style="font-size:11px;font-weight:700;color:#1d1d1f;margin-top:2px;">QC-SYS-2026</div>
+                    </div>
                 </div>
-                <div style="font-size:11px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:flex;align-items:center;gap:5px;"><i class="ti ti-droplet"></i>Haematology analyser — Sysmex XN-550</div>
-                <div class="qc-row"><div class="qc-name">Haemoglobin — control L1</div><div class="qc-lot">Lot: HC-2026-04A</div><div class="qc-val"><input value="11.8" /></div><div class="qc-status"><span class="badge b-grn">Pass</span></div></div>
-                <div class="qc-row"><div class="qc-name">Haemoglobin — control L2</div><div class="qc-lot">Lot: HC-2026-04A</div><div class="qc-val"><input value="14.3" /></div><div class="qc-status"><span class="badge b-grn">Pass</span></div></div>
-                <div class="qc-row"><div class="qc-name">WBC — control L1</div><div class="qc-lot">Lot: HC-2026-04A</div><div class="qc-val"><input value="4.2" /></div><div class="qc-status"><span class="badge b-grn">Pass</span></div></div>
-                <div class="qc-row"><div class="qc-name">WBC — control L2</div><div class="qc-lot">Lot: HC-2026-04A</div><div class="qc-val"><input value="9.8" /></div><div class="qc-status"><span class="badge b-grn">Pass</span></div></div>
-                <div style="font-size:11px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px;display:flex;align-items:center;gap:5px;"><i class="ti ti-flask"></i>Chemistry analyser — Cobas C311</div>
-                <div class="qc-row"><div class="qc-name">Glucose — control normal</div><div class="qc-lot">Lot: GC-2026-07B</div><div class="qc-val"><input value="5.1" /></div><div class="qc-status"><span class="badge b-grn">Pass</span></div></div>
-                <div class="qc-row"><div class="qc-name">Creatinine — control normal</div><div class="qc-lot">Lot: GC-2026-07B</div><div class="qc-val"><input value="75" /></div><div class="qc-status"><span class="badge b-grn">Pass</span></div></div>
-                <div class="qc-row"><div class="qc-name">Troponin I — control L1</div><div class="qc-lot">Lot: TC-2026-02C</div><div class="qc-val"><input value="0.62" style="color:var(--redd);font-weight:700;" /></div><div class="qc-status"><span class="badge b-red">Fail ↑</span></div></div>
-                <div style="margin-top:8px;padding:8px 12px;background:var(--redb);border-radius:8px;font-size:11px;color:var(--redd);display:flex;align-items:center;gap:7px;">
-                    <i class="ti ti-alert-triangle" style="font-size:14px;"></i>
-                    Troponin I QC failure detected. Do not release troponin results until root cause is identified and repeat QC passes.
+
+                <!-- 100% Functional QC Parameter Matrix Table (With Editable Apple Inputs) -->
+                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.04);overflow:hidden;margin-bottom:20px;">
+                    <div style="padding:14px 20px;background:#eaf2ff;border-bottom:1.5px solid #0071e3;display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:13.5px;font-weight:800;color:#0071e3;">DAILY QUALITY CONTROL PARAMETER REGISTER (EDITABLE TECHNOLOGIST ENTRY)</span>
+                        <span style="font-size:11.5px;font-weight:700;color:#3a3a3c;">MLT Martin Odhiambo • PClinic MOD Authority</span>
+                    </div>
+                    <table class="wtbl" style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f8f9fa;border-bottom:1px solid rgba(0,0,0,0.12);text-align:left;color:#1c1c1e;">
+                                <th style="padding:12px 16px;width:28%;font-weight:800;">CONTROL PARAMETER & LEVEL</th>
+                                <th style="padding:12px 16px;width:18%;font-weight:700;">TARGET RANGE & UNITS</th>
+                                <th style="padding:12px 16px;width:18%;font-weight:700;">REAGENT LOT ID</th>
+                                <th style="padding:12px 16px;width:20%;font-weight:800;color:#0071e3;">EDITABLE CONTROL VALUE</th>
+                                <th style="padding:12px 16px;width:16%;font-weight:800;">WESTGARD STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pcLabQcTable">
+                            <!-- Dynamically populated with functional rows -->
+                        </tbody>
+                    </table>
                 </div>
-                <div style="margin-top:10px;">
-                    <div class="lbl" style="margin-bottom:4px;">Corrective action taken</div>
-                    <textarea class="ta" style="min-height:50px;" placeholder="Root cause analysis, corrective steps, repeat QC result…"></textarea>
-                </div>
-                <div class="fa">
-                    <button class="btn-p" onclick="showToast('📊 QC log submitted', 'success')">Submit QC log</button>
-                    <button class="btn-s" onclick="showToast('💾 Draft saved', 'info')">Save draft</button>
+
+                <!-- Footer Action Bar (Simple, Functional, Apple Favorite Colors — No Green) -->
+                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div style="font-size:12.5px;color:#64748b;">
+                        <strong>ℹ️ Instant Diagnostic Clearance:</strong> Authorizing daily QC clears the analyzer for clinical patient reporting.
+                    </div>
+                    <div style="display:flex;gap:12px;">
+                        <button type="button" onclick="pcLabEngine.printQcCertificateModal()" style="height:40px;padding:0 20px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.16);background:#f5f5f7;color:#1d1d1f;font-weight:700;font-size:12.5px;cursor:pointer;">🖨️ Print QC Compliance Certificate</button>
+                        <button type="button" onclick="pcLabEngine.reportQcDeviation()" style="height:40px;padding:0 18px;border-radius:10px;border:0.5px solid rgba(255,149,0,0.4);background:#fff4e0;color:#b85d00;font-weight:700;font-size:12.5px;cursor:pointer;">⚠️ Log Analyzer Maintenance</button>
+                        <button type="button" onclick="pcLabEngine.verifyAndAuthorizeQc()" style="height:40px;padding:0 26px;border-radius:10px;border:0;background:#0071e3;color:#fff;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 3px 12px rgba(0,113,227,0.35);">⚡ Authorize Daily Quality Control</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2284,67 +2306,136 @@
                 <div class="panel-header">
                     <span class="panel-title">Laboratory reports — release and print</span>
                     <div class="panel-actions">
-                        <span style="font-size:11px;background:var(--redb);color:var(--redd);padding:2px 8px;border-radius:10px;font-weight:600;">3 awaiting release</span>
+                        <span style="font-size:11px;background:var(--redb);color:var(--redd);padding:2px 8px;border-radius:10px;font-weight:600;">0 awaiting release</span>
                     </div>
                 </div>
-                <div class="fg" style="margin-bottom:12px;">
-                    <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" placeholder="Search to filter results…" /></div>
-                    <div class="fgl"><div class="lbl">Date range</div><input class="fi" type="date" value="2026-06-29" /></div>
-                    <div class="fgl"><div class="lbl">Department</div><select class="fi"><option>All departments</option><option>Haematology</option><option>Chemistry</option><option>Microbiology</option><option>Histopathology</option><option>Blood bank</option></select></div>
-                    <div class="fgl"><div class="lbl">Status</div><select class="fi"><option>All</option><option>Pending release</option><option>Released</option><option>Printed</option></select></div>
+                <div id="repScopeNote" style="margin-bottom:12px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
+                <div class="stat-row" style="margin-bottom:16px;">
+                    <div class="sc">
+                        <div class="sc-ic" style="background:var(--acb)"><i class="ti ti-test-pipe" style="color:var(--ac)"></i></div>
+                        <div class="sc-lbl">Specimens today</div>
+                        <div class="sc-val" id="sc-specimens-today">0</div>
+                        <div class="sc-sub">+8 since 6 AM</div>
+                    </div>
+                    <div class="sc">
+                        <div class="sc-ic" style="background:var(--orangeb)"><i class="ti ti-hourglass" style="color:var(--orange)"></i></div>
+                        <div class="sc-lbl">Pending results</div>
+                        <div class="sc-val" id="sc-pending-val">0</div>
+                        <div class="sc-sub">Oldest: 3 hrs</div>
+                    </div>
+                    <div class="sc">
+                        <div class="sc-ic" style="background:var(--greenb)"><i class="ti ti-circle-check" style="color:var(--green)"></i></div>
+                        <div class="sc-lbl">Verified today</div>
+                        <div class="sc-val" id="sc-verified-val">0</div>
+                        <div class="sc-sub">Avg TAT: 52 min</div>
+                    </div>
+                    <div class="sc">
+                        <div class="sc-ic" style="background:var(--redb)"><i class="ti ti-alert-triangle" style="color:var(--red)"></i></div>
+                        <div class="sc-lbl">Critical values</div>
+                        <div class="sc-val" id="sc-critical-val">0</div>
+                        <div class="sc-sub">Notified to ward</div>
+                    </div>
+                    <div class="sc">
+                        <div class="sc-ic" style="background:var(--purpleb)"><i class="ti ti-bolt" style="color:var(--purple)"></i></div>
+                        <div class="sc-lbl">STAT requests</div>
+                        <div class="sc-val" id="sc-stat-val">0</div>
+                        <div class="sc-sub">All in progress</div>
+                    </div>
                 </div>
+
+                <!-- Top Header & 1-Click Verified Report Selector -->
+                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:18px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <div style="font-size:17px;font-weight:800;color:#004a52;">📜 Simple & Smart Laboratory Reporting (MOD)</div>
+                        <div style="font-size:12px;font-weight:600;color:#64748b;margin-top:2px;">1-Click Verified Report Preview & Official Barcode Certification</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <label style="font-size:12px;font-weight:700;color:#1d1d1f;">Select Verified Patient Report:</label>
+                        <select id="repSmartPatientSelect" class="fi" style="height:38px;padding:0 14px;border-radius:10px;font-weight:700;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.3);cursor:pointer;" onchange="pcLabEngine.selectReportPatient(this.value)">
+                            <option value="">Verified reports ready to print…</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 3-Card Apple Glass Reporting Grid -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
+                    <!-- CARD 1: VERIFIED PATIENT & BARCODE CERTIFICATION -->
+                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
+                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
+                            <span>👤</span> PATIENT & ACCESSION BARCODE
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;">Patient Name & MRN</div>
+                            <div id="rep_pat_name" style="font-size:15px;font-weight:800;color:#1d1d1f;margin-top:2px;">Awaiting patient selection…</div>
+                            <div id="rep_pat_mrn" style="font-size:12px;font-weight:600;color:#007080;margin-top:2px;">MRN MOD-001 • Verified Report</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;">Ordering Clinician & Department</div>
+                            <div id="rep_doc_name" style="font-size:13px;font-weight:700;color:#3a3a3c;margin-top:2px;">—</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;">Official System Barcode</div>
+                            <div style="margin-top:6px;" id="rep_barcode_box"></div>
+                            <div id="rep_acc_no" style="font-size:11px;font-weight:700;color:#1d1d1f;margin-top:2px;">ACC: LAB-MOD-001-2026</div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: REPORT QUALITY ASSURANCE & STATUS -->
+                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
+                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
+                            <span>🛡️</span> REPORT VERIFICATION & QUALITY
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;">Official Report Status</div>
+                            <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+                                <span style="background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:12px;padding:5px 12px;border-radius:20px;">✓ OFFICIALLY VERIFIED & RELEASED</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;">Turnaround Time (TAT) Metric</div>
+                            <div style="font-size:13px;font-weight:700;color:#1d1d1f;margin-top:2px;">32 min (Target: ≤ 60 min) • Fasting OK</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;">Verifying Senior MLT</div>
+                            <div style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-top:2px;">MLT Martin Odhiambo • MOD Authority</div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: VERIFIED TEST MATRIX PREVIEW -->
+                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
+                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
+                            <span>📊</span> VERIFIED TEST MATRIX PREVIEW
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Result Summary & Diagnostic Flags</div>
+                            <div id="rep_matrix_chips" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;">
+                                <!-- Dynamically filled with verified chips -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Report Action Bar -->
+                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px 24px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div style="font-size:12.5px;color:#64748b;">
+                        <strong>ℹ️ Smart 1-Click Reporting:</strong> Verified reports feature an official SVG verification barcode and are signed for legal hospital use.
+                    </div>
+                    <div style="display:flex;gap:12px;">
+                        <button type="button" onclick="pcLabEngine.printSelectedReportModal()" style="height:40px;padding:0 24px;border-radius:10px;border:0;background:#007080;color:#fff;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 3px 10px rgba(0,112,128,0.3);">🖨️ Open & Print Official MOD Report</button>
+                        <button type="button" onclick="pcLabEngine.broadcastReportToDoctor()" style="height:40px;padding:0 18px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.16);background:#fff;font-weight:700;font-size:12.5px;cursor:pointer;">📤 Re-send Report to Doctor Dashboard</button>
+                    </div>
+                </div>
+
+                <!-- Verified Laboratory Reports Table -->
+                <div class="section-title" style="margin-top:8px;">All Verified Laboratory Reports (Common Server Archive)</div>
                 <table class="wtbl">
-                    <thead><tr><th style="width:13%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Panel</th><th style="width:10%">Dept</th><th style="width:10%">Verified</th><th style="width:12%">Flags</th><th style="width:12%">Status</th><th style="width:9%">Action</th></tr></thead>
-                    <tbody>
+                    <thead><tr><th style="width:13%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:18%">Panel</th><th style="width:12%">Dept</th><th style="width:12%">Verified</th><th style="width:11%">Status</th><th style="width:12%">Action</th></tr></thead>
+                    <tbody id="pcLabReportsTable">
                         <tr>
-                            <td style="font-weight:600;color:var(--ac)">LAB-0629-063</td>
-                            <td>John Kamau</td>
-                            <td>Cardiac markers</td>
-                            <td>Chemistry</td>
-                            <td>09:05</td>
-                            <td><span class="badge b-red">Critical ↑↑</span></td>
-                            <td><span class="badge b-org">Pending release</span></td>
-                            <td><button class="btn-p" style="padding:4px 10px;font-size:10px;" onclick="showToast('✅ Report released', 'success')">Release</button></td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600;color:var(--ac)">LAB-0629-059</td>
-                            <td>Mary Adhiambo</td>
-                            <td>Drug levels</td>
-                            <td>Chemistry</td>
-                            <td>08:44</td>
-                            <td><span class="badge b-org">↑ High</span></td>
-                            <td><span class="badge b-org">Pending release</span></td>
-                            <td><button class="btn-p" style="padding:4px 10px;font-size:10px;" onclick="showToast('✅ Report released', 'success')">Release</button></td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600;color:var(--ac)">LAB-0629-055</td>
-                            <td>Samuel Otieno</td>
-                            <td>Malaria RDT</td>
-                            <td>Serology</td>
-                            <td>08:30</td>
-                            <td><span class="badge b-red">Positive</span></td>
-                            <td><span class="badge b-org">Pending release</span></td>
-                            <td><button class="btn-p" style="padding:4px 10px;font-size:10px;" onclick="showToast('✅ Report released', 'success')">Release</button></td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600;color:var(--ac)">LAB-0629-061</td>
-                            <td>Amina Hassan</td>
-                            <td>Antenatal screen</td>
-                            <td>Haematology</td>
-                            <td>08:20</td>
-                            <td><span class="badge b-grn">Normal</span></td>
-                            <td><span class="badge b-grn">Released</span></td>
-                            <td><button class="btn-s" style="padding:4px 10px;font-size:10px;display:flex;align-items:center;gap:3px;" onclick="window.print()"><i class="ti ti-printer" style="font-size:11px;"></i>Print</button></td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600;color:var(--ac)">LAB-0629-060</td>
-                            <td>Samuel Otieno</td>
-                            <td>Coagulation</td>
-                            <td>Haematology</td>
-                            <td>08:12</td>
-                            <td><span class="badge b-grn">Normal</span></td>
-                            <td><span class="badge b-grn">Released</span></td>
-                            <td><button class="btn-s" style="padding:4px 10px;font-size:10px;display:flex;align-items:center;gap:3px;" onclick="window.print()"><i class="ti ti-printer" style="font-size:11px;"></i>Print</button></td>
+                            <td colspan="8" style="text-align:center;padding:36px;color:#8e8e93;">
+                                <div style="font-size:28px;margin-bottom:6px;">🖨️</div>
+                                No pending reports awaiting manual release. All verified results are available in patient records.
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -2383,71 +2474,81 @@
             updateBreadcrumb('Laboratory');
         }
 
-        // ─── PATIENT DATA ───
-        var patients = {
-            'john kamau': { name: 'John Kamau', initials: 'JK', mrn: 'MRN 00-1882' },
-            '00-1882': { name: 'John Kamau', initials: 'JK', mrn: 'MRN 00-1882' },
-            'grace wanjiru': { name: 'Grace Wanjiru', initials: 'GW', mrn: 'MRN 00-2047' },
-            '00-2047': { name: 'Grace Wanjiru', initials: 'GW', mrn: 'MRN 00-2047' },
-            'amina hassan': { name: 'Amina Hassan', initials: 'AH', mrn: 'MRN 00-3301' },
-            '00-3301': { name: 'Amina Hassan', initials: 'AH', mrn: 'MRN 00-3301' },
-            'samuel otieno': { name: 'Samuel Otieno', initials: 'SO', mrn: 'MRN 00-2918' },
-            '00-2918': { name: 'Samuel Otieno', initials: 'SO', mrn: 'MRN 00-2918' }
-        };
-
-        // ─── SMART SEARCH ───
+        // ─── SMART SEARCH (100% Common Server Powered) ───
         function handleSmartSearch(query) {
             var q = query.trim().toLowerCase();
             var container = document.getElementById('suggestions');
-            if (!q) {
-                container.classList.remove('show');
+            if (!q || !container) {
+                if (container) container.classList.remove('show');
+                pcLabEngine.repaint();
                 return;
             }
-            var matches = Object.values(patients).filter(function(p) {
-                return p.name.toLowerCase().includes(q) || p.mrn.toLowerCase().includes(q);
-            });
+            var allP = (typeof getPatients === 'function') ? getPatients() : (window.read ? read('pclinic_patients', []) : []);
+            var matches = allP.filter(function(p) {
+                var nm = String(p.name || (p.firstName + ' ' + p.lastName) || '').toLowerCase();
+                var id = String(p.id || '').toLowerCase();
+                return nm.includes(q) || id.includes(q);
+            }).slice(0, 8);
             if (matches.length === 0) {
                 container.classList.remove('show');
+                pcLabEngine.repaint();
                 return;
             }
             container.innerHTML = matches.map(function(p) {
-                return '<div class="suggestion-item" onclick="selectSuggestion(\'' + p.name.replace(/'/g, "\\'") +
-                    '\')"><span>👤</span><span><span class="highlight">' + p.name + '</span> — ' + p.mrn +
-                    '</span></div>';
+                var pId = String(p.id).replace(/^MOD-/i, '').trim();
+                var nm  = p.name || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || 'Patient';
+                return '<div class="suggestion-item" onclick="selectSuggestion(\'' + pId.replace(/'/g, "\\'") + '\', \'' + nm.replace(/'/g, "\\'") + '\')">' +
+                    '<span>👤</span><span><span class="highlight">' + nm + '</span> — MRN ' + pId + ' · ✓ Select</span></div>';
             }).join('');
             container.classList.add('show');
+            pcLabEngine.repaint();
         }
 
-        function selectSuggestion(name) {
-            document.getElementById('searchInput').value = name;
+        function selectSuggestion(pId, nm) {
+            document.getElementById('searchInput').value = nm || '';
             document.getElementById('suggestions').classList.remove('show');
-            lookupPatient();
+            if (window.pcLabEngine && typeof pcLabEngine.selectLabPatient === 'function') {
+                pcLabEngine.selectLabPatient(pId);
+            }
         }
 
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.search-wrap')) {
-                document.getElementById('suggestions').classList.remove('show');
+                var s = document.getElementById('suggestions');
+                if (s) s.classList.remove('show');
             }
         });
 
-        function lookupPatient() {
+        function lookupPatient(mrn) {
             var v = document.getElementById('searchInput').value.trim().toLowerCase();
-            var p = patients[v] || Object.values(patients).find(function(pat) { return pat.name.toLowerCase() === v; });
+            var q = String(mrn || '').trim().toLowerCase() || v;
+            if (!q) return;
+            var allP = (typeof getPatients === 'function') ? getPatients() : (window.read ? read('pclinic_patients', []) : []);
+            var p = allP.find(function(pat) {
+                var pid = String(pat.id || '').replace(/^MOD-/i, '').toLowerCase();
+                var nm  = String(pat.name || ((pat.firstName || '') + ' ' + (pat.lastName || '')) || '').toLowerCase();
+                var nat = String(pat.nationalId || '').toLowerCase();
+                return pid === q || nm === q || nm.indexOf(q) !== -1 || pid.indexOf(q) !== -1 || (q.length >= 6 && nat.indexOf(q) !== -1);
+            });
             if (p) {
-                if (typeof showToast === 'function') {
-                    showToast('👤 Loaded patient: ' + p.name, 'success');
+                if (window.pcLabEngine && typeof pcLabEngine.selectLabPatient === 'function') {
+                    pcLabEngine.selectLabPatient(p.id);
                 }
-                var specPatient = document.getElementById('specPatient');
-                if (specPatient) specPatient.value = p.name + ' — ' + p.mrn;
             } else {
                 if (typeof showToast === 'function') {
-                    showToast('❌ Patient not found', 'error');
+                    showToast('❌ Patient not found in Common Server', 'error');
                 }
             }
         }
 
         // ─── TAB SWITCHING ───
         function switchTab(name, btn) {
+            // 🔒 Selected Patient Mode: no button works until a patient is selected
+            var tabBtn = btn || document.querySelector('.nav-tab[data-tab="' + name + '"]');
+            if (tabBtn && tabBtn.classList.contains('tab-locked')) {
+                showToast('🔒 Select a patient first — click ✓ Select on the patient list, or search by name/ID in the patient identification bar above', 'warning');
+                return;
+            }
             document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
             if (btn) btn.classList.add('active');
             document.querySelectorAll('.main-panel').forEach(function(p) { p.style.display = 'none'; });
@@ -2529,74 +2630,61 @@
             tbody.appendChild(tr);
         }
 
-        // ─── MODAL ───
-        var modalData = {
-            pending: {
-                title: 'Pending results — 18 tests',
-                rows: [
-                    ['LAB-0629-063', 'John Kamau', 'Troponin I', 'STAT', '52 min'],
-                    ['LAB-0629-063', 'John Kamau', 'CK-MB', 'STAT', '52 min'],
-                    ['LAB-0629-062', 'Grace Wanjiru', 'FBC', 'Urgent', '48 min'],
-                    ['LAB-0629-062', 'Grace Wanjiru', 'LFTs', 'Urgent', '48 min'],
-                    ['LAB-0629-058', 'Peter Omondi', 'PT/aPTT', 'STAT', '91 min'],
-                    ['LAB-0629-057', 'Faith Njeri', 'Urinalysis', 'Routine', '96 min']
-                ]
-            },
-            critical: {
-                title: 'Critical values — 3 flags',
-                rows: [
-                    ['LAB-0629-063', 'John Kamau', 'Troponin I', '2.87 ng/mL', '↑↑ Critical'],
-                    ['LAB-0629-063', 'John Kamau', 'Potassium', '5.6 mmol/L', '↑ High'],
-                    ['LAB-0629-055', 'Samuel Otieno', 'Malaria RDT', 'Positive', 'Positive']
-                ]
-            },
-            overdue: {
-                title: 'Overdue tests — TAT exceeded',
-                rows: [
-                    ['LAB-0629-058', 'Peter Omondi', 'PT/aPTT', 'STAT — 91 min (limit: 60 min)'],
-                    ['LAB-0629-057', 'Faith Njeri', 'Urinalysis', 'Routine — 96 min (limit: 90 min)']
-                ]
-            },
-            verified: {
-                title: 'Verified today — 41 results',
-                rows: [
-                    ['LAB-0629-061', 'Amina Hassan', 'Antenatal screen', '08:20'],
-                    ['LAB-0629-060', 'Samuel Otieno', 'Coagulation', '08:12'],
-                    ['LAB-0629-052', 'Tom Maina', 'FBC + CRP', '07:30'],
-                    ['LAB-0629-051', 'Peter Omondi', 'Lipid profile', '07:15'],
-                    ['…', '37 more results', 'Verified', 'Today']
-                ]
-            },
-            stat: {
-                title: 'STAT requests — 4 active',
-                rows: [
-                    ['LAB-0629-063', 'John Kamau', 'Cardiac markers', 'In progress — 52 min'],
-                    ['LAB-0629-058', 'Peter Omondi', 'Coagulation', 'Pending — 91 min'],
-                    ['LAB-0629-056', 'Amina Hassan', 'Blood culture', 'Inoculated — 3 hrs'],
-                    ['LAB-0629-054', 'Tom Maina', 'ABG', 'Pending — 15 min']
-                ]
-            }
-        };
-
+        // ─── MODAL (100% Common Server Powered • SELECTED PATIENT ONLY) ───
         function openModal(type) {
-            var d = modalData[type];
-            if (!d) return;
-            document.getElementById('modalTitle').textContent = d.title;
-            var hdrs = {
-                pending: ['Acc. no.', 'Patient', 'Test', 'Priority', 'TAT'],
-                critical: ['Acc. no.', 'Patient', 'Test', 'Value', 'Flag'],
-                overdue: ['Acc. no.', 'Patient', 'Test', 'Status'],
-                verified: ['Acc. no.', 'Patient', 'Panel', 'Time'],
-                stat: ['Acc. no.', 'Patient', 'Test', 'Status']
-            };
-            var hh = hdrs[type] || [];
+            var orders = (window.pcLabEngine && typeof getLabOrders === 'function') ? getLabOrders() : (window.pcOrders ? pcOrders.list({dept:'lab'}) : []);
+            var title = 'Laboratory Queue';
+            var filtered = [];
+            var hdrs = ['Acc. no.', 'Patient', 'Test', 'Priority', 'Status'];
+
+            // 🔒 All opens work ONLY for the selected patient in the identification bar
+            var selP = (window.pcLabEngine && typeof pcLabEngine.getSelectedLabPatient === 'function') ? pcLabEngine.getSelectedLabPatient() : null;
+            if (!selP) {
+                showToast('🔒 Select a patient first — click ✓ Select on the patient list, or search by name/ID in the patient identification bar above', 'warning');
+                return;
+            }
+            var selId = String(selP.id).replace(/^MOD-/i, '').toLowerCase();
+            var selName = selP.name || ((selP.firstName || '') + ' ' + (selP.lastName || '')).trim();
+            orders = orders.filter(function(o){ return String(o.patientId).replace(/^MOD-/i, '').toLowerCase() === selId; });
+
+            if (type === 'pending') {
+                filtered = orders.filter(function(o){ return o.status === 'pending'; });
+                title = 'Pending Results — ' + filtered.length + ' Tests • ' + selName;
+            } else if (type === 'critical') {
+                filtered = orders.filter(function(o){ return o.priority === 'stat'; });
+                title = 'Critical / STAT Orders — ' + filtered.length + ' Orders • ' + selName;
+            } else if (type === 'overdue') {
+                filtered = orders.filter(function(o){
+                    return o.status === 'pending' && ((Date.now() - new Date(o.orderedAt)) > 45 * 60000);
+                });
+                title = 'Overdue Tests (TAT Exceeded) — ' + filtered.length + ' Orders • ' + selName;
+            } else if (type === 'verified') {
+                filtered = orders.filter(function(o){ return o.status === 'completed'; });
+                title = 'Verified Results — ' + filtered.length + ' Results • ' + selName;
+            } else if (type === 'stat') {
+                filtered = orders.filter(function(o){ return o.priority === 'stat' && o.status !== 'completed'; });
+                title = 'Active STAT Requests — ' + filtered.length + ' Requests • ' + selName;
+            }
+
+            document.getElementById('modalTitle').textContent = title;
             var html = '<table class="wtbl"><thead><tr>';
-            hh.forEach(function(h) { html += '<th>' + h + '</th>'; });
+            hdrs.forEach(function(h) { html += '<th>' + h + '</th>'; });
             html += '</tr></thead><tbody>';
-            d.rows.forEach(function(r) {
-                html += '<tr>' + r.map(function(c) { return '<td style="font-size:12px;">' + c + '</td>'; }).join(
-                '') + '</tr>';
-            });
+
+            if (!filtered.length) {
+                html += '<tr><td colspan="' + hdrs.length + '" style="text-align:center;padding:24px;color:#8e8e93;">No matching orders for the selected patient.</td></tr>';
+            } else {
+                filtered.forEach(function(o) {
+                    var itemsStr = (o.items || []).map(function(it){ return it.name; }).join(', ');
+                    html += '<tr style="cursor:pointer;" onclick="closeModal(); pcLabEngine.openResultModal(\'' + o.id + '\')">' +
+                            '<td style="font-weight:600;color:var(--ac,#007080);">' + o.id + '</td>' +
+                            '<td style="font-weight:600;">' + (o.patientName || 'Patient ' + o.patientId) + '</td>' +
+                            '<td>' + itemsStr + '</td>' +
+                            '<td><span class="badge" style="background:#ffebe9;color:#8e1f1a;">' + String(o.priority).toUpperCase() + '</span></td>' +
+                            '<td>' + String(o.status).toUpperCase() + '</td>' +
+                            '</tr>';
+                });
+            }
             html += '</tbody></table>';
             document.getElementById('modalBody').innerHTML = html;
             document.getElementById('modalOverlay').classList.add('show');
@@ -2684,8 +2772,13 @@
 <script>
 // Live order queue from doctors — replaces the hardcoded demo rows.
 window.addEventListener('DOMContentLoaded', function () {
-    if (!window.pcWorklist) return;
-    pcWorklist.mount({ dept: 'lab', target: '#pcLabWorklist', mode: 'table', cols: 6 });
+    var oldDc = document.getElementById('dcBar');
+    if (oldDc && oldDc.parentNode) oldDc.parentNode.removeChild(oldDc);
+    if (window.pcLabEngine) {
+        pcLabEngine.repaint();
+    } else if (window.pcWorklist) {
+        pcWorklist.mount({ dept: 'lab', target: '#pcLabWorklist', mode: 'table', cols: 6 });
+    }
 });
 </script>
 </body>

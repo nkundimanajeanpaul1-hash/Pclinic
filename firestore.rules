@@ -1,205 +1,328 @@
 rules_version = '2';
 
-// ============================================================
-// PCLINIC — FIRESTORE SECURITY RULES
-// ============================================================
-// Replaces the old "allow everyone until Aug 29, 2026" rule.
-//
-// Model (mirrors auth-guard.js exactly):
-//   • You must be signed in (Firebase Auth).
-//   • Your /users/{uid} profile must exist and have active != false.
-//   • Some collections additionally require a specific role.
-//   • Everything not listed here is DENIED by default.
-//
-// Deploy:  Firebase Console → Firestore → Rules → paste → Publish
-//    or:   firebase deploy --only firestore:rules
-// ============================================================
+// PCLINIC — EMERGENCY SECURITY BASELINE
+// Deploy only after running the emulator tests in tests/.
+// This is a transitional ruleset for the current monolithic patient model.
+// It removes public/date-based access, denies unknown collections, restricts
+// non-clinical roles, validates staff profiles, protects immutable ownership
+// fields, and removes the pre-authorized wildcard patient subcollection.
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // ── HELPERS ────────────────────────────────────────────
 
     function signedIn() {
       return request.auth != null;
     }
 
-    // The caller's own staff profile document.
-    function profile() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    function profilePath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
     }
 
     function hasProfile() {
-      return signedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      return signedIn() && exists(profilePath());
     }
 
-    // An "active staff member": signed in, profile exists, not deactivated.
-    //
-    // We use .get('active', true) rather than `.active != false` because in
-    // Firestore rules, reading a field that does not exist raises an
-    // evaluation error (it does NOT return null) — which would deny access
-    // outright. Any profile document created without an `active` field (e.g.
-    // a hand-made first admin, per SECURITY_SETUP.md step 3) would silently
-    // be locked out of the whole system.
-    //
-    // Defaulting to `true` when the field is absent matches exactly what
-    // auth-guard.js and login.html do: they only block on `active === false`.
+    function profile() {
+      return get(profilePath()).data;
+    }
+
+    // Missing `active` is denied. Every staff profile must be explicit.
     function activeStaff() {
-      return hasProfile() && profile().get('active', true) != false;
+      return hasProfile() && profile().get('active', false) == true;
     }
 
     function role() {
       return hasProfile() ? profile().get('role', '') : '';
     }
 
+    function staffId() {
+      return hasProfile() ? profile().get('staffId', '') : '';
+    }
+
     function isAdmin() {
       return activeStaff() && role() == 'admin';
     }
 
-    // Admins are allowed everywhere, matching auth-guard.js behaviour.
     function hasRole(allowed) {
-      return activeStaff() && (role() == 'admin' || role() in allowed);
+      return activeStaff() && (isAdmin() || role() in allowed);
     }
 
+    function validRole(value) {
+      return value in [
+        'admin', 'doctor', 'nurse', 'reception', 'lab', 'pharmacy',
+        'radio', 'physio', 'cashier', 'finance', 'hr', 'inventory',
+        'theater', 'beds'
+      ];
+    }
 
-    // ── USERS / STAFF PROFILES ─────────────────────────────
-    //
-    // CRITICAL BOOTSTRAP RULE:
-    // auth-guard.js and login.html read /users/{own uid} on EVERY page load,
-    // BEFORE the app knows what role the person has. If we required admin to
-    // read this collection, every non-admin would be locked out of the entire
-    // system on login. So: you may always read your OWN profile document.
-    //
-    // Listing the whole collection (admin-dashboard.html staff table and the
-    // duplicate-staffId query) stays admin-only.
+    function validProfile(data) {
+      return data.keys().hasOnly([
+          'staffId', 'name', 'role', 'active', 'createdAt', 'createdBy'
+        ])
+        && data.staffId is string
+        && data.staffId.matches('^[0-9]{1,20}$')
+        && data.name is string
+        && data.name.size() >= 2
+        && data.name.size() <= 120
+        && data.role is string
+        && validRole(data.role)
+        && data.active is bool;
+    }
 
+    function patientReader() {
+      // HR, inventory, cashier and finance must use their own collections and
+      // cannot read the monolithic clinical patient record.
+      return hasRole([
+        'doctor', 'nurse', 'reception', 'lab', 'pharmacy', 'radio',
+        'physio', 'theater', 'beds'
+      ]);
+    }
+
+    function patientUpdater() {
+      return hasRole([
+        'doctor', 'nurse', 'reception', 'lab', 'pharmacy', 'radio',
+        'physio', 'theater', 'beds'
+      ]);
+    }
+
+    function patientIdentityIsImmutable() {
+      return request.resource.data.get('id', null) == resource.data.get('id', null)
+        && request.resource.data.get('mrn', '') == resource.data.get('mrn', '')
+        && request.resource.data.get('createdAt', null) == resource.data.get('createdAt', null)
+        && request.resource.data.get('createdById', '') == resource.data.get('createdById', '');
+    }
+
+    function validOrderStatus(value) {
+      return value in ['pending', 'in-progress', 'completed', 'cancelled'];
+    }
+
+    function orderReader(data) {
+      return activeStaff() && (
+        isAdmin()
+        || role() in ['doctor', 'nurse', 'reception', 'cashier', 'finance', 'lab', 'pharmacy', 'physio', 'theater']
+        || (role() == 'radio' && data.get('dept', '') == 'radiology')
+      );
+    }
+
+    function departmentMayUpdateOrder(data) {
+      return isAdmin()
+        || data.get('orderedById', '') == staffId()
+        || (data.get('dept', '') == 'lab' && role() == 'lab')
+        // Radiology transitions are performed by trusted callable functions,
+        // not direct browser writes, so finalisation and audit are atomic.
+        || (data.get('dept', '') == 'pharmacy' && role() == 'pharmacy')
+        || (data.get('dept', '') == 'physio' && role() == 'physio')
+        || (data.get('dept', '') == 'theatre' && role() == 'theater')
+        || (data.get('dept', '') == 'nursing' && role() == 'nurse');
+    }
+
+    function messageAddressedToCaller(data) {
+      return isAdmin()
+        || data.get('toStaffId', '') == staffId()
+        || (data.get('toRoles', []) is list && data.get('toRoles', []).hasAny([role()]));
+    }
+
+    // ── STAFF PROFILES ───────────────────────────────────────────
     match /users/{userId} {
-
-      // Read your own profile (needed by the auth guard), or any profile if admin.
       allow get: if signedIn() && (request.auth.uid == userId || isAdmin());
-
-      // Listing/querying all staff — admin only.
       allow list: if isAdmin();
 
-      // Only admins create staff profiles (admin-dashboard.html → addStaff()).
-      // Guard the shape so a compromised client can't invent arbitrary fields.
-      allow create: if isAdmin()
-        && request.resource.data.keys().hasOnly(
-             ['staffId', 'name', 'role', 'active', 'createdAt', 'createdBy'])
-        && request.resource.data.staffId is string
-        && request.resource.data.name is string
-        && request.resource.data.role is string
-        && request.resource.data.active is bool;
+      allow create: if isAdmin() && validProfile(request.resource.data);
 
-      // Only admins change profiles (e.g. the Deactivate / Reactivate toggle).
-      // An admin may not deactivate or demote THEMSELVES — this prevents
-      // locking the last admin out of the system by accident.
-      // (.get(field, default) again, so profiles missing a field don't raise
-      // an evaluation error and produce a confusing permission denial.)
+      // Supports one-time deletion of legacy `initialPassword`: the resulting
+      // document must contain only the approved profile fields.
       allow update: if isAdmin()
+        && validProfile(request.resource.data)
+        && request.resource.data.staffId == resource.data.staffId
         && !(request.auth.uid == userId
-             && (request.resource.data.get('active', true) != resource.data.get('active', true)
-                 || request.resource.data.get('role', '') != resource.data.get('role', '')));
+          && (request.resource.data.active != resource.data.active
+            || request.resource.data.role != resource.data.role));
 
-      // Deleting a profile would orphan the Auth account and destroy the
-      // audit trail. The app uses the `active` flag instead — so: never.
+      // Deactivate instead. Permanent Auth deletion belongs in an Admin SDK
+      // backend and must not destroy the profile/audit linkage.
       allow delete: if false;
     }
 
-
-    // ── PATIENTS ───────────────────────────────────────────
-    //
-    // Today the app stores everything (vitals, notes, prescriptions, bills…)
-    // inside one patient document, so read/write has to be all-or-nothing for
-    // active staff. Once the Phase-1 sub-collection refactor lands, these can
-    // be tightened per-role (e.g. only doctors/nurses write clinical notes).
-    // The /patients/{id}/{sub}/{doc} block below is already in place for that.
-
+    // ── PATIENTS — TRANSITIONAL MONOLITH ─────────────────────────
     match /patients/{patientId} {
+      allow read: if patientReader();
 
-      allow read: if activeStaff();
+      allow create: if hasRole(['reception'])
+        && request.resource.data.get('mrn', '') == patientId
+        && request.resource.data.get('createdById', '') == staffId()
+        && request.resource.data.get('photo', null) == null
+        && !request.resource.data.keys().hasAny(['photos', 'videos', 'media', 'attachments', 'consentFile']);
 
-      // Any active staff member may create or update patient records.
-      allow create, update: if activeStaff();
+      allow update: if patientUpdater()
+        && patientIdentityIsImmutable()
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['photo', 'photos', 'videos', 'media', 'attachments', 'consentFile']);
+      allow delete: if isAdmin();
 
-      // Deletion is destructive and irreversible. Only the two roles whose
-      // dashboards actually expose a delete button — admin and reception.
-      allow delete: if hasRole(['reception']);
-
-      // ── FUTURE SUB-COLLECTIONS (Phase 1 refactor) ────────
-      // Pre-authorised so the migration doesn't need a rules change.
-      match /{subCollection}/{docId} {
-        allow read: if activeStaff();
-        allow create, update: if activeStaff();
+      // The current application stores official forms here. No other future
+      // subcollection receives blanket access.
+      match /files/{fileId} {
+        allow read: if patientReader();
+        allow create, update: if hasRole([
+          'doctor', 'nurse', 'reception', 'lab', 'radio', 'physio', 'theater'
+        ])
+        && (request.resource.data.get('patientId', null) == patientId
+          || request.resource.data.get('patientId', null)
+            == get(/databases/$(database)/documents/patients/$(patientId)).data.get('id', null))
+        && !request.resource.data.keys().hasAny([
+          'data', 'attachment', 'photo', 'photos', 'video', 'videos', 'media'
+        ])
+        && (!request.resource.data.keys().hasAny(['attachments'])
+          || (request.resource.data.attachments is list
+            && request.resource.data.attachments.size() == 0));
         allow delete: if isAdmin();
+      }
+
+      match /{unknownSubcollection}/{documentId} {
+        allow read, write: if false;
       }
     }
 
-
-
-    // ── ORDERS (lab / imaging / prescription / procedure) ──
-    // The shared work stream between departments. Any active staff member
-    // may raise an order and any may progress one — a lab tech must be
-    // able to complete a doctor's request. Deletion is never allowed:
-    // orders are cancelled with a reason so the record survives.
+    // ── ORDERS ───────────────────────────────────────────────────
     match /orders/{orderId} {
-      allow read: if activeStaff();
-      allow create: if activeStaff()
-        && request.resource.data.orderedById == profile().get('staffId', '')
-        && request.resource.data.status == 'pending';
-      allow update: if activeStaff();
+      allow read: if orderReader(resource.data);
+
+      allow create: if hasRole(['doctor', 'nurse', 'reception'])
+        && request.resource.data.get('id', '') == orderId
+        && request.resource.data.get('orderedById', '') == staffId()
+        && request.resource.data.get('status', '') == 'pending';
+
+      allow update: if orderReader(resource.data)
+        && departmentMayUpdateOrder(resource.data)
+        && request.resource.data.get('id', '') == resource.data.get('id', '')
+        && request.resource.data.get('patientId', '') == resource.data.get('patientId', '')
+        && request.resource.data.get('orderedById', '') == resource.data.get('orderedById', '')
+        && request.resource.data.get('orderedAt', '') == resource.data.get('orderedAt', '')
+        && validOrderStatus(request.resource.data.get('status', ''));
+
       allow delete: if false;
     }
 
-    // ── BILLS ──
-    // Created by whoever raises the charge (usually a doctor, via an
-    // order). Only cashier/finance/admin may record a payment, so a
-    // clinician cannot mark their own bill as settled.
+    // ── LABORATORY REPORTING ──────────────────────────────────────
+    // Final reports, drafts, critical alerts and audit entries are written by
+    // trusted callable functions. Browser clients are read-only so a released
+    // result cannot be silently overwritten from developer tools.
+    match /labResults/{resultId} {
+      allow read: if hasRole(['doctor', 'nurse', 'lab']);
+      allow write: if false;
+    }
+
+    match /labResultDrafts/{draftId} {
+      allow read: if hasRole(['lab']);
+      allow write: if false;
+    }
+
+    match /labCriticalAlerts/{alertId} {
+      allow read: if hasRole(['doctor', 'nurse', 'lab']);
+      allow write: if false;
+    }
+
+    // ── RADIOLOGY REPORTING ───────────────────────────────────────
+    // Reports, addenda and critical alerts are written only by trusted
+    // callable functions using the Admin SDK. Browser clients are read-only.
+    match /radiologyReports/{reportId} {
+      allow read: if hasRole(['doctor', 'nurse', 'radio']);
+      allow write: if false;
+    }
+
+    match /radiologyAddenda/{addendumId} {
+      allow read: if hasRole(['doctor', 'nurse', 'radio']);
+      allow write: if false;
+    }
+
+    match /criticalAlerts/{alertId} {
+      allow read: if hasRole(['doctor', 'nurse', 'radio']);
+      allow write: if false;
+    }
+
+    // ── BILLS ────────────────────────────────────────────────────
     match /bills/{billId} {
-      allow read: if activeStaff();
-      allow create: if activeStaff();
-      allow update: if hasRole(['cashier', 'finance']);
+      allow read: if hasRole(['cashier', 'finance']);
+
+      allow create: if hasRole(['doctor', 'nurse', 'reception'])
+        && request.resource.data.get('id', '') == billId
+        && request.resource.data.get('createdById', '') == staffId()
+        && request.resource.data.get('status', '') == 'pending'
+        && request.resource.data.get('paid', 0) == 0;
+
+      allow update: if hasRole(['cashier', 'finance'])
+        && request.resource.data.get('id', '') == resource.data.get('id', '')
+        && request.resource.data.get('patientId', '') == resource.data.get('patientId', '')
+        && request.resource.data.get('createdById', '') == resource.data.get('createdById', '')
+        && request.resource.data.get('createdAt', '') == resource.data.get('createdAt', '')
+        && request.resource.data.get('status', '') in ['pending', 'partial', 'paid', 'cancelled']
+        && request.resource.data.get('total', -1) is number
+        && request.resource.data.get('paid', -1) is number
+        && request.resource.data.get('balance', -1) is number
+        && request.resource.data.total >= 0
+        && request.resource.data.paid >= 0
+        && request.resource.data.balance >= 0
+        && request.resource.data.paid <= request.resource.data.total
+        && request.resource.data.balance == request.resource.data.total - request.resource.data.paid;
+
       allow delete: if false;
     }
 
-    // ── MESSAGES / NOTIFICATIONS ──
-    // Staff-to-staff and admin broadcasts. The sender is pinned to the
-    // caller so nobody can forge a message from someone else.
-    match /messages/{msgId} {
-      allow read: if activeStaff();
+    // ── MESSAGES ─────────────────────────────────────────────────
+    match /messages/{messageId} {
+      allow read: if activeStaff() && messageAddressedToCaller(resource.data);
+
       allow create: if activeStaff()
-        && request.resource.data.fromId == profile().get('staffId', '');
-      // Anyone may update, but ONLY to add themselves to readBy.
+        && request.resource.data.get('id', '') == messageId
+        && request.resource.data.get('fromId', '') == staffId()
+        && request.resource.data.get('fromRole', '') == role()
+        && request.resource.data.get('readBy', []) is list
+        && request.resource.data.get('readBy', []).size() == 0;
+
       allow update: if activeStaff()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']);
+        && messageAddressedToCaller(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy'])
+        && request.resource.data.readBy is list
+        && request.resource.data.readBy.hasAll(resource.data.get('readBy', []))
+        && request.resource.data.readBy.hasAny([staffId()])
+        && request.resource.data.readBy.size() <= resource.data.get('readBy', []).size() + 1;
+
       allow delete: if isAdmin();
     }
 
-    // ── CONFIG (service tariff / price list) ──
-    // Everyone needs to read prices; only admins may change them.
+    // ── PATIENT ID COUNTER ───────────────────────────────────────
+    match /config/patientCounter {
+      allow get: if hasRole(['reception']);
+
+      allow create: if hasRole(['reception'])
+        && request.resource.data.keys().hasOnly(['lastId', 'updatedAt'])
+        && request.resource.data.lastId is int
+        && request.resource.data.lastId >= 1001;
+
+      allow update: if hasRole(['reception'])
+        && request.resource.data.keys().hasOnly(['lastId', 'updatedAt'])
+        && request.resource.data.lastId is int
+        && request.resource.data.lastId == resource.data.lastId + 1;
+
+      allow delete: if false;
+    }
+
+    // Other configuration documents (tariffs/catalogues) are admin-managed.
     match /config/{docId} {
       allow read: if activeStaff();
-      allow write: if isAdmin();
+      allow create, update: if isAdmin();
+      allow delete: if false;
     }
 
-    // ── AUDIT LOG (append-only) ────────────────────────────
-    // Not yet written by the app — this is here so that when audit logging is
-    // added it is tamper-proof from day one. Entries can be created but never
-    // edited or deleted by anyone, including admins.
-
+    // Audit events will be written by a trusted backend. Client-created audit
+    // events are denied so the UI cannot forge evidence.
     match /auditLog/{entryId} {
       allow read: if isAdmin();
-      allow create: if activeStaff()
-        && request.resource.data.actorUid == request.auth.uid;
-      allow update, delete: if false;
+      allow write: if false;
     }
 
-
-    // ── DEFAULT DENY ───────────────────────────────────────
-    // Anything not explicitly matched above is refused. If you add a new
-    // collection later, you must add a rule for it here or it will not work.
-
+    // Deny drug references and every unknown collection from browser clients.
+    // The Admin SDK backend bypasses rules and performs its own authorization.
     match /{document=**} {
       allow read, write: if false;
     }

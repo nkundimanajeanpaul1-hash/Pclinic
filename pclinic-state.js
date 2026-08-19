@@ -21,88 +21,110 @@
 
     function read(k, fallback) {
         try {
-            var v = localStorage.getItem(key(k));
+            var v = sessionStorage.getItem(key(k));
             return v === null ? fallback : JSON.parse(v);
         } catch (e) { return fallback; }
     }
 
     function write(k, v) {
-        try { localStorage.setItem(key(k), JSON.stringify(v)); return true; }
+        try { sessionStorage.setItem(key(k), JSON.stringify(v)); return true; }
         catch (e) { console.warn('[pclinic] storage full or blocked:', e); return false; }
     }
 
-    function drop(k) { try { localStorage.removeItem(key(k)); } catch (e) {} }
+    function drop(k) { try { sessionStorage.removeItem(key(k)); } catch (e) {} }
 
 
     /* ══════════════════════════════════════════
-       1. FAST LOGOUT
-       ══════════════════════════════════════════
-       The old flow was: confirm() → toast → setTimeout(500ms) →
-       await signOut() (a NETWORK round trip) → only then redirect.
-       On a slow connection that's several seconds of the user
-       clicking "Log out" and nothing visibly happening.
+       1. SECURE LOGOUT AND CLINICAL CACHE CLEARING
+       ══════════════════════════════════════════ */
+    function clearSensitiveBrowserState() {
+        // Keep only non-identifying display preferences. Staff IDs, patient
+        // data, drafts, orders, bills, media and local staff mirrors are
+        // removed. PClinic must never use localStorage as a clinical database.
+        var allowedPreferences = {
+            'pclinic-theme': true,
+            'pclinic-lang': true,
+            'pclinic-compact': true,
+            'pclinic-fontsize': true
+        };
+        try {
+            Object.keys(localStorage).forEach(function (k) {
+                var isPClinicKey = k.indexOf('pclinic') === 0 ||
+                    k === 'userRole' || k === 'userName' ||
+                    k === 'darkMode' || k === 'opd_dark_mode';
+                if (isPClinicKey && !allowedPreferences[k]) {
+                    localStorage.removeItem(k);
+                }
+            });
+        } catch (e) {}
+        try { sessionStorage.clear(); } catch (e) {}
+    }
 
-       Firebase persists the sign-out locally the moment it's called,
-       so there is no need to await the server before leaving. We
-       clear local state, fire signOut() WITHOUT awaiting it, and
-       navigate immediately. Sign-out still completes in the
-       background; the user just doesn't wait for it.
-    */
-    function fastLogout(opts) {
+    var logoutInProgress = false;
+    async function secureLogout(opts) {
         opts = opts || {};
+        if (logoutInProgress) return false;
+        if (opts.confirm !== false && !window.confirm('Sign out of PClinic?')) return false;
+        logoutInProgress = true;
 
-        if (opts.confirm !== false &&
-            !window.confirm('Sign out of PClinic?')) return;
-
-        // Visual acknowledgement within the same frame as the click.
         try {
             var veil = document.createElement('div');
             veil.setAttribute('role', 'status');
             veil.style.cssText =
                 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;' +
-                'justify-content:center;gap:12px;background:rgba(255,255,255,.92);' +
+                'justify-content:center;gap:12px;background:rgba(255,255,255,.94);' +
                 '-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);' +
                 'font:600 14px -apple-system,BlinkMacSystemFont,sans-serif;color:#1c1c1e';
-            veil.innerHTML =
-                '<span style="width:17px;height:17px;border:2.5px solid rgba(0,0,0,.15);' +
-                'border-top-color:#0071e3;border-radius:50%;' +
-                'animation:pcSpin .7s linear infinite"></span> Signing out…';
+            var spinner = document.createElement('span');
+            spinner.style.cssText =
+                'width:17px;height:17px;border:2.5px solid rgba(0,0,0,.15);' +
+                'border-top-color:#0071e3;border-radius:50%;animation:pcSpin .7s linear infinite';
+            veil.appendChild(spinner);
+            veil.appendChild(document.createTextNode(' Signing out securely…'));
             document.body.appendChild(veil);
         } catch (e) {}
 
-        // Clear per-user local state, but KEEP UI preferences
-        // (theme, remembered staff ID) so the next sign-in feels familiar.
-        try {
-            var keep = ['pclinic-theme', 'pclinic_remember_staffid'];
-            Object.keys(localStorage)
-                .filter(function (k) { return k.indexOf(NS) === 0; })
-                .forEach(function (k) { localStorage.removeItem(k); });
-            localStorage.removeItem('pclinic_remember_user');
-            // The selected patient is per-session clinical context. Leaving
-            // it behind meant the NEXT person to sign in inherited whoever
-            // the previous user had open.
-            localStorage.removeItem('pclinic_active_patient');
-            localStorage.removeItem('pclinic_handoff');
-            Object.keys(sessionStorage).forEach(function (k) {
-                if (keep.indexOf(k) === -1) sessionStorage.removeItem(k);
-            });
-        } catch (e) {}
+        clearSensitiveBrowserState();
 
-        // Fire and forget — do NOT await the network.
+        var tasks = [];
         try {
-            if (window.firebaseAuth && window.firebaseAuthFunctions &&
-                window.firebaseAuthFunctions.signOut) {
-                window.firebaseAuthFunctions.signOut(window.firebaseAuth)
-                    .catch(function () { /* already leaving */ });
+            if (window.firebaseAuth && window.firebaseAuthFunctions && window.firebaseAuthFunctions.signOut) {
+                tasks.push(window.firebaseAuthFunctions.signOut(window.firebaseAuth));
+            }
+        } catch (e) {}
+        try {
+            if (typeof window.pclinicClearFirebaseCache === 'function') {
+                tasks.push(window.pclinicClearFirebaseCache());
             }
         } catch (e) {}
 
-        location.replace('login.html');   // replace() so Back can't re-enter
+        // Do not hang forever on a bad network, but give local sign-out and
+        // IndexedDB cleanup a chance to complete before navigation.
+        try {
+            await Promise.race([
+                Promise.allSettled(tasks),
+                new Promise(function (resolve) { setTimeout(resolve, 1800); })
+            ]);
+        } catch (e) {}
+
+        location.replace('login.html');
+        return true;
     }
 
-    window.pclinicLogout = fastLogout;
-    window.pcLogout = fastLogout;
+    window.pclinicClearSensitiveState = clearSensitiveBrowserState;
+    window.pclinicLogout = secureLogout;
+    window.pcLogout = secureLogout;
 
+    // Shared clinical terminals lock after 15 minutes without interaction.
+    var idleTimer = null;
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function () { secureLogout({ confirm: false }); }, 15 * 60 * 1000);
+    }
+    ['pointerdown', 'keydown', 'touchstart'].forEach(function (eventName) {
+        document.addEventListener(eventName, resetIdleTimer, { passive: true });
+    });
+    resetIdleTimer();
 
     /* ══════════════════════════════════════════
        2. REFRESH-STABLE STATE

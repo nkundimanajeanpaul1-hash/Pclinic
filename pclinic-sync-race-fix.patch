@@ -1,0 +1,268 @@
+diff --git a/lab-request.html b/lab-request.html
+index 7c8ed0d..c89e310 100644
+--- a/lab-request.html
++++ b/lab-request.html
+@@ -1272,7 +1272,7 @@ function autoTickRecentLabRequests() {
+ 
+ 
+ // ─── SUBMIT LAB REQUEST ───
+-function submitLabRequest() {
++async function submitLabRequest() {
+     if (!currentPatient) {
+         try {
+             if (window.parent && window.parent.currentPatient) {
+@@ -1329,14 +1329,22 @@ function submitLabRequest() {
+             if (index !== -1) {
+                 if (!patients[index].labRequests) patients[index].labRequests = [];
+                 patients[index].labRequests.push(labRequest);
++                // Mark this patient "pending" BEFORE the optimistic local write lands,
++                // so the realtime listener in patient-data.js won't overwrite this
++                // labRequest with a stale cloud snapshot while the write is in flight.
++                try { if (typeof markPatientPending === 'function') markPatientPending(patients[index].id); } catch(e0) {}
+                 localStorage.setItem('pclinic_patients', JSON.stringify(patients));
+                 // ⛔ CRITICAL: write through patient-data.js too (localStorage + Firestore),
+-                // so the Doctor, Admin and every dashboard see the request.
++                // so the Doctor, Admin and every dashboard see the request. Awaited so
++                // a failed server write surfaces immediately instead of silently.
+                 try {
+                     if (typeof updatePatient === 'function') {
+-                        updatePatient(patients[index].id, { labRequests: patients[index].labRequests });
++                        const savedPatient = await updatePatient(patients[index].id, { labRequests: patients[index].labRequests });
++                        if (!savedPatient) {
++                            console.warn('⚠️ Lab request was NOT confirmed by the server — it may not reach Lab/Cashier on other devices.');
++                        }
+                     }
+-                } catch(e2) {}
++                } catch(e2) { console.warn('updatePatient threw:', e2); }
+             } else {
+                 console.warn('⚠️ Patient not found in pclinic_patients — request saved to order ledger only');
+             }
+diff --git a/patient-data.js b/patient-data.js
+index eb25aa6..03ca0c9 100644
+--- a/patient-data.js
++++ b/patient-data.js
+@@ -15,6 +15,17 @@ const COUNTER_DOC_PATH = 'config/patientCounter'; // stores { lastId: number }
+ let isFirebaseReady = false;
+ let realtimeUnsubscribe = null;
+ 
++// A patient ID sits in here from the moment a local write starts until
++// Firestore confirms (or definitively fails) it. The realtime listener
++// below used to overwrite the ENTIRE patients array with whatever the
++// server snapshot said, which meant a lab request added to a patient's
++// labRequests[] a few hundred ms earlier — before the write round-tripped
++// — got silently erased the instant any snapshot ticked. Any patient in
++// this set is protected: their local copy wins until the write resolves.
++const _pendingPatientIds = new Set();
++function markPatientPending(id) { _pendingPatientIds.add(String(id)); }
++function clearPatientPending(id) { _pendingPatientIds.delete(String(id)); }
++
+ // ─── HELPERS ───
+ function getCurrentStaff() {
+     return window.currentStaff || { name: 'Unknown', staffId: '', id: '' };
+@@ -90,11 +101,25 @@ function startRealtimeSync() {
+             var localPatients = [];
+             try { localPatients = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) {}
+             var cloudIds = new Set(cloudPatients.map(function (p) { return String(p.id); }));
++
++            // Brand new local-only patients (never synced at all) are still
++            // discarded — that guard against stale/fabricated cache is fine.
+             var localOnlyCount = localPatients.filter(function (p) { return !cloudIds.has(String(p.id)); }).length;
+             if (localOnlyCount > 0) {
+                 console.warn('Discarding ' + localOnlyCount + ' unverified local-only patient record(s); no automatic upload is allowed.');
+             }
+-            var finalPatients = cloudPatients;
++
++            // But for patients that DO exist in the cloud AND have a write
++            // still in flight from this tab (e.g. a lab request just
++            // submitted), keep the local version instead of the snapshot's
++            // — the snapshot may simply predate that write landing.
++            var localById = {};
++            localPatients.forEach(function (p) { localById[String(p.id)] = p; });
++            var finalPatients = cloudPatients.map(function (cp) {
++                var pid = String(cp.id);
++                if (_pendingPatientIds.has(pid) && localById[pid]) return localById[pid];
++                return cp;
++            });
+             localStorage.setItem(STORAGE_KEY, JSON.stringify(finalPatients));
+             console.log('☁️ Synced', finalPatients.length, 'patients (cloud:' + cloudPatients.length + ' local:' + localPatients.length + ')');
+             window.dispatchEvent(new Event('storage'));
+@@ -386,8 +411,10 @@ async function updatePatient(id, updates) {
+ 
+     // Emergency safety mode is cloud-first. Do not tell clinical staff a
+     // record was saved when Firestore rejected or never received it.
++    markPatientPending(id);
+     const synced = await savePatientToFirebase_FIELD_ONLY(id, safeUpdates);
+     if (!synced) {
++        clearPatientPending(id);
+         const msg = 'Record was NOT saved to the server. Check your connection and permissions, then try again.';
+         console.error(msg, id, Object.keys(safeUpdates));
+         if (window.pcToast) window.pcToast(msg, 'error', 7000);
+@@ -409,6 +436,7 @@ async function updatePatient(id, updates) {
+     }
+     patients[idx] = merged;
+     localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
++    clearPatientPending(id);
+     window.dispatchEvent(new Event('storage'));
+     console.log('✅ Patient updated on server:', merged.mrn, Object.keys(safeUpdates));
+     return merged;
+@@ -872,6 +900,8 @@ window.getPaidBills = getPaidBills;
+ window.markBillAsPaid = markBillAsPaid;
+ window.getAllBills = getAllBills;
+ window.getUnpaidBills = getUnpaidBills;
++window.markPatientPending = markPatientPending;
++window.clearPatientPending = clearPatientPending;
+ window.addLabRequest = addLabRequest;
+ window.addLabResult = addLabResult;
+ window.getPatientSummary = getPatientSummary;
+diff --git a/pclinic-orders.js b/pclinic-orders.js
+index 4fa5821..5a6c871 100644
+--- a/pclinic-orders.js
++++ b/pclinic-orders.js
+@@ -45,29 +45,94 @@
+     function emit(name, detail) {
+         window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+     }
++
++    /* ══════════════════════════════════════════
++       IN-FLIGHT WRITE GUARD
++       ══════════════════════════════════════════
++       A record written locally is "pending" from the moment it's saved
++       until Firestore confirms (or definitively rejects) it. mergeDown()
++       must never treat a pending record as "unverified local cache junk"
++       — that was the bug: a lab order created 200ms before the next
++       onSnapshot tick got wiped from localStorage because the cloud
++       write simply hadn't landed yet.
++    */
++    var _pendingWrites = {};   // id -> true while a push to Firestore is in flight
++    function markPending(id)   { _pendingWrites[id] = true; }
++    function clearPending(id)  { delete _pendingWrites[id]; }
++    function isPending(id)     { return !!_pendingWrites[id]; }
++
+     // Push to Firestore when available. Never blocks the UI — the local
+     // write already happened, so an offline doctor keeps working.
++    // On confirmed failure we do NOT delete the local record anymore —
++    // we flag it so the UI can show "not saved to server, tap to retry"
++    // and mergeDown() knows to leave it alone until it's resolved.
+     function sync(coll, id, data) {
++        var key = coll === 'orders' ? ORDERS_KEY : coll === 'bills' ? BILLS_KEY : coll === 'messages' ? MSGS_KEY : null;
++
++        function flagFailed(reason) {
++            if (!key) return;
++            var all = read(key, []);
++            var i = all.findIndex(function (row) { return String(row.id) === String(id); });
++            if (i !== -1) {
++                all[i]._syncFailed = true;
++                all[i]._syncError = reason || 'unknown';
++                write(key, all);
++            }
++            clearPending(id);
++            emit('pclinicSyncError', { collection: coll, id: id });
++            if (window.pcToast) window.pcToast('⚠️ Not saved to the server yet — will retry, or tap to retry now.', 'error', 7000);
++        }
++
++        markPending(id);
++
+         try {
+             if (!window.firebaseDB || !window.firebaseFunctions) {
+                 throw new Error('Secure server connection is unavailable');
+             }
+             var f = window.firebaseFunctions;
+             return f.setDoc(f.doc(window.firebaseDB, coll, id), data)
++                .then(function () {
++                    // Confirmed — clear any previous failure flag and the pending guard.
++                    if (key) {
++                        var all = read(key, []);
++                        var i = all.findIndex(function (row) { return String(row.id) === String(id); });
++                        if (i !== -1 && (all[i]._syncFailed || all[i]._syncError)) {
++                            delete all[i]._syncFailed;
++                            delete all[i]._syncError;
++                            write(key, all);
++                        }
++                    }
++                    clearPending(id);
++                    return true;
++                })
+                 .catch(function (e) {
+                     console.error('[pclinic] server write failed:', e);
+-                    var key = coll === 'orders' ? ORDERS_KEY : coll === 'bills' ? BILLS_KEY : coll === 'messages' ? MSGS_KEY : null;
+-                    if (key) write(key, read(key, []).filter(function (row) { return String(row.id) !== String(id); }));
+-                    emit('pclinicSyncError', { collection: coll, id: id });
+-                    if (window.pcToast) window.pcToast('Change was NOT saved to the server. Please retry.', 'error', 7000);
++                    flagFailed(e && e.message);
+                     return false;
+                 });
+         } catch (e) {
+-            if (window.pcToast) window.pcToast('Secure server connection is required.', 'error', 7000);
++            flagFailed(e && e.message);
+             return Promise.resolve(false);
+         }
+     }
+ 
++    // Manual retry for a record the UI flagged as _syncFailed.
++    function retrySync(coll, id) {
++        var key = coll === 'orders' ? ORDERS_KEY : coll === 'bills' ? BILLS_KEY : coll === 'messages' ? MSGS_KEY : null;
++        if (!key) return Promise.resolve(false);
++        var all = read(key, []);
++        var row = all.filter(function (r) { return String(r.id) === String(id); })[0];
++        if (!row) return Promise.resolve(false);
++        var data = {};
++        Object.keys(row).forEach(function (k) {
++            if (k !== '_syncFailed' && k !== '_syncError') data[k] = row[k];
++        });
++        return sync(coll, id, data).then(function (ok) {
++            emit(coll === 'orders' ? 'ordersUpdated' : coll === 'bills' ? 'billsUpdated' : 'pclinicRetrySynced', { id: id, ok: ok });
++            return ok;
++        });
++    }
++
+     /* ══════════════════════════════════════════
+        LIVE PULL — Firestore → localStorage (orders & bills)
+        ══════════════════════════════════════════
+@@ -86,13 +151,26 @@
+         var localList = read(key, []);
+         var cloudIds = {};
+         cloudList.forEach(function (d) { cloudIds[String(d.id)] = true; });
++
++        // A local-only record is only "unverified browser cache junk" if it
++        // is NOT currently being pushed to Firestore and hasn't already
++        // failed to push (in which case the UI is showing a retry banner
++        // for it — discarding it here would hide that failure entirely).
+         var localOnly = localList.filter(function (d) { return !cloudIds[String(d.id)]; });
+-        if (localOnly.length) {
+-            console.warn('[pclinic] discarding ' + localOnly.length + ' unverified local-only ' + key + ' record(s)');
++        var keep = localOnly.filter(function (d) { return isPending(d.id) || d._syncFailed; });
++        var discard = localOnly.filter(function (d) { return !isPending(d.id) && !d._syncFailed; });
++
++        if (discard.length) {
++            console.warn('[pclinic] discarding ' + discard.length + ' unverified local-only ' + key + ' record(s)');
+         }
+-        // Firestore is authoritative in emergency security mode. Never
+-        // resurrect or auto-upload records left in a browser cache.
+-        return cloudList;
++        if (keep.length) {
++            console.log('[pclinic] keeping ' + keep.length + ' in-flight/failed local ' + key + ' record(s) pending confirmation');
++        }
++
++        // Firestore is authoritative for everything it has already
++        // confirmed. In-flight or failed local writes are appended so
++        // they stay visible until they resolve one way or the other.
++        return cloudList.concat(keep);
+     }
+ 
+     function startLiveSync(coll, key, eventName) {
+@@ -1454,11 +1532,13 @@
+         purgeAllTemplateData: purgeAllTemplateData,
+         ensureTariffSeeded: ensureTariffSeeded, SEED_LAB_EXAMS: SEED_LAB_EXAMS,
+         ensurePharmacySeeded: ensurePharmacySeeded, SEED_PHARMACY_ITEMS: SEED_PHARMACY_ITEMS,
+-        ensureActsSeeded: ensureActsSeeded, SEED_ACT_ITEMS: SEED_ACT_ITEMS
++        ensureActsSeeded: ensureActsSeeded, SEED_ACT_ITEMS: SEED_ACT_ITEMS,
++        retry: function (id) { return retrySync('orders', id); }
+     };
+     window.pcBilling = {
+         create: createBill, pay: payBill, cancel: cancelBill,
+-        list: getBills, revenue: revenueSummary, money: money, purge: purgeTemplateBillsFromStorage
++        list: getBills, revenue: revenueSummary, money: money, purge: purgeTemplateBillsFromStorage,
++        retry: function (id) { return retrySync('bills', id); }
+     };
+     window.pcTariff = {
+         all: getTariff, save: saveTariff, price: getPrice,

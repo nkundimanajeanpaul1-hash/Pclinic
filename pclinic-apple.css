@@ -1,0 +1,192 @@
+/* ═══════════════════════════════════════════════════════════════════
+   PCLINIC — APPLE DESIGN SYSTEM (recent iOS design language)
+   • Liquid-glass surfaces (saturation + blur, refractive gradient borders)
+   • SF Pro / SF Symbols typography with optical sizing
+   • Spring physics (cubic-bezier(.34,1.56,.64,1)) + press scaling
+   • Taptic-style haptic feedback (navigator.vibrate)
+   • Layered soft shadows, large superellipse corners, gradient mesh
+   • Automatic dark-mode vibrancy
+   Used by: Medical Summary, all form pages (via engine injection),
+   and the shared top-bar menu polish.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+    --apple-blue:   #0071e3;
+    --apple-teal:   #007080;
+    --apple-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --apple-ease:   cubic-bezier(0.25, 0.1, 0.25, 1);
+    --glass-bg:     rgba(255, 255, 255, 0.72);
+    --glass-bd:     rgba(255, 255, 255, 0.6);
+    --glass-line:   rgba(0, 0, 0, 0.08);
+    --radius-lg:    24px;
+    --radius-md:    16px;
+    --radius-pill:  980px;
+    --shadow-soft:  0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+    --shadow-lift:  0 2px 6px rgba(0, 0, 0, 0.06), 0 16px 44px rgba(0, 0, 0, 0.10);
+    --mesh-1: radial-gradient(1200px 700px at 12% 8%,  rgba(0, 113, 227, 0.07), transparent 55%);
+    --mesh-2: radial-gradient(1100px 680px at 88% 14%, rgba(0, 112, 128, 0.07), transparent 55%);
+    --mesh-3: radial-gradient(900px 640px at 55% 100%, rgba(175, 82, 222, 0.05), transparent 55%);
+}
+
+[data-theme="dark"], body.dark-mode {
+    --glass-bg:     rgba(30, 30, 34, 0.66);
+    --glass-bd:     rgba(255, 255, 255, 0.08);
+    --glass-line:   rgba(255, 255, 255, 0.10);
+    --shadow-soft:  0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.30);
+    --shadow-lift:  0 2px 6px rgba(0, 0, 0, 0.4), 0 18px 48px rgba(0, 0, 0, 0.35);
+}
+
+/* ─── TYPOGRAPHY: SF Pro with optical sizing ─── */
+body.apple-ui,
+.apple-ui {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+                 "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+}
+
+/* ─── PAGE BACKGROUND: gradient mesh + frosted wash ─── */
+body.apple-mesh {
+    background:
+        var(--mesh-1),
+        var(--mesh-2),
+        var(--mesh-3),
+        var(--bg, #f5f5f7) !important;
+    background-attachment: fixed !important;
+}
+
+/* ─── LIQUID GLASS SURFACE (iOS-style translucent card) ─── */
+.apple-glass {
+    background: var(--glass-bg) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
+    border: 0.5px solid var(--glass-bd) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-soft) !important;
+    transition: transform 0.45s var(--apple-spring),
+                box-shadow 0.45s var(--apple-spring) !important;
+}
+
+.apple-glass:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift) !important;
+}
+
+/* Refractive edge light (top inner highlight, like iOS glass) */
+.apple-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(160deg,
+        rgba(255, 255, 255, 0.55) 0%,
+        rgba(255, 255, 255, 0.12) 28%,
+        rgba(255, 255, 255, 0) 55%);
+    opacity: 0.9;
+}
+
+/* ─── APPLE PILL BUTTON ─── */
+.apple-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 36px;
+    padding: 0 18px;
+    border-radius: var(--radius-pill) !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.06) !important;
+    background: linear-gradient(180deg, #ffffff, #f4f5f7) !important;
+    color: #1d1d1f !important;
+    font-family: inherit !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em !important;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transition: transform 0.35s var(--apple-spring), box-shadow 0.35s var(--apple-spring),
+                background 0.25s var(--apple-ease), filter 0.25s var(--apple-ease);
+    -webkit-tap-highlight-color: transparent;
+}
+.apple-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+    filter: brightness(1.02);
+}
+.apple-btn:active {
+    transform: scale(0.95);
+    transition-duration: 0.08s;
+}
+.apple-btn.primary {
+    background: linear-gradient(180deg, #0a84ff, #0071e3) !important;
+    color: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.04) !important;
+    box-shadow: 0 2px 8px rgba(0, 113, 227, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.apple-btn.primary:hover {
+    box-shadow: 0 10px 26px rgba(0, 113, 227, 0.45);
+}
+
+/* ─── SEGMENTED / PILL CHIP ─── */
+.apple-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: var(--radius-pill);
+    background: rgba(0, 113, 227, 0.10);
+    color: var(--apple-blue);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+/* ─── iOS INPUT STYLE ─── */
+.apple-input {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 0.5px solid rgba(0, 0, 0, 0.10);
+    background: rgba(255, 255, 255, 0.85);
+    color: #1d1d1f;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s var(--apple-ease), box-shadow 0.2s var(--apple-ease),
+                background 0.2s var(--apple-ease);
+}
+.apple-input:focus {
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.14);
+    background: #ffffff;
+}
+
+/* ─── PAGE ENTRANCE (iOS-style spring reveal) ─── */
+@keyframes appleRise {
+    from { opacity: 0; transform: translateY(14px) scale(0.985); }
+    to   { opacity: 1; transform: none; }
+}
+.apple-rise {
+    animation: appleRise 0.5s var(--apple-spring) both;
+}
+.apple-rise-1 { animation-delay: 0.05s; }
+.apple-rise-2 { animation-delay: 0.10s; }
+.apple-rise-3 { animation-delay: 0.15s; }
+
+/* ─── HAPTIC-SUPPORTED PRESS (Taptic feel) ─── */
+.apple-btn, .apple-glass, .new-link, .chk-btn, .ab-btn {
+    will-change: transform;
+}
+
+/* ─── REDUCED MOTION (Apple accessibility) ─── */
+@media (prefers-reduced-motion: reduce) {
+    .apple-glass, .apple-btn, .apple-rise {
+        animation: none !important;
+        transition: opacity 0.15s ease !important;
+    }
+}

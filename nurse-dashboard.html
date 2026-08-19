@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 
     <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
+    <link rel="stylesheet" href="pclinic-apple.css">
 <style>
         /* ============================================================
            NURSE DASHBOARD — Complete Apple-Style
@@ -1143,7 +1144,7 @@
             50% { opacity: 0.5; }
         }
     </style>
-    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
+    <script src="pclinic-file.js?v=20260814_RAD" defer></script>
 </head>
 <body>
 
@@ -1192,6 +1193,7 @@
             <button class="nav-tab" data-tab="billing" onclick="switchTab('billing',this)"><i class="ti ti-receipt"></i> Billing</button>
             <button class="nav-tab" data-tab="lab" onclick="switchTab('lab',this)"><i class="ti ti-test-pipe"></i> Lab Results</button>
             <button class="nav-tab" data-tab="notes" onclick="switchTab('notes',this)"><i class="ti ti-notes"></i> Nursing Notes</button>
+            <button class="nav-tab" data-tab="careplan" onclick="switchTab('careplan',this)"><i class="ti ti-clipboard-check"></i> Care Plan</button>
             <button class="nav-tab" data-tab="meds" onclick="switchTab('meds',this)"><i class="ti ti-pill"></i> Medication Log</button>
         </div>
 
@@ -1445,6 +1447,19 @@
                     </div>
                     <div class="fa"><button class="btn-p" onclick="saveVitals()"><i class="ti ti-check"></i> Save vitals</button><button class="btn-s" onclick="clearVitals()">Clear</button></div>
                 </div>
+
+                <!-- ─── VITAL SIGNS GRAPH (Apple chart from the Common Server) ─── -->
+                <div class="panel-body" id="sub-vitals-graph">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <span style="font-size:14px;font-weight:700;letter-spacing:-0.01em;">📈 Vital signs graph — trends over time</span>
+                        <span class="apple-chip" id="vitalsGraphPatient">No patient selected</span>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;" id="vitalsGraphChips"></div>
+                    <div class="apple-glass" style="position:relative; padding:16px; overflow-x:auto;">
+                        <div id="vitalsGraphBox" style="min-width:560px;"></div>
+                    </div>
+                    <div style="font-size:11px;color:var(--tm);margin-top:8px;">Pulled live from the Common Server — every vital sign recorded by nurses and doctors appears here.</div>
+                </div>
             </div>
 
             <!-- ─── PANEL: CPN ─── -->
@@ -1515,6 +1530,44 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ─── DELIVERIES (Common Server registry) ─── -->
+                <div class="panel-body" id="sub-cpn-del">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                        <span style="font-size:14px;font-weight:700;letter-spacing:-0.01em;">🤰 Deliveries — registry</span>
+                        <span class="apple-chip" id="delPatientChip">No patient selected</span>
+                    </div>
+                    <div class="fg" style="margin-bottom:12px;">
+                        <div class="fgl"><div class="lbl">Delivery date &amp; time</div><input class="fi apple-input" type="datetime-local" id="delDateTime"/></div>
+                        <div class="fgl"><div class="lbl">Type of delivery</div>
+                            <select class="fi apple-input" id="delType">
+                                <option>Vaginal — normal (SVD)</option>
+                                <option>Vaginal — assisted (vacuum)</option>
+                                <option>Caesarean section</option>
+                            </select></div>
+                        <div class="fgl"><div class="lbl">Baby sex</div>
+                            <select class="fi apple-input" id="delSex"><option>Male</option><option>Female</option></select></div>
+                        <div class="fgl"><div class="lbl">Birth weight (kg)</div><input class="fi apple-input" type="number" step="0.01" id="delWeight" placeholder="3.20"/></div>
+                        <div class="fgl"><div class="lbl">APGAR (1 min / 5 min)</div><input class="fi apple-input" id="delApgar" placeholder="8 / 9"/></div>
+                        <div class="fgl"><div class="lbl">Outcome</div>
+                            <select class="fi apple-input" id="delOutcome">
+                                <option>Live birth — healthy</option>
+                                <option>Live birth — needs care</option>
+                                <option>Stillbirth</option>
+                            </select></div>
+                        <div class="fgl"><div class="lbl">Attended by</div><input class="fi apple-input" id="delBy" value="Nurse Achieng"/></div>
+                        <div class="fgl ff"><div class="lbl">Notes</div><textarea class="ta" id="delNotes" rows="2" placeholder="Complications, referral, maternal condition…"></textarea></div>
+                    </div>
+                    <div class="fa"><button class="btn-p apple-btn primary" onclick="saveDelivery()"><i class="ti ti-check"></i> Save delivery</button><button class="btn-s apple-btn" onclick="clearDelivery()">Clear</button></div>
+
+                    <div style="margin-top:20px; border-top:0.5px solid var(--bd); padding-top:14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span style="font-size:13px; font-weight:600;"><i class="ti ti-history"></i> Deliveries history</span>
+                            <span class="badge b-pink" id="delCount">0 deliveries</span>
+                        </div>
+                        <div id="delHistoryList"><p class="cpn-empty">📋 No deliveries recorded yet.</p></div>
+                    </div>
+                </div>
             </div>
 
             <!-- ─── PANEL: FAMILY PLANNING ─── -->
@@ -1565,6 +1618,35 @@
                         <div id="fpHistoryList">
                             <p class="cpn-empty">📋 No Family Planning records yet.</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── PANEL: CARE PLAN (Common Server) ─── -->
+            <div id="panel-careplan" class="main-panel" style="display:none;">
+                <div class="panel-body show" id="sub-careplan-form">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <span style="font-size:14px;font-weight:700;letter-spacing:-0.01em;">🗒️ Nursing Care Plan</span>
+                        <span class="apple-chip" id="careplanPatientChip">No patient selected</span>
+                    </div>
+                    <div class="fg" style="margin-bottom:12px;">
+                        <div class="fgl ff"><div class="lbl">Nursing problem / diagnosis</div><input class="fi apple-input" id="cpProblem" placeholder="e.g. Risk of infection — post-op wound"/></div>
+                        <div class="fgl ff"><div class="lbl">Goals / expected outcomes</div><textarea class="ta" id="cpGoals" rows="2" placeholder="e.g. Wound clean and dry, afebrile within 48h…"></textarea></div>
+                        <div class="fgl ff"><div class="lbl">Nursing interventions</div><textarea class="ta" id="cpInterventions" rows="3" placeholder="e.g. Daily dressing, monitor temp 4-hourly, encourage hydration…"></textarea></div>
+                        <div class="fgl"><div class="lbl">Evaluation date</div><input class="fi apple-input" type="date" id="cpEvalDate"/></div>
+                        <div class="fgl"><div class="lbl">Status</div>
+                            <select class="fi apple-input" id="cpStatus">
+                                <option>Active</option><option>Achieved</option><option>Discontinued</option>
+                            </select></div>
+                    </div>
+                    <div class="fa"><button class="btn-p apple-btn primary" onclick="saveCarePlan()"><i class="ti ti-check"></i> Save care plan</button><button class="btn-s apple-btn" onclick="clearCarePlan()">Clear</button></div>
+
+                    <div style="margin-top:20px; border-top:0.5px solid var(--bd); padding-top:14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span style="font-size:13px; font-weight:600;"><i class="ti ti-history"></i> Care plan history</span>
+                            <span class="badge b-info" id="cpCount">0 plans</span>
+                        </div>
+                        <div id="cpHistoryList"><p class="cpn-empty">📋 No care plans yet. Create one above.</p></div>
                     </div>
                 </div>
             </div>
@@ -1963,6 +2045,12 @@
             currentPatient = p;
             displayPatientCard(p);
             fillForms(p);
+            try {
+                renderCarePlanHistory();
+                renderDeliveriesHistory();
+                renderVitalsGraph();
+                updateNursingChips();
+            } catch(e) { console.warn(e); }
             showToast('👤 Loaded patient: ' + (p.firstName || '') + ' ' + (p.lastName || ''), 'success');
             document.getElementById('suggestions').classList.remove('show');
             switchTab('overview', document.querySelector('[data-tab="overview"]'));
@@ -3011,12 +3099,13 @@ function addBillRow() {
                 overview: [{ id: 'overview-default', label: 'Dashboard', icon: 'ti-home' }],
                 patients: [{ id: 'patients-list', label: 'All Patients', icon: 'ti-users' }],
                 triage: [{ id: 'triage-form', label: 'New triage', icon: 'ti-urgent' }],
-                vitals: [{ id: 'vitals-form', label: 'Record vitals', icon: 'ti-heartbeat' }],
-                cpn: [{ id: 'cpn-ante', label: 'CPN', icon: 'ti-baby-carriage' }],
+                vitals: [{ id: 'vitals-form', label: 'Record vitals', icon: 'ti-heartbeat' }, { id: 'vitals-graph', label: 'Vital signs graph', icon: 'ti-chart-line' }],
+                cpn: [{ id: 'cpn-ante', label: 'CPN', icon: 'ti-baby-carriage' }, { id: 'cpn-del', label: 'Deliveries', icon: 'ti-baby-carriage' }],
                 fp: [{ id: 'fp-consult', label: 'FP', icon: 'ti-heart' }],
                 billing: [{ id: 'bill-med', label: 'Billing', icon: 'ti-receipt' }],
                 lab: [{ id: 'lab-view', label: 'Lab results', icon: 'ti-test-pipe' }],
                 notes: [{ id: 'notes-form', label: 'Nursing notes', icon: 'ti-notes' }],
+                careplan: [{ id: 'careplan-form', label: 'Care Plan', icon: 'ti-clipboard-check' }],
                 meds: [{ id: 'meds-log', label: 'Medication log', icon: 'ti-pill' }]
             };
 
@@ -3159,10 +3248,9 @@ function addBillRow() {
         }
 
         function performLogout() {
-            showToast('🚪 Logging out...', 'info');
-            setTimeout(function() {
-                window.location.href = 'login.html';
-            }, 1000);
+            return window.pclinicLogout
+                ? window.pclinicLogout({ confirm: false })
+                : window.location.replace('login.html');
         }
 
         // ─── PRINT ───
@@ -3215,13 +3303,299 @@ function addBillRow() {
             });
 
             loadPatients();
-            switchTab('overview', document.querySelector('[data-tab="overview"]'));
+
+            // ─── DEEP LINK from the Nursing menu (top bar): ?patient=&tab= ───
+            try {
+                var nq = new URLSearchParams(window.location.search);
+                var np = nq.get('patient');
+                var nt = nq.get('tab');
+                if (np) {
+                    var npts = (typeof getPatients === 'function') ? getPatients() : [];
+                    var npFound = npts.find(function(x) {
+                        return String(x.id) === String(np) || String(x.mrn) === String(np);
+                    });
+                    if (npFound) {
+                        try {
+                            selectPatient(npFound.id);
+                        } catch(selErr) {
+                            // ⛔ ROBUST FALLBACK: set the patient directly and
+                            // render the nursing features (selectPatient may fail
+                            // in some embedded environments).
+                            try {
+                                currentPatient = npFound;
+                                displayPatientCard(npFound);
+                                fillForms(npFound);
+                                renderCarePlanHistory();
+                                renderDeliveriesHistory();
+                                renderVitalsGraph();
+                                updateNursingChips();
+                            } catch(e2) { console.warn(e2); }
+                        }
+                    }
+                }
+                if (nt === 'careplan') {
+                    switchTab('careplan', document.querySelector('[data-tab="careplan"]'));
+                } else if (nt === 'vitalsgraph') {
+                    switchTab('vitals', document.querySelector('[data-tab="vitals"]'));
+                    switchSub('vitals-graph');
+                } else if (nt === 'deliveries') {
+                    switchTab('cpn', document.querySelector('[data-tab="cpn"]'));
+                    switchSub('cpn-del');
+                }
+            } catch(e) { console.warn(e); }
+
+            var hasDeepTab = false;
+            try { hasDeepTab = !!new URLSearchParams(window.location.search).get('tab'); } catch(e) {}
+            if (!hasDeepTab) {
+                switchTab('overview', document.querySelector('[data-tab="overview"]'));
+            }
 
             console.log('🏥 PClinic Nurse Dashboard — Fully Integrated');
             console.log('📌 CPN, Family Planning, Nursing Notes, Billing, and Medication Log save to patient-data.js');
             console.log('📌 All records visible to doctors');
             console.log('📌 Shortcuts: Ctrl+F (Search), Ctrl+D (Dark), ESC (Close)');
         });
+
+        /* ══════════════════════════════════════════════════════════════
+           NURSING MENU FEATURES — Common Server powered, Apple styled
+           Careplan · Vital signs graph · Deliveries
+           Every record saves through updatePatient() → the shared
+           pclinic_patients store + Firestore, visible to all dashboards.
+           ══════════════════════════════════════════════════════════════ */
+        function nurseName(p) {
+            return p ? ((p.name || ((p.firstName || '') + ' ' + (p.lastName || ''))).trim() || ('Patient ' + p.id)) : '';
+        }
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function updateNursingChips() {
+            var name = currentPatient ? nurseName(currentPatient) + ' — MRN ' + (currentPatient.mrn || currentPatient.id) : 'No patient selected';
+            ['careplanPatientChip', 'delPatientChip', 'vitalsGraphPatient'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = name;
+            });
+        }
+
+        /* ── 🗒️ CARE PLAN ── */
+        function saveCarePlan() {
+            if (!currentPatient) { showToast('⚠️ Please select a patient first', 'warning'); return; }
+            var problem = document.getElementById('cpProblem').value.trim();
+            if (!problem) { showToast('⚠️ Enter the nursing problem / diagnosis', 'warning'); return; }
+            var entry = {
+                id: 'CP-' + Date.now(),
+                problem: problem,
+                goals: document.getElementById('cpGoals').value.trim(),
+                interventions: document.getElementById('cpInterventions').value.trim(),
+                evalDate: document.getElementById('cpEvalDate').value,
+                status: document.getElementById('cpStatus').value,
+                by: (window.currentStaff && window.currentStaff.name) || 'Nurse',
+                at: new Date().toISOString()
+            };
+            if (!currentPatient.carePlans) currentPatient.carePlans = [];
+            currentPatient.carePlans.push(entry);
+            if (typeof updatePatient === 'function') {
+                updatePatient(currentPatient.id, { carePlans: currentPatient.carePlans });
+            }
+            clearCarePlan();
+            renderCarePlanHistory();
+            showToast('🗒️ Care plan saved to the Common Server', 'success');
+        }
+        function clearCarePlan() {
+            ['cpProblem','cpGoals','cpInterventions','cpEvalDate'].forEach(function(id) {
+                var el = document.getElementById(id); if (el) el.value = '';
+            });
+            var st = document.getElementById('cpStatus'); if (st) st.value = 'Active';
+        }
+        function renderCarePlanHistory() {
+            var box = document.getElementById('cpHistoryList');
+            var cnt = document.getElementById('cpCount');
+            var plans = (currentPatient && currentPatient.carePlans) || [];
+            if (cnt) cnt.textContent = plans.length + ' plan' + (plans.length === 1 ? '' : 's');
+            if (!plans.length) {
+                box.innerHTML = '<p class="cpn-empty">📋 No care plans yet. Create one above.</p>';
+                return;
+            }
+            box.innerHTML = plans.map(function(cp, i) {
+                var badge = cp.status === 'Achieved'
+                    ? '<span class="badge b-stable">Achieved</span>'
+                    : cp.status === 'Discontinued'
+                        ? '<span class="badge b-red">Discontinued</span>'
+                        : '<span class="badge b-info">Active</span>';
+                return '<div class="apple-glass" style="position:relative; padding:12px 16px; margin-bottom:8px;">' +
+                    '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">' +
+                        '<div style="flex:1; min-width:200px;">' +
+                            '<div style="font-weight:800; color:var(--tp); letter-spacing:-0.01em;">' + escapeHtml(cp.problem) + '</div>' +
+                            (cp.goals ? '<div style="font-size:11.5px;color:var(--tm);margin-top:2px;">🎯 ' + escapeHtml(cp.goals) + '</div>' : '') +
+                            (cp.interventions ? '<div style="font-size:11.5px;color:var(--tm);margin-top:2px;">🩺 ' + escapeHtml(cp.interventions) + '</div>' : '') +
+                            '<div style="font-size:10.5px;color:var(--tm);margin-top:4px;">' + (cp.evalDate ? 'Evaluate: ' + escapeHtml(cp.evalDate) + ' · ' : '') + escapeHtml(cp.by || '') + '</div>' +
+                        '</div>' +
+                        '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' + badge +
+                            '<button class="btn-s apple-btn" onclick="setCarePlanStatus(' + i + ',\'Achieved\')">✓ Achieved</button>' +
+                            '<button class="btn-s apple-btn" onclick="deleteCarePlan(' + i + ')" style="color:var(--red);">🗑</button>' +
+                        '</div>' +
+                    '</div></div>';
+            }).join('');
+        }
+        function setCarePlanStatus(i, status) {
+            if (!currentPatient || !currentPatient.carePlans) return;
+            currentPatient.carePlans[i].status = status;
+            if (typeof updatePatient === 'function') updatePatient(currentPatient.id, { carePlans: currentPatient.carePlans });
+            renderCarePlanHistory();
+            showToast(status === 'Achieved' ? '✅ Care plan goal achieved' : 'Care plan updated', 'success');
+        }
+        function deleteCarePlan(i) {
+            if (!currentPatient || !currentPatient.carePlans) return;
+            if (!confirm('Delete this care plan?')) return;
+            currentPatient.carePlans.splice(i, 1);
+            if (typeof updatePatient === 'function') updatePatient(currentPatient.id, { carePlans: currentPatient.carePlans });
+            renderCarePlanHistory();
+            showToast('🗑 Care plan removed from the Common Server', 'info');
+        }
+
+        /* ── 🤰 DELIVERIES ── */
+        function saveDelivery() {
+            if (!currentPatient) { showToast('⚠️ Please select a patient first', 'warning'); return; }
+            var date = document.getElementById('delDateTime').value;
+            var weight = document.getElementById('delWeight').value;
+            if (!date || !weight) { showToast('⚠️ Fill delivery date and birth weight', 'warning'); return; }
+            var entry = {
+                id: 'DEL-' + Date.now(),
+                dateTime: date,
+                type: document.getElementById('delType').value,
+                sex: document.getElementById('delSex').value,
+                weight: parseFloat(weight) || null,
+                apgar: document.getElementById('delApgar').value.trim(),
+                outcome: document.getElementById('delOutcome').value,
+                by: document.getElementById('delBy').value.trim() || 'Nurse',
+                notes: document.getElementById('delNotes').value.trim(),
+                at: new Date().toISOString()
+            };
+            if (!currentPatient.deliveries) currentPatient.deliveries = [];
+            currentPatient.deliveries.push(entry);
+            if (typeof updatePatient === 'function') {
+                updatePatient(currentPatient.id, { deliveries: currentPatient.deliveries });
+            }
+            clearDelivery();
+            renderDeliveriesHistory();
+            showToast('🤰 Delivery registered on the Common Server', 'success');
+        }
+        function clearDelivery() {
+            ['delDateTime','delWeight','delApgar','delNotes'].forEach(function(id) {
+                var el = document.getElementById(id); if (el) el.value = '';
+            });
+            var by = document.getElementById('delBy'); if (by) by.value = 'Nurse Achieng';
+        }
+        function renderDeliveriesHistory() {
+            var box = document.getElementById('delHistoryList');
+            var cnt = document.getElementById('delCount');
+            var dels = (currentPatient && currentPatient.deliveries) || [];
+            if (cnt) cnt.textContent = dels.length + ' deliver' + (dels.length === 1 ? 'y' : 'ies');
+            if (!dels.length) {
+                box.innerHTML = '<p class="cpn-empty">📋 No deliveries recorded yet.</p>';
+                return;
+            }
+            box.innerHTML = dels.map(function(d, i) {
+                var dStr = d.dateTime ? new Date(d.dateTime).toLocaleString('en-GB') : '—';
+                return '<div class="apple-glass" style="position:relative; padding:12px 16px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">' +
+                    '<div style="flex:1; min-width:200px;">' +
+                        '<div style="font-weight:800; color:var(--tp);">' + escapeHtml(d.type) + ' — ' + escapeHtml(d.sex || '') + ' · ' + escapeHtml(d.weight != null ? d.weight + ' kg' : '') + '</div>' +
+                        '<div style="font-size:11.5px;color:var(--tm);margin-top:2px;">' + escapeHtml(dStr) + ' · APGAR ' + escapeHtml(d.apgar || '—') + ' · ' + escapeHtml(d.outcome || '') + '</div>' +
+                        (d.notes ? '<div style="font-size:11px;color:var(--tm);margin-top:2px;">' + escapeHtml(d.notes) + '</div>' : '') +
+                    '</div>' +
+                    '<button class="btn-s apple-btn" onclick="deleteDelivery(' + i + ')" style="color:var(--red);">🗑</button>' +
+                '</div>';
+            }).join('');
+        }
+        function deleteDelivery(i) {
+            if (!currentPatient || !currentPatient.deliveries) return;
+            if (!confirm('Delete this delivery record?')) return;
+            currentPatient.deliveries.splice(i, 1);
+            if (typeof updatePatient === 'function') updatePatient(currentPatient.id, { deliveries: currentPatient.deliveries });
+            renderDeliveriesHistory();
+            showToast('🗑 Delivery record removed from the Common Server', 'info');
+        }
+
+        /* ── 📈 VITAL SIGNS GRAPH (Apple SVG trend charts from the Common Server) ── */
+        function vitalsSeries(vitals, key) {
+            return (vitals || [])
+                .map(function(v, i) { return { i: i, t: v.timestamp || v.recordedAt || v.at, v: v[key] }; })
+                .filter(function(x) { return x.v != null && x.v !== ''; });
+        }
+        function svgChart(points, color, unit, label) {
+            var W = 250, H = 88, pad = 10;
+            if (!points || points.length < 2) {
+                return '<div style="width:250px;">' +
+                    '<div style="font-size:11px;font-weight:800;color:#1d1d1f;">' + escapeHtml(label) + '</div>' +
+                    '<div style="height:88px;display:flex;align-items:center;justify-content:center;color:#8e8e93;font-size:11px;">Not enough data</div></div>';
+            }
+            var vals = points.map(function(p) { return Number(p.v); });
+            var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+            if (min === max) { min -= 1; max += 1; }
+            var span = max - min;
+            var px = function(i) { return pad + (i / (points.length - 1)) * (W - 2 * pad); };
+            var py = function(v) { return H - pad - ((Number(v) - min) / span) * (H - 2 * pad); };
+            var line = points.map(function(p, i) { return (i === 0 ? 'M' : 'L') + px(i).toFixed(1) + ' ' + py(p.v).toFixed(1); }).join(' ');
+            var dots = points.map(function(p, i) {
+                return '<circle cx="' + px(i).toFixed(1) + '" cy="' + py(p.v).toFixed(1) + '" r="3" fill="' + color + '"/>';
+            }).join('');
+            var last = points[points.length - 1];
+            return '<div style="width:250px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                    '<span style="font-size:11px;font-weight:800;color:#1d1d1f;">' + escapeHtml(label) + '</span>' +
+                    '<span style="font-size:10px;font-weight:800;color:' + color + ';">' + last.v + ' ' + escapeHtml(unit || '') + '</span></div>' +
+                '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="display:block;">' +
+                    '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                    dots +
+                '</svg>' +
+                '<div style="font-size:9.5px;color:#8e8e93;">' + points.length + ' records</div></div>';
+        }
+        function renderVitalsGraph() {
+            var box = document.getElementById('vitalsGraphBox');
+            var chips = document.getElementById('vitalsGraphChips');
+            if (!box) return;
+            var vitals = (currentPatient && currentPatient.vitals) || [];
+            if (!currentPatient) {
+                box.innerHTML = '<div style="padding:26px;text-align:center;color:#8e8e93;font-size:12.5px;">🔒 Select a patient first — the graph shows their vital signs recorded on the Common Server.</div>';
+                chips.innerHTML = '';
+                return;
+            }
+            if (!vitals.length) {
+                box.innerHTML = '<div style="padding:26px;text-align:center;color:#8e8e93;font-size:12.5px;">No vital signs recorded yet for <b>' + escapeHtml(nurseName(currentPatient)) + '</b>.<br>Record them in the Vitals tab — they appear on this graph instantly.</div>';
+                chips.innerHTML = '';
+                return;
+            }
+            var last = vitals[vitals.length - 1];
+            var chip = function(lbl, val, unit, color) {
+                if (val == null || val === '') return '';
+                return '<span class="apple-chip" style="background:' + color + '14;color:' + color + ';">' + lbl + ' ' + val + (unit ? ' ' + escapeHtml(unit) : '') + '</span>';
+            };
+            chips.innerHTML =
+                chip('🌡', last.temperature, '°C', '#ff9f0a') +
+                chip('💓', last.pulse, 'bpm', '#ff375f') +
+                chip('🩸', (last.bpSystolic && last.bpDiastolic) ? last.bpSystolic + '/' + last.bpDiastolic : null, 'mmHg', '#0071e3') +
+                chip('🫁', last.spo2, '%', '#30d158');
+            box.innerHTML =
+                '<div style="display:flex;flex-wrap:wrap;gap:18px;">' +
+                    svgChart(vitalsSeries(vitals, 'temperature'), '#ff9f0a', '°C', 'Temperature') +
+                    svgChart(vitalsSeries(vitals, 'pulse'), '#ff375f', 'bpm', 'Pulse') +
+                    svgChart(vitalsSeries(vitals, 'spo2'), '#30d158', '%', 'SpO₂') +
+                    svgChart(vitalsSeries(vitals, 'bpSystolic'), '#0071e3', 'mmHg', 'Systolic BP') +
+                '</div>';
+        }
+
+        window.saveCarePlan = saveCarePlan;
+        window.clearCarePlan = clearCarePlan;
+        window.renderCarePlanHistory = renderCarePlanHistory;
+        window.setCarePlanStatus = setCarePlanStatus;
+        window.deleteCarePlan = deleteCarePlan;
+        window.saveDelivery = saveDelivery;
+        window.clearDelivery = clearDelivery;
+        window.renderDeliveriesHistory = renderDeliveriesHistory;
+        window.deleteDelivery = deleteDelivery;
+        window.renderVitalsGraph = renderVitalsGraph;
+        window.updateNursingChips = updateNursingChips;
 
         // ─── UPDATE BREADCRUMB ───
         if (typeof updateBreadcrumb !== 'undefined') {

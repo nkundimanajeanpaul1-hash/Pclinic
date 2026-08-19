@@ -804,7 +804,7 @@
             .toast { font-size: 11px; padding: 6px 12px; }
         }
     </style>
-    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
+    <script src="pclinic-file.js?v=20260814_RAD" defer></script>
 </head>
 <body>
 
@@ -828,11 +828,11 @@
                 
                 <div class="tb-btn" onclick="toggleDarkMode()"><i class="ti ti-moon" id="darkModeIcon"></i></div>
                 <div class="tb-btn" onclick="openShortcuts()"><i class="ti ti-help"></i></div>
-                <div class="tb-btn" onclick="showToast('🔔 3 new notifications', 'info')"><i class="ti ti-bell"></i><div class="notif-dot"></div></div>
+                <div class="tb-btn" onclick="showToast('🔔 Notifications', 'info')"><i class="ti ti-bell"></i><div class="notif-dot"></div></div>
                 <div class="tb-btn" onclick="showToast('⚙️ Settings', 'info')"><i class="ti ti-settings"></i></div>
                 <div class="user-chip" onclick="toggleLogoutModal()">
-                    <div class="ua">DM</div>
-                    <span class="uname">Dr. Mutua</span>
+                    <div class="ua" id="finUa">ST</div>
+                    <span class="uname" id="finUname">Staff</span>
                 </div>
                 <div class="tb-btn" onclick="toggleLogoutModal()"><i class="ti ti-logout"></i></div>
             </div>
@@ -883,16 +883,16 @@
             <div id="patient-card" class="patient-card">
                 <div class="pc-header">
                     <div class="pc-photo" id="pc-photo" onclick="document.getElementById('patientPhotoInput').click()">
-                        <span id="pc-photo-text">JK</span>
+                        <span id="pc-photo-text">—</span>
                         <div class="upload-badge">📷</div>
                         <input type="file" id="patientPhotoInput" accept="image/*" style="display:none" onchange="handlePatientMedia(event)"/>
                     </div>
                     <div class="pc-id-block">
-                        <div class="pc-name" id="pc-name">John Kamau</div>
+                        <div class="pc-name" id="pc-name">—</div>
                         <div class="pc-meta">
-                            <span class="pc-meta-item"><i class="ti ti-id"></i><span id="pc-mrn">MRN 00-1882</span></span>
-                            <span class="pc-meta-item"><i class="ti ti-calendar"></i><span id="pc-dob">DOB: 14 Mar 1968 (56 yrs)</span></span>
-                            <span class="pc-meta-item"><i class="ti ti-gender-male"></i><span id="pc-sex">Male</span></span>
+                            <span class="pc-meta-item"><i class="ti ti-id"></i><span id="pc-mrn">MRN —</span></span>
+                            <span class="pc-meta-item"><i class="ti ti-calendar"></i><span id="pc-dob">DOB: —</span></span>
+                            <span class="pc-meta-item"><i class="ti ti-gender-male"></i><span id="pc-sex">—</span></span>
                             <span class="pc-meta-item"><i class="ti ti-phone"></i><span id="pc-phone">+254 712 345 678</span></span>
                             <span class="pc-meta-item"><i class="ti ti-map-pin"></i><span id="pc-ward">Ward 4B · Bed 05</span></span>
                         </div>
@@ -998,9 +998,9 @@
                             <thead><tr><th>Time</th><th>Patient</th><th>Type</th><th>Location</th><th>Status</th></tr></thead>
                             <tbody>
                                 <tr><td>08:00</td><td>Ward round 4B</td><td>Ward round</td><td>Ward 4B</td><td><span class="badge b-info">In progress</span></td></tr>
-                                <tr><td>10:30</td><td>Grace Wanjiru</td><td>Post-CABG review</td><td>OPD 3</td><td><span class="badge b-warn">Upcoming</span></td></tr>
-                                <tr><td>11:00</td><td>Samuel Otieno</td><td>Pre-op clearance</td><td>Surgical suite</td><td><span class="badge b-warn">Upcoming</span></td></tr>
-                                <tr><td>14:00</td><td>Mary Adhiambo</td><td>Elective PCI</td><td>Cath lab 3</td><td><span class="badge b-warn">Upcoming</span></td></tr>
+                                <tr><td colspan="5" style="text-align:center;color:var(--tm);padding:12px;">📭 No entries yet — from the Common Server.</td></tr>
+                                <tr><td colspan="5" style="text-align:center;color:var(--tm);padding:12px;">📭 No entries yet — from the Common Server.</td></tr>
+                                
                                 <tr><td>16:00</td><td>MDT — ICU cases</td><td>Meeting</td><td>Conference rm 1</td><td><span class="badge">Upcoming</span></td></tr>
                             </tbody>
                         </table>
@@ -1011,9 +1011,9 @@
                 <div class="mp-body" id="tab-admission">
                     <div class="section-title">Admit patient</div>
                     <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient name *</div><input class="fi" id="admitName" placeholder="e.g. John Kamau — MRN 00-1882"/></div>
+                        <div class="fgl"><div class="lbl">Patient name *</div><input class="fi" id="admitName" placeholder="Patient name — MRN…"/></div>
                         <div class="fgl"><div class="lbl">Admission date *</div><input class="fi" type="date" id="admitDate"/></div>
-                        <div class="fgl"><div class="lbl">Attending doctor *</div><input class="fi" id="admitDoctor" placeholder="Dr. David Mutua"/></div>
+                        <div class="fgl"><div class="lbl">Attending doctor *</div><input class="fi" id="admitDoctor" placeholder="Doctor name"/></div>
                         <div class="fgl"><div class="lbl">Ward *</div>
                             <select class="fi" id="admitWard">
                                 <option>Ward 4A</option><option>Ward 4B</option><option>ICU</option>
@@ -1047,7 +1047,7 @@
                 <div class="mp-body" id="tab-ward">
                     <div class="section-title">Ward round entry</div>
                     <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="wardPatient" placeholder="John Kamau — MRN 00-1882"/></div>
+                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="wardPatient" placeholder="Patient name — MRN…"/></div>
                         <div class="fgl"><div class="lbl">Location</div><input class="fi" id="wardLocation" placeholder="Ward 4B · Bed 05"/></div>
                         <div class="fgl ff"><div class="lbl">Clinical notes</div><textarea class="ta" id="wardNotes" placeholder="Examination findings, plan for the day…" style="min-height:80px;"></textarea></div>
                     </div>
@@ -1060,8 +1060,7 @@
                         <table class="wtbl">
                             <thead><tr><th>Date</th><th>Patient</th><th>Notes</th><th>Status</th></tr></thead>
                             <tbody>
-                                <tr><td>29 Jun 2026 08:00</td><td>John Kamau</td><td>SpO₂ 89%, needs oxygen therapy. Review echo.</td><td><span class="badge b-critical">Critical</span></td></tr>
-                                <tr><td>28 Jun 2026 14:00</td><td>Grace Wanjiru</td><td>Post-CABG day 4, stable. Wound healing well.</td><td><span class="badge b-stable">Stable</span></td></tr>
+                                <tr><td colspan="4" style="text-align:center;color:var(--tm);padding:14px;">📭 No ward-round entries yet — they appear here from the Common Server.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1071,7 +1070,7 @@
                 <div class="mp-body" id="tab-imaging">
                     <div class="section-title">Imaging request</div>
                     <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="imgPatient" placeholder="John Kamau — MRN 00-1882"/></div>
+                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="imgPatient" placeholder="Patient name — MRN…"/></div>
                         <div class="fgl"><div class="lbl">Modality</div>
                             <select class="fi" id="imgModality">
                                 <option>X-Ray</option><option>CT scan</option><option>MRI</option>
@@ -1097,7 +1096,7 @@
                 <div class="mp-body" id="tab-lab">
                     <div class="section-title">Lab request</div>
                     <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="labPatient" placeholder="John Kamau — MRN 00-1882"/></div>
+                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="labPatient" placeholder="Patient name — MRN…"/></div>
                         <div class="fgl"><div class="lbl">Tests *</div>
                             <select class="fi" id="labTests" multiple style="height:60px;">
                                 <option>CBC</option><option>Chemistry panel</option><option>Troponin I</option>
@@ -1124,7 +1123,7 @@
                 <div class="mp-body" id="tab-notes">
                     <div class="section-title">Clinical note</div>
                     <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="notesPatient" placeholder="John Kamau — MRN 00-1882"/></div>
+                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="notesPatient" placeholder="Patient name — MRN…"/></div>
                         <div class="fgl"><div class="lbl">Date</div><input class="fi" type="date" id="notesDate"/></div>
                         <div class="fgl"><div class="lbl">Type</div>
                             <select class="fi" id="notesType">
@@ -1132,7 +1131,7 @@
                                 <option>ED visit</option><option>Ward round</option><option>Discharge</option>
                             </select>
                         </div>
-                        <div class="fgl"><div class="lbl">Doctor</div><input class="fi" id="notesDoctor" placeholder="Dr. David Mutua"/></div>
+                        <div class="fgl"><div class="lbl">Doctor</div><input class="fi" id="notesDoctor" placeholder="Doctor name"/></div>
                         <div class="fgl ff"><div class="lbl">Clinical notes</div><textarea class="ta" id="notesText" placeholder="History, examination, assessment, plan…" style="min-height:100px;"></textarea></div>
                     </div>
                     <div class="fa">
@@ -1145,7 +1144,7 @@
                 <div class="mp-body" id="tab-rx">
                     <div class="section-title">Prescription</div>
                     <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="rxPatient" placeholder="John Kamau — MRN 00-1882"/></div>
+                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="rxPatient" placeholder="Patient name — MRN…"/></div>
                         <div class="fgl"><div class="lbl">Date</div><input class="fi" type="date" id="rxDate"/></div>
                         <div class="fgl ff"><div class="lbl">Medication</div><input class="fi" id="rxMed" placeholder="e.g. Aspirin 75mg"/></div>
                         <div class="fgl"><div class="lbl">Dosage</div><input class="fi" id="rxDosage" placeholder="e.g. 75mg"/></div>
@@ -1173,10 +1172,10 @@
                 <div class="mp-body" id="tab-surgery">
                     <div class="section-title">Surgical note</div>
                     <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="surgPatient" placeholder="John Kamau — MRN 00-1882"/></div>
+                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="surgPatient" placeholder="Patient name — MRN…"/></div>
                         <div class="fgl"><div class="lbl">Date</div><input class="fi" type="date" id="surgDate"/></div>
                         <div class="fgl"><div class="lbl">Procedure</div><input class="fi" id="surgProc" placeholder="e.g. CABG x3"/></div>
-                        <div class="fgl"><div class="lbl">Surgeon</div><input class="fi" id="surgSurgeon" placeholder="Dr. David Mutua"/></div>
+                        <div class="fgl"><div class="lbl">Surgeon</div><input class="fi" id="surgSurgeon" placeholder="Doctor name"/></div>
                         <div class="fgl ff"><div class="lbl">Operation notes</div><textarea class="ta" id="surgNotes" placeholder="Findings, procedure performed, complications, estimated blood loss…" style="min-height:80px;"></textarea></div>
                         <div class="fgl"><div class="lbl">Consent status</div>
                             <select class="fi" id="surgConsent">
@@ -1201,7 +1200,7 @@
                 <div class="mp-body" id="tab-physio">
                     <div class="section-title">Physiotherapy order</div>
                     <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="physioPatient" placeholder="John Kamau — MRN 00-1882"/></div>
+                        <div class="fgl"><div class="lbl">Patient</div><input class="fi" id="physioPatient" placeholder="Patient name — MRN…"/></div>
                         <div class="fgl"><div class="lbl">Date</div><input class="fi" type="date" id="physioDate"/></div>
                         <div class="fgl"><div class="lbl">Therapy type</div>
                             <select class="fi" id="physioType">
@@ -1248,12 +1247,12 @@
                 </div>
                 <div class="modal-body">
                     <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient *</div><input class="fi" id="theaterPatient" placeholder="John Kamau"/></div>
+                        <div class="fgl"><div class="lbl">Patient *</div><input class="fi" id="theaterPatient" placeholder="Patient name"/></div>
                         <div class="fgl"><div class="lbl">MRN *</div><input class="fi" id="theaterMRN" placeholder="00-1882"/></div>
                         <div class="fgl"><div class="lbl">Procedure *</div><input class="fi" id="theaterProcedure" placeholder="e.g. CABG x3"/></div>
                         <div class="fgl"><div class="lbl">Date *</div><input class="fi" type="date" id="theaterDate"/></div>
                         <div class="fgl"><div class="lbl">Time</div><input class="fi" type="time" id="theaterTime"/></div>
-                        <div class="fgl"><div class="lbl">Surgeon *</div><input class="fi" id="theaterSurgeon" placeholder="Dr. David Mutua"/></div>
+                        <div class="fgl"><div class="lbl">Surgeon *</div><input class="fi" id="theaterSurgeon" placeholder="Doctor name"/></div>
                         <div class="fgl"><div class="lbl">Priority</div>
                             <select class="fi" id="theaterPriority">
                                 <option>Routine</option><option>Urgent</option><option>Emergency</option>
@@ -1323,36 +1322,11 @@
     <script>
         // ─── DATA ───
         let currentPatient = null;
-        let theaterList = [
-            { patient: 'John Kamau', mrn: '00-1882', procedure: 'CABG', date: '2026-06-29', time: '08:00',
-                surgeon: 'Dr. David Mutua', priority: 'Emergency', status: 'Scheduled',
-            notes: 'Urgent revascularization' },
-            { patient: 'Grace Wanjiru', mrn: '00-2047', procedure: 'PCI', date: '2026-06-30', time: '10:00',
-                surgeon: 'Dr. Amina Uwase', priority: 'Urgent', status: 'Scheduled', notes: 'Drug-eluting stent' }
-        ];
+        let theaterList = []; // ⛔ NO TEMPLATE DATA — from the Common Server once rebuilt
         let patientMedia = { photos: [], videos: [] };
 
-        // ─── PATIENT DATABASE ───
-        const patients = {
-            'john kamau': { name: 'John Kamau', initials: 'JK', mrn: 'MRN 00-1882', dob: '14 Mar 1968 (56 yrs)',
-                sex: 'Male', phone: '+254 712 345 678', ward: 'Ward 4B · Bed 05', status: 'Critical', dx: 'STEMI',
-                statusClass: 'b-critical' },
-            '00-1882': { name: 'John Kamau', initials: 'JK', mrn: 'MRN 00-1882', dob: '14 Mar 1968 (56 yrs)',
-                sex: 'Male', phone: '+254 712 345 678', ward: 'Ward 4B · Bed 05', status: 'Critical', dx: 'STEMI',
-                statusClass: 'b-critical' },
-            'grace wanjiru': { name: 'Grace Wanjiru', initials: 'GW', mrn: 'MRN 00-2047', dob: '03 Aug 1972 (53 yrs)',
-                sex: 'Female', phone: '+254 722 987 654', ward: 'Ward 4B · Bed 02', status: 'Stable', dx: 'Post-CABG',
-                statusClass: 'b-stable' },
-            '00-2047': { name: 'Grace Wanjiru', initials: 'GW', mrn: 'MRN 00-2047', dob: '03 Aug 1972 (53 yrs)',
-                sex: 'Female', phone: '+254 722 987 654', ward: 'Ward 4B · Bed 02', status: 'Stable', dx: 'Post-CABG',
-                statusClass: 'b-stable' },
-            'mary adhiambo': { name: 'Mary Adhiambo', initials: 'MA', mrn: 'MRN 00-3104', dob: '19 Nov 1980 (45 yrs)',
-                sex: 'Female', phone: '+254 733 456 789', ward: 'Ward 4B · Bed 09', status: 'Monitor', dx: 'Stable angina',
-                statusClass: 'b-warn' },
-            'samuel otieno': { name: 'Samuel Otieno', initials: 'SO', mrn: 'MRN 00-2918', dob: '22 Feb 1965 (61 yrs)',
-                sex: 'Male', phone: '+254 710 654 321', ward: 'Ward 4B · Bed 11', status: 'Observation',
-                dx: 'Valvular disease', statusClass: 'b-purple' }
-        };
+        // ⛔ NO TEMPLATE DATA — patient lookup is the Common Server (pclinic_patients)
+        const patients = {};
 
         // ─── SMART SEARCH ───
         function handleSmartSearch(query) {
@@ -1370,12 +1344,23 @@
                 container.classList.remove('show');
                 return;
             }
-            container.innerHTML = matches.map(p =>
-                `<div class="suggestion-item" onclick="selectSuggestion('${p.name}')">
-                    <span>👤</span>
-                    <span><span class="highlight">${p.name}</span> — ${p.mrn}</span>
-                </div>`
-            ).join('');
+            container.textContent = '';
+            matches.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.addEventListener('click', () => selectSuggestion(String(p.name || '')));
+                const icon = document.createElement('span');
+                icon.textContent = '👤';
+                const label = document.createElement('span');
+                const name = document.createElement('span');
+                name.className = 'highlight';
+                name.textContent = String(p.name || '');
+                label.appendChild(name);
+                label.appendChild(document.createTextNode(' — ' + String(p.mrn || '')));
+                item.appendChild(icon);
+                item.appendChild(label);
+                container.appendChild(item);
+            });
             container.classList.add('show');
         }
 
@@ -1464,14 +1449,13 @@
             sb.className = 'badge ' + p.statusClass;
             card.classList.add('show');
             const photoEl = document.getElementById('pc-photo');
-            if (patientMedia.photos.length > 0) {
-                photoEl.innerHTML =
-                    `<img src="${patientMedia.photos[patientMedia.photos.length-1]}" alt=""><div class="upload-badge">📷</div>`;
-            } else {
-                photoEl.innerHTML = `<span id="pc-photo-text">${p.initials}</span><div class="upload-badge">📷</div>`;
-            }
-            document.getElementById('photoCount').textContent = patientMedia.photos.length;
-            document.getElementById('videoCount').textContent = patientMedia.videos.length;
+            photoEl.replaceChildren();
+            const initials = document.createElement('span');
+            initials.id = 'pc-photo-text';
+            initials.textContent = String(p.initials || '');
+            photoEl.appendChild(initials);
+            document.getElementById('photoCount').textContent = '0';
+            document.getElementById('videoCount').textContent = '0';
         }
 
         function fillForms(p) {
@@ -1502,40 +1486,15 @@
 
         // ─── PATIENT MEDIA ───
         function handlePatientMedia(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (!file.type.startsWith('image/')) {
-                showToast('⚠️ Please select an image file.', 'warning');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                patientMedia.photos.push(ev.target.result);
-                document.getElementById('photoCount').textContent = patientMedia.photos.length;
-                const photoEl = document.getElementById('pc-photo');
-                photoEl.innerHTML =
-                    `<img src="${ev.target.result}" alt=""><div class="upload-badge">📷</div>`;
-                showToast('📸 Patient photo uploaded', 'success');
-                e.target.value = '';
-            };
-            reader.readAsDataURL(file);
+            if (e && e.target) e.target.value = '';
+            showToast('🔒 Patient media uploads are disabled until secure object storage is configured.', 'warning');
+            return false;
         }
 
         function handlePatientVideo(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (!file.type.startsWith('video/')) {
-                showToast('⚠️ Please select a video file.', 'warning');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                patientMedia.videos.push(ev.target.result);
-                document.getElementById('videoCount').textContent = patientMedia.videos.length;
-                showToast('🎥 Patient video uploaded', 'success');
-                e.target.value = '';
-            };
-            reader.readAsDataURL(file);
+            if (e && e.target) e.target.value = '';
+            showToast('🔒 Patient media uploads are disabled until secure object storage is configured.', 'warning');
+            return false;
         }
 
         // ─── ADMISSION ───
@@ -1707,54 +1666,37 @@
         }
 
         // ─── STATS MODAL ───
+        // ⛔ NO TEMPLATE DATA — live from the Common Server (patients + bills)
         const modalData = {
-            admitted: {
-                title: 'Admitted patients — Ward 4B',
-                rows: [
-                    ['John Kamau', '4B-05', 'STEMI', 'Critical'],
-                    ['Grace Wanjiru', '4B-02', 'Post-CABG', 'Stable'],
-                    ['Mary Adhiambo', '4B-09', 'Stable angina', 'Monitor'],
-                    ['Samuel Otieno', '4B-11', 'Valvular disease', 'Observation'],
-                    ['Amina Hassan', '4B-12', 'HF exacerbation', 'Stable'],
-                    ['Peter Omondi', '4B-14', 'AF with RVR', 'Monitor']
-                ]
-            },
-            review: {
-                title: 'Needs review — flagged patients',
-                rows: [
-                    ['John Kamau', '4B-05', 'SpO₂ 89% — critical', 'Urgent'],
-                    ['Grace Wanjiru', '4B-02', 'Troponin I elevated', 'Urgent'],
-                    ['Mary Adhiambo', '4B-09', 'Drug interaction — Warfarin + Amiodarone', 'Moderate']
-                ]
-            },
-            critical: {
-                title: 'Critical patients',
-                rows: [
-                    ['John Kamau', '4B-05', 'STEMI · SpO₂ 89%', 'HR 112 · BP 148/92'],
-                    ['Amina Hassan', '4B-12', 'HF — BNP >1000', 'Awaiting echo']
-                ]
-            },
-            discharge: {
-                title: 'Pending discharge',
-                rows: [
-                    ['Grace Wanjiru', '4B-02', 'Post-CABG day 5', 'Summary pending'],
-                    ['Samuel Otieno', '4B-11', 'Valvular Dx — stable', 'Awaiting physio clearance'],
-                    ['Peter Omondi', '4B-14', 'AF controlled', 'Discharge meds ready'],
-                    ['Faith Njeri', '4B-08', 'HTN crisis resolved', 'Letter pending'],
-                    ['Tom Maina', '4B-16', 'Chest pain — ruled out ACS', 'Ready']
-                ]
-            }
+            admitted: { title: 'Admitted patients', rows: [] },
+            review:   { title: 'Needs review — flagged patients', rows: [] },
+            critical: { title: 'Critical patients', rows: [] },
+            discharge:{ title: 'Pending discharge', rows: [] }
         };
+        function computeModalData() {
+            try {
+                const pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                modalData.admitted.rows = pts.filter(p => String(p.patientType || '').toLowerCase() === 'inpatient')
+                    .map(p => [((p.firstName || '') + ' ' + (p.lastName || '')).trim(), p.mrn || p.id, p.department || '—', 'Admitted']);
+                modalData.critical.rows = pts.filter(p => /critical/i.test((p.notes || '') + (p.status || '')))
+                    .map(p => [((p.firstName || '') + ' ' + (p.lastName || '')).trim(), p.mrn || p.id, 'Critical', '—']);
+            } catch (e) {}
+        }
 
         function openStatModal(type) {
+            computeModalData();
             const d = modalData[type];
             if (!d) return;
             document.getElementById('modal-title').textContent = d.title;
             let html =
                 '<table class="wtbl"><thead><tr><th>Patient</th><th>Bed / Location</th><th>Details</th><th>Status / Note</th></tr></thead><tbody>';
-            d.rows.forEach(r => {
-                html += '<tr>' + r.map(c => '<td style="font-size:12px;">' + c + '</td>').join('') + '</tr>';
-            });
+            if (!d.rows.length) {
+                html += '<tr><td colspan="4" style="text-align:center;color:var(--tm);padding:14px;">📭 Nothing here yet — the Common Server has no records for this view.</td></tr>';
+            } else {
+                d.rows.forEach(r => {
+                    html += '<tr>' + r.map(c => '<td style="font-size:12px;">' + c + '</td>').join('') + '</tr>';
+                });
+            }
             html += '</tbody></table>';
             document.getElementById('modal-body').innerHTML = html;
             document.getElementById('stat-modal').classList.add('show');
@@ -1783,10 +1725,9 @@
         }
 
         function performLogout() {
-            showToast('🚪 Logging out...', 'info');
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 1000);
+            return window.pclinicLogout
+                ? window.pclinicLogout({ confirm: false })
+                : window.location.replace('login.html');
         }
 
         // ─── PRINT ───

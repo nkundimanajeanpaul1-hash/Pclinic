@@ -39,13 +39,8 @@
     }
 
     function goToLogin(reason) {
-        // For file pages (opd-file, clinical-note, etc.) don't force redirect — allow dummy user so page is never blank
-        var path = window.location.pathname || '';
-        var isFilePage = path.includes('-file.html') || path.includes('clinical-note') || path.includes('surgical-note') || path.includes('ward-round') || path.includes('admission-form') || path.includes('nursing-note') || path.includes('procedure-note') || path.includes('discharge-summary') || path.includes('referral') || path.includes('prescription') || path.includes('lab-results') || path.includes('imaging-results');
-        if (isFilePage) {
-            console.warn('Auth guard: no user but file page — allowing dummy staff to prevent blank page');
-            return;
-        }
+        // Clinical file pages are protected exactly like dashboards. Never
+        // render a dummy user: stale browser caches may contain real PHI.
         if (reason) {
             try { sessionStorage.setItem('pclinic_auth_message', reason); } catch (e) {}
         }
@@ -160,11 +155,19 @@
     // pclinic-state.js installs a faster implementation (it does not await
     // the network round trip). Only define a fallback if that isn't loaded.
     if (typeof window.pclinicLogout !== 'function') {
-        window.pclinicLogout = function () {
+        window.pclinicLogout = async function () {
             try {
-                localStorage.removeItem('pclinic_remember_user');
+                Object.keys(localStorage).forEach(function (k) {
+                    if (k.indexOf('pclinic') === 0 || k === 'userRole' || k === 'userName') {
+                        localStorage.removeItem(k);
+                    }
+                });
+                sessionStorage.clear();
                 if (window.firebaseAuth && window.firebaseAuthFunctions) {
-                    window.firebaseAuthFunctions.signOut(window.firebaseAuth).catch(function () {});
+                    await window.firebaseAuthFunctions.signOut(window.firebaseAuth);
+                }
+                if (typeof window.pclinicClearFirebaseCache === 'function') {
+                    await window.pclinicClearFirebaseCache();
                 }
             } catch (e) {}
             window.location.replace('login.html');

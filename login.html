@@ -382,9 +382,9 @@
                 </div>
 
                 <div class="row-between">
-                    <label class="remember-check">
-                        <input type="checkbox" id="remember" />
-                        <span>Remember my Staff ID</span>
+                    <label class="remember-check" title="Sessions and identifiers are not retained on shared clinic devices">
+                        <input type="checkbox" id="remember" disabled />
+                        <span>Secure session-only login</span>
                     </label>
                 </div>
 
@@ -419,6 +419,18 @@
             const btnText = document.getElementById('btnText');
             const spinner = document.getElementById('spinner');
             const rememberCheck = document.getElementById('remember');
+
+            // Fail closed on shared devices: opening the login page removes
+            // clinical data and staff identifiers left by an earlier session.
+            try {
+                const allowedPreferences = { 'pclinic-theme': true, 'pclinic-lang': true, 'pclinic-compact': true, 'pclinic-fontsize': true };
+                Object.keys(localStorage).forEach(function (key) {
+                    if ((key.indexOf('pclinic') === 0 || key === 'userRole' || key === 'userName') && !allowedPreferences[key]) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            } catch (e) {}
+            if (rememberCheck) rememberCheck.checked = false;
 
             // The form is already painted and usable. These just manage the
             // small background-check chip in the corner.
@@ -465,12 +477,8 @@
                 spinner.classList.toggle('active', loading);
             }
 
-            // ─── REMEMBERED STAFF ID ───
-            const savedId = localStorage.getItem('pclinic_remember_staffid');
-            if (savedId) {
-                staffIdInput.value = savedId;
-                rememberCheck.checked = true;
-            }
+            // Staff identifiers are not retained on shared clinic devices.
+            localStorage.removeItem('pclinic_remember_staffid');
 
             // If a previous page redirected us here with a reason, show it once the form is visible.
             const authMsg = sessionStorage.getItem('pclinic_auth_message');
@@ -501,54 +509,40 @@
                 });
             }
 
-            // ─── ON LOAD: IF ALREADY LOGGED IN & ACTIVE, SKIP STRAIGHT TO HUB ───
-            // No artificial delay here — as soon as Firebase confirms an
-            // existing valid session, we redirect immediately. If there's
-            // no session (the normal case for a fresh visit), the login
-            // form is revealed right away instead of waiting.
-            (async function checkExistingSession() {
+            // ─── SECURE LOGIN INITIALIZATION ───
+            // Opening the login page always ends any existing session. It also
+            // performs a one-time cleanup of IndexedDB left by older releases,
+            // then reloads with a fresh in-memory Firestore instance.
+            (async function initializeSecureLogin() {
                 const ready = await waitForFirebase();
-                if (!ready) { cancelSessionChip(); if (authMsg) { showMessage(authMsg, 'error'); sessionStorage.removeItem('pclinic_auth_message'); } return; }
-
-                // Wait for Firebase to FULLY settle its initial auth check
-                // (important right after a page refresh) before deciding
-                // whether a session exists — otherwise a refresh can
-                // briefly look "logged out" and flash the form.
+                if (!ready) {
+                    cancelSessionChip();
+                    if (authMsg) { showMessage(authMsg, 'error'); sessionStorage.removeItem('pclinic_auth_message'); }
+                    return;
+                }
                 try {
-                    if (typeof window.firebaseAuth.authStateReady === 'function') {
-                        await window.firebaseAuth.authStateReady();
+                    if (typeof window.firebaseAuth.authStateReady === 'function') await window.firebaseAuth.authStateReady();
+                    if (window.firebaseAuth.currentUser) {
+                        await window.firebaseAuthFunctions.signOut(window.firebaseAuth);
                     }
                 } catch (e) {}
 
-                let settled = false;
-                const { onAuthStateChanged, signOut } = window.firebaseAuthFunctions;
-                const unsubscribe = onAuthStateChanged(window.firebaseAuth, async function(user) {
-                    if (settled) return;
-                    settled = true;
-                    if (typeof unsubscribe === 'function') unsubscribe();
-
-                    if (!user) {
-                        cancelSessionChip();
-                        if (authMsg) {
-                            showMessage(authMsg, 'error');
-                            sessionStorage.removeItem('pclinic_auth_message');
-                        }
-                        return;
-                    }
+                if (!sessionStorage.getItem('pclinic_login_cache_reset')) {
+                    sessionStorage.setItem('pclinic_login_cache_reset', '1');
                     try {
-                        const { doc, getDoc } = window.firebaseFunctions;
-                        const snap = await getDoc(doc(window.firebaseDB, 'users', user.uid));
-                        if (snap.exists() && snap.data().active !== false) {
-                            window.location.replace('hub.html');
-                            return;
+                        if (typeof window.pclinicClearFirebaseCache === 'function') {
+                            await window.pclinicClearFirebaseCache();
                         }
-                        // Stale/invalid session — sign out and show the form.
-                        await signOut(window.firebaseAuth);
-                        cancelSessionChip();
-                    } catch (e) {
-                        cancelSessionChip();
-                    }
-                });
+                    } catch (e) {}
+                    window.location.replace('login.html');
+                    return;
+                }
+
+                cancelSessionChip();
+                if (authMsg) {
+                    showMessage(authMsg, 'error');
+                    sessionStorage.removeItem('pclinic_auth_message');
+                }
             })();
 
             form.addEventListener('submit', async function(e) {
@@ -605,11 +599,7 @@
                         return;
                     }
 
-                    if (rememberCheck.checked) {
-                        localStorage.setItem('pclinic_remember_staffid', staffId);
-                    } else {
-                        localStorage.removeItem('pclinic_remember_staffid');
-                    }
+                    localStorage.removeItem('pclinic_remember_staffid');
 
                     showMessage(`✅ Welcome, ${profile.name || staffId}!`, 'success');
                     // Redirect right away — no artificial waiting.

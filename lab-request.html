@@ -792,7 +792,7 @@
                 </div>
                 <div>
                     <label class="lbl">Requesting Doctor</label>
-                    <input class="fi" id="labDoctor" value="Dr. Mutua">
+                    <input class="fi" id="labDoctor" placeholder="Requesting doctor…">
                 </div>
             </div>
 
@@ -805,364 +805,25 @@
                 </div>
                 <div style="border: 0.5px solid rgba(0,0,0,0.04); border-radius: 12px; padding: 12px; background: rgba(255,255,255,0.2);">
                     <div class="lab-grid" id="labTestGrid">
-
+                        <!-- ═══ THE SAME 4-COLUMN CATEGORY TABLE AS BEFORE ═══
+                             Built LIVE from the Common Server tariff
+                             (Admin Dashboard → Lab Exams) — admin add/delete
+                             updates this table instantly. -->
                         <!-- ─── COLUMN 1 ─── -->
-                        <div>
-                            <!-- PARASITOLOGY - Yellow -->
-                            <div class="lab-category parasitology">
-                                <div class="lab-category-title">🦟 Parasitology</div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Malaria Parasite (MP)">
-                                    <span class="test-name">Malaria Parasite (MP)</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Stool Ova & Cysts">
-                                    <span class="test-name">Stool Ova &amp; Cysts</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Filaria Test">
-                                    <span class="test-name">Filaria Test</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Schistosomiasis (Bilharzia)">
-                                    <span class="test-name">Schistosomiasis</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Toxoplasmosis Test">
-                                    <span class="test-name">Toxoplasmosis</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Leishmania Test">
-                                    <span class="test-name">Leishmania Test</span>
-                                </div>
-                            </div>
-
-                            <!-- HEMATOLOGY - Red -->
-                            <div class="lab-category hematology">
-                                <div class="lab-category-title">🩸 Hematology</div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="CBC - Complete Blood Count">
-                                    <span class="test-name">CBC - Complete</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Hemoglobin (Hb)">
-                                    <span class="test-name">Hemoglobin (Hb)</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="WBC - White Blood Cell Count">
-                                    <span class="test-name">WBC Count</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Platelet Count">
-                                    <span class="test-name">Platelet Count</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="ESR - Erythrocyte Sedimentation Rate">
-                                    <span class="test-name">ESR</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Blood Group & Rh Typing">
-                                    <span class="test-name">Blood Group</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Reticulocyte Count">
-                                    <span class="test-name">Reticulocyte</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Coagulation Profile (PT/INR/PTT)">
-                                    <span class="test-name">Coagulation (PT/INR)</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Peripheral Blood Smear">
-                                    <span class="test-name">Blood Smear</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Sickling Test / Electrophoresis">
-                                    <span class="test-name">Sickling Test</span>
-                                </div>
-                            </div>
-                        </div>
-
+                        <div id="labCol1"></div>
                         <!-- ─── COLUMN 2 ─── -->
-                        <div>
-                            <!-- BIOCHEMISTRY - Green -->
-                            <div class="lab-category biochemistry">
-                                <div class="lab-category-title">🧬 Biochemistry</div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Fasting Blood Sugar (FBS)">
-                                    <span class="test-name">FBS</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Random Blood Sugar (RBS)">
-                                    <span class="test-name">RBS</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="HbA1c - Glycated Hemoglobin">
-                                    <span class="test-name">HbA1c</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Lipid Profile">
-                                    <span class="test-name">Lipid Profile</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Liver Function Test (LFT)">
-                                    <span class="test-name">LFT</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Renal Function Test (RFT)">
-                                    <span class="test-name">RFT</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Electrolytes - Na, K, Cl">
-                                    <span class="test-name">Electrolytes</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Serum Creatinine">
-                                    <span class="test-name">Creatinine</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Blood Urea Nitrogen (BUN)">
-                                    <span class="test-name">BUN</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Uric Acid">
-                                    <span class="test-name">Uric Acid</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Amylase">
-                                    <span class="test-name">Amylase</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Lipase">
-                                    <span class="test-name">Lipase</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Cardiac Enzymes (Troponin I/T)">
-                                    <span class="test-name">Troponin I/T</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Serum Bilirubin (Total & Direct)">
-                                    <span class="test-name">Bilirubin (T&D)</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="SGOT / AST & SGPT / ALT">
-                                    <span class="test-name">AST / ALT</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Alkaline Phosphatase (ALP)">
-                                    <span class="test-name">ALP</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Serum Albumin & Total Protein">
-                                    <span class="test-name">Albumin & Protein</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Serum Calcium & Magnesium">
-                                    <span class="test-name">Calcium & Mg</span>
-                                </div>
-                            </div>
-                        </div>
-
+                        <div id="labCol2"></div>
                         <!-- ─── COLUMN 3 ─── -->
-                        <div>
-                            <!-- MICROBIOLOGY - Purple -->
-                            <div class="lab-category microbiology">
-                                <div class="lab-category-title">🦠 Microbiology</div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Blood Culture">
-                                    <span class="test-name">Blood Culture</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Urine Culture & Sensitivity">
-                                    <span class="test-name">Urine Culture</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Sputum Culture">
-                                    <span class="test-name">Sputum Culture</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Gram Stain">
-                                    <span class="test-name">Gram Stain</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="AFB - Acid Fast Bacilli">
-                                    <span class="test-name">AFB</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="TB Culture">
-                                    <span class="test-name">TB Culture</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Typhoid Test (Widal)">
-                                    <span class="test-name">Widal Test</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Brucella Test">
-                                    <span class="test-name">Brucella</span>
-                                </div>
-                            </div>
-
-                            <!-- URINALYSIS - Blue -->
-                            <div class="lab-category urinalysis">
-                                <div class="lab-category-title">💧 Urinalysis</div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Urinalysis - Complete">
-                                    <span class="test-name">Urinalysis</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Urine Pregnancy Test">
-                                    <span class="test-name">UPT</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="24-Hour Urine Collection">
-                                    <span class="test-name">24-Hr Urine</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Urine Microalbumin">
-                                    <span class="test-name">Microalbumin</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Urine Ketones">
-                                    <span class="test-name">Ketones</span>
-                                </div>
-                            </div>
-                        </div>
-
+                        <div id="labCol3"></div>
                         <!-- ─── COLUMN 4 ─── -->
-                        <div>
-                            <!-- HORMONES - Orange -->
-                            <div class="lab-category hormones">
-                                <div class="lab-category-title">🧪 Hormones</div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Thyroid Function Test (TFT)">
-                                    <span class="test-name">TFT</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="TSH - Thyroid Stimulating Hormone">
-                                    <span class="test-name">TSH</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="T3 - Triiodothyronine">
-                                    <span class="test-name">T3</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="T4 - Thyroxine">
-                                    <span class="test-name">T4</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Fertility Hormones (FSH, LH)">
-                                    <span class="test-name">FSH / LH</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Cortisol Level">
-                                    <span class="test-name">Cortisol</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Prolactin">
-                                    <span class="test-name">Prolactin</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Testosterone">
-                                    <span class="test-name">Testosterone</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Estrogen (Estradiol)">
-                                    <span class="test-name">Estradiol</span>
-                                </div>
-                            </div>
-
-                            <!-- SEROLOGY / IMMUNOLOGY - Pink -->
-                            <div class="lab-category serology">
-                                <div class="lab-category-title">🧫 Serology</div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="HIV Test">
-                                    <span class="test-name">HIV</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Hepatitis B Surface Antigen (HBsAg)">
-                                    <span class="test-name">HBsAg</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Hepatitis C Antibody">
-                                    <span class="test-name">HCV</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Syphilis Test (RPR/VDRL)">
-                                    <span class="test-name">RPR</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Dengue Test">
-                                    <span class="test-name">Dengue</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Chikungunya Test">
-                                    <span class="test-name">Chikungunya</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Zika Virus Test">
-                                    <span class="test-name">Zika</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Rheumatoid Factor (RF)">
-                                    <span class="test-name">RF</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="CRP - C-Reactive Protein">
-                                    <span class="test-name">CRP</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="ASO - Anti-Streptolysin O">
-                                    <span class="test-name">ASO</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="H. pylori Ag / Ab">
-                                    <span class="test-name">H. pylori</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Widal Test (Salmonella)">
-                                    <span class="test-name">Widal Test</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Brucella Agglutination">
-                                    <span class="test-name">Brucella</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="Beta-HCG (Quantitative)">
-                                    <span class="test-name">Beta-HCG</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="PSA - Prostate Specific Antigen">
-                                    <span class="test-name">PSA</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="D-Dimer">
-                                    <span class="test-name">D-Dimer</span>
-                                </div>
-                            </div>
-
-                            <!-- COVID-19 - Dark Red -->
-                            <div class="lab-category covid">
-                                <div class="lab-category-title">🦠 COVID-19</div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="COVID-19 Antigen Test">
-                                    <span class="test-name">Antigen</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="COVID-19 PCR Test">
-                                    <span class="test-name">PCR</span>
-                                </div>
-                                <div class="lab-test-item" onclick="toggleLabTest(this)">
-                                    <input type="checkbox" value="COVID-19 Antibody Test">
-                                    <span class="test-name">Antibody</span>
-                                </div>
-                            </div>
-
-                            <!-- CUSTOM TEST - Grey -->
+                        <div id="labCol4">
+                            <!-- ➕ Custom (manual, not yet in the tariff) -->
                             <div class="lab-category custom">
                                 <div class="lab-category-title">➕ Custom</div>
                                 <div class="custom-test-area">
-                                    <div class="custom-row">
+                                    <div class="custom-row" style="display:flex;gap:6px;flex-wrap:wrap;">
                                         <input type="text" id="customLabTest" placeholder="Enter test name...">
+                                        <input type="number" id="customLabPrice" placeholder="Price RWF" style="width:110px;">
                                         <button class="btn-add-custom" onclick="addCustomLabTest()">
                                             <i class="ti ti-plus"></i> Add
                                         </button>
@@ -1172,9 +833,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
             <div class="form-row">
                 <div>
                     <label class="lbl">Priority</label>
@@ -1253,26 +911,100 @@
             }, 3000);
         }
 
-        const LAB_PRICES = {
-            'CBC - Complete Blood Count': 6000, 'Hemoglobin (Hb)': 2500, 'WBC - White Blood Cell Count': 3000,
-            'Platelet Count': 3000, 'ESR - Erythrocyte Sedimentation Rate': 2500, 'Blood Group & Rh Typing': 3500,
-            'Reticulocyte Count': 4000, 'Coagulation Profile (PT/INR/PTT)': 8000, 'Peripheral Blood Smear': 5000,
-            'Sickling Test / Electrophoresis': 6000, 'Fasting Blood Sugar (FBS)': 2500, 'Random Blood Sugar (RBS)': 2500,
-            'HbA1c - Glycated Hemoglobin': 10000, 'Lipid Profile': 12000, 'Liver Function Test (LFT)': 12000,
-            'Renal Function Test (RFT)': 12000, 'Electrolytes - Na, K, Cl': 8000, 'Serum Creatinine': 4000,
-            'Blood Urea Nitrogen (BUN)': 4000, 'Uric Acid': 5000, 'Amylase': 6000, 'Lipase': 7000,
-            'Cardiac Enzymes (Troponin I/T)': 15000, 'Serum Bilirubin (Total & Direct)': 5000,
-            'SGOT / AST & SGPT / ALT': 8000, 'Alkaline Phosphatase (ALP)': 5000,
-            'Serum Albumin & Total Protein': 6000, 'Serum Calcium & Magnesium': 6000,
-            'Malaria Parasite (MP / Blood Smear)': 3000, 'Stool Ova & Parasites (O&P)': 2500,
-            'HIV Test': 3000, 'Hepatitis B Surface Antigen (HBsAg)': 4000, 'Hepatitis C Antibody': 5000,
-            'Syphilis Test (RPR/VDRL)': 3500, 'H. pylori Ag / Ab': 5000, 'Widal Test (Salmonella)': 4000,
-            'Brucella Agglutination': 5000, 'Beta-HCG (Quantitative)': 8000, 'PSA - Prostate Specific Antigen': 12000,
-            'D-Dimer': 20000, 'CRP - C-Reactive Protein': 6000, 'ASO - Anti-Streptolysin O': 5000,
-            'Rheumatoid Factor (RF)': 5000, 'COVID-19 Antigen Test': 5000, 'COVID-19 PCR Test': 25000
-        };
+        // ═══ TARIFF-DRIVEN TEST LIST (Common Server — Admin → Lab Exams) ═══
+        function rws(n) { return 'RWF ' + (Number(n) || 0).toLocaleString('en-US'); }
+        function escAttr(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function escHtml(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-        // ─── TOGGLE LAB TEST (FIXED FOR CHECKBOX CLICK BUBBLING) ───
+        // ─── TARIFF-DRIVEN TEST TABLE — same layout as the original ───
+        var LAB_CATEGORIES = [
+            { id:'parasitology', col:1, title:'🦟 Parasitology' },
+            { id:'hematology',    col:1, title:'🩸 Hematology' },
+            { id:'biochemistry',  col:2, title:'🧬 Biochemistry' },
+            { id:'microbiology',  col:3, title:'🦠 Microbiology' },
+            { id:'urinalysis',    col:3, title:'💧 Urinalysis' },
+            { id:'hormones',      col:4, title:'🧪 Hormones' },
+            { id:'serology',      col:4, title:'🧫 Serology' },
+            { id:'covid',         col:4, title:'🦠 COVID-19' }
+        ];
+
+        function renderLabTariffTests() {
+            var labs = [];
+            try { if (window.pcTariff && typeof pcTariff.byDept === 'function') labs = pcTariff.byDept('lab') || []; }
+            catch(e) { labs = []; }
+
+            [1,2,3].forEach(function(c){
+                var col = document.getElementById('labCol' + c);
+                if (col) col.innerHTML = '';
+            });
+            var col4 = document.getElementById('labCol4');
+            var customCat = col4 ? col4.querySelector('.lab-category.custom') : null;
+            if (col4) col4.innerHTML = '';
+            if (col4 && customCat) col4.appendChild(customCat);
+
+            if (!labs.length) {
+                var c1 = document.getElementById('labCol1');
+                if (c1) c1.innerHTML =
+                    '<div class="lab-category"><div class="lab-category-title">🧪 No lab exams configured</div>' +
+                    '<div style="padding:10px 14px;font-size:12px;color:var(--tm);line-height:1.6;">' +
+                    'The Administrator adds laboratory exams in <b>Admin Dashboard → Lab Exams</b>.<br>' +
+                    'They appear here automatically with their prices (RWF).</div></div>';
+                return;
+            }
+
+            LAB_CATEGORIES.forEach(function(cat){
+                var items = labs.filter(function(t){
+                    return String(t.category || mapCategory(String(t.name || ''))) === cat.id;
+                });
+                if (!items.length) return;
+                var html = '<div class="lab-category ' + cat.id + '"><div class="lab-category-title">' + cat.title + '</div>';
+                items.forEach(function(t){
+                    var label = t.shortLabel || t.name || '';
+                    html += '<div class="lab-test-item" onclick="toggleLabTest(this, event)">' +
+                        '<input type="checkbox" value="' + escAttr(t.name) + '" data-code="' + escAttr(t.code || '') + '" data-price="' + (Number(t.price) || 0) + '">' +
+                        '<span class="test-name">' + escHtml(label) + '</span>' +
+                        '<span style="margin-left:auto;font-size:10.5px;font-weight:800;color:var(--ac,#007080);white-space:nowrap;">' + rws(t.price) + '</span>' +
+                    '</div>';
+                });
+                html += '</div>';
+                var col = document.getElementById('labCol' + cat.col);
+                if (col) col.insertAdjacentHTML('beforeend', html);
+            });
+
+            // Admin-added exams without a category → General Laboratory (column 4)
+            var ungrouped = labs.filter(function(t){
+                var c = String(t.category || mapCategory(String(t.name || '')));
+                return !LAB_CATEGORIES.some(function(x){ return x.id === c; });
+            });
+            if (ungrouped.length && col4) {
+                var gh = '<div class="lab-category"><div class="lab-category-title">🧪 General Laboratory</div>';
+                ungrouped.forEach(function(t){
+                    gh += '<div class="lab-test-item" onclick="toggleLabTest(this, event)">' +
+                        '<input type="checkbox" value="' + escAttr(t.name) + '" data-code="' + escAttr(t.code || '') + '" data-price="' + (Number(t.price) || 0) + '">' +
+                        '<span class="test-name">' + escHtml(t.shortLabel || t.name || '') + '</span>' +
+                        '<span style="margin-left:auto;font-size:10.5px;font-weight:800;color:var(--ac,#007080);white-space:nowrap;">' + rws(t.price) + '</span>' +
+                    '</div>';
+                });
+                gh += '</div>';
+                col4.insertAdjacentHTML('afterbegin', gh);
+            }
+        }
+
+        // Name → category fallback for admin-added exams without a category
+        function mapCategory(name) {
+            var n = String(name || '').toLowerCase();
+            if (/(malaria|stool|filaria|schisto|toxo|leish)/.test(n)) return 'parasitology';
+            if (/(cbc|hemoglobin|wbc|platelet|esr|blood group|reticulo|coagul|smear|sickle)/.test(n)) return 'hematology';
+            if (/(glucose|hba1c|lipid|liver|renal|electrolyte|creatinine|urea|uric|amylase|lipase|troponin|bilirubin|sgot|sgpt|alkaline|albumin|calcium)/.test(n)) return 'biochemistry';
+            if (/(culture|gram|afb|tb|widal|brucella)/.test(n)) return 'microbiology';
+            if (/(urine|urinalysis|pregnancy|microalbumin|ketone)/.test(n)) return 'urinalysis';
+            if (/(thyroid|tsh|t3|t4|hormone|cortisol|prolactin|testosterone|estrogen)/.test(n)) return 'hormones';
+            if (/(hiv|hepatitis|syphilis|rpr|dengue|chikungunya|zika|rf|crp|aso|pylori|hcg|psa|d-dimer|widal)/.test(n)) return 'serology';
+            if (/(covid)/.test(n)) return 'covid';
+            return 'general';
+        }
+
+        // ─── TOGGLE LAB TEST (FIXED FOR CHECKBOX CLICK BUBBLING) ───        // ─── TOGGLE LAB TEST (FIXED FOR CHECKBOX CLICK BUBBLING) ───        // ─── TOGGLE LAB TEST (FIXED FOR CHECKBOX CLICK BUBBLING) ───
         function toggleLabTest(element, event) {
             const checkbox = element.querySelector('input[type="checkbox"]');
             if (!checkbox) return;
@@ -1283,18 +1015,22 @@
             updateSelectedTests();
         }
 
-        // ─── UPDATE SELECTED TESTS ───
+        // ─── UPDATE SELECTED TESTS (each = {code, name, price} from the tariff) ───
         function updateSelectedTests() {
             const checkboxes = document.querySelectorAll('.lab-test-item input[type="checkbox"]:checked');
-            selectedLabTests = Array.from(checkboxes).map(cb => cb.value);
-            
+            selectedLabTests = Array.from(checkboxes).map(cb => ({
+                code: cb.getAttribute('data-code') || '',
+                name: cb.value,
+                price: Number(cb.getAttribute('data-price')) || 0
+            }));
+
             document.querySelectorAll('#customTestsList .custom-test-tag').forEach(tag => {
                 const name = tag.dataset.name;
-                if (name && !selectedLabTests.includes(name)) {
-                    selectedLabTests.push(name);
+                if (name && !selectedLabTests.some(t => t.name === name)) {
+                    selectedLabTests.push({ code: '', name: name, price: Number(tag.dataset.price) || 0 });
                 }
             });
-            
+
             const countEl = document.getElementById('selectedTestCount');
             if (countEl) {
                 countEl.textContent = selectedLabTests.length;
@@ -1321,11 +1057,14 @@
                 }
             }
             
+            const priceInput = document.getElementById('customLabPrice');
+            const price = Number(priceInput && priceInput.value ? priceInput.value : 0) || 0;
             const tag = document.createElement('span');
             tag.className = 'custom-test-tag';
             tag.dataset.name = testName;
+            tag.dataset.price = price;
             tag.innerHTML = `
-                ${testName}
+                ${testName}${price ? ' · RWF ' + price.toLocaleString('en-US') : ''}
                 <span class="remove" onclick="removeCustomTest(this)">×</span>
             `;
             list.appendChild(tag);
@@ -1447,15 +1186,9 @@ function loadPatientData(patient) {
                             success = true;
                         }
                     }
-                    // If still not found, take the first patient
-                    if (!success && patients.length > 0) {
-                        currentPatient = patients[0];
-                        const name = (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '');
-                        const mrn = currentPatient.mrn || 'N/A';
-                        document.getElementById('labPatient').value = name + ' — ' + mrn;
-                        console.log('✅ Defaulted to first patient:', name);
-                        success = true;
-                    }
+                    // Never silently select the first patient. A laboratory
+                    // request must remain blocked until the clinician makes an
+                    // explicit patient selection.
                 }
             } catch (e) {
                 console.log('Error loading from patients list:', e);
@@ -1533,7 +1266,7 @@ function autoTickRecentLabRequests() {
 
 
 // ─── SUBMIT LAB REQUEST ───
-function submitLabRequest() {
+async function submitLabRequest() {
     if (!currentPatient) {
         try {
             if (window.parent && window.parent.currentPatient) {
@@ -1560,74 +1293,65 @@ function submitLabRequest() {
         patientId: currentPatient.id,
         patientName: (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || ''),
         mrn: currentPatient.mrn || 'N/A',
-        tests: [...selectedLabTests],
+        tests: selectedLabTests.map(t => t.name),
         priority: document.getElementById('labPriority').value,
         sampleType: document.getElementById('labSampleType').value,
         clinicalDetails: 'Lab tests requested',
-        requestedBy: document.getElementById('labDoctor').value || 'Dr. Unknown',
+        requestedBy: (window.currentStaff && window.currentStaff.name) || document.getElementById('labDoctor').value || 'Unknown',
+        requestedById: (window.currentStaff && window.currentStaff.staffId) || '',
         status: 'Pending',
         timestamp: new Date().toISOString()
     };
 
     try {
-        // Save to parent if available
-        if (window.parent && window.parent.currentPatient) {
-            const parentPatient = window.parent.currentPatient;
-            if (!parentPatient.labRequests) parentPatient.labRequests = [];
-            parentPatient.labRequests.push(labRequest);
-            
-            if (typeof window.parent.updatePatient === 'function') {
-                window.parent.updatePatient(parentPatient.id, { 
-                    labRequests: parentPatient.labRequests 
-                });
-            }
+        if (!window.currentStaff || !window.currentStaff.staffId) {
+            throw new Error('Your authenticated staff profile is not ready. Reload the page and sign in again.');
         }
-        
-        // Save to localStorage
-        try {
-            const patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
-            const index = patients.findIndex(p => p.id === currentPatient.id);
-            if (index !== -1) {
-                if (!patients[index].labRequests) patients[index].labRequests = [];
-                patients[index].labRequests.push(labRequest);
-                localStorage.setItem('pclinic_patients', JSON.stringify(patients));
-            }
-        } catch (e) {}
 
-        // ─── CREATE REAL LAB ORDER WITH AUTOMATIC BILLING FOR CASHIER ───
-        try {
-            if (window.pcOrders) {
-                const items = selectedLabTests.map(testName => {
-                    return {
-                        code: 'LAB-' + testName.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8),
-                        name: testName,
-                        qty: 1,
-                        price: LAB_PRICES[testName] || 5000
-                    };
-                });
-                const totalCash = items.reduce((sum, it) => sum + it.price, 0);
-                const order = window.pcOrders.create({
-                    patientId: currentPatient.id,
-                    patientName: (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || ''),
-                    type: 'lab',
-                    priority: document.getElementById('labPriority').value || 'routine',
-                    notes: 'Sample: ' + (document.getElementById('labSampleType').value || 'Blood') + ' · Requested by: ' + (document.getElementById('labDoctor').value || 'Dr. Unknown'),
-                    items: items
-                });
-                console.log('✅ Created pcOrder with automatic billing for Cashier:', order, 'Total RWF:', totalCash);
-            }
-        } catch (err) {
-            console.warn('Error creating pcOrder:', err);
+        // Save the request once to the authoritative patient record. The old
+        // flow pushed into the parent object and then pushed again locally,
+        // producing duplicate laboratory requests.
+        const patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+        const index = patients.findIndex(p => String(p.id) === String(currentPatient.id) || String(p.mrn) === String(currentPatient.mrn || currentPatient.id));
+        if (index === -1) throw new Error('The selected patient was not found on the common server.');
+        const requests = Array.isArray(patients[index].labRequests) ? patients[index].labRequests.slice() : [];
+        if (!requests.some(request => String(request.id) === String(labRequest.id))) requests.push(labRequest);
+        if (typeof updatePatient !== 'function') throw new Error('The secure patient service is unavailable.');
+        const savedPatient = await updatePatient(patients[index].id, { labRequests: requests });
+        if (!savedPatient) throw new Error('The patient laboratory request was not accepted by the common server.');
+        currentPatient = savedPatient;
+
+        // Create and await the REAL order document. Success is shown only
+        // after Firestore confirms it; this prevents local-only requests from
+        // reaching the laboratory as unsaveable synthetic orders.
+        if (!window.pcOrders || typeof window.pcOrders.createAsync !== 'function') {
+            throw new Error('The secure order service is unavailable. Reload the page and retry.');
         }
+        const items = selectedLabTests.map(t => ({
+            code: t.code || ('LAB-' + String(t.name).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8)),
+            name: t.name,
+            qty: 1,
+            price: Number(t.price) || 0
+        }));
+        const totalCash = items.reduce((sum, item) => sum + item.price, 0);
+        const order = await window.pcOrders.createAsync({
+            patientId: currentPatient.id,
+            patientName: (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || ''),
+            type: 'lab',
+            priority: String(document.getElementById('labPriority').value || 'routine').toLowerCase(),
+            notes: 'Sample: ' + (document.getElementById('labSampleType').value || 'Blood') + ' · Requested by: ' + window.currentStaff.name,
+            items: items
+        });
+        console.log('✅ Common-server lab order confirmed:', order.id, 'Total RWF:', totalCash);
 
         // ─── NOTIFY PARENT THAT LAB REQUEST WAS SUBMITTED ───
         window.parent.postMessage({ 
             type: 'LAB_REQUEST_SUBMITTED', 
             patientId: currentPatient.id 
-        }, '*');
+        }, window.location.origin);
         console.log('📨 Notified parent about lab request submission for patient:', currentPatient.id);
 
-        const totalPrice = selectedLabTests.reduce((sum, t) => sum + (LAB_PRICES[t] || 5000), 0);
+        const totalPrice = selectedLabTests.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
         showToast(`✅ Lab request saved & sent to Lab! Billed ${totalPrice.toLocaleString()} RWF to Cashier.`, 'success');
         clearLabSelection();
         
@@ -1653,7 +1377,7 @@ function submitLabRequest() {
 function closeLabPage() {
     try {
         if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'CLOSE_LAB' }, '*');
+            window.parent.postMessage({ type: 'CLOSE_LAB' }, window.location.origin);
             return;
         }
     } catch (e) {}
@@ -1793,6 +1517,21 @@ function toggleHistoryDetails(idx) {
         // ─── INIT ───
         document.addEventListener('DOMContentLoaded', function() {
     console.log('🧪 Lab Request Form Loaded');
+    renderLabTariffTests();
+    // ⛔ NO TEMPLATE DOCTOR: prefill the requesting doctor with the REAL
+    // logged-in staff member (parent Doctor Dashboard or current session).
+    try {
+        var docIn = document.getElementById('labDoctor');
+        var who = '';
+        if (window.parent && window.parent !== window && window.parent.currentStaff && window.parent.currentStaff.name) {
+            who = window.parent.currentStaff.name;
+        } else if (window.currentStaff && window.currentStaff.name) {
+            who = window.currentStaff.name;
+        }
+        if (docIn && who && !docIn.value) docIn.value = who;
+    } catch(e){}
+    window.addEventListener('tariffUpdated', renderLabTariffTests);
+    window.addEventListener('storage', renderLabTariffTests);
     
     // Try multiple ways to load patient data
     let loaded = false;
@@ -1856,7 +1595,7 @@ function toggleHistoryDetails(idx) {
 
 
     <script>
-        requireAuth([]).then(function(staff) {
+        requireAuth(['doctor','nurse']).then(function(staff) {
             window.currentStaff = staff;
             console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
         }).catch(function(err) {
@@ -1865,7 +1604,8 @@ function toggleHistoryDetails(idx) {
     </script>
 <script src="pclinic-catalog.js"></script>
 <script src="pclinic-orders.js"></script>
-<script src="pclinic-file.js?v=20260804_CHUK_3ROW"></script>
+<script src="patient-data.js"></script>
+<script src="pclinic-file.js?v=20260814_RAD"></script>
 <script src="pclinic-handoff.js"></script>
 </body>
 </html>

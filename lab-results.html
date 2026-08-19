@@ -19,7 +19,7 @@
         :root {
             --bg: #f0f2f5;
             --s1: #ffffff;
-            --s2: #ebf3fb; /* OpenClinic alternating light blue */
+            --s2: #ebf3fb; /* PClinic alternating light blue */
             --s3: #e2eef9;
             --bd: #d1e2f2;
             --tp: #1a1a2e;
@@ -76,7 +76,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ─── OPENCLINIC PATIENT DEMOGRAPHIC BANNER ─── */
+        /* ─── PCLINIC PATIENT DEMOGRAPHIC BANNER ─── */
         .oc-patient-banner {
             background: var(--s1);
             border: 1px solid var(--bd);
@@ -114,7 +114,7 @@
             color: var(--ac);
         }
 
-        /* ─── OPENCLINIC GA CUMULATIVE FLOW SHEET MATRIX ─── */
+        /* ─── PCLINIC CUMULATIVE FLOW SHEET MATRIX ─── */
         .oc-matrix-wrapper {
             background: var(--s1);
             border: 1px solid var(--bd);
@@ -391,44 +391,50 @@
             </div>
         </div>
 
-        <!-- OpenClinic GA Cumulative Flow Sheet Table -->
+        <!-- PClinic Patient Identification Strip (REAL SELECTED PATIENT ONLY — no fallback) -->
+        <div id="ocPatientBar" class="oc-patient-banner" style="display:none;"></div>
+
+        <!-- PClinic Cumulative Flow Sheet Table -->
         <div class="oc-matrix-wrapper">
             <table class="oc-matrix-table" id="ocMatrixTable">
                 <thead id="matrixHead"></thead>
                 <tbody id="matrixBody"></tbody>
             </table>
         </div>
+
+        <!-- Microbiology Culture & Sensitivity Reports (real lab data) -->
+        <div id="microReports" style="display:none;"></div>
     </div>
 
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="pclinic-catalog.js"></script>
     <script src="pclinic-orders.js"></script>
-    <script src="pclinic-file.js?v=20260804_CHUK_3ROW"></script>
+    <script src="pclinic-file.js?v=20260814_RAD"></script>
     <script src="pclinic-handoff.js"></script>
 
     <script>
-    (function() {
+    (function () {
         'use strict';
 
-        let currentPatient = null;
+        var currentPatient = null;
 
-        // ─── STANDARD OPENCLINIC GA LABORATORY PARAMETER REGISTER ───
-        const OC_CATEGORIES = [
+        /* ── STANDARD PCLINIC LABORATORY PARAMETER REGISTER (codes/ranges only — NO template values) ── */
+        var OC_CATEGORIES = [
             {
                 id: 'chem',
                 title: '20000 USUAL CHEMISTRY',
                 className: 'oc-cat-chem',
                 tests: [
-                    { code: '20001', name: 'UREA/BLOOD', unit: 'mmol/l', range: '3-9.2', defaultVal: '4.900' },
-                    { code: '20002', name: 'CREATININE/BLOOD', unit: 'µmol/l', range: '63.6-110.5', defaultVal: '71.200' },
-                    { code: '20003', name: 'NA + (SODIUM)/BLOOD', unit: 'mmol/l', range: '135-145', defaultVal: '140.000' },
-                    { code: '20004', name: 'K + (POTASSIUM)/BLOOD', unit: 'mmol/l', range: '3.5-5.0', defaultVal: '4.400' },
-                    { code: '20005', name: 'MAGNESIUM/BLOOD', unit: 'mmol/l', range: '0.66-1.07', defaultVal: '0.860' },
-                    { code: '20006', name: 'CL -(CHLORURE)/BLOOD', unit: 'mmol/l', range: '98-107', defaultVal: '102.000', abnormalVal: '116.000' },
-                    { code: '20007', name: 'FASTING GLUCOSE/BLOOD', unit: 'mmol/l', range: '3.9-5.6', defaultVal: '4.800' },
-                    { code: '20008', name: 'LIVER FUNCTION (SGPT/ALT)', unit: 'U/l', range: '7-56', defaultVal: '24.000' },
-                    { code: '20009', name: 'LIVER FUNCTION (SGOT/AST)', unit: 'U/l', range: '10-40', defaultVal: '22.000' }
+                    { code: '20001', name: 'UREA/BLOOD', unit: 'mmol/l', range: '3-9.2' },
+                    { code: '20002', name: 'CREATININE/BLOOD', unit: 'µmol/l', range: '63.6-110.5' },
+                    { code: '20003', name: 'NA + (SODIUM)/BLOOD', unit: 'mmol/l', range: '135-145' },
+                    { code: '20004', name: 'K + (POTASSIUM)/BLOOD', unit: 'mmol/l', range: '3.5-5.0' },
+                    { code: '20005', name: 'MAGNESIUM/BLOOD', unit: 'mmol/l', range: '0.66-1.07' },
+                    { code: '20006', name: 'CL -(CHLORURE)/BLOOD', unit: 'mmol/l', range: '98-107' },
+                    { code: '20007', name: 'FASTING GLUCOSE/BLOOD', unit: 'mmol/l', range: '3.9-5.6' },
+                    { code: '20008', name: 'LIVER FUNCTION (SGPT/ALT)', unit: 'U/l', range: '7-56' },
+                    { code: '20009', name: 'LIVER FUNCTION (SGOT/AST)', unit: 'U/l', range: '10-40' }
                 ]
             },
             {
@@ -436,20 +442,20 @@
                 title: '31000 FULL BLOOD COUNT',
                 className: 'oc-cat-fbc',
                 tests: [
-                    { code: '31001', name: 'WBC', unit: '10^3/µl', range: '4-10', defaultVal: '7.34', abnormalVal: '23.18' },
-                    { code: '31002', name: 'RBC', unit: '10^6/µl', range: '4.5-6.2', defaultVal: '4.82', abnormalVal: '3.86' },
-                    { code: '31003', name: 'hemoglobin', unit: 'g/dl', range: '13-17', defaultVal: '14.9', abnormalVal: '12.4' },
-                    { code: '31004', name: 'Hct', unit: '%', range: '40-54', defaultVal: '45.0', abnormalVal: '34.3' },
-                    { code: '31005', name: 'MCV', unit: 'fL', range: '82-98', defaultVal: '89.2', abnormalVal: '88.9' },
-                    { code: '31006', name: 'MCH', unit: 'pg', range: '27-31', defaultVal: '30.9', abnormalVal: '32.1' },
-                    { code: '31007', name: 'MCHC', unit: 'g/dl', range: '32-36', defaultVal: '34.7', abnormalVal: '36.2' },
-                    { code: '31008', name: 'platelets', unit: '10^3/µl', range: '150-450', defaultVal: '220', abnormalVal: '174' },
-                    { code: '31009', name: 'RDW', unit: '%', range: '11.5-14.5', defaultVal: '13.1', abnormalVal: '16.8' },
-                    { code: '31010', name: 'MPV', unit: 'fL', range: '6.9-10.6', defaultVal: '9.4', abnormalVal: '10.2' },
-                    { code: '32001', name: 'neutrophiles', unit: '%', range: '40-75', defaultVal: '62.0', abnormalVal: '83.4' },
-                    { code: '32002', name: 'lymphocytes', unit: '%', range: '20-40', defaultVal: '28.5', defaultValOld: '12.1' },
-                    { code: '32003', name: 'monocytes', unit: '%', range: '2-8', defaultVal: '6.2' },
-                    { code: '32004', name: 'eosinophiles', unit: '%', range: '1-4', defaultVal: '2.1' }
+                    { code: '31001', name: 'WBC', unit: '10^3/µl', range: '4-10' },
+                    { code: '31002', name: 'RBC', unit: '10^6/µl', range: '4.5-6.2' },
+                    { code: '31003', name: 'hemoglobin', unit: 'g/dl', range: '13-17' },
+                    { code: '31004', name: 'Hct', unit: '%', range: '40-54' },
+                    { code: '31005', name: 'MCV', unit: 'fL', range: '82-98' },
+                    { code: '31006', name: 'MCH', unit: 'pg', range: '27-31' },
+                    { code: '31007', name: 'MCHC', unit: 'g/dl', range: '32-36' },
+                    { code: '31008', name: 'platelets', unit: '10^3/µl', range: '150-450' },
+                    { code: '31009', name: 'RDW', unit: '%', range: '11.5-14.5' },
+                    { code: '31010', name: 'MPV', unit: 'fL', range: '6.9-10.6' },
+                    { code: '32001', name: 'neutrophiles', unit: '%', range: '40-75' },
+                    { code: '32002', name: 'lymphocytes', unit: '%', range: '20-40' },
+                    { code: '32003', name: 'monocytes', unit: '%', range: '2-8' },
+                    { code: '32004', name: 'eosinophiles', unit: '%', range: '1-4' }
                 ]
             },
             {
@@ -457,13 +463,13 @@
                 title: '40000 SEROLOGY & IMMUNOLOGY',
                 className: 'oc-cat-sero',
                 tests: [
-                    { code: '40001', name: 'HIV 1/2 ANTIBODY/AG', unit: '', range: 'Negative', defaultVal: 'Negative' },
-                    { code: '40002', name: 'HBsAg (HEPATITIS B)', unit: '', range: 'Negative', defaultVal: 'Negative' },
-                    { code: '40003', name: 'HCV ANTIBODY', unit: '', range: 'Negative', defaultVal: 'Negative' },
-                    { code: '40004', name: 'SYPHILIS RPR/VDRL', unit: '', range: 'Negative', defaultVal: 'Negative' },
-                    { code: '40005', name: 'CRP (C-REACTIVE PROTEIN)', unit: 'mg/l', range: '0-5', defaultVal: '2.400' },
-                    { code: '40006', name: 'WIDAL TEST (SALMONELLA)', unit: '', range: 'Negative', defaultVal: 'Negative' },
-                    { code: '40007', name: 'H. PYLORI AG/AB', unit: '', range: 'Negative', defaultVal: 'Negative' }
+                    { code: '40001', name: 'HIV 1/2 ANTIBODY/AG', unit: '', range: 'Negative' },
+                    { code: '40002', name: 'HBsAg (HEPATITIS B)', unit: '', range: 'Negative' },
+                    { code: '40003', name: 'HCV ANTIBODY', unit: '', range: 'Negative' },
+                    { code: '40004', name: 'SYPHILIS RPR/VDRL', unit: '', range: 'Negative' },
+                    { code: '40005', name: 'CRP (C-REACTIVE PROTEIN)', unit: 'mg/l', range: '0-5' },
+                    { code: '40006', name: 'WIDAL TEST (SALMONELLA)', unit: '', range: 'Negative' },
+                    { code: '40007', name: 'H. PYLORI AG/AB', unit: '', range: 'Negative' }
                 ]
             },
             {
@@ -471,10 +477,10 @@
                 title: '50000 MICROBIOLOGY & CULTURES',
                 className: 'oc-cat-mic',
                 tests: [
-                    { code: '50001', name: 'MALARIA PARASITE (MP)', unit: '', range: 'Negative', defaultVal: 'Negative' },
-                    { code: '50002', name: 'BLOOD CULTURE & SENSITIVITY', unit: '', range: 'No growth', defaultVal: 'No growth' },
-                    { code: '50003', name: 'URINE CULTURE & SENSITIVITY', unit: '', range: 'No growth', defaultVal: 'No growth' },
-                    { code: '50004', name: 'STOOL OVA & CYSTS', unit: '', range: 'Negative', defaultVal: 'Negative' }
+                    { code: '50001', name: 'MALARIA PARASITE (MP)', unit: '', range: 'Negative' },
+                    { code: '50002', name: 'BLOOD CULTURE & SENSITIVITY', unit: '', range: 'No growth' },
+                    { code: '50003', name: 'URINE CULTURE & SENSITIVITY', unit: '', range: 'No growth' },
+                    { code: '50004', name: 'STOOL OVA & CYSTS', unit: '', range: 'Negative' }
                 ]
             },
             {
@@ -482,228 +488,290 @@
                 title: '60000 URINALYSIS',
                 className: 'oc-cat-uri',
                 tests: [
-                    { code: '60001', name: 'URINE PROTEIN/ALBUMIN', unit: '', range: 'Negative', defaultVal: 'Negative' },
-                    { code: '60002', name: 'URINE GLUCOSE', unit: '', range: 'Negative', defaultVal: 'Negative' },
-                    { code: '60003', name: 'URINE KETONES', unit: '', range: 'Negative', defaultVal: 'Negative' },
-                    { code: '60004', name: 'URINE WBC / LEUKOCYTES', unit: '/HPF', range: '0-5', defaultVal: '2' }
+                    { code: '60001', name: 'URINE PROTEIN/ALBUMIN', unit: '', range: 'Negative' },
+                    { code: '60002', name: 'URINE GLUCOSE', unit: '', range: 'Negative' },
+                    { code: '60003', name: 'URINE KETONES', unit: '', range: 'Negative' },
+                    { code: '60004', name: 'URINE WBC / LEUKOCYTES', unit: '/HPF', range: '0-5' }
                 ]
             }
         ];
 
-        // ─── INITIALIZE ───
-        function init() {
-            loadDarkMode();
-            loadPatientData();
-            buildOpenClinicMatrix();
-        }
-
-        function loadDarkMode() {
-            const isDark = localStorage.getItem('pclinic-theme') === 'dark';
-            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-            document.body.classList.toggle('dark-mode', isDark);
-            const ic = document.getElementById('themeIcon');
-            if (ic) ic.className = isDark ? 'ti ti-sun' : 'ti ti-moon';
-        }
-
+        /* ── HELPERS ── */
         function escapeHtml(str) {
-            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        function showToast(msg, type = 'info') {
-            const c = document.getElementById('toastContainer');
-            const t = document.createElement('div');
-            t.className = 'toast';
-            t.style.background = type === 'success' ? '#059669' : type === 'error' ? '#ef4444' : '#1a1a2e';
-            t.textContent = msg;
-            c.appendChild(t);
-            setTimeout(() => t.remove(), 3000);
+        function stripMod(v) {
+            return String(v == null ? '' : v).replace(/^MOD-/i, '').trim();
         }
 
-        // ─── LOAD PATIENT ───
-        function loadPatientData() {
-            try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const pid = urlParams.get('patient') || localStorage.getItem('pclinic_active_patient');
-                if (pid) {
-                    const pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
-                    const found = pts.find(p => String(p.id) === String(pid));
-                    if (found) {
-                        currentPatient = found;
-                        updatePatientBanner(found);
-                        return;
-                    }
-                }
-            } catch (e) {}
-
-            try {
-                if (window.parent && window.parent.currentPatient) {
-                    currentPatient = window.parent.currentPatient;
-                    updatePatientBanner(currentPatient);
-                    return;
-                }
-            } catch (e) {}
-
-            // Default fallback if no patient selected
-            currentPatient = {
-                id: '655055',
-                firstName: 'GASPARD',
-                lastName: 'TEKEREZA',
-                mrn: '655055',
-                dob: '1986-01-07',
-                gender: 'Male',
-                department: 'SURGERY WARD 7',
-                district: 'KAMONYI'
-            };
-            updatePatientBanner(currentPatient);
+        function readPatients() {
+            try { return JSON.parse(localStorage.getItem('pclinic_patients') || '[]') || []; }
+            catch (e) { return []; }
         }
 
+        function patientName(p) {
+            if (!p) return '';
+            if (p.name) return p.name;
+            var n = ((p.firstName || '') + ' ' + (p.lastName || '')).trim();
+            return n || ('Patient ' + stripMod(p.id));
+        }
+
+        function flagBadge(flag) {
+            var f = String(flag || 'Normal');
+            var bg = '#e9f9ee', fg = '#1a7a32';
+            if (f.indexOf('High') !== -1 || f.indexOf('Low') !== -1) { bg = '#fff4e0'; fg = '#7a4500'; }
+            if (f.indexOf('Critical') !== -1) { bg = '#ffebe9'; fg = '#8a1f1a'; }
+            return '<span style="display:inline-block;background:' + bg + ';color:' + fg + ';font-weight:800;font-size:10px;padding:2px 8px;border-radius:20px;margin-left:6px;">' + escapeHtml(f) + '</span>';
+        }
+
+        /* ── PATIENT IDENTIFICATION STRIP (REAL SELECTED PATIENT ONLY) ── */
         function updatePatientBanner(p) {
-            // Patient banner deleted per user request
+            var bar = document.getElementById('ocPatientBar');
+            if (!bar) return;
+            if (!p || !p.id) {
+                bar.style.display = 'none';
+                bar.innerHTML = '';
+                return;
+            }
+            var dobStr = p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '—';
+            var ageStr = p.dob ? (new Date().getFullYear() - new Date(p.dob).getFullYear()) + ' years' : '—';
+            bar.innerHTML =
+                '<div class="oc-demo-item"><span class="oc-demo-lbl">Family name</span><span class="oc-demo-val">' + escapeHtml(String(p.lastName || '—').toUpperCase()) + '</span></div>' +
+                '<div class="oc-demo-item"><span class="oc-demo-lbl">Firstname</span><span class="oc-demo-val">' + escapeHtml(String(p.firstName || '—').toUpperCase()) + '</span></div>' +
+                '<div class="oc-demo-item"><span class="oc-demo-lbl">Date of birth</span><span class="oc-demo-val">' + escapeHtml(dobStr) + ' ⚪ (' + escapeHtml(p.gender || '—') + ' - ' + escapeHtml(ageStr) + ')</span></div>' +
+                '<div class="oc-demo-item"><span class="oc-demo-lbl">Record number</span><span class="oc-demo-val mrn">' + escapeHtml(p.mrn || stripMod(p.id)) + '</span></div>' +
+                '<div class="oc-demo-item"><span class="oc-demo-lbl">Department</span><span class="oc-demo-val">' + escapeHtml(String(p.department || '—').toUpperCase()) + '</span></div>' +
+                '<div class="oc-demo-item"><span class="oc-demo-lbl">Person ID</span><span class="oc-demo-val">' + escapeHtml(stripMod(p.id)) + '</span></div>' +
+                '<div class="oc-demo-item"><span class="oc-demo-lbl">District</span><span class="oc-demo-val">' + escapeHtml(String(p.district || '—').toUpperCase()) + '</span></div>' +
+                '<div class="oc-demo-item"><span class="oc-demo-lbl">Insurance</span><span class="oc-demo-val">' + escapeHtml(p.insurance || 'RSSB / RAMA') + '</span></div>';
+            bar.style.display = 'grid';
         }
 
-        // ─── BUILD OPENCLINIC GA CUMULATIVE FLOW SHEET MATRIX ───
-        function buildOpenClinicMatrix() {
-            // 1. Generate Order Columns (Standard OpenClinic historical progression + any new pending orders for patient)
-            const orderCols = [
-                {
-                    dateStr: '29/07/2026',
-                    timeStr: '00:00',
-                    orderId: '5709945',
-                    isHistorical: true,
-                    abnormalCodes: ['31001', '31003', '31004', '32001'] // WBC 23.18 (!), Hb 12.4 (!), etc.
-                },
-                {
-                    dateStr: '29/07/2026',
-                    timeStr: '16:07',
-                    orderId: '5712693',
-                    isHistorical: true,
-                    abnormalCodes: []
-                },
-                {
-                    dateStr: '30/07/2026',
-                    timeStr: '13:22',
-                    orderId: '5716274',
-                    isHistorical: true,
-                    abnormalCodes: ['31002', '31007', '31008', '31009', '31010'] // RBC 3.86 (!), PLT 174 (!), etc.
-                },
-                {
-                    dateStr: '01/08/2026',
-                    timeStr: '00:00',
-                    orderId: '5723334',
-                    isHistorical: true,
-                    abnormalCodes: ['20006', '31008', '31009', '31010', '32001'] // CL 116.000 (!), etc.
-                }
-            ];
+        /* ── EMPTY STATE (NO TEMPLATE DATA — REAL PATIENT ONLY) ── */
+        function renderEmptyState(msg) {
+            var head = document.getElementById('matrixHead');
+            var body = document.getElementById('matrixBody');
+            if (head) head.innerHTML = '';
+            if (body) {
+                body.innerHTML = '<tr><td style="text-align:center;padding:56px 20px;color:#6e6e73;font-size:13px;">' +
+                    '<div style="font-size:34px;margin-bottom:10px;">🧪</div>' + msg + '</td></tr>';
+            }
+        }
 
-            // 2. Check if currentPatient has any real orders in pclinic_orders or labRequests
-            if (currentPatient) {
+        /* ── LOAD REAL SELECTED PATIENT (NO HARDCODED FALLBACK) ── */
+        function loadPatientData() {
+            var pts = readPatients();
+            var found = null;
+
+            // 1. URL param ?patient=
+            try {
+                var q = new URLSearchParams(window.location.search).get('patient');
+                if (q) {
+                    found = pts.find(function (p) { return String(p.id) === String(q) || String(p.mrn) === String(q); }) || null;
+                }
+            } catch (e) {}
+
+            // 2. Doctor Dashboard snapshot (pclinic_lab_patient_data)
+            if (!found) {
                 try {
-                    const orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
-                    orders.forEach(o => {
-                        if (String(o.patientId) === String(currentPatient.id) && o.type === 'lab') {
-                            const dObj = new Date(o.orderedAt || Date.now());
-                            orderCols.push({
-                                dateStr: dObj.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-                                timeStr: dObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-                                orderId: String(o.id).replace(/[^0-9]/g, '').slice(0, 7) || '5801245',
-                                isPending: o.status !== 'completed' && o.status !== 'Completed',
-                                testsOrdered: (o.items || []).map(i => i.name)
-                            });
-                        }
-                    });
-                } catch(e) {}
+                    var snap = JSON.parse(localStorage.getItem('pclinic_lab_patient_data') || 'null');
+                    if (snap && snap.id) {
+                        found = pts.find(function (p) { return String(p.id) === String(snap.id); }) || snap;
+                    }
+                } catch (e) {}
             }
 
-            // 3. Render Table Header (thead)
-            const head = document.getElementById('matrixHead');
-            let headHtml = `
-                <tr>
-                    <th style="width: 220px; text-align: left;">Analysis</th>
-                    <th style="width: 380px; text-align: left;">Test Parameter &amp; Reference Range</th>
-            `;
-            orderCols.forEach(col => {
-                headHtml += `
-                    <th class="oc-col-order-hdr">
-                        <div class="oc-col-order-date">${col.dateStr} ${col.timeStr}</div>
-                        <div class="oc-col-order-id">${col.orderId}</div>
-                        <div class="oc-col-links">
-                            <span class="oc-col-link" onclick="showToast('📄 Displaying Lab results report #${col.orderId}', 'info')">
-                                <i class="ti ti-file-text"></i> Lab.results
-                            </span>
-                            <span class="oc-col-link" onclick="showToast('📋 Opening order #${col.orderId}', 'info')">
-                                <i class="ti ti-clipboard-list"></i> Order
-                            </span>
-                        </div>
-                    </th>
-                `;
+            // 3. Active patient id (pclinic_active_patient)
+            if (!found) {
+                try {
+                    var aid = localStorage.getItem('pclinic_active_patient');
+                    if (aid) {
+                        found = pts.find(function (p) { return String(p.id) === String(aid) || String(p.mrn) === String(aid); }) || null;
+                    }
+                } catch (e) {}
+            }
+
+            // 4. Parent window (iframe in Doctor Dashboard)
+            if (!found) {
+                try {
+                    if (window.parent && window.parent !== window && window.parent.currentPatient && window.parent.currentPatient.id) {
+                        found = window.parent.currentPatient;
+                    }
+                } catch (e) {}
+            }
+
+            if (found && found.id) {
+                currentPatient = found;
+                updatePatientBanner(found);
+                return true;
+            }
+
+            // ⛔ NO PATIENT → EMPTY STATE (never a hardcoded fallback patient)
+            currentPatient = null;
+            updatePatientBanner(null);
+            return false;
+        }
+
+        /* ── MATCH A SAVED RESULT TO A REGISTER TEST ── */
+        function findResultForTest(results, t) {
+            if (!Array.isArray(results)) return null;
+            for (var i = 0; i < results.length; i++) {
+                var r = results[i];
+                if (r && r.code && String(r.code) === String(t.code)) return r;
+            }
+            var tn = String(t.name).toLowerCase();
+            for (var j = 0; j < results.length; j++) {
+                var r2 = results[j];
+                if (!r2) continue;
+                var rn = String(r2.test || r2.name || '').toLowerCase();
+                if (rn && (rn.indexOf(tn) !== -1 || tn.indexOf(rn) !== -1)) return r2;
+            }
+            return null;
+        }
+
+        function testIsOrdered(testsOrdered, t, cat) {
+            if (!Array.isArray(testsOrdered)) return false;
+            var tn = String(t.name).toLowerCase();
+            var catId = cat ? cat.id : '';
+            return testsOrdered.some(function (nm) {
+                var n = String(nm || '').toLowerCase();
+                if (!n) return false;
+                if (n.indexOf(tn) !== -1 || tn.indexOf(n) !== -1) return true;
+                // Category-level matches (e.g. order item "Urinalysis" covers all 60000 rows)
+                if (catId === 'uri' && (n.indexOf('urinalysis') !== -1 || n.indexOf('urine') !== -1)) return true;
+                if (catId === 'fbc' && (n.indexOf('cbc') !== -1 || n.indexOf('blood count') !== -1 || n.indexOf('fbc') !== -1 || n.indexOf('haemoglobin') !== -1)) return true;
+                if (catId === 'chem' && (n.indexOf('chemistry') !== -1 || n.indexOf('renal') !== -1 || n.indexOf('liver') !== -1 || n.indexOf('rft') !== -1 || n.indexOf('lft') !== -1)) return true;
+                if (catId === 'micro' && (n.indexOf('culture') !== -1 || n.indexOf('microbio') !== -1 || n.indexOf('malaria') !== -1 || n.indexOf('stool') !== -1)) return true;
+                if (catId === 'sero' && (n.indexOf('serology') !== -1 || n.indexOf('hiv') !== -1 || n.indexOf('hepatitis') !== -1 || n.indexOf('crp') !== -1)) return true;
+                return false;
+            });
+        }
+
+        /* ── BUILD THE CUMULATIVE FLOW SHEET FROM REAL ORDERS & REAL RESULTS ONLY ── */
+        function buildPClinicMatrix() {
+            if (!currentPatient || !currentPatient.id) {
+                renderEmptyState('🔒 No patient selected.<br><span style="font-size:11.5px;">This flow sheet shows ONLY the selected patient — choose a patient in the Doctor Dashboard.</span>');
+                return;
+            }
+
+            var pidRaw = stripMod(currentPatient.id);
+
+            // 1. Real lab orders for this patient from the Common Server
+            var orders = [];
+            try {
+                orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]').filter(function (o) {
+                    return stripMod(o.patientId) === pidRaw && (o.type === 'lab' || o.dept === 'lab') && String(o.status || '').toLowerCase() !== 'cancelled';
+                });
+            } catch (e) {}
+
+            // 2. Build result sets: each real order = one column
+            var sets = orders.map(function (o) {
+                return {
+                    kind: 'order',
+                    id: String(o.id || ''),
+                    date: o.completedAt || o.orderedAt || new Date().toISOString(),
+                    status: o.status || 'pending',
+                    results: Array.isArray(o.results) ? o.results : [],
+                    testsOrdered: Array.isArray(o.items) ? o.items.map(function (it) { return it.name; }) : [],
+                    verifiedBy: o.completedBy || ''
+                };
+            });
+
+            // 3. Structured results saved on the patient record without a matching order
+            var knownIds = orders.map(function (o) { return String(o.id); });
+            var storedResults = Array.isArray(currentPatient.labResults) ? currentPatient.labResults : [];
+            storedResults.forEach(function (r) {
+                if (!r || !Array.isArray(r.tests) || !r.tests.length) return;
+                if (r.orderId && knownIds.indexOf(String(r.orderId)) !== -1) return;
+                sets.push({
+                    kind: 'stored',
+                    id: String(r.id || r.orderId || ''),
+                    date: r.date || new Date().toISOString(),
+                    status: 'completed',
+                    results: r.tests,
+                    testsOrdered: r.tests.map(function (t) { return t.test || t.name || ''; }),
+                    verifiedBy: r.verifiedBy || ''
+                });
+            });
+
+            sets.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+
+            if (!sets.length) {
+                renderEmptyState('No laboratory orders yet for <strong>' + escapeHtml(patientName(currentPatient)) + '</strong>.<br>' +
+                    '<span style="font-size:11.5px;">Create a Lab Request and the laboratory will publish verified results here.</span>');
+                return;
+            }
+
+            // 4. Table header — one real order column per set
+            var head = document.getElementById('matrixHead');
+            var headHtml = '<tr>' +
+                '<th style="width:220px;text-align:left;">Analysis</th>' +
+                '<th style="width:380px;text-align:left;">Test Parameter &amp; Reference Range</th>';
+            sets.forEach(function (s) {
+                var d = new Date(s.date);
+                var dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                var timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                var isVerified = s.status === 'completed' || s.status === 'Completed';
+                var statusChip = isVerified
+                    ? '<span style="display:inline-block;background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;">✓ Verified</span>'
+                    : '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;">⏳ Pending</span>';
+                headHtml += '<th class="oc-col-order-hdr">' +
+                    '<div class="oc-col-order-date">' + dateStr + ' ' + timeStr + '</div>' +
+                    '<div class="oc-col-order-id">' + escapeHtml(String(s.id).replace(/[^0-9]/g, '').slice(0, 7) || '—') + '</div>' +
+                    '<div class="oc-col-links">' +
+                        '<span class="oc-col-link" onclick="showToast(&quot;📄 Lab results report #' + escapeHtml(String(s.id).replace(/[^0-9]/g, '').slice(0, 7)) + '&quot;, &quot;info&quot;)"><i class="ti ti-file-text"></i> Lab.results</span>' +
+                        '<span class="oc-col-link" onclick="showToast(&quot;📋 Order #' + escapeHtml(String(s.id).replace(/[^0-9]/g, '').slice(0, 7)) + '&quot;, &quot;info&quot;)"><i class="ti ti-clipboard-list"></i> Order</span>' +
+                    '</div>' + statusChip + '</th>';
             });
             headHtml += '</tr>';
             head.innerHTML = headHtml;
 
-            // 4. Render Table Body (tbody)
-            const body = document.getElementById('matrixBody');
-            let bodyHtml = '';
+            // 5. Table body — REAL saved values only
+            var body = document.getElementById('matrixBody');
+            var bodyHtml = '';
+            var rowCount = 0;
 
-            let rowCount = 0;
-
-            OC_CATEGORIES.forEach(cat => {
-                const totalTests = cat.tests.length;
-
-                cat.tests.forEach((t, idx) => {
-                    const rowClass = (rowCount % 2 === 0) ? 'row-even' : 'row-odd';
+            OC_CATEGORIES.forEach(function (cat) {
+                var totalTests = cat.tests.length;
+                cat.tests.forEach(function (t, idx) {
+                    var rowClass = (rowCount % 2 === 0) ? 'row-even' : 'row-odd';
                     rowCount++;
+                    bodyHtml += '<tr class="' + rowClass + '">';
 
-                    bodyHtml += `<tr class="${rowClass}">`;
-
-                    // Category Left Cell (Spans all tests in category)
                     if (idx === 0) {
-                        bodyHtml += `
-                            <td class="oc-cat-cell ${cat.className}" rowspan="${totalTests}">
-                                ${cat.title}
-                            </td>
-                        `;
+                        bodyHtml += '<td class="oc-cat-cell ' + cat.className + '" rowspan="' + totalTests + '">' + cat.title + '</td>';
                     }
 
-                    // Test Parameter Cell: "CODE TEST NAME (unit) [range]"
-                    const unitStr = t.unit ? ` (${t.unit})` : '';
-                    const rangeStr = t.range ? ` [${t.range}]` : '';
-                    bodyHtml += `
-                        <td class="oc-test-cell">
-                            <span class="oc-test-code">${t.code}</span>
-                            <span>${t.name}${unitStr}</span>
-                            <span class="oc-test-range">${rangeStr}</span>
-                        </td>
-                    `;
+                    var unitStr = t.unit ? ' (' + t.unit + ')' : '';
+                    var rangeStr = t.range ? ' [' + t.range + ']' : '';
+                    bodyHtml += '<td class="oc-test-cell">' +
+                        '<span class="oc-test-code">' + t.code + '</span>' +
+                        '<span>' + t.name + unitStr + '</span>' +
+                        '<span class="oc-test-range">' + rangeStr + '</span></td>';
 
-                    // Generate Cells for Each Order Column
-                    orderCols.forEach((col, cIdx) => {
-                        if (col.isPending) {
-                            // Check if this test was part of the pending order
-                            const isOrdered = col.testsOrdered && col.testsOrdered.some(nm => 
-                                nm.toLowerCase().includes(t.name.toLowerCase()) || 
-                                t.name.toLowerCase().includes(nm.toLowerCase())
-                            );
-                            if (isOrdered) {
-                                bodyHtml += `
-                                    <td class="oc-res-cell">
-                                        <span class="oc-pending-badge">⏳ Pending</span>
-                                    </td>
-                                `;
+                    sets.forEach(function (s) {
+                        var isVerified = s.status === 'completed' || s.status === 'Completed';
+                        if (isVerified) {
+                            var r = findResultForTest(s.results, t);
+                            if (r) {
+                                var val = r.value != null && r.value !== '' ? r.value : '—';
+                                bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(val) + '</span>' +
+                                    '<span style="font-size:10px;color:#6e6e73;"> ' + escapeHtml(r.unit || '') + '</span>' +
+                                    flagBadge(r.flag) + '</td>';
                             } else {
-                                bodyHtml += '<td class="oc-res-cell" style="color:var(--tm);opacity:0.3;">--</td>';
+                                var ordered = testIsOrdered(s.testsOrdered, t, cat);
+                                bodyHtml += ordered
+                                    ? '<td class="oc-res-cell" style="color:#6e6e73;font-size:11px;">—</td>'
+                                    : '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
                             }
                         } else {
-                            // Historical order column
-                            const isAbnormal = col.abnormalCodes && col.abnormalCodes.includes(t.code);
-                            const resValue = isAbnormal ? (t.abnormalVal || t.defaultVal) : t.defaultVal;
-                            const cellClass = isAbnormal ? 'oc-res-cell oc-res-abnormal' : 'oc-res-cell';
-                            const flagBadge = isAbnormal ? '<span class="oc-flag">!</span>' : '';
-
-                            bodyHtml += `
-                                <td class="${cellClass}">
-                                    <span>${resValue}</span>${flagBadge}
-                                </td>
-                            `;
+                            var isOrdered = testIsOrdered(s.testsOrdered, t, cat);
+                            bodyHtml += isOrdered
+                                ? '<td class="oc-res-cell"><span class="oc-pending-badge">⏳ Pending</span></td>'
+                                : '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
                         }
                     });
 
@@ -714,30 +782,164 @@
             body.innerHTML = bodyHtml;
         }
 
-        // ─── CLOSE AND NAVIGATE ───
+        /* ── MICROBIOLOGY CULTURE & SENSITIVITY — REAL LAB REPORT IN DOCTOR VIEW ── */
+        function buildCandSCard(r) {
+            var atbRows = (Array.isArray(r.antibiotics) ? r.antibiotics : []).map(function (a, i) {
+                var atbName = Array.isArray(a) ? (a[1] || a[0] || 'Antibiotic') : (a.name || a.antibiotic || 'Antibiotic');
+                var sens = Array.isArray(a) ? (a[2] || 'Sensitive') : (a.sensitivity || 'Sensitive');
+                var sLow = String(sens).toLowerCase();
+                var fg = sLow === 'resistant' ? '#8a1f1a' : (sLow === 'intermediate' ? '#7a4500' : '#1a7a32');
+                return '<tr>' +
+                    '<td style="padding:7px 12px;border:0.5px solid #d8d8dc;font-weight:700;">' + (i + 1) + '</td>' +
+                    '<td style="padding:7px 12px;border:0.5px solid #d8d8dc;">' + escapeHtml(atbName) + '</td>' +
+                    '<td style="padding:7px 12px;border:0.5px solid #d8d8dc;text-align:center;font-weight:800;color:' + fg + ';">' + escapeHtml(sens) + '</td>' +
+                    '</tr>';
+            }).join('');
+
+            var repDate = r.date ? new Date(r.date).toLocaleDateString('en-GB') : '—';
+            var collDate = r.collectedAt ? new Date(r.collectedAt).toLocaleDateString('en-GB') : repDate;
+
+            return '<div style="background:#fff;border:1px solid var(--bd);border-radius:16px;padding:22px;margin-bottom:16px;box-shadow:var(--shadow);">' +
+                '<div style="text-align:center;border-bottom:2px solid #1d1d1f;padding-bottom:12px;margin-bottom:16px;">' +
+                    '<div style="font-size:18px;font-weight:800;letter-spacing:0.5px;color:#1d1d1f;">MICROBIOLOGY</div>' +
+                    '<div style="font-size:13.5px;font-weight:800;margin-top:3px;color:#1d1d1f;">Culture and Sensitivity</div>' +
+                    '<div style="font-size:11.5px;color:#6e6e73;margin-top:6px;">' + escapeHtml(r.incubationNote || '') + '</div>' +
+                '</div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:12.5px;color:#3a3a3c;margin-bottom:16px;">' +
+                    '<div><strong>Date of Sample Collection:</strong> ' + escapeHtml(collDate) + '</div>' +
+                    '<div><strong>Date of Reporting:</strong> ' + escapeHtml(repDate) + '</div>' +
+                    '<div><strong>Sample Type:</strong> ' + escapeHtml(r.sampleType || '—') + '</div>' +
+                    '<div><strong>Organism Isolated:</strong> ' + escapeHtml(r.organism || '—') + '</div>' +
+                    '<div><strong>Colony Count:</strong> ' + escapeHtml(r.colonyCount || '—') + '</div>' +
+                    '<div><strong>Patient:</strong> ' + escapeHtml(patientName(currentPatient)) + ' • MRN ' + escapeHtml(currentPatient.mrn || stripMod(currentPatient.id)) + '</div>' +
+                '</div>' +
+                '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+                    '<thead><tr style="background:#f5f5f7;">' +
+                        '<th style="padding:8px 12px;border:0.5px solid #d8d8dc;text-align:left;width:10%;">S. No.</th>' +
+                        '<th style="padding:8px 12px;border:0.5px solid #d8d8dc;text-align:left;">Antibiotic</th>' +
+                        '<th style="padding:8px 12px;border:0.5px solid #d8d8dc;width:24%;">Sensitivity</th>' +
+                    '</tr></thead><tbody>' + atbRows + '</tbody></table>' +
+                '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:16px;border-top:1px solid #d8d8dc;padding-top:12px;font-size:11.5px;color:#3a3a3c;">' +
+                    '<div><strong>Verifying Senior MLT:</strong> ' + escapeHtml(r.verifiedBy || 'PClinic MOD Laboratory') + '</div>' +
+                    '<div style="border:1.5px solid #1d1d1f;padding:6px 14px;border-radius:6px;font-weight:800;font-size:10.5px;letter-spacing:0.5px;">MOD / PCLINIC VERIFIED</div>' +
+                '</div>' +
+            '</div>';
+        }
+
+        function buildMicrobiologyReports() {
+            var box = document.getElementById('microReports');
+            if (!box) return;
+            if (!currentPatient) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+            var entries = [];
+            (Array.isArray(currentPatient.labResults) ? currentPatient.labResults : []).forEach(function (r) {
+                if (r && Array.isArray(r.antibiotics) && r.antibiotics.length) entries.push(r);
+            });
+            try {
+                var orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
+                orders.forEach(function (o) {
+                    if (o && stripMod(o.patientId) === stripMod(currentPatient.id) && o.microbiology &&
+                        Array.isArray(o.microbiology.antibiotics) && o.microbiology.antibiotics.length) {
+                        entries.push(o.microbiology);
+                    }
+                });
+            } catch (e) {}
+
+            if (!entries.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+            box.style.display = 'block';
+            box.innerHTML = '<div style="font-size:14px;font-weight:800;color:#1d1d1f;margin:20px 0 12px;">🧫 Microbiology — Culture &amp; Sensitivity Reports</div>' +
+                entries.map(buildCandSCard).join('');
+        }
+
+        /* ── INITIALIZE ── */
+        function init() {
+            loadDarkMode();
+            var ok = loadPatientData();
+            if (ok) {
+                buildPClinicMatrix();
+                buildMicrobiologyReports();
+            } else {
+                renderEmptyState('🔒 No patient selected.<br><span style="font-size:11.5px;">This flow sheet shows ONLY the selected patient — choose a patient in the Doctor Dashboard.</span>');
+                var box = document.getElementById('microReports');
+                if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+            }
+        }
+
+        function loadDarkMode() {
+            var isDark = localStorage.getItem('pclinic-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            document.body.classList.toggle('dark-mode', isDark);
+        }
+
+        function showToast(msg, type) {
+            var c = document.getElementById('toastContainer');
+            var t = document.createElement('div');
+            t.className = 'toast';
+            t.style.background = type === 'success' ? '#059669' : type === 'error' ? '#ef4444' : '#1a1a2e';
+            t.textContent = msg;
+            c.appendChild(t);
+            setTimeout(function () { t.remove(); }, 3000);
+        }
+
+        /* ── CLOSE AND NAVIGATE ── */
         function closeLabResultsPage() {
             try {
                 if (window.parent && window.parent !== window) {
-                    window.parent.postMessage({ type: 'CLOSE_LAB_RESULTS' }, '*');
+                    window.parent.postMessage({ type: 'CLOSE_LAB_RESULTS' }, window.location.origin);
                     return;
                 }
             } catch (e) {}
             window.location.href = 'doctor-dashboard.html';
         }
 
-        window.pcToggleTheme = function() {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            const next = isDark ? 'light' : 'dark';
+        window.pcToggleTheme = function () {
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            var next = isDark ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
-            document.body.classList.toggle('dark-mode', next === 'dark');
+            document.body.classList.toggle('dark-mode', next);
             localStorage.setItem('pclinic-theme', next);
-            const ic = document.getElementById('themeIcon');
-            if (ic) ic.className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
         };
 
-        window.addEventListener('DOMContentLoaded', init);
+        /* ── DOCTOR DASHBOARD LIVE SYNC ── */
+        window.addEventListener('DOMContentLoaded', function () {
+            requireAuth(['doctor','lab','nurse']).then(init).catch(function () {});
+        });
+
+        window.addEventListener('message', function (e) {
+            if (e.origin !== window.location.origin) return;
+            if (window.parent !== window && e.source !== window.parent) return;
+            if (e.data && e.data.type === 'LOAD_PATIENT' && e.data.patient && e.data.patient.id) {
+                var pts = readPatients();
+                var p = pts.find(function (x) { return String(x.id) === String(e.data.patient.id); }) || e.data.patient;
+                currentPatient = p;
+                updatePatientBanner(p);
+                buildPClinicMatrix();
+                buildMicrobiologyReports();
+            }
+        });
+
+        window.addEventListener('storage', function () {
+            if (loadPatientData()) {
+                buildPClinicMatrix();
+                buildMicrobiologyReports();
+            }
+        });
+        window.addEventListener('labResultsUpdated', function () {
+            if (loadPatientData()) {
+                buildPClinicMatrix();
+                buildMicrobiologyReports();
+            }
+        });
+        window.addEventListener('ordersUpdated', function () {
+            if (loadPatientData()) {
+                buildPClinicMatrix();
+                buildMicrobiologyReports();
+            }
+        });
+
         window.closeLabResultsPage = closeLabResultsPage;
-        window.buildOpenClinicMatrix = buildOpenClinicMatrix;
+        window.buildPClinicMatrix = buildPClinicMatrix;
+        window.buildMicrobiologyReports = buildMicrobiologyReports;
     })();
     </script>
 </body>

@@ -15,6 +15,17 @@ const COUNTER_DOC_PATH = 'config/patientCounter'; // stores { lastId: number }
 let isFirebaseReady = false;
 let realtimeUnsubscribe = null;
 
+// A patient ID sits in here from the moment a local write starts until
+// Firestore confirms (or definitively fails) it. The realtime listener
+// below used to overwrite the ENTIRE patients array with whatever the
+// server snapshot said, which meant a lab request added to a patient's
+// labRequests[] a few hundred ms earlier — before the write round-tripped
+// — got silently erased the instant any snapshot ticked. Any patient in
+// this set is protected: their local copy wins until the write resolves.
+const _pendingPatientIds = new Set();
+function markPatientPending(id) { _pendingPatientIds.add(String(id)); }
+function clearPatientPending(id) { _pendingPatientIds.delete(String(id)); }
+
 // ─── HELPERS ───
 function getCurrentStaff() {
     return window.currentStaff || { name: 'Unknown', staffId: '', id: '' };
@@ -77,22 +88,51 @@ function startRealtimeSync() {
         const patientsRef = collection(window.firebaseDB, COLLECTION_NAME);
         const q = query(patientsRef, orderBy('id', 'asc'));
         realtimeUnsubscribe = onSnapshot(q, (snapshot) => {
-            const patients = [];
+            const cloudPatients = [];
             snapshot.forEach((doc) => {
-                // Use doc.data() which now only contains field-level updates
                 const data = doc.data();
-                // Ensure id is present (Firestore doc ID is string, we store numeric id inside)
                 if (!data.id) data.id = parseInt(doc.id, 10) || doc.id;
-                patients.push(data);
+                cloudPatients.push(data);
             });
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
-            console.log('☁️ Synced', patients.length, 'patients from cloud');
+            // Emergency safety mode: Firestore is the sole source of truth.
+            // Never auto-upload stale browser records and never preserve a
+            // locally deleted/unknown record merely because it is absent from
+            // the server snapshot.
+            var localPatients = [];
+            try { localPatients = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) {}
+            var cloudIds = new Set(cloudPatients.map(function (p) { return String(p.id); }));
+
+            // Brand new local-only patients (never synced at all) are still
+            // discarded — that guard against stale/fabricated cache is fine.
+            var localOnlyCount = localPatients.filter(function (p) { return !cloudIds.has(String(p.id)); }).length;
+            if (localOnlyCount > 0) {
+                console.warn('Discarding ' + localOnlyCount + ' unverified local-only patient record(s); no automatic upload is allowed.');
+            }
+
+            // But for patients that DO exist in the cloud AND have a write
+            // still in flight from this tab (e.g. a lab request just
+            // submitted), keep the local version instead of the snapshot's
+            // — the snapshot may simply predate that write landing.
+            var localById = {};
+            localPatients.forEach(function (p) { localById[String(p.id)] = p; });
+            var finalPatients = cloudPatients.map(function (cp) {
+                var pid = String(cp.id);
+                if (_pendingPatientIds.has(pid) && localById[pid]) return localById[pid];
+                return cp;
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(finalPatients));
+            console.log('☁️ Synced', finalPatients.length, 'patients (cloud:' + cloudPatients.length + ' local:' + localPatients.length + ')');
             window.dispatchEvent(new Event('storage'));
-            window.dispatchEvent(new CustomEvent('patientsUpdated', { detail: { count: patients.length } }));
+            window.dispatchEvent(new CustomEvent('patientsUpdated', { detail: { count: finalPatients.length } }));
         }, (error) => {
             console.error('❌ Firebase sync error:', error);
+            // Fail closed: an unauthorized or disconnected browser must not
+            // continue presenting an old clinical cache as current data.
+            try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+            window.dispatchEvent(new CustomEvent('pclinicSyncError', { detail: { code: error && error.code } }));
+            if (window.pcToast) window.pcToast('Patient data is unavailable; the local clinical cache was cleared.', 'error', 7000);
         });
-        console.log('🔄 Real-time sync active');
+        console.log('🔄 Real-time sync active (server-authoritative mode)');
     } catch (e) {
         console.error('Error starting sync:', e);
     }
@@ -195,12 +235,30 @@ function getPatientsByLocation(loc) {
 // OLD CODE: setDoc(patientRef, entirePatient) → overwrites everything, loses concurrent edits
 // NEW CODE: updateDoc(patientRef, { onlyChangedFields }) + arrayUnion for lists
 
+// Surfaces silent server-write failures to the person at the keyboard.
+// Without this, a rejected Firestore write (permission-denied, offline,
+// stale rules, etc.) only ever showed up as a console.error — the local
+// copy still looked saved, so the record quietly never reached the
+// common server and no other device or dashboard ever saw it.
+function notifySaveFailure(context) {
+    if (typeof window.pcToast === 'function') {
+        window.pcToast('Change was NOT saved to the server. Please retry.', 'error', 7000);
+    }
+    if (typeof window.notify === 'function') {
+        window.notify('Change was NOT saved to the server. Please retry.', 'error');
+    }
+    console.warn('[pclinic] save-failure toast for:', context);
+}
+
 async function savePatientToFirebase_FIELD_ONLY(patientId, fieldPatch) {
-    if (!isFirebaseReady || !window.firebaseDB) return false;
+    if (!isFirebaseReady || !window.firebaseDB) {
+        notifySaveFailure('savePatientToFirebase_FIELD_ONLY: Firebase not ready');
+        return false;
+    }
     try {
         const { updateDoc, serverTimestamp } = window.firebaseFunctions;
         const ref = getPatientRef(patientId);
-        if (!ref) return false;
+        if (!ref) { notifySaveFailure('savePatientToFirebase_FIELD_ONLY: no ref'); return false; }
         await updateDoc(ref, {
             ...fieldPatch,
             updatedAt: serverTimestamp(),
@@ -225,12 +283,16 @@ async function savePatientToFirebase_FIELD_ONLY(patientId, fieldPatch) {
                 console.error('Fallback setDoc merge failed:', e2);
             }
         }
+        notifySaveFailure('savePatientToFirebase_FIELD_ONLY: ' + (e && e.code || e));
         return false;
     }
 }
 
 async function savePatientArrayField(patientId, fieldName, newEntry) {
-    if (!isFirebaseReady || !window.firebaseDB) return false;
+    if (!isFirebaseReady || !window.firebaseDB) {
+        notifySaveFailure('savePatientArrayField(' + fieldName + '): Firebase not ready');
+        return false;
+    }
     try {
         const { updateDoc, arrayUnion, serverTimestamp } = window.firebaseFunctions;
         const ref = getPatientRef(patientId);
@@ -243,6 +305,7 @@ async function savePatientArrayField(patientId, fieldName, newEntry) {
         return true;
     } catch (e) {
         console.error(`❌ Firebase arrayUnion ${fieldName} error:`, e);
+        notifySaveFailure('savePatientArrayField(' + fieldName + '): ' + (e && e.code || e));
         return false;
     }
 }
@@ -252,7 +315,7 @@ async function savePatientArrayField(patientId, fieldName, newEntry) {
 // ============================================================
 
 async function addPatient(patientData) {
-    console.log('🔵 addPatient (safe) called:', patientData);
+    console.log('🔵 addPatient called (clinical fields are not logged)');
     const newId = await getNextPatientIdSafe();
     let firstName = patientData.firstName || '';
     let lastName = patientData.lastName || '';
@@ -273,7 +336,7 @@ async function addPatient(patientData) {
     const nowIso = new Date().toISOString();
     const newPatient = {
         id: newId,
-        mrn: 'MRN ' + newId,
+        mrn: String(newId),
         name: fullName || (firstName + ' ' + lastName).trim(),
         firstName, lastName,
         dob: patientData.dob || '',
@@ -294,7 +357,8 @@ async function addPatient(patientData) {
         priority: patientData.priority || 'medium',
         queueStatus: patientData.queueStatus || 'waiting',
         queueAdded: patientData.queueAdded || Date.now(),
-        photo: patientData.photo || null,
+        // Media uploads are disabled until secure object storage is configured.
+        photo: null,
         vitals: [], triage: [], clinicalNotes: [], prescriptions: [], billingHistory: [],
         labRequests: [], labResults: [], appointments: [], referrals: [], wardRounds: [],
         insurance: patientData.insurance || { provider: '', policyNumber: '', scheme: '', validity: '' },
@@ -306,28 +370,30 @@ async function addPatient(patientData) {
         updatedBy: getCurrentStaffName()
     };
 
-    // Optimistic local
-    const patients = getPatients();
-    patients.push(newPatient);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
-    window.dispatchEvent(new Event('storage'));
-
-    // Firestore: create only this doc (not whole collection)
-    if (isFirebaseReady && window.firebaseDB) {
-        try {
-            const { doc, setDoc, serverTimestamp } = window.firebaseFunctions;
-            const ref = doc(window.firebaseDB, COLLECTION_NAME, String(newId));
-            await setDoc(ref, {
-                ...newPatient,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-            });
-            console.log('☁️ Patient created in cloud:', newPatient.mrn);
-        } catch (e) {
-            console.error('❌ Firebase create error:', e);
-        }
+    // Emergency safety mode is cloud-first. Offline-only patient creation is
+    // disabled because localStorage is not a safe or authoritative EHR store.
+    if (!isFirebaseReady || !window.firebaseDB || !window.firebaseFunctions) {
+        throw new Error('Secure server connection is required to register a patient.');
     }
-    return newPatient;
+    try {
+        const { doc, setDoc, serverTimestamp } = window.firebaseFunctions;
+        const ref = doc(window.firebaseDB, COLLECTION_NAME, String(newId));
+        await setDoc(ref, {
+            ...newPatient,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        const patients = getPatients();
+        patients.push(newPatient);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+        window.dispatchEvent(new Event('storage'));
+        console.log('☁️ Patient created on server:', newPatient.mrn);
+        return newPatient;
+    } catch (e) {
+        console.error('❌ Firebase create error:', e);
+        if (window.pcToast) window.pcToast('Patient was NOT registered on the server.', 'error', 7000);
+        throw e;
+    }
 }
 
 async function updatePatient(id, updates) {
@@ -335,26 +401,44 @@ async function updatePatient(id, updates) {
     const idx = patients.findIndex(p => String(p.id) === String(id));
     if (idx === -1) return null;
 
-    // Merge locally for instant UI
+    const blockedMediaFields = ['photo', 'photos', 'videos', 'media', 'attachments', 'consentFile'];
+    const safeUpdates = { ...(updates || {}) };
+    blockedMediaFields.forEach(field => { delete safeUpdates[field]; });
+    if (Object.keys(safeUpdates).length === 0) {
+        if (window.pcToast) window.pcToast('Media uploads are disabled until secure object storage is configured.', 'warning');
+        return null;
+    }
+
+    // Emergency safety mode is cloud-first. Do not tell clinical staff a
+    // record was saved when Firestore rejected or never received it.
+    markPatientPending(id);
+    const synced = await savePatientToFirebase_FIELD_ONLY(id, safeUpdates);
+    if (!synced) {
+        clearPatientPending(id);
+        const msg = 'Record was NOT saved to the server. Check your connection and permissions, then try again.';
+        console.error(msg, id, Object.keys(safeUpdates));
+        if (window.pcToast) window.pcToast(msg, 'error', 7000);
+        window.dispatchEvent(new CustomEvent('pclinicSyncError', { detail: { patientId: id, fields: Object.keys(safeUpdates) } }));
+        return null;
+    }
+
     const merged = {
         ...patients[idx],
-        ...updates,
+        ...safeUpdates,
         updatedAt: new Date().toISOString(),
-        updatedBy: getCurrentStaffName()
+        updatedBy: getCurrentStaffName(),
+        updatedById: getCurrentStaffId()
     };
-    // Keep name in sync if first/last changed
-    if (updates.firstName || updates.lastName) {
-        const f = updates.firstName || merged.firstName || '';
-        const l = updates.lastName || merged.lastName || '';
+    if (safeUpdates.firstName || safeUpdates.lastName) {
+        const f = safeUpdates.firstName || merged.firstName || '';
+        const l = safeUpdates.lastName || merged.lastName || '';
         merged.name = (f + ' ' + l).trim();
     }
     patients[idx] = merged;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    clearPatientPending(id);
     window.dispatchEvent(new Event('storage'));
-
-    // Firebase: ONLY changed fields
-    await savePatientToFirebase_FIELD_ONLY(id, updates);
-    console.log('✅ Patient updated (field-level):', merged.mrn, Object.keys(updates));
+    console.log('✅ Patient updated on server:', merged.mrn, Object.keys(safeUpdates));
     return merged;
 }
 
@@ -428,7 +512,7 @@ async function reindexPatients() {
     let cur = 1001;
     for (const p of patients) {
         p.id = cur;
-        p.mrn = 'MRN ' + cur;
+        p.mrn = String(cur);
         cur++;
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
@@ -757,15 +841,9 @@ function getPatientSummary(id) {
 function getPatientsForDepartment() { return getPatients(); }
 
 async function seedSamplePatients() {
-    const existing = getPatients();
-    if (existing.length > 0) { console.log('📊 Already have ' + existing.length + ' patients'); return; }
-    console.log('🌱 Seeding sample patients...');
-    const samples = [
-        { firstName: 'John', lastName: 'Smith', dob: '1985-06-15', gender: 'Male', phone: '+250 788 111 222', email: 'john.smith@email.com', address: '123 Main St, Kigali', emergencyContact: 'Jane Smith - Wife - +250 788 111 223', department: 'Cardiology', priority: 'medium' },
-        { firstName: 'Sarah', lastName: 'Johnson', dob: '1992-11-03', gender: 'Female', phone: '+250 788 333 444', email: 'sarah.j@email.com', address: '456 Oak Ave, Kigali', emergencyContact: 'Mike Johnson - Brother - +250 788 333 445', department: 'Neurology', priority: 'high' }
-    ];
-    for (const p of samples) await addPatient(p);
-    console.log('✅ Seeded ' + samples.length + ' sample patients');
+    // REMOVED per user request: no template patients
+    console.log('📊 seedSamplePatients disabled — no template patients');
+    return;
 }
 
 function getFirebaseStatus() {
@@ -822,6 +900,8 @@ window.getPaidBills = getPaidBills;
 window.markBillAsPaid = markBillAsPaid;
 window.getAllBills = getAllBills;
 window.getUnpaidBills = getUnpaidBills;
+window.markPatientPending = markPatientPending;
+window.clearPatientPending = clearPatientPending;
 window.addLabRequest = addLabRequest;
 window.addLabResult = addLabResult;
 window.getPatientSummary = getPatientSummary;
@@ -830,9 +910,15 @@ window.getFirebaseStatus = getFirebaseStatus;
 
 // ── AUTO-INIT ──
 console.log('📋 Patient Data System v2 loading...');
-console.log('📊 Local patients:', getPatients().length);
-waitForFirebase().then((ready) => {
-    if (ready) console.log('✅ Firebase connected! Real-time sync active with field-level updates.');
-    else console.log('⚠️ Using localStorage only (offline mode)');
-});
-console.log('✅ Patient Data System v2 ready — safe updates enabled');
+function startPatientSyncAfterAuth() {
+    waitForFirebase().then((ready) => {
+        if (ready) console.log('✅ Authenticated Firebase patient sync active.');
+        else {
+            try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+            console.error('❌ Secure Firebase connection unavailable; local-only clinical mode is disabled.');
+        }
+    });
+}
+if (window.currentStaff) startPatientSyncAfterAuth();
+else window.addEventListener('pclinicStaffReady', startPatientSyncAfterAuth, { once: true });
+console.log('✅ Patient Data System v2 ready — server-authoritative updates enabled');

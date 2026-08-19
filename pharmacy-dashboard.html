@@ -747,7 +747,7 @@
             .shortcuts-grid { grid-template-columns: 1fr; }
         }
     </style>
-    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
+    <script src="pclinic-file.js?v=20260814_RAD" defer></script>
 </head>
 <body>
 
@@ -1732,14 +1732,7 @@
 
         // ─── LOGOUT ───
         function handleLogout() {
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userName');
-                showToast('👋 Logged out successfully', 'info');
-                setTimeout(function() {
-                    window.location.href = 'login.html';
-                }, 500);
-            }
+            return window.pclinicLogout ? window.pclinicLogout() : window.location.replace('login.html');
         }
 
         // ─── KEYBOARD SHORTCUTS ───

@@ -17,10 +17,11 @@
     <!-- ─── PATIENT DATA SYSTEM ─── -->          
     <script src="patient-data.js" defer></script>
     <script src="pclinic-orders.js" defer></script>
+    <script src="pclinic-radiology.js" defer></script>
     <script src="doctor.js" defer></script>
     <script src="doctor-command.js" defer></script>
-    <script src="pclinic-file.js?v=20260804_CHUK_3ROW" defer></script>
-    <script src="doctor-patient.js?v=20260804_CHUK_3ROW" defer></script>
+    <script src="pclinic-file.js?v=20260814_RAD" defer></script>
+    <script src="doctor-patient.js?v=20260814_RAD" defer></script>
     <script src="doctor-actionbar.js" defer></script>
     <script src="doctor-move.js" defer></script>
     <script src="doctor-fixes.js" defer></script> 
@@ -3759,8 +3760,8 @@ input.fi:focus,
                     <i class="ti ti-settings"></i>
                 </div>
                 <div class="user-chip" onclick="toggleLogoutModal()">
-                    <div class="ua">DM</div>
-                    <span class="uname">Dr. Mutua</span>
+                    <div class="ua" id="ddUa">ST</div>
+                    <span class="uname" id="ddUname">Staff</span>
                 </div>
                 <div class="tb-btn" onclick="toggleLogoutModal()"><i class="ti ti-logout"></i></div>
             </div>
@@ -4105,8 +4106,7 @@ input.fi:focus,
                 <!-- ─── TAB: ALL PATIENTS ─── -->
                 <div class="mp-body" id="tab-patients">
                     <div class="section-title">👥 All Patients</div>
-                    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
-                        <input class="fi" style="flex:1;min-width:150px;" placeholder="Filter patients..." id="patientFilter" oninput="renderPatientTable()"/>
+                    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
                         <select class="fi" style="width:auto;" id="statusFilter" onchange="renderPatientTable()">
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
@@ -4207,6 +4207,41 @@ input.fi:focus,
         <div id="rxHistoryList">
             <p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">No prescriptions found for this patient.</p>
         </div>
+    </div>
+</div>
+
+<!-- ═══ LAB RESULTS TAB (READ-ONLY FOR THE DOCTOR — REAL DATA FROM THE LABORATORY) ═══ -->
+<div class="mp-body" id="tab-lab-results">
+    <div style="padding:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+            <div>
+                <div style="font-size:15px;font-weight:800;color:#1d1d1f;">🧪 Laboratory — Requests &amp; Verified Results</div>
+                <div style="font-size:11.5px;color:#6e6e73;margin-top:2px;">Read-only for the doctor • Results are released by the Laboratory and appear here live.</div>
+            </div>
+            <button class="btn-p" onclick="openLabResultsPage(currentPatient)" style="height:34px;padding:0 16px;border-radius:10px;border:0;background:#0071e3;color:#fff;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;"><i class="ti ti-chart-bar"></i> Open Cumulative Flow Sheet</button>
+        </div>
+
+        <!-- ─── LAB REQUESTS (cancel/delete pending only — NO result entry) ─── -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:13px;font-weight:700;color:#1d1d1f;">📋 Lab Requests</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <select id="labRequestStatusFilter" onchange="displayLabRequests(currentPatient)" style="height:30px;padding:0 10px;border-radius:8px;border:0.5px solid var(--bd);background:#fff;font-size:11.5px;font-weight:600;color:#1d1d1f;font-family:inherit;">
+                    <option value="all">All statuses</option>
+                    <option value="pending">⏳ Pending at Lab</option>
+                    <option value="completed">✅ Verified</option>
+                    <option value="cancelled">❌ Cancelled</option>
+                </select>
+                <span class="badge b-info" id="labRequestCount" style="background:#eaf2ff;color:#0071e3;font-weight:700;font-size:11px;padding:3px 10px;border-radius:20px;">0 requests</span>
+            </div>
+        </div>
+        <div id="labRequestsList"></div>
+
+        <!-- ─── VERIFIED LAB RESULTS (READ-ONLY) ─── -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 8px;">
+            <span style="font-size:13px;font-weight:700;color:#1d1d1f;">📊 Verified Lab Results</span>
+            <span class="badge b-grn" style="background:#e9f9ee;color:#1a7a32;font-weight:700;font-size:11px;padding:3px 10px;border-radius:20px;">✓ Laboratory released</span>
+        </div>
+        <div id="labResultsList"></div>
     </div>
 </div>
 
@@ -4373,7 +4408,7 @@ input.fi:focus,
                             <label style="font-size: 11px; font-weight: 600; color: var(--tm); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 4px;">
                                 <i class="ti ti-user"></i> Transferring Doctor *
                             </label>
-                            <input type="text" id="transferFromDoctor" class="fi" value="Dr. Mutua" readonly style="background: var(--s3); cursor: default; font-weight: 500; color: var(--ac);"/>
+                            <input type="text" id="transferFromDoctor" class="fi" value="" id="transferFromDoctor" readonly style="background: var(--s3); cursor: default; font-weight: 500; color: var(--ac);"/>
                         </div>
 
                         <!-- To Whom (Doctor/Hospital) -->
@@ -4486,9 +4521,88 @@ input.fi:focus,
 
 
     <script>
-        requireAuth(['doctor']).then(function(staff) {
+        requireAuth(['doctor']).then(async function(staff) {
             window.currentStaff = staff;
             console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
+            // ⛔ NO TEMPLATE DATA — the top-bar chips always show the REAL logged-in staff
+            try {
+                var nm = (staff && staff.name) || 'Staff';
+                var un = document.getElementById('ddUname');
+                if (un) un.textContent = nm;
+                var ua = document.getElementById('ddUa');
+                if (ua) {
+                    var parts = nm.split(/\s+/);
+                    ua.textContent = ((parts[0] || 'S').charAt(0) + ((parts[1] || '').charAt(0) || '')).toUpperCase();
+                }
+                var tf = document.getElementById('transferFromDoctor');
+                if (tf && !tf.value) tf.value = nm;
+            } catch(e){}
+
+            // Live, server-confirmed radiology notifications. Historical
+            // reports are marked seen on first load so they do not all toast.
+            try {
+                if (window.pcRadiology) {
+                    await window.pcRadiology.init({ staff: staff });
+                    var seenRadiology = new Set();
+                    var firstRadiologySnapshot = true;
+                    window.pcRadiology.subscribe(function(snapshot) {
+                        if (!snapshot.ready) return;
+                        var mine = (snapshot.reports || []).filter(function(report) {
+                            return report.status === 'final' && String(report.orderedById || '') === String(staff.staffId || '');
+                        });
+                        if (firstRadiologySnapshot) {
+                            mine.forEach(function(report) { seenRadiology.add(String(report.id)); });
+                            firstRadiologySnapshot = false;
+                            return;
+                        }
+                        mine.forEach(function(report) {
+                            if (seenRadiology.has(String(report.id))) return;
+                            seenRadiology.add(String(report.id));
+                            var message = (report.critical ? '⚠️ CRITICAL — ' : '📻 ') +
+                                'Radiology report ready: ' + (report.study || 'study') +
+                                ' for ' + (report.patientName || 'patient');
+                            var toast = window.sharedShowToast || window.showToast;
+                            if (typeof toast === 'function') toast(message, report.critical ? 'warning' : 'success', 8000);
+                        });
+                    });
+                }
+            } catch (radiologyError) {
+                console.warn('Radiology live notifications unavailable:', radiologyError && radiologyError.message);
+            }
+
+            // Live laboratory-result notifications addressed to this exact
+            // requesting clinician. pclinic-orders.js maintains the secure
+            // Firestore message mirror with both role and staff-ID queries.
+            try {
+                var seenLabMessages = new Set();
+                var labMessagesReady = false;
+                var labNotificationStartedAt = Date.now();
+                function handleLabResultMessages() {
+                    if (!window.pcMessages || typeof window.pcMessages.list !== 'function') return;
+                    var messages = window.pcMessages.list().filter(function(message) {
+                        return message && message.category === 'lab-result' &&
+                            (!message.toStaffId || String(message.toStaffId) === String(staff.staffId || ''));
+                    });
+                    if (!labMessagesReady) {
+                        messages.forEach(function(message) { seenLabMessages.add(String(message.id)); });
+                        labMessagesReady = true;
+                        return;
+                    }
+                    messages.forEach(function(message) {
+                        if (seenLabMessages.has(String(message.id))) return;
+                        seenLabMessages.add(String(message.id));
+                        var messageTime = new Date(message.at || 0).getTime();
+                        if (messageTime && messageTime < labNotificationStartedAt - 30000) return;
+                        var isUrgent = message.priority === 'urgent' || String(message.text || '').indexOf('CRITICAL') !== -1;
+                        var toast = window.sharedShowToast || window.showToast || window.pcToast;
+                        if (typeof toast === 'function') toast(message.text || 'Laboratory results are ready.', isUrgent ? 'warning' : 'success', isUrgent ? 12000 : 7000);
+                    });
+                }
+                handleLabResultMessages();
+                window.addEventListener('messagesUpdated', handleLabResultMessages);
+            } catch (labNotificationError) {
+                console.warn('Laboratory live notifications unavailable:', labNotificationError && labNotificationError.message);
+            }
         }).catch(function(err) {
             console.warn('Auth guard redirect:', err && err.message);
         });

@@ -56,7 +56,11 @@
             warning: '⚠️',
             info: 'ℹ️'
         };
-        toast.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ️'}</span> ${message}`;
+        const icon = document.createElement('span');
+        icon.className = 'toast-icon';
+        icon.textContent = icons[type] || 'ℹ️';
+        toast.appendChild(icon);
+        toast.appendChild(document.createTextNode(' ' + String(message == null ? '' : message)));
         container.appendChild(toast);
 
         // Trigger show animation
@@ -80,10 +84,13 @@
             overlay = document.createElement('div');
             overlay.id = 'pageLoadingOverlay';
             overlay.className = 'loading-overlay';
-            overlay.innerHTML = `
-                <div class="spinner-large"></div>
-                <div class="loading-text" id="loadingText">${text}</div>
-            `;
+            const spinner = document.createElement('div');
+            spinner.className = 'spinner-large';
+            const label = document.createElement('div');
+            label.className = 'loading-text';
+            label.id = 'loadingText';
+            overlay.appendChild(spinner);
+            overlay.appendChild(label);
             document.body.appendChild(overlay);
         }
         document.getElementById('loadingText').textContent = text;
