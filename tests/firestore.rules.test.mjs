@@ -170,6 +170,41 @@ describe('staff profile safety', () => {
 });
 
 describe('laboratory workflow security', () => {
+  test('doctor creates a lab order exactly as pclinic-orders.js createOrder() does', async () => {
+    // Exact payload shape emitted by createOrder()/sync() in pclinic-orders.js
+    // (lab-request.html → pcOrders.createAsync) for a lab order with billing.
+    const clientPayload = {
+      id: 'ord-labclient-1',
+      patientId: '1001',
+      patientName: 'Demo Patient',
+      type: 'lab',
+      dept: 'lab',
+      items: [{ code: 'LAB-CBC', name: 'CBC', qty: 1, price: 5000 }],
+      priority: 'routine',
+      notes: 'Sample: Blood · Requested by: Test Doctor',
+      status: 'pending',
+      total: 5000,
+      billed: true,
+      billId: 'bill-labclient-1',
+      orderedBy: 'Test Doctor',
+      orderedById: profiles.doctor.staffId,
+      orderedAt: '2026-08-21T12:00:00.000Z',
+      history: [{ at: '2026-08-21T12:00:00.000Z', by: 'Test Doctor', byId: profiles.doctor.staffId, action: 'created' }],
+    };
+    await assertSucceeds(setDoc(doc(dbFor('doctor'), 'orders', clientPayload.id), clientPayload));
+
+    // A nurse can also create; reception can too.
+    await assertSucceeds(setDoc(doc(dbFor('nurse'), 'orders', 'ord-nurse-1'), {
+      ...clientPayload, id: 'ord-nurse-1', orderedById: profiles.nurse.staffId,
+      orderedBy: 'Test Nurse', history: [],
+    }));
+
+    // Failures the live clinic saw: any of these single differences denies the create.
+    await assertFails(setDoc(doc(dbFor('doctor'), 'orders', 'ord-mismatch-id'), { ...clientPayload, id: 'ord-other-id' }));
+    await assertFails(setDoc(doc(dbFor('doctor'), 'orders', 'ord-mismatch-staff'), { ...clientPayload, orderedById: profiles.nurse.staffId }));
+    await assertFails(setDoc(doc(dbFor('doctor'), 'orders', 'ord-wrong-status'), { ...clientPayload, status: 'in-progress' }));
+  });
+
   test('laboratory may transition an existing lab order but cannot manufacture a legacy order in the browser', async () => {
     await assertSucceeds(updateDoc(doc(dbFor('lab'), 'orders', 'lab-order-1'), {
       status: 'in-progress', accessionNo: 'LAB-1001-TEST', accessionedById: profiles.lab.staffId,
