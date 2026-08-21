@@ -409,7 +409,8 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="pclinic-catalog.js"></script>
-    <script src="pclinic-orders.js"></script>
+    <script src="pclinic-lab-catalog.js"></script>
+<script src="pclinic-orders.js"></script>
     <script src="pclinic-file.js?v=20260814_RAD"></script>
     <script src="pclinic-handoff.js"></script>
 
@@ -495,6 +496,40 @@
                 ]
             }
         ];
+
+        // ── EXTEND THE FLOW SHEET WITH THE FULL CHUK LAB CATALOG ──
+        // Shows a row for every parameter of every catalog exam; codes that
+        // already exist (20000/31000/40000/50000/60000 rows) are skipped so
+        // old results keep matching. Runs before any rendering.
+        (function extendCategoriesWithCatalog() {
+            if (!window.pcLabCatalog || typeof window.pcLabCatalog.list !== 'function') return;
+            var knownCodes = {};
+            var catById = {};
+            OC_CATEGORIES.forEach(function (c) {
+                catById[c.id] = c;
+                c.tests.forEach(function (t) { knownCodes[String(t.code).toUpperCase()] = true; });
+            });
+            window.pcLabCatalog.list().forEach(function (ex) {
+                var catId = ex.category || 'other';
+                var cat = catById[catId];
+                if (!cat) {
+                    cat = {
+                        id: catId,
+                        title: String(window.pcLabCatalog.categoryLabel(catId) || catId).toUpperCase(),
+                        className: 'oc-cat-' + catId,
+                        color: '#334155',
+                        tests: []
+                    };
+                    catById[catId] = cat;
+                    OC_CATEGORIES.push(cat);
+                }
+                (ex.parameters || []).forEach(function (p) {
+                    if (knownCodes[String(p.code).toUpperCase()]) return;
+                    knownCodes[String(p.code).toUpperCase()] = true;
+                    cat.tests.push({ code: p.code, name: p.name, unit: p.unit || '', range: p.range || '' });
+                });
+            });
+        })();
 
         /* ── HELPERS ── */
         function escapeHtml(str) {
@@ -675,7 +710,16 @@
                     date: o.completedAt || o.orderedAt || new Date().toISOString(),
                     status: o.status || 'pending',
                     results: Array.isArray(o.results) ? o.results : [],
-                    testsOrdered: Array.isArray(o.items) ? o.items.map(function (it) { return it.name; }) : [],
+                    testsOrdered: Array.isArray(o.items) ? o.items.reduce(function (acc, it) {
+                        acc.push(it.name);
+                        if (window.pcLabCatalog) {
+                            var ex = window.pcLabCatalog.byCode(it.code) || window.pcLabCatalog.findByName(it.name);
+                            if (ex && Array.isArray(ex.parameters)) {
+                                ex.parameters.forEach(function (p) { acc.push(p.name); });
+                            }
+                        }
+                        return acc;
+                    }, []) : [],
                     verifiedBy: o.completedBy || ''
                 };
             });

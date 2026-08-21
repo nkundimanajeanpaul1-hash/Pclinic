@@ -933,6 +933,32 @@
             try { if (window.pcTariff && typeof pcTariff.byDept === 'function') labs = pcTariff.byDept('lab') || []; }
             catch(e) { labs = []; }
 
+            // ── MERGE THE FULL CHUK LAB CATALOG ──
+            // Every exam from pclinic-lab-catalog.js appears here. When the
+            // same exam (code OR name) already exists in the admin tariff,
+            // the tariff entry and its price win; otherwise the catalog
+            // placeholder price (3000 RWF, editable in Admin → Lab Exams).
+            if (window.pcLabCatalog && typeof window.pcLabCatalog.list === 'function') {
+                var knownCodes = {};
+                var knownNames = {};
+                labs.forEach(function (t) {
+                    knownCodes[String(t.code || '').toUpperCase()] = t;
+                    knownNames[String(t.name || '').toLowerCase().trim()] = t;
+                });
+                window.pcLabCatalog.list().forEach(function (ex) {
+                    if (knownCodes[String(ex.code || '').toUpperCase()]) return;
+                    var byName = knownNames[String(ex.name || '').toLowerCase().trim()];
+                    labs.push({
+                        code: ex.code,
+                        name: ex.name,
+                        dept: 'lab',
+                        category: ex.category || 'general',
+                        verify: ex.verify === true,
+                        price: byName ? (Number(byName.price) || 0) : window.pcLabCatalog.defaultPrice(ex)
+                    });
+                });
+            }
+
             [1,2,3].forEach(function(c){
                 var col = document.getElementById('labCol' + c);
                 if (col) col.innerHTML = '';
@@ -1603,6 +1629,7 @@ function toggleHistoryDetails(idx) {
         });
     </script>
 <script src="pclinic-catalog.js"></script>
+<script src="pclinic-lab-catalog.js"></script>
 <script src="pclinic-orders.js"></script>
 <script src="patient-data.js"></script>
 <script src="pclinic-file.js?v=20260814_RAD"></script>

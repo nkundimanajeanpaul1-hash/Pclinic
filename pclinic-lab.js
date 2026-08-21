@@ -174,6 +174,11 @@
                 if (String(OC_CATEGORIES[c].tests[i].code) === wanted) return OC_CATEGORIES[c].tests[i];
             }
         }
+        // Full CHUK catalog fallback (new parameter codes like '16110-1').
+        if (window.pcLabCatalog && typeof window.pcLabCatalog.parameterByCode === 'function') {
+            var cp = window.pcLabCatalog.parameterByCode(wanted);
+            if (cp) return { code: cp.code, name: cp.name, unit: cp.unit || '', range: cp.range || '' };
+        }
         return null;
     }
 
@@ -253,6 +258,17 @@
             return cloneLabParameter(parameter, item);
         });
         if (known.length) return known;
+        // ── FULL CHUK CATALOG FALLBACK ──
+        // Unrecognised codes/names resolve to the catalog exam's parameter
+        // rows so the lab can enter results for every catalogued test.
+        if (window.pcLabCatalog) {
+            var catalogExam = window.pcLabCatalog.byCode(item.code) || window.pcLabCatalog.findByName(item.name);
+            if (catalogExam && Array.isArray(catalogExam.parameters) && catalogExam.parameters.length) {
+                return catalogExam.parameters.map(function (parameter) {
+                    return cloneLabParameter(parameter, item);
+                });
+            }
+        }
         return [cloneLabParameter({ code: item.code || ('RESULT-' + Date.now()), name: item.name, unit: item.unit, range: item.refRange || item.range }, item)];
     }
 
