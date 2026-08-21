@@ -819,32 +819,51 @@
         tbody.innerHTML = html;
     }
 
-    /* ── 100/100 LOOK-ALIKE EDITABLE PCLINIC CUMULATIVE MATRIX TABLE (.oc-matrix-table) ── */
+    /* ── DAY-GROUPED RESULT ENTRY: ONE CARD PER REQUEST DATE ──
+           All requests of the same day are entered and released in ONE card.
+           Each request keeps its own sub-heading and inputs (data-order-id)
+           so results still map back to the correct order on the common server. */
     function buildEditableMatrixTableHTML(group) {
         var pName = group.patientName;
         var mrn = group.patientId;
-        var nowStr = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
-        var html = '<div style="display:flex;flex-direction:column;gap:16px;">';
+        var dayParts = String(group.dateStr || '').split('-');
+        var dayDateStr = dayParts.length === 3 ? dayParts[2] + '/' + dayParts[1] + '/' + dayParts[0] : (group.dateStr || '—');
 
-        group.orders.forEach(function(order, orderIndex) {
+        var ordersSorted = group.orders.slice().sort(function (a, b) {
+            return new Date(a.orderedAt || 0) - new Date(b.orderedAt || 0);
+        });
+        var nonFinalCount = ordersSorted.filter(function (o) {
+            return String(o.status || '').toLowerCase() !== 'completed';
+        }).length;
+        var allCompleted = ordersSorted.length > 0 && nonFinalCount === 0;
+        var someFailed = ordersSorted.some(function (o) { return o._syncFailed === true; });
+
+        var orderIdsStr = ordersSorted.map(function (o) { return esc(String(o.id || '—')); }).join(' · ');
+
+        var stateChip = allCompleted
+            ? '<span style="background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:11px;padding:4px 10px;border-radius:20px;">✓ FINAL — IMMUTABLE</span>'
+            : someFailed
+                ? '<span style="background:#ffebe9;color:#8a1f1a;font-weight:800;font-size:11px;padding:4px 10px;border-radius:20px;">⚠ Server sync failed — release will repair</span>'
+                : '<span style="background:#fff4e0;color:#7a4500;font-weight:800;font-size:11px;padding:4px 10px;border-radius:20px;">Result entry — ' + ordersSorted.length + ' request(s)</span>';
+
+        // One card body: every request of the day, in one place.
+        var bodyHtml = '';
+        var parameterCount = 0;
+        ordersSorted.forEach(function (order) {
             var orderId = String(order.id || '');
             var orderDomId = safeDomId(orderId);
             var failed = order._syncFailed === true;
             var completed = String(order.status || '').toLowerCase() === 'completed' && !failed;
-            // These attributes are used both inside each parameter row and by
-            // the order-level comments box below. Defining them at order scope
-            // prevents the ReferenceError that previously stopped every repaint.
             var readonlyAttr = completed ? ' readonly' : '';
             var disabledAttr = completed ? ' disabled' : '';
             var items = Array.isArray(order.items) ? order.items : [];
             var parameterRows = '';
-            var parameterCount = 0;
 
-            items.forEach(function(item) {
+            items.forEach(function (item) {
                 var parameters = parametersForOrderItem(item);
                 parameterRows += '<div style="font-size:11.5px;font-weight:800;color:#004a52;margin:12px 0 6px;padding-bottom:5px;border-bottom:1px solid rgba(0,112,128,.18);">' +
                     esc(item.name || 'Laboratory test') + ' <span style="font-weight:600;color:#64748b;">(' + esc(item.code || 'No code') + ')</span></div>';
-                parameters.forEach(function(parameter, parameterIndex) {
+                parameters.forEach(function (parameter, parameterIndex) {
                     parameterCount++;
                     var existing = existingOrderResult(order, parameter) || {};
                     var rowId = orderDomId + '_' + safeDomId(parameter.orderItemCode) + '_' + safeDomId(parameter.code) + '_' + parameterIndex;
@@ -858,6 +877,7 @@
                           '<input id="lab_value_' + rowId + '" class="lab-order-result-input" type="text" value="' + esc(value) + '" placeholder="Enter measured value"' + readonlyAttr +
                             ' data-code="' + esc(parameter.code) + '" data-name="' + esc(parameter.name) + '" data-unit="' + esc(parameter.unit) + '" data-range="' + esc(parameter.range) + '"' +
                             ' data-order-item-code="' + esc(parameter.orderItemCode) + '" data-order-item-name="' + esc(parameter.orderItemName) + '"' +
+                            ' data-order-id="' + esc(orderId) + '"' +
                             ' data-flag-id="lab_flag_' + rowId + '" oninput="pcLabEngine.autoFlagResult(this)"' +
                             ' style="width:100%;height:36px;background:' + (completed ? '#f1f5f9' : '#fff') + ';border:1px solid ' + (completed ? '#cbd5e1' : '#007080') + ';border-radius:8px;padding:0 11px;font-weight:750;font-size:13px;color:#1d1d1f;" />' +
                           '<select id="lab_flag_' + rowId + '" class="lab-order-result-flag"' + disabledAttr +
@@ -872,36 +892,38 @@
             });
 
             if (!parameterRows) {
-                parameterRows = '<div style="padding:14px;color:#8a1f1a;background:#ffebe9;border-radius:10px;">This order has no valid test items. Ask the requesting clinician to correct it.</div>';
+                parameterRows = '<div style="padding:14px;color:#8a1f1a;background:#ffebe9;border-radius:10px;">Request ' + esc(orderId) + ' has no valid test items. Ask the requesting clinician to correct it.</div>';
             }
 
-            var stateChip = completed
-                ? '<span style="background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:11px;padding:4px 10px;border-radius:20px;">✓ FINAL — IMMUTABLE</span>'
-                : failed
-                    ? '<span style="background:#ffebe9;color:#8a1f1a;font-weight:800;font-size:11px;padding:4px 10px;border-radius:20px;">⚠ Server sync failed — release will repair</span>'
-                    : '<span style="background:#fff4e0;color:#7a4500;font-weight:800;font-size:11px;padding:4px 10px;border-radius:20px;">Result entry</span>';
+            bodyHtml += '<div class="lab-day-order-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 4px;padding:8px 12px;border-radius:10px;background:#f1f5f9;border:1px solid rgba(0,0,0,.06);">' +
+                '<div style="font-size:12px;font-weight:800;color:#334155;">Request ' + esc(orderId) +
+                ' <span style="font-weight:600;color:#64748b;">· ' + esc(order.orderedBy || 'Unknown') + ' · ' +
+                esc(order.orderedAt ? new Date(order.orderedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—') + '</span></div>' +
+                (completed ? '<span style="font-size:10px;font-weight:800;color:#1a7a32;">✓ FINAL</span>' : (failed ? '<span style="font-size:10px;font-weight:800;color:#8a1f1a;">⚠ SYNC FAILED</span>' : '')) +
+                '</div>' + parameterRows;
+        });
 
-            html += '<section class="lab-order-result-section" data-lab-order-id="' + esc(orderId) + '" style="background:#fff;border-radius:16px;border:1px solid rgba(0,0,0,.12);box-shadow:0 6px 22px rgba(0,0,0,.06);overflow:hidden;">' +
+        var footer = allCompleted
+            ? '<button onclick="pcLabEngine.printReportModal(\'' + esc(ordersSorted[ordersSorted.length - 1].id) + '\')" style="height:38px;padding:0 18px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;font-weight:750;cursor:pointer;">🖨️ View final report</button>'
+            : '<button class="lab-release-btn" onclick="pcLabEngine.saveDayResults(\'' + esc(group.key) + '\',this)" style="height:40px;padding:0 24px;border-radius:10px;border:0;background:#007080;color:#fff;font-weight:850;font-size:12.5px;cursor:pointer;box-shadow:0 3px 10px rgba(0,112,128,.28);">💾 Validate &amp; Release the Day\u2019s Requests (' + nonFinalCount + ')</button>';
+
+        var html = '<div style="display:flex;flex-direction:column;gap:16px;">' +
+            '<section class="lab-order-result-section lab-day-result-section" data-lab-day-key="' + esc(group.key) + '" style="background:#fff;border-radius:16px;border:1px solid rgba(0,0,0,.12);box-shadow:0 6px 22px rgba(0,0,0,.06);overflow:hidden;">' +
               '<div style="padding:15px 20px;background:#e6f6f8;border-bottom:2px solid #007080;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">' +
-                '<div><div style="font-size:15px;font-weight:850;color:#004a52;">Order ' + esc(orderId) + '</div>' +
-                '<div style="font-size:11.5px;color:#334155;margin-top:3px;">Patient: <strong>' + esc(pName) + '</strong> • MRN ' + esc(mrn) + ' • Ordered by: <strong>' + esc(order.orderedBy || 'Unknown') + '</strong></div>' +
-                '<div style="font-size:10.5px;color:#64748b;margin-top:2px;">' + esc(order.orderedAt ? new Date(order.orderedAt).toLocaleString() : nowStr) + ' • ' + esc(String(order.priority || 'routine').toUpperCase()) + '</div></div>' + stateChip +
+                '<div><div style="font-size:15px;font-weight:850;color:#004a52;">📅 ' + dayDateStr + ' — ' + ordersSorted.length + ' request(s)</div>' +
+                '<div style="font-size:11.5px;color:#334155;margin-top:3px;">Patient: <strong>' + esc(pName) + '</strong> • MRN ' + esc(mrn) + ' • Request(s): <strong>' + orderIdsStr + '</strong></div></div>' + stateChip +
               '</div>' +
               '<div style="padding:16px 20px;">' +
-                '<div style="font-size:12px;font-weight:800;color:#004a52;margin-bottom:8px;">REQUESTED TESTS — ENTER EVERY REQUIRED RESULT</div>' + parameterRows +
-                '<label style="display:block;font-size:11px;font-weight:800;color:#475569;margin:12px 0 5px;">Laboratory comments / interpretation</label>' +
-                '<textarea class="lab-order-comments"' + readonlyAttr + ' placeholder="Optional validated comment for the requesting clinician" style="width:100%;min-height:64px;resize:vertical;border:1px solid #cbd5e1;border-radius:9px;padding:9px 11px;font:12px inherit;background:' + (completed ? '#f1f5f9' : '#fff') + ';">' + esc(order.labComments || '') + '</textarea>' +
+                '<div style="font-size:12px;font-weight:800;color:#004a52;margin-bottom:8px;">REQUESTED TESTS — ENTER EVERY REQUIRED RESULT (ALL REQUESTS OF THIS DAY)</div>' + bodyHtml +
+                '<label style="display:block;font-size:11px;font-weight:800;color:#475569;margin:12px 0 5px;">Laboratory comments / interpretation (applies to all requests of this day)</label>' +
+                '<textarea class="lab-order-comments"' + (allCompleted ? ' readonly' : '') + ' placeholder="Optional validated comment for the requesting clinician" style="width:100%;min-height:64px;resize:vertical;border:1px solid #cbd5e1;border-radius:9px;padding:9px 11px;font:12px inherit;background:' + (allCompleted ? '#f1f5f9' : '#fff') + ';">' + esc(ordersSorted[0].labComments || '') + '</textarea>' +
               '</div>' +
               '<div style="padding:13px 20px;background:#f8f9fa;border-top:1px solid rgba(0,0,0,.09);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
                 '<div style="font-size:11.5px;color:#64748b;max-width:650px;">Final release is committed on the common server, written to the patient record, audited, and sent to the requesting doctor. Critical flags create an urgent alert.</div>' +
-                (completed
-                    ? '<button onclick="pcLabEngine.printReportModal(\'' + esc(orderId) + '\')" style="height:38px;padding:0 18px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;font-weight:750;cursor:pointer;">🖨️ View final report</button>'
-                    : '<button class="lab-release-btn" onclick="pcLabEngine.saveOrderResults(\'' + esc(orderId) + '\',this)" style="height:40px;padding:0 24px;border-radius:10px;border:0;background:#007080;color:#fff;font-weight:850;font-size:12.5px;cursor:pointer;box-shadow:0 3px 10px rgba(0,112,128,.28);">💾 Validate & Release to Requesting Doctor</button>') +
+                footer +
               '</div>' +
-            '</section>';
-        });
-
-        html += '</div>';
+            '</section>' +
+          '</div>';
         return html;
     }
 
@@ -1175,18 +1197,124 @@
         }
     }
 
-    // Backward-compatible group action: release each non-final order one at a
-    // time, preserving its own result association and server confirmation.
+    // Backward-compatible group action: delegates to the day-based release.
     async function saveGroupResults(key) {
-        var group = groupOrdersByPatientAndDate(getLabOrders()).filter(function(row) { return row.key === key; })[0];
-        if (!group) return false;
-        for (var i = 0; i < group.orders.length; i++) {
-            if (String(group.orders[i].status).toLowerCase() !== 'completed') {
-                var ok = await saveOrderResults(group.orders[i].id, null);
-                if (!ok) return false;
+        return saveDayResults(key, null);
+    }
+
+    /* ── DAY-GROUPED RELEASE: one validation & one confirmation for the day ──
+           Gathers every result input of the day card, checks nothing is
+           missing, then releases each non-final request of the day through
+           the trusted common server, one at a time, each with its own
+           results (mapped back via data-order-id) and the shared day comment. */
+    async function saveDayResults(groupKey, button) {
+        var group = groupOrdersByPatientAndDate(getLabOrders()).filter(function (row) { return row.key === groupKey; })[0];
+        if (!group) {
+            if (window.showToast) showToast('❌ The laboratory requests for this day were not found.', 'error');
+            return false;
+        }
+        var section = document.querySelector('.lab-day-result-section[data-lab-day-key="' + groupKey + '"]');
+        if (!section) {
+            if (window.showToast) showToast('❌ Result form is not open. Unfold the day and retry.', 'error');
+            return false;
+        }
+
+        var inputs = section.querySelectorAll('.lab-order-result-input');
+        var resultsByOrder = {};
+        var missing = [];
+        inputs.forEach(function (input) {
+            var value = String(input.value || '').trim();
+            if (!value) {
+                missing.push(input.getAttribute('data-name') || 'Result');
+                input.style.borderColor = '#d32f2f';
+                input.style.background = '#fff5f5';
+                return;
+            }
+            input.style.borderColor = '#007080';
+            input.style.background = '#fff';
+            var flag = document.getElementById(input.getAttribute('data-flag-id'));
+            var orderId = input.getAttribute('data-order-id') || '';
+            if (!resultsByOrder[orderId]) resultsByOrder[orderId] = [];
+            resultsByOrder[orderId].push({
+                code: input.getAttribute('data-code') || '',
+                orderItemCode: input.getAttribute('data-order-item-code') || '',
+                orderItemName: input.getAttribute('data-order-item-name') || '',
+                test: input.getAttribute('data-name') || 'Laboratory result',
+                value: value,
+                unit: input.getAttribute('data-unit') || '',
+                refRange: input.getAttribute('data-range') || '',
+                flag: flag ? flag.value : 'Normal'
+            });
+        });
+
+        var nonFinal = group.orders.filter(function (o) { return String(o.status || '').toLowerCase() !== 'completed'; });
+        if (!nonFinal.length) {
+            if (window.showToast) showToast('ℹ️ All requests of this day are already final.', 'info');
+            return true;
+        }
+        var orderWithNoValues = nonFinal.filter(function (o) { return !(resultsByOrder[String(o.id)] && resultsByOrder[String(o.id)].length); })[0];
+        if (orderWithNoValues) {
+            if (window.showToast) showToast('⚠️ No result values were entered for request ' + String(orderWithNoValues.id || '') + '.', 'warning');
+            return false;
+        }
+        if (missing.length) {
+            if (window.showToast) showToast('⚠️ Complete all required results. Missing: ' + missing.slice(0, 4).join(', ') + (missing.length > 4 ? '…' : ''), 'warning');
+            var firstMissing = section.querySelector('.lab-order-result-input[style*="d32f2f"]');
+            if (firstMissing) firstMissing.focus();
+            return false;
+        }
+
+        var allResults = nonFinal.reduce(function (acc, o) { return acc.concat(resultsByOrder[String(o.id)] || []); }, []);
+        var hasCritical = allResults.some(function (row) { return String(row.flag).indexOf('Critical') !== -1; });
+        var promptText = hasCritical
+            ? 'This day contains a CRITICAL result. Final release will urgently notify the requesting doctor and cannot be undone. Release ALL requests of this day?'
+            : 'Validate and permanently release the results of ALL ' + nonFinal.length + ' request(s) of this day? Final results cannot be overwritten.';
+        if (!window.confirm(promptText)) return false;
+
+        var commentsEl = section.querySelector('.lab-order-comments');
+        var comments = commentsEl ? String(commentsEl.value || '').trim() : '';
+        var originalText = button ? button.textContent : '';
+        if (button) {
+            button.disabled = true;
+            button.style.opacity = '.65';
+            button.textContent = 'Saving ' + nonFinal.length + ' request(s) to common server…';
+        }
+        try {
+            for (var i = 0; i < nonFinal.length; i++) {
+                var order = nonFinal[i];
+                var response = await releaseOrderToCommonServer(order, {
+                    results: resultsByOrder[String(order.id)],
+                    comments: comments
+                });
+                if (window.pcOrders && typeof pcOrders.applyServerPatch === 'function') {
+                    pcOrders.applyServerPatch(order.id, {
+                        status: 'completed', labState: 'final', resultId: response.resultId,
+                        results: response.results || resultsByOrder[String(order.id)], completedAt: response.completedAt || new Date().toISOString(),
+                        completedBy: response.completedBy || (window.currentStaff && window.currentStaff.name) || 'Laboratory staff',
+                        completedById: response.completedById || (window.currentStaff && window.currentStaff.staffId) || '',
+                        critical: response.critical === true
+                    });
+                }
+                try {
+                    window.dispatchEvent(new CustomEvent('labResultsUpdated', { detail: { orderId: order.id, patientId: order.patientId, serverConfirmed: true } }));
+                } catch (eventError) {}
+            }
+            if (window.showToast) {
+                showToast(hasCritical ? '🚨 Critical results released — urgent alert sent to the requesting doctor.' : '✅ All requests of this day were released on the common server and sent to the requesting doctor.', 'success');
+            }
+            repaintAll();
+            return true;
+        } catch (error) {
+            console.error('Laboratory day release failed:', error);
+            if (window.showToast) showToast('❌ Release stopped: ' + labReleaseErrorMessage(error) + ' Requests released before this one remain final.', 'error');
+            return false;
+        } finally {
+            if (button && document.body.contains(button)) {
+                button.disabled = false;
+                button.style.opacity = '1';
+                button.textContent = originalText || '💾 Validate & Release the Day\u2019s Requests';
             }
         }
-        return true;
     }
 
     /* ── Render Completed Results Table (#pcLabResultsTable) ── */
@@ -2410,6 +2538,7 @@
         repaint: repaintAll,
         togglePatientGroup: togglePatientGroup,
         saveGroupResults: saveGroupResults,
+        saveDayResults: saveDayResults,
         saveOrderResults: saveOrderResults,
         autoFlagResult: autoFlagResult,
         selectLabPatient: selectLabPatient,
