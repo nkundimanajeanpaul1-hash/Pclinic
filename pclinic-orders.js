@@ -107,13 +107,26 @@
                 })
                 .catch(function (e) {
                     console.error('[pclinic] server write failed:', e);
-                    flagFailed(e && e.message);
+                    // Keep the machine reason (code + message) so the UI can
+                    // tell a permission-denied from a network failure.
+                    flagFailed((e && (e.code ? e.code + ': ' : '') + (e && e.message ? e.message : 'unknown')) || 'unknown');
                     return false;
                 });
         } catch (e) {
-            flagFailed(e && e.message);
+            flagFailed((e && (e.code ? e.code + ': ' : '') + (e && e.message ? e.message : 'unknown')) || 'unknown');
             return Promise.resolve(false);
         }
+    }
+
+    // Read back the server's stored reason for a failed write, if any.
+    function syncFailureReason(coll, id) {
+        var key = coll === 'orders' ? ORDERS_KEY : coll === 'bills' ? BILLS_KEY : null;
+        if (!key) return '';
+        try {
+            var all = read(key, []);
+            var row = all.filter(function (r) { return String(r.id) === String(id); })[0];
+            return (row && row._syncError) || '';
+        } catch (e) { return ''; }
     }
 
     // Keep the latest server-write promise so workflows that must not claim
@@ -571,7 +584,12 @@
         var order = createOrder(o);
         if (!order) throw new Error('The laboratory order could not be created. Confirm that you are signed in and at least one test is selected.');
         var ok = await waitForTrackedSync('orders', order.id);
-        if (!ok) throw new Error('The order was not accepted by the common server. Check your connection and staff permissions, then retry.');
+        if (!ok) {
+            var why = syncFailureReason('orders', order.id);
+            throw new Error('The order was not accepted by the common server' +
+                (why ? ' (' + why + ')' : '') +
+                '. Check your connection and staff permissions, then retry.');
+        }
         if (order.billId) {
             var billOk = await waitForTrackedSync('bills', order.billId);
             if (!billOk) throw new Error('The order was saved, but its bill was not accepted by the common server. Retry from Billing before charging the patient.');
@@ -602,7 +620,11 @@
         var order = updateOrder(id, patch, quiet);
         if (!order) throw new Error('Order not found.');
         var ok = await waitForTrackedSync('orders', id);
-        if (!ok) throw new Error('The update was not accepted by the common server.');
+        if (!ok) {
+            var why = syncFailureReason('orders', id);
+            throw new Error('The update was not accepted by the common server' +
+                (why ? ' (' + why + ')' : '') + '.');
+        }
         return order;
     }
 
