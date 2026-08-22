@@ -3729,6 +3729,43 @@ input.fi:focus,
         body.font-large h3 { font-size: 17px !important; }
         body.font-large .btn-apple, body.font-large button { font-size: 14px !important; padding: 9px 16px !important; }
 
+        /* Stack like lab-request: ID bar full height, action bar fully below — no overlap */
+        #pcMasterHeader, #pcMasterHeader.pc-master-header {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            position: relative !important;
+            z-index: 40 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 8px 16px 4px !important;
+            background: transparent !important;
+            overflow: visible !important;
+        }
+        #pc_chuk_top_menu.chuk-top-menu {
+            position: relative !important;
+            top: auto !important;
+            z-index: 3 !important;
+        }
+        #pc_common_demo_bar.oc-demo-bar,
+        .oc-demo-bar {
+            position: relative !important;
+            top: auto !important;
+            z-index: 2 !important;
+            margin: 0 !important;
+            flex-shrink: 0 !important;
+        }
+        #dcBar.dc-bar, #dcBar {
+            position: relative !important;
+            top: auto !important;
+            z-index: 1 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            clear: both !important;
+            flex-shrink: 0 !important;
+        }
+
     </style>
 </head>
 <body>
