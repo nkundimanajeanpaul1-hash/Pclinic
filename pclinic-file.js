@@ -530,8 +530,8 @@
         var master = document.getElementById('pcMasterHeader') || el;
         var demoBar = document.getElementById('pc_common_demo_bar');
         if (demoBar && demoBar.parentNode) {
-            if (demoBar.nextSibling) demoBar.parentNode.insertBefore(bar, demoBar.nextSibling);
-            else demoBar.parentNode.appendChild(bar);
+            if (demoBar.nextSibling !== bar) demoBar.parentNode.insertBefore(bar, demoBar.nextSibling);
+            else if (!demoBar.nextSibling) demoBar.parentNode.appendChild(bar);
         } else if (master.firstChild) {
             master.insertBefore(bar, master.firstChild);
         } else {
