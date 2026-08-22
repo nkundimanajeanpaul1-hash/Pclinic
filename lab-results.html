@@ -62,15 +62,10 @@
 
         body {
             font-family: var(--f);
-            background:
-                radial-gradient(900px 520px at 8% -10%, rgba(0, 113, 227, 0.07), transparent 58%),
-                radial-gradient(800px 480px at 96% 0%, rgba(0, 112, 128, 0.06), transparent 52%),
-                radial-gradient(700px 500px at 50% 110%, rgba(175, 82, 222, 0.04), transparent 55%),
-                linear-gradient(180deg, #f5f5f7 0%, #eef1f6 100%);
-            background-attachment: fixed;
+            background: transparent;
             color: var(--tp);
-            font-size: 12px;
-            padding: 8px 10px 16px;
+            font-size: 13px;
+            padding: 4px 4px 10px;
             -webkit-font-smoothing: antialiased;
             letter-spacing: -0.011em;
         }
@@ -164,7 +159,7 @@
             min-width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            font-size: 11px;
+            font-size: 12.5px;
             text-align: left;
         }
 
@@ -172,7 +167,7 @@
             position: sticky;
             top: 0;
             z-index: 4;
-            background: rgba(245, 247, 250, 0.90);
+            background: rgba(255, 246, 226, 0.92);
             -webkit-backdrop-filter: blur(18px);
             backdrop-filter: blur(18px);
             color: var(--tp);
@@ -188,16 +183,18 @@
             position: sticky;
             left: 0;
             z-index: 5;
-            min-width: 72px;
-            max-width: 82px;
+            min-width: 58px;
+            max-width: 64px;
+            width: 60px;
         }
         table.oc-matrix-table thead th:nth-child(2),
         table.oc-matrix-table tbody td.oc-test-cell {
             position: sticky;
-            left: 72px;
+            left: 60px;
             z-index: 5;
-            min-width: 128px;
-            max-width: 148px;
+            min-width: 108px;
+            max-width: 118px;
+            width: 112px;
         }
         table.oc-matrix-table thead th:nth-child(1) { z-index: 8; }
         table.oc-matrix-table thead th:nth-child(2) { z-index: 8; }
@@ -208,17 +205,17 @@
 
         .oc-col-order-hdr {
             text-align: center;
-            font-size: 9px;
+            font-size: 12px;
             line-height: 1.15;
-            min-width: 54px;
-            max-width: 62px;
-            width: 58px;
+            min-width: 44px;
+            max-width: 50px;
+            width: 46px;
         }
 
         .oc-col-order-date {
             font-weight: 800;
             color: var(--tp);
-            font-size: 11px;
+            font-size: 12px;
             letter-spacing: -0.02em;
         }
 
@@ -254,7 +251,7 @@
         }
 
         table.oc-matrix-table tbody tr.row-even {
-            background: rgba(235, 243, 251, 0.42);
+            background: rgba(255, 244, 226, 0.42);
         }
 
         table.oc-matrix-table tbody tr.row-odd {
@@ -262,11 +259,11 @@
         }
 
         table.oc-matrix-table tbody tr:hover {
-            background: rgba(0, 113, 227, 0.08) !important;
+            background: rgba(232, 197, 107, 0.22) !important;
         }
 
         table.oc-matrix-table td {
-            padding: 3px 4px;
+            padding: 4px 3px;
             border-right: 0.5px solid var(--bd);
             vertical-align: middle;
         }
@@ -303,39 +300,39 @@
         /* Test Name Cell */
         .oc-test-cell {
             font-family: var(--f);
-            font-size: 11px;
+            font-size: 12.5px;
             font-weight: 500;
             color: var(--tp);
-            white-space: nowrap;
-            background: rgba(255, 255, 255, 0.92) !important;
+            white-space: normal;
+            background: rgba(255, 250, 240, 0.94) !important;
             overflow: hidden;
-            text-overflow: ellipsis;
+            line-height: 1.2;
+            word-break: break-word;
         }
 
         .oc-test-code {
             font-weight: 700;
-            color: var(--gold-deep);
-            margin-right: 5px;
-            font-size: 10px;
+            color: #b8860b;
+            margin-right: 4px;
+            font-size: 12.5px;
         }
 
         .oc-test-range {
             color: var(--tm);
-            font-size: 10px;
-            margin-left: 5px;
+            font-size: 12.5px;
+            margin-left: 4px;
         }
 
         /* Result Cell */
         .oc-res-cell {
             text-align: center;
-            font-size: 11.5px;
+            font-size: 12.5px;
             font-weight: 650;
             color: var(--tp);
             white-space: nowrap;
-            min-width: 52px;
-            max-width: 62px;
-            width: 58px;
-            font-size: 10.5px;
+            min-width: 42px;
+            max-width: 48px;
+            width: 46px;
         }
 
         .oc-res-abnormal {
@@ -489,6 +486,16 @@
                     { code: '20003', name: 'NA + (SODIUM)/BLOOD', unit: 'mmol/l', range: '135-145' },
                     { code: '20004', name: 'K + (POTASSIUM)/BLOOD', unit: 'mmol/l', range: '3.5-5.0' },
                     { code: '20005', name: 'MAGNESIUM/BLOOD', unit: 'mmol/l', range: '0.66-1.07' },
+                    { code: '20006', name: 'CL -(CHLORURE)/BLOOD', unit: 'mmol/l', range: '98-107' },
+                    { code: '20007', name: 'FASTING GLUCOSE/BLOOD', unit: 'mmol/l', range: '3.9-5.6' },
+                    { code: '20008', name: 'LIVER FUNCTION (SGPT/ALT)', unit: 'U/l', range: '7-56' },
+                    { code: '20009', name: 'LIVER FUNCTION (SGOT/AST)', unit: 'U/l', range: '10-40' }
+                ]
+            },
+            {
+                id: 'fbc',
+                title: '31000 FULL BLOOD COUNT',
+               1.07' },
                     { code: '20006', name: 'CL -(CHLORURE)/BLOOD', unit: 'mmol/l', range: '98-107' },
                     { code: '20007', name: 'FASTING GLUCOSE/BLOOD', unit: 'mmol/l', range: '3.9-5.6' },
                     { code: '20008', name: 'LIVER FUNCTION (SGPT/ALT)', unit: 'U/l', range: '7-56' },
@@ -787,17 +794,7 @@
 
             // 3. Structured results saved on the patient record without a matching order
             var knownIds = orders.map(function (o) { return String(o.id); });
-            var storedResults = Array.isArray(currentPatient.labResults) ? currentPatient.labResults : [];
-            storedResults.forEach(function (r) {
-                if (!r || !Array.isArray(r.tests) || !r.tests.length) return;
-                if (r.orderId && knownIds.indexOf(String(r.orderId)) !== -1) return;
-                sets.push({
-                    kind: 'stored',
-                    id: String(r.id || r.orderId || ''),
-                    date: r.date || new Date().toISOString(),
-                    status: 'completed',
-                    results: r.tests,
-                    testsOrdered: r.tests.map(function (t) { return t.test || t.name || ''; }),
+            var storedResults = Array.isArray(currentPatient.labResults) ? currentPatientrn t.test || t.name || ''; }),
                     verifiedBy: r.verifiedBy || ''
                 });
             });
@@ -869,8 +866,8 @@
             // 4. Table header — ONE column per day
             var head = document.getElementById('matrixHead');
             var headHtml = '<tr>' +
-                '<th style="width:76px;text-align:left;">Analysis</th>' +
-                '<th style="width:136px;text-align:left;">Parameter</th>';
+                '<th style="width:60px;text-align:left;">Analysis</th>' +
+                '<th style="width:112px;text-align:left;">Parameter</th>';
             groups.forEach(function (g) {
                 var first = g.sets[0];
                 var d = new Date(first.date);
@@ -895,8 +892,8 @@
             // 4. Table header — one real order column per set
             var head = document.getElementById('matrixHead');
             var headHtml = '<tr>' +
-                '<th style="width:76px;text-align:left;">Analysis</th>' +
-                '<th style="width:136px;text-align:left;">Parameter</th>';
+                '<th style="width:60px;text-align:left;">Analysis</th>' +
+                '<th style="width:112px;text-align:left;">Parameter</th>';
             sets.forEach(function (s) {
                 var d = new Date(s.date);
                 var dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -946,7 +943,6 @@
                             var r = cell.r;
                             var val = r.value != null && r.value !== '' ? r.value : '—';
                             bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(val) + '</span>' +
-                                '<span style="font-size:8px;color:#6e6e73;"> ' + escapeHtml(r.unit || '') + '</span>' +
                                 flagBadge(r.flag) + '</td>';
                         } else if (cell.kind === 'pending') {
                             bodyHtml += '<td class="oc-res-cell"><span class="oc-pending-badge">…</span></td>';
@@ -1148,5 +1144,29 @@
         window.buildMicrobiologyReports = buildMicrobiologyReports;
     })();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f3aff42d165f95',t:'MTc4NzQyMDY4NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f3bc6d097e5f95',t:'MTc4NzQyMTE5Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+dPatientData()) {
+                buildPClinicMatrix();
+                buildMicrobiologyReports();
+            }
+        });
+        window.addEventListener('ordersUpdated', function () {
+            if (loadPatientData()) {
+                buildPClinicMatrix();
+                buildMicrobiologyReports();
+            }
+        });
+
+        window.closeLabResultsPage = closeLabResultsPage;
+        window.buildPClinicMatrix = buildPClinicMatrix;
+        window.buildMicrobiologyReports = buildMicrobiologyReports;
+    })();
+    </script>
+</body>
+</html>
+
+    })();
+    </script>
+</body>
 </html>
