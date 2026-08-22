@@ -135,7 +135,9 @@
 
         /* ─── GOLDEN GATE FLOW SHEET ─── */
         .oc-matrix-wrapper {
-            background: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(242,246,252,0.40));
+            background:
+                radial-gradient(700px 280px at 0% 0%, rgba(232, 197, 107, 0.28), transparent 55%),
+                linear-gradient(180deg, rgba(255, 252, 244, 0.72), rgba(255, 244, 220, 0.48));
             -webkit-backdrop-filter: saturate(190%) blur(32px);
             backdrop-filter: saturate(190%) blur(32px);
             border: 0.5px solid rgba(255,255,255,0.72);
@@ -495,16 +497,6 @@
             {
                 id: 'fbc',
                 title: '31000 FULL BLOOD COUNT',
-               1.07' },
-                    { code: '20006', name: 'CL -(CHLORURE)/BLOOD', unit: 'mmol/l', range: '98-107' },
-                    { code: '20007', name: 'FASTING GLUCOSE/BLOOD', unit: 'mmol/l', range: '3.9-5.6' },
-                    { code: '20008', name: 'LIVER FUNCTION (SGPT/ALT)', unit: 'U/l', range: '7-56' },
-                    { code: '20009', name: 'LIVER FUNCTION (SGOT/AST)', unit: 'U/l', range: '10-40' }
-                ]
-            },
-            {
-                id: 'fbc',
-                title: '31000 FULL BLOOD COUNT',
                 className: 'oc-cat-fbc',
                 tests: [
                     { code: '31001', name: 'WBC', unit: '10^3/µl', range: '4-10' },
@@ -794,7 +786,17 @@
 
             // 3. Structured results saved on the patient record without a matching order
             var knownIds = orders.map(function (o) { return String(o.id); });
-            var storedResults = Array.isArray(currentPatient.labResults) ? currentPatientrn t.test || t.name || ''; }),
+            var storedResults = Array.isArray(currentPatient.labResults) ? currentPatient.labResults : [];
+            storedResults.forEach(function (r) {
+                if (!r || !Array.isArray(r.tests) || !r.tests.length) return;
+                if (r.orderId && knownIds.indexOf(String(r.orderId)) !== -1) return;
+                sets.push({
+                    kind: 'stored',
+                    id: String(r.id || r.orderId || ''),
+                    date: r.date || new Date().toISOString(),
+                    status: 'completed',
+                    results: r.tests,
+                    testsOrdered: r.tests.map(function (t) { return t.test || t.name || ''; }),
                     verifiedBy: r.verifiedBy || ''
                 });
             });
@@ -1144,5 +1146,5 @@
         window.buildMicrobiologyReports = buildMicrobiologyReports;
     })();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f3c5ed0fc05f95',t:'MTc4NzQyMTU4NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f3cb042c495f95',t:'MTc4NzQyMTc5Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
