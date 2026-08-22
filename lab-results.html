@@ -446,6 +446,39 @@
             .oc-matrix-wrapper { max-height: none; overflow: visible; box-shadow: none; }
         }
 
+        /* Shared patient identification + action bars must stay on this page */
+        #pcMasterHeader, #pcMasterHeader.pc-master-header {
+            display: flex !important;
+            flex-direction: column !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 400 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 0 8px !important;
+            padding: 6px 8px 0 !important;
+            background: transparent !important;
+        }
+        #pc_common_demo_bar.oc-demo-bar,
+        .oc-demo-bar {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            height: auto !important;
+            max-height: none !important;
+            position: relative !important;
+            top: auto !important;
+        }
+        #dcBar.dc-bar, .dc-bar {
+            display: flex !important;
+            visibility: visible !important;
+        }
+
+
         /* Beat global 100% table/column rules from pclinic-file.css */
         .oc-matrix-wrapper table.oc-matrix-table col.col-analysis,
         .oc-matrix-wrapper table.oc-matrix-table th:first-child,
@@ -485,6 +518,7 @@
 
     <div class="toast-container" id="toastContainer"></div>
 
+    <script src="patient-data.js"></script>
     <script src="pclinic-catalog.js"></script>
     <script src="pclinic-lab-catalog.js"></script>
 <script src="pclinic-orders.js"></script>
@@ -1111,9 +1145,24 @@
         }
 
         /* ── INITIALIZE ── */
+        function showSharedPatientBar(p) {
+            try {
+                if (!window.pcFile || typeof window.pcFile.renderDemoBar !== 'function') return;
+                var master = document.getElementById('pcMasterHeader');
+                if (!master) {
+                    master = document.createElement('div');
+                    master.id = 'pcMasterHeader';
+                    master.className = 'pc-master-header';
+                    document.body.insertBefore(master, document.body.firstChild);
+                }
+                window.pcFile.renderDemoBar(master, p || currentPatient || {});
+            } catch (e) { console.warn('showSharedPatientBar', e); }
+        }
+
         function init() {
             loadDarkMode();
             var ok = loadPatientData();
+            showSharedPatientBar(currentPatient);
             if (ok) {
                 buildPClinicMatrix();
                 buildMicrobiologyReports();
@@ -1172,6 +1221,7 @@
                 var p = pts.find(function (x) { return String(x.id) === String(e.data.patient.id); }) || e.data.patient;
                 currentPatient = p;
                 updatePatientBanner(p);
+                showSharedPatientBar(p);
                 buildPClinicMatrix();
                 buildMicrobiologyReports();
             }
@@ -1201,5 +1251,5 @@
         window.buildMicrobiologyReports = buildMicrobiologyReports;
     })();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f3f6bd3d69197c',t:'MTc4NzQyMzU4NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f4039a6a1b7a78',t:'MTc4NzQyNDExMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
