@@ -799,6 +799,33 @@
             padding: 3px 10px;
             border-radius: 8px;
         }
+
+        /* Shared patient identification bar stays visible on lab request */
+        #pcMasterHeader, #pcMasterHeader.pc-master-header {
+            display: flex !important;
+            flex-direction: column !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 400 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 0 10px !important;
+            padding: 6px 8px 0 !important;
+            background: transparent !important;
+        }
+        #pc_common_demo_bar.oc-demo-bar, .oc-demo-bar {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            height: auto !important;
+            position: relative !important;
+            top: auto !important;
+        }
+        #dcBar.dc-bar, .dc-bar { display: flex !important; visibility: visible !important; }
     </style>
 </head>
 <body>
@@ -1266,9 +1293,7 @@ function loadPatientData(patient) {
     }
     
     if (success) {
-        if (typeof pcFile !== 'undefined' && typeof pcFile.renderDemoBar === 'function') {
-            pcFile.renderDemoBar('.body', currentPatient);
-        }
+        showSharedPatientBar(currentPatient);
         autoTickRecentLabRequests();
         return true;
     }
@@ -1584,6 +1609,20 @@ function toggleHistoryDetails(idx) {
 
 
         // ─── INIT ───
+
+        function showSharedPatientBar(p) {
+            try {
+                if (!window.pcFile || typeof window.pcFile.renderDemoBar !== 'function') return;
+                var master = document.getElementById('pcMasterHeader');
+                if (!master) {
+                    master = document.createElement('div');
+                    master.id = 'pcMasterHeader';
+                    master.className = 'pc-master-header';
+                    document.body.insertBefore(master, document.body.firstChild);
+                }
+                window.pcFile.renderDemoBar(master, p || currentPatient || {});
+            } catch (e) { console.warn('showSharedPatientBar', e); }
+        }
         document.addEventListener('DOMContentLoaded', function() {
     console.log('🧪 Lab Request Form Loaded');
     renderLabTariffTests();
@@ -1638,6 +1677,7 @@ function toggleHistoryDetails(idx) {
         document.getElementById('labPatient').value = 'No patient selected';
     }
     
+    showSharedPatientBar(currentPatient);
     updateSelectedTests();
     var labSearch = document.getElementById('labSearch');
     if (labSearch) {
@@ -1795,5 +1835,5 @@ function toggleHistoryDetails(idx) {
 <script src="patient-data.js"></script>
 <script src="pclinic-file.js?v=20260814_RAD"></script>
 <script src="pclinic-handoff.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f46b803b7d73a0',t:'MTc4NzQyODM2Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f4c093f9d0392a',t:'MTc4NzQzMTg1Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
