@@ -70,7 +70,7 @@
             background-attachment: fixed;
             color: var(--tp);
             font-size: 12px;
-            padding: 14px 16px 28px;
+            padding: 8px 10px 16px;
             -webkit-font-smoothing: antialiased;
             letter-spacing: -0.011em;
         }
@@ -445,28 +445,8 @@
 <body>
 
     <div class="container">
-        <!-- Compact Toolbar (No Top Navigation Bar / Logo, No Demographic Banner) -->
-        <div class="gg-toolbar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; padding: 8px 12px; border-radius: 16px; background: linear-gradient(165deg, rgba(255,255,255,0.55), rgba(255,244,220,0.38)); backdrop-filter: saturate(180%) blur(22px); -webkit-backdrop-filter: saturate(180%) blur(22px); border: 0.5px solid rgba(255,255,255,0.7); box-shadow: var(--shadow);">
-            <div style="font-size: 13px; font-weight: 700; color: var(--tp); display: flex; align-items: center; gap: 8px; letter-spacing: -0.02em;">
-                <i class="ti ti-test-pipe" style="color: var(--gold-deep); font-size: 16px;"></i>
-                <span>Lab flow sheet</span>
-                <span style="font-size:10px;font-weight:650;color:var(--gold-deep);background:rgba(232,197,107,0.28);padding:2px 8px;border-radius:999px;">Golden Gate</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <a href="lab-request.html" class="btn-apple" style="text-decoration:none;" title="New Lab Request"><i class="ti ti-test-pipe"></i> New Request</a>
-                <a href="lab-dashboard.html" class="btn-apple" style="text-decoration:none;" title="Laboratory Portal"><i class="ti ti-layout-dashboard"></i> Laboratory</a>
-                <a href="doctor-dashboard.html" class="btn-apple" style="text-decoration:none;" title="Doctor Console"><i class="ti ti-user-check"></i> Doctor</a>
-                <button class="btn-apple" onclick="window.print()" title="Print report">
-                    <i class="ti ti-printer"></i> Print
-                </button>
-                <button class="btn-apple" onclick="closeLabResultsPage()" title="Close and return">
-                    <i class="ti ti-arrow-left"></i> Close
-                </button>
-            </div>
-        </div>
-
-        <!-- PClinic Patient Identification Strip (REAL SELECTED PATIENT ONLY — no fallback) -->
-        <div id="ocPatientBar" class="oc-patient-banner" style="display:none;"></div>
+        <!-- Toolbar + patient banner removed: IDs live in the patient identification strip, actions in the action bar. -->
+        <div id="ocPatientBar" class="oc-patient-banner" style="display:none !important;" hidden></div>
 
         <!-- PClinic Cumulative Flow Sheet Table -->
         <div class="oc-matrix-wrapper">
@@ -656,7 +636,7 @@
                 '<div class="oc-demo-item"><span class="oc-demo-lbl">Person ID</span><span class="oc-demo-val">' + escapeHtml(stripMod(p.id)) + '</span></div>' +
                 '<div class="oc-demo-item"><span class="oc-demo-lbl">District</span><span class="oc-demo-val">' + escapeHtml(String(p.district || '—').toUpperCase()) + '</span></div>' +
                 '<div class="oc-demo-item"><span class="oc-demo-lbl">Insurance</span><span class="oc-demo-val">' + escapeHtml(p.insurance || 'RSSB / RAMA') + '</span></div>';
-            bar.style.display = 'grid';
+            bar.style.display = 'none';
         }
 
         /* ── EMPTY STATE (NO TEMPLATE DATA — REAL PATIENT ONLY) ── */
@@ -1173,7 +1153,7 @@
         window.buildMicrobiologyReports = buildMicrobiologyReports;
     })();
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f396a68d946062',t:'MTc4NzQxOTY0OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>r','lab','nurse']).then(init).catch(function () {});
         });
 
