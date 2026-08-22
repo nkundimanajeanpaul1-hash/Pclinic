@@ -952,6 +952,8 @@
             // ── END GROUP-BY-DAY HELPERS ──
 
             var groups = groupSetsByDay(sets);
+            // Newest exam date first (left); older dates follow to the right
+            groups.reverse();
 
             // 4. Table header — ONE column per day
             var head = document.getElementById('matrixHead');
@@ -1004,14 +1006,35 @@
             head.innerHTML = headHtml;
             */
 
-            // 5. Table body — REAL saved values only
+            // 5. Table body — recently requested / resulted tests first
             var body = document.getElementById('matrixBody');
             var bodyHtml = '';
             var rowCount = 0;
 
-            OC_CATEGORIES.forEach(function (cat) {
-                var totalTests = cat.tests.length;
-                cat.tests.forEach(function (t, idx) {
+            function testActivityScore(t, cat) {
+                var score = 0;
+                for (var gi = 0; gi < groups.length; gi++) {
+                    var cell = cellForGroup(groups[gi], t, cat);
+                    var recency = groups.length - gi; // newer columns (left) weigh more
+                    if (cell.kind === 'result') score = Math.max(score, 1000 + recency * 10);
+                    else if (cell.kind === 'pending') score = Math.max(score, 500 + recency * 10);
+                }
+                return score;
+            }
+
+            var catsOrdered = OC_CATEGORIES.map(function (cat) {
+                var tests = cat.tests.slice().sort(function (a, b) {
+                    return testActivityScore(b, cat) - testActivityScore(a, cat);
+                });
+                var catScore = 0;
+                tests.forEach(function (t) { catScore = Math.max(catScore, testActivityScore(t, cat)); });
+                return { cat: cat, tests: tests, score: catScore };
+            }).sort(function (a, b) { return b.score - a.score; });
+
+            catsOrdered.forEach(function (pack) {
+                var cat = pack.cat;
+                var totalTests = pack.tests.length;
+                pack.tests.forEach(function (t, idx) {
                     var rowClass = (rowCount % 2 === 0) ? 'row-even' : 'row-odd';
                     rowCount++;
                     bodyHtml += '<tr class="' + rowClass + '">';
@@ -1227,29 +1250,53 @@
             }
         });
 
-        window.addEventListener('storage', function () {
-            if (loadPatientData()) {
+        function refreshFlowSheet() {
+            loadPatientData();
+            showSharedPatientBar(currentPatient);
+            if (currentPatient && currentPatient.id) {
                 buildPClinicMatrix();
                 buildMicrobiologyReports();
             }
+        }
+
+        function labSheetFingerprint() {
+            var pid = currentPatient && currentPatient.id ? stripMod(currentPatient.id) : '';
+            var orders = '';
+            try { orders = localStorage.getItem('pclinic_orders') || ''; } catch (e) {}
+            var labs = '';
+            try {
+                labs = currentPatient && currentPatient.labResults
+                    ? JSON.stringify(currentPatient.labResults)
+                    : (localStorage.getItem('pclinic_patients') || '');
+            } catch (e2) {}
+            return pid + '|' + orders.length + ':' + orders.slice(-80) + '|' + labs.length + ':' + labs.slice(-80);
+        }
+
+        var lastPrint = '';
+        function autoPromoteRecentLabs() {
+            try {
+                var fp = labSheetFingerprint();
+                if (fp === lastPrint) return;
+                lastPrint = fp;
+                refreshFlowSheet();
+            } catch (e) {}
+        }
+
+        window.addEventListener('storage', refreshFlowSheet);
+        window.addEventListener('labResultsUpdated', refreshFlowSheet);
+        window.addEventListener('ordersUpdated', refreshFlowSheet);
+        window.addEventListener('pcPatientChanged', refreshFlowSheet);
+        window.addEventListener('patientsUpdated', refreshFlowSheet);
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) autoPromoteRecentLabs();
         });
-        window.addEventListener('labResultsUpdated', function () {
-            if (loadPatientData()) {
-                buildPClinicMatrix();
-                buildMicrobiologyReports();
-            }
-        });
-        window.addEventListener('ordersUpdated', function () {
-            if (loadPatientData()) {
-                buildPClinicMatrix();
-                buildMicrobiologyReports();
-            }
-        });
+        window.addEventListener('focus', autoPromoteRecentLabs);
+        setInterval(autoPromoteRecentLabs, 4000);
 
         window.closeLabResultsPage = closeLabResultsPage;
         window.buildPClinicMatrix = buildPClinicMatrix;
         window.buildMicrobiologyReports = buildMicrobiologyReports;
     })();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f40d476a197a78',t:'MTc4NzQyNDUwOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f436245900af0f',t:'MTc4NzQyNjE4MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
