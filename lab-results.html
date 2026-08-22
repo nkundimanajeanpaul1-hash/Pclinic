@@ -177,7 +177,7 @@
             backdrop-filter: blur(18px);
             color: var(--tp);
             font-weight: 700;
-            padding: 8px 8px;
+            padding: 5px 3px;
             border-bottom: 0.5px solid var(--bd);
             border-right: 0.5px solid var(--bd);
             vertical-align: bottom;
@@ -188,16 +188,16 @@
             position: sticky;
             left: 0;
             z-index: 5;
-            min-width: 132px;
-            max-width: 148px;
+            min-width: 92px;
+            max-width: 104px;
         }
         table.oc-matrix-table thead th:nth-child(2),
         table.oc-matrix-table tbody td.oc-test-cell {
             position: sticky;
-            left: 132px;
+            left: 92px;
             z-index: 5;
-            min-width: 220px;
-            max-width: 260px;
+            min-width: 168px;
+            max-width: 188px;
         }
         table.oc-matrix-table thead th:nth-child(1) { z-index: 8; }
         table.oc-matrix-table thead th:nth-child(2) { z-index: 8; }
@@ -208,10 +208,11 @@
 
         .oc-col-order-hdr {
             text-align: center;
-            font-size: 10px;
-            line-height: 1.25;
-            min-width: 88px;
-            max-width: 112px;
+            font-size: 9px;
+            line-height: 1.15;
+            min-width: 54px;
+            max-width: 62px;
+            width: 58px;
         }
 
         .oc-col-order-date {
@@ -265,7 +266,7 @@
         }
 
         table.oc-matrix-table td {
-            padding: 5px 7px;
+            padding: 3px 4px;
             border-right: 0.5px solid var(--bd);
             vertical-align: middle;
         }
@@ -279,7 +280,7 @@
             font-weight: 800;
             font-size: 10px;
             vertical-align: top !important;
-            padding: 8px 8px !important;
+            padding: 5px 5px !important;
             background: rgba(255, 250, 240, 0.92) !important;
             border-right: 1px solid var(--bd) !important;
             letter-spacing: 0.2px;
@@ -613,7 +614,11 @@
             var bg = '#e9f9ee', fg = '#1a7a32';
             if (f.indexOf('High') !== -1 || f.indexOf('Low') !== -1) { bg = '#fff4e0'; fg = '#7a4500'; }
             if (f.indexOf('Critical') !== -1) { bg = '#ffebe9'; fg = '#8a1f1a'; }
-            return '<span style="display:inline-block;background:' + bg + ';color:' + fg + ';font-weight:800;font-size:10px;padding:2px 8px;border-radius:20px;margin-left:6px;">' + escapeHtml(f) + '</span>';
+            if (f === 'Normal' || f === 'N' || !flag) return '';
+            var short = 'H';
+            if (f.indexOf('Critical') !== -1) short = 'C';
+            else if (f.indexOf('Low') !== -1) short = 'L';
+            return '<span style="display:inline-block;background:' + bg + ';color:' + fg + ';font-weight:800;font-size:8px;padding:0 3px;border-radius:8px;margin-left:2px;">' + short + '</span>';
         }
 
         /* ── PATIENT IDENTIFICATION STRIP (REAL SELECTED PATIENT ONLY) ── */
@@ -862,35 +867,23 @@
             // 4. Table header — ONE column per day
             var head = document.getElementById('matrixHead');
             var headHtml = '<tr>' +
-                '<th style="width:140px;text-align:left;">Analysis</th>' +
-                '<th style="width:240px;text-align:left;">Parameter</th>';
+                '<th style="width:96px;text-align:left;">Analysis</th>' +
+                '<th style="width:176px;text-align:left;">Parameter</th>';
             groups.forEach(function (g) {
                 var first = g.sets[0];
-                var newest = g.sets[g.sets.length - 1];
                 var d = new Date(first.date);
-                var dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                var countStr = g.sets.length + (g.sets.length === 1 ? ' request' : ' requests');
-                var orderNums = g.sets.map(function (s) {
-                    return '#' + escapeHtml(String(s.id).replace(/[^0-9]/g, '').slice(0, 7) || '—');
-                });
-                var numsStr = orderNums.slice(0, 3).join(' · ');
-                if (orderNums.length > 3) numsStr += ' <span style="opacity:.65;">+' + (orderNums.length - 3) + ' more</span>';
+                var dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
                 var chip;
                 if (g.verifiedCount === g.sets.length) {
-                    chip = '<span style="display:inline-block;background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;">✓ Verified</span>';
+                    chip = '<span style="display:inline-block;background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:8px;padding:1px 4px;border-radius:20px;margin-top:2px;">✓</span>';
                 } else if (g.verifiedCount > 0) {
-                    chip = '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;">⏳ Pending (' + g.verifiedCount + '/' + g.sets.length + ' verified)</span>';
+                    chip = '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 4px;border-radius:20px;margin-top:2px;">' + g.verifiedCount + '/' + g.sets.length + '</span>';
                 } else {
-                    chip = '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;">⏳ Pending</span>';
+                    chip = '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 4px;border-radius:20px;margin-top:2px;">…</span>';
                 }
                 headHtml += '<th class="oc-col-order-hdr">' +
                     '<div class="oc-col-order-date">' + dateStr + '</div>' +
-                    '<div class="oc-col-order-id">' + countStr + '</div>' +
-                    '<div class="oc-col-order-id">' + numsStr + '</div>' +
-                    '<div class="oc-col-links">' +
-                        '<span class="oc-col-link" onclick="showToast(&quot;📄 Lab results report #' + escapeHtml(String(newest.id).replace(/[^0-9]/g, '').slice(0, 7)) + '&quot;, &quot;info&quot;)"><i class="ti ti-file-text"></i> Lab.results</span>' +
-                        '<span class="oc-col-link" onclick="showToast(&quot;📋 Order #' + escapeHtml(String(newest.id).replace(/[^0-9]/g, '').slice(0, 7)) + '&quot;, &quot;info&quot;)"><i class="ti ti-clipboard-list"></i> Order</span>' +
-                    '</div>' + chip + '</th>';
+                    chip + '</th>';
             });
             headHtml += '</tr>';
             head.innerHTML = headHtml;
@@ -900,8 +893,8 @@
             // 4. Table header — one real order column per set
             var head = document.getElementById('matrixHead');
             var headHtml = '<tr>' +
-                '<th style="width:140px;text-align:left;">Analysis</th>' +
-                '<th style="width:240px;text-align:left;">Parameter</th>';
+                '<th style="width:96px;text-align:left;">Analysis</th>' +
+                '<th style="width:176px;text-align:left;">Parameter</th>';
             sets.forEach(function (s) {
                 var d = new Date(s.date);
                 var dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -951,10 +944,10 @@
                             var r = cell.r;
                             var val = r.value != null && r.value !== '' ? r.value : '—';
                             bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(val) + '</span>' +
-                                '<span style="font-size:10px;color:#6e6e73;"> ' + escapeHtml(r.unit || '') + '</span>' +
+                                '<span style="font-size:8px;color:#6e6e73;"> ' + escapeHtml(r.unit || '') + '</span>' +
                                 flagBadge(r.flag) + '</td>';
                         } else if (cell.kind === 'pending') {
-                            bodyHtml += '<td class="oc-res-cell"><span class="oc-pending-badge">⏳ Pending</span></td>';
+                            bodyHtml += '<td class="oc-res-cell"><span class="oc-pending-badge">…</span></td>';
                         } else {
                             bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
                         }
@@ -969,7 +962,7 @@
                             if (r) {
                                 var val = r.value != null && r.value !== '' ? r.value : '—';
                                 bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(val) + '</span>' +
-                                    '<span style="font-size:10px;color:#6e6e73;"> ' + escapeHtml(r.unit || '') + '</span>' +
+                                    '<span style="font-size:8px;color:#6e6e73;"> ' + escapeHtml(r.unit || '') + '</span>' +
                                     flagBadge(r.flag) + '</td>';
                             } else {
                                 var ordered = testIsOrdered(s.testsOrdered, t, cat);
@@ -980,7 +973,7 @@
                         } else {
                             var isOrdered = testIsOrdered(s.testsOrdered, t, cat);
                             bodyHtml += isOrdered
-                                ? '<td class="oc-res-cell"><span class="oc-pending-badge">⏳ Pending</span></td>'
+                                ? '<td class="oc-res-cell"><span class="oc-pending-badge">…</span></td>'
                                 : '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
                         }
                     });
@@ -1153,5 +1146,5 @@
         window.buildMicrobiologyReports = buildMicrobiologyReports;
     })();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f39f60a9c36062',t:'MTc4NzQyMDAwNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f3a83278255f95',t:'MTc4NzQyMDM2Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
