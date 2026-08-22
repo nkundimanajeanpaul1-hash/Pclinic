@@ -18,28 +18,28 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg: #ece8df;
-            --s1: rgba(255, 252, 247, 0.62);
-            --s2: rgba(255, 244, 226, 0.45);
-            --s3: rgba(255, 236, 205, 0.72);
-            --bd: rgba(140, 110, 60, 0.16);
+            --bg: #f5f5f7;
+            --s1: rgba(255, 255, 255, 0.62);
+            --s2: rgba(235, 243, 251, 0.45);
+            --s3: rgba(226, 238, 249, 0.72);
+            --bd: rgba(0, 0, 0, 0.08);
             --tp: #1d1d1f;
             --ts: #3a3a3c;
             --tm: #6e6e73;
-            --ac: #c48a1a;
-            --ach: #9a6a10;
-            --acb: rgba(196, 138, 26, 0.12);
+            --ac: #0071e3;
+            --ach: #005bb5;
+            --acb: rgba(0, 113, 227, 0.10);
             --green: #248a3d;
             --orange: #c47b12;
             --red: #c9342a;
             --redb: rgba(201, 52, 42, 0.14);
-            --yellowb: rgba(255, 204, 0, 0.18);
-            --shadow: 0 1px 2px rgba(80, 50, 10, 0.04), 0 10px 32px rgba(80, 50, 10, 0.08);
+            --yellowb: rgba(0, 113, 227, 0.08);
+            --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 32px rgba(0, 0, 0, 0.06);
             --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', sans-serif;
             --smooth: cubic-bezier(0.22, 1, 0.36, 1);
             --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-            --gold: #e8c56b;
-            --gold-deep: #b8860b;
+            --gold: #0071e3;
+            --gold-deep: #0071e3;
         }
 
         /* Apple-Grade Dark Mode (from zero) — 0 invisible text */
@@ -63,10 +63,10 @@
         body {
             font-family: var(--f);
             background:
-                radial-gradient(900px 520px at 8% -10%, rgba(232, 197, 107, 0.45), transparent 58%),
-                radial-gradient(800px 480px at 96% 0%, rgba(255, 214, 140, 0.35), transparent 52%),
-                radial-gradient(700px 500px at 50% 110%, rgba(180, 210, 230, 0.28), transparent 55%),
-                linear-gradient(180deg, #f4efe6 0%, #e8e2d6 100%);
+                radial-gradient(900px 520px at 8% -10%, rgba(0, 113, 227, 0.07), transparent 58%),
+                radial-gradient(800px 480px at 96% 0%, rgba(0, 112, 128, 0.06), transparent 52%),
+                radial-gradient(700px 500px at 50% 110%, rgba(175, 82, 222, 0.04), transparent 55%),
+                linear-gradient(180deg, #f5f5f7 0%, #eef1f6 100%);
             background-attachment: fixed;
             color: var(--tp);
             font-size: 12px;
@@ -93,7 +93,7 @@
 
         /* ─── PCLINIC PATIENT DEMOGRAPHIC BANNER ─── */
         .oc-patient-banner {
-            background: linear-gradient(165deg, rgba(255,255,255,0.58), rgba(255,248,232,0.42));
+            background: linear-gradient(165deg, rgba(255,255,255,0.62), rgba(242,246,252,0.42));
             -webkit-backdrop-filter: saturate(180%) blur(28px);
             backdrop-filter: saturate(180%) blur(28px);
             border: 0.5px solid rgba(255,255,255,0.7);
@@ -140,7 +140,7 @@
 
         /* ─── GOLDEN GATE FLOW SHEET ─── */
         .oc-matrix-wrapper {
-            background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,248,236,0.38));
+            background: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(242,246,252,0.40));
             -webkit-backdrop-filter: saturate(190%) blur(32px);
             backdrop-filter: saturate(190%) blur(32px);
             border: 0.5px solid rgba(255,255,255,0.72);
@@ -154,7 +154,7 @@
         }
         .oc-matrix-wrapper::-webkit-scrollbar { height: 8px; width: 8px; }
         .oc-matrix-wrapper::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #e8c56b, #c49a3a);
+            background: linear-gradient(180deg, #8ec5ff, #0071e3);
             border-radius: 99px;
         }
         .oc-matrix-wrapper::-webkit-scrollbar-track { background: transparent; }
@@ -172,7 +172,7 @@
             position: sticky;
             top: 0;
             z-index: 4;
-            background: rgba(255, 246, 226, 0.88);
+            background: rgba(245, 247, 250, 0.90);
             -webkit-backdrop-filter: blur(18px);
             backdrop-filter: blur(18px);
             color: var(--tp);
@@ -188,16 +188,16 @@
             position: sticky;
             left: 0;
             z-index: 5;
-            min-width: 92px;
-            max-width: 104px;
+            min-width: 72px;
+            max-width: 82px;
         }
         table.oc-matrix-table thead th:nth-child(2),
         table.oc-matrix-table tbody td.oc-test-cell {
             position: sticky;
-            left: 92px;
+            left: 72px;
             z-index: 5;
-            min-width: 168px;
-            max-width: 188px;
+            min-width: 128px;
+            max-width: 148px;
         }
         table.oc-matrix-table thead th:nth-child(1) { z-index: 8; }
         table.oc-matrix-table thead th:nth-child(2) { z-index: 8; }
@@ -254,7 +254,7 @@
         }
 
         table.oc-matrix-table tbody tr.row-even {
-            background: rgba(255, 244, 226, 0.35);
+            background: rgba(235, 243, 251, 0.42);
         }
 
         table.oc-matrix-table tbody tr.row-odd {
@@ -262,7 +262,7 @@
         }
 
         table.oc-matrix-table tbody tr:hover {
-            background: rgba(232, 197, 107, 0.22) !important;
+            background: rgba(0, 113, 227, 0.08) !important;
         }
 
         table.oc-matrix-table td {
@@ -281,7 +281,7 @@
             font-size: 10px;
             vertical-align: top !important;
             padding: 5px 5px !important;
-            background: rgba(255, 250, 240, 0.92) !important;
+            background: rgba(255, 255, 255, 0.92) !important;
             border-right: 1px solid var(--bd) !important;
             letter-spacing: 0.2px;
             line-height: 1.25;
@@ -307,7 +307,7 @@
             font-weight: 500;
             color: var(--tp);
             white-space: nowrap;
-            background: rgba(255, 252, 247, 0.9) !important;
+            background: rgba(255, 255, 255, 0.92) !important;
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -332,8 +332,10 @@
             font-weight: 650;
             color: var(--tp);
             white-space: nowrap;
-            min-width: 84px;
-            max-width: 110px;
+            min-width: 52px;
+            max-width: 62px;
+            width: 58px;
+            font-size: 10.5px;
         }
 
         .oc-res-abnormal {
@@ -867,8 +869,8 @@
             // 4. Table header — ONE column per day
             var head = document.getElementById('matrixHead');
             var headHtml = '<tr>' +
-                '<th style="width:96px;text-align:left;">Analysis</th>' +
-                '<th style="width:176px;text-align:left;">Parameter</th>';
+                '<th style="width:76px;text-align:left;">Analysis</th>' +
+                '<th style="width:136px;text-align:left;">Parameter</th>';
             groups.forEach(function (g) {
                 var first = g.sets[0];
                 var d = new Date(first.date);
@@ -893,8 +895,8 @@
             // 4. Table header — one real order column per set
             var head = document.getElementById('matrixHead');
             var headHtml = '<tr>' +
-                '<th style="width:96px;text-align:left;">Analysis</th>' +
-                '<th style="width:176px;text-align:left;">Parameter</th>';
+                '<th style="width:76px;text-align:left;">Analysis</th>' +
+                '<th style="width:136px;text-align:left;">Parameter</th>';
             sets.forEach(function (s) {
                 var d = new Date(s.date);
                 var dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -1146,5 +1148,5 @@
         window.buildMicrobiologyReports = buildMicrobiologyReports;
     })();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f3a83278255f95',t:'MTc4NzQyMDM2Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f3aff42d165f95',t:'MTc4NzQyMDY4NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
