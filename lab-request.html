@@ -182,7 +182,12 @@
         .lab-search-hit:hover, .lab-search-hit.active { background: rgba(0,113,227,0.08); }
         .lab-search-hit .code { font-weight: 800; color: var(--ac); min-width: 52px; }
         .lab-search-hit .nm { flex: 1; }
-        .lab-search-empty { padding: 10px 12px; font-size: 12px; color: var(--tm); }
+        .lab-test-item.lab-miss { display: none !important; }
+        .lab-test-item.lab-hit {
+            background: rgba(0,113,227,0.10) !important;
+            outline: 1px solid rgba(0,113,227,0.25);
+        }
+        .lab-category.lab-cat-empty { display: none !important; }
 
         .lbl {
             font-size: 11px;
@@ -1657,6 +1662,109 @@ function toggleHistoryDetails(idx) {
 
 
 
+        function collectSearchableLabs() {
+            var out = [];
+            document.querySelectorAll('.lab-test-item input[type="checkbox"]').forEach(function (cb) {
+                var item = cb.closest('.lab-test-item');
+                var nameEl = item ? item.querySelector('.test-name') : null;
+                out.push({
+                    code: cb.getAttribute('data-code') || '',
+                    name: cb.value || '',
+                    label: nameEl ? nameEl.textContent.trim() : cb.value,
+                    price: Number(cb.getAttribute('data-price')) || 0,
+                    el: item
+                });
+            });
+            return out;
+        }
+
+        function hideLabSearchHits() {
+            var box = document.getElementById('labSearchHits');
+            if (box) { box.hidden = true; box.innerHTML = ''; }
+        }
+
+        function filterLabGrid(q) {
+            q = String(q || '').trim().toLowerCase();
+            document.querySelectorAll('.lab-test-item').forEach(function (item) {
+                item.classList.remove('lab-miss', 'lab-hit');
+                if (!q) return;
+                var cb = item.querySelector('input[type="checkbox"]');
+                var nameEl = item.querySelector('.test-name');
+                var blob = ((cb && cb.value) || '') + ' ' + ((cb && cb.getAttribute('data-code')) || '') + ' ' + (nameEl ? nameEl.textContent : '');
+                var ok = blob.toLowerCase().indexOf(q) !== -1;
+                item.classList.add(ok ? 'lab-hit' : 'lab-miss');
+            });
+            document.querySelectorAll('.lab-category').forEach(function (cat) {
+                if (cat.classList.contains('custom')) return;
+                var any = cat.querySelector('.lab-test-item:not(.lab-miss)');
+                cat.classList.toggle('lab-cat-empty', !!q && !any);
+            });
+        }
+
+        function pickLabFromSearch(code, name) {
+            var found = null;
+            document.querySelectorAll('.lab-test-item input[type="checkbox"]').forEach(function (cb) {
+                var c = String(cb.getAttribute('data-code') || '');
+                var n = String(cb.value || '');
+                if ((code && c && c.toUpperCase() === String(code).toUpperCase()) ||
+                    (name && n.toLowerCase() === String(name).toLowerCase())) {
+                    found = cb;
+                }
+            });
+            if (found) {
+                found.checked = true;
+                var row = found.closest('.lab-test-item');
+                if (row) {
+                    row.classList.add('selected');
+                    filterLabGrid('');
+                    var s = document.getElementById('labSearch');
+                    if (s) s.value = '';
+                    row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }
+                updateSelectedTests();
+                showToast('✅ ' + (found.value || name) + ' ticked', 'success');
+                hideLabSearchHits();
+                return;
+            }
+            var custom = document.getElementById('customLabTest');
+            if (custom) { custom.value = name || code || ''; addCustomLabTest(); }
+            hideLabSearchHits();
+        }
+
+        function runLabSearch() {
+            var input = document.getElementById('labSearch');
+            var box = document.getElementById('labSearchHits');
+            if (!input || !box) return;
+            var q = String(input.value || '').trim();
+            filterLabGrid(q);
+            if (q.length < 1) { hideLabSearchHits(); return; }
+            var ql = q.toLowerCase();
+            var hits = collectSearchableLabs().filter(function (t) {
+                return String(t.code).toLowerCase().indexOf(ql) !== -1 ||
+                    String(t.name).toLowerCase().indexOf(ql) !== -1 ||
+                    String(t.label).toLowerCase().indexOf(ql) !== -1;
+            }).slice(0, 24);
+            if (!hits.length) {
+                box.hidden = false;
+                box.innerHTML = '<div class="lab-search-empty">No match for “' + escHtml(q) + '”. Add it under Custom if needed.</div>';
+                return;
+            }
+            box.hidden = false;
+            box.innerHTML = hits.map(function (t) {
+                return '<button type="button" class="lab-search-hit" data-code="' + escAttr(t.code) + '" data-name="' + escAttr(t.name) + '">' +
+                    '<span class="code">' + escHtml(t.code || '—') + '</span>' +
+                    '<span class="nm">' + escHtml(t.label || t.name) + '</span>' +
+                    '<span style="font-size:10.5px;font-weight:800;color:var(--ac);">' + rws(t.price) + '</span>' +
+                    '</button>';
+            }).join('');
+            box.querySelectorAll('.lab-search-hit').forEach(function (b) {
+                b.onclick = function () { pickLabFromSearch(b.getAttribute('data-code'), b.getAttribute('data-name')); };
+            });
+        }
+
+        window.pickLabFromSearch = pickLabFromSearch;
+        window.runLabSearch = runLabSearch;
+
         // ─── EXPOSE FUNCTIONS ───
         window.toggleLabTest = toggleLabTest;
         window.addCustomLabTest = addCustomLabTest;
@@ -1686,5 +1794,5 @@ function toggleHistoryDetails(idx) {
 <script src="patient-data.js"></script>
 <script src="pclinic-file.js?v=20260814_RAD"></script>
 <script src="pclinic-handoff.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f4459f8a0b6062',t:'MTc4NzQyNjgxNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f45818380473a0',t:'MTc4NzQyNzU3Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
