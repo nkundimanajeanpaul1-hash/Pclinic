@@ -147,6 +147,42 @@
             gap: 16px;
             margin-bottom: 16px;
         }
+        .form-row.lab-top-row {
+            grid-template-columns: 1.1fr 1fr 1.2fr;
+        }
+        .lab-search-wrap { position: relative; }
+        .lab-search-hits {
+            position: absolute;
+            left: 0; right: 0; top: calc(100% + 4px);
+            z-index: 40;
+            max-height: 260px;
+            overflow-y: auto;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(16px);
+            border: 0.5px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+            padding: 4px;
+        }
+        .lab-search-hit {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            text-align: left;
+            border: 0;
+            background: none;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            color: var(--tp);
+        }
+        .lab-search-hit:hover, .lab-search-hit.active { background: rgba(0,113,227,0.08); }
+        .lab-search-hit .code { font-weight: 800; color: var(--ac); min-width: 52px; }
+        .lab-search-hit .nm { flex: 1; }
+        .lab-search-empty { padding: 10px 12px; font-size: 12px; color: var(--tm); }
 
         .lbl {
             font-size: 11px;
@@ -485,7 +521,8 @@
             .lab-grid {
                 grid-template-columns: 1fr 1fr;
             }
-            .form-row {
+            .form-row,
+            .form-row.lab-top-row {
                 grid-template-columns: 1fr;
             }
             body {
@@ -1596,6 +1633,21 @@ function toggleHistoryDetails(idx) {
     }
     
     updateSelectedTests();
+    var labSearch = document.getElementById('labSearch');
+    if (labSearch) {
+        labSearch.addEventListener('input', runLabSearch);
+        labSearch.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') { hideLabSearchHits(); return; }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                var first = document.querySelector('#labSearchHits .lab-search-hit');
+                if (first) first.click();
+            }
+        });
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.lab-search-wrap')) hideLabSearchHits();
+        });
+    }
 });
 
 
@@ -1634,5 +1686,5 @@ function toggleHistoryDetails(idx) {
 <script src="patient-data.js"></script>
 <script src="pclinic-file.js?v=20260814_RAD"></script>
 <script src="pclinic-handoff.js"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f4459f8a0b6062',t:'MTc4NzQyNjgxNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
