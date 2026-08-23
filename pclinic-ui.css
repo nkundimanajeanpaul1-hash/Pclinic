@@ -1280,10 +1280,10 @@ body.compact .patient-card, body.compact .card {
 
 .chuk-top-menu {
     display: flex !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
     align-items: center !important;
     gap: 8px !important;
-    padding: 8px 14px !important;
+    padding: 8px 10px 8px 12px !important;
     background: #f0f0f5 !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-bottom: none !important;
@@ -1292,10 +1292,10 @@ body.compact .patient-card, body.compact .card {
     font-size: 12px !important;
     font-weight: 700 !important;
     width: 100% !important;
+    max-width: 100% !important;
     flex-wrap: nowrap !important;
     flex-shrink: 0 !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
+    overflow: hidden !important;
     white-space: nowrap !important;
     position: relative !important;
     top: auto !important;
@@ -1304,24 +1304,59 @@ body.compact .patient-card, body.compact .card {
     max-height: 48px !important;
     box-sizing: border-box !important;
 }
-.chuk-top-menu::-webkit-scrollbar { height: 0 !important; }
 
 .chuk-menu-left {
     display: flex !important;
     align-items: center !important;
     gap: 6px !important;
     flex-wrap: nowrap !important;
-    flex-shrink: 0 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+}
+.chuk-menu-left::-webkit-scrollbar { height: 0 !important; display: none !important; }
+
+.chuk-menu-center {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    max-width: 220px !important;
+}
+.chuk-menu-center .pc-global-clock,
+#pcGlobalClock {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 220px !important;
 }
 
-/* RIGHT CORNER OF THE BAR (margin-left: auto) */
+/* RIGHT CORNER — always on screen */
 .chuk-menu-right {
     display: flex !important;
     align-items: center !important;
-    gap: 6px !important;
-    margin-left: auto !important;
+    gap: 5px !important;
+    margin-left: 6px !important;
     flex-wrap: nowrap !important;
+    flex: 0 0 auto !important;
     flex-shrink: 0 !important;
+}
+
+@media (max-width: 1180px) {
+    .chuk-menu-center { display: none !important; }
+}
+@media (max-width: 980px) {
+    .chuk-top-menu .chk-btn { padding: 0 8px !important; font-size: 11px !important; }
+    .chk-btn.btn-user { max-width: 120px !important; overflow: hidden !important; }
+}
+@media (max-width: 760px) {
+    .chk-btn.btn-theme,
+    .chk-btn.btn-alerts,
+    .chk-btn.btn-info { padding: 0 8px !important; }
+    .chk-btn.btn-user { max-width: 88px !important; }
 }
 
 /* Never allow a second CHUK strip */
