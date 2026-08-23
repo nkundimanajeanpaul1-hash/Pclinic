@@ -3024,10 +3024,23 @@ table.apple-table tbody tr:hover {
               <div class="form-group"><label>Date of Birth *</label><input type="date" id="bDob" onchange="calcAge()" class="apple-input"></div>
               <div class="form-group"><label>Age (auto)</label><input type="text" id="bAge" readonly placeholder="Auto" style="background:rgba(0,122,255,0.08); font-weight:600; color:#007aff;" class="apple-input"></div>
               <div class="form-group"><label>Gender *</label><select id="bGender" class="apple-input"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></div>
-              <div class="form-group"><label>Nat ID/PP * (16 digits)</label><input type="text" id="bNid" placeholder="1 1990 8 0012345 0 67" maxlength="24" oninput="validateRwandaId()" class="apple-input"><small id="nidHelp" style="font-size:10px;"></small></div>
+              <div class="form-group"><label id="bNidLabel">Nat ID/PP * (16 digits)</label><input type="text" id="bNid" placeholder="1 1990 8 0012345 0 67" maxlength="24" oninput="validateRwandaId()" class="apple-input"><small id="nidHelp" style="font-size:10px;"></small></div>
               <div class="form-group"><label>MRN / Record Number (auto, numbers only)</label><input type="text" id="bMrn" readonly style="background:#e8f0fe; font-weight:700; color:#0b57d0; border:1px solid #0b57d0;" class="apple-input" placeholder="Auto generating..."></div>
               <div class="form-group"><label>Archive Code (red badge)</label><input type="text" id="bArchiveCode" placeholder="ARCH-2026-1003" class="apple-input"></div>
               <div class="form-group"><label>Person ID (numbers only)</label><input type="text" id="bPersonId" placeholder="Auto from Nat ID" inputmode="numeric" class="apple-input"></div>
+              <div class="form-group form-grid-full" id="pedBox" style="display:none;margin-top:4px;padding:12px 14px;border-radius:14px;background:rgba(255,149,0,0.10);border:0.5px solid rgba(255,149,0,0.28);">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:700;color:#9a5700;margin-bottom:10px;">
+                  <input type="checkbox" id="bPediatric" onchange="syncPediatricIdMode()" style="width:16px;height:16px;"> Pediatric — no personal identification card
+                </label>
+                <div style="font-size:11px;color:#7a4500;line-height:1.45;margin-bottom:10px;">Under 16, identity is the hospital <b>MRN</b>. Attach a parent/guardian National ID and/or birth certificate. Caretaker on the next pages is required.</div>
+                <div class="form-grid">
+                  <div class="form-group"><label>Child document</label><select id="bChildDocType" class="apple-input" onchange="syncPediatricIdMode()"><option value="none">No personal ID (use MRN)</option><option value="birth-certificate">Birth certificate</option><option value="guardian-nid">Parent / guardian Nat ID only</option><option value="passport">Passport / other</option></select></div>
+                  <div class="form-group"><label>Birth certificate / child doc #</label><input type="text" id="bBirthCert" placeholder="BC / acte de naissance" class="apple-input"></div>
+                  <div class="form-group"><label>Guardian Nat ID (16 digits) *</label><input type="text" id="bGuardianNid" placeholder="Parent or caretaker National ID" maxlength="24" class="apple-input" oninput="validateGuardianId()"></div>
+                  <div class="form-group"><label>Guardian name</label><input type="text" id="bGuardianName" placeholder="Same as caretaker if they bring the child" class="apple-input"></div>
+                </div>
+                <small id="guardianNidHelp" style="font-size:10px;"></small>
+              </div>
               </div>
               <span class="card-status" id="cardStatus1" style="display:none">Open</span>
               <i class="fold-chevron" id="chev1" style="display:none"></i>
@@ -4122,6 +4135,12 @@ function selectPatientForEdit(id){
       set('bAllergies', p.allergies||'');
       set('bReferralSource', p.referralSource||'Self');
       set('bArrivalMode', p.arrivalMode||'Walking');
+      set('bBirthCert', p.birthCertificate||'');
+      set('bGuardianNid', p.guardianNationalId||'');
+      set('bGuardianName', p.guardianName||'');
+      var pedEl=document.getElementById('bPediatric'); if(pedEl) pedEl.checked=!!(p.pediatric||p.noPersonalId);
+      var cdt=document.getElementById('bChildDocType'); if(cdt) cdt.value=p.childDocType||'none';
+      if(typeof calcAge==='function') calcAge();
       if(typeof openCard==='function'){ window._regDone={1:true,2:true,3:true,4:true}; openCard(1); }
       // Change submit button text to Update
       var submitBtn=document.querySelector('#view-booking .submit-btn');
@@ -4341,21 +4360,81 @@ function openCard(n){
 function completeCard(n){
   n=parseInt(n,10)||window._regStep||1;
   var valid=true;
-  if(n===1){valid=!!(document.getElementById('bFamilyName').value.trim()&&document.getElementById('bFirstName').value.trim()&&document.getElementById('bDob').value&&document.getElementById('bGender').value&&validateRwandaId());}
+  if(n===1){valid=!!(document.getElementById('bFamilyName').value.trim()&&document.getElementById('bFirstName').value.trim()&&document.getElementById('bDob').value&&document.getElementById('bGender').value&&validateRwandaId()&&validatePediatricIdentity());}
   if(n===2){valid=!!(document.getElementById('bDistrict').value.trim()&&validatePhone250()&&validateEmail());}
-  if(n===3){valid=!!(document.getElementById('bCareName').value.trim()&&document.getElementById('bCareRel').value&&validateCarePhone());}
+  if(n===3){valid=!!(document.getElementById('bCareName').value.trim()&&document.getElementById('bCareRel').value&&validateCarePhone()); if(isPediatricPatient() && !valid){ showToast('❌ Pediatric patients need a caretaker / next of kin.','error'); return; }}
   if(!valid){showToast('❌ Complete the required fields on this page before continuing.','error');return;}
   window._regDone[n]=true;
   var status=document.getElementById('cardStatus'+n);
   if(status){status.textContent='✓ Done';}
   if(n<4)openCard(n+1);else { openCard(4); showToast('✅ Ready to register.','success'); }
 }
+function patientAgeYears(){
+  var dob=document.getElementById('bDob'); if(!dob||!dob.value) return null;
+  var birth=new Date(dob.value),today=new Date(),age=today.getFullYear()-birth.getFullYear(),m=today.getMonth()-birth.getMonth();
+  if(m<0||(m===0&&today.getDate()<birth.getDate())) age--;
+  return age;
+}
+function isPediatricPatient(){
+  var box=document.getElementById('bPediatric');
+  if(box && box.checked) return true;
+  var age=patientAgeYears();
+  return age!==null && age<16;
+}
+function syncPediatricIdMode(){
+  var age=patientAgeYears();
+  var box=document.getElementById('bPediatric');
+  var wrap=document.getElementById('pedBox');
+  var label=document.getElementById('bNidLabel');
+  var nid=document.getElementById('bNid');
+  if(age!==null && age<16 && box && !box.checked) box.checked=true;
+  var ped=isPediatricPatient();
+  if(wrap) wrap.style.display = (ped || (age!==null && age<16)) ? 'block' : 'none';
+  if(ped){
+    if(label) label.textContent='Nat ID/PP (optional — child usually has none)';
+    if(nid) nid.placeholder='Leave empty if no ID card';
+    var dept=document.getElementById('bDept');
+    if(dept && (!dept.value || dept.value==='General')) dept.value='Pediatrics';
+    var help=document.getElementById('nidHelp');
+    if(help && nid && !nid.value.trim()){ help.textContent='Pediatric: identity = hospital MRN + guardian ID'; help.style.color='#9a5700'; }
+  } else {
+    if(label) label.textContent='Nat ID/PP * (16 digits)';
+    if(nid) nid.placeholder='1 1990 8 0012345 0 67';
+  }
+}
 function calcAge(){
-  var dob=document.getElementById('bDob'),out=document.getElementById('bAge');if(!dob||!out)return;if(!dob.value){out.value='';return;}
-  var birth=new Date(dob.value),today=new Date(),age=today.getFullYear()-birth.getFullYear(),m=today.getMonth()-birth.getMonth();if(m<0||(m===0&&today.getDate()<birth.getDate()))age--;out.value=age>=0?age+' years':'';
+  var dob=document.getElementById('bDob'),out=document.getElementById('bAge');if(!dob||!out)return;
+  if(!dob.value){out.value='';syncPediatricIdMode();return;}
+  var age=patientAgeYears();
+  out.value=(age!==null && age>=0)?age+' years':'';
+  syncPediatricIdMode();
+}
+function validNidDigits(value){
+  var digits=String(value||'').replace(/\D/g,'');
+  return digits.length===16 && ['1','2','3'].indexOf(digits.charAt(0))!==-1;
+}
+function validateGuardianId(){
+  var el=document.getElementById('bGuardianNid'),help=document.getElementById('guardianNidHelp');
+  if(!el) return true;
+  if(!isPediatricPatient()) return true;
+  var ok=validNidDigits(el.value);
+  if(help){ help.textContent=!el.value.trim()?'⚠️ Guardian National ID is required when the child has no ID card':(ok?'✅ Guardian National ID valid':'⚠️ Guardian National ID must be 16 valid digits'); help.style.color=ok?'#16a34a':'#ef4444'; }
+  return ok;
+}
+function validatePediatricIdentity(){
+  if(!isPediatricPatient()) return true;
+  return validateGuardianId();
 }
 function validateRwandaId(){
-  var el=document.getElementById('bNid'),help=document.getElementById('nidHelp');if(!el)return false;var digits=el.value.replace(/\D/g,''),valid=digits.length===16&&['1','2','3'].indexOf(digits.charAt(0))!==-1;
+  var el=document.getElementById('bNid'),help=document.getElementById('nidHelp');if(!el)return false;
+  var digits=el.value.replace(/\D/g,'');
+  if(isPediatricPatient()){
+    if(!digits){ if(help){help.textContent='Pediatric: no personal ID — hospital MRN will identify the child'; help.style.color='#9a5700';} return true; }
+    var ok=validNidDigits(el.value);
+    if(help){help.textContent=ok?'✅ Valid National ID':'⚠️ If entered, National ID must be 16 valid digits';help.style.color=ok?'#16a34a':'#ef4444';}
+    return ok;
+  }
+  var valid=validNidDigits(el.value);
   if(help){help.textContent=!digits?'':(valid?'✅ Valid National ID':'⚠️ National ID must contain 16 valid digits');help.style.color=valid?'#16a34a':'#ef4444';}return valid;
 }
 function validRwandaPhone(value){return /^(\+2507\d{8}|07\d{8}|7\d{8})$/.test(String(value||'').replace(/\s+/g,''));}
@@ -4377,7 +4456,7 @@ function checkDuplicate() {
   if(!query){resultEl.textContent='Type MRN, phone or Nat ID to check';return;}
   var patients=[];try{patients=getPatients()||[];}catch(e){}
   var q=query.toLowerCase().replace(/\s+/g,'');
-  var matches=patients.filter(function(p){return [p.mrn,p.phone,p.nationalId,p.id].some(function(v){var x=String(v||'').toLowerCase().replace(/\s+/g,'');return x===q||x.indexOf(q)!==-1;});});
+  var matches=patients.filter(function(p){return [p.mrn,p.phone,p.nationalId,p.id,p.guardianNationalId,p.birthCertificate].some(function(v){var x=String(v||'').toLowerCase().replace(/\s+/g,'');return x===q||x.indexOf(q)!==-1;});});
   var box=document.createElement('div');box.style.cssText=matches.length?'background:#fee2e2;border:1px solid #ef4444;border-radius:8px;padding:10px':'background:#d1fae5;border:1px solid #16a34a;border-radius:8px;padding:8px;color:#065f46';
   if(!matches.length){box.textContent='✅ No duplicate found for the supplied identifier.';resultEl.appendChild(box);return;}
   var title=document.createElement('b');title.style.color='#991b1b';title.textContent='⚠️ Duplicate found ('+matches.length+'):';box.appendChild(title);
@@ -4406,6 +4485,11 @@ async function registerPatient(){
   var dob = document.getElementById('bDob') ? document.getElementById('bDob').value : '';
   var gender = document.getElementById('bGender') ? document.getElementById('bGender').value : '';
   var nid = document.getElementById('bNid') ? document.getElementById('bNid').value.trim() : '';
+  var pediatric = isPediatricPatient();
+  var childDocType = document.getElementById('bChildDocType') ? document.getElementById('bChildDocType').value : '';
+  var birthCert = document.getElementById('bBirthCert') ? document.getElementById('bBirthCert').value.trim() : '';
+  var guardianNid = document.getElementById('bGuardianNid') ? document.getElementById('bGuardianNid').value.trim() : '';
+  var guardianName = document.getElementById('bGuardianName') ? document.getElementById('bGuardianName').value.trim() : '';
   var mrnDisplay = document.getElementById('bMrn') ? document.getElementById('bMrn').value.trim() : '';
   var archiveCode = document.getElementById('bArchiveCode') ? document.getElementById('bArchiveCode').value.trim() : '';
   var personId = document.getElementById('bPersonId') ? document.getElementById('bPersonId').value.trim() : '';
@@ -4437,12 +4521,22 @@ async function registerPatient(){
   var consent = document.getElementById('bConsent') ? document.getElementById('bConsent').checked : false;
 
   // Validations
-  if (!familyName || !firstName || !dob || !gender || !phone || !nid) {
-    showToast('❌ Please fill required * fields: Family Name, Firstname, DOB, Gender, Phone, Nat ID', 'error');
+  if (!familyName || !firstName || !dob || !gender || !phone || (!pediatric && !nid)) {
+    showToast('❌ Please fill required * fields: Family Name, Firstname, DOB, Gender, Phone'+(pediatric?'':' , Nat ID'), 'error');
     return;
   }
   if (!validateRwandaId()) {
     showToast('❌ Invalid National ID - must be 16 digits', 'error');
+    return;
+  }
+  if (pediatric && !validateGuardianId()) {
+    showToast('❌ Pediatric patient: enter the parent/guardian National ID (child has no ID card).', 'error');
+    openCard(1);
+    return;
+  }
+  if (pediatric && (!careName || !careRel || !carePhone)) {
+    showToast('❌ Pediatric patient: caretaker / next of kin is required.', 'error');
+    openCard(3);
     return;
   }
   if (!validatePhone250()) {
@@ -4486,8 +4580,14 @@ async function registerPatient(){
     familyName: familyName,
     dob: dob,
     gender: gender,
-    nationalId: nidClean,
-    nationalIdFormatted: nid,
+    nationalId: nidClean || (pediatric ? ('PED-'+String(mrnDisplay||'').replace(/\D/g,'')) : ''),
+    nationalIdFormatted: nid || (pediatric ? ('PED/'+String(mrnDisplay||'')) : ''),
+    pediatric: !!pediatric,
+    noPersonalId: !!(pediatric && !nidClean),
+    childDocType: pediatric ? (childDocType||'none') : '',
+    birthCertificate: birthCert,
+    guardianNationalId: guardianNid.replace(/\s+/g,'').replace(/[^0-9]/g,''),
+    guardianName: guardianName || careName,
     archiveCode: archiveCode,
     personId: personId ? personId.replace(/[^0-9]/g,'') : '',
     phone: phoneClean,
@@ -4565,9 +4665,11 @@ async function registerPatient(){
       }
 
       // Reset form - all new fields
-      ['bFamilyName','bFirstName','bMiddleName','bNid','bArchiveCode','bPersonId','bPhone','bEmail','bAddress','bSector','bCell','bVillage','bCareName','bCarePhone','bCareEmail','bInsPolicy','bAllergies'].forEach(function(id){
+      ['bFamilyName','bFirstName','bMiddleName','bNid','bArchiveCode','bPersonId','bPhone','bEmail','bAddress','bSector','bCell','bVillage','bCareName','bCarePhone','bCareEmail','bInsPolicy','bAllergies','bBirthCert','bGuardianNid','bGuardianName'].forEach(function(id){
         var el=document.getElementById(id); if(el) el.value='';
       });
+      var pedOff=document.getElementById('bPediatric'); if(pedOff) pedOff.checked=false;
+      if(typeof syncPediatricIdMode==='function') syncPediatricIdMode();
       document.getElementById('bDob').value='';
       document.getElementById('bAge').value='';
       document.getElementById('bDistrict').value='';
