@@ -2403,6 +2403,115 @@ table.apple-table tbody tr:hover {
   transition:.12s ease !important;
 }
 
+
+/* ════════════════════════════════════════════════════════════
+   macOS Tahoe 26.6.2 — registration wizard (one column / step)
+   ════════════════════════════════════════════════════════════ */
+#view-booking{
+  background:transparent !important;
+}
+#view-booking .form-scroll{
+  padding:10px 14px 28px !important;
+  max-width:920px;
+  margin:0 auto;
+  width:100%;
+}
+.tahoe-wizard{
+  margin-top:8px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(246,246,248,0.70) 100%);
+  backdrop-filter:saturate(200%) blur(40px) brightness(1.04);
+  -webkit-backdrop-filter:saturate(200%) blur(40px) brightness(1.04);
+  border:0.5px solid rgba(255,255,255,0.82);
+  border-radius:22px;
+  box-shadow:0 1px 0 rgba(255,255,255,0.9) inset, 0 18px 50px rgba(20,20,35,0.12), 0 2px 8px rgba(0,0,0,0.04);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  min-height:520px;
+}
+.tahoe-wiz-titlebar{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:12px 16px 10px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.18));
+  border-bottom:0.5px solid rgba(0,0,0,0.06);
+}
+.tahoe-lights{display:flex;gap:7px;flex-shrink:0}
+.tahoe-lights i{width:12px;height:12px;border-radius:50%;display:block;box-shadow:inset 0 0 0 0.5px rgba(0,0,0,0.12)}
+.tahoe-lights .c1{background:#ff5f57}
+.tahoe-lights .c2{background:#febc2e}
+.tahoe-lights .c3{background:#28c840}
+.tahoe-wiz-heading{flex:1;min-width:0}
+.tahoe-wiz-heading .t1{font-size:15px;font-weight:700;letter-spacing:-0.35px;color:var(--tp)}
+.tahoe-wiz-heading .t2{font-size:11px;color:var(--tm);margin-top:1px}
+.tahoe-steps{display:flex;align-items:center;gap:0;flex-shrink:0}
+.tahoe-step{
+  display:flex;align-items:center;gap:7px;
+  padding:6px 10px;border-radius:999px;
+  border:none;background:transparent;cursor:pointer;
+  font-family:var(--f);color:var(--tm);font-size:11px;font-weight:600;
+  transition:all .35s cubic-bezier(0.32,0.72,0,1);
+}
+.tahoe-step .n{
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.06);color:var(--tm);font-size:11px;font-weight:700;
+}
+.tahoe-step.active{background:rgba(0,122,255,0.10);color:#0b57d0}
+.tahoe-step.active .n{background:#007aff;color:#fff;box-shadow:0 2px 8px rgba(0,122,255,0.35)}
+.tahoe-step.done .n{background:#28c840;color:#fff}
+.tahoe-step-line{width:14px;height:2px;background:rgba(0,0,0,0.08);border-radius:2px}
+.tahoe-wiz-body{flex:1;position:relative;padding:18px 22px 8px;min-height:360px}
+.tahoe-pane{display:none;animation:tahoePane .38s cubic-bezier(0.32,0.72,0,1)}
+.tahoe-pane.active{display:block}
+@keyframes tahoePane{
+  from{opacity:0;transform:translateX(18px)}
+  to{opacity:1;transform:translateX(0)}
+}
+.tahoe-pane-kicker{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#007aff;margin-bottom:4px}
+.tahoe-pane-title{font-size:22px;font-weight:700;letter-spacing:-0.6px;margin-bottom:14px;color:var(--tp)}
+#view-booking .tahoe-wizard .form-grid{gap:0 16px !important;margin-top:0 !important}
+#view-booking .tahoe-wizard .form-group{margin-bottom:12px !important}
+#view-booking .tahoe-wizard .form-group label{font-size:11px !important;color:var(--tm);margin-bottom:4px !important}
+#view-booking .tahoe-wizard .apple-input,
+#view-booking .tahoe-wizard .form-group input,
+#view-booking .tahoe-wizard .form-group select,
+#view-booking .tahoe-wizard .form-group textarea{
+  height:36px !important;min-height:36px !important;
+  border-radius:10px !important;
+  background:rgba(255,255,255,0.72) !important;
+  border:0.5px solid rgba(0,0,0,0.08) !important;
+  font-size:13px !important;padding:8px 12px !important;
+}
+#view-booking .tahoe-wizard .form-group input:focus,
+#view-booking .tahoe-wizard .form-group select:focus{
+  box-shadow:0 0 0 4px rgba(0,122,255,0.16) !important;
+  border-color:#007aff !important;
+}
+.tahoe-wiz-footer{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px 18px 16px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(246,246,248,0.55));
+  border-top:0.5px solid rgba(0,0,0,0.05);
+}
+.tahoe-wiz-footer .btn,
+.tahoe-wiz-footer .submit-btn{
+  height:34px !important;min-height:34px !important;
+  border-radius:17px !important;padding:0 18px !important;font-size:13px !important;
+}
+.tahoe-wiz-footer .submit-btn{width:auto !important;margin:0 !important;grid-column:auto !important}
+#view-booking .form-card.foldable,
+#view-booking .apple-stepper{display:none !important}
+
+#view-booking #dupCard{
+  background:rgba(255,255,255,0.62) !important;
+  backdrop-filter:saturate(200%) blur(28px) !important;
+  border-radius:16px !important;
+}
+#view-booking .photo-upload{
+  background:rgba(255,255,255,0.45) !important;
+}
 </style>
     <script src="pclinic-file.js?v=20260814_RAD" defer></script>
 </head>
@@ -2885,34 +2994,30 @@ table.apple-table tbody tr:hover {
           <input type="file" id="ptphoto" accept="image/*" onchange="window.handlePtPhoto(event)"/>
         </div>
 
-        <!-- ===== PROGRESS STEPPER - APPLE DOTS ===== -->
-        <div class="apple-stepper" style="display:flex; align-items:center; justify-content:center; gap:8px; margin:16px 0; padding:8px;">
-          <div class="step-dot active" data-step="1" onclick="openCard(1)" style="width:32px; height:32px; border-radius:50%; background:#007aff; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; cursor:pointer; transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 2px 8px rgba(0,122,255,0.3);">1</div>
-          <div class="step-line" style="width:24px; height:2px; background:rgba(0,0,0,0.1); border-radius:2px; transition: all 0.4s;"></div>
-          <div class="step-dot" data-step="2" onclick="openCard(2)" style="width:32px; height:32px; border-radius:50%; background:rgba(0,0,0,0.08); color:var(--tm); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; cursor:pointer; transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);">2</div>
-          <div class="step-line" style="width:24px; height:2px; background:rgba(0,0,0,0.1); border-radius:2px;"></div>
-          <div class="step-dot" data-step="3" onclick="openCard(3)" style="width:32px; height:32px; border-radius:50%; background:rgba(0,0,0,0.08); color:var(--tm); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; cursor:pointer; transition: all 0.4s;">3</div>
-          <div class="step-line" style="width:24px; height:2px; background:rgba(0,0,0,0.1); border-radius:2px;"></div>
-          <div class="step-dot" data-step="4" onclick="openCard(4)" style="width:32px; height:32px; border-radius:50%; background:rgba(0,0,0,0.08); color:var(--tm); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; cursor:pointer; transition: all 0.4s;">4</div>
-        </div>
-
-        <!-- ===== CARD 1 - PRIMARY DEMOGRAPHICS - FOLDABLE APPLE ===== -->
-        <div class="form-card apple-card foldable open" data-card="1" id="card1" style="background: rgba(255,255,255,0.75); backdrop-filter: saturate(180%) blur(24px); -webkit-backdrop-filter: saturate(180%) blur(24px); border:0.5px solid rgba(255,255,255,0.7); border-radius:16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85); transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1); overflow:hidden;">
-          <div class="form-card-header foldable-header" onclick="toggleCard(1)" style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; cursor:pointer; user-select:none; transition: all 0.3s;">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div class="card-icon" style="width:24px; height:24px; border-radius:7px; background: linear-gradient(135deg, #007aff, #5856d6); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; box-shadow: 0 2px 8px rgba(0,122,255,0.25); transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);">👤</div>
-              <div>
-                <div class="form-card-title" style="margin:0; font-size:15px; font-weight:700; letter-spacing:-0.3px;">Card 1 - Primary Demographics</div>
-                <div style="font-size:11px; color:var(--tm); margin-top:2px;">Family, DOB, Gender, Nat ID, MRN (numbers only)</div>
-              </div>
+        <!-- ===== TAHOE WIZARD — one step at a time ===== -->
+        <div class="tahoe-wizard" id="regWizard">
+          <div class="tahoe-wiz-titlebar">
+            <div class="tahoe-lights" aria-hidden="true"><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>
+            <div class="tahoe-wiz-heading">
+              <div class="t1" id="tahoeWizTitle">New patient</div>
+              <div class="t2" id="tahoeWizSub">Step 1 of 4 — identity</div>
             </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span class="card-status" id="cardStatus1" style="font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px; background:rgba(0,0,0,0.06); color:var(--tm);">Open</span>
-              <i class="ti ti-chevron-down fold-chevron" id="chev1" style="font-size:12px; color:var(--tm); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); transform: rotate(180deg);"></i>
+            <div class="tahoe-steps" role="tablist">
+              <button type="button" class="tahoe-step active" data-step="1" onclick="openCard(1)"><span class="n">1</span><span>Identity</span></button>
+              <span class="tahoe-step-line"></span>
+              <button type="button" class="tahoe-step" data-step="2" onclick="openCard(2)"><span class="n">2</span><span>Contact</span></button>
+              <span class="tahoe-step-line"></span>
+              <button type="button" class="tahoe-step" data-step="3" onclick="openCard(3)"><span class="n">3</span><span>Caretaker</span></button>
+              <span class="tahoe-step-line"></span>
+              <button type="button" class="tahoe-step" data-step="4" onclick="openCard(4)"><span class="n">4</span><span>Insurance</span></button>
             </div>
           </div>
-          <div class="form-card-body foldable-body" id="body1" style="max-height:1000px; opacity:1; overflow:hidden; transition: max-height 0.62s cubic-bezier(0.32,0.72,0,1), opacity 0.45s ease, padding 0.45s ease, transform 0.62s cubic-bezier(0.34,1.56,0.64,1); padding:0 10px 10px; transform:translateY(0) scale(1);">
-            <div class="form-grid" style="margin-top:12px;">
+          <div class="tahoe-wiz-body">
+
+            <div class="tahoe-pane active" id="card1" data-card="1">
+              <div class="tahoe-pane-kicker">Column 1</div>
+              <div class="tahoe-pane-title">Primary demographics</div>
+              <div class="form-grid">
               <div class="form-group"><label>Family Name *</label><input type="text" id="bFamilyName" placeholder="e.g. NSHUTI" class="apple-input"></div>
               <div class="form-group"><label>Firstname *</label><input type="text" id="bFirstName" placeholder="e.g. DJUMA" class="apple-input"></div>
               <div class="form-group"><label>Middle Name</label><input type="text" id="bMiddleName" placeholder="Middle name" class="apple-input"></div>
@@ -2923,27 +3028,16 @@ table.apple-table tbody tr:hover {
               <div class="form-group"><label>MRN / Record Number (auto, numbers only)</label><input type="text" id="bMrn" readonly style="background:#e8f0fe; font-weight:700; color:#0b57d0; border:1px solid #0b57d0;" class="apple-input" placeholder="Auto generating..."></div>
               <div class="form-group"><label>Archive Code (red badge)</label><input type="text" id="bArchiveCode" placeholder="ARCH-2026-1003" class="apple-input"></div>
               <div class="form-group"><label>Person ID (numbers only)</label><input type="text" id="bPersonId" placeholder="Auto from Nat ID" inputmode="numeric" class="apple-input"></div>
+              </div>
+              <span class="card-status" id="cardStatus1" style="display:none">Open</span>
+              <i class="fold-chevron" id="chev1" style="display:none"></i>
+              <div id="body1"></div>
             </div>
-            <div style="margin-top:16px; display:flex; justify-content:flex-end;">
-              <button class="btn btn-primary apple-bounce" onclick="completeCard(1)" style="background:linear-gradient(135deg,#007aff,#5856d6); color:#fff; border:none; border-radius:20px; padding:8px 20px; font-weight:600; box-shadow:0 4px 12px rgba(0,122,255,0.25); transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);">Continue → Card 2</button>
-            </div>
-          </div>
-        </div>
 
-        <!-- ===== CARD 2 - CONTACT & ADDRESS ===== -->
-        <div class="form-card apple-card foldable" data-card="2" id="card2" style="background: rgba(255,255,255,0.68); backdrop-filter: saturate(180%) blur(24px); border:0.5px solid rgba(255,255,255,0.6); border-radius:16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03); transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1); overflow:hidden;">
-          <div class="form-card-header foldable-header" onclick="toggleCard(2)" style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; cursor:pointer;">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div class="card-icon" style="width:24px; height:24px; border-radius:7px; background: linear-gradient(135deg, #34c759, #30d158); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px;">📍</div>
-              <div><div class="form-card-title" style="margin:0; font-size:15px; font-weight:700;">Card 2 - Contact & Address</div><div style="font-size:11px; color:var(--tm);">Phone +250, Email, District → Sector → Cell → Village</div></div>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span class="card-status" id="cardStatus2" style="font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px; background:rgba(0,0,0,0.06); color:var(--tm);">Locked</span>
-              <i class="ti ti-chevron-down fold-chevron" id="chev2" style="font-size:12px; color:var(--tm); transition: transform 0.4s;"></i>
-            </div>
-          </div>
-          <div class="form-card-body foldable-body" id="body2" style="max-height:0; opacity:0; overflow:hidden; transition: max-height 0.62s cubic-bezier(0.32,0.72,0,1), opacity 0.45s ease, padding 0.45s ease, transform 0.62s cubic-bezier(0.34,1.56,0.64,1); padding:0 10px; transform:translateY(-4px) scale(0.98);">
-            <div class="form-grid" style="margin-top:12px;">
+            <div class="tahoe-pane" id="card2" data-card="2">
+              <div class="tahoe-pane-kicker">Column 2</div>
+              <div class="tahoe-pane-title">Contact &amp; address</div>
+              <div class="form-grid">
               <div class="form-group"><label>Phone * (+250)</label><input type="text" id="bPhone" placeholder="+250 788 123 456" oninput="validatePhone250()" class="apple-input"><small id="phoneHelp" style="font-size:10px;"></small></div>
               <div class="form-group"><label>Email</label><input type="email" id="bEmail" placeholder="patient@email.com" oninput="validateEmail()" class="apple-input"><small id="emailHelp" style="font-size:10px;"></small></div>
               <div class="form-group"><label>District *</label><input type="text" id="bDistrict" list="rwDistricts" placeholder="e.g. Gasabo" onchange="filterSectors()" class="apple-input"><datalist id="rwDistricts"><option value="Bugesera"><option value="Gasabo"><option value="Kicukiro"><option value="Nyarugenge"><option value="Gatsibo"><option value="Kamonyi"><option value="Musanze"></datalist></div>
@@ -2952,54 +3046,30 @@ table.apple-table tbody tr:hover {
               <div class="form-group"><label>Village</label><input type="text" id="bVillage" placeholder="e.g. Ubumwe" class="apple-input"></div>
               <div class="form-group"><label>Country</label><select id="bCountry" class="apple-input"><option value="Rwanda" selected>Rwanda</option><option>Uganda</option><option>DRC</option><option>Burundi</option><option>Tanzania</option><option>Other</option></select></div>
               <div class="form-group form-grid-full"><label>Address free text</label><input type="text" id="bAddress" placeholder="House number, street" class="apple-input"></div>
+              </div>
+              <span class="card-status" id="cardStatus2" style="display:none">Locked</span>
+              <i class="fold-chevron" id="chev2" style="display:none"></i>
+              <div id="body2"></div>
             </div>
-            <div style="margin-top:16px; display:flex; justify-content:space-between;">
-              <button class="btn apple-bounce" onclick="openCard(1)" style="border-radius:20px;">← Back</button>
-              <button class="btn btn-primary apple-bounce" onclick="completeCard(2)">Continue → Card 3</button>
-            </div>
-          </div>
-        </div>
 
-        <!-- ===== CARD 3 - CARETAKER ===== -->
-        <div class="form-card apple-card foldable" data-card="3" id="card3" style="background: rgba(255,255,255,0.65); backdrop-filter: saturate(180%) blur(24px); border:0.5px solid rgba(255,255,255,0.6); border-radius:16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03); transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1); overflow:hidden;">
-          <div class="form-card-header foldable-header" onclick="toggleCard(3)" style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; cursor:pointer;">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div class="card-icon" style="width:24px; height:24px; border-radius:7px; background: linear-gradient(135deg, #ff9500, #ff9f0a); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px;">❤️</div>
-              <div><div class="form-card-title" style="margin:0; font-size:15px; font-weight:700;">Card 3 - Caretaker / Next of Kin</div><div style="font-size:11px; color:var(--tm);">Separate fields, not ONE text</div></div>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span class="card-status" id="cardStatus3" style="font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px; background:rgba(0,0,0,0.06); color:var(--tm);">Locked</span>
-              <i class="ti ti-chevron-down fold-chevron" id="chev3" style="font-size:12px; color:var(--tm); transition: transform 0.4s;"></i>
-            </div>
-          </div>
-          <div class="form-card-body foldable-body" id="body3" style="max-height:0; opacity:0; overflow:hidden; transition: max-height 0.62s cubic-bezier(0.32,0.72,0,1), opacity 0.45s ease, padding 0.45s ease, transform 0.62s cubic-bezier(0.34,1.56,0.64,1); padding:0 10px; transform:translateY(-4px) scale(0.98);">
-            <div class="form-grid" style="margin-top:12px;">
+            <div class="tahoe-pane" id="card3" data-card="3">
+              <div class="tahoe-pane-kicker">Column 3</div>
+              <div class="tahoe-pane-title">Caretaker / next of kin</div>
+              <div class="form-grid">
               <div class="form-group"><label>Name *</label><input type="text" id="bCareName" placeholder="UWASE CLAUDINE" class="apple-input"></div>
               <div class="form-group"><label>Relationship *</label><select id="bCareRel" class="apple-input"><option value="">Select</option><option>Spouse</option><option>Mother</option><option>Father</option><option>Sibling</option><option>Guardian</option><option>Child</option><option>Friend</option><option>Other</option></select></div>
               <div class="form-group"><label>Phone *</label><input type="text" id="bCarePhone" placeholder="+250 788 987 654" oninput="validateCarePhone()" class="apple-input"><small id="carePhoneHelp" style="font-size:10px;"></small></div>
               <div class="form-group"><label>Email / Notes</label><input type="text" id="bCareEmail" placeholder="Emergency notes" class="apple-input"></div>
+              </div>
+              <span class="card-status" id="cardStatus3" style="display:none">Locked</span>
+              <i class="fold-chevron" id="chev3" style="display:none"></i>
+              <div id="body3"></div>
             </div>
-            <div style="margin-top:16px; display:flex; justify-content:space-between;">
-              <button class="btn" onclick="openCard(2)">← Back</button>
-              <button class="btn btn-primary apple-bounce" onclick="completeCard(3)">Continue → Card 4</button>
-            </div>
-          </div>
-        </div>
 
-        <!-- ===== CARD 4 - INSURANCE & VISIT ===== -->
-        <div class="form-card apple-card foldable" data-card="4" id="card4" style="background: rgba(255,255,255,0.62); backdrop-filter: saturate(180%) blur(24px); border:0.5px solid rgba(255,255,255,0.55); border-radius:16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03); transition: all 0.5s; overflow:hidden;">
-          <div class="form-card-header foldable-header" onclick="toggleCard(4)" style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; cursor:pointer;">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div class="card-icon" style="width:24px; height:24px; border-radius:7px; background: linear-gradient(135deg, #af52de, #bf5af2); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px;">🛡️</div>
-              <div><div class="form-card-title" style="margin:0; font-size:15px; font-weight:700;">Card 4 - Insurance & Visit</div><div style="font-size:11px; color:var(--tm);">Provider, Blood, Consent — numbers only MRN</div></div>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span class="card-status" id="cardStatus4" style="font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px; background:rgba(0,0,0,0.06); color:var(--tm);">Locked</span>
-              <i class="ti ti-chevron-down fold-chevron" id="chev4" style="font-size:12px; color:var(--tm); transition: transform 0.4s;"></i>
-            </div>
-          </div>
-          <div class="form-card-body foldable-body" id="body4" style="max-height:0; opacity:0; overflow:hidden; transition: max-height 0.62s cubic-bezier(0.32,0.72,0,1), opacity 0.45s ease, padding 0.45s ease, transform 0.62s cubic-bezier(0.34,1.56,0.64,1); padding:0 10px; transform:translateY(-4px) scale(0.98);">
-            <div class="form-grid" style="margin-top:12px;">
+            <div class="tahoe-pane" id="card4" data-card="4">
+              <div class="tahoe-pane-kicker">Column 4</div>
+              <div class="tahoe-pane-title">Insurance &amp; visit</div>
+              <div class="form-grid">
               <div class="form-group"><label>Provider</label><select id="bInsProvider" class="apple-input"><option value="">Select</option><option>RSSB</option><option>MMI</option><option>MUTUELLE DE SANTE</option><option>Other</option></select></div>
               <div class="form-group"><label>Provider (if Other)</label><input type="text" id="bInsProviderOther" placeholder="Type" class="apple-input"></div>
               <div class="form-group"><label>Policy</label><input type="text" id="bInsPolicy" placeholder="Policy #" class="apple-input"></div>
@@ -3013,22 +3083,27 @@ table.apple-table tbody tr:hover {
               <div class="form-group"><label>Allergies</label><input type="text" id="bAllergies" placeholder="Penicillin, None" class="apple-input"></div>
               <div class="form-group"><label>Referral Source</label><select id="bReferralSource" class="apple-input"><option>Self</option><option>Health Center</option><option>Private clinic</option><option>CHUK</option></select></div>
               <div class="form-group"><label>Arrival Mode</label><select id="bArrivalMode" class="apple-input"><option>Walking</option><option>Ambulance</option><option>Wheelchair</option><option>Stretcher</option></select></div>
-              <div class="form-group form-grid-full" style="margin-top:8px; padding:12px; background:rgba(255,255,255,0.6); border-radius:12px; border:0.5px solid rgba(0,0,0,0.06); backdrop-filter:blur(8px);"><label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600;"><input type="checkbox" id="bConsent" checked style="width:18px; height:18px;"> ✅ I confirm patient information is correct and consent obtained</label></div>
-            </div>
-            <div style="margin-top:16px; display:flex; justify-content:space-between; align-items:center;">
-              <div style="display:flex; gap:8px;">
-                <button class="btn" onclick="openCard(3)">← Back</button>
-                <button class="btn" id="cancelEditBtn" onclick="cancelEditMode()" style="display:none; background:#ffebe9; border-color:#ffbeb8; color:#8a1f1a;"><i class="ti ti-x"></i> Cancel Edit</button>
+              <div class="form-group form-grid-full" style="margin-top:8px; padding:12px; background:rgba(255,255,255,0.6); border-radius:12px; border:0.5px solid rgba(0,0,0,0.06);"><label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600;"><input type="checkbox" id="bConsent" checked style="width:18px; height:18px;"> I confirm patient information is correct and consent obtained</label></div>
               </div>
-              <button class="submit-btn apple-bounce" id="mainSubmitBtn" style="background:linear-gradient(135deg,#007aff,#5856d6); color:#fff; border:none; border-radius:20px; padding:10px 24px; font-weight:700; box-shadow:0 4px 16px rgba(0,122,255,0.3); transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);" onclick="window.registerPatient()"><i class="ti ti-user-plus"></i> Register Patient (Numbers Only ID)</button>
+              <span class="card-status" id="cardStatus4" style="display:none">Locked</span>
+              <i class="fold-chevron" id="chev4" style="display:none"></i>
+              <div id="body4"></div>
+            </div>
+          </div>
+          <div class="tahoe-wiz-footer">
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button type="button" class="btn apple-bounce" id="regBackBtn" onclick="openCard((window._regStep||1)-1)" style="display:none">← Back</button>
+              <button type="button" class="btn" id="cancelEditBtn" onclick="cancelEditMode()" style="display:none; background:#ffebe9; border-color:#ffbeb8; color:#8a1f1a;"><i class="ti ti-x"></i> Cancel Edit</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button type="button" class="btn btn-primary apple-bounce" id="regNextBtn" onclick="completeCard(window._regStep||1)">Continue</button>
+              <button type="button" class="submit-btn apple-bounce" id="mainSubmitBtn" style="display:none;background:linear-gradient(135deg,#007aff,#5856d6);color:#fff;border:none;" onclick="window.registerPatient()"><i class="ti ti-user-plus"></i> Register Patient</button>
             </div>
           </div>
         </div>
 
       </div>
     </div>
-
-
 
         <!-- ===== APPOINTMENTS VIEW ===== -->
     <div class="view" id="view-appointments">
@@ -4047,8 +4122,7 @@ function selectPatientForEdit(id){
       set('bAllergies', p.allergies||'');
       set('bReferralSource', p.referralSource||'Self');
       set('bArrivalMode', p.arrivalMode||'Walking');
-      // Open all cards
-      for(var i=1;i<=4;i++){ var b=document.getElementById('body'+i); if(b){ b.style.maxHeight='1000px'; b.style.opacity='1'; b.style.padding='0 10px 10px'; } }
+      if(typeof openCard==='function'){ window._regDone={1:true,2:true,3:true,4:true}; openCard(1); }
       // Change submit button text to Update
       var submitBtn=document.querySelector('#view-booking .submit-btn');
       if(submitBtn){ submitBtn.innerHTML='<i class="ti ti-device-floppy"></i> Update Patient Info (MRN '+p.mrn+') — Common Server'; submitBtn.style.background='linear-gradient(135deg,#10b981,#059669)'; }
@@ -4233,29 +4307,48 @@ function closeMo(){
   openPatientId=null;
 }
 
+window._regStep=1;
+window._regDone={};
 function setCardOpen(n, open){
-  var body=document.getElementById('body'+n), chev=document.getElementById('chev'+n), status=document.getElementById('cardStatus'+n), card=document.getElementById('card'+n);
-  if(!body) return;
-  body.style.maxHeight=open?'1100px':'0'; body.style.opacity=open?'1':'0'; body.style.padding=open?'0 10px 10px':'0 10px'; body.style.transform=open?'translateY(0) scale(1)':'translateY(-4px) scale(.985)';
-  if(chev) chev.style.transform=open?'rotate(180deg)':'rotate(0deg)';
-  if(status){status.textContent=open?'Open':'Folded';status.style.background=open?'rgba(0,122,255,.1)':'rgba(0,0,0,.06)';status.style.color=open?'#007aff':'var(--tm)';}
-  if(card) card.classList.toggle('open',open);
+  var card=document.getElementById('card'+n);
+  if(card) card.classList.toggle('active', !!open);
 }
-function toggleCard(n){var body=document.getElementById('body'+n);if(!body)return;var open=body.style.maxHeight&&body.style.maxHeight!=='0px'&&body.style.opacity!=='0';setCardOpen(n,!open);}
+function toggleCard(n){ openCard(n); }
 function openCard(n){
-  for(var i=1;i<=4;i++){setCardOpen(i,i===n);var dot=document.querySelector('.step-dot[data-step="'+i+'"]');if(dot){dot.style.background=i===n?'#007aff':(dot.textContent==='✓'?'#16a34a':'rgba(0,0,0,.08)');dot.style.color=i===n||dot.textContent==='✓'?'#fff':'var(--tm)';}}
-  var target=document.getElementById('card'+n);if(target)target.scrollIntoView({behavior:'smooth',block:'nearest'});
+  n=parseInt(n,10); if(!n||n<1) n=1; if(n>4) n=4;
+  window._regStep=n;
+  var labels=['','Identity','Contact','Caretaker','Insurance'];
+  for(var i=1;i<=4;i++){
+    var pane=document.getElementById('card'+i);
+    if(pane) pane.classList.toggle('active', i===n);
+    var step=document.querySelector('.tahoe-step[data-step="'+i+'"]');
+    if(step){
+      step.classList.toggle('active', i===n);
+      step.classList.toggle('done', !!window._regDone[i] && i!==n);
+      var num=step.querySelector('.n');
+      if(num) num.textContent = (window._regDone[i] && i!==n) ? '✓' : String(i);
+    }
+  }
+  var sub=document.getElementById('tahoeWizSub');
+  if(sub) sub.textContent='Step '+n+' of 4 — '+labels[n].toLowerCase();
+  var back=document.getElementById('regBackBtn');
+  var next=document.getElementById('regNextBtn');
+  var submit=document.getElementById('mainSubmitBtn');
+  if(back) back.style.display=n>1?'inline-flex':'none';
+  if(next){ next.style.display=n<4?'inline-flex':'none'; next.textContent=n===1?'Continue':'Continue'; }
+  if(submit) submit.style.display=n===4?'inline-flex':'none';
 }
 function completeCard(n){
+  n=parseInt(n,10)||window._regStep||1;
   var valid=true;
   if(n===1){valid=!!(document.getElementById('bFamilyName').value.trim()&&document.getElementById('bFirstName').value.trim()&&document.getElementById('bDob').value&&document.getElementById('bGender').value&&validateRwandaId());}
   if(n===2){valid=!!(document.getElementById('bDistrict').value.trim()&&validatePhone250()&&validateEmail());}
   if(n===3){valid=!!(document.getElementById('bCareName').value.trim()&&document.getElementById('bCareRel').value&&validateCarePhone());}
-  if(!valid){showToast('❌ Complete the required fields in this card before continuing.','error');return;}
-  var status=document.getElementById('cardStatus'+n),dot=document.querySelector('.step-dot[data-step="'+n+'"]');
-  if(status){status.textContent='✓ Done';status.style.background='#d1fae5';status.style.color='#065f46';}
-  if(dot){dot.textContent='✓';dot.style.background='#16a34a';dot.style.color='#fff';}
-  if(n<4)openCard(n+1);else showToast('✅ Registration cards complete — ready to register.','success');
+  if(!valid){showToast('❌ Complete the required fields on this page before continuing.','error');return;}
+  window._regDone[n]=true;
+  var status=document.getElementById('cardStatus'+n);
+  if(status){status.textContent='✓ Done';}
+  if(n<4)openCard(n+1);else { openCard(4); showToast('✅ Ready to register.','success'); }
 }
 function calcAge(){
   var dob=document.getElementById('bDob'),out=document.getElementById('bAge');if(!dob||!out)return;if(!dob.value){out.value='';return;}
@@ -4500,6 +4593,7 @@ async function registerPatient(){
       if(submitBtn){ submitBtn.innerHTML='<i class="ti ti-user-plus"></i> Register Patient (Numbers Only ID)'; submitBtn.style.background='linear-gradient(135deg,#007aff,#5856d6)'; }
       updateNextMrnDisplay();
       var dupRes=document.getElementById('dupResult'); if(dupRes) dupRes.innerHTML='';
+      window._regDone={}; if(typeof openCard==='function') openCard(1);
 
       // Communicate everywhere - dispatch events
       window.dispatchEvent(new Event('storage'));
@@ -6107,6 +6201,9 @@ window.raNotify = raNotify;
 window.raMyOrders = raMyOrders;
 window.raPrint = raPrint;
 window.cancelEditMode = cancelEditMode;
+window.openCard = openCard;
+window.completeCard = completeCard;
+window.toggleCard = toggleCard;
 
 window.openPatientSelector = openPatientSelector;
 window.closePatientSelector = closePatientSelector;
