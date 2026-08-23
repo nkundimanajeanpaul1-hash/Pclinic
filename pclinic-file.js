@@ -1506,12 +1506,7 @@
             if(inputEl) inputEl.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); pcFile.searchPatientRegistry(); } });
         });
         try {
-            var barPath = String((window.location && (window.location.pathname || window.location.href)) || '').toLowerCase();
-            if (barPath.indexOf('doctor-dashboard') === -1) renderClinicalActionBar(el, p);
-            else {
-                var hideDc = document.getElementById('dcBar');
-                if (hideDc && hideDc.parentNode) hideDc.parentNode.removeChild(hideDc);
-            }
+            renderClinicalActionBar(el, p);
         } catch(e){ console.warn('renderClinicalActionBar error:', e); }
     }
 
