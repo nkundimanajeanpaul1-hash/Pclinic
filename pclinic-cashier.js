@@ -15,6 +15,15 @@
     var mounts = [];
 
     function esc(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+    function patientInitials(name) {
+        return String(name || '?').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(function(part){ return part.charAt(0).toUpperCase(); }).join('') || '?';
+    }
+    function patientIdentity(name, patientId, meta) {
+        return '<div class="cashier-patient-cell">' +
+            '<span class="cashier-patient-avatar">' + esc(patientInitials(name)) + '</span>' +
+            '<span class="cashier-patient-info"><span class="cashier-patient-name">' + esc(name || 'Patient') + '</span>' +
+            '<span class="cashier-patient-meta">' + esc(meta || 'Billing patient') + '<span class="cashier-patient-mrn">MRN ' + esc(patientId || '—') + '</span></span></span></div>';
+    }
 
     /* ─── SVG SYSTEM VERIFICATION BARCODE GENERATOR ─── */
     function generateSVGBarcode(textString) {
@@ -69,8 +78,7 @@
         var btn = 'style="height:27px;padding:0 12px;border-radius:8px;border:0;background:#0071e3;' +
                   'color:#fff;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer"';
         return '<tr data-bill="' + esc(b.id) + '" onclick="if(window.selectCashierPatient) selectCashierPatient(\'' + esc(b.patientId) + '\')" style="cursor:pointer">' +
-            '<td><div style="font-weight:600">' + esc(b.patientName || '—') + '</div>' +
-                '<div style="font-size:10.5px;color:#8e8e93">' + esc(b.number) + ' · ' + when(b.createdAt) + '</div></td>' +
+            '<td>' + patientIdentity(b.patientName || 'Patient', b.patientId, (b.number || 'Invoice') + ' · ' + when(b.createdAt)) + '</td>' +
             '<td style="font-size:11.5px;color:#8e8e93">ID ' + esc(b.patientId) + '</td>' +
             '<td style="font-size:11.5px;max-width:230px">' + esc(items || '—') + '</td>' +
             '<td style="font-weight:700;white-space:nowrap">' + money(b.total) +
@@ -209,15 +217,10 @@
 
             // Multiple invoices -> Accordion Master Row + Darker Child Table Row
             var masterHtml = '<tr id="master_' + esc(g.key) + '" class="patient-master-row" onclick="if(window.selectCashierPatient) selectCashierPatient(\'' + esc(g.patientId) + '\'); togglePatientInvoices(\'' + esc(g.key) + '\')" style="cursor:pointer; background:#f8f9fc; border-bottom:1px solid rgba(0,0,0,0.08); transition:background 0.28s ease;">' +
-                '<td>' +
-                    '<div style="font-weight:700; color:#1d1d1f; display:flex; align-items:center; gap:6px;">' +
-                        '<i class="ti ti-chevron-right unfold-icon" id="icon_' + esc(g.key) + '" style="transition:transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1); color:#0071e3; font-size:15px;"></i>' +
-                        esc(g.patientName) +
-                    '</div>' +
-                    '<div style="font-size:10.5px; color:#0071e3; font-weight:700; margin-top:3px; margin-left:20px;">' +
-                        '📂 ' + g.bills.length + ' Invoices Available — Click row to unfold &amp; view' +
-                    '</div>' +
-                '</td>' +
+                '<td><div style="display:flex;align-items:center;gap:7px;">' +
+                    '<i class="ti ti-chevron-right unfold-icon" id="icon_' + esc(g.key) + '" style="transition:transform .28s cubic-bezier(.34,1.56,.64,1);color:#0071e3;font-size:15px;"></i>' +
+                    patientIdentity(g.patientName, g.patientId, g.bills.length + ' invoices · Click to unfold') +
+                '</div></td>' +
                 '<td style="font-size:11.5px; color:#8e8e93;">MOD-' + esc(g.patientId) + '</td>' +
                 '<td style="font-size:11.5px; max-width:240px;">' +
                     '<span style="background:rgba(0,113,227,0.12); color:#0071e3; padding:2px 8px; border-radius:6px; font-weight:700; font-size:10.5px;">' +
