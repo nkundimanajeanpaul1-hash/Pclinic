@@ -2225,6 +2225,20 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
 .rc-tools .ra-new-patient i{font-size:20px}
 .rc-tools .ra-new-patient:hover{background:linear-gradient(145deg,#1687ff,#0062d6);color:#fff;transform:translateY(-2px) scale(1.02);box-shadow:0 9px 26px rgba(0,122,255,.44)}
 .rc-tools .ra-new-patient:active{transform:scale(.97)}
+.rc-tools .ra-ai-assistant{
+  min-height:40px;
+  padding:0 17px;
+  border:0;
+  border-radius:12px;
+  background:linear-gradient(145deg,#7c3aed,#5856d6);
+  color:#fff;
+  box-shadow:0 5px 16px rgba(88,86,214,.3);
+  font:700 12.5px var(--f);
+  flex:0 0 auto;
+}
+.rc-tools .ra-ai-assistant i{font-size:18px}
+.rc-tools .ra-ai-assistant:hover{background:linear-gradient(145deg,#8b5cf6,#6366f1);color:#fff;transform:translateY(-2px);box-shadow:0 8px 22px rgba(88,86,214,.42)}
+.ra-ai-live{width:7px;height:7px;border-radius:50%;background:#5cff91;box-shadow:0 0 0 3px rgba(92,255,145,.18);margin-left:2px}
 .rc-sep{width:1px;height:22px;background:var(--bd);margin:0 2px}
 
 /* One dashboard-wide search replaces the duplicate per-view search boxes. */
@@ -2665,6 +2679,11 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
     <button type="button" class="ra-btn ra-new-patient" onclick="window.showView('booking', getNavBtn('booking')); window.scrollTo({top:0,behavior:'smooth'});" title="New Patient Registration (⌘N)">
       <i class="ti ti-user-plus"></i>
       <span>New Patient Registration</span>
+    </button>
+    <button type="button" class="ra-btn ra-ai-assistant" onclick="openAIAssistant()" title="Ask about any Reception workflow">
+      <i class="ti ti-robot"></i>
+      <span>AI Reception Assistant</span>
+      <span class="ra-ai-live" aria-hidden="true"></span>
     </button>
 
     <div class="reception-unified-search" role="search">
@@ -3502,7 +3521,7 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
 
 <!-- ===== PCLINIC AI ASSISTANT MODAL ===== -->
 <div class="modal-overlay" id="aiAssistantModal" onclick="if(event.target===this)closeAIAssistant()">
-  <div class="modal-sheet" style="max-width:560px; max-height:85vh;">
+  <div class="modal-sheet" style="max-width:720px; max-height:90vh;">
     <div class="modal-header" style="background:linear-gradient(135deg,#007aff,#5856d6); color:#fff;">
       <div class="modal-title" style="color:#fff;"><i class="ti ti-robot" style="margin-right:6px;"></i> PClinic AI Assistant — Reception Help</div>
       <button class="modal-close" onclick="closeAIAssistant()" style="background:rgba(255,255,255,0.2); color:#fff;"><i class="ti ti-x"></i></button>
@@ -3511,18 +3530,22 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
       <div id="aiChatHistory" style="flex:1; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:10px; background:var(--s3);">
         <div style="background:#fff; border:0.5px solid var(--bd); border-radius:12px; padding:10px 14px; max-width:85%; align-self:flex-start;">
           <div style="font-size:11px; font-weight:700; color:#007aff; margin-bottom:4px;">🤖 PClinic AI</div>
-          <div style="font-size:13px; line-height:1.4;">Hello! I'm your PClinic AI assistant. Ask me anything about reception: registration, duplicate check, RSSB/Mutuelle, referrals, appointments, billing, printing, bed management, etc. I pull data from common server when needed.</div>
+          <div style="font-size:13px; line-height:1.5;">Hello! I am the Reception workflow assistant. I explain every part of this page step by step: duplicate checks, new and returning patient registration, RDV/RVC appointments, doctor schedules, queue and triage, bed/admission work, referrals, insurance percentages, billing, reports, printing, and emergencies. I use live counts from the common server when available.</div>
         </div>
       </div>
       <div style="padding:12px; border-top:0.5px solid var(--bd); display:flex; gap:8px; align-items:center; background:#fff;">
         <input type="text" id="aiQuestionInput" placeholder="Ask AI: e.g. How to give RDV for already registered patient?" style="flex:1; padding:10px 14px; border-radius:20px; border:0.5px solid var(--bd); font-size:13px;" onkeydown="if(event.key==='Enter')askAI()">
         <button class="btn btn-primary" onclick="askAI()" style="border-radius:20px;"><i class="ti ti-send"></i> Ask</button>
       </div>
-      <div style="padding:8px 12px; font-size:10px; color:var(--tm); background:var(--s3); border-top:0.5px solid var(--bd); display:flex; gap:8px; flex-wrap:wrap;">
-        <span style="cursor:pointer; background:#fff; padding:3px 8px; border-radius:12px; border:0.5px solid var(--bd);" onclick="document.getElementById('aiQuestionInput').value='How to register new patient?'; askAI();">How to register?</span>
-        <span style="cursor:pointer; background:#fff; padding:3px 8px; border-radius:12px; border:0.5px solid var(--bd);" onclick="document.getElementById('aiQuestionInput').value='How to give RDV for already registered patient?'; askAI();">Give RDV</span>
-        <span style="cursor:pointer; background:#fff; padding:3px 8px; border-radius:12px; border:0.5px solid var(--bd);" onclick="document.getElementById('aiQuestionInput').value='How to verify RSSB insurance?'; askAI();">RSSB</span>
-        <span style="cursor:pointer; background:#fff; padding:3px 8px; border-radius:12px; border:0.5px solid var(--bd);" onclick="document.getElementById('aiQuestionInput').value='How to handle referral from health center?'; askAI();">Referral</span>
+      <div style="padding:9px 12px; font-size:10px; color:var(--tm); background:var(--s3); border-top:0.5px solid var(--bd); display:flex; gap:7px; flex-wrap:wrap;">
+        <button type="button" class="ra-btn ra-indigo" onclick="askReceptionTopic('Explain the whole reception page')">Page guide</button>
+        <button type="button" class="ra-btn ra-blue" onclick="askReceptionTopic('How do I register a new patient and check duplicates?')">Registration</button>
+        <button type="button" class="ra-btn ra-purple" onclick="askReceptionTopic('How do I check and book patient RDV or RVC appointment?')">RDV / Booking</button>
+        <button type="button" class="ra-btn ra-orange" onclick="askReceptionTopic('How do I book a bed and admit a patient?')">Beds / Admission</button>
+        <button type="button" class="ra-btn ra-green" onclick="askReceptionTopic('Explain insurance percentages and patient bills')">Insurance / Bills</button>
+        <button type="button" class="ra-btn ra-teal" onclick="askReceptionTopic('How do queue, triage and call next work?')">Queue / Triage</button>
+        <button type="button" class="ra-btn ra-blue-dark" onclick="askReceptionTopic('Explain referral workflow')">Referrals</button>
+        <button type="button" class="ra-btn ra-red" onclick="askReceptionTopic('How do I handle an emergency patient?')">Emergency</button>
       </div>
     </div>
   </div>
@@ -4334,6 +4357,68 @@ function closeAIAssistant(){
   var m=document.getElementById('aiAssistantModal');
   if(m){ m.classList.remove('open'); document.body.style.overflow=''; }
 }
+function askReceptionTopic(question){
+  var input=document.getElementById('aiQuestionInput');
+  if(input){input.value=question;askAI();}
+}
+function getReceptionWorkflowAnswer(question, patients){
+  var q=String(question||'').toLowerCase();
+  var patientCount=(patients||[]).length;
+  var queueCount=(typeof queue!=='undefined'&&Array.isArray(queue))?queue.filter(function(x){return x.status==='waiting';}).length:0;
+  var apptCount=0;try{apptCount=getReceptionAppointments().length;}catch(e){try{apptCount=appointments.length;}catch(ignore){}}
+  var live='Live status: '+patientCount+' registered patients, '+queueCount+' waiting, '+apptCount+' appointments.\n\n';
+
+  if(/whole|everything|page guide|reception page|all feature|what can/.test(q)){
+    return live+'RECEPTION PAGE GUIDE\n\n'+
+      '1. New Patient Registration — opens the four-step identity, contact, caretaker, and insurance/visit form.\n'+
+      '2. One Search — checks possible duplicates by name, MRN, ID, National ID or phone and also finds doctor schedules.\n'+
+      '3. Referrals — manage referral in, referral out, counter-referral, health-centre and ambulance arrivals.\n'+
+      '4. Queue — view waiting patients, set triage priority, record vitals and call the next patient.\n'+
+      '5. History — find previously registered patients and send them back to the queue.\n'+
+      '6. Reports — filter registration, insurance, visit, district, department and date statistics.\n'+
+      '7. Appointments/RDV/RVC — select an existing patient, choose date, time, department and doctor, then book.\n'+
+      '8. Beds — review ward occupancy; use Bed/Ward → Admission to admit an identified patient.\n'+
+      '9. Insurance and Billing — save the patient-pay percentage; new bills automatically split patient and insurer amounts.\n'+
+      '10. Surgery, printing, communication and emergency tools are available from the tabs and action menus.';
+  }
+  if(/duplicate|new patient|register|registration/.test(q)){
+    return live+'NEW PATIENT REGISTRATION\n1. Use the single search bar first. Search National ID, phone, MRN or name and review every “Possible duplicate” result.\n2. Click the large blue New Patient Registration button.\n3. Complete Identity, Contact, Caretaker, then Insurance & Visit. Required fields must be valid.\n4. Select insurance and confirm Patient pays %. RSSB defaults to 15%; the percentage is editable according to the policy.\n5. Review consent and click Register Patient. The record is saved to the common server.\n6. If the person already exists, open the result instead of creating another record, or register the visit as Returning.';
+  }
+  if(/rdv|rvc|appointment|doctor schedule|check and book/.test(q) && !/bed|ward|surgery|theatre|theater/.test(q)){
+    return live+'PATIENT RDV / RVC / APPOINTMENT CHECK AND BOOKING\n1. Search the patient in the one reception search bar. Existing appointments and doctor schedules appear in the same result panel.\n2. Open Appointments, then click Select Patient. Search by name, MRN, phone or National ID.\n3. Choose Select for RDV; the registered patient is inserted into the appointment form.\n4. Enter date, time, department, doctor, priority and notes.\n5. Click Book Appointment. The appointment is saved on the patient record and appears in the Appointment List/doctor schedule.\n6. Always review the existing schedule results first to avoid duplicate bookings.';
+  }
+  if(/bed|ward|admission|admit|discharge/.test(q)){
+    return live+'BED REVIEW AND ADMISSION\n1. Open the Beds tab to review ward occupancy and available beds.\n2. Identify the patient with the reception search and confirm the MRN.\n3. Open Bed / Ward → Admission and enter that MRN.\n4. The current workflow marks the patient as admitted and sets the location to Ward on the common server.\n5. Coordinate the exact physical bed assignment with the ward dashboard; Reception currently reviews capacity but does not reserve a numbered bed.\n6. Use Bed / Ward → Discharge only after authorization; it completes the encounter and records the discharge time.';
+  }
+  if(/queue|triage|call next|vital|waiting/.test(q)){
+    return live+'QUEUE, TRIAGE AND VITALS\n1. Open Queue to see waiting patients.\n2. Use Patient → Triage Priority and enter the MRN; choose critical, high, medium or low.\n3. Use Patient → Record Vitals after selecting a patient to save BP, pulse and temperature.\n4. Call Next opens the next waiting patient. Confirm identity before sending the patient to the department.\n5. Use Move / Transfer when the destination department changes.';
+  }
+  if(/insurance|rssb|rama|mutuelle|mmi|percentage|percent|bill|payment|cashier/.test(q)){
+    return live+'INSURANCE PERCENTAGE AND BILLING\n1. In Insurance & Visit select the provider and enter Patient pays %.\n2. RSSB/RAMA defaults to patient 15% and insurer 85%. Mutuelle defaults to 10% patient share; MMI defaults to 15%. These values can be edited for the actual policy.\n3. The percentage is stored on the patient record and frozen onto each new bill.\n4. Example: gross RWF 100,000 at 15% creates patient due RWF 15,000 and insurance claim RWF 85,000.\n5. Cashier collects only Patient Due. The insurer portion appears in RSSB / Insurance Claims.\n6. Verify provider, policy, validity and percentage before registration or editing.';
+  }
+  if(/referral|counter referral|health center|ambulance/.test(q)){
+    return live+'REFERRAL WORKFLOW\n1. Referral In: verify the referral document, register/select the patient, set Visit Type to Referral and record the source.\n2. Referral Out: use Referral → Referral Out, enter MRN and confirm the destination process.\n3. Counter-Referral: use the counter-referral list after specialist care.\n4. Health-centre/CHUK and Ambulance filters show the corresponding patient groups.\n5. Set triage priority immediately for urgent referrals.';
+  }
+  if(/emergency|critical|urgent/.test(q)){
+    return live+'EMERGENCY RECEPTION WORKFLOW\n1. Click Emergency in the action bar.\n2. Identify or rapidly register the patient; do not delay life-saving care for missing nonessential fields.\n3. Set Visit Type=Emergency and Priority=critical/high.\n4. Record available vitals, add the patient to the queue and notify the receiving clinical team.\n5. Use Bed/Ward admission when authorized. The assistant gives workflow guidance only—not diagnosis or treatment advice.';
+  }
+  if(/history|yesterday|previous|returning/.test(q)){
+    return live+'RETURNING PATIENT / HISTORY\n1. Search the patient in the one search bar.\n2. Open History and choose All time, Today, Yesterday, Last 7 days or month filters.\n3. Open the patient to verify identity and details.\n4. Use Queue to start a new visit, or Appointments to create an RDV. Do not create a duplicate registration.';
+  }
+  if(/report|statistic|export/.test(q)){
+    return live+'REPORTS\nOpen Reports, choose date, gender, department, insurance, district and visit filters. The cards and table update from common-server patient records. Use Export for authorized operational reporting and avoid exposing patient identifiers unnecessarily.';
+  }
+  if(/surgery|operation|theatre|theater/.test(q)){
+    return live+'SURGERY BOOKING\nOpen Surgery, select a registered patient, enter date/time, procedure, surgeon and required details, then save. Check the surgery list first to avoid duplicate bookings and coordinate bed/theatre availability with the responsible department.';
+  }
+  if(/edit|update patient|change patient/.test(q)){
+    return live+'EDIT PATIENT INFORMATION\nOpen Patient → Select to Edit, search the common server, choose the patient, update the four registration steps and save. Verify identity before changing National ID, phone, caretaker, insurance or patient-pay percentage.';
+  }
+  if(/print|card|archive/.test(q)){
+    return live+'PRINTING AND ARCHIVE\nSelect and verify the patient first. Billing / Print provides Bill, Print ID Card, Archive and Consent actions. Check MRN, names and archive code before printing. Never leave printed identifiers unattended.';
+  }
+  return live+'I can explain: the whole reception page; duplicate checking and registration; returning patients; RDV/RVC appointment checks and booking; doctor schedules; queue, triage and vitals; bed review and admission; referrals; insurance percentages and bills; emergencies; surgery; reports; printing and patient editing. Choose a topic button below or ask a specific “How do I…” question.';
+}
 function askAI(){
   var input=document.getElementById('aiQuestionInput');
   var history=document.getElementById('aiChatHistory');
@@ -4355,31 +4440,7 @@ function askAI(){
   // Simulate AI thinking + get answer from common server context
   setTimeout(function(){
     var all=[]; try{ all=getPatients(); }catch(e){}
-    var lower=q.toLowerCase();
-    var answer='';
-    if(lower.indexOf('register')>-1 || lower.indexOf('new patient')>-1){
-      answer='To register a new patient:\n1. Click <b>Register</b> in action bar\n2. Check duplicate via MRN/Phone/Nat ID in thin card (pulls from common server)\n3. Fill 4 small foldable cards (Family, Contact, Caretaker, Insurance)\n4. Click Register — patient saved to Firebase pclinic-20d81 and appears in doctor dashboard instantly.';
-    } else if(lower.indexOf('rdv')>-1 || lower.indexOf('appointment')>-1 || lower.indexOf('already registered')>-1){
-      answer='To give RDV for already registered patient:\n1. Click <b>Select Patient for RDV / Appointment</b> (blue button)\n2. Modal pulls all '+all.length+' patients from common server (same as doctor)\n3. Search by name/MRN/phone → Click <b>Select for RDV</b>\n4. Identification auto-fills in appointment form (patient dropdown set to that MRN)\n5. Just put date/time/department/doctor and click Book. The appointment is saved to patient record in common server and doctor gets notification.';
-    } else if(lower.indexOf('edit')>-1 && (lower.indexOf('patient')>-1 || lower.indexOf('info')>-1)){
-      answer='To edit patient information:\n1. Click <b>Select Patient to Edit Info</b>\n2. Select patient from common server list\n3. All 4 cards auto-populate with existing identifications (family name, DOB, Nat ID, phone, district, insurance, etc)\n4. Edit any field and click <b>Update Patient Info</b> — it calls <code>updatePatient(id, fields)</code> → field-level updateDoc to Firestore, so doctor sees new info instantly.';
-    } else if(lower.indexOf('rssb')>-1 || lower.indexOf('mutuelle')>-1 || lower.indexOf('insurance')>-1){
-      answer='Insurance verification (Rwanda):\n- Click <b>Insurance ⌄ → RSSB / Mutuelle / MMI</b> in action bar. Each pulls filtered list from common server: <code>p.insurance.provider</code>\n- Green badge = verified. If invalid, patient must pay cash. All verification status saved to common server.';
-    } else if(lower.indexOf('referral')>-1){
-      answer='Referral flow for tertiary CHUK:\n- <b>Referral In</b>: patient from Health Center → check referral paper → Register as Visit Type=Referral, Referral Source=Health Center\n- <b>Referral Out</b>: CHUK cannot handle → prompt MRN → set visitType=Referral, queueStatus=referred → appears in doctor dashboard\n- <b>Counter-Referral</b>: after specialist, send back. All via common server.';
-    } else if(lower.indexOf('yesterday')>-1 || lower.indexOf('previously')>-1 || lower.indexOf('history')>-1){
-      answer='To see previously registered (yesterday):\n- Click <b>History</b> tab (green)\n- Default filter = Yesterday, but you can choose All time / Today / Last 7 days\n- It pulls '+all.length+' patients from common server Firebase. Search by name/MRN. Click eye to view, list icon to add to queue.';
-    } else if(lower.indexOf('opd appointment')>-1 || lower.indexOf('appointment file')>-1){
-      answer='Standalone OPD Appointment File (like OPD File, Clinical Note, etc):\n- New file created: <b>appointment-file.html</b> — same style as other files with patient identification bar on top (common server)\n- From reception, click <b>OPD Appointment</b> single button or <b>Appointment ⌄ → OPD Appointment FILE</b>\n- If patient selected, it opens <code>appointment-file.html?patient=MRN</code> in new tab, patient identification auto-filled from common server\n- Fields: Date *, Time *, Department *, Doctor *, Visit Type, Priority, Reason, Notes\n- Save → creates note in patient history + RDV sent to reception, same as other files\n- Uses same global top bar with live clock, no file action bar.';
-    } else if(lower.indexOf('bill')>-1 || lower.indexOf('payment')>-1){
-      answer='Billing from common server:\n- Click <b>Billing ⌄ → Bill</b> → pulls '+ (function(){ try{ return (typeof getAllBills==='function'?getAllBills().length:0); }catch(e){ return 0; } })() +' bills from <code>patients.billingHistory</code> in Firebase. Shows modal table with MRN, amount, status. Same data cashier sees.';
-    } else if(lower.indexOf('bed')>-1 || lower.indexOf('admission')>-1){
-      answer='Bed / Admission from common server:\n- <b>Bed Request</b> shows ward occupancy (ICU, Cardiology...). Free beds calculated locally but admission status <code>location=Ward, queueStatus=admitted</code> saved to Firebase, so doctor and nurse see patient is admitted.';
-    } else if(lower.indexOf('print')>-1 || lower.indexOf('card')>-1){
-      answer='Printing: Print Card / Wristband / File all pull MRN from common server and use browser print. Archive Code (red badge) is stored in <code>p.archiveCode</code> in Firebase.';
-    } else {
-      answer='I can help with:\n• Registration (4 cards, numeric-only MRN, duplicate check)\n• Selecting patient for RDV (auto-fills identification)\n• Editing patient info (populate 4 cards from server)\n• Insurance (RSSB/Mutuelle/MMI) verification\n• Referral In/Out/Counter for CHUK\n• OPD Appointment (standalone file like OPD File)\n• History (yesterday filter)\n• Bills, Lab Results, Imaging from common server\n\nCommon server: Firebase <b>pclinic-20d81 / patients</b> — '+all.length+' patients total, same as doctor dashboard. Ask a specific question like "How to give RDV?"';
-    }
+    var answer=getReceptionWorkflowAnswer(q, all);
     var aiDiv=document.createElement('div');
     aiDiv.style.cssText='background:#fff; border:0.5px solid var(--bd); border-radius:12px; padding:10px 14px; max-width:85%; align-self:flex-start;';
     var aiLabel=document.createElement('div');
@@ -4423,7 +4484,7 @@ document.addEventListener('keydown', function(e){
   if((e.ctrlKey || e.metaKey) && e.key === 'l'){ e.preventDefault(); handleLogout(); }
   if((e.ctrlKey || e.metaKey) && e.key === 'n'){ e.preventDefault(); showView('booking', getNavBtn('booking')); }
   if((e.ctrlKey || e.metaKey) && e.key === 'f'){ e.preventDefault(); var s=document.getElementById('receptionSearch'); if(s)s.focus(); }
-  if(e.key === 'Escape'){ closeShortcuts(); closeMo(); }
+  if(e.key === 'Escape'){ closeShortcuts(); closeMo(); closeAIAssistant(); }
 });
 
 // ─── LOGOUT ───
