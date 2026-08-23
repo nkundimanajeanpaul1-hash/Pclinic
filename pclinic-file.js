@@ -1463,8 +1463,11 @@
 
         // Do NOT delete global CHUK menu - keep it
         var isCleared = !!p._cleared;
-        var name = isCleared ? '' : ((p.lastName || '').toUpperCase());
-        var first = isCleared ? '' : ((p.firstName || '').toUpperCase());
+        // Older/common-server records may expose only `name`. Split it so a
+        // selected patient is still visibly identified in the shared bar.
+        var fallbackNameParts = String(p.name || '').trim().split(/\s+/).filter(Boolean);
+        var name = isCleared ? '' : ((p.lastName || (fallbackNameParts.length > 1 ? fallbackNameParts.slice(-1)[0] : fallbackNameParts[0]) || '').toUpperCase());
+        var first = isCleared ? '' : ((p.firstName || (fallbackNameParts.length > 1 ? fallbackNameParts.slice(0, -1).join(' ') : '') || '').toUpperCase());
         var natId = isCleared ? '' : (p.nationalId || '');
         var mrn = isCleared ? '' : (p.mrn || p.id || '');
         var dobStr = isCleared ? '' : (p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '');
@@ -1538,7 +1541,20 @@
                 }
             } catch(e){}
             if (results && results.length) {
+                // Prefer an exact identifier match over a partial match. This
+                // is important at cashier: typing Person ID 101 must not pick
+                // the first patient whose MRN merely contains "101".
+                var exactIdentifier = String(pid || mrn || nat || '').replace(/^MOD-/i, '').toLowerCase();
                 var best = results[0];
+                if (exactIdentifier) {
+                    for (var rIdx = 0; rIdx < results.length; rIdx++) {
+                        var candidate = results[rIdx] || {};
+                        var ids = [candidate.id, candidate.mrn, candidate.nationalId, candidate.passport].map(function(v) {
+                            return String(v == null ? '' : v).replace(/^MOD-/i, '').toLowerCase();
+                        });
+                        if (ids.indexOf(exactIdentifier) !== -1) { best = candidate; break; }
+                    }
+                }
                 try { localStorage.setItem('pclinic_active_patient', String(best.id)); } catch(e){}
                 if (window.pcFile && window.pcFile.renderDemoBar) {
                     var master = document.getElementById('pcMasterHeader') || document.body;
@@ -2250,14 +2266,9 @@
             removeReceptionPatientIdentificationBar();
             return;
         }
-        if (pathStr.indexOf('cashier-dashboard') !== -1) {
-            if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
-            var oldDemo = document.getElementById('pc_common_demo_bar');
-            if (oldDemo && oldDemo.parentNode) oldDemo.parentNode.removeChild(oldDemo);
-            var oldDc = document.getElementById('dcBar');
-            if (oldDc && oldDc.parentNode) oldDc.parentNode.removeChild(oldDc);
-            return;
-        }
+        // Cashier uses the normal shared Patient Identification bar. The
+        // generic mounting path below restores the last selected patient (or
+        // renders empty searchable fields when no patient is active).
         /* ── ADMIN DASHBOARD: common CHUK top bar + admin buttons on the bar below ── */
         if (pathStr.indexOf('admin-dashboard') !== -1) {
             if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
@@ -2313,14 +2324,9 @@
                 var oldGlobal = document.getElementById('pc_chuk_top_menu');
                 if (oldGlobal && oldGlobal.parentNode) oldGlobal.parentNode.removeChild(oldGlobal);
             }
-            // If on Cashier Dashboard, keep ONLY CHUK top bar (#pc_chuk_top_menu) and skip Bar 2 & Bar 3!
-            if (file.indexOf('cashier-dashboard') !== -1) {
-                var oldDemo = document.getElementById('pc_common_demo_bar');
-                if (oldDemo && oldDemo.parentNode) oldDemo.parentNode.removeChild(oldDemo);
-                var oldDc = document.getElementById('dcBar');
-                if (oldDc && oldDc.parentNode) oldDc.parentNode.removeChild(oldDc);
-                return;
-            }
+            // Cashier follows the generic path: show the Patient
+            // Identification bar, while the context/action bar is removed at
+            // the end of autoMountPatientBar().
             // Medical Summary: ONLY the 30-forms table (patient-gated) — top bar stays,
             // no identification demo bar, no dcBar.
             if (file.indexOf('medical-summary') !== -1) {

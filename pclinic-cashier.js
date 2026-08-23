@@ -68,7 +68,7 @@
         var items = (b.items || []).map(function (i) { return i.name; }).join(', ');
         var btn = 'style="height:27px;padding:0 12px;border-radius:8px;border:0;background:#0071e3;' +
                   'color:#fff;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer"';
-        return '<tr data-bill="' + esc(b.id) + '">' +
+        return '<tr data-bill="' + esc(b.id) + '" onclick="if(window.selectCashierPatient) selectCashierPatient(\'' + esc(b.patientId) + '\')" style="cursor:pointer">' +
             '<td><div style="font-weight:600">' + esc(b.patientName || '—') + '</div>' +
                 '<div style="font-size:10.5px;color:#8e8e93">' + esc(b.number) + ' · ' + when(b.createdAt) + '</div></td>' +
             '<td style="font-size:11.5px;color:#8e8e93">ID ' + esc(b.patientId) + '</td>' +
@@ -206,7 +206,7 @@
             }
 
             // Multiple invoices -> Accordion Master Row + Darker Child Table Row
-            var masterHtml = '<tr id="master_' + esc(g.key) + '" class="patient-master-row" onclick="togglePatientInvoices(\'' + esc(g.key) + '\')" style="cursor:pointer; background:#f8f9fc; border-bottom:1px solid rgba(0,0,0,0.08); transition:background 0.28s ease;">' +
+            var masterHtml = '<tr id="master_' + esc(g.key) + '" class="patient-master-row" onclick="if(window.selectCashierPatient) selectCashierPatient(\'' + esc(g.patientId) + '\'); togglePatientInvoices(\'' + esc(g.key) + '\')" style="cursor:pointer; background:#f8f9fc; border-bottom:1px solid rgba(0,0,0,0.08); transition:background 0.28s ease;">' +
                 '<td>' +
                     '<div style="font-weight:700; color:#1d1d1f; display:flex; align-items:center; gap:6px;">' +
                         '<i class="ti ti-chevron-right unfold-icon" id="icon_' + esc(g.key) + '" style="transition:transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1); color:#0071e3; font-size:15px;"></i>' +

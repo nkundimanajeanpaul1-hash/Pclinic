@@ -10,9 +10,13 @@
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
     <script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');}catch(e){}})();</script>
     <style>
-        /* ─── CASHIER HEADER: ONLY CHUK TOP BAR REMAINS ─── */
-        #pc_common_demo_bar, #dcBar, .oc-demo-bar, #dcCtx {
+        /* Cashier keeps the shared CHUK top bar and Patient Identification bar.
+           The clinical action/context bar is not needed for payment work. */
+        #dcBar, #dcCtx {
             display: none !important;
+        }
+        #pc_common_demo_bar.oc-demo-bar {
+            display: block !important;
         }
         /* ─── 100/100 RECEPTION DASHBOARD CSS ARCHITECTURE ─── */
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -712,6 +716,27 @@
         }
     };
 
+    window.selectCashierPatient = function(patientId) {
+        var wanted = String(patientId == null ? '' : patientId).replace(/^MOD-/i, '').trim();
+        if (!wanted) return null;
+        var patients = [];
+        try { if (typeof getPatients === 'function') patients = getPatients() || []; } catch(e) {}
+        var selected = patients.find(function(p) {
+            return String(p.id || '') === wanted || String(p.mrn || '').replace(/^MOD-/i, '') === wanted;
+        }) || null;
+        if (!selected) {
+            if (typeof showToast === 'function') showToast('Patient ' + wanted + ' was not found in the Common Server registry', 'warning');
+            return null;
+        }
+        try { localStorage.setItem('pclinic_active_patient', String(selected.id)); } catch(e) {}
+        if (window.pcFile && typeof pcFile.renderDemoBar === 'function') {
+            pcFile.renderDemoBar(document.getElementById('pcMasterHeader') || document.body, selected);
+        }
+        window.currentPatient = selected;
+        try { window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: selected })); } catch(e) {}
+        return selected;
+    };
+
     window.onCashierPatientSelected = function(sel) {
         var opt = sel.options[sel.selectedIndex];
         if (!opt) return;
@@ -719,6 +744,7 @@
         var mrn = opt.getAttribute('data-mrn') || id;
         var pidEl = document.getElementById('m_pid');
         if (pidEl) pidEl.value = mrn ? ('MOD-' + mrn) : '';
+        if (id || mrn) selectCashierPatient(id || mrn);
     };
 
     /* ─── SVG SYSTEM VERIFICATION BARCODE GENERATOR ─── */
@@ -1248,8 +1274,8 @@
             if (window.pcFile && typeof pcFile.autoMountPatientBar === 'function') {
                 pcFile.autoMountPatientBar();
             }
-            var oldDemo = document.getElementById('pc_common_demo_bar');
-            if (oldDemo && oldDemo.parentNode) oldDemo.parentNode.removeChild(oldDemo);
+            // Keep the shared Patient Identification bar visible for cashier
+            // searches; cashier does not use the clinical context/action bar.
             var oldDc = document.getElementById('dcBar');
             if (oldDc && oldDc.parentNode) oldDc.parentNode.removeChild(oldDc);
         } catch(e) {}

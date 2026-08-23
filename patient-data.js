@@ -217,7 +217,10 @@ function searchPatients(query, opts) {
         const first = String(p.firstName || '').toLowerCase();
         const last = String(p.lastName || '').toLowerCase();
         const full = String(p.name || (first + ' ' + last)).toLowerCase();
-        const hay = [full, first, last, String(p.mrn || '').toLowerCase(), String(p.phone || ''), String(p.district || '').toLowerCase(), String(p.location || '').toLowerCase()].join(' ');
+        // Include every identifier exposed by the shared Patient
+        // Identification bar. This lets cashier and clinical staff search by
+        // Person ID, MRN, national ID/passport, or patient name.
+        const hay = [full, first, last, String(p.id || '').toLowerCase(), String(p.mrn || '').toLowerCase(), String(p.nationalId || '').toLowerCase(), String(p.passport || '').toLowerCase(), String(p.phone || ''), String(p.district || '').toLowerCase(), String(p.location || '').toLowerCase()].join(' ');
         return words.every(w => hay.includes(w));
     });
 }
