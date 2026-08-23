@@ -841,24 +841,44 @@
                             if (!exists) {
                                 existingBill.items = existingBill.items || [];
                                 existingBill.items.push(newItem);
-                                existingBill.total = (existingBill.total || 0) + (newItem.price * newItem.qty);
-                                existingBill.balance = Math.max(0, existingBill.total - (existingBill.paid || 0));
-                                if (existingBill.status === 'paid' && existingBill.balance > 0) {
-                                    existingBill.status = 'partial'; // Re-open if new charges added!
-                                }
                             }
                         });
+                        // Recalculate the complete invoice using the patient's
+                        // registered insurance responsibility percentage.
+                        var existingGross = (existingBill.items || []).reduce(function(sum,it){return sum + (Number(it.price)||0)*(Number(it.qty)||1);},0) - (Number(existingBill.discount)||0);
+                        existingGross = Math.max(0, existingGross);
+                        var existingCoverage = resolveBillCoverage({patientId:p.id, insurance:existingBill.insurance||p.insurance, patientPayPercent:existingBill.patientPayPercent});
+                        existingBill.grossTotal = existingGross;
+                        existingBill.patientPayPercent = existingCoverage.patientPayPercent;
+                        existingBill.insuranceCoveragePercent = 100-existingCoverage.patientPayPercent;
+                        existingBill.insuranceCovered = Math.max(0, existingGross-Math.round(existingGross*existingCoverage.patientPayPercent/100));
+                        existingBill.patientResponsibility = Math.round(existingGross*existingCoverage.patientPayPercent/100);
+                        existingBill.total = existingBill.patientResponsibility;
+                        existingBill.insurance = existingCoverage.insurance;
+                        existingBill.claimStatus = existingBill.insuranceCovered>0?(existingBill.claimStatus||'pending'):null;
+                        existingBill.balance = Math.max(0, existingBill.total-(existingBill.paid||0));
+                        if (existingBill.status === 'paid' && existingBill.balance > 0) existingBill.status = 'partial';
                     } else {
                         // Create new aggregated Common Server bill for this patient!
+                        var synCoverage = resolveBillCoverage({patientId:p.id, insurance:p.insurance});
+                        var synPatientTotal = Math.round(sumTotal * synCoverage.patientPayPercent / 100);
                         var synBill = {
                             id: 'INV-CS-' + pIdStr,
                             number: 'INV-' + new Date().getFullYear() + '-' + pIdStr.slice(-4).padStart(4, '0'),
                             patientId: pIdStr,
                             patientName: pName,
                             items: items,
-                            total: sumTotal,
+                            subtotal: sumTotal,
+                            grossTotal: sumTotal,
+                            patientPayPercent: synCoverage.patientPayPercent,
+                            insuranceCoveragePercent: 100-synCoverage.patientPayPercent,
+                            insuranceCovered: Math.max(0,sumTotal-synPatientTotal),
+                            patientResponsibility: synPatientTotal,
+                            total: synPatientTotal,
                             paid: 0,
-                            balance: sumTotal,
+                            balance: synPatientTotal,
+                            insurance: synCoverage.insurance,
+                            claimStatus: sumTotal-synPatientTotal>0?'pending':null,
                             status: 'pending',
                             source: p.department || p.location || p.ward || 'OPD Clinical Suite',
                             createdBy: p.attendingDoctor || 'Attending Physician',
@@ -1340,6 +1360,41 @@
         });
     }
 
+    function resolveBillCoverage(b) {
+        b = b || {};
+        var patient = null;
+        try {
+            var patients = typeof getPatients === 'function' ? getPatients() : read('pclinic_patients', []);
+            patient = (patients || []).filter(function(p) {
+                return String(p.id) === String(b.patientId) || String(p.mrn || '') === String(b.patientId);
+            })[0] || null;
+        } catch(e) {}
+        var insurance = b.insurance || (patient && patient.insurance) || null;
+        if (typeof insurance === 'string') insurance = { provider: insurance };
+        insurance = insurance || {};
+        var explicit = b.patientPayPercent;
+        if (explicit == null) explicit = insurance.patientPayPercent;
+        if (explicit == null && patient) explicit = patient.billingPatientPayPercent;
+        var provider = String(insurance.provider || '').trim();
+        var patientPercent;
+        if (explicit != null && explicit !== '') {
+            patientPercent = Number(explicit);
+        } else if (/RSSB|RAMA/i.test(provider)) {
+            patientPercent = 15;
+        } else if (/MUTUELLE/i.test(provider)) {
+            patientPercent = 10;
+        } else if (/MMI/i.test(provider)) {
+            patientPercent = 15;
+        } else {
+            patientPercent = 100;
+        }
+        if (!isFinite(patientPercent)) patientPercent = 100;
+        patientPercent = Math.max(0, Math.min(100, patientPercent));
+        insurance.patientPayPercent = patientPercent;
+        insurance.coveragePercent = 100 - patientPercent;
+        return { insurance: insurance, patientPayPercent: patientPercent };
+    }
+
     function createBill(b) {
         if (!b || !b.patientId) return null;
         var items = (b.items || []).map(function (it) {
@@ -1354,6 +1409,11 @@
         if (!items.length) return null;
         var staff = who();
         var subtotal = items.reduce(function (s, i) { return s + i.price * i.qty; }, 0);
+        var discount = Math.max(0, Number(b.discount) || 0);
+        var grossTotal = Math.max(0, subtotal - discount);
+        var coverage = resolveBillCoverage(b);
+        var patientTotal = Math.round(grossTotal * coverage.patientPayPercent / 100);
+        var insuranceCovered = Math.max(0, grossTotal - patientTotal);
 
         var bill = {
             id: uid('bill'),
@@ -1362,14 +1422,22 @@
             patientName: b.patientName || '',
             items: items,
             subtotal: subtotal,
-            discount: b.discount || 0,
-            total: subtotal - (b.discount || 0),
+            discount: discount,
+            grossTotal: grossTotal,
+            patientPayPercent: coverage.patientPayPercent,
+            insuranceCoveragePercent: 100 - coverage.patientPayPercent,
+            insuranceCovered: insuranceCovered,
+            patientResponsibility: patientTotal,
+            // `total` and `balance` are intentionally the amount collected
+            // from the patient. The insurer share stays in insuranceCovered.
+            total: patientTotal,
             paid: 0,
-            balance: subtotal - (b.discount || 0),
+            balance: patientTotal,
             status: 'pending',                 // pending | partial | paid | cancelled
             source: b.source || 'manual',
             orderId: b.orderId || null,
-            insurance: b.insurance || null,
+            insurance: coverage.insurance,
+            claimStatus: insuranceCovered > 0 ? 'pending' : null,
             createdBy: staff.name,
             createdById: staff.id,
             createdAt: new Date().toISOString(),

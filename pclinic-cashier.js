@@ -74,6 +74,8 @@
             '<td style="font-size:11.5px;color:#8e8e93">ID ' + esc(b.patientId) + '</td>' +
             '<td style="font-size:11.5px;max-width:230px">' + esc(items || '—') + '</td>' +
             '<td style="font-weight:700;white-space:nowrap">' + money(b.total) +
+                '<div style="font-size:9.5px;color:#6e6e73;font-weight:600">Patient ' + esc(b.patientPayPercent != null ? b.patientPayPercent : 100) + '%</div>' +
+                (Number(b.insuranceCovered || 0) > 0 ? '<div style="font-size:9.5px;color:#0f766e;font-weight:600">Insurance: ' + money(b.insuranceCovered) + '</div>' : '') +
                 (b.balance > 0 && b.paid > 0 ? '<div style="font-size:10.5px;color:#8a1f1a;font-weight:600">' +
                  money(b.balance) + ' due</div>' : '') + '</td>' +
             '<td style="font-size:11.5px">' + esc((b.payments && b.payments.length) ? b.payments[b.payments.length - 1].method : '—') + '</td>' +
@@ -307,7 +309,8 @@
         var claimsCount = all.filter(function(b) { 
             var src = String(b.source || '').toLowerCase();
             var pm  = String((b.payments && b.payments.length) ? b.payments[b.payments.length - 1].method : '').toLowerCase();
-            return src.indexOf('rssb') !== -1 || src.indexOf('insurance') !== -1 || pm.indexOf('rssb') !== -1 || pm.indexOf('insurance') !== -1 || pm.indexOf('mutuelle') !== -1;
+            var provider = String(b.insurance && b.insurance.provider ? b.insurance.provider : '').toLowerCase();
+            return Number(b.insuranceCovered || 0) > 0 || provider || src.indexOf('rssb') !== -1 || src.indexOf('insurance') !== -1 || pm.indexOf('rssb') !== -1 || pm.indexOf('insurance') !== -1 || pm.indexOf('mutuelle') !== -1;
         }).length;
 
         set('#pcKpiBilled',      money(r.billed));

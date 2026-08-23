@@ -872,8 +872,8 @@
                 '</div>' +
                 '<div style="width:240px; text-align:right;">' +
                     '<div style="display:flex; justify-content:space-between; padding:4px 0;"><span style="color:#666;">Subtotal</span><strong>' + sub.toLocaleString() + ' RWF</strong></div>' +
-                    '<div style="display:flex; justify-content:space-between; padding:4px 0;"><span style="color:#666;">VAT (18%)</span><strong>' + vat.toLocaleString() + ' RWF</strong></div>' +
-                    '<div style="display:flex; justify-content:space-between; padding:8px 0; border-top:2px solid #1d1d1f; font-size:16px; color:#10b981;"><span>Paid Total</span><strong>' + paidAmt.toLocaleString() + ' RWF</strong></div>' +
+                    (Number(d.insuranceCovered||0)>0?'<div style="display:flex; justify-content:space-between; padding:4px 0;color:#0f766e;"><span>'+esc((d.insurance&&d.insurance.provider)||'Insurance')+' pays ('+esc(d.insuranceCoveragePercent||0)+'%)</span><strong>'+Number(d.insuranceCovered||0).toLocaleString()+' RWF</strong></div>':'') +
+                    '<div style="display:flex; justify-content:space-between; padding:8px 0; border-top:2px solid #1d1d1f; font-size:16px; color:#10b981;"><span>Patient paid (' + esc(d.patientPayPercent != null ? d.patientPayPercent : 100) + '%)</span><strong>' + paidAmt.toLocaleString() + ' RWF</strong></div>' +
                 '</div>' +
             '</div>' +
 
@@ -1163,7 +1163,8 @@
             var claims = bills.filter(function(b) {
                 var src = String(b.source || '').toLowerCase();
                 var pm  = String((b.payments && b.payments.length) ? b.payments[b.payments.length - 1].method : '').toLowerCase();
-                return src.indexOf('rssb') !== -1 || src.indexOf('insurance') !== -1 || pm.indexOf('rssb') !== -1 || pm.indexOf('insurance') !== -1 || pm.indexOf('mutuelle') !== -1;
+                var provider = String(b.insurance && b.insurance.provider ? b.insurance.provider : '').toLowerCase();
+                return Number(b.insuranceCovered || 0) > 0 || !!provider || src.indexOf('rssb') !== -1 || src.indexOf('insurance') !== -1 || pm.indexOf('rssb') !== -1 || pm.indexOf('insurance') !== -1 || pm.indexOf('mutuelle') !== -1;
             });
             if (claims.length === 0) {
                 claimsBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:36px; color:#86868b;">No insurance claims found in Common Server. Zero template data.</td></tr>';
@@ -1173,8 +1174,8 @@
                            '<td><strong>' + esc(b.number || b.id) + '</strong></td>' +
                            '<td>' + esc(b.patientName || 'Patient') + '</td>' +
                            '<td>MOD-' + esc(b.patientId || '') + '</td>' +
-                           '<td><span style="background:#e8f8f2; color:#0f766e; padding:3px 8px; border-radius:6px; font-weight:800;">RSSB / RAMA Insurance</span></td>' +
-                           '<td><strong style="color:#0071e3;">' + money(b.total) + '</strong></td>' +
+                           '<td><span style="background:#e8f8f2; color:#0f766e; padding:3px 8px; border-radius:6px; font-weight:800;">' + esc((b.insurance && b.insurance.provider) || 'Insurance') + '</span><div style="font-size:10px;color:#6e6e73;margin-top:3px;">Patient pays ' + esc(b.patientPayPercent != null ? b.patientPayPercent : 100) + '%</div></td>' +
+                           '<td><strong style="color:#0071e3;">' + money(b.insuranceCovered != null ? b.insuranceCovered : b.total) + '</strong><div style="font-size:10px;color:#6e6e73;">Patient due: ' + money(b.total) + '</div></td>' +
                            '<td>' + esc((b.status || 'pending').toUpperCase()) + '</td>' +
                            '<td>' + esc(b.createdAt ? new Date(b.createdAt).toLocaleDateString('en-GB') : 'Today') + '</td>' +
                            '</tr>';
@@ -1240,8 +1241,8 @@
             '<div style="display:flex; justify-content:flex-end; font-size:13px;">' +
                 '<div style="width:240px;">' +
                     '<div style="display:flex; justify-content:space-between; padding:4px 0;"><span style="color:#666;">Subtotal</span><strong>' + sub.toLocaleString() + ' RWF</strong></div>' +
-                    '<div style="display:flex; justify-content:space-between; padding:4px 0;"><span style="color:#666;">VAT (18%)</span><strong>' + vat.toLocaleString() + ' RWF</strong></div>' +
-                    '<div style="display:flex; justify-content:space-between; padding:8px 0; border-top:2px solid #1d1d1f; font-size:15px; color:var(--ac);"><span>Total Due</span><strong>' + tot.toLocaleString() + ' RWF</strong></div>' +
+                    (Number(d.insuranceCovered||0)>0?'<div style="display:flex; justify-content:space-between; padding:4px 0;color:#0f766e;"><span>'+esc((d.insurance&&d.insurance.provider)||'Insurance')+' share</span><strong>'+Number(d.insuranceCovered||0).toLocaleString()+' RWF</strong></div>':'') +
+                    '<div style="display:flex; justify-content:space-between; padding:8px 0; border-top:2px solid #1d1d1f; font-size:15px; color:var(--ac);"><span>Patient Due (' + esc(d.patientPayPercent != null ? d.patientPayPercent : 100) + '%)</span><strong>' + Number(d.total||0).toLocaleString() + ' RWF</strong></div>' +
                 '</div>' +
             '</div>';
     };

@@ -3129,11 +3129,12 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
               <div class="tahoe-pane-kicker">Column 4</div>
               <div class="tahoe-pane-title">Insurance &amp; visit</div>
               <div class="form-grid">
-              <div class="form-group"><label>Provider</label><select id="bInsProvider" class="apple-input"><option value="">Select</option><option>RSSB</option><option>MMI</option><option>MUTUELLE DE SANTE</option><option>Other</option></select></div>
+              <div class="form-group"><label>Provider</label><select id="bInsProvider" class="apple-input" onchange="updatePatientPayPercentage()"><option value="">No insurance / Self-pay</option><option>RSSB</option><option>MMI</option><option>MUTUELLE DE SANTE</option><option>Other</option></select></div>
               <div class="form-group"><label>Provider (if Other)</label><input type="text" id="bInsProviderOther" placeholder="Type" class="apple-input"></div>
               <div class="form-group"><label>Policy</label><input type="text" id="bInsPolicy" placeholder="Policy #" class="apple-input"></div>
               <div class="form-group"><label>Scheme</label><select id="bInsScheme" class="apple-input"><option value="">Select</option><option>Gold</option><option>Silver</option><option>Bronze</option><option>Community-Based</option></select></div>
               <div class="form-group"><label>Validity</label><input type="date" id="bInsValidity" class="apple-input"></div>
+              <div class="form-group"><label>Patient pays (%) *</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="bPatientPayPercent" class="apple-input" min="0" max="100" step="1" value="100" oninput="updateInsuranceSharePreview()" style="font-weight:800;color:#0b57d0;"><span id="bInsuranceSharePreview" style="white-space:nowrap;font-size:10px;font-weight:700;color:var(--tm);">Insurance pays 0%</span></div><small style="font-size:9.5px;color:var(--tm);">Applied automatically to every patient bill. RSSB default: patient 15%.</small></div>
               <div class="form-group"><label>Patient Type *</label><select id="bPatientType" class="apple-input"><option>New</option><option>Returning</option></select></div>
               <div class="form-group"><label>Visit Type *</label><select id="bVisitType" class="apple-input"><option>OPD</option><option>Emergency</option><option>Referral</option><option>ANC</option><option>Maternity</option></select></div>
               <div class="form-group"><label>Department *</label><select id="bDept" class="apple-input"><option>General</option><option>Cardiology</option><option>Neurology</option><option>Orthopedics</option><option>Pediatrics</option><option>ICU</option></select></div>
@@ -4254,6 +4255,8 @@ function selectPatientForEdit(id){
       set('bInsPolicy', (p.insurance&&p.insurance.policyNumber)?p.insurance.policyNumber:(p.policyNumber||''));
       set('bInsScheme', (p.insurance&&p.insurance.scheme)?p.insurance.scheme:'');
       set('bInsValidity', (p.insurance&&p.insurance.validity)?p.insurance.validity:'');
+      set('bPatientPayPercent', (p.insurance&&p.insurance.patientPayPercent!=null)?p.insurance.patientPayPercent:(p.billingPatientPayPercent!=null?p.billingPatientPayPercent:100));
+      if(typeof updateInsuranceSharePreview==='function') updateInsuranceSharePreview();
       set('bPatientType', p.patientType||'Returning');
       set('bVisitType', p.visitType||'OPD');
       set('bDept', p.department||'General');
@@ -4639,6 +4642,7 @@ async function registerPatient(){
   var insPolicy = document.getElementById('bInsPolicy') ? document.getElementById('bInsPolicy').value.trim() : '';
   var insScheme = document.getElementById('bInsScheme') ? document.getElementById('bInsScheme').value : '';
   var insValidity = document.getElementById('bInsValidity') ? document.getElementById('bInsValidity').value : '';
+  var patientPayPercent = document.getElementById('bPatientPayPercent') ? Math.max(0, Math.min(100, Number(document.getElementById('bPatientPayPercent').value))) : 100;
   var patientType = document.getElementById('bPatientType') ? document.getElementById('bPatientType').value : 'New';
   var visitType = document.getElementById('bVisitType') ? document.getElementById('bVisitType').value : 'OPD';
   var department = document.getElementById('bDept') ? document.getElementById('bDept').value : 'General';
@@ -4737,8 +4741,13 @@ async function registerPatient(){
       provider: finalInsProvider,
       policyNumber: insPolicy,
       scheme: insScheme,
-      validity: insValidity
+      validity: insValidity,
+      patientPayPercent: patientPayPercent,
+      coveragePercent: 100 - patientPayPercent
     },
+    // Kept at top level as well so every billing entry point can resolve the
+    // patient's responsibility without depending on a particular UI page.
+    billingPatientPayPercent: patientPayPercent,
     policyNumber: insPolicy,
     department: department || 'General',
     location: (department && department !== 'General') ? department : 'OPD',
@@ -5745,6 +5754,7 @@ function openPatient(id){
   addInfo('📍 Address', patient.address, true);
   addInfo('🚨 Emergency Contact', emergency, true);
   addInfo('🏥 Insurance', patient.insurance && patient.insurance.provider ? patient.insurance.provider : 'None');
+  addInfo('💳 Patient pays', ((patient.insurance&&patient.insurance.patientPayPercent!=null)?patient.insurance.patientPayPercent:(patient.billingPatientPayPercent!=null?patient.billingPatientPayPercent:100))+'% of each bill');
   addInfo('📅 Registered', patient.registered);
 
   var notes = document.getElementById('moNotes');
@@ -5800,6 +5810,31 @@ async function changePatientStatus(id, status){
 function deletePatientRecord(){
   showToast('🔒 Patient deletion is restricted to an authorized administrator and audited process.', 'warning');
   return false;
+}
+
+// ─── INSURANCE PATIENT SHARE → BILLING RESPONSIBILITY ───
+function insuranceDefaultPatientPercent(provider) {
+  var p=String(provider||'').trim().toUpperCase();
+  if(p.indexOf('RSSB')!==-1 || p.indexOf('RAMA')!==-1) return 15;
+  if(p.indexOf('MUTUELLE')!==-1) return 10;
+  if(p.indexOf('MMI')!==-1) return 15;
+  // Unknown/custom providers remain self-pay until reception enters the
+  // percentage defined by that patient's policy.
+  return 100;
+}
+function updatePatientPayPercentage() {
+  var provider=document.getElementById('bInsProvider');
+  var input=document.getElementById('bPatientPayPercent');
+  if(input) input.value=insuranceDefaultPatientPercent(provider?provider.value:'');
+  updateInsuranceSharePreview();
+}
+function updateInsuranceSharePreview() {
+  var input=document.getElementById('bPatientPayPercent');
+  var preview=document.getElementById('bInsuranceSharePreview');
+  if(!input)return;
+  var patientPct=Math.max(0,Math.min(100,Number(input.value)||0));
+  input.value=patientPct;
+  if(preview) preview.textContent='Insurance pays '+(100-patientPct)+'%';
 }
 
 // ─── SYNC INSURANCE PROVIDER ───
