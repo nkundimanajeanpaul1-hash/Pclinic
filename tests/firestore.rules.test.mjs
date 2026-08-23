@@ -32,6 +32,9 @@ const profiles = {
   radio: { uid: 'radio-uid', staffId: '45001', name: 'Test Radiologist', role: 'radio', active: true },
   lab: { uid: 'lab-uid', staffId: '47001', name: 'Test Laboratory Technologist', role: 'lab', active: true },
   cashier: { uid: 'cashier-uid', staffId: '50001', name: 'Test Cashier', role: 'cashier', active: true },
+  finance: { uid: 'finance-uid', staffId: '51001', name: 'Test Finance', role: 'finance', active: true },
+  theater: { uid: 'theater-uid', staffId: '52001', name: 'Test Theater', role: 'theater', active: true },
+  beds: { uid: 'beds-uid', staffId: '53001', name: 'Test Beds', role: 'beds', active: true },
   hr: { uid: 'hr-uid', staffId: '60001', name: 'Test HR', role: 'hr', active: true },
   inactive: { uid: 'inactive-uid', staffId: '70001', name: 'Inactive User', role: 'doctor', active: false },
 };
@@ -63,6 +66,15 @@ async function seed() {
       createdById: profiles.reception.staffId,
       updatedAt: 'test',
       photo: null,
+    });
+    await setDoc(doc(db, 'billingPatientDirectory', '1001'), {
+      id: '1001', mrn: '1001', name: 'Demo Patient', firstName: 'Demo', lastName: 'Patient',
+      insuranceProvider: 'RSSB', patientPayPercent: 15, active: true, updatedAt: 'test'
+    });
+    await setDoc(doc(db, 'beds', 'ICU-1'), { id: 'ICU-1', ward: 'ICU', bedNumber: 'ICU-1', status: 'available' });
+    await setDoc(doc(db, 'notifications', 'ntf-doctor'), {
+      id: 'ntf-doctor', title: 'Appointment', message: 'Test', type: 'appointment',
+      toRoles: ['doctor'], toStaffId: '', createdById: profiles.reception.staffId, read: false, createdAt: 'test'
     });
     await setDoc(doc(db, 'bills', 'bill-1'), {
       id: 'bill-1', patientId: 1001, createdById: profiles.doctor.staffId,
@@ -270,6 +282,37 @@ describe('radiology workflow security', () => {
   });
 });
 
+describe('reception cross-role integrations', () => {
+  test('cashier and finance read only the restricted billing directory', async () => {
+    await assertSucceeds(getDoc(doc(dbFor('cashier'), 'billingPatientDirectory', '1001')));
+    await assertSucceeds(getDoc(doc(dbFor('finance'), 'billingPatientDirectory', '1001')));
+    await assertFails(getDoc(doc(dbFor('cashier'), 'patients', '1001')));
+    await assertSucceeds(setDoc(doc(dbFor('reception'), 'billingPatientDirectory', '1002'), {
+      id:'1002', mrn:'1002', name:'Safe Name', firstName:'Safe', lastName:'Name', insuranceProvider:'', patientPayPercent:100, active:true, updatedAt:'test'
+    }));
+    await assertFails(setDoc(doc(dbFor('reception'), 'billingPatientDirectory', '1003'), {
+      id:'1003', mrn:'1003', name:'Unsafe', firstName:'', lastName:'', insuranceProvider:'', patientPayPercent:100, active:true, updatedAt:'test', nationalId:'secret'
+    }));
+  });
+
+  test('bed registry is readable by operational roles and writable only by Beds/Admin', async () => {
+    for (const role of ['reception','nurse','beds','theater']) await assertSucceeds(getDoc(doc(dbFor(role), 'beds', 'ICU-1')));
+    await assertFails(updateDoc(doc(dbFor('reception'), 'beds', 'ICU-1'), { status:'occupied' }));
+    await assertSucceeds(updateDoc(doc(dbFor('beds'), 'beds', 'ICU-1'), { status:'reserved' }));
+  });
+
+  test('server notifications are role-addressed', async () => {
+    await assertSucceeds(getDoc(doc(dbFor('doctor'), 'notifications', 'ntf-doctor')));
+    await assertFails(getDoc(doc(dbFor('cashier'), 'notifications', 'ntf-doctor')));
+    await assertSucceeds(setDoc(doc(dbFor('reception'), 'notifications', 'ntf-cashier'), {
+      id:'ntf-cashier', title:'Billing request', message:'MRN 1001', type:'billing_request',
+      toRoles:['cashier'], toStaffId:'', createdById:profiles.reception.staffId, read:false, createdAt:'test'
+    }));
+    await assertSucceeds(getDoc(doc(dbFor('cashier'), 'notifications', 'ntf-cashier')));
+    await assertFails(getDoc(doc(dbFor('nurse'), 'notifications', 'ntf-cashier')));
+  });
+});
+
 describe('patient counter, billing and files', () => {
   test('reception increments counter exactly by one; other roles cannot', async () => {
     await assertSucceeds(setDoc(doc(dbFor('reception'), 'config', 'patientCounter'), { lastId: 1001, updatedAt: 'test' }));
@@ -278,8 +321,12 @@ describe('patient counter, billing and files', () => {
     await assertFails(updateDoc(doc(dbFor('doctor'), 'config', 'patientCounter'), { lastId: 1003, updatedAt: 'bad' }));
   });
 
-  test('cashier reads bills but cannot read patients', async () => {
+  test('cashier reads/creates bills but cannot read full patients', async () => {
     await assertSucceeds(getDoc(doc(dbFor('cashier'), 'bills', 'bill-1')));
+    await assertSucceeds(setDoc(doc(dbFor('cashier'), 'bills', 'bill-cashier-1'), {
+      id:'bill-cashier-1', patientId:'1001', createdById:profiles.cashier.staffId,
+      createdAt:'test', status:'pending', total:15, paid:0, balance:15
+    }));
     await assertFails(getDoc(doc(dbFor('cashier'), 'patients', '1001')));
   });
 

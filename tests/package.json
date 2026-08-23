@@ -3,8 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:static": "node --test firestore.rules.test.mjs",
-    "test:rules": "firebase emulators:exec --config ../firebase.json --project demo-pclinic --only firestore \"node --test firestore.rules.test.mjs\""
+    "test:static": "node --test dashboard-role-contracts.test.mjs",
+    "test:rules": "firebase emulators:exec --config ../firebase.json --project demo-pclinic --only firestore \"node --test firestore.rules.test.mjs\"",
+    "test:all": "npm run test:static && npm run test:rules"
   },
   "dependencies": {
     "@firebase/rules-unit-testing": "^5.0.2",
