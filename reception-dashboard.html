@@ -2613,14 +2613,12 @@ table.apple-table tbody tr:hover {
       <button class="ra-btn ra-blue" onclick="toggleDropdown('dd-patient')"><i class="ti ti-users"></i> Patient <i class="ti ti-chevron-down"></i></button>
       <div class="ra-dropdown-menu" id="dd-patient">
         <div class="dd-label">Patient tools</div>
-        <button onclick="raPatient();closeAllDropdowns();"><i class="ti ti-database"></i> All Patients</button>
         <button onclick="openPatientSelector('rdv');closeAllDropdowns();"><i class="ti ti-user-check"></i> Select for RDV</button>
         <button onclick="openPatientSelector('edit');closeAllDropdowns();"><i class="ti ti-edit"></i> Select to Edit</button>
         <button onclick="focusDupSearch();closeAllDropdowns();"><i class="ti ti-search"></i> Duplicate Check</button>
         <button onclick="raTriage();closeAllDropdowns();"><i class="ti ti-first-aid-kit"></i> Triage Priority</button>
         <button onclick="raVitals();closeAllDropdowns();"><i class="ti ti-heartbeat"></i> Record Vitals</button>
         <div class="dd-divider"></div>
-        <button onclick="raEdit();closeAllDropdowns();"><i class="ti ti-user-edit"></i> Edit Last Opened</button>
         <button onclick="raMove();closeAllDropdowns();"><i class="ti ti-arrows-exchange"></i> Move / Transfer</button>
       </div>
     </div>
@@ -2649,22 +2647,8 @@ table.apple-table tbody tr:hover {
     <div class="ra-dropdown">
       <button class="ra-btn ra-orange" onclick="toggleDropdown('dd-bed')"><i class="ti ti-bed"></i> Bed / Ward <i class="ti ti-chevron-down"></i></button>
       <div class="ra-dropdown-menu" id="dd-bed">
-        <button onclick="raBedRequest();closeAllDropdowns();"><i class="ti ti-bed"></i> Bed Request</button>
         <button onclick="raAdmission();closeAllDropdowns();"><i class="ti ti-login-2"></i> Admission</button>
         <button onclick="raDischarge();closeAllDropdowns();"><i class="ti ti-logout-2"></i> Discharge</button>
-        <button onclick="raEmergency();closeAllDropdowns();"><i class="ti ti-emergency-bed"></i> Emergency</button>
-        <button onclick="raWard();closeAllDropdowns();"><i class="ti ti-building-ward"></i> Ward Management</button>
-      </div>
-    </div>
-
-    <div class="ra-dropdown">
-      <button class="ra-btn ra-yellow" onclick="toggleDropdown('dd-appt')"><i class="ti ti-calendar-plus"></i> Appointment <i class="ti ti-chevron-down"></i></button>
-      <div class="ra-dropdown-menu" id="dd-appt">
-        <button onclick="raAppointment();closeAllDropdowns();"><i class="ti ti-calendar"></i> Appointment List</button>
-        <button onclick="raOPDAppointment();closeAllDropdowns();"><i class="ti ti-calendar-event"></i> OPD Appointment / RDV</button>
-        <button onclick="raOPDAppointmentFile();closeAllDropdowns();"><i class="ti ti-file-plus"></i> OPD Appointment File</button>
-        <button onclick="raSurgery();closeAllDropdowns();"><i class="ti ti-scalpel"></i> Surgery</button>
-        <button onclick="raTheater();closeAllDropdowns();"><i class="ti ti-building-hospital"></i> Theater / OT</button>
       </div>
     </div>
 
@@ -2672,13 +2656,7 @@ table.apple-table tbody tr:hover {
       <button class="ra-btn ra-yellow" onclick="toggleDropdown('dd-finance')"><i class="ti ti-receipt"></i> Billing / Print <i class="ti ti-chevron-down"></i></button>
       <div class="ra-dropdown-menu" id="dd-finance">
         <button onclick="raBill();closeAllDropdowns();"><i class="ti ti-receipt"></i> Bill</button>
-        <button onclick="raPayment();closeAllDropdowns();"><i class="ti ti-cash"></i> Payment</button>
-        <button onclick="raCashier();closeAllDropdowns();"><i class="ti ti-building-bank"></i> Cashier</button>
-        <button onclick="raReceipt();closeAllDropdowns();"><i class="ti ti-receipt-2"></i> Receipt</button>
-        <div class="dd-divider"></div>
         <button onclick="raPrintCard();closeAllDropdowns();"><i class="ti ti-id-badge-2"></i> Print ID Card</button>
-        <button onclick="raWristband();closeAllDropdowns();"><i class="ti ti-bandage"></i> Print Wristband</button>
-        <button onclick="raPrintFile();closeAllDropdowns();"><i class="ti ti-folder"></i> Print Patient File</button>
         <button onclick="raArchive();closeAllDropdowns();"><i class="ti ti-archive"></i> Archive</button>
         <button onclick="raConsent();closeAllDropdowns();"><i class="ti ti-signature"></i> Consent</button>
       </div>
