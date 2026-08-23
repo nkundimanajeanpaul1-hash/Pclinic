@@ -2262,6 +2262,23 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
 #dupCard{display:none !important}
 #dupResultExpanded{display:none !important}
 [data-theme="dark"] .reception-unified-search .rus-shell,[data-theme="dark"] .reception-search-results{background:#1c1c1e}
+
+/* Clear, labelled actions for every patient in the Reception queue. */
+#view-queue .queue-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:355px}
+#view-queue .queue-action-btn{
+  width:auto !important;height:30px !important;padding:0 9px !important;border-radius:8px !important;
+  display:inline-flex !important;align-items:center !important;justify-content:center !important;gap:4px !important;
+  font:700 10px var(--f) !important;white-space:nowrap !important;transform:none !important;
+}
+#view-queue .queue-action-btn i{font-size:13px}
+#view-queue .queue-action-btn.view{background:#eef2ff !important;color:#3730a3 !important;border-color:#c7d2fe !important}
+#view-queue .queue-action-btn.call{background:var(--greenb) !important;color:var(--greend) !important;border-color:#b8e9c9 !important}
+#view-queue .queue-action-btn.triage{background:var(--orangeb) !important;color:var(--oranged) !important;border-color:#ffdfa0 !important}
+#view-queue .queue-action-btn.vitals{background:#e0f7f5 !important;color:#0a5a54 !important;border-color:#a8e6e0 !important}
+#view-queue .queue-action-btn.rdv{background:var(--acb) !important;color:var(--ach) !important;border-color:#c2ddff !important}
+#view-queue .queue-action-btn.complete{background:var(--redb) !important;color:var(--redd) !important;border-color:#ffbeb8 !important}
+#view-queue .queue-action-btn:hover{filter:brightness(.97);transform:translateY(-1px) !important;box-shadow:0 3px 10px rgba(0,0,0,.08) !important}
+#view-queue .queue-status-pill{display:inline-flex;padding:4px 9px;border-radius:12px;background:var(--purpleb);color:var(--purpled);font-size:10px;font-weight:800;text-transform:capitalize}
 [data-theme="dark"] .reception-command-bar{background:rgba(28,28,30,.94);border-color:rgba(255,255,255,.12)}
 [data-theme="dark"] .rc-tools{background:rgba(44,44,46,.72)}
 [data-theme="dark"] .reception-command-bar .rc-tab.active{background:rgba(255,255,255,.06) !important}
@@ -2820,7 +2837,7 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
       </div>
       <div class="table-wrap">
         <table class="apple-table">
-          <thead><tr><th>#</th><th>Patient</th><th>Department</th><th>Priority</th><th>Waiting</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>#</th><th>Patient</th><th>Department</th><th>Priority</th><th>Waiting</th><th>Status</th><th>Patient Actions</th></tr></thead>
           <tbody id="qTbody"></tbody>
         </table>
       </div>
@@ -4850,7 +4867,7 @@ async function registerPatient(){
       var freshPatients = [];
       try { freshPatients = typeof getPatients === 'function' ? getPatients() : JSON.parse(localStorage.getItem('pclinic_patients')||'[]'); } catch(e){}
       queue = freshPatients.filter(function(p){ return p.status === 'active' && p.queueStatus !== 'completed'; }).map(function(p){
-        return { id: p.id, name: (p.firstName||'') + ' ' + (p.lastName||p.familyName||''), dept: p.department||'General', priority: p.priority||'medium', since: p.queueAdded||Date.now(), status: p.queueStatus||'waiting' };
+        return { id: p.id, mrn: p.mrn||p.id, name: (p.firstName||'') + ' ' + (p.lastName||p.familyName||''), dept: p.department||'General', priority: p.priority||'medium', since: p.queueAdded||Date.now(), status: p.queueStatus||'waiting' };
       });
       var order = { critical:0, high:1, medium:2, low:3 };
       queue.sort(function(a,b){ return (order[a.priority]||2)-(order[b.priority]||2); });
@@ -4930,6 +4947,7 @@ function loadQueue(){
   }).map(function(p) {
     return {
       id: p.id,
+      mrn: p.mrn || p.id,
       name: p.firstName + ' ' + p.lastName,
       dept: p.department || 'General',
       priority: p.priority || 'medium',
@@ -4972,14 +4990,20 @@ function renderQueue(){
     row.appendChild(cell(String(p.priority||'medium').toUpperCase()));
     var wait=Math.max(0,Math.floor((Date.now()-(Number(p.since)||Date.now()))/60000));
     row.appendChild(cell(wait<60?wait+'m':Math.floor(wait/60)+'h '+(wait%60)+'m'));
-    row.appendChild(cell(safeStatus(p.status).replace('-',' ')));
-    var action=document.createElement('td');
-    if(p.status==='waiting'){
-      var call=document.createElement('button');call.type='button';call.className='action-btn accept';call.title='Call in';call.textContent='Call';
-      call.addEventListener('click',function(e){e.stopPropagation();window.callIn(p.id);});action.appendChild(call);
+    var statusCell=document.createElement('td');var statusPill=document.createElement('span');statusPill.className='queue-status-pill';statusPill.textContent=safeStatus(p.status).replace('-',' ');statusCell.appendChild(statusPill);row.appendChild(statusCell);
+    var action=document.createElement('td');var actionGroup=document.createElement('div');actionGroup.className='queue-actions';
+    function queueButton(css,icon,label,title,handler){
+      var btn=document.createElement('button');btn.type='button';btn.className='action-btn queue-action-btn '+css;btn.title=title;
+      var ic=document.createElement('i');ic.className='ti '+icon;var txt=document.createElement('span');txt.textContent=label;btn.appendChild(ic);btn.appendChild(txt);
+      btn.addEventListener('click',function(e){e.stopPropagation();handler();});actionGroup.appendChild(btn);
     }
-    var remove=document.createElement('button');remove.type='button';remove.className='action-btn reject';remove.title='Remove';remove.textContent='Remove';
-    remove.addEventListener('click',function(e){e.stopPropagation();window.removeQ(p.id);});action.appendChild(remove);row.appendChild(action);
+    queueButton('view','ti-user-search','View','Open full patient details',function(){window.openPatient(p.id);});
+    if(p.status==='waiting') queueButton('call','ti-phone-call','Call Patient','Call this patient from the waiting queue',function(){window.callIn(p.id);});
+    queueButton('triage','ti-first-aid-kit','Triage','Set this patient’s queue priority',function(){triageQueuePatient(p.id);});
+    queueButton('vitals','ti-heartbeat','Vitals','Record blood pressure, pulse and temperature',function(){queuePatientVitals(p.id);});
+    queueButton('rdv','ti-calendar-plus','Book RDV','Create an appointment for this patient',function(){queuePatientAppointment(p.id);});
+    queueButton('complete','ti-circle-check','Complete','Mark the queue visit completed',function(){if(confirm('Mark '+String(p.name||'this patient')+' as completed and remove from the active queue?'))window.removeQ(p.id);});
+    action.appendChild(actionGroup);row.appendChild(action);
     tb.appendChild(row);
   });
   updateStats();
@@ -5259,6 +5283,25 @@ function raReports(){
 
 
 
+
+async function triageQueuePatient(id){
+  var item=queue.find(function(x){return String(x.id)===String(id);});if(!item)return;
+  var priority=String(prompt('Set triage priority for '+String(item.name||'patient')+': critical / high / medium / low',item.priority||'medium')||'').toLowerCase().trim();
+  if(!priority)return;
+  if(['critical','high','medium','low'].indexOf(priority)===-1){showToast('❌ Choose critical, high, medium or low.','error');return;}
+  var updated=await updatePatient(id,{priority:priority,triagedAt:new Date().toISOString()});
+  if(!updated){showToast('❌ Triage priority was not saved.','error');return;}
+  item.priority=priority;saveQueue();renderQueue();showToast('✅ '+item.name+' priority set to '+priority.toUpperCase()+'.','success');
+}
+function queuePatientVitals(id){
+  openPatientId=id;
+  raVitals();
+}
+function queuePatientAppointment(id){
+  if(typeof selectPatientForRDV==='function'){selectPatientForRDV(id);return;}
+  showView('appointments',getNavBtn('appointments'));
+  showToast('Select the patient and complete the appointment form.','info');
+}
 
 async function callIn(id){
   var item=queue.find(function(x){return String(x.id)===String(id);});if(!item)return;
