@@ -783,19 +783,20 @@
         }
 
         function testIsOrdered(testsOrdered, t, cat) {
-            if (!Array.isArray(testsOrdered)) return false;
-            var tn = String(t.name).toLowerCase();
+            if (!Array.isArray(testsOrdered) || !testsOrdered.length) return false;
+            if (window.pcLabCatalog && typeof window.pcLabCatalog.matchesParameter === 'function') {
+                if (window.pcLabCatalog.matchesParameter(testsOrdered, t)) return true;
+            }
+            var tn = String(t.name || '').toLowerCase();
+            var tc = String(t.code || '').toLowerCase();
             var catId = cat ? cat.id : '';
             return testsOrdered.some(function (nm) {
                 var n = String(nm || '').toLowerCase();
                 if (!n) return false;
-                if (n.indexOf(tn) !== -1 || tn.indexOf(n) !== -1) return true;
-                // Category-level matches (e.g. order item "Urinalysis" covers all 60000 rows)
-                if (catId === 'uri' && (n.indexOf('urinalysis') !== -1 || n.indexOf('urine') !== -1)) return true;
-                if (catId === 'fbc' && (n.indexOf('cbc') !== -1 || n.indexOf('blood count') !== -1 || n.indexOf('fbc') !== -1 || n.indexOf('haemoglobin') !== -1)) return true;
-                if (catId === 'chem' && (n.indexOf('chemistry') !== -1 || n.indexOf('renal') !== -1 || n.indexOf('liver') !== -1 || n.indexOf('rft') !== -1 || n.indexOf('lft') !== -1)) return true;
-                if (catId === 'micro' && (n.indexOf('culture') !== -1 || n.indexOf('microbio') !== -1 || n.indexOf('malaria') !== -1 || n.indexOf('stool') !== -1)) return true;
-                if (catId === 'sero' && (n.indexOf('serology') !== -1 || n.indexOf('hiv') !== -1 || n.indexOf('hepatitis') !== -1 || n.indexOf('crp') !== -1)) return true;
+                if (tc && n === tc) return true;
+                if (tn && (n === tn || n.indexOf(tn) !== -1 || tn.indexOf(n) !== -1)) return true;
+                if ((catId === 'uri' || catId === 'urinalysis') && n.indexOf('urinalysis') !== -1) return true;
+                if ((catId === 'fbc' || catId === 'hematology') && (n.indexOf('full blood') !== -1 || n === '13100')) return true;
                 return false;
             });
         }
@@ -858,22 +859,38 @@
                     date: o.completedAt || o.orderedAt || new Date().toISOString(),
                     status: o.status || 'pending',
                     results: Array.isArray(o.results) ? o.results : [],
-                    testsOrdered: Array.isArray(o.items) ? o.items.reduce(function (acc, it) {
-                        acc.push(it.name);
-                        if (window.pcLabCatalog) {
-                            var ex = window.pcLabCatalog.byCode(it.code) || window.pcLabCatalog.findByName(it.name);
-                            if (ex && Array.isArray(ex.parameters)) {
-                                ex.parameters.forEach(function (p) { acc.push(p.name); });
-                            }
-                        }
-                        return acc;
-                    }, []) : [],
+                    testsOrdered: (window.pcLabCatalog && window.pcLabCatalog.expandOrderItems)
+                        ? window.pcLabCatalog.expandOrderItems(o.items || [])
+                        : (Array.isArray(o.items) ? o.items.map(function (it) { return it.name; }) : []),
                     verifiedBy: o.completedBy || ''
                 };
             });
 
             // 3. Structured results saved on the patient record without a matching order
             var knownIds = orders.map(function (o) { return String(o.id); });
+            var labReqs = Array.isArray(currentPatient.labRequests) ? currentPatient.labRequests : [];
+            labReqs.forEach(function (req) {
+                if (!req) return;
+                var rid = String(req.id || '');
+                if (rid && knownIds.indexOf(rid) !== -1) return;
+                var st = String(req.status || 'Pending').toLowerCase();
+                if (st === 'cancelled') return;
+                var items = Array.isArray(req.testItems) && req.testItems.length
+                    ? req.testItems
+                    : (Array.isArray(req.tests) ? req.tests : []);
+                knownIds.push(rid);
+                sets.push({
+                    kind: 'request',
+                    id: rid || ('req-' + (req.timestamp || '')),
+                    date: req.timestamp || new Date().toISOString(),
+                    status: (st === 'completed') ? 'completed' : 'pending',
+                    results: Array.isArray(req.results) ? req.results : [],
+                    testsOrdered: (window.pcLabCatalog && window.pcLabCatalog.expandOrderItems)
+                        ? window.pcLabCatalog.expandOrderItems(items)
+                        : items.map(function (it) { return typeof it === 'string' ? it : (it.name || ''); }),
+                    verifiedBy: req.verifiedBy || ''
+                });
+            });
             var storedResults = Array.isArray(currentPatient.labResults) ? currentPatient.labResults : [];
             storedResults.forEach(function (r) {
                 if (!r || !Array.isArray(r.tests) || !r.tests.length) return;
@@ -1058,7 +1075,7 @@
                             bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(val) + '</span>' +
                                 flagBadge(r.flag) + '</td>';
                         } else if (cell.kind === 'pending') {
-                            bodyHtml += '<td class="oc-res-cell"><span class="oc-pending-badge">…</span></td>';
+                            bodyHtml += '<td class="oc-res-cell"><span class="oc-pending-badge">Pending</span></td>';
                         } else {
                             bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
                         }

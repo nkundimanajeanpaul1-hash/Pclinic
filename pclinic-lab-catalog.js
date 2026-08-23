@@ -34,13 +34,15 @@
         vitamins:      'Vitamins',
         genetics:      'Genetics',
         cytology:      'Cytology & Pathology',
-        fluids:        'Body Fluids'
+        fluids:        'Body Fluids',
+        urinalysis:    'Urinalysis',
+        covid:         'COVID-19'
     };
 
     var CATEGORY_ORDER = [
         'hematology', 'bloodbank', 'biochemistry', 'immunology', 'serology',
-        'hormones', 'tumor', 'microbiology', 'parasitology', 'vitamins',
-        'genetics', 'cytology', 'fluids'
+        'hormones', 'tumor', 'microbiology', 'parasitology', 'urinalysis',
+        'vitamins', 'genetics', 'cytology', 'fluids', 'covid'
     ];
 
     // Each exam: { code, name, category, price?, verify?, parameters: [{code,name,unit,range}] }
@@ -148,6 +150,10 @@
         {
             code: '13515', name: 'CHLORIDE', category: 'biochemistry',
             parameters: [{ code: '20006', name: 'CL - (CHLORURE)/BLOOD', unit: 'mmol/l', range: '98-107' }]
+        },
+        {
+            code: '13517', name: 'MAGNESIUM', category: 'biochemistry',
+            parameters: [{ code: '20005', name: 'MAGNESIUM/BLOOD', unit: 'mmol/l', range: '0.66-1.07' }]
         },
         {
             code: '13516', name: 'CREATININE (URINE)', category: 'biochemistry',
@@ -707,20 +713,33 @@
             parameters: [{ code: '40007', name: 'H. PYLORI AG/AB', unit: '', range: 'Negative' }]
         },
         {
-            code: '60001', name: 'URINE PROTEIN/ALBUMIN', category: 'biochemistry',
+            code: '60000', name: 'URINALYSIS', category: 'urinalysis',
+            parameters: [
+                { code: '60001', name: 'URINE PROTEIN/ALBUMIN', unit: '', range: 'Negative' },
+                { code: '60002', name: 'URINE GLUCOSE', unit: '', range: 'Negative' },
+                { code: '60003', name: 'URINE KETONES', unit: '', range: 'Negative' },
+                { code: '60004', name: 'URINE WBC / LEUKOCYTES', unit: '/HPF', range: '0-5' }
+            ]
+        },
+        {
+            code: '60001', name: 'URINE PROTEIN/ALBUMIN', category: 'urinalysis',
             parameters: [{ code: '60001', name: 'URINE PROTEIN/ALBUMIN', unit: '', range: 'Negative' }]
         },
         {
-            code: '60002', name: 'URINE GLUCOSE', category: 'biochemistry',
+            code: '60002', name: 'URINE GLUCOSE', category: 'urinalysis',
             parameters: [{ code: '60002', name: 'URINE GLUCOSE', unit: '', range: 'Negative' }]
         },
         {
-            code: '60003', name: 'URINE KETONES', category: 'biochemistry',
+            code: '60003', name: 'URINE KETONES', category: 'urinalysis',
             parameters: [{ code: '60003', name: 'URINE KETONES', unit: '', range: 'Negative' }]
         },
         {
-            code: '60004', name: 'URINE WBC / LEUKOCYTES', category: 'biochemistry',
+            code: '60004', name: 'URINE WBC / LEUKOCYTES', category: 'urinalysis',
             parameters: [{ code: '60004', name: 'URINE WBC / LEUKOCYTES', unit: '/HPF', range: '0-5' }]
+        },
+        {
+            code: '70001', name: 'COVID-19 ANTIGEN / PCR', category: 'covid',
+            parameters: [{ code: '70001-1', name: 'COVID-19', unit: '', range: 'Negative' }]
         },
 
         /* ═══ VITAMINS ═══ */

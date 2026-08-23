@@ -990,11 +990,18 @@
         var LAB_CATEGORIES = [
             { id:'parasitology', col:1, title:'🦟 Parasitology' },
             { id:'hematology',    col:1, title:'🩸 Hematology' },
+            { id:'bloodbank',     col:1, title:'🩸 Blood Bank' },
             { id:'biochemistry',  col:2, title:'🧬 Biochemistry' },
+            { id:'immunology',    col:2, title:'🛡️ Immunology' },
             { id:'microbiology',  col:3, title:'🦠 Microbiology' },
             { id:'urinalysis',    col:3, title:'💧 Urinalysis' },
+            { id:'fluids',        col:3, title:'💧 Body Fluids' },
             { id:'hormones',      col:4, title:'🧪 Hormones' },
             { id:'serology',      col:4, title:'🧫 Serology' },
+            { id:'tumor',         col:4, title:'🎗️ Tumor Markers' },
+            { id:'vitamins',      col:4, title:'💊 Vitamins' },
+            { id:'cytology',      col:4, title:'🔬 Cytology' },
+            { id:'genetics',      col:4, title:'🧬 Genetics' },
             { id:'covid',         col:4, title:'🦠 COVID-19' }
         ];
 
@@ -1446,15 +1453,18 @@ async function submitLabRequest() {
         console.log('📨 Notified parent about lab request submission for patient:', currentPatient.id);
 
         const totalPrice = selectedLabTests.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
-        showToast(`✅ Lab request saved & sent to Lab! Billed ${totalPrice.toLocaleString()} RWF to Cashier.`, 'success');
+        showToast(`✅ Lab request saved. Opening results as Pending…`, 'success');
         clearLabSelection();
-        
-
-
-
-       setTimeout(() => {
-    closeLabPage();
-}, 400);
+        setTimeout(function () {
+            var dest = 'lab-results.html?patient=' + encodeURIComponent(currentPatient.id);
+            try {
+                if (window.parent && window.parent !== window) {
+                    window.parent.location.href = dest;
+                    return;
+                }
+            } catch (navErr) {}
+            window.location.href = dest;
+        }, 350);
         
 
 
