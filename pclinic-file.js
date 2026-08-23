@@ -487,9 +487,11 @@
         if (!el) return;
 
         var pathStr = String((window.location && (window.location.pathname || window.location.href)) || '').toLowerCase();
-        if (pathStr.indexOf('cashier-dashboard') !== -1 || pathStr.indexOf('lab-dashboard') !== -1) {
+        if (pathStr.indexOf('cashier-dashboard') !== -1 || pathStr.indexOf('lab-dashboard') !== -1 || pathStr.indexOf('doctor-dashboard') !== -1) {
             var oldDc = document.getElementById('dcBar');
             if (oldDc && oldDc.parentNode) oldDc.parentNode.removeChild(oldDc);
+            var oldCtx = document.getElementById('dcCtx');
+            if (oldCtx && oldCtx.parentNode) oldCtx.parentNode.removeChild(oldCtx);
             return;
         }
         /* ── RADIOLOGY DASHBOARD: radiology-only buttons + patient selection on Bar 3 ── */
@@ -1503,7 +1505,14 @@
             var inputEl=document.getElementById(id);
             if(inputEl) inputEl.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); pcFile.searchPatientRegistry(); } });
         });
-        try { renderClinicalActionBar(el, p); } catch(e){ console.warn('renderClinicalActionBar error:', e); }
+        try {
+            var barPath = String((window.location && (window.location.pathname || window.location.href)) || '').toLowerCase();
+            if (barPath.indexOf('doctor-dashboard') === -1) renderClinicalActionBar(el, p);
+            else {
+                var hideDc = document.getElementById('dcBar');
+                if (hideDc && hideDc.parentNode) hideDc.parentNode.removeChild(hideDc);
+            }
+        } catch(e){ console.warn('renderClinicalActionBar error:', e); }
     }
 
     
@@ -2348,9 +2357,11 @@
         p = p || {};
         try { renderPatientIdentificationBar(master, p); } catch(e){ console.warn(e); }
         var pathStr2 = String((window.location && (window.location.pathname || window.location.href)) || '').toLowerCase();
-        if (pathStr2.indexOf('lab-dashboard') !== -1 || pathStr2.indexOf('cashier-dashboard') !== -1) {
+        if (pathStr2.indexOf('lab-dashboard') !== -1 || pathStr2.indexOf('cashier-dashboard') !== -1 || pathStr2.indexOf('doctor-dashboard') !== -1) {
             var oldDc = document.getElementById('dcBar');
             if (oldDc && oldDc.parentNode) oldDc.parentNode.removeChild(oldDc);
+            var oldCtx = document.getElementById('dcCtx');
+            if (oldCtx && oldCtx.parentNode) oldCtx.parentNode.removeChild(oldCtx);
         }
     }
 
