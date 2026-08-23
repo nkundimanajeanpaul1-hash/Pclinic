@@ -306,18 +306,8 @@
         }
     }
 
-    function removeDoctorActionBar() {
-        ['dcBar', 'dcCtx'].forEach(function (id) {
-            var el = document.getElementById(id);
-            if (el && el.parentNode) el.parentNode.removeChild(el);
-        });
-    }
-
     /* ══════════ BUILD ══════════ */
     function build() {
-        // Registry page already has the connected action bar — do not draw a second strip under the ID bar.
-        removeDoctorActionBar();
-        return;
         var bar = $('#dcBar');
         if (!bar) {
             var ctx = document.createElement('div');
@@ -387,8 +377,7 @@
     css.textContent = `
     #pcMasterHeader{display:flex!important;flex-direction:column!important;gap:8px!important;position:relative!important;z-index:40!important;width:100%!important;max-width:100%!important;overflow:visible!important}
     #pc_common_demo_bar.oc-demo-bar,.oc-demo-bar{position:relative!important;top:auto!important;z-index:2!important;margin:0!important}
-    #dcBar,#dcCtx{display:none!important;height:0!important;overflow:hidden!important;padding:0!important;margin:0!important;border:0!important}
-    #dcBar.off{display:none!important}
+    #dcBar{display:flex!important;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 14px;position:relative!important;top:auto!important;z-index:1!important;margin:0!important;width:100%!important;clear:both!important}
     .ab-sep{width:1px;height:20px;background:rgba(0,0,0,.1);margin:0 3px;flex-shrink:0}
     [data-theme="dark"] .ab-sep{background:rgba(255,255,255,.12)}
     .ab-btn{position:relative;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;
@@ -498,7 +487,7 @@
             var el = $('#dcCtx'); if (el) delete el.dataset.enrichedFor;
             setTimeout(enrichStrip, 60);
         });
-        setInterval(function () { hideCard(); removeDoctorActionBar(); }, 2500);
+        setInterval(function () { hideCard(); dedupeTabs(); enrichStrip(); placeActionBarBelowIdentification(); }, 2500);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();

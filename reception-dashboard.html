@@ -2512,6 +2512,16 @@ table.apple-table tbody tr:hover {
 #view-booking .photo-upload{
   background:rgba(255,255,255,0.45) !important;
 }
+
+/* Reception already has the registry command bar — never show clinical #dcBar */
+#dcBar, #dcBar.dc-bar, #dcCtx {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
 </style>
     <script src="pclinic-file.js?v=20260814_RAD" defer></script>
 </head>

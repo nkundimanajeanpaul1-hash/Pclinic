@@ -3756,13 +3756,14 @@ input.fi:focus,
             margin: 0 !important;
             flex-shrink: 0 !important;
         }
-        #dcBar.dc-bar, #dcBar, #dcCtx {
-            display: none !important;
-            height: 0 !important;
-            overflow: hidden !important;
+        #dcBar.dc-bar, #dcBar {
+            position: relative !important;
+            top: auto !important;
+            z-index: 1 !important;
             margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
+            width: 100% !important;
+            clear: both !important;
+            flex-shrink: 0 !important;
         }
 
     </style>
