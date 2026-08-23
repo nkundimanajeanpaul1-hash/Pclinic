@@ -2195,6 +2195,14 @@ table.apple-table tbody tr:hover {
 .reception-command-bar .rc-tab[data-tone="red"]{--rc:#c2413b}
 .reception-command-bar .rc-tab[data-tone="orange"]{--rc:#c65d00}
 .reception-command-bar .rc-tab .ncnt{position:static;min-width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;border-radius:9px;background:color-mix(in srgb,var(--rc,#0b57d0) 13%,#fff);color:var(--rc,#0b57d0);font-size:9px;font-weight:800}
+/* Reception does not display the shared Patient Identification bar. Patient
+   lookup is handled by the unified reception search and registration tools. */
+#pc_common_demo_bar,
+#pcMasterHeader > .oc-demo-bar,
+body > .oc-demo-bar{display:none !important;height:0 !important;min-height:0 !important;margin:0 !important;padding:0 !important;border:0 !important}
+body{--pc-patient-bar-height:0px !important}
+body.pc-has-patient-identification-bar{padding-top:0 !important}
+
 /* Patient/top identification and command actions touch with no empty strip. */
 #pcMasterHeader, #pc_chuk_top_menu, #pc_common_demo_bar, .topbar, .reception-command-bar{margin-top:0 !important;margin-bottom:0 !important}
 #pc_common_demo_bar + .reception-command-bar,
@@ -6459,5 +6467,5 @@ window.sendSurgeonNotification = sendSurgeonNotification;
             console.warn('Auth guard redirect:', err && err.message);
         });
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2fb572f2a4b881b',t:'MTc4NzUwMDkzNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
