@@ -1742,28 +1742,30 @@ table.apple-table .empty-state p{
   position:fixed;
   bottom:32px;
   right:32px;
+  min-width:238px;
+  height:58px;
+  padding:0 24px;
   background:linear-gradient(145deg,#007aff,#0055cc);
   color:#fff;
-  border:none;
-  border-radius:50%;
-  width:64px;
-  height:64px;
-  font-size:32px;
-  box-shadow:0 4px 28px rgba(0,122,255,0.45);
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:18px;
+  box-shadow:0 8px 30px rgba(0,122,255,.42);
   cursor:pointer;
   display:flex;
   align-items:center;
   justify-content:center;
+  gap:11px;
   z-index:50;
+  font:700 14px var(--f);
+  letter-spacing:-.15px;
   transition:var(--bounce);
 }
-.fab:hover{
-  transform:scale(1.12) rotate(90deg);
-  box-shadow:0 8px 40px rgba(0,122,255,0.55);
-}
-.fab:active{transform:scale(0.9);}
-.fab i{font-size:32px;transition:var(--transition)}
-.fab:hover i{transform:rotate(90deg);}
+.fab:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 13px 38px rgba(0,122,255,.52)}
+.fab:active{transform:scale(.96)}
+.fab i{font-size:22px;transition:var(--transition)}
+.fab:hover i{transform:rotate(90deg)}
+.fab .fab-label{white-space:nowrap}
+@media(max-width:600px){.fab{min-width:0;width:58px;height:58px;padding:0;border-radius:18px}.fab .fab-label{display:none}}
 
 /* ════════════════════════════════════════════════════════════
    LOADING OVERLAY
@@ -1813,8 +1815,9 @@ table.apple-table .empty-state p{
   .datechip .date{display:none}
   .uname,.urole{display:none}
   .appsub{display:none}
-  .fab{width:56px;height:56px;font-size:28px;bottom:20px;right:20px}
-  .fab i{font-size:28px}
+  .fab{min-width:0;width:56px;height:56px;padding:0;border-radius:17px;bottom:20px;right:20px}
+  .fab .fab-label{display:none}
+  .fab i{font-size:24px}
   .stats{padding:12px 16px;gap:8px}
   .stat-card{padding:12px 14px;gap:10px}
   .stat-value{font-size:20px}
@@ -2192,9 +2195,36 @@ table.apple-table tbody tr:hover {
 .reception-command-bar .rc-tab[data-tone="red"]{--rc:#c2413b}
 .reception-command-bar .rc-tab[data-tone="orange"]{--rc:#c65d00}
 .reception-command-bar .rc-tab .ncnt{position:static;min-width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;border-radius:9px;background:color-mix(in srgb,var(--rc,#0b57d0) 13%,#fff);color:var(--rc,#0b57d0);font-size:9px;font-weight:800}
+/* Patient/top identification and command actions touch with no empty strip. */
+#pcMasterHeader, #pc_chuk_top_menu, #pc_common_demo_bar, .topbar, .reception-command-bar{margin-top:0 !important;margin-bottom:0 !important}
+#pc_common_demo_bar + .reception-command-bar,
+#pcMasterHeader + .reception-command-bar,
+.topbar + .reception-command-bar{border-top:0 !important}
 .rc-tools{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 14px 9px;background:rgba(245,245,247,.6)}
 .rc-tools .ra-btn{min-height:32px;border-radius:9px;padding:0 11px}
 .rc-sep{width:1px;height:22px;background:var(--bd);margin:0 2px}
+
+/* One dashboard-wide search replaces the duplicate per-view search boxes. */
+.reception-unified-search{position:relative;flex:1 1 310px;min-width:260px;max-width:520px}
+.reception-unified-search .rus-shell{height:34px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#fff;border:.5px solid var(--bd);border-radius:18px;transition:all .2s}
+.reception-unified-search .rus-shell:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px rgba(0,122,255,.14)}
+.reception-unified-search .rus-shell i{font-size:14px;color:var(--tm)}
+.reception-unified-search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--tp);font:12.5px var(--f)}
+.reception-unified-search .rus-clear{display:none;border:0;background:transparent;color:var(--tm);cursor:pointer;font-size:15px;padding:2px}
+.reception-search-results{display:none;position:absolute;top:calc(100% + 7px);left:0;width:min(640px,88vw);max-height:420px;overflow:auto;background:rgba(255,255,255,.98);border:.5px solid var(--bd);border-radius:14px;box-shadow:0 16px 42px rgba(0,0,0,.18);z-index:500;padding:8px}
+.reception-search-results.open{display:block}
+.rus-section-title{padding:7px 9px 5px;color:var(--tm);font-size:9.5px;font-weight:800;letter-spacing:.55px;text-transform:uppercase}
+.rus-result{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border:0;border-radius:9px;background:transparent;text-align:left;color:var(--tp);font-family:var(--f);cursor:pointer}
+.rus-result:hover{background:var(--s3)}
+.rus-result i{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--acb);color:var(--ac);font-size:13px}
+.rus-result-main{flex:1;min-width:0}.rus-result-title{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rus-result-sub{margin-top:2px;color:var(--tm);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rus-tag{padding:2px 7px;border-radius:10px;background:var(--orangeb);color:var(--oranged);font-size:9px;font-weight:700}
+/* Context filters remain, but all duplicate text search fields are removed. */
+.view > .toolbar .search-wrap,
+#view-reports .toolbar .search-wrap{display:none !important}
+#dupCard{display:none !important}
+#dupResultExpanded{display:none !important}
+[data-theme="dark"] .reception-unified-search .rus-shell,[data-theme="dark"] .reception-search-results{background:#1c1c1e}
 [data-theme="dark"] .reception-command-bar{background:rgba(28,28,30,.94);border-color:rgba(255,255,255,.12)}
 [data-theme="dark"] .rc-tools{background:rgba(44,44,46,.72)}
 [data-theme="dark"] .reception-command-bar .rc-tab.active{background:rgba(255,255,255,.06) !important}
@@ -2609,6 +2639,15 @@ table.apple-table tbody tr:hover {
   </div>
 
   <div class="rc-tools" aria-label="Reception actions">
+    <div class="reception-unified-search" role="search">
+      <div class="rus-shell">
+        <i class="ti ti-search"></i>
+        <input type="search" id="receptionSearch" autocomplete="off" placeholder="Search duplicate patient, MRN, ID, phone, doctor schedule…" oninput="searchReceptionHub(this.value)" onfocus="searchReceptionHub(this.value)" />
+        <button type="button" class="rus-clear" id="receptionSearchClear" onclick="clearReceptionSearch()" title="Clear search"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="reception-search-results" id="receptionSearchResults" aria-live="polite"></div>
+    </div>
+
     <div class="ra-dropdown">
       <button class="ra-btn ra-blue" onclick="toggleDropdown('dd-patient')"><i class="ti ti-users"></i> Patient <i class="ti ti-chevron-down"></i></button>
       <div class="ra-dropdown-menu" id="dd-patient">
@@ -2962,16 +3001,7 @@ table.apple-table tbody tr:hover {
     <div class="view active" id="view-booking">
       <div class="form-scroll" style="padding:20px 24px; background: transparent;">
 
-        <!-- ===== APPLE THIN DUPLICATE CHECK - VERY THIN PILL ===== -->
-        <div class="form-card apple-thin-card" id="dupCard" style="padding:10px 16px; background: rgba(255,255,255,0.72); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border:0.5px solid rgba(255,255,255,0.7); border-radius:14px; box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03); display:flex; align-items:center; gap:12px; min-height:48px; transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);">
-          <div style="width:28px; height:28px; border-radius:50%; background: linear-gradient(135deg, #007aff, #5856d6); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; flex-shrink:0;">🔍</div>
-          <div style="flex:1; display:flex; align-items:center; gap:10px;">
-            <input type="text" id="bSearchDup" placeholder="Check duplicate: MRN / Phone / Nat ID..." style="flex:1; border:none; background:transparent; font-size:13px; outline:none; color:var(--tp);" oninput="if(this.value.length>2) checkDuplicate()">
-            <button class="btn" onclick="checkDuplicate()" style="padding:6px 14px; font-size:12px; border-radius:20px; background:rgba(0,122,255,0.1); color:#007aff; border:0.5px solid rgba(0,122,255,0.2); backdrop-filter: blur(8px);">Check</button>
-          </div>
-          <div id="dupResult" style="display:none;"></div>
-        </div>
-        <div id="dupResultExpanded" style="margin-top:-8px; margin-bottom:12px;"></div>
+        <!-- Duplicate checking now uses the single Reception search field in the command bar. -->
 
         <!-- ===== PHOTO - APPLE GLASS ===== -->
         <div class="form-card apple-card" style="background: rgba(255,255,255,0.68); backdrop-filter: saturate(180%) blur(24px); -webkit-backdrop-filter: saturate(180%) blur(24px); border:0.5px solid rgba(255,255,255,0.65); border-radius:16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85);">
@@ -3473,8 +3503,9 @@ table.apple-table tbody tr:hover {
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- ===== FAB ===== -->
-<button class="fab" onclick="window.showView('booking', getNavBtn('booking'))" title="Register New Patient (⌘N)">
-  <i class="ti ti-plus"></i>
+<button class="fab" onclick="window.showView('booking', getNavBtn('booking')); window.scrollTo({top:0,behavior:'smooth'});" title="New Patient Registration (⌘N)">
+  <i class="ti ti-user-plus"></i>
+  <span class="fab-label">New Patient Registration</span>
 </button>
 
 <!-- ===== PATIENT DATA SYSTEM ===== -->
@@ -3655,13 +3686,95 @@ if(view === 'surgery') {
   if(navigator.vibrate) navigator.vibrate(5);
 }
 
+function getReceptionAppointments(){
+  var out=[], seen={};
+  var patients=[]; try{patients=getPatients()||[];}catch(e){}
+  patients.forEach(function(p){
+    (p.appointments||[]).forEach(function(a){
+      var item=Object.assign({patientId:p.id,patientName:(p.name||((p.firstName||'')+' '+(p.lastName||'')).trim()),patientMrn:p.mrn||p.id},a||{});
+      var key=String(item.id||[item.patientId,item.date,item.time,item.doctor].join('|'));
+      if(!seen[key]){seen[key]=true;out.push(item);}
+    });
+  });
+  (appointments||[]).forEach(function(a){var key=String(a.id||[a.patientId,a.date,a.time,a.doctor].join('|'));if(!seen[key]){seen[key]=true;out.push(a);}});
+  return out;
+}
+
+function searchReceptionHub(value){
+  var input=document.getElementById('receptionSearch');
+  var panel=document.getElementById('receptionSearchResults');
+  var clear=document.getElementById('receptionSearchClear');
+  var raw=String(value!=null?value:(input?input.value:'')).trim();
+  var q=raw.toLowerCase();
+  if(clear) clear.style.display=q?'inline-flex':'none';
+  if(!panel)return;
+  panel.replaceChildren();
+  if(q.length<2){panel.classList.remove('open');return;}
+
+  // The one search field also drives whichever reception table is open.
+  [['refSearch',renderRefs],['qSearch',renderQueue],['histSearch',renderHistory],['repSearch',renderReports]].forEach(function(pair){
+    var el=document.getElementById(pair[0]); if(el)el.value=raw;
+  });
+  var active=document.querySelector('.view.active');
+  if(active){
+    if(active.id==='view-referrals')renderRefs();
+    else if(active.id==='view-queue')renderQueue();
+    else if(active.id==='view-history')renderHistory();
+    else if(active.id==='view-reports')renderReports();
+  }
+
+  var patients=[];try{patients=getPatients()||[];}catch(e){}
+  var words=q.split(/\s+/).filter(Boolean);
+  var patientMatches=patients.filter(function(p){
+    var hay=[p.name,p.firstName,p.middleName,p.lastName,p.id,p.mrn,p.phone,p.nationalId,p.guardianNationalId,p.birthCertificate,p.district,p.department].join(' ').toLowerCase();
+    return words.every(function(w){return hay.indexOf(w)!==-1;});
+  }).slice(0,8);
+  var scheduleMatches=getReceptionAppointments().filter(function(a){
+    var hay=[a.doctor,a.patientName,a.patientMrn,a.patientId,a.department,a.date,a.time,a.status].join(' ').toLowerCase();
+    return words.every(function(w){return hay.indexOf(w)!==-1;});
+  }).slice(0,8);
+
+  function title(text){var d=document.createElement('div');d.className='rus-section-title';d.textContent=text;panel.appendChild(d);}
+  function result(icon,heading,sub,tag,onClick){
+    var b=document.createElement('button');b.type='button';b.className='rus-result';
+    var ic=document.createElement('i');ic.className='ti '+icon;b.appendChild(ic);
+    var main=document.createElement('span');main.className='rus-result-main';
+    var h=document.createElement('span');h.className='rus-result-title';h.textContent=heading;h.style.display='block';main.appendChild(h);
+    var s=document.createElement('span');s.className='rus-result-sub';s.textContent=sub;s.style.display='block';main.appendChild(s);b.appendChild(main);
+    var t=document.createElement('span');t.className='rus-tag';t.textContent=tag;b.appendChild(t);
+    b.addEventListener('click',onClick);panel.appendChild(b);
+  }
+  if(patientMatches.length){
+    title('Patient matches — verify possible duplicates');
+    patientMatches.forEach(function(p){
+      var name=p.name||((p.firstName||'')+' '+(p.lastName||'')).trim()||('Patient '+(p.id||''));
+      result('ti-user-search',name,'MRN '+(p.mrn||p.id||'—')+' · '+(p.phone||'No phone')+' · Nat ID '+(p.nationalId||'—'),'Possible duplicate',function(){panel.classList.remove('open');openPatient(p.id);});
+    });
+  }
+  if(scheduleMatches.length){
+    title('Doctor schedule / appointments');
+    scheduleMatches.forEach(function(a){
+      result('ti-calendar-clock',(a.doctor||'Unassigned doctor')+' — '+(a.patientName||('Patient '+(a.patientId||''))),(a.date||'No date')+' '+(a.time||'')+' · '+(a.department||'No department')+' · '+(a.status||'scheduled'),'Schedule',function(){panel.classList.remove('open');showView('appointments',getNavBtn('appointments'));renderAppointmentList();});
+    });
+  }
+  if(!patientMatches.length&&!scheduleMatches.length){
+    var empty=document.createElement('div');empty.style.cssText='padding:22px;text-align:center;color:var(--tm);font-size:12px';empty.textContent='No duplicate patient or doctor schedule found for “'+raw+'”.';panel.appendChild(empty);
+  }
+  panel.classList.add('open');
+}
+
+function clearReceptionSearch(){
+  var input=document.getElementById('receptionSearch');if(input){input.value='';input.focus();}
+  ['refSearch','qSearch','histSearch','repSearch'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  var panel=document.getElementById('receptionSearchResults');if(panel){panel.replaceChildren();panel.classList.remove('open');}
+  var clear=document.getElementById('receptionSearchClear');if(clear)clear.style.display='none';
+  var active=document.querySelector('.view.active');if(active){if(active.id==='view-referrals')renderRefs();else if(active.id==='view-queue')renderQueue();else if(active.id==='view-history')renderHistory();else if(active.id==='view-reports')renderReports();}
+}
+
 function focusDupSearch(){
-  showView('booking', getNavBtn('booking'));
-  setTimeout(function(){
-    var el=document.getElementById('bSearchDup');
-    if(el){ el.focus(); el.scrollIntoView({behavior:'smooth', block:'center'}); el.style.boxShadow='0 0 0 4px rgba(0,122,255,0.2)'; setTimeout(()=>{el.style.boxShadow='';},1200); }
-    showToast('🔍 Search patient: MRN / Phone / Nat ID','info');
-  },200);
+  var el=document.getElementById('receptionSearch');
+  if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  showToast('🔍 One search: duplicate patient, MRN, phone, National ID or doctor schedule','info');
 }
 
 function toggleDropdown(id){
@@ -3726,8 +3839,10 @@ function raViewQueueFromHistory(id, mrn){
 }
 // Close dropdowns on outside click
 document.addEventListener('click', function(e){
-  if(!e.target.closest('.ra-dropdown')){
-    closeAllDropdowns();
+  if(!e.target.closest('.ra-dropdown')) closeAllDropdowns();
+  if(!e.target.closest('.reception-unified-search')){
+    var searchPanel=document.getElementById('receptionSearchResults');
+    if(searchPanel)searchPanel.classList.remove('open');
   }
 });
 
@@ -4280,7 +4395,7 @@ document.addEventListener('keydown', function(e){
   if((e.ctrlKey || e.metaKey) && e.key === '/'){ e.preventDefault(); showShortcuts(); }
   if((e.ctrlKey || e.metaKey) && e.key === 'l'){ e.preventDefault(); handleLogout(); }
   if((e.ctrlKey || e.metaKey) && e.key === 'n'){ e.preventDefault(); showView('booking', getNavBtn('booking')); }
-  if((e.ctrlKey || e.metaKey) && e.key === 'f'){ e.preventDefault(); var s = document.querySelector('.search-wrap input'); if(s) s.focus(); }
+  if((e.ctrlKey || e.metaKey) && e.key === 'f'){ e.preventDefault(); var s=document.getElementById('receptionSearch'); if(s)s.focus(); }
   if(e.key === 'Escape'){ closeShortcuts(); closeMo(); }
 });
 
@@ -4438,8 +4553,10 @@ function filterSectors() {
 }
 
 function checkDuplicate() {
-  var query=document.getElementById('bSearchDup')?document.getElementById('bSearchDup').value.trim():'';
-  var resultEl=document.getElementById('dupResult'); if(!resultEl)return;
+  var globalSearch=document.getElementById('receptionSearch');
+  var query=globalSearch?globalSearch.value.trim():'';
+  var resultEl=document.getElementById('dupResult');
+  if(!resultEl){searchReceptionHub(query);return;}
   resultEl.replaceChildren();
   if(!query){resultEl.textContent='Type MRN, phone or Nat ID to check';return;}
   var patients=[];try{patients=getPatients()||[];}catch(e){}
