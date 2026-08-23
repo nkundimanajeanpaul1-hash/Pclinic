@@ -81,125 +81,154 @@
         .pc-crumb a { color: var(--ac); text-decoration: none; font-weight: 800; }
         .pc-crumb .current { color: var(--tp); }
 
-        /* ─── RECEPTION PILL TAB NAV BAR (.nav) ─── */
+        /* ─── HR ACTION-BAR DESIGN, SHARED BY CASHIER ─── */
         .nav {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 12px 24px;
-            background: var(--glass-bg);
-            -webkit-backdrop-filter: var(--glass-blur);
-            backdrop-filter: var(--glass-blur);
-            border-bottom: 0.5px solid var(--bd);
+            gap: 4px;
+            padding: 6px 24px;
+            background: rgba(255,255,255,.6);
+            -webkit-backdrop-filter: saturate(180%) blur(16px);
+            backdrop-filter: saturate(180%) blur(16px);
+            border-bottom: .5px solid var(--bd);
             overflow-x: auto;
+            flex-wrap: nowrap;
             white-space: nowrap;
         }
         .ntab {
-            border: 0.5px solid var(--bd);
-            background: var(--s0);
-            color: var(--tp);
-            padding: 9px 18px;
-            border-radius: 20px;
-            font-size: 12.5px;
-            font-weight: 800;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--tm);
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            gap: 6px;
+            white-space: nowrap;
+            transition: all .2s cubic-bezier(.34,1.56,.64,1);
+            font-family: inherit;
         }
         .ntab:hover {
-            background: var(--s1);
+            background: rgba(255,255,255,.5);
+            color: var(--tp);
             transform: translateY(-1px);
         }
+        .ntab:active { transform: scale(.95); }
         .ntab.active {
-            background: var(--ac) !important;
-            color: #ffffff !important;
-            border-color: #0056b3 !important;
-            box-shadow: 0 4px 14px rgba(0, 113, 227, 0.28) !important;
+            background: #f0ecfd !important;
+            color: #5856d6 !important;
+            box-shadow: none !important;
         }
+        .ntab i { font-size: 14px; }
         .ncnt {
-            background: rgba(0,0,0,0.08);
-            color: var(--tp);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 900;
+            min-width: 16px;
+            padding: 1px 6px;
+            border-radius: 99px;
+            background: #ff3b30;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 600;
+            text-align: center;
         }
-        .ntab.active .ncnt {
-            background: rgba(255,255,255,0.28) !important;
-            color: #ffffff !important;
-        }
+        .ntab.active .ncnt { background:#ff3b30 !important; color:#fff !important; }
 
-        /* ─── RECEPTION SECONDARY ACTION BAR (.reception-action-bar) ─── */
         .reception-action-bar {
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
-            padding: 12px 24px;
-            background: var(--s0);
-            border-bottom: 0.5px solid var(--bd);
+            gap: 12px;
+            padding: 10px 24px;
+            background: rgba(255,255,255,.5);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            border-bottom: .5px solid var(--bd);
         }
         .ra-btn {
-            border: 0.5px solid var(--bd);
-            background: var(--s0);
-            color: var(--tp);
-            padding: 8px 16px;
-            border-radius: 14px;
+            padding: 7px 14px;
+            background: rgba(255,255,255,.5);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            border: .5px solid var(--bd);
+            border-radius: 8px;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 500;
             cursor: pointer;
+            font-family: inherit;
+            color: #3a3a3c;
+            transition: all .2s cubic-bezier(.34,1.56,.64,1);
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            gap: 5px;
+            white-space: nowrap;
         }
         .ra-btn:hover {
-            background: var(--s1);
-            transform: translateY(-1px);
+            background: rgba(255,255,255,.9);
+            transform: scale(1.02);
         }
-        .ra-btn.ra-blue {
-            background: linear-gradient(135deg, #0071e3, #0b57d0);
-            color: #ffffff;
-            border: 0;
-            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25);
+        .ra-btn:active { transform: scale(.95); }
+        .ra-btn.ra-blue, .ra-btn.ra-purple {
+            padding: 7px 18px;
+            background: #5856d6;
+            color: #fff;
+            border: none;
+            box-shadow: 0 2px 8px rgba(88,86,214,.25);
+            font-weight: 600;
+        }
+        .ra-btn.ra-blue:hover, .ra-btn.ra-purple:hover {
+            background:#5856d6;
+            box-shadow:0 4px 12px rgba(88,86,214,.35);
         }
         .ra-btn.ra-green {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: #ffffff;
-            border: 0;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+            padding: 7px 18px;
+            background: #34c759;
+            color: #fff;
+            border: none;
+            box-shadow: 0 2px 8px rgba(52,199,89,.25);
+            font-weight: 600;
         }
-        .ra-btn.ra-purple {
-            background: linear-gradient(135deg, #8b5cf6, #6366f1);
-            color: #ffffff;
-            border: 0;
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
-        }
+        .ra-btn.ra-green:hover { background:#34c759; box-shadow:0 4px 12px rgba(52,199,89,.35); }
 
-        /* ─── CHIPS (FILTER STATUS) ─── */
-        .chip {
-            border: 0.5px solid var(--bd);
-            background: var(--s0);
-            color: var(--tp);
-            padding: 6px 14px;
-            border-radius: 18px;
-            font-size: 11.5px;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
+        .cashier-search-wrap { position:relative; flex:1; min-width:220px; max-width:420px; }
+        .cashier-search-shell {
+            display:flex; align-items:center; gap:8px; padding:6px 14px;
+            background:rgba(255,255,255,.5); backdrop-filter:blur(4px);
+            border:.5px solid var(--bd); border-radius:20px; transition:all .2s;
         }
-        .chip:hover { background: var(--s1); }
+        .cashier-search-shell:focus-within {
+            background:rgba(255,255,255,.9); border-color:#5856d6;
+            box-shadow:0 0 0 3px rgba(88,86,214,.15);
+        }
+        .cashier-search-shell i { font-size:14px; color:var(--tm); }
+        .cashier-search-shell input {
+            width:100%; border:0; outline:0; background:transparent;
+            color:var(--tp); font-size:13px; font-family:inherit;
+        }
+        .cashier-search-shell input::placeholder { color:var(--tm); }
+
+        /* HR-style KPI filter buttons */
+        .chip {
+            border:.5px solid var(--bd);
+            background:rgba(255,255,255,.5);
+            color:#3a3a3c;
+            padding:5px 12px;
+            border-radius:20px;
+            font-size:12px;
+            font-weight:500;
+            cursor:pointer;
+            display:inline-flex;
+            align-items:center;
+            gap:5px;
+            transition:all .2s cubic-bezier(.34,1.56,.64,1);
+        }
+        .chip:hover { background:rgba(255,255,255,.9); transform:translateY(-2px); box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04); }
+        .chip:active { transform:scale(.95); }
         .chip.on {
-            background: #1d1d1f !important;
-            color: #ffffff !important;
-            border-color: #1d1d1f !important;
+            background:#f0ecfd !important;
+            color:#5856d6 !important;
+            border-color:rgba(88,86,214,.18) !important;
         }
         .c-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
         .dot-amber { background: #f59e0b; }
@@ -346,17 +375,17 @@
         <i class="ti ti-file-invoice"></i> Invoices &amp; Receipts
         <span class="ncnt" id="invcnt">0</span>
     </button>
-    <button class="ntab" onclick="showCashierView('payments', this)" style="background:linear-gradient(135deg,#10b981,#059669); color:#fff;">
+    <button class="ntab" onclick="showCashierView('payments', this)">
         <i class="ti ti-credit-card"></i> Payments Collected
-        <span class="ncnt" id="paycnt" style="background:rgba(255,255,255,0.28); color:#fff;">0</span>
+        <span class="ncnt" id="paycnt">0</span>
     </button>
-    <button class="ntab" onclick="showCashierView('claims', this)" style="background:linear-gradient(135deg,#0071e3,#0b57d0); color:#fff;">
+    <button class="ntab" onclick="showCashierView('claims', this)">
         <i class="ti ti-shield-check"></i> RSSB / Insurance Claims
-        <span class="ncnt" id="claimscnt" style="background:rgba(255,255,255,0.28); color:#fff;">0</span>
+        <span class="ncnt" id="claimscnt">0</span>
     </button>
-    <button class="ntab" onclick="showCashierView('reports', this)" style="background:linear-gradient(135deg,#8b5cf6,#6366f1); color:#fff;">
+    <button class="ntab" onclick="showCashierView('reports', this)">
         <i class="ti ti-chart-bar"></i> Finance Reports
-        <span class="ncnt" id="reportscnt" style="background:rgba(255,255,255,0.28); color:#fff;">0</span>
+        <span class="ncnt" id="reportscnt">0</span>
     </button>
 </div>
 
@@ -369,13 +398,16 @@
         <i class="ti ti-credit-card"></i> 💰 Record Payment
     </button>
     
-    <!-- Inline Search Box -->
-    <div style="display:inline-flex; align-items:center; gap:6px;">
-        <input type="text" id="searchInput" class="pcf-in" placeholder="Search invoices, patient name, MRN..." oninput="filterTable()" style="width:240px; height:36px; background:#ebeef3;" />
+    <!-- HR-style search control -->
+    <div class="cashier-search-wrap">
+        <div class="cashier-search-shell">
+            <i class="ti ti-search"></i>
+            <input type="text" id="searchInput" placeholder="Search invoices, patient name, MRN…" oninput="filterTable()" />
+        </div>
     </div>
 
-    <!-- Status Filter Chips -->
-    <div style="display:inline-flex; gap:6px; align-items:center;">
+    <!-- HR-style KPI status filters -->
+    <div style="display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">
         <div class="chip on" data-status="all" onclick="setChip(this, 'all')">All</div>
         <div class="chip" data-status="pending" onclick="setChip(this, 'pending')"><span class="c-dot dot-amber"></span>Pending</div>
         <div class="chip" data-status="partial" onclick="setChip(this, 'partial')"><span class="c-dot dot-blue"></span>Partial</div>
