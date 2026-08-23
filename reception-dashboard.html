@@ -2210,6 +2210,21 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
 .topbar + .reception-command-bar{border-top:0 !important}
 .rc-tools{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 14px 9px;background:rgba(245,245,247,.6)}
 .rc-tools .ra-btn{min-height:32px;border-radius:9px;padding:0 11px}
+.rc-tools .ra-new-patient{
+  min-height:44px;
+  padding:0 22px;
+  border:0;
+  border-radius:13px;
+  background:linear-gradient(145deg,#007aff,#0055cc);
+  color:#fff;
+  box-shadow:0 6px 20px rgba(0,122,255,.34);
+  font:700 13.5px var(--f);
+  letter-spacing:-.15px;
+  flex:0 0 auto;
+}
+.rc-tools .ra-new-patient i{font-size:20px}
+.rc-tools .ra-new-patient:hover{background:linear-gradient(145deg,#1687ff,#0062d6);color:#fff;transform:translateY(-2px) scale(1.02);box-shadow:0 9px 26px rgba(0,122,255,.44)}
+.rc-tools .ra-new-patient:active{transform:scale(.97)}
 .rc-sep{width:1px;height:22px;background:var(--bd);margin:0 2px}
 
 /* One dashboard-wide search replaces the duplicate per-view search boxes. */
@@ -2237,7 +2252,7 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
 [data-theme="dark"] .rc-tools{background:rgba(44,44,46,.72)}
 [data-theme="dark"] .reception-command-bar .rc-tab.active{background:rgba(255,255,255,.06) !important}
 @media(max-width:1050px){.reception-command-bar{position:relative}.rc-primary{padding:0 8px}.rc-tools{flex-wrap:nowrap;overflow-x:auto;padding:8px}.rc-tools::-webkit-scrollbar{height:4px}.rc-tools::-webkit-scrollbar-thumb{background:var(--bd);border-radius:4px}.rc-sep{display:none}}
-@media(max-width:600px){.reception-command-bar .rc-tab{padding:0 10px;font-size:10.5px}.rc-tools .ra-btn{font-size:10.5px}}
+@media(max-width:600px){.reception-command-bar .rc-tab{padding:0 10px;font-size:10.5px}.rc-tools .ra-btn{font-size:10.5px}.rc-tools .ra-new-patient{min-height:42px;padding:0 17px;font-size:12.5px}}
 
 /* ════════════════════════════════════════════════════════════
    COMPACT SMALL CARDS - CLOSER + SMOOTH BOUNCE (NEW)
@@ -2647,6 +2662,11 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
   </div>
 
   <div class="rc-tools" aria-label="Reception actions">
+    <button type="button" class="ra-btn ra-new-patient" onclick="window.showView('booking', getNavBtn('booking')); window.scrollTo({top:0,behavior:'smooth'});" title="New Patient Registration (⌘N)">
+      <i class="ti ti-user-plus"></i>
+      <span>New Patient Registration</span>
+    </button>
+
     <div class="reception-unified-search" role="search">
       <div class="rus-shell">
         <i class="ti ti-search"></i>
@@ -3510,11 +3530,7 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
 <!-- ===== TOAST CONTAINER ===== -->
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- ===== FAB ===== -->
-<button class="fab" onclick="window.showView('booking', getNavBtn('booking')); window.scrollTo({top:0,behavior:'smooth'});" title="New Patient Registration (⌘N)">
-  <i class="ti ti-user-plus"></i>
-  <span class="fab-label">New Patient Registration</span>
-</button>
+<!-- New Patient Registration is now a large blue button in the action bar. -->
 
 <!-- ===== PATIENT DATA SYSTEM ===== -->
 
@@ -6467,5 +6483,5 @@ window.sendSurgeonNotification = sendSurgeonNotification;
             console.warn('Auth guard redirect:', err && err.message);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2fb572f2a4b881b',t:'MTc4NzUwMDkzNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
