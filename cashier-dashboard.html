@@ -452,10 +452,11 @@
         [data-theme="dark"] .cashier-list-item{border-color:rgba(255,255,255,.06)}
 
         /* Exact Doctor Dashboard → All Patients list surface and row metrics. */
+        body{background:#c3c4ca !important;background-image:none !important}
         .table-card{background:transparent !important;border:0 !important;border-radius:14px !important;box-shadow:none !important;overflow-x:auto !important}
-        .table-card>.table-header{background:rgba(255,255,255,.7) !important;border:.5px solid rgba(0,0,0,.04) !important;border-bottom:0 !important;border-radius:14px 14px 0 0 !important;padding:12px 14px !important}
+        .table-card>.table-header{background:transparent !important;border:0 !important;border-radius:0 !important;padding:0 2px 12px !important}
         .table-card>table{
-            border-collapse:separate !important;border-spacing:0 !important;border-radius:0 0 14px 14px !important;overflow:hidden !important;
+            border-collapse:separate !important;border-spacing:0 !important;border-radius:14px !important;overflow:hidden !important;
             box-shadow:0 1px 3px rgba(0,0,0,.02),0 4px 12px rgba(0,0,0,.03) !important;
             background:rgba(255,255,255,.7) !important;-webkit-backdrop-filter:blur(12px) !important;backdrop-filter:blur(12px) !important;font-size:13px !important;
         }
@@ -473,9 +474,10 @@
         .table-card>table tbody>tr:hover>td{background:rgba(192,179,179,.06) !important;transform:scale(1.002) !important;box-shadow:0 2px 8px rgba(0,0,0,.03) !important}
         .table-card>table tbody>tr:active>td{transform:scale(.98) !important;transition:all .1s ease !important}
         .table-card>table tbody>tr:last-child>td{border-bottom:0 !important}
+        .cashier-list-total{padding:8px 2px 0;color:var(--tm);font-size:11px;font-weight:400}.cashier-list-total strong{color:var(--tm);font-weight:600}
         @keyframes cashierDoctorRowAppear{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
         .table-card>table tbody>tr:nth-child(1){animation-delay:.02s !important}.table-card>table tbody>tr:nth-child(2){animation-delay:.04s !important}.table-card>table tbody>tr:nth-child(3){animation-delay:.06s !important}.table-card>table tbody>tr:nth-child(4){animation-delay:.08s !important}.table-card>table tbody>tr:nth-child(5){animation-delay:.10s !important}.table-card>table tbody>tr:nth-child(6){animation-delay:.12s !important}.table-card>table tbody>tr:nth-child(7){animation-delay:.14s !important}.table-card>table tbody>tr:nth-child(8){animation-delay:.16s !important}.table-card>table tbody>tr:nth-child(9){animation-delay:.18s !important}.table-card>table tbody>tr:nth-child(10){animation-delay:.20s !important}
-        .cashier-patient-avatar{display:none !important}.cashier-patient-cell{gap:0 !important;min-width:170px}.cashier-patient-name{font-size:13px !important;font-weight:600 !important;letter-spacing:-.01em !important}.cashier-patient-meta{font-size:10.5px !important;color:var(--tm) !important}.cashier-patient-mrn{padding:2px 12px !important;border-radius:20px !important;background:rgba(0,113,227,.08) !important;color:#0066d6 !important;font-size:10px !important;font-weight:500 !important;border:.5px solid rgba(0,113,227,.08) !important}
+        .cashier-patient-avatar{display:none !important}.cashier-patient-cell{gap:0 !important;min-width:170px}.cashier-patient-name{font-size:13px !important;font-weight:600 !important;letter-spacing:-.01em !important;text-transform:uppercase !important}.cashier-patient-meta{font-size:10.5px !important;color:var(--tm) !important}.table-card>table .cashier-patient-meta{display:none !important}.cashier-list-item .cashier-patient-meta{display:block !important}.cashier-patient-mrn{padding:2px 12px !important;border-radius:20px !important;background:rgba(0,113,227,.08) !important;color:#0066d6 !important;font-size:10px !important;font-weight:500 !important;border:.5px solid rgba(0,113,227,.08) !important}.cashier-status-text{padding:0 !important;background:transparent !important;color:var(--tp) !important;font-size:12px !important;font-weight:400 !important;border-radius:0 !important;text-transform:lowercase !important}
         .table-card>table tbody .ra-btn{background:rgba(0,0,0,.03) !important;border:.5px solid rgba(0,0,0,.04) !important;border-radius:8px !important;padding:4px 12px !important;min-height:26px !important;font-size:10px !important;font-weight:500 !important;color:var(--tm) !important;box-shadow:none !important;transition:all .3s cubic-bezier(.34,1.56,.64,1) !important}
         .table-card>table tbody .ra-btn:hover{background:var(--ac) !important;color:#fff !important;transform:scale(1.04) !important;box-shadow:0 2px 8px rgba(0,113,227,.2) !important}
         .patient-child-row>td{padding:12px 22px !important;background:transparent !important;border:0 !important;box-shadow:none !important}.patient-child-row>td>div:first-child{color:var(--tp) !important}
@@ -611,6 +613,7 @@
             </thead>
             <tbody id="pcLiveBills"></tbody>
         </table>
+        <div class="cashier-list-total">Total: <strong id="queuePatientCount">0</strong> patients</div>
     </div>
 </div>
 
@@ -1311,7 +1314,7 @@
                     return '<tr>' +
                            '<td><strong>' + esc(b.number || b.id) + '</strong></td>' +
                            '<td>' + patientIdentityHtml(b.patientName || 'Patient', b.patientId, 'Paid receipt') + '</td>' +
-                           '<td>MOD-' + esc(b.patientId || '') + '</td>' +
+                           '<td>' + esc(b.patientId || '') + '</td>' +
                            '<td><strong style="color:#10b981;">' + money(b.total) + '</strong></td>' +
                            '<td>' + esc(pm) + '</td>' +
                            '<td>' + esc(b.paidBy || 'Cashier') + '</td>' +
@@ -1337,7 +1340,7 @@
                     return '<tr>' +
                            '<td><strong>' + esc(b.number || b.id) + '</strong></td>' +
                            '<td>' + patientIdentityHtml(b.patientName || 'Patient', b.patientId, 'Insurance claim') + '</td>' +
-                           '<td>MOD-' + esc(b.patientId || '') + '</td>' +
+                           '<td>' + esc(b.patientId || '') + '</td>' +
                            '<td><span style="background:#e8f8f2; color:#0f766e; padding:3px 8px; border-radius:6px; font-weight:800;">' + esc((b.insurance && b.insurance.provider) || 'Insurance') + '</span><div style="font-size:10px;color:#6e6e73;margin-top:3px;">Patient pays ' + esc(b.patientPayPercent != null ? b.patientPayPercent : 100) + '%</div></td>' +
                            '<td><strong style="color:#0071e3;">' + money(b.insuranceCovered != null ? b.insuranceCovered : b.total) + '</strong><div style="font-size:10px;color:#6e6e73;">Patient due: ' + money(b.total) + '</div></td>' +
                            '<td>' + esc((b.status || 'pending').toUpperCase()) + '</td>' +

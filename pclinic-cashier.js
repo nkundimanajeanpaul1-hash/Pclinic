@@ -68,7 +68,7 @@
             paid:      ['#e9f9ee', '#1a7a32'],
             cancelled: ['#ffebe9', '#8a1f1a']
         }[s] || ['#f2f2f4', '#8e8e93'];
-        return '<span style="font-size:9.5px;font-weight:700;padding:3px 9px;border-radius:30px;' +
+        return '<span class="cashier-status-text" style="font-size:9.5px;font-weight:700;padding:3px 9px;border-radius:30px;' +
                'background:' + m[0] + ';color:' + m[1] + '">' + esc(s) + '</span>';
     }
 
@@ -79,7 +79,7 @@
                   'color:#fff;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer"';
         return '<tr data-bill="' + esc(b.id) + '" onclick="if(window.selectCashierPatient) selectCashierPatient(\'' + esc(b.patientId) + '\')" style="cursor:pointer">' +
             '<td>' + patientIdentity(b.patientName || 'Patient', b.patientId, (b.number || 'Invoice') + ' · ' + when(b.createdAt)) + '</td>' +
-            '<td style="font-size:11.5px;color:#8e8e93">ID ' + esc(b.patientId) + '</td>' +
+            '<td style="font-size:11.5px">' + esc(b.patientId) + '</td>' +
             '<td style="font-size:11.5px;max-width:230px">' + esc(items || '—') + '</td>' +
             '<td style="font-weight:700;white-space:nowrap">' + money(b.total) +
                 '<div style="font-size:9.5px;color:#6e6e73;font-weight:600">Patient ' + esc(b.patientPayPercent != null ? b.patientPayPercent : 100) + '%</div>' +
@@ -157,6 +157,7 @@
         }
 
         if (!bills.length) {
+            var emptyCount = document.getElementById('queuePatientCount'); if (emptyCount) emptyCount.textContent = '0';
             el.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:38px;color:#8e8e93;font-size:12.5px">' +
                 '<div style="font-size:32px;opacity:.35;margin-bottom:8px">🧾</div>' +
                 '<strong>No hospital bills found in Common Server.</strong><br><span style="font-size:11px">Bills raised by doctors for registered patients appear here automatically. Zero template patients.</span>' +
@@ -221,7 +222,7 @@
                     '<i class="ti ti-chevron-right unfold-icon" id="icon_' + esc(g.key) + '" style="transition:transform .28s cubic-bezier(.34,1.56,.64,1);color:#0071e3;font-size:15px;"></i>' +
                     patientIdentity(g.patientName, g.patientId, g.bills.length + ' invoices · Click to unfold') +
                 '</div></td>' +
-                '<td style="font-size:11.5px; color:#8e8e93;">MOD-' + esc(g.patientId) + '</td>' +
+                '<td style="font-size:11.5px;">' + esc(g.patientId) + '</td>' +
                 '<td style="font-size:11.5px; max-width:240px;">' +
                     '<span style="background:rgba(0,113,227,0.12); color:#0071e3; padding:2px 8px; border-radius:6px; font-weight:700; font-size:10.5px;">' +
                         g.bills.length + ' Invoices Combined' +
@@ -298,6 +299,7 @@
         }).join('');
 
         el.innerHTML = htmlRows;
+        var patientCountEl = document.getElementById('queuePatientCount'); if (patientCountEl) patientCountEl.textContent = String(groupOrder.length);
         updateKpis();
     }
 
