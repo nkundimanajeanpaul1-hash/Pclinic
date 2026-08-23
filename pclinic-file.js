@@ -1362,7 +1362,15 @@
         var file = path.split('/').pop() || '';
         var excluded = ['hub.html','login.html','index.html'];
         if (excluded.includes(file)) return null;
-        if (document.getElementById('pc_chuk_top_menu')) return document.getElementById('pc_chuk_top_menu');
+        var extras = document.querySelectorAll('.chuk-top-menu, #pc_chuk_top_menu');
+        var keep = extras[0] || null;
+        for (var xi = 1; xi < extras.length; xi++) {
+            if (extras[xi] && extras[xi].parentNode) extras[xi].parentNode.removeChild(extras[xi]);
+        }
+        if (keep) {
+            keep.id = 'pc_chuk_top_menu';
+            return keep;
+        }
         var master = document.getElementById('pcMasterHeader');
         if (!master) {
             master = document.createElement('div');

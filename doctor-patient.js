@@ -156,9 +156,9 @@
         var ins = isCleared ? 'RSSB / RAMA' : (p.insurance || 'RSSB / RAMA');
         var dist = isCleared ? 'NYARUGENGE' : (p.district || 'NYARUGENGE');
 
-        var oldMenu = document.getElementById('pc_chuk_top_menu');
-        if (oldMenu && oldMenu.parentNode) oldMenu.parentNode.removeChild(oldMenu);
-
+        /* One CHUK strip only — never rebuild it here (pclinic-file owns Bar 1). */
+        var existingChuk = document.getElementById('pc_chuk_top_menu');
+        if (!existingChuk) {
         var menuDiv = document.createElement('div');
         menuDiv.id = 'pc_chuk_top_menu';
         menuDiv.className = 'chuk-top-menu noprint';
@@ -183,6 +183,7 @@
 
         if (el.parentNode) {
             el.parentNode.insertBefore(menuDiv, el);
+        }
         }
 
         el.className = 'oc-demo-bar noprint';
