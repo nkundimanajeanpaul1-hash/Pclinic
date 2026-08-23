@@ -178,137 +178,31 @@
     <script>
         (function() {
             'use strict';
-
-            const STORAGE_KEY = 'pclinic_beds_data';
-            const WARDS = ['General Ward', 'Maternity Ward', 'ICU', 'Pediatric Ward'];
-            const BEDS_PER_WARD = 8;
-
-            function loadBeds() {
-                try {
-                    const raw = localStorage.getItem(STORAGE_KEY);
-                    if (raw) return JSON.parse(raw);
-                } catch (e) {}
-                // Seed default layout
-                const beds = {};
-                WARDS.forEach(ward => {
-                    beds[ward] = [];
-                    for (let i = 1; i <= BEDS_PER_WARD; i++) {
-                        beds[ward].push({ number: ward.split(' ')[0].substring(0, 1) + i, status: 'available', patient: '' });
-                    }
-                });
-                return beds;
+            let bedRecords = [], unsubscribe = null;
+            function esc(v){const d=document.createElement('div');d.textContent=String(v==null?'':v);return d.innerHTML;}
+            function groupBeds(){const groups={};bedRecords.forEach(b=>{const w=String(b.ward||'Unassigned');(groups[w]||(groups[w]=[])).push(b);});return groups;}
+            function renderAll(){
+                let total=0,available=0,occupied=0,cleaning=0;const groups=groupBeds(),wards=Object.keys(groups).sort(),container=document.getElementById('wardsContainer');
+                if(!wards.length){container.innerHTML='<div class="ward-section"><div class="empty-state" style="padding:40px;text-align:center">No authoritative bed records configured on the Common Server.</div></div>';}
+                else container.innerHTML=wards.map(ward=>{const list=groups[ward].sort((a,b)=>String(a.bedNumber||a.id).localeCompare(String(b.bedNumber||b.id)));list.forEach(b=>{total++;if(b.status==='available')available++;else if(b.status==='occupied')occupied++;else if(b.status==='maintenance'||b.status==='cleaning')cleaning++;});return '<div class="ward-section"><div class="ward-title"><i class="ti ti-building-hospital"></i> '+esc(ward)+' <span style="color:var(--tm);font-weight:500;text-transform:none;">('+list.filter(b=>b.status==='occupied').length+'/'+list.length+' occupied)</span></div><div class="beds-grid">'+list.map(b=>'<div class="bed-card '+esc(b.status==='maintenance'?'cleaning':b.status)+'" onclick="openBedModal(\''+esc(b.id)+'\')"><div class="bed-num">Bed '+esc(b.bedNumber||b.id)+'</div><div class="bed-status">'+esc(b.status)+'</div><div class="bed-patient">'+esc(b.patientName||(b.status==='available'?'Ready for patient':'—'))+'</div></div>').join('')+'</div></div>';}).join('');
+                document.getElementById('statTotal').textContent=total;document.getElementById('statAvailable').textContent=available;document.getElementById('statOccupied').textContent=occupied;document.getElementById('statCleaning').textContent=cleaning;
             }
-            function saveBeds(beds) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(beds));
-            }
-            let beds = loadBeds();
-
-            function renderAll() {
-                let total = 0, available = 0, occupied = 0, cleaning = 0;
-                const container = document.getElementById('wardsContainer');
-                container.innerHTML = WARDS.map(ward => {
-                    const wardBeds = beds[ward] || [];
-                    wardBeds.forEach(b => {
-                        total++;
-                        if (b.status === 'available') available++;
-                        else if (b.status === 'occupied') occupied++;
-                        else if (b.status === 'cleaning') cleaning++;
-                    });
-                    const occCount = wardBeds.filter(b => b.status === 'occupied').length;
-                    return `
-                        <div class="ward-section">
-                            <div class="ward-title"><i class="ti ti-building-hospital"></i> ${ward} <span style="color:var(--tm);font-weight:500;text-transform:none;">(${occCount}/${wardBeds.length} occupied)</span></div>
-                            <div class="beds-grid">
-                                ${wardBeds.map((b, i) => `
-                                    <div class="bed-card ${b.status}" onclick="openBedModal('${ward}', ${i})">
-                                        <div class="bed-num">Bed ${b.number}</div>
-                                        <div class="bed-status">${b.status}</div>
-                                        <div class="bed-patient">${b.patient || (b.status === 'available' ? 'Ready for patient' : b.status === 'cleaning' ? 'Being prepared' : '—')}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                document.getElementById('statTotal').textContent = total;
-                document.getElementById('statAvailable').textContent = available;
-                document.getElementById('statOccupied').textContent = occupied;
-                document.getElementById('statCleaning').textContent = cleaning;
-            }
-
-            window.openBedModal = function(ward, index) {
-                const bed = beds[ward][index];
-                const modal = document.getElementById('bedModal');
-                const body = document.getElementById('bedModalBody');
-                body.innerHTML = `
-                    <h3><i class="ti ti-bed"></i> ${ward} — Bed ${bed.number}</h3>
-                    <div class="field">
-                        <label>Status</label>
-                        <select id="modalStatus">
-                            <option value="available" ${bed.status === 'available' ? 'selected' : ''}>Available</option>
-                            <option value="occupied" ${bed.status === 'occupied' ? 'selected' : ''}>Occupied</option>
-                            <option value="cleaning" ${bed.status === 'cleaning' ? 'selected' : ''}>Cleaning</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label>Patient Name (if occupied)</label>
-                        <input type="text" id="modalPatient" value="${bed.patient || ''}" placeholder="e.g. John Mugisha" />
-                    </div>
-                    <div class="modal-actions">
-                        <button class="btn btn-outline" onclick="closeBedModal()">Cancel</button>
-                        <button class="btn btn-green" onclick="saveBed('${ward}', ${index})">Save</button>
-                    </div>
-                `;
-                modal.classList.add('open');
-            };
-            window.closeBedModal = function() {
-                document.getElementById('bedModal').classList.remove('open');
-            };
-            window.saveBed = function(ward, index) {
-                const status = document.getElementById('modalStatus').value;
-                const patient = document.getElementById('modalPatient').value.trim();
-                beds[ward][index].status = status;
-                beds[ward][index].patient = status === 'occupied' ? patient : '';
-                saveBeds(beds);
-                renderAll();
-                closeBedModal();
-                showToast('✅ Bed updated', 'success');
-            };
-
-            window.showToast = function(msg, type) {
-                const container = document.getElementById('toastContainer');
-                const toast = document.createElement('div');
-                toast.className = 'toast' + (type ? ' ' + type : '');
-                toast.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span> ${msg}`;
-                container.appendChild(toast);
-                setTimeout(() => { toast.style.animation = 'toastOut 0.3s ease forwards'; setTimeout(() => toast.remove(), 300); }, 3000);
-            };
-            window.toggleDarkMode = function() {
-                const html = document.documentElement;
-                const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                html.setAttribute('data-theme', next);
-                localStorage.setItem('pclinic-theme', next);
-                document.getElementById('themeIcon').className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
-            };
-            (function() {
-                const saved = (localStorage.getItem('pclinic-theme') || (localStorage.getItem('pclinic-theme') || localStorage.getItem('pclinic_theme'))) || 'light';
-                document.documentElement.setAttribute('data-theme', saved);
-                document.getElementById('themeIcon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
-            })();
-            window.logout = function() { window.pclinicLogout(); };
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') closeBedModal();
-            });
-
-            renderAll();
-            console.log('🏥 PClinic Bed Management loaded');
+            function start(){if(unsubscribe||!window.firebaseDB||!window.firebaseFunctions)return;const f=window.firebaseFunctions;unsubscribe=f.onSnapshot(f.collection(window.firebaseDB,'beds'),snap=>{bedRecords=[];snap.forEach(ds=>bedRecords.push(Object.assign({id:ds.id},ds.data())));renderAll();},err=>{console.error(err);bedRecords=[];renderAll();showToast('Authoritative bed registry unavailable','error');});}
+            window.openBedModal=function(id){const bed=bedRecords.find(b=>String(b.id)===String(id));if(!bed)return;const canEdit=['beds','admin'].includes(String((window.currentStaff||{}).role||'').toLowerCase());const body=document.getElementById('bedModalBody');body.innerHTML='<h3><i class="ti ti-bed"></i> '+esc(bed.ward)+' — '+esc(bed.bedNumber||bed.id)+'</h3><div class="field"><label>Status</label><select id="modalStatus" '+(canEdit?'':'disabled')+'><option value="available">Available</option><option value="occupied">Occupied</option><option value="reserved">Reserved</option><option value="maintenance">Maintenance</option><option value="unavailable">Unavailable</option></select></div><div class="field"><label>Patient ID (when assigned)</label><input id="modalPatientId" '+(canEdit?'':'disabled')+' value="'+esc(bed.patientId||'')+'"></div><div class="modal-actions"><button class="btn btn-outline" onclick="closeBedModal()">Close</button>'+(canEdit?'<button class="btn btn-green" onclick="saveBed(\''+esc(bed.id)+'\')">Save to Server</button>':'')+'</div>';document.getElementById('modalStatus').value=bed.status||'unavailable';document.getElementById('bedModal').classList.add('open');};
+            window.closeBedModal=()=>document.getElementById('bedModal').classList.remove('open');
+            window.saveBed=async function(id){const f=window.firebaseFunctions,status=document.getElementById('modalStatus').value,patientId=document.getElementById('modalPatientId').value.trim();try{await f.updateDoc(f.doc(window.firebaseDB,'beds',String(id)),{status:status,patientId:patientId,updatedAt:f.serverTimestamp(),updatedById:String((window.currentStaff||{}).staffId||'')});closeBedModal();showToast('Bed updated on Common Server','success');}catch(e){console.error(e);showToast('Bed update failed','error');}};
+            window.showToast=function(msg,type){const c=document.getElementById('toastContainer'),t=document.createElement('div');t.className='toast '+(type||'');t.textContent=msg;c.appendChild(t);setTimeout(()=>t.remove(),3500);};
+            window.toggleDarkMode=function(){const h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('pclinic-theme',n);};
+            window.logout=function(){return window.pclinicLogout();};
+            document.addEventListener('keydown',e=>{if(e.key==='Escape')closeBedModal();});
+            window.addEventListener('firebaseReady',start);window.addEventListener('pclinicStaffReady',start);if(window.firebaseReady)setTimeout(start,0);renderAll();
         })();
     </script>
 
     <script>
         requireAuth(['beds','nurse','reception']).then(function(staff) {
             window.currentStaff = staff;
+            window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: staff }));
         }).catch(function(err) {
             console.warn('Auth guard redirect:', err && err.message);
         });

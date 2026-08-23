@@ -11,6 +11,7 @@
     <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
     <script type="module" src="firebase-config.js"></script>
     <script src="auth-guard.js"></script>
+    <script src="pclinic-notifications.js" defer></script>
 <script src="pclinic-state.js"></script>
 <script src="shared.js" defer></script>
 
@@ -4560,6 +4561,7 @@ input.fi:focus,
     <script>
         requireAuth(['doctor']).then(async function(staff) {
             window.currentStaff = staff;
+            window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: staff }));
             console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
             // ⛔ NO TEMPLATE DATA — the top-bar chips always show the REAL logged-in staff
             try {

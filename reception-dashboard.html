@@ -2279,6 +2279,21 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
 #view-queue .queue-action-btn.complete{background:var(--redb) !important;color:var(--redd) !important;border-color:#ffbeb8 !important}
 #view-queue .queue-action-btn:hover{filter:brightness(.97);transform:translateY(-1px) !important;box-shadow:0 3px 10px rgba(0,0,0,.08) !important}
 #view-queue .queue-status-pill{display:inline-flex;padding:4px 9px;border-radius:12px;background:var(--purpleb);color:var(--purpled);font-size:10px;font-weight:800;text-transform:capitalize}
+
+/* Tahoe-style accessibility adaptations for web users. */
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:3px solid #0a84ff !important;outline-offset:2px !important;box-shadow:0 0 0 5px rgba(10,132,255,.18) !important}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;scroll-behavior:auto !important;transition-duration:.01ms !important}
+}
+@media (prefers-contrast: more){
+  :root{--bd:#59595f;--tm:#4a4a4f;--bds:#2f2f33}
+  button,input,select,textarea,.form-card,.modal-sheet,.reception-command-bar{border-width:1.5px !important}
+  .ra-btn,.ntab{font-weight:750 !important}
+}
+@media (prefers-reduced-transparency: reduce){
+  .topbar,.nav,.reception-command-bar,.rc-tools,.modal-sheet,.form-card,.tahoe-wizard,.toolbar{backdrop-filter:none !important;-webkit-backdrop-filter:none !important;background:var(--s1) !important}
+}
+html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="true"] .nav,html[data-reduce-transparency="true"] .reception-command-bar,html[data-reduce-transparency="true"] .rc-tools,html[data-reduce-transparency="true"] .modal-sheet,html[data-reduce-transparency="true"] .form-card,html[data-reduce-transparency="true"] .tahoe-wizard{backdrop-filter:none !important;-webkit-backdrop-filter:none !important;background:var(--s1) !important}
 [data-theme="dark"] .reception-command-bar{background:rgba(28,28,30,.94);border-color:rgba(255,255,255,.12)}
 [data-theme="dark"] .rc-tools{background:rgba(44,44,46,.72)}
 [data-theme="dark"] .reception-command-bar .rc-tab.active{background:rgba(255,255,255,.06) !important}
@@ -3062,7 +3077,7 @@ body.pc-has-patient-identification-bar{padding-top:0 !important}
 
     <!-- ===== REGISTER VIEW ===== -->
 
-    <div class="view active" id="view-booking">
+    <div class="view" id="view-booking">
       <div class="form-scroll" style="padding:20px 24px; background: transparent;">
 
         <!-- Duplicate checking now uses the single Reception search field in the command bar. -->
@@ -4044,19 +4059,22 @@ function raEmergency(){
   _showHistoryFiltered('emergency', 'all', '🚨 Emergency patients from common server: '+emerg.length);
 }
 function raWard(){ showView('beds', getNavBtn('beds')); }
-function raBill(){
-  var all=_getAllPatientsCommon(); var bills=[]; try{ if(typeof getAllBills==='function') bills=getAllBills(); else { all.forEach(function(p){ if(p.billingHistory) bills=bills.concat(p.billingHistory.map(function(b){ return {patientId:p.id, patientName:(p.firstName+' '+p.lastName), bill:b}; })); }); } }catch(e){}
-  showToast('🧾 Bills from common server: '+bills.length,'info');
-  var btn=document.querySelector('.ntab[onclick*=\"history\"]'); showView('history', btn);
-  // Optionally open modal with bills list
-  console.log('Bills from common server', bills);
+async function raBill(){
+  var all=_getAllPatientsCommon(),p=all.find(function(x){return String(x.id)===String(openPatientId);});
+  if(!p){showToast('Open a patient from Search or Queue before requesting billing.','warning');focusDupSearch();return false;}
+  try{await writeServerNotification({type:'billing_request',title:'Billing request — '+(p.name||p.firstName+' '+p.lastName),message:'Reception requests Cashier review for MRN '+(p.mrn||p.id),toRoles:['cashier'],patientId:String(p.id),patientMrn:String(p.mrn||p.id)});showToast('✅ Billing request sent to Cashier on the Common Server.','success');return true;}
+  catch(error){console.error(error);showToast('❌ Billing request was not sent.','error');return false;}
 }
-function raPayment(){ raBill(); showToast('💵 Payment view — same common server bills','info'); }
-function raCashier(){ raBill(); }
-function raReceipt(){ window.print(); }
-function raPrintCard(){ var all=_getAllPatientsCommon(); if(!all.length){ showToast('❌ No patients','error'); return; } var p=all[0]; showToast('🪪 Print ID Card for MRN '+p.mrn+' (from common server)','info'); window.print(); }
-function raWristband(){ raPrintCard(); showToast('⌚ Wristband print from common server','info'); }
-function raPrintFile(){ window.print(); showToast('📁 OPD File print — data from common server','info'); }
+function raPayment(){showToast('Payments are recorded only by authorized Cashier/Finance staff.','info');}
+function raCashier(){return raBill();}
+function raReceipt(){showToast('Official receipts are issued from the Cashier dashboard after payment.','info');}
+function raPrintCard(){
+  if(!openPatientId){showToast('Open and verify a patient from Search or Queue before printing.','warning');focusDupSearch();return false;}
+  if(window.pcFile&&typeof pcFile.printPatientIdCard==='function'){pcFile.printPatientIdCard(openPatientId);return true;}
+  showToast('❌ Patient ID print service is unavailable.','error');return false;
+}
+function raWristband(){showToast('Wristbands must be printed by the admitting ward from an assigned encounter.','info');}
+function raPrintFile(){if(!openPatientId){showToast('Select a patient first.','warning');return;}window.open('opd-file.html?patient='+encodeURIComponent(openPatientId),'_blank');}
 function raArchive(){
   var all=_getAllPatientsCommon(); var arch=all.filter(function(p){ return p.archiveCode; });
   _showHistoryFiltered('', 'all', '📦 Archive codes from common server: '+arch.length);
@@ -4131,12 +4149,13 @@ function raMessages(){
   html+='</div>';
   showServerModal('💬 Messages — Common Server ('+(msgs.length+notesCount)+')', html);
 }
-function raNotify(){
-  var all=_getAllPatientsCommon(); if(!all.length){ showToast('❌ No patients to notify','error'); return; }
-  var mrn=prompt('🔔 Notify doctor — Enter MRN to notify:'); if(!mrn) return;
-  var p=all.find(function(x){ return String(x.mrn)==String(mrn); });
-  if(!p){ showToast('❌ Not found','error'); return; }
-  showToast('🔔 Notified doctor for MRN '+p.mrn+' (common server)','success');
+async function raNotify(){
+  var all=_getAllPatientsCommon();if(!all.length){showToast('❌ No patients to notify','error');return false;}
+  var mrn=prompt('🔔 Notify doctor — Enter MRN:');if(!mrn)return false;
+  var p=all.find(function(x){return String(x.mrn||x.id)===String(mrn);});if(!p){showToast('❌ Patient not found','error');return false;}
+  var message=prompt('Message for the clinical team:','Reception requests review for MRN '+(p.mrn||p.id));if(!message)return false;
+  try{await writeServerNotification({type:'reception_doctor_message',title:'Reception review request — MRN '+(p.mrn||p.id),message:message,toRoles:['doctor'],patientId:String(p.id),patientMrn:String(p.mrn||p.id)});showToast('✅ Doctor notification saved to the Common Server.','success');return true;}
+  catch(error){console.error(error);showToast('❌ Doctor notification was not sent.','error');return false;}
 }
 function raMyOrders(){
   var all=_getAllPatientsCommon(); var orders=0; try{ if(typeof getAllBills==='function'){ orders=getAllBills().length; } }catch(e){}
@@ -4501,7 +4520,7 @@ document.addEventListener('keydown', function(e){
   if((e.ctrlKey || e.metaKey) && e.key === 'l'){ e.preventDefault(); handleLogout(); }
   if((e.ctrlKey || e.metaKey) && e.key === 'n'){ e.preventDefault(); showView('booking', getNavBtn('booking')); }
   if((e.ctrlKey || e.metaKey) && e.key === 'f'){ e.preventDefault(); var s=document.getElementById('receptionSearch'); if(s)s.focus(); }
-  if(e.key === 'Escape'){ closeShortcuts(); closeMo(); closeAIAssistant(); }
+  if(e.key === 'Escape'){ closeShortcuts(); closeMo(); closeAIAssistant(); closePatientSelector(); closeServerDataModal(); }
 });
 
 // ─── LOGOUT ───
@@ -5371,14 +5390,21 @@ async function bookAppointment(){
 
   // Save to the Common Server first. Do not report success for a local-only write.
   var patientAppointments=Array.isArray(patient.appointments)?patient.appointments.slice():[];
-  appt.notificationSent=true;
-  appt.notifiedDoctors=[{doctor:doctor,date:new Date().toISOString()}];
+  appt.notificationSent=false;
+  appt.notifiedDoctors=[];
   patientAppointments.push(appt);
   var updatedPatient=await updatePatient(patientId,{appointments:patientAppointments});
   if(!updatedPatient){showToast('❌ Appointment was not saved to the Common Server.','error');return;}
   appointments.push(appt);
   saveAppointments();
-  sendDoctorNotification(appt,updatedPatient);
+  try {
+    await sendDoctorNotification(appt,updatedPatient);
+    appt.notificationSent=true;
+    appt.notifiedDoctors=[{doctor:doctor,date:new Date().toISOString()}];
+  } catch(notificationError) {
+    console.error(notificationError);
+    showToast('⚠️ Appointment saved, but the Doctor notification failed.','warning');
+  }
 
   // ─── ADD TO ACTIVITY FEED ───
   addFeed('booked', String(patient.firstName || '')+' '+String(patient.lastName || '')+' appointment booked with '+String(doctor || '')+' on '+String(date || '')+' at '+String(time || ''));
@@ -5397,8 +5423,16 @@ async function bookAppointment(){
   updateStats();
 }
 
+async function writeServerNotification(data){
+  if(!window.firebaseDB||!window.firebaseFunctions)throw new Error('Common server is unavailable');
+  var f=window.firebaseFunctions,staff=window.currentStaff||{},id='NTF-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
+  var record=Object.assign({id:id,title:'Reception notification',message:'',type:'reception',toRoles:[],toStaffId:'',read:false,createdById:String(staff.staffId||staff.id||''),createdByName:String(staff.name||'Reception'),createdAt:f.serverTimestamp()},data||{});
+  await f.setDoc(f.doc(window.firebaseDB,'notifications',id),record);
+  return record;
+}
+
 // ─── SEND DOCTOR NOTIFICATION ───
-function sendDoctorNotification(appointment, patient) {
+async function sendDoctorNotification(appointment, patient) {
   // Create notification object
   var notification = {
     id: Date.now(),
@@ -5418,33 +5452,14 @@ function sendDoctorNotification(appointment, patient) {
     read: false
   };
 
-  // ─── SAVE TO LOCAL STORAGE (for doctor dashboard) ───
-  var doctorNotifications = JSON.parse(localStorage.getItem('pclinic_doctor_notifications') || '[]');
-  doctorNotifications.push(notification);
-  localStorage.setItem('pclinic_doctor_notifications', JSON.stringify(doctorNotifications));
-
-  // The appointment notification state was included in the server-confirmed patient update.
-  // ─── SAVE TO DOCTOR'S SPECIFIC NOTIFICATION LIST ───
-  var doctorKey = 'pclinic_doctor_' + appointment.doctor.replace(/\s+/g, '_') + '_appointments';
-  var doctorAppointments = JSON.parse(localStorage.getItem(doctorKey) || '[]');
-  doctorAppointments.push({
-    id: appointment.id,
-    patientId: patient.id,
-    patientName: patient.firstName + ' ' + patient.lastName,
-    patientMrn: patient.mrn,
-    date: appointment.date,
-    time: appointment.time,
-    department: appointment.department,
-    priority: appointment.priority,
-    notes: appointment.notes,
-    status: 'pending',
-    createdAt: Date.now(),
-    notifiedAt: new Date().toISOString()
+  await writeServerNotification({
+    type:'appointment',title:'New appointment — '+appointment.patientName,
+    message:appointment.date+' '+appointment.time+' · '+appointment.department,
+    toRoles:['doctor'],targetStaffName:appointment.doctor,
+    appointmentId:String(appointment.id),patientId:String(patient.id),patientMrn:String(patient.mrn||''),
+    date:appointment.date,time:appointment.time,department:appointment.department,priority:appointment.priority,notes:appointment.notes||''
   });
-  localStorage.setItem(doctorKey, JSON.stringify(doctorAppointments));
-
-  console.log('📨 Notification sent to doctor:', appointment.doctor);
-  console.log('📋 Doctor appointments saved:', doctorAppointments.length);
+  console.log('📨 Server notification sent to doctor:', appointment.doctor);
 }
 
 // ─── VIEW DOCTOR NOTIFICATIONS (FOR TESTING) ───
@@ -5483,44 +5498,41 @@ function loadAppointments(){
 }
 
 // ─── BEDS ───
-var wards = [
-  {name:'ICU', beds:[{n:'ICU-1',s:'occupied'},{n:'ICU-2',s:'occupied'},{n:'ICU-3',s:'reserved'},{n:'ICU-4',s:'avail'},{n:'ICU-5',s:'avail'},{n:'ICU-6',s:'occupied'}]},
-  {name:'Cardiology', beds:[{n:'C-01',s:'occupied'},{n:'C-02',s:'avail'},{n:'C-03',s:'avail'},{n:'C-04',s:'reserved'},{n:'C-05',s:'occupied'},{n:'C-06',s:'avail'},{n:'C-07',s:'avail'},{n:'C-08',s:'occupied'}]},
-  {name:'Neurology', beds:[{n:'N-01',s:'avail'},{n:'N-02',s:'occupied'},{n:'N-03',s:'avail'},{n:'N-04',s:'avail'}]},
-  {name:'Orthopedics', beds:[{n:'O-01',s:'occupied'},{n:'O-02',s:'reserved'},{n:'O-03',s:'avail'},{n:'O-04',s:'avail'},{n:'O-05',s:'avail'},{n:'O-06',s:'occupied'}]},
-  {name:'Pediatrics', beds:[{n:'P-01',s:'avail'},{n:'P-02',s:'avail'},{n:'P-03',s:'occupied'},{n:'P-04',s:'avail'}]},
-];
-
-function renderBeds(){
-  var el = document.getElementById('bedsContent');
-  el.innerHTML = wards.map(function(w){
-    var avail = w.beds.filter(function(b){ return b.s === 'avail'; }).length;
-    var total = w.beds.length;
-    var pct = Math.round(avail/total*100);
-    var bc = pct>50 ? '#34c759' : pct>25 ? '#ff9500' : '#ff3b30';
-    return '<div class="ward-card"><div class="ward-header"><div class="ward-name">'+w.name+'</div><div class="ward-stats">'+avail+'/'+total+' available · '+pct+'%</div></div>'+
-      '<div class="ward-bar"><div class="ward-bar-fill" style="width:'+pct+'%;background:'+bc+'"></div></div>'+
-      '<div class="bed-grid">'+w.beds.map(function(b){ return '<div class="bed-item '+b.s+'" title="'+b.n+'">'+b.n+'</div>'; }).join('')+'</div>'+
-      '<div class="bed-legend"><div class="bed-legend-item"><div class="bed-legend-dot available"></div>Available</div>'+
-      '<div class="bed-legend-item"><div class="bed-legend-dot occupied"></div>Occupied</div>'+
-      '<div class="bed-legend-item"><div class="bed-legend-dot reserved"></div>Reserved</div></div></div>';
-  }).join('');
-  updateStats();
+var wards = [];
+var bedRegistryUnsubscribe = null;
+function applyBedSnapshot(snapshot){
+  var byWard={};
+  snapshot.forEach(function(ds){
+    var d=ds.data()||{},ward=String(d.ward||'Unassigned'),status=String(d.status||'unavailable').toLowerCase();
+    if(['available','avail','occupied','reserved','maintenance','unavailable'].indexOf(status)===-1)status='unavailable';
+    if(status==='available')status='avail';
+    if(!byWard[ward])byWard[ward]=[];
+    byWard[ward].push({n:String(d.bedNumber||d.name||d.id||ds.id),s:status,patientId:String(d.patientId||'')});
+  });
+  wards=Object.keys(byWard).sort().map(function(name){return{name:name,beds:byWard[name].sort(function(a,b){return a.n.localeCompare(b.n);})};});
+  renderBeds();
 }
-
-function refreshBeds(){
-  showLoading('Refreshing bed status...');
-  setTimeout(function(){
-    wards.forEach(function(w){
-      w.beds.forEach(function(b){
-        if(Math.random() > .8) b.s = b.s === 'avail' ? 'occupied' : 'avail';
-      });
-    });
-    renderBeds();
-    hideLoading();
-    showToast('🔄 Bed status refreshed', 'info');
-    if(navigator.vibrate) navigator.vibrate(10);
-  }, 500);
+function startBedRegistry(){
+  if(bedRegistryUnsubscribe||!window.firebaseDB||!window.firebaseFunctions)return;
+  var f=window.firebaseFunctions;
+  bedRegistryUnsubscribe=f.onSnapshot(f.collection(window.firebaseDB,'beds'),applyBedSnapshot,function(error){
+    console.error('Bed registry unavailable:',error);wards=[];renderBeds();showToast('❌ Authoritative bed registry is unavailable. No bed availability is being shown.','error');
+  });
+}
+function renderBeds(){
+  var el=document.getElementById('bedsContent');if(!el)return;
+  if(!wards.length){el.innerHTML='<div class="empty-state" style="grid-column:1/-1;padding:42px;text-align:center;"><strong>No authoritative bed records available.</strong><br><span style="font-size:11px;">Reception will never display simulated availability. Ask Beds/Admin staff to configure the server bed registry.</span></div>';updateStats();return;}
+  el.innerHTML=wards.map(function(w){
+    var avail=w.beds.filter(function(b){return b.s==='avail';}).length,total=w.beds.length,pct=total?Math.round(avail/total*100):0,bc=pct>50?'#34c759':pct>25?'#ff9500':'#ff3b30';
+    return '<div class="ward-card"><div class="ward-header"><div class="ward-name">'+escHtml(w.name)+'</div><div class="ward-stats">'+avail+'/'+total+' available · '+pct+'%</div></div><div class="ward-bar"><div class="ward-bar-fill" style="width:'+pct+'%;background:'+bc+'"></div></div><div class="bed-grid">'+w.beds.map(function(b){return '<div class="bed-item '+escHtml(b.s)+'" title="'+escHtml(b.n)+(b.patientId?' · assigned':'')+'">'+escHtml(b.n)+'</div>';}).join('')+'</div><div class="bed-legend"><div class="bed-legend-item"><div class="bed-legend-dot available"></div>Available</div><div class="bed-legend-item"><div class="bed-legend-dot occupied"></div>Occupied</div><div class="bed-legend-item"><div class="bed-legend-dot reserved"></div>Reserved</div></div></div>';
+  }).join('');updateStats();
+}
+async function refreshBeds(){
+  if(!window.firebaseDB||!window.firebaseFunctions){showToast('❌ Common server is unavailable.','error');return;}
+  showLoading('Refreshing authoritative bed registry...');
+  try{var snap=await window.firebaseFunctions.getDocs(window.firebaseFunctions.collection(window.firebaseDB,'beds'));applyBedSnapshot(snap);showToast('✅ Bed registry refreshed from Common Server.','success');}
+  catch(error){console.error(error);showToast('❌ Bed registry refresh failed.','error');}
+  finally{hideLoading();}
 }
 
 
@@ -5621,74 +5633,28 @@ function renderAppointmentList() {
   tbody.innerHTML = html;
 }
 
-// ─── CONFIRM APPOINTMENT ───
-function confirmAppointment(appointmentId) {
-  var found = false;
-
-  // Update in appointments array
-  var apptIndex = appointments.findIndex(function(a) { return a.id === appointmentId; });
-  if (apptIndex !== -1) {
-    appointments[apptIndex].status = 'confirmed';
-    found = true;
-  }
-
-  // Update in patient records
-  var patients = getPatients();
-  patients.forEach(function(patient) {
-    if (patient.appointments) {
-      var patientAppt = patient.appointments.find(function(a) { return a.id === appointmentId; });
-      if (patientAppt) {
-        patientAppt.status = 'confirmed';
-        updatePatient(patient.id, { appointments: patient.appointments });
-        found = true;
-      }
-    }
+// ─── CONFIRM / CANCEL APPOINTMENT — SERVER CONFIRMED ───
+async function setAppointmentStatus(appointmentId,status) {
+  var local=appointments.find(function(a){return a.id===appointmentId;});
+  var patients=getPatients(),writes=[],found=false;
+  patients.forEach(function(patient){
+    var list=Array.isArray(patient.appointments)?patient.appointments.slice():[];
+    var idx=list.findIndex(function(a){return a.id===appointmentId;});
+    if(idx!==-1){list[idx]=Object.assign({},list[idx],{status:status,updatedAt:new Date().toISOString()});writes.push(updatePatient(patient.id,{appointments:list}));found=true;}
   });
-
-  if (found) {
-    saveAppointments();
-    renderAppointmentList();
-    showToast('✅ Appointment confirmed!', 'success');
-    addFeed('updated', 'Appointment confirmed');
-  } else {
-    showToast('❌ Appointment not found', 'error');
-  }
+  if(!found){showToast('❌ Appointment not found','error');return false;}
+  var results=await Promise.all(writes);
+  if(results.some(function(r){return !r;})){showToast('❌ Appointment status was not saved to the Common Server.','error');return false;}
+  if(local)local.status=status;
+  saveAppointments();renderAppointmentList();
+  showToast(status==='confirmed'?'✅ Appointment confirmed!':'🗑️ Appointment cancelled',status==='confirmed'?'success':'info');
+  addFeed(status==='confirmed'?'updated':'note','Appointment '+status);
+  return true;
 }
-
-// ─── CANCEL APPOINTMENT ───
-function cancelAppointment(appointmentId) {
-  if (!confirm('⚠️ Are you sure you want to cancel this appointment?')) return;
-
-  var found = false;
-
-  // Update in appointments array
-  var apptIndex = appointments.findIndex(function(a) { return a.id === appointmentId; });
-  if (apptIndex !== -1) {
-    appointments[apptIndex].status = 'cancelled';
-    found = true;
-  }
-
-  // Update in patient records
-  var patients = getPatients();
-  patients.forEach(function(patient) {
-    if (patient.appointments) {
-      var patientAppt = patient.appointments.find(function(a) { return a.id === appointmentId; });
-      if (patientAppt) {
-        patientAppt.status = 'cancelled';
-        updatePatient(patient.id, { appointments: patient.appointments });
-        found = true;
-      }
-    }
-  });
-
-  if (found) {
-    saveAppointments();
-    renderAppointmentList();
-    showToast('🗑️ Appointment cancelled', 'info');
-    addFeed('note', 'Appointment cancelled');
-  } else {
-    showToast('❌ Appointment not found', 'error');
-  }
+async function confirmAppointment(appointmentId){return setAppointmentStatus(appointmentId,'confirmed');}
+async function cancelAppointment(appointmentId){
+  if(!confirm('⚠️ Are you sure you want to cancel this appointment?'))return false;
+  return setAppointmentStatus(appointmentId,'cancelled');
 }
 
 // ─── REFERRALS DATA ───
@@ -6127,7 +6093,13 @@ async function bookSurgery() {
   if(!updatedPatient){showToast('❌ Surgery was not saved to the Common Server.','error');return;}
   surgeries.push(surgery);
   saveSurgeries();
-  sendSurgeonNotification(surgery,updatedPatient);
+  try {
+    await sendSurgeonNotification(surgery,updatedPatient);
+    surgery.notificationSent=true;
+  } catch(notificationError) {
+    console.error(notificationError);
+    showToast('⚠️ Surgery saved, but the Theater notification failed.','warning');
+  }
 
   // ─── ADD TO ACTIVITY FEED ───
   addFeed('critical', '🔪 Surgery booked for '+String(patient.firstName || '')+' '+String(patient.lastName || '')+' with '+String(surgeon || '')+' ('+String(procedure || '')+')');
@@ -6149,52 +6121,16 @@ async function bookSurgery() {
 }
 
 // ─── SEND SURGEON NOTIFICATION ───
-function sendSurgeonNotification(surgery, patient) {
-  // Create notification
-  var notification = {
-    id: Date.now(),
-    type: 'surgery',
-    surgeryId: surgery.id,
-    patientId: patient.id,
-    patientName: patient.firstName + ' ' + patient.lastName,
-    patientMrn: patient.mrn,
-    surgeon: surgery.surgeon,
-    procedure: surgery.procedure,
-    date: surgery.date,
-    time: surgery.time,
-    theater: surgery.theater,
-    priority: surgery.priority,
-    notes: surgery.notes,
-    status: 'pending',
-    createdAt: Date.now(),
-    read: false
-  };
-
-  // Save to surgeon's notifications
-  var surgeonKey = 'pclinic_surgeon_' + surgery.surgeon.replace(/\s+/g, '_') + '_surgeries';
-  var surgeonSurgeries = JSON.parse(localStorage.getItem(surgeonKey) || '[]');
-  surgeonSurgeries.push({
-    id: surgery.id,
-    patientId: patient.id,
-    patientName: patient.firstName + ' ' + patient.lastName,
-    patientMrn: patient.mrn,
-    procedure: surgery.procedure,
-    date: surgery.date,
-    time: surgery.time,
-    theater: surgery.theater,
-    priority: surgery.priority,
-    status: 'scheduled',
-    notes: surgery.notes,
-    createdAt: Date.now()
+async function sendSurgeonNotification(surgery, patient) {
+  await writeServerNotification({
+    type:'surgery',title:'New surgery — '+surgery.procedure,
+    message:surgery.date+' '+surgery.time+' · '+surgery.theater+' · '+surgery.patientName,
+    toRoles:['theater'],surgeonName:surgery.surgeon,
+    surgeryId:String(surgery.id),patientId:String(patient.id),patientMrn:String(patient.mrn||''),
+    procedure:surgery.procedure,date:surgery.date,time:surgery.time,theater:surgery.theater,
+    priority:surgery.priority,notes:surgery.notes||''
   });
-  localStorage.setItem(surgeonKey, JSON.stringify(surgeonSurgeries));
-
-  // Save to global notifications
-  var allNotifications = JSON.parse(localStorage.getItem('pclinic_surgery_notifications') || '[]');
-  allNotifications.push(notification);
-  localStorage.setItem('pclinic_surgery_notifications', JSON.stringify(allNotifications));
-
-  console.log('📨 Surgery notification sent to:', surgery.surgeon);
+  console.log('📨 Server surgery notification sent to Theater:', surgery.surgeon);
 }
 
 // ─── RENDER SURGERY LIST ───
@@ -6305,74 +6241,28 @@ function renderSurgeryList() {
   tbody.innerHTML = html;
 }
 
-// ─── CONFIRM SURGERY ───
-function confirmSurgery(surgeryId) {
-  var found = false;
-
-  // Update in surgeries array
-  var surgIndex = surgeries.findIndex(function(s) { return s.id === surgeryId; });
-  if (surgIndex !== -1) {
-    surgeries[surgIndex].status = 'confirmed';
-    found = true;
-  }
-
-  // Update in patient records
-  var patients = getPatients();
-  patients.forEach(function(patient) {
-    if (patient.surgeries) {
-      var patientSurg = patient.surgeries.find(function(s) { return s.id === surgeryId; });
-      if (patientSurg) {
-        patientSurg.status = 'confirmed';
-        updatePatient(patient.id, { surgeries: patient.surgeries });
-        found = true;
-      }
-    }
+// ─── CONFIRM / CANCEL SURGERY — SERVER CONFIRMED ───
+async function setSurgeryStatus(surgeryId,status){
+  var local=surgeries.find(function(s){return s.id===surgeryId;});
+  var patients=getPatients(),writes=[],found=false;
+  patients.forEach(function(patient){
+    var list=Array.isArray(patient.surgeries)?patient.surgeries.slice():[];
+    var idx=list.findIndex(function(s){return s.id===surgeryId;});
+    if(idx!==-1){list[idx]=Object.assign({},list[idx],{status:status,updatedAt:new Date().toISOString()});writes.push(updatePatient(patient.id,{surgeries:list}));found=true;}
   });
-
-  if (found) {
-    saveSurgeries();
-    renderSurgeryList();
-    showToast('✅ Surgery confirmed!', 'success');
-    addFeed('updated', '🔪 Surgery confirmed');
-  } else {
-    showToast('❌ Surgery not found', 'error');
-  }
+  if(!found){showToast('❌ Surgery not found','error');return false;}
+  var results=await Promise.all(writes);
+  if(results.some(function(r){return !r;})){showToast('❌ Surgery status was not saved to the Common Server.','error');return false;}
+  if(local)local.status=status;
+  saveSurgeries();renderSurgeryList();
+  showToast(status==='confirmed'?'✅ Surgery confirmed!':'🗑️ Surgery cancelled',status==='confirmed'?'success':'info');
+  addFeed(status==='confirmed'?'updated':'note','🔪 Surgery '+status);
+  return true;
 }
-
-// ─── CANCEL SURGERY ───
-function cancelSurgery(surgeryId) {
-  if (!confirm('⚠️ Are you sure you want to cancel this surgery?')) return;
-
-  var found = false;
-
-  // Update in surgeries array
-  var surgIndex = surgeries.findIndex(function(s) { return s.id === surgeryId; });
-  if (surgIndex !== -1) {
-    surgeries[surgIndex].status = 'cancelled';
-    found = true;
-  }
-
-  // Update in patient records
-  var patients = getPatients();
-  patients.forEach(function(patient) {
-    if (patient.surgeries) {
-      var patientSurg = patient.surgeries.find(function(s) { return s.id === surgeryId; });
-      if (patientSurg) {
-        patientSurg.status = 'cancelled';
-        updatePatient(patient.id, { surgeries: patient.surgeries });
-        found = true;
-      }
-    }
-  });
-
-  if (found) {
-    saveSurgeries();
-    renderSurgeryList();
-    showToast('🗑️ Surgery cancelled', 'info');
-    addFeed('note', '🔪 Surgery cancelled');
-  } else {
-    showToast('❌ Surgery not found', 'error');
-  }
+async function confirmSurgery(surgeryId){return setSurgeryStatus(surgeryId,'confirmed');}
+async function cancelSurgery(surgeryId){
+  if(!confirm('⚠️ Are you sure you want to cancel this surgery?'))return false;
+  return setSurgeryStatus(surgeryId,'cancelled');
 }
 
 // ─── POPULATE SURGERY PATIENTS ───
@@ -6395,6 +6285,7 @@ function populateSurgeryPatients() {
 // ─── INIT — 4 CARDS, NUMERIC ONLY MRN, COMMUNICATES EVERYWHERE ───
 // COMMON SERVER: reads patients from Firebase same as doctor dashboard via patient-data.js realtime sync
 function init(){
+  document.querySelectorAll('.modal-overlay').forEach(function(modal){modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');});
   // Set dates - NOT for DOB (DOB should be empty), only for appointments
   document.getElementById('apptDate').value = todayStr();
   document.getElementById('apptTime').value = '09:00';
@@ -6419,6 +6310,7 @@ function init(){
   renderHistory();
   try{ renderReports(); }catch(e){}
   renderBeds();
+  startBedRegistry();
   renderRefs();
   updateStats();
 
@@ -6432,6 +6324,7 @@ function init(){
     try {
       var count = 0;
       try { count = getPatients().length; } catch(e){}
+      if(count>0&&typeof rebuildBillingPatientDirectory==='function')rebuildBillingPatientDirectory();
       console.log('☁️ Common server sync ['+source+'] — patients:', count, detail||'');
       initRefs();
       loadQueue();

@@ -42,6 +42,46 @@ function getPatientRef(id) {
     const { doc } = window.firebaseFunctions;
     return doc(window.firebaseDB, COLLECTION_NAME, String(id));
 }
+function billingDirectoryRecord(patient) {
+    const insurance = patient && patient.insurance && typeof patient.insurance === 'object' ? patient.insurance : {};
+    return {
+        id: String(patient.id),
+        mrn: String(patient.mrn || patient.id),
+        name: String(patient.name || ((patient.firstName || '') + ' ' + (patient.lastName || '')).trim()),
+        firstName: String(patient.firstName || ''),
+        lastName: String(patient.lastName || ''),
+        insuranceProvider: String(insurance.provider || ''),
+        patientPayPercent: Number(insurance.patientPayPercent != null ? insurance.patientPayPercent : (patient.billingPatientPayPercent != null ? patient.billingPatientPayPercent : 100)),
+        active: patient.status !== 'inactive',
+        updatedAt: new Date().toISOString()
+    };
+}
+async function syncBillingPatientDirectory(patient) {
+    if (!patient || !patient.id || !window.firebaseDB || !window.firebaseFunctions) return false;
+    try {
+        const { doc, setDoc, serverTimestamp } = window.firebaseFunctions;
+        const ref = doc(window.firebaseDB, 'billingPatientDirectory', String(patient.id));
+        const record = billingDirectoryRecord(patient);
+        await setDoc(ref, { ...record, updatedAt: serverTimestamp() }, { merge: true });
+        return true;
+    } catch (error) {
+        console.error('Billing patient directory sync failed:', error);
+        if (window.pcToast) window.pcToast('Patient saved, but billing directory sync failed. Contact an administrator.', 'warning', 7000);
+        return false;
+    }
+}
+let billingDirectoryRebuilt = false;
+async function rebuildBillingPatientDirectory() {
+    const role = String(getCurrentStaff().role || '').toLowerCase();
+    if (billingDirectoryRebuilt || (role !== 'reception' && role !== 'admin')) return false;
+    billingDirectoryRebuilt = true;
+    const patients = getPatients();
+    for (let i = 0; i < patients.length; i += 25) {
+        await Promise.all(patients.slice(i, i + 25).map(syncBillingPatientDirectory));
+    }
+    return true;
+}
+window.rebuildBillingPatientDirectory = rebuildBillingPatientDirectory;
 function parseCounterDocPath() {
     const [col, docId] = COUNTER_DOC_PATH.split('/');
     return { col, docId };
@@ -337,7 +377,19 @@ async function addPatient(patientData) {
     }
 
     const nowIso = new Date().toISOString();
+    // Preserve the complete Reception registration schema. Identity, audit,
+    // media and clinical-array fields below are still controlled here so a
+    // caller cannot override authoritative values.
+    const safeRegistrationData = { ...(patientData || {}) };
+    [
+        'id', 'mrn', 'createdAt', 'createdBy', 'createdById', 'updatedAt',
+        'updatedBy', 'updatedById', 'photo', 'photos', 'videos', 'media',
+        'attachments', 'consentFile', 'vitals', 'triage', 'clinicalNotes',
+        'prescriptions', 'billingHistory', 'labRequests', 'labResults',
+        'appointments', 'referrals', 'wardRounds'
+    ].forEach(field => { delete safeRegistrationData[field]; });
     const newPatient = {
+        ...safeRegistrationData,
         id: newId,
         mrn: String(newId),
         name: fullName || (firstName + ' ' + lastName).trim(),
@@ -390,6 +442,7 @@ async function addPatient(patientData) {
         patients.push(newPatient);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
         window.dispatchEvent(new Event('storage'));
+        await syncBillingPatientDirectory(newPatient);
         console.log('☁️ Patient created on server:', newPatient.mrn);
         return newPatient;
     } catch (e) {
@@ -441,6 +494,13 @@ async function updatePatient(id, updates) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
     clearPatientPending(id);
     window.dispatchEvent(new Event('storage'));
+    // Reception edits to identity/insurance must immediately reach Cashier's
+    // restricted directory. Other roles may be denied by rules; patient save
+    // remains successful and Reception will reconcile on its next edit.
+    const syncRole = String(getCurrentStaff().role || '').toLowerCase();
+    if (syncRole === 'reception' || syncRole === 'admin') {
+        try { await syncBillingPatientDirectory(merged); } catch (e) {}
+    }
     console.log('✅ Patient updated on server:', merged.mrn, Object.keys(safeUpdates));
     return merged;
 }

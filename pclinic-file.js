@@ -1533,7 +1533,9 @@
             if (!q) { if (window.pcToast) pcToast('Enter at least one search field', 'info'); return; }
             var results = [];
             try {
-                if (typeof searchPatients === 'function') results = searchPatients(q);
+                var cashierPage = String((window.location && window.location.pathname) || '').toLowerCase().indexOf('cashier-dashboard') !== -1;
+                if (cashierPage && typeof searchBillingPatients === 'function') results = searchBillingPatients(q);
+                else if (typeof searchPatients === 'function') results = searchPatients(q);
                 else if (typeof getPatients === 'function') {
                     var all = getPatients() || [];
                     var low = q.toLowerCase();
@@ -2354,7 +2356,11 @@
             try { savedId = savedId || new URLSearchParams(window.location.search).get('patient'); } catch(e){}
             if (savedId) {
                 var list = [];
-                try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
+                try {
+                    var cashierRestore = String((window.location && window.location.pathname) || '').toLowerCase().indexOf('cashier-dashboard') !== -1;
+                    if (cashierRestore && typeof getBillingPatients === 'function') list = getBillingPatients() || [];
+                    else if (typeof getPatients === 'function') list = getPatients() || [];
+                } catch(e){}
                 if (!list.length) {
                     try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
                 }

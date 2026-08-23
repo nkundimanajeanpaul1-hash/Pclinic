@@ -1,0 +1,300 @@
+
+> test:all
+> npm run test:static && npm run test:rules
+
+
+> test:static
+> node --test dashboard-role-contracts.test.mjs
+
+TAP version 13
+# Subtest: reception-dashboard.html requires reception authentication
+ok 1 - reception-dashboard.html requires reception authentication
+  ---
+  duration_ms: 8.109385
+  ...
+# Subtest: doctor-dashboard.html requires doctor authentication
+ok 2 - doctor-dashboard.html requires doctor authentication
+  ---
+  duration_ms: 1.942637
+  ...
+# Subtest: cashier-dashboard.html requires cashier authentication
+ok 3 - cashier-dashboard.html requires cashier authentication
+  ---
+  duration_ms: 2.462801
+  ...
+# Subtest: nurse-dashboard.html requires nurse authentication
+ok 4 - nurse-dashboard.html requires nurse authentication
+  ---
+  duration_ms: 1.882341
+  ...
+# Subtest: beds-dashboard.html requires beds authentication
+ok 5 - beds-dashboard.html requires beds authentication
+  ---
+  duration_ms: 0.804386
+  ...
+# Subtest: theater-dashboard.html requires theater authentication
+ok 6 - theater-dashboard.html requires theater authentication
+  ---
+  duration_ms: 1.144311
+  ...
+# Subtest: new patient registration preserves the complete approved schema
+ok 7 - new patient registration preserves the complete approved schema
+  ---
+  duration_ms: 24.338721
+  ...
+# Subtest: cross-role server integrations are loaded by consumers
+ok 8 - cross-role server integrations are loaded by consumers
+  ---
+  duration_ms: 3.60889
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 101.541321
+
+> test:rules
+> firebase emulators:exec --config ../firebase.json --project demo-pclinic --only firestore "node --test firestore.rules.test.mjs"
+
+⚠  emulators: You are not currently authenticated so some features may not work correctly. Please run firebase login to authenticate the CLI.
+i  emulators: Starting emulators: firestore
+i  emulators: Detected demo project ID "demo-pclinic", emulated services will use a demo configuration and attempts to access non-emulated services for this project will fail.
+i  firestore: Firestore Emulator logging to firestore-debug.log
+✔  firestore: Firestore Emulator UI websocket is running on 9150.
+i  Running script: node --test firestore.rules.test.mjs
+TAP version 13
+# Subtest: default deny and patient access
+    # Subtest: signed-out, no-profile, inactive, HR and cashier cannot read patients
+    ok 1 - signed-out, no-profile, inactive, HR and cashier cannot read patients
+      ---
+      duration_ms: 879.130103
+      ...
+    # Subtest: doctor can read and list patients
+    ok 2 - doctor can read and list patients
+      ---
+      duration_ms: 327.715997
+      ...
+# [2026-08-23T17:31:03.676Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c63 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# evaluation error at L150:24 for 'create' @ L150, false for 'create' @ L364, evaluation error at L156:24 for 'update' @ L156, false for 'update' @ L364, false for 'create' @ L150, false for 'create' @ L364
+    # Subtest: reception creates a patient but nurse cannot
+    ok 3 - reception creates a patient but nurse cannot
+      ---
+      duration_ms: 267.472228
+      ...
+# [2026-08-23T17:31:03.825Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c65 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# evaluation error at L156:24 for 'update' @ L156, false for 'update' @ L364, false for 'update' @ L156, false for 'update' @ L364
+# [2026-08-23T17:31:03.872Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c66 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L150, false for 'create' @ L364, evaluation error at L156:24 for 'update' @ L156, false for 'update' @ L364, false for 'create' @ L150, false for 'create' @ L364
+    # Subtest: media fields are rejected
+    ok 4 - media fields are rejected
+      ---
+      duration_ms: 195.000661
+      ...
+# [2026-08-23T17:31:04.073Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c69 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# evaluation error at L156:24 for 'update' @ L156, false for 'update' @ L364, false for 'update' @ L156, false for 'update' @ L364
+# [2026-08-23T17:31:04.126Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c6a error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# evaluation error at L156:24 for 'update' @ L156, false for 'update' @ L364, false for 'update' @ L156, false for 'update' @ L364
+    # Subtest: patient identity is immutable
+    ok 5 - patient identity is immutable
+      ---
+      duration_ms: 254.703958
+      ...
+# [2026-08-23T17:31:04.264Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c6c error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# evaluation error at L160:24 for 'delete' @ L160, false for 'delete' @ L364, false for 'delete' @ L160, false for 'delete' @ L364
+    # Subtest: only admin deletes a patient
+    ok 6 - only admin deletes a patient
+      ---
+      duration_ms: 173.203648
+      ...
+# [2026-08-23T17:31:04.420Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c6f error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L182, false for 'create' @ L364, false for 'update' @ L182, false for 'update' @ L364
+# [2026-08-23T17:31:04.448Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c70 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L364, false for 'update' @ L364
+    # Subtest: unknown patient subcollections and unknown top-level collections are denied
+    ok 7 - unknown patient subcollections and unknown top-level collections are denied
+      ---
+      duration_ms: 147.875771
+      ...
+    1..7
+ok 1 - default deny and patient access
+  ---
+  duration_ms: 4140.042331
+  type: 'suite'
+  ...
+# [2026-08-23T17:31:04.650Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c72 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L130, false for 'create' @ L364, false for 'update' @ L134, false for 'update' @ L364
+# [2026-08-23T17:31:04.694Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c73 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L130, false for 'create' @ L364, false for 'update' @ L134, false for 'update' @ L364
+# Subtest: staff profile safety
+    # Subtest: admin cannot create a profile with plaintext password or invalid role
+    ok 1 - admin cannot create a profile with plaintext password or invalid role
+      ---
+      duration_ms: 281.848508
+      ...
+# [2026-08-23T17:31:04.874Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c77 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# evaluation error at L134:24 for 'update' @ L134, false for 'update' @ L364, false for 'update' @ L134, false for 'update' @ L364
+    # Subtest: admin can deactivate another user but cannot deactivate self
+    ok 2 - admin can deactivate another user but cannot deactivate self
+      ---
+      duration_ms: 143.756526
+      ...
+# [2026-08-23T17:31:05.002Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c79 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'delete' @ L143, false for 'delete' @ L364
+    # Subtest: profiles are never deleted
+    ok 3 - profiles are never deleted
+      ---
+      duration_ms: 128.174057
+      ...
+    1..3
+ok 2 - staff profile safety
+  ---
+  duration_ms: 554.301926
+  type: 'suite'
+  ...
+# [2026-08-23T17:31:05.250Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c7d error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L190, false for 'create' @ L364, evaluation error at L195:24 for 'update' @ L195, false for 'update' @ L364, false for 'create' @ L190, false for 'create' @ L364
+# [2026-08-23T17:31:05.301Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c7e error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L190, false for 'create' @ L364, evaluation error at L195:24 for 'update' @ L195, false for 'update' @ L364, false for 'create' @ L190, false for 'create' @ L364
+# [2026-08-23T17:31:05.337Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c7f error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L190, false for 'create' @ L364, evaluation error at L195:24 for 'update' @ L195, false for 'update' @ L364, false for 'create' @ L190, false for 'create' @ L364
+# Subtest: laboratory workflow security
+    # Subtest: doctor creates a lab order exactly as pclinic-orders.js createOrder() does
+    ok 1 - doctor creates a lab order exactly as pclinic-orders.js createOrder() does
+      ---
+      duration_ms: 334.79355
+      ...
+# [2026-08-23T17:31:05.515Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c82 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L190, false for 'create' @ L364, evaluation error at L195:24 for 'update' @ L195, false for 'update' @ L364, false for 'create' @ L190, false for 'create' @ L364
+# [2026-08-23T17:31:05.563Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c83 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# evaluation error at L195:24 for 'update' @ L195, false for 'update' @ L364, false for 'update' @ L195, false for 'update' @ L364
+    # Subtest: laboratory may transition an existing lab order but cannot manufacture a legacy order in the browser
+    ok 2 - laboratory may transition an existing lab order but cannot manufacture a legacy order in the browser
+      ---
+      duration_ms: 228.445288
+      ...
+    # Subtest: clinical laboratory roles can read final reports but non-clinical roles cannot
+    ok 3 - clinical laboratory roles can read final reports but non-clinical roles cannot
+      ---
+      duration_ms: 357.741738
+      ...
+# [2026-08-23T17:31:06.073Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c8b error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L212, false for 'create' @ L364, false for 'update' @ L212, false for 'update' @ L364
+# [2026-08-23T17:31:06.110Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c8c error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'update' @ L212, false for 'update' @ L364
+# [2026-08-23T17:31:06.149Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c8d error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L222, false for 'create' @ L364, false for 'update' @ L222, false for 'update' @ L364
+    # Subtest: browser clients cannot create or overwrite final laboratory reports or alerts
+    ok 4 - browser clients cannot create or overwrite final laboratory reports or alerts
+      ---
+      duration_ms: 225.718183
+      ...
+    1..4
+ok 3 - laboratory workflow security
+  ---
+  duration_ms: 1147.328941
+  type: 'suite'
+  ...
+# [2026-08-23T17:31:06.420Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c92 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# evaluation error at L195:24 for 'update' @ L195, false for 'update' @ L364, false for 'update' @ L195, false for 'update' @ L364
+# Subtest: radiology workflow security
+    # Subtest: radiology can read imaging orders but cannot transition them directly
+    ok 1 - radiology can read imaging orders but cannot transition them directly
+      ---
+      duration_ms: 269.755413
+      ...
+    # Subtest: radiology reports are readable only by clinical reporting roles
+    ok 2 - radiology reports are readable only by clinical reporting roles
+      ---
+      duration_ms: 277.588763
+      ...
+# [2026-08-23T17:31:06.804Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c9b error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L230, false for 'create' @ L364, false for 'update' @ L230, false for 'update' @ L364
+# [2026-08-23T17:31:06.835Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c9c error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'update' @ L230, false for 'update' @ L364
+# [2026-08-23T17:31:06.861Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9c9d error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L240, false for 'create' @ L364, false for 'update' @ L240, false for 'update' @ L364
+    # Subtest: browser clients cannot create or alter reports, addenda or alerts
+    ok 3 - browser clients cannot create or alter reports, addenda or alerts
+      ---
+      duration_ms: 163.576421
+      ...
+    1..3
+ok 4 - radiology workflow security
+  ---
+  duration_ms: 711.455306
+  type: 'suite'
+  ...
+# [2026-08-23T17:31:07.133Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9ca3 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L247, false for 'create' @ L364, false for 'update' @ L247, false for 'update' @ L364
+# Subtest: reception cross-role integrations
+    # Subtest: cashier and finance read only the restricted billing directory
+    ok 1 - cashier and finance read only the restricted billing directory
+      ---
+      duration_ms: 271.206233
+      ...
+# [2026-08-23T17:31:07.471Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9ca9 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# evaluation error at L262:32 for 'update' @ L262, false for 'update' @ L364, false for 'update' @ L262, false for 'update' @ L364
+    # Subtest: bed registry is readable by operational roles and writable only by Beds/Admin
+    ok 2 - bed registry is readable by operational roles and writable only by Beds/Admin
+      ---
+      duration_ms: 383.543751
+      ...
+    # Subtest: server notifications are role-addressed
+    ok 3 - server notifications are role-addressed
+      ---
+      duration_ms: 251.09438
+      ...
+    1..3
+ok 5 - reception cross-role integrations
+  ---
+  duration_ms: 906.434438
+  type: 'suite'
+  ...
+# [2026-08-23T17:31:07.940Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9cb4 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# evaluation error at L339:24 for 'update' @ L339, evaluation error at L350:32 for 'update' @ L350, false for 'update' @ L364, false for 'update' @ L339, false for 'update' @ L350, false for 'update' @ L364
+# [2026-08-23T17:31:07.982Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9cb5 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# evaluation error at L339:24 for 'update' @ L339, evaluation error at L350:32 for 'update' @ L350, false for 'update' @ L364, false for 'update' @ L339, false for 'update' @ L350, false for 'update' @ L364
+# Subtest: patient counter, billing and files
+    # Subtest: reception increments counter exactly by one; other roles cannot
+    ok 1 - reception increments counter exactly by one; other roles cannot
+      ---
+      duration_ms: 213.491507
+      ...
+    # Subtest: cashier reads/creates bills but cannot read full patients
+    ok 2 - cashier reads/creates bills but cannot read full patients
+      ---
+      duration_ms: 157.570716
+      ...
+# [2026-08-23T17:31:08.274Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9cbc error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L166, false for 'create' @ L182, false for 'create' @ L364, false for 'update' @ L166, false for 'update' @ L182, false for 'update' @ L364
+# [2026-08-23T17:31:08.314Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x788e9cbd error. Code: 7 Message: 7 PERMISSION_DENIED: 
+# false for 'create' @ L166, false for 'create' @ L182, false for 'create' @ L364, false for 'update' @ L166, false for 'update' @ L182, false for 'update' @ L364
+    # Subtest: patient files reject embedded data URLs
+    ok 3 - patient files reject embedded data URLs
+      ---
+      duration_ms: 174.443084
+      ...
+    1..3
+ok 6 - patient counter, billing and files
+  ---
+  duration_ms: 545.874303
+  type: 'suite'
+  ...
+1..6
+# tests 23
+# suites 6
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8365.873731
+✔  Script exited successfully (code 0)
+i  emulators: Shutting down emulators.
+i  firestore: Stopping Firestore Emulator
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator

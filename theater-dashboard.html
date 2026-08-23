@@ -6,6 +6,7 @@
     <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
     <script type="module" src="firebase-config.js"></script>
     <script src="auth-guard.js"></script>
+    <script src="pclinic-notifications.js" defer></script>
 <script src="pclinic-state.js"></script>
 <script src="shared.js" defer></script>
 
@@ -2019,6 +2020,7 @@
     <script>
         requireAuth(['theater']).then(function(staff) {
             window.currentStaff = staff;
+            window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: staff }));
             console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
         }).catch(function(err) {
             console.warn('Auth guard redirect:', err && err.message);

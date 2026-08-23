@@ -240,11 +240,48 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── RESTRICTED BILLING PATIENT DIRECTORY ─────────────────────
+    // Contains no clinical notes, diagnoses, contact details or national ID.
+    match /billingPatientDirectory/{patientId} {
+      allow read: if hasRole(['reception', 'cashier', 'finance']);
+      allow create, update: if hasRole(['reception'])
+        && request.resource.data.get('id', '') == patientId
+        && request.resource.data.keys().hasOnly([
+          'id','mrn','name','firstName','lastName','insuranceProvider',
+          'patientPayPercent','active','updatedAt'
+        ])
+        && request.resource.data.get('patientPayPercent', -1) is number
+        && request.resource.data.get('patientPayPercent', -1) >= 0
+        && request.resource.data.get('patientPayPercent', -1) <= 100;
+      allow delete: if isAdmin();
+    }
+
+    // ── AUTHORITATIVE BED REGISTRY ────────────────────────────────
+    match /beds/{bedId} {
+      allow read: if hasRole(['reception','nurse','beds','theater']);
+      allow create, update: if hasRole(['beds'])
+        && request.resource.data.get('id','') == bedId
+        && request.resource.data.get('status','') in ['available','occupied','reserved','maintenance','unavailable'];
+      allow delete: if isAdmin();
+    }
+
+    // ── SERVER-BACKED STAFF NOTIFICATIONS ─────────────────────────
+    match /notifications/{notificationId} {
+      allow read: if messageAddressedToCaller(resource.data);
+      allow create: if hasRole(['reception','doctor','nurse','lab','radio','theater','beds'])
+        && request.resource.data.get('id','') == notificationId
+        && request.resource.data.get('createdById','') == staffId()
+        && request.resource.data.get('toRoles',[]) is list;
+      allow update: if messageAddressedToCaller(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read','readAt']);
+      allow delete: if isAdmin();
+    }
+
     // ── BILLS ────────────────────────────────────────────────────
     match /bills/{billId} {
       allow read: if hasRole(['cashier', 'finance']);
 
-      allow create: if hasRole(['doctor', 'nurse', 'reception'])
+      allow create: if hasRole(['doctor', 'nurse', 'reception', 'cashier'])
         && request.resource.data.get('id', '') == billId
         && request.resource.data.get('createdById', '') == staffId()
         && request.resource.data.get('status', '') == 'pending'

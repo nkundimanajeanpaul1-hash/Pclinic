@@ -1364,7 +1364,7 @@
         b = b || {};
         var patient = null;
         try {
-            var patients = typeof getPatients === 'function' ? getPatients() : read('pclinic_patients', []);
+            var patients = typeof getBillingPatients === 'function' ? getBillingPatients() : (typeof getPatients === 'function' ? getPatients() : read('pclinic_patients', []));
             patient = (patients || []).filter(function(p) {
                 return String(p.id) === String(b.patientId) || String(p.mrn || '') === String(b.patientId);
             })[0] || null;

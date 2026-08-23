@@ -686,8 +686,9 @@
 <!-- ─── SCRIPTS ─── -->
 <script type="module" src="firebase-config.js"></script>
 <script src="auth-guard.js"></script>
+<script src="pclinic-notifications.js"></script>
 <script src="pclinic-state.js"></script>
-<script src="patient-data.js"></script>
+<script src="billing-patient-directory.js"></script>
 <script src="pclinic-orders.js"></script>
 <script src="pclinic-cashier.js"></script>
 <script src="shared.js"></script>
@@ -717,8 +718,8 @@
     /* ─── COMMON SERVER PATIENT & BILL SELECTORS ─── */
     window.initCashierCommonServer = function() {
         var patSel = document.getElementById('m_pat');
-        if (patSel && typeof getPatients === 'function') {
-            var patients = getPatients() || [];
+        if (patSel) {
+            var patients = (typeof getBillingPatients === 'function') ? getBillingPatients() : [];
             if (patients.length === 0) {
                 patSel.innerHTML = '<option value="">— No registered patients found in Common Server —</option>';
             } else {
@@ -752,7 +753,7 @@
         var wanted = String(patientId == null ? '' : patientId).replace(/^MOD-/i, '').trim();
         if (!wanted) return null;
         var patients = [];
-        try { if (typeof getPatients === 'function') patients = getPatients() || []; } catch(e) {}
+        try { if (typeof getBillingPatients === 'function') patients = getBillingPatients() || []; } catch(e) {}
         var selected = patients.find(function(p) {
             return String(p.id || '') === wanted || String(p.mrn || '').replace(/^MOD-/i, '') === wanted;
         }) || null;
@@ -1329,6 +1330,10 @@
         }
     });
 
+    window.addEventListener('billingPatientDirectoryUpdated', function() {
+        if (typeof initCashierCommonServer === 'function') initCashierCommonServer();
+    });
+
     window.addEventListener('focus', function() {
         if (window.pcBillFeed && pcBillFeed.repaintCashier) pcBillFeed.repaintCashier();
         renderAuxViews();
@@ -1343,6 +1348,7 @@
     // which roles are listed here — so admin keeps full access too.
     requireAuth(['cashier']).then(function(staff) {
         window.currentStaff = staff;
+        window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: staff }));
         console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
     }).catch(function(err) {
         console.warn('Auth guard redirect:', err && err.message);
