@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Bed Registry Setup — PClinic</title>
+<style>
+:root{--bg:#ababb9;--s1:#fff;--bd:#d1d1d6;--tp:#1c1c1e;--tm:#8e8e93;--ac:#007aff;--green:#34c759;--red:#ff3b30;--orange:#ff9500;--f:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--f);background:var(--bg);color:var(--tp);font-size:13px;min-height:100vh;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 60px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#007aff,#0055cc);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px}
+h1{font-size:19px;letter-spacing:-.4px}
+.sub{color:var(--tm);font-size:12px;margin-bottom:18px;line-height:1.5}
+.card{background:var(--s1);border:.5px solid var(--bd);border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card h2{font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+input,select{padding:9px 12px;font-size:13px;border-radius:10px;border:.5px solid var(--bd);background:#f5f5f7;color:var(--tp);font-family:var(--f);min-width:110px}
+input:focus,select:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px rgba(0,122,255,.15)}
+.btn{padding:9px 16px;font-size:12px;font-weight:600;border-radius:10px;border:.5px solid var(--bd);background:#fff;color:var(--tp);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+.btn:hover{background:#f5f5f7;transform:translateY(-1px)}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:var(--ac);color:#fff;border-color:var(--ac)}
+.btn-primary:hover{background:#0066d6}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-danger:hover{background:#d70000}
+.hint{font-size:11px;color:var(--tm);margin-top:8px;line-height:1.5}
+.ward{margin-bottom:12px}
+.ward-hdr{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;margin-bottom:6px}
+.ward-stats{font-size:11px;color:var(--tm);font-weight:500}
+.beds{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:6px}
+.bed{border:.5px solid var(--bd);border-radius:8px;padding:7px 8px;font-size:11px;font-weight:600;display:flex;flex-direction:column;gap:2px;background:#fff}
+.bed .st{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.bed.available{border-color:#b8e9c9}.bed.available .st{color:#1a7a32}
+.bed.occupied{border-color:#ffbeb8;background:#fff7f6}.bed.occupied .st{color:#8a1f1a}
+.bed.reserved{border-color:#ffdfa0;background:#fffbf2}.bed.reserved .st{color:#7a4500}
+.bed.maintenance,.bed.unavailable{border-color:#d1d1d6;background:#f5f5f7;opacity:.75}.bed.maintenance .st,.bed.unavailable .st{color:#8e8e93}
+.empty{text-align:center;color:var(--tm);padding:30px 10px;font-size:12px;line-height:1.6}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:rgba(28,28,30,.94);color:#fff;border-radius:14px;padding:12px 20px;font-size:13px;box-shadow:0 4px 24px rgba(0,0,0,.25);display:none;z-index:99;max-width:90vw}
+.toast.show{display:block;animation:tp .35s cubic-bezier(0.34,1.56,0.64,1)}
+.toast.ok{background:var(--green)}.toast.err{background:var(--red)}
+@keyframes tp{from{opacity:0;transform:translateX(-50%) translateY(16px) scale(.9)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+.loading{text-align:center;padding:30px;color:var(--tm);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logo">P</div>
+    <div>
+      <h1>Bed Registry Setup</h1>
+      <div class="appsub" style="font-size:11px;color:var(--tm)">PClinic — authoritative bed configuration (Beds / Admin staff only)</div>
+    </div>
+  </div>
+  <div class="sub">
+    Reception, Nurse and Theater dashboards read the <b>beds</b> collection live. This page creates and clears that registry on the Common Server
+    (Firebase <b>pclinic-20d81</b>). If the registry is empty, Reception shows <i>“No authoritative bed records”</i> — never simulated beds.
+  </div>
+
+  <div class="card">
+    <h2>➕ Create beds for a ward</h2>
+    <div class="row">
+      <div class="field"><label>Ward name</label><input id="wardName" placeholder="e.g. ICU" size="10"/></div>
+      <div class="field"><label>Bed prefix</label><input id="bedPrefix" placeholder="e.g. I" size="6" value="B"/></div>
+      <div class="field"><label>Start #</label><input id="bedStart" type="number" min="1" value="1" size="6"/></div>
+      <div class="field"><label>Count</label><input id="bedCount" type="number" min="1" max="200" value="10" size="6"/></div>
+      <button class="btn btn-primary" onclick="createBeds()">Create beds</button>
+    </div>
+    <div class="hint">Creates documents like <b>BED-ICU-I1</b> → ward “ICU”, bed number “I1”, status <i>available</i>. Beds already existing are skipped (safe to re-run).</div>
+  </div>
+
+  <div class="card">
+    <h2>🛏️ Current registry</h2>
+    <div id="registry" class="loading">Loading bed registry from Common Server…</div>
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+      <button class="btn" onclick="loadRegistry()">↻ Refresh</button>
+      <button class="btn btn-danger" id="clearBtn" style="display:none" onclick="clearRegistry()">🗑️ Delete all beds (Admin)</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module" src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
+<script>
+function toast(msg, cls){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+(cls||'');
+  clearTimeout(t._h); t._h=setTimeout(function(){ t.className='toast'; }, 4000);
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+function bedDocId(ward, number){
+  return 'BED-' + String(ward).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'') + '-' + String(number).toUpperCase().replace(/[^A-Z0-9]+/g,'');
+}
+
+function createBeds(){
+  if(!window.firebaseDB || !window.firebaseFunctions){ toast('❌ Common Server is not ready yet. Reload.','err'); return; }
+  var ward=document.getElementById('wardName').value.trim();
+  var prefix=document.getElementById('bedPrefix').value.trim();
+  var start=parseInt(document.getElementById('bedStart').value,10);
+  var count=parseInt(document.getElementById('bedCount').value,10);
+  if(!ward){ toast('❌ Enter a ward name.','err'); return; }
+  if(!prefix){ toast('❌ Enter a bed prefix (e.g. I, A, W).','err'); return; }
+  if(!(start>=1) || !(count>=1) || count>200){ toast('❌ Start must be ≥1 and count 1–200.','err'); return; }
+  var f=window.firebaseFunctions, db=window.firebaseDB;
+  var created=0, skipped=0, failed=0;
+  (async function(){
+    for(var i=0;i<count;i++){
+      var number=prefix+(start+i);
+      var id=bedDocId(ward,number);
+      try{
+        var snap=await f.getDoc(f.doc(db,'beds',id));
+        if(snap.exists()){ skipped++; continue; }
+        await f.setDoc(f.doc(db,'beds',id), { id:id, ward:ward, bedNumber:number, status:'available', patientId:'', createdAt:f.serverTimestamp() });
+        created++;
+      }catch(e){ failed++; console.error('Bed create failed', id, e); }
+    }
+    if(failed) toast('⚠️ Created '+created+', skipped '+skipped+', FAILED '+failed+'. Check the console.','err');
+    else toast('✅ Created '+created+' bed(s) in “'+ward+'” (skipped '+skipped+' existing).','ok');
+    loadRegistry();
+  })();
+}
+
+function loadRegistry(){
+  var host=document.getElementById('registry');
+  if(!window.firebaseDB || !window.firebaseFunctions){ host.innerHTML='<div class="empty">Common Server not ready. Reload the page.</div>'; return; }
+  host.innerHTML='<div class="loading">Loading bed registry from Common Server…</div>';
+  var f=window.firebaseFunctions, db=window.firebaseDB;
+  f.getDocs(f.collection(db,'beds')).then(function(snap){
+    if(snap.empty){
+      host.innerHTML='<div class="empty">🛏️ The <b>beds</b> collection is empty.<br>Use the form above to create your first ward.<br><span style="font-size:11px">Reception will keep showing “No authoritative bed records” until beds exist.</span></div>';
+      return;
+    }
+    var byWard={};
+    snap.forEach(function(d){
+      var x=d.data()||{};
+      var ward=String(x.ward||'Unassigned');
+      (byWard[ward]=byWard[ward]||[]).push({ n:String(x.bedNumber||d.id), s:String(x.status||'unavailable'), p:String(x.patientId||''), id:d.id });
+    });
+    var wards=Object.keys(byWard).sort();
+    var total=0, avail=0;
+    var html='';
+    wards.forEach(function(w){
+      var beds=byWard[w].sort(function(a,b){ return a.n.localeCompare(b.n,undefined,{numeric:true}); });
+      var a=beds.filter(function(b){return b.s==='available';}).length;
+      total+=beds.length; avail+=a;
+      html+='<div class="ward"><div class="ward-hdr"><span>'+esc(w)+'</span><span class="ward-stats">'+a+'/'+beds.length+' available</span></div><div class="beds">';
+      beds.forEach(function(b){
+        html+='<div class="bed '+esc(b.s)+'"><span>'+esc(b.n)+'</span><span class="st">'+esc(b.s)+(b.p?' · '+esc(b.p):'')+'</span></div>';
+      });
+      html+='</div></div>';
+    });
+    host.innerHTML=html;
+    document.getElementById('registryTotal') && (document.getElementById('registryTotal').textContent=total);
+  }).catch(function(e){
+    console.error('Registry read failed', e);
+    host.innerHTML='<div class="empty">❌ Could not read the bed registry.<br><span style="font-size:11px">'+esc(e.message||e)+'</span><br><span style="font-size:11px">Make sure <b>firestore.rules</b> is deployed and you are logged in as Beds or Admin.</span></div>';
+  });
+}
+
+function clearRegistry(){
+  var c1=confirm('⚠️ Delete the ENTIRE bed registry from the Common Server?\nAll ward assignments shown in Reception/Nurse/Theater will disappear.');
+  if(!c1) return;
+  var c2=prompt('Type DELETE to confirm:','');
+  if(c2!=='DELETE'){ toast('Cancelled.','err'); return; }
+  var f=window.firebaseFunctions, db=window.firebaseDB, deleted=0, failed=0;
+  f.getDocs(f.collection(db,'beds')).then(function(snap){
+    return Promise.all(snap.docs.map(function(d){
+      return f.deleteDoc(d.ref).then(function(){ deleted++; }).catch(function(e){ failed++; console.error(e); });
+    }));
+  }).then(function(){
+    if(failed) toast('⚠️ Deleted '+deleted+', FAILED '+failed+'.','err');
+    else toast('🗑️ Bed registry cleared ('+deleted+' beds).','ok');
+    loadRegistry();
+  }).catch(function(e){ toast('❌ '+e.message,'err'); });
+}
+
+requireAuth(['beds','admin']).then(function(staff){
+  document.getElementById('clearBtn').style.display = String(staff.role).toLowerCase()==='admin' ? 'inline-flex' : 'none';
+  document.querySelector('.appsub').textContent = 'PClinic — logged in as '+staff.name+' ('+staff.role+') — Common Server pclinic-20d81';
+  loadRegistry();
+}).catch(function(err){
+  console.warn('Auth redirect:', err && err.message);
+});
+</script>
+</body>
+</html>

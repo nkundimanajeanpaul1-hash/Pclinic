@@ -4022,7 +4022,36 @@ function raRefresh(){
 }
 function raReferralIn(){ var btn=getNavBtn('referrals'); showView('referrals', btn); var all=_getAllPatientsCommon(); var refs=all.filter(function(p){ return (p.referralSource||'').toLowerCase().indexOf('health')>-1 || (p.visitType||'').toLowerCase()==='referral'; }); showToast('📥 Referral In: '+refs.length+' from common server','info'); }
 async function raReferralOut(){var mrn=prompt('📤 Referral Out — Enter MRN to refer out:');if(!mrn)return;var p=_getAllPatientsCommon().find(function(x){return String(x.mrn)===String(mrn)||String(x.id)===String(mrn);});if(!p){showToast('❌ Patient not found.','error');return;}var updated=await updatePatient(p.id,{visitType:'Referral',referralSource:'Self',queueStatus:'referred',referralDate:todayStr()});if(updated){initRefs();renderRefs();showToast('✅ Referred out MRN '+p.mrn+'.','success');}else showToast('❌ Referral was not saved.','error');}
-function raCounterReferral(){ _showHistoryFiltered('counter', 'all', '↩️ Counter-Referral: showing patients with counter-referral'); var all=_getAllPatientsCommon(); showToast('↩️ Counter-Referral list: '+all.length+' total from server','info'); }
+function raCounterReferral(){
+  var all=_getAllPatientsCommon();
+  var list=all.filter(function(p){ return p.counterReferral===true; });
+  if(!list.length){
+    showToast('↩️ No counter-referral patients yet. Open a patient and use the “Counter-Referral” button to mark a return visit.','info');
+    return;
+  }
+  var html='<div style="font-size:12px;color:var(--tm);margin-bottom:12px;">Patients marked for counter-referral (return visit / follow-up) — from common server. '+list.length+' total.</div>';
+  html+='<table class="apple-table" style="width:100%;font-size:12px;"><thead><tr><th>Patient</th><th>MRN</th><th>Location</th><th>Marked</th><th>Note</th><th>Status</th></tr></thead><tbody>';
+  list.slice(0,100).forEach(function(p){
+    html+='<tr><td>'+(p.firstName||'')+' '+(p.lastName||'')+'</td><td>'+String(p.mrn||p.id||'')+'</td><td>'+String(p.department||p.location||'General')+'</td><td>'+String(p.counterReferralDate||'—')+'</td><td>'+String(p.counterReferralNote||'')+'</td><td>'+safeStatus(p.status)+'</td></tr>';
+  });
+  html+='</tbody></table>';
+  showServerModal('↩️ Counter-Referral — Common Server ('+list.length+')', html);
+}
+async function markCounterReferral(id, currentlyMarked){
+  var patient=getPatient(id); if(!patient) return;
+  if(currentlyMarked){
+    if(!confirm('Clear the counter-referral mark for '+String(patient.firstName||'')+' '+String(patient.lastName||'')+' (MRN '+String(patient.mrn||id)+')?')) return;
+    var cleared=await updatePatient(id,{counterReferral:false, counterReferralClearedAt:new Date().toISOString()});
+    if(cleared){ showToast('↩️ Counter-referral cleared for MRN '+String(patient.mrn||id)+'.','success'); openPatient(id); }
+    else showToast('❌ Change was not saved.','error');
+    return;
+  }
+  var note=prompt('Mark as counter-referral (return visit / follow-up).\nOptional note for the clinical team:','');
+  if(note===null) return;
+  var updated=await updatePatient(id,{counterReferral:true, counterReferralDate:todayStr(), counterReferralNote:String(note||''), counterReferralBy:(window.currentStaff&&window.currentStaff.name)||'Reception', counterReferralById:(window.currentStaff&&window.currentStaff.staffId)||''});
+  if(updated){ showToast('↩️ MRN '+String(patient.mrn||id)+' marked for counter-referral on the Common Server.','success'); openPatient(id); }
+  else showToast('❌ Counter-referral was not saved.','error');
+}
 function raHC(){ _showHistoryFiltered('CHUK', 'all', '🏥 Filtering HC/CHUK referral patients from common server'); }
 function raAmbulance(){
   var all=_getAllPatientsCommon(); var amb=all.filter(function(p){ return String(p.arrivalMode||'').toLowerCase().indexOf('ambulance')>-1; });
@@ -4061,23 +4090,85 @@ function raRSSB(){ _filterByInsurance('RSSB'); }
 function raMutuelle(){ _filterByInsurance('MUTUELLE'); }
 function raMMI(){ _filterByInsurance('MMI'); }
 function raBedRequest(){ showView('beds', getNavBtn('beds')); showToast('🛏️ Bed requests from common server — free beds calculated from wards','info'); }
+async function listAvailableBeds(){
+  if(!window.firebaseDB||!window.firebaseFunctions) return [];
+  var f=window.firebaseFunctions, db=window.firebaseDB;
+  var snap=await f.getDocs(f.query(f.collection(db,'beds'), f.where('status','in',['available','reserved'])));
+  return snap.docs.map(function(d){
+    var x=d.data()||{};
+    return { id:d.id, ward:String(x.ward||'Unassigned'), number:String(x.bedNumber||x.name||d.id), status:String(x.status||'available'), patientId:String(x.patientId||'') };
+  });
+}
 async function raAdmission(){
   var mrn=prompt('🏥 Admission — Enter MRN from common server:');if(!mrn)return;
   var p=_getAllPatientsCommon().find(function(x){return String(x.mrn)===String(mrn)||String(x.id)===String(mrn);});if(!p){showToast('❌ Patient not found.','error');return;}
-  var updates={queueStatus:'admitted',deptSetting:'inpatient',deptUnit:'ward',locationSince:new Date().toISOString()};
+  if(p.bed && p.bed.bedId) showToast('ℹ️ MRN '+mrn+' currently has bed '+p.bed.number+' ('+p.bed.ward+').','info');
+  // 1) Offer a real bed from the authoritative registry
+  var bedChoice=null;
+  try{
+    var avail=await listAvailableBeds();
+    if(avail.length){
+      var byWard={};
+      avail.forEach(function(b){ (byWard[b.ward]=byWard[b.ward]||[]).push(b.number); });
+      var menu=Object.keys(byWard).sort().map(function(w){ return w+': '+byWard[w].join(', '); }).join('\n');
+      var pick=prompt('🛏️ Available beds from the Common Server:\n'+menu+'\n\nEnter the bed to assign (e.g. I1) — or Cancel to admit without a numbered bed:');
+      if(pick){
+        pick=pick.trim().toUpperCase();
+        var found=avail.find(function(b){ return b.number.toUpperCase()===pick; });
+        if(!found){ showToast('❌ Bed '+pick+' is not in the available list.','error'); return; }
+        bedChoice=found;
+      }
+    } else {
+      showToast('⚠️ Bed registry is empty — admitting without a numbered bed. Configure beds at beds-setup.html (Beds/Admin).','warning');
+    }
+  }catch(e){ console.warn('Bed registry unavailable:', e); }
+  // 2) Build the admission update (precise location + optional bed)
+  var unit='ward';
+  if(bedChoice){ if(/icu/i.test(bedChoice.ward)) unit='icu'; else if(/hcu/i.test(bedChoice.ward)) unit='hcu'; }
+  var updates={queueStatus:'admitted',deptSetting:'inpatient',deptUnit:unit,locationSince:new Date().toISOString()};
   if(window.PCLINIC_DEPTS){
     var info=PCLINIC_DEPTS.parsePatientDept(p);
-    var path2=PCLINIC_DEPTS.deptPath('inpatient',info.type,info.specialty,'ward');
-    updates.department=path2||'Inpatient - Ward';updates.location=path2||'Inpatient - Ward';
-  } else { updates.location='Ward'; }
+    var path2=PCLINIC_DEPTS.deptPath('inpatient',info.type,info.specialty,unit);
+    updates.department=path2||('Inpatient - '+(unit==='icu'?'ICU':'Ward'));updates.location=updates.department;
+  } else { updates.location=unit==='icu'?'ICU':'Ward'; }
+  if(bedChoice) updates.bed={ ward:bedChoice.ward, number:bedChoice.number, bedId:bedChoice.id, assignedAt:new Date().toISOString() };
   var updated=await updatePatient(p.id,updates);
-  if(updated)showToast('✅ Admitted MRN '+mrn+' (Inpatient, Ward) on the Common Server.','success');
-  else showToast('❌ Admission was not saved.','error');
+  if(!updated){ showToast('❌ Admission was not saved.','error'); return; }
+  // 3) Mark the real bed occupied in the bed registry
+  if(bedChoice && window.firebaseDB && window.firebaseFunctions){
+    var f=window.firebaseFunctions, db=window.firebaseDB;
+    try{
+      await f.setDoc(f.doc(db,'beds',bedChoice.id), { status:'occupied', patientId:String(p.id), patientName:String((p.firstName||'')+' '+(p.lastName||'')), assignedAt:f.serverTimestamp() }, {merge:true});
+      showToast('✅ Admitted MRN '+mrn+' → bed '+bedChoice.number+' ('+bedChoice.ward+') on the Common Server.','success');
+    }catch(e){
+      console.error('Bed occupation failed:', e);
+      showToast('⚠️ Patient admitted, but bed '+bedChoice.number+' could not be marked occupied: '+e.message,'warning');
+    }
+  } else {
+    showToast('✅ Admitted MRN '+mrn+' (Inpatient, '+(unit==='icu'?'ICU':'Ward')+') on the Common Server.','success');
+  }
+  renderBeds();
 }
 async function raDischarge(){
   var mrn=prompt('🚪 Discharge — Enter MRN:');if(!mrn)return;
   var p=_getAllPatientsCommon().find(function(x){return String(x.mrn)===String(mrn)||String(x.id)===String(mrn);});if(!p){showToast('❌ Patient not found.','error');return;}
-  var updated=await updatePatient(p.id,{queueStatus:'completed',status:'inactive',dischargedAt:new Date().toISOString()});if(updated)showToast('✅ Discharged MRN '+p.mrn+'.','success');else showToast('❌ Discharge was not saved.','error');
+  var heldBed=(p.bed && p.bed.bedId) ? p.bed : null;
+  var updated=await updatePatient(p.id,{queueStatus:'completed',status:'inactive',dischargedAt:new Date().toISOString(),bed:null});
+  if(!updated){ showToast('❌ Discharge was not saved.','error'); return; }
+  // Release the real bed back to the registry
+  if(heldBed && window.firebaseDB && window.firebaseFunctions){
+    var f=window.firebaseFunctions, db=window.firebaseDB;
+    try{
+      await f.setDoc(f.doc(db,'beds',heldBed.bedId), { status:'available', patientId:'', patientName:'', releasedAt:f.serverTimestamp() }, {merge:true});
+      showToast('🚪 Discharged MRN '+p.mrn+' — bed '+heldBed.number+' ('+heldBed.ward+') released.','success');
+    }catch(e){
+      console.error('Bed release failed:', e);
+      showToast('⚠️ Patient discharged, but bed '+heldBed.number+' could not be released: '+e.message,'warning');
+    }
+  } else {
+    showToast('✅ Discharged MRN '+p.mrn+'.','success');
+  }
+  renderBeds();
 }
 function raEmergency(){
   var all=_getAllPatientsCommon(); var emerg=all.filter(function(p){ return (p.priority==='critical'||p.priority==='high')||String(p.visitType).toLowerCase()==='emergency'; });
@@ -4160,19 +4251,62 @@ function raImaging(){
   }
   showServerModal('🖼️ Imaging — Common Server ('+items.length+')', html);
 }
-function raMessages(){
-  var msgs=[]; try{ msgs=JSON.parse(localStorage.getItem('pclinic_doctor_notifications')||'[]'); }catch(e){}
-  // Also pull from Firebase messages collection? For now use local + patients notes
-  var all=_getAllPatientsCommon(); var notesCount=0; all.forEach(function(p){ if(p.clinicalNotes) notesCount+=p.clinicalNotes.length; });
-  showToast('💬 Messages from common server: '+msgs.length+' notifications + '+notesCount+' clinical notes','info');
-  var html='<div style="font-size:12px; color:var(--tm); margin-bottom:12px;">Doctor notifications + clinical notes from common server</div>';
-  html+='<div style="display:grid; gap:8px;">';
-  msgs.slice(0,20).forEach(function(m){
-    html+='<div style="background:var(--s3); padding:10px 12px; border-radius:10px;"><div style="font-weight:600; font-size:12px;">'+(m.doctor||'Doctor')+' — '+ (m.patientName||'') +'</div><div style="font-size:11px; color:var(--tm);">'+(m.date||'')+' '+ (m.time||'')+'</div></div>';
-  });
-  if(!msgs.length) html+='<p style="text-align:center; color:var(--tm); padding:20px;">No messages yet in common server</p>';
-  html+='</div>';
-  showServerModal('💬 Messages — Common Server ('+(msgs.length+notesCount)+')', html);
+async function raMessages(){
+  if(!window.firebaseDB||!window.firebaseFunctions){ showToast('❌ Common Server is not ready yet.','error'); return; }
+  var f=window.firebaseFunctions, db=window.firebaseDB, staff=window.currentStaff||{};
+  var role=String(staff.role||'reception').toLowerCase(), sid=String(staff.staffId||staff.id||'');
+  var seen={}, items=[];
+  function collect(snap){
+    snap.forEach(function(d){
+      var x=d.data()||{}; x.id=x.id||d.id;
+      if(!seen[x.id]){ seen[x.id]=true; items.push(x); }
+    });
+  }
+  try{
+    if(role) collect(await f.getDocs(f.query(f.collection(db,'notifications'), f.where('toRoles','array-contains',role))));
+    if(sid) collect(await f.getDocs(f.query(f.collection(db,'notifications'), f.where('toStaffId','==',sid))));
+  }catch(e){
+    console.error('Messages read failed:', e);
+    showToast('❌ Could not load messages from the Common Server: '+e.message,'error');
+    return;
+  }
+  function tsOf(x){ var c=x&&x.createdAt; if(c&&typeof c.toDate==='function'){ try{ return c.toDate().toISOString(); }catch(e){} } return String((x&&x.createdAt)||''); }
+  items.sort(function(a,b){ return tsOf(b).localeCompare(tsOf(a)); });
+  var unread=items.filter(function(x){ return !x.read; }).length;
+  var html='<div style="font-size:12px; color:var(--tm); margin-bottom:12px;">Server notifications addressed to Reception ('+items.length+' total), '+unread+' unread.</div>';
+  if(!items.length){
+    html+='<p style="text-align:center; color:var(--tm); padding:20px;">No server messages yet.</p>';
+  } else {
+    html+='<div style="display:grid; gap:8px;">';
+    items.slice(0,30).forEach(function(m){
+      var time=tsOf(m).replace('T',' ').slice(0,16);
+      html+='<div style="background:var(--s3); padding:10px 12px; border-radius:10px;'+(m.read?'opacity:.72;':'border-left:3px solid var(--ac);')+'">'
+        +'<div style="font-weight:600; font-size:12px;">'+(m.read?'':'🔵 ')+String(m.title||m.message||'Notification')+'</div>'
+        +'<div style="font-size:11px; color:var(--tm); margin-top:3px;">'+String(m.message||'')+'</div>'
+        +'<div style="font-size:10px; color:var(--tm); margin-top:4px;">From: '+String(m.createdByName||'staff')+' · '+time+'</div>'
+        +'</div>';
+    });
+    html+='</div>';
+  }
+  showServerModal('💬 Messages — Common Server ('+items.length+')', html);
+  if(unread){
+    var host=document.getElementById('serverDataBody');
+    if(host){
+      var wrap=document.createElement('div'); wrap.style.cssText='text-align:center;margin-top:12px;';
+      var btn=document.createElement('button'); btn.type='button'; btn.className='btn btn-primary'; btn.textContent='✅ Mark all as read';
+      btn.addEventListener('click', async function(){
+        var list=items.filter(function(x){ return !x.read; });
+        var ok=0, fail=0;
+        for(var i=0;i<list.length;i++){
+          try{ await f.updateDoc(f.doc(db,'notifications',list[i].id), { read:true, readAt:f.serverTimestamp() }); ok++; }
+          catch(e){ fail++; console.error('Mark read failed:', e); }
+        }
+        showToast(fail?('⚠️ Marked '+ok+', failed '+fail+'.'):('✅ '+ok+' message(s) marked as read.'), fail?'err':'ok');
+        raMessages();
+      });
+      wrap.appendChild(btn); host.appendChild(wrap);
+    }
+  }
 }
 async function raNotify(){
   var all=_getAllPatientsCommon();if(!all.length){showToast('❌ No patients to notify','error');return false;}
@@ -4391,7 +4525,7 @@ function raOPDAppointment(){
   showView('appointments', btn);
   setTimeout(function(){
     var dept=document.getElementById('apptDept');
-    if(dept){ dept.value='General'; }
+    if(dept){ dept.value=(window.PCLINIC_DEPTS?PCLINIC_DEPTS.deptPath('outpatient','non-surgical','general-medicine',''):'General'); }
     showToast('📅 OPD Appointment — Select patient from common server, then set date. Also available as file: /appointment-file.html','info');
   },200);
   // Also offer file-style version (like opd-file.html) with patient param
@@ -5371,6 +5505,33 @@ async function removeQ(id){
 }
 
 // ─── APPOINTMENTS ───
+/* Load doctors from the Common Server staff profiles (immutable staffId).
+ * Falls back to the static list when the staff directory is not readable
+ * (e.g. rules not deployed yet), so booking keeps working. */
+async function populateDoctors(){
+  var sel=document.getElementById('apptDoctor'); if(!sel) return;
+  var current=sel.value;
+  var staticList=['Dr. Amina Uwase','Dr. Jean Habimana','Dr. Claire Mugisha','Dr. Eric Nkurunziza','Dr. Grace Ineza','Dr. Samuel Bizimana'];
+  var doctors=[], map={};
+  if(window.firebaseDB && window.firebaseFunctions){
+    try{
+      var f=window.firebaseFunctions, db=window.firebaseDB;
+      var snap=await f.getDocs(f.query(f.collection(db,'users'), f.where('role','==','doctor'), f.where('active','==',true)));
+      snap.forEach(function(d){
+        var x=d.data()||{}; var sid=String(x.staffId||d.id);
+        if(sid && x.name){ doctors.push({id:sid, name:String(x.name)}); map[sid]=String(x.name); }
+      });
+    }catch(e){ console.warn('Doctor staff list unavailable, using static list:', e.message||e); }
+  }
+  if(!doctors.length) staticList.forEach(function(n){ doctors.push({id:n, name:n}); map[n]=n; });
+  window._pclinicDoctors=map;
+  sel.replaceChildren();
+  var ph=document.createElement('option'); ph.value=''; ph.textContent='Select doctor'; sel.appendChild(ph);
+  doctors.sort(function(a,b){ return a.name.localeCompare(b.name); }).forEach(function(d){
+    var o=document.createElement('option'); o.value=d.id; o.textContent=d.name+(/^\d+$/.test(d.id)?' (ID: '+d.id+')':''); sel.appendChild(o);
+  });
+  if(current && map[current]) sel.value=current;
+}
 function populateAppointmentPatients(){
   var select = document.getElementById('apptPatient');
   var patients = getPatients();
@@ -5392,7 +5553,9 @@ async function bookAppointment(){
   var date = document.getElementById('apptDate').value;
   var time = document.getElementById('apptTime').value;
   var dept = document.getElementById('apptDept').value;
-  var doctor = document.getElementById('apptDoctor').value;
+  var doctorId = document.getElementById('apptDoctor').value;
+  var doctor = (window._pclinicDoctors && window._pclinicDoctors[doctorId]) || doctorId;
+  var doctorStaffId = /^\d+$/.test(String(doctorId)) ? String(doctorId) : '';
   var priority = document.getElementById('apptPri').value;
   var notes = document.getElementById('apptNotes').value.trim();
 
@@ -5414,6 +5577,7 @@ async function bookAppointment(){
     time: time,
     department: dept,
     doctor: doctor,
+    doctorStaffId: doctorStaffId,
     priority: priority || 'medium',
     notes: notes || '',
     status: 'scheduled',
@@ -5489,7 +5653,7 @@ async function sendDoctorNotification(appointment, patient) {
   await writeServerNotification({
     type:'appointment',title:'New appointment — '+appointment.patientName,
     message:appointment.date+' '+appointment.time+' · '+appointment.department,
-    toRoles:['doctor'],targetStaffName:appointment.doctor,
+    toRoles:['doctor'],toStaffId:String(appointment.doctorStaffId||''),targetStaffName:appointment.doctor,
     appointmentId:String(appointment.id),patientId:String(patient.id),patientMrn:String(patient.mrn||''),
     date:appointment.date,time:appointment.time,department:appointment.department,priority:appointment.priority,notes:appointment.notes||''
   });
@@ -5555,7 +5719,7 @@ function startBedRegistry(){
 }
 function renderBeds(){
   var el=document.getElementById('bedsContent');if(!el)return;
-  if(!wards.length){el.innerHTML='<div class="empty-state" style="grid-column:1/-1;padding:42px;text-align:center;"><strong>No authoritative bed records available.</strong><br><span style="font-size:11px;">Reception will never display simulated availability. Ask Beds/Admin staff to configure the server bed registry.</span></div>';updateStats();return;}
+  if(!wards.length){el.innerHTML='<div class="empty-state" style="grid-column:1/-1;padding:42px;text-align:center;"><strong>No authoritative bed records available.</strong><br><span style="font-size:11px;">Reception will never display simulated availability. Ask Beds/Admin staff to configure the server bed registry at <b>beds-setup.html</b> (Beds/Admin login).</span></div>';updateStats();return;}
   el.innerHTML=wards.map(function(w){
     var avail=w.beds.filter(function(b){return b.s==='avail';}).length,total=w.beds.length,pct=total?Math.round(avail/total*100):0,bc=pct>50?'#34c759':pct>25?'#ff9500':'#ff3b30';
     return '<div class="ward-card"><div class="ward-header"><div class="ward-name">'+escHtml(w.name)+'</div><div class="ward-stats">'+avail+'/'+total+' available · '+pct+'%</div></div><div class="ward-bar"><div class="ward-bar-fill" style="width:'+pct+'%;background:'+bc+'"></div></div><div class="bed-grid">'+w.beds.map(function(b){return '<div class="bed-item '+escHtml(b.s)+'" title="'+escHtml(b.n)+(b.patientId?' · assigned':'')+'">'+escHtml(b.n)+'</div>';}).join('')+'</div><div class="bed-legend"><div class="bed-legend-item"><div class="bed-legend-dot available"></div>Available</div><div class="bed-legend-item"><div class="bed-legend-dot occupied"></div>Occupied</div><div class="bed-legend-item"><div class="bed-legend-dot reserved"></div>Reserved</div></div></div>';
@@ -5928,6 +6092,12 @@ function openPatient(id){
     button.addEventListener('click', function(){ window.changePatientStatus(patient.id, def[0]); });
     actions.appendChild(button);
   });
+  var crBtn = document.createElement('button');
+  crBtn.type = 'button';
+  crBtn.className = 'modal-action-btn secondary';
+  crBtn.textContent = patient.counterReferral ? '↩️ Clear Counter-Referral' : '↩️ Counter-Referral';
+  crBtn.addEventListener('click', function(){ window.markCounterReferral(patient.id, !!patient.counterReferral); });
+  actions.appendChild(crBtn);
 
   document.getElementById('mover').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -6358,6 +6528,29 @@ function init(){
   document.querySelectorAll('.modal-overlay').forEach(function(modal){modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');});
   // Precise location taxonomy: fill registration selects + grouped department filters
   if(window.PCLINIC_DEPTS){ PCLINIC_DEPTS.initDeptRegistrationForm(); PCLINIC_DEPTS.refreshDeptFilters(); }
+  // Appointment department: upgrade the old flat list to the 4-level location taxonomy (grouped)
+  if(window.PCLINIC_DEPTS){
+    var apptDeptSel=document.getElementById('apptDept');
+    if(apptDeptSel){
+      var currentApptDept=apptDeptSel.value;
+      apptDeptSel.innerHTML='';
+      var phOpt=document.createElement('option'); phOpt.value=''; phOpt.textContent='Select department'; apptDeptSel.appendChild(phOpt);
+      var apptDeptGroups=[['outpatient','non-surgical','OPD — Non-surgical'],['outpatient','surgical','OPD — Surgical'],['inpatient','non-surgical','Inpatient — Non-surgical'],['inpatient','surgical','Inpatient — Surgical']];
+      apptDeptGroups.forEach(function(g){
+        var og=document.createElement('optgroup'); og.label=g[2];
+        PCLINIC_DEPTS.TAXONOMY.specialties[g[1]].forEach(function(s){
+          var op=document.createElement('option'); op.value=PCLINIC_DEPTS.deptPath(g[0],g[1],s.id,''); op.textContent=s.label; og.appendChild(op);
+        });
+        apptDeptSel.appendChild(og);
+      });
+      if(currentApptDept){
+        var matchedApptDept=null;
+        Array.prototype.forEach.call(apptDeptSel.querySelectorAll('option'),function(op){ if(op.value===currentApptDept) matchedApptDept=op; });
+        if(matchedApptDept) apptDeptSel.value=matchedApptDept.value;
+      }
+    }
+  }
+  if(typeof populateDoctors==='function') populateDoctors();
   // Set dates - NOT for DOB (DOB should be empty), only for appointments
   document.getElementById('apptDate').value = todayStr();
   document.getElementById('apptTime').value = '09:00';
@@ -6407,6 +6600,7 @@ function init(){
       updateStats();
       populateAppointmentPatients();
       populateSurgeryPatients();
+      if(typeof populateDoctors==='function') populateDoctors();
       if(typeof updateNextMrnDisplay==='function') updateNextMrnDisplay();
       var status = document.getElementById('aQuickStats');
       if(status && detail && detail.count!==undefined){
@@ -6554,6 +6748,8 @@ window.askAI = askAI;
 
 window.focusDupSearch = focusDupSearch;
 window.changePatientStatus = changePatientStatus;
+window.markCounterReferral = markCounterReferral;
+window.populateDoctors = populateDoctors;
 window.deletePatientRecord = deletePatientRecord;
 window.handleMoPhoto = handleMoPhoto;
 window.exportCSV = exportCSV;

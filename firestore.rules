@@ -123,9 +123,13 @@ service cloud.firestore {
     }
 
     // ── STAFF PROFILES ───────────────────────────────────────────
+    // Profiles contain only staffId/name/role/active (no email, phone,
+    // password). Clinical roles read them to select staff by immutable
+    // staffId (e.g. reception booking an appointment with a doctor).
     match /users/{userId} {
-      allow get: if signedIn() && (request.auth.uid == userId || isAdmin());
-      allow list: if isAdmin();
+      allow get: if signedIn() && (request.auth.uid == userId || activeStaff() || isAdmin());
+      allow list: if isAdmin()
+        || (activeStaff() && role() in ['reception','doctor','nurse','theater','beds','hr']);
 
       allow create: if isAdmin() && validProfile(request.resource.data);
 
@@ -257,11 +261,22 @@ service cloud.firestore {
     }
 
     // ── AUTHORITATIVE BED REGISTRY ────────────────────────────────
+    // Reception/Nurse may only assign (available → occupied/reserved) or
+    // release (→ available) a bed without changing its identity (ward/number).
+    // Full lifecycle (maintenance, renumbering) stays with Beds/Admin.
     match /beds/{bedId} {
       allow read: if hasRole(['reception','nurse','beds','theater']);
-      allow create, update: if hasRole(['beds'])
+      allow create: if hasRole(['beds'])
         && request.resource.data.get('id','') == bedId
         && request.resource.data.get('status','') in ['available','occupied','reserved','maintenance','unavailable'];
+      allow update: if (hasRole(['beds'])
+        && request.resource.data.get('id','') == bedId
+        && request.resource.data.get('status','') in ['available','occupied','reserved','maintenance','unavailable'])
+        || (hasRole(['reception','nurse'])
+        && request.resource.data.get('id','') == bedId
+        && request.resource.data.get('ward','') == resource.data.get('ward','')
+        && request.resource.data.get('bedNumber','') == resource.data.get('bedNumber','')
+        && request.resource.data.get('status','') in ['available','occupied','reserved']);
       allow delete: if isAdmin();
     }
 
