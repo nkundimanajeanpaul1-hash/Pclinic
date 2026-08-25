@@ -4970,7 +4970,7 @@ function loadQueue(){
       name: p.firstName + ' ' + p.lastName,
       dept: p.department || 'General',
       priority: p.priority || 'medium',
-      since: p.queueAdded || Date.now() - Math.random() * 3600000,
+      since: p.queueAdded || Date.now(),
       status: p.queueStatus || 'waiting'
     };
   });
