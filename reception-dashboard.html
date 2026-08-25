@@ -2811,6 +2811,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
         </div>
         <select class="toolbar-select" id="refFStatus" onchange="window.renderRefs()">
           <option value="">All statuses</option>
+          <option value="all-patients">All patients (entire system)</option>
           <option value="pending">Pending</option>
           <option value="accepted">Accepted</option>
           <option value="rejected">Rejected</option>
@@ -5681,15 +5682,51 @@ function renderRefs(){
   var q=String((document.getElementById('refSearch')||{}).value||'').toLowerCase();
   var status=String((document.getElementById('refFStatus')||{}).value||'');
   var priority=String((document.getElementById('refFPri')||{}).value||'');
-  var data=refs.filter(function(ref){var hay=[ref.name,ref.doctor,ref.refHosp,ref.dept].join(' ').toLowerCase();return(!status||ref.status===status)&&(!priority||ref.priority===priority)&&(!q||hay.indexOf(q)!==-1);});
-  var body=document.getElementById('refTbody');if(!body)return;body.replaceChildren();
-  if(!data.length){var row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=8;cell.className='empty-state';cell.textContent='No referrals found in the Common Server.';row.appendChild(cell);body.appendChild(row);updateStats();return;}
-  data.forEach(function(ref){
+  var body=document.getElementById('refTbody');if(!body)return;
+  function makeRow(ref){
     var row=document.createElement('tr');
     function td(value){var cell=document.createElement('td');cell.textContent=String(value==null?'':value);return cell;}
     row.appendChild(td(ref.name));row.appendChild(td(ref.refHosp));row.appendChild(td(ref.dept));row.appendChild(td(String(ref.priority||'medium').toUpperCase()));row.appendChild(td(ref.doctor));row.appendChild(td(ref.date?fmtDate(ref.date):'—'));row.appendChild(td(String(ref.status||'pending').replace('-',' ')));
-    var actions=document.createElement('td'),view=document.createElement('button');view.type='button';view.className='action-btn';view.title='View patient';view.textContent='View';view.addEventListener('click',function(){window.openPatient(ref.id);});actions.appendChild(view);row.appendChild(actions);body.appendChild(row);
-  });
+    var actions=document.createElement('td'),view=document.createElement('button');view.type='button';view.className='action-btn';view.title='View patient';view.textContent='View';view.addEventListener('click',function(){window.openPatient(ref.id);});actions.appendChild(view);row.appendChild(actions);
+    return row;
+  }
+  var data;
+  if(status==='all-patients'){
+    // Show EVERY patient in the Common Server, not just referrals
+    var allPat=[];try{allPat=getPatients()||[];}catch(e){}
+    function patDate(p){
+      var raw=p.referralDate||p.registered||'';
+      if(raw)return String(raw).slice(0,10);
+      var ca=p.createdAt;
+      if(ca&&typeof ca.toDate==='function'){try{var d=ca.toDate();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}catch(e){}}
+      if(ca)return String(ca).slice(0,10);
+      return todayStr();
+    }
+    data=allPat.map(function(p){
+      return {
+        id:p.id,
+        name:(p.name||((p.firstName||'')+' '+(p.lastName||p.familyName||'')).trim())||('Patient '+p.id),
+        refHosp:p.referralHospital||p.refHospital||p.referralSource||'—',
+        dept:p.department||p.location||'General',
+        priority:p.priority||'medium',
+        doctor:p.attendingDoctor||p.doctor||'Not assigned',
+        date:patDate(p),
+        status:p.status||p.queueStatus||'active',
+        _p:p
+      };
+    }).filter(function(ref){var hay=[ref.name,ref.doctor,ref.refHosp,ref.dept,String((ref._p&&ref._p.mrn)||''),String((ref._p&&ref._p.phone)||'')].join(' ').toLowerCase();return(!priority||ref.priority===priority)&&(!q||hay.indexOf(q)!==-1);});
+    function regKey(p){var raw=(p&&(p.registered||p.createdAt||p.queueAdded))||0;if(!raw)return 0;if(typeof raw==='number')return raw;if(typeof raw.toDate==='function'){try{return raw.toDate().getTime();}catch(e){return 0;}}var d=new Date(String(raw));return isNaN(d.getTime())?0:d.getTime();}
+    data.sort(function(a,b){return regKey(b._p)-regKey(a._p)||((parseInt(b.id,10)||0)-(parseInt(a.id,10)||0));});
+    body.replaceChildren();
+    if(!data.length){var row0=document.createElement('tr'),cell0=document.createElement('td');cell0.colSpan=8;cell0.className='empty-state';cell0.textContent='No patients found in the Common Server.';row0.appendChild(cell0);body.appendChild(row0);updateStats();return;}
+    data.forEach(function(ref){body.appendChild(makeRow(ref));});
+    updateStats();
+    return;
+  }
+  data=refs.filter(function(ref){var hay=[ref.name,ref.doctor,ref.refHosp,ref.dept].join(' ').toLowerCase();return(!status||ref.status===status)&&(!priority||ref.priority===priority)&&(!q||hay.indexOf(q)!==-1);});
+  body.replaceChildren();
+  if(!data.length){var row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=8;cell.className='empty-state';cell.textContent='No referrals found in the Common Server.';row.appendChild(cell);body.appendChild(row);updateStats();return;}
+  data.forEach(function(ref){body.appendChild(makeRow(ref));});
   updateStats();
 }
 // ─── PRIORITY LABEL ───
