@@ -3978,9 +3978,18 @@ async function raMove(){
   var p=null;try{p=getPatientByMRN?getPatientByMRN(mrns):getPatient(mrns);}catch(e){}
   if(!p){p=_getAllPatientsCommon().find(function(x){return String(x.mrn)===String(mrns)||String(x.id)===String(mrns);});}
   if(!p){showToast('❌ Patient MRN '+mrns+' not found in common server','error');return;}
-  var dept=prompt('Move '+p.firstName+' '+p.lastName+' (MRN '+p.mrn+') to which department? General/Cardiology/Neurology/Orthopedics/Pediatrics/ICU');if(!dept)return;
-  var updated=await updatePatient(p.id,{department:dept,location:dept,locationSince:new Date().toISOString()});
-  if(updated)showToast('✅ Moved MRN '+p.mrn+' to '+dept+' on the Common Server.','success');
+  var dest=prompt('Move '+p.firstName+' '+p.lastName+' (MRN '+p.mrn+') to where?\nFormat: Setting - Service - Specialty [- Unit]\nExamples:\n• Inpatient - Surgery - Cardiothoracic - ICU\n• OPD - Surgery - Orthopedics\n• Inpatient - Non-surgical - Pediatrics\n• ICU');
+  if(!dest)return;
+  var updates={locationSince:new Date().toISOString()};
+  var parsed=window.PCLINIC_DEPTS?PCLINIC_DEPTS.parseDeptInput(dest):null;
+  if(parsed){
+    updates.department=parsed.path;updates.location=parsed.path;
+    updates.deptSetting=parsed.setting;updates.deptServiceType=parsed.type||'';updates.deptSpecialty=parsed.specialty||'';updates.deptUnit=parsed.unit||'';
+  } else {
+    updates.department=String(dest).trim();updates.location=String(dest).trim();
+  }
+  var updated=await updatePatient(p.id,updates);
+  if(updated)showToast('✅ Moved MRN '+p.mrn+' to '+(parsed?parsed.path:dest)+' on the Common Server.','success');
   else showToast('❌ Transfer was not saved.','error');
 }
 function raRegister(){ showView('booking', getNavBtn('booking')); }
@@ -4055,7 +4064,15 @@ function raBedRequest(){ showView('beds', getNavBtn('beds')); showToast('🛏️
 async function raAdmission(){
   var mrn=prompt('🏥 Admission — Enter MRN from common server:');if(!mrn)return;
   var p=_getAllPatientsCommon().find(function(x){return String(x.mrn)===String(mrn)||String(x.id)===String(mrn);});if(!p){showToast('❌ Patient not found.','error');return;}
-  var updated=await updatePatient(p.id,{queueStatus:'admitted',location:'Ward',locationSince:new Date().toISOString()});if(updated)showToast('✅ Admitted MRN '+p.mrn+' on the Common Server.','success');else showToast('❌ Admission was not saved.','error');
+  var updates={queueStatus:'admitted',deptSetting:'inpatient',deptUnit:'ward',locationSince:new Date().toISOString()};
+  if(window.PCLINIC_DEPTS){
+    var info=PCLINIC_DEPTS.parsePatientDept(p);
+    var path2=PCLINIC_DEPTS.deptPath('inpatient',info.type,info.specialty,'ward');
+    updates.department=path2||'Inpatient - Ward';updates.location=path2||'Inpatient - Ward';
+  } else { updates.location='Ward'; }
+  var updated=await updatePatient(p.id,updates);
+  if(updated)showToast('✅ Admitted MRN '+mrn+' (Inpatient, Ward) on the Common Server.','success');
+  else showToast('❌ Admission was not saved.','error');
 }
 async function raDischarge(){
   var mrn=prompt('🚪 Discharge — Enter MRN:');if(!mrn)return;
@@ -5060,7 +5077,7 @@ function renderHistory(){
     if(deptFilter&&(window.PCLINIC_DEPTS?PCLINIC_DEPTS.deptMatches(p,deptFilter):String(p.department||p.location||'').toLowerCase()!==deptFilter))return false;
     var d=regDate(p);if(dateFilter!=='all'){if(!d)return false;d.setHours(0,0,0,0);if(dateFilter==='today'&&d.getTime()!==today.getTime())return false;if(dateFilter==='yesterday'&&d.getTime()!==yesterday.getTime())return false;if(dateFilter==='last7'&&d<last7)return false;if(dateFilter==='thisMonth'&&d<thisMonth)return false;if(dateFilter==='lastMonth'&&(d<lastMonth||d>lastMonthEnd))return false;}
     if(!q)return true;
-    return [p.firstName,p.lastName,p.familyName,p.mrn,p.id,p.phone,p.nationalId,p.district,p.email,p.department,p.location].map(function(v){return String(v||'').toLowerCase();}).join(' ').indexOf(q)!==-1;
+    return [p.firstName,p.lastName,p.familyName,p.middleName,p.mrn,p.id,p.phone,p.nationalId,p.personId,p.archiveCode,p.district,p.sector,p.cell,p.email,p.department,p.location,p.visitType,p.arrivalMode,p.referralSource,(p.insurance&&p.insurance.provider)?p.insurance.provider:'',p.queueStatus,p.priority,p.status,p.bloodGroup,p.allergies].map(function(v){return String(v||'').toLowerCase();}).join(' ').indexOf(q)!==-1;
   });
   filtered.sort(function(a,b){return ((regDate(b)||0)-(regDate(a)||0))||((parseInt(b.id,10)||0)-(parseInt(a.id,10)||0));});
   tbody.replaceChildren();
@@ -6068,8 +6085,8 @@ function handleMoPhoto(e){
   return false;
 }
 function exportCSV(){
-  showToast('📊 Exporting referrals...', 'info');
-  setTimeout(function(){ showToast('✅ Referrals exported', 'success'); }, 500);
+  showToast('🔒 Browser export of patient data is disabled. Use the approved encrypted reporting process.','warning');
+  return false;
 }
 
 function printRefs(){

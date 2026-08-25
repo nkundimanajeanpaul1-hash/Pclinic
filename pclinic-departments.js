@@ -71,7 +71,7 @@ var UNIT_SHORT = { icu:'ICU', hcu:'HCU', ward:'Ward', ot:'OT / Theater', recover
 /* Order matters: specific names before generic ones. */
 var LEGACY_SPECIALTY_ALIASES = [
   { match:['orthopedics','orthopaedics','ortho'],                     id:'orthopedics',         type:'surgical' },
-  { match:['cardiothoracic','cardio-thoracic','cardio tho','cto'],    id:'cardiothoracic',      type:'surgical' },
+  { match:['cardiothoracic','cardio-thoracic','cardio tho','cardiotho','cardiothoracis','cto'], id:'cardiothoracic', type:'surgical' },
   { match:['neurosurgery','neuro-surgery'],                           id:'neurosurgery',        type:'surgical' },
   { match:['pediatric surgery','paediatric surgery','paeds surgery'], id:'pediatric-surgery',   type:'surgical' },
   { match:['general surgery','gen surgery'],                          id:'general-surgery',     type:'surgical' },
@@ -83,7 +83,7 @@ var LEGACY_SPECIALTY_ALIASES = [
   { match:['ophthalmic surgery','eye surgery'],                       id:'ophthalmic-surgery',  type:'surgical' },
   { match:['pediatrics','paediatrics','pedi'],                        id:'pediatrics',          type:'non-surgical' },
   { match:['cardiology','cardio'],                                    id:'cardiology',          type:'non-surgical' },
-  { match:['neurology'],                                              id:'neurology',           type:'non-surgical' },
+  { match:['neurology','neuro'],                                   id:'neurology',           type:'non-surgical' },
   { match:['gynecology','gynaecology','gyne','maternity','obs'],      id:'gynecology',          type:'non-surgical' },
   { match:['psychiatry','psych'],                                     id:'psychiatry',          type:'non-surgical' },
   { match:['internal medicine','internal-medicine'],                  id:'internal-medicine',   type:'non-surgical' },
@@ -363,12 +363,31 @@ function applyDeptToForm(p){
   syncDeptForm();
 }
 
+/* Parse a free-text location (e.g. "in patient - surgery - cardiothoracis - icu",
+ * "out patient-surgery-orthopedics", "ICU") into structured parts.
+ * Returns null when nothing recognizable is found. */
+function parseDeptInput(text){
+  var t = String(text==null?'':text).trim();
+  if(!t) return null;
+  var norm = t.toLowerCase().replace(/\bin\s+patient\b/g,'inpatient').replace(/\bout\s+patient\b/g,'outpatient');
+  var info = parsePatientDept({ department: norm, location: norm });
+  if(!info.setting && !info.type && !info.specialty && !info.unit) return null;
+  var setting = info.setting || 'outpatient';
+  var type = info.type || '';
+  if(!type && info.specialty){
+    type = (TAXONOMY.specialties['surgical']||[]).some(function(x){ return x.id===info.specialty; }) ? 'surgical' : 'non-surgical';
+  }
+  var path = deptPath(setting, type, info.specialty, info.unit);
+  return { setting: setting, type: type, specialty: info.specialty, unit: info.unit, path: path || t };
+}
+
 window.PCLINIC_DEPTS = {
   TAXONOMY: TAXONOMY,
   deptKey: deptKey,
   deptPath: deptPath,
   findSpecialty: findSpecialty,
   parsePatientDept: parsePatientDept,
+  parseDeptInput: parseDeptInput,
   deptLabel: deptLabel,
   deptMatches: deptMatches,
   fillDeptFilter: fillDeptFilter,
