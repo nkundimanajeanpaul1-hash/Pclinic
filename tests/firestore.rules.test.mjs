@@ -179,6 +179,21 @@ describe('staff profile safety', () => {
   test('profiles are never deleted', async () => {
     await assertFails(deleteDoc(doc(dbFor('admin'), 'users', profiles.doctor.uid)));
   });
+
+  test('clinical roles can read staff profiles (for staffId selection); non-clinical roles cannot list', async () => {
+    // Self-read always works; clinical roles may read any active profile...
+    await assertSucceeds(getDoc(doc(dbFor('doctor'), 'users', profiles.doctor.uid)));
+    await assertSucceeds(getDoc(doc(dbFor('reception'), 'users', profiles.doctor.uid)));
+    await assertSucceeds(getDoc(doc(dbFor('nurse'), 'users', profiles.beds.uid)));
+    // ...and list them for booking/assignment by immutable staffId.
+    await assertSucceeds(getDocs(query(collection(dbFor('reception'), 'users'))));
+    await assertSucceeds(getDocs(query(collection(dbFor('doctor'), 'users'))));
+    // Non-clinical (billing) roles stay out of the staff directory.
+    await assertFails(getDocs(query(collection(dbFor('cashier'), 'users'))));
+    await assertFails(getDocs(query(collection(dbFor('finance'), 'users'))));
+    // Inactive staff cannot read the directory.
+    await assertFails(getDocs(query(collection(dbFor('inactive'), 'users'))));
+  });
 });
 
 describe('laboratory workflow security', () => {
@@ -295,10 +310,20 @@ describe('reception cross-role integrations', () => {
     }));
   });
 
-  test('bed registry is readable by operational roles and writable only by Beds/Admin', async () => {
+  test('bed registry: operational roles read; Reception/Nurse assign/release; Beds full control', async () => {
     for (const role of ['reception','nurse','beds','theater']) await assertSucceeds(getDoc(doc(dbFor(role), 'beds', 'ICU-1')));
-    await assertFails(updateDoc(doc(dbFor('reception'), 'beds', 'ICU-1'), { status:'occupied' }));
-    await assertSucceeds(updateDoc(doc(dbFor('beds'), 'beds', 'ICU-1'), { status:'reserved' }));
+    // Reception may assign (occupied) and release (available) a bed...
+    await assertSucceeds(updateDoc(doc(dbFor('reception'), 'beds', 'ICU-1'), { status:'occupied', patientId:'1001' }));
+    await assertSucceeds(updateDoc(doc(dbFor('reception'), 'beds', 'ICU-1'), { status:'available', patientId:'' }));
+    // ...but may not change bed identity or set maintenance states.
+    await assertFails(updateDoc(doc(dbFor('reception'), 'beds', 'ICU-1'), { status:'maintenance' }));
+    await assertFails(updateDoc(doc(dbFor('reception'), 'beds', 'ICU-1'), { ward:'Other' }));
+    await assertFails(updateDoc(doc(dbFor('reception'), 'beds', 'ICU-1'), { bedNumber:'X' }));
+    // Theater may read but not write.
+    await assertFails(updateDoc(doc(dbFor('theater'), 'beds', 'ICU-1'), { status:'occupied' }));
+    // Beds keeps full lifecycle control.
+    await assertSucceeds(updateDoc(doc(dbFor('beds'), 'beds', 'ICU-1'), { status:'maintenance' }));
+    await assertSucceeds(updateDoc(doc(dbFor('beds'), 'beds', 'ICU-1'), { status:'available' }));
   });
 
   test('server notifications are role-addressed', async () => {
