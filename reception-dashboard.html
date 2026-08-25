@@ -2844,8 +2844,6 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
         </div>
         <select class="toolbar-select" id="qFDept" onchange="window.renderQueue()">
           <option value="">All departments</option>
-          <option>Cardiology</option><option>Neurology</option><option>Orthopedics</option>
-          <option>General</option><option>Pediatrics</option><option>ICU</option>
         </select>
         <button class="btn btn-success" onclick="window.showView('booking', getNavBtn('booking'))">
           <i class="ti ti-user-plus"></i> Register Patient
@@ -2881,7 +2879,6 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
         </select>
         <select class="toolbar-select" id="histDeptFilter" onchange="window.renderHistory()">
           <option value="">All depts</option>
-          <option>General</option><option>Cardiology</option><option>Neurology</option><option>Orthopedics</option><option>Pediatrics</option><option>ICU</option>
         </select>
         <button class="btn" onclick="window.renderHistory()" title="Refresh from common server"><i class="ti ti-refresh"></i> Refresh</button>
         <button class="btn" onclick="window.exportHistoryCSV()"><i class="ti ti-download"></i> Export</button>
@@ -2945,9 +2942,8 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
           <option value="Male">Male only</option>
           <option value="Other">Other</option>
         </select>
-        <select class="toolbar-select" id="repDeptFilter" onchange="renderReports()" title="Department: Cardiology, OPD, Gyne, etc">
+        <select class="toolbar-select" id="repDeptFilter" onchange="renderReports()" title="Department: OPD/Inpatient → Surgical/Non-surgical → specialty">
           <option value="">All depts</option>
-          <option>General</option><option>Cardiology</option><option>Neurology</option><option>Orthopedics</option><option>Pediatrics</option><option>ICU</option><option>Gynecology</option><option>OPD</option><option>Maternity</option><option>Emergency</option>
         </select>
         <select class="toolbar-select" id="repInsFilter" onchange="renderReports()" title="Insurance">
           <option value="">All insurance</option>
@@ -3004,9 +3000,9 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
                 <button class="ra-btn ra-pink" onclick="document.getElementById('repGenderFilter').value='Female'; renderReports();" style="font-size:10px; padding:4px 8px;"><i class="ti ti-gender-female"></i> Female only</button>
                 <button class="ra-btn ra-blue" onclick="document.getElementById('repGenderFilter').value='Male'; renderReports();" style="font-size:10px; padding:4px 8px;"><i class="ti ti-gender-male"></i> Male only</button>
                 <button class="ra-btn ra-green" onclick="document.getElementById('repDateFilter').value='yesterday'; renderReports();" style="font-size:10px; padding:4px 8px;"><i class="ti ti-calendar"></i> Yesterday</button>
-                <button class="ra-btn ra-orange" onclick="document.getElementById('repDeptFilter').value='Cardiology'; renderReports();" style="font-size:10px; padding:4px 8px;"><i class="ti ti-heart"></i> Cardio</button>
-                <button class="ra-btn" style="background:#fef3c7; border-color:#fde68a; color:#92400e; font-size:10px; padding:4px 8px;" onclick="document.getElementById('repDeptFilter').value='General'; renderReports();"><i class="ti ti-building-hospital"></i> OPD</button>
-                <button class="ra-btn ra-purple" onclick="document.getElementById('repDeptFilter').value='Gynecology'; renderReports();" style="font-size:10px; padding:4px 8px;"><i class="ti ti-woman"></i> Gyne</button>
+                <button class="ra-btn ra-orange" onclick="document.getElementById('repDeptFilter').value='any|any|cardiology'; renderReports();" style="font-size:10px; padding:4px 8px;"><i class="ti ti-heart"></i> Cardio</button>
+                <button class="ra-btn" style="background:#fef3c7; border-color:#fde68a; color:#92400e; font-size:10px; padding:4px 8px;" onclick="document.getElementById('repDeptFilter').value='outpatient|any|any'; renderReports();"><i class="ti ti-building-hospital"></i> OPD</button>
+                <button class="ra-btn ra-purple" onclick="document.getElementById('repDeptFilter').value='any|any|gynecology'; renderReports();" style="font-size:10px; padding:4px 8px;"><i class="ti ti-woman"></i> Gyne</button>
                 <button class="ra-btn ra-yellow" onclick="document.getElementById('repInsFilter').value='RSSB'; renderReports();" style="font-size:10px; padding:4px 8px;">RSSB</button>
                 <button class="ra-btn ra-teal" onclick="document.getElementById('repInsFilter').value='MUTUELLE DE SANTE'; renderReports();" style="font-size:10px; padding:4px 8px;">Mutuelle</button>
                 <button class="ra-btn ra-gray" onclick="document.getElementById('repDateFilter').value='all'; document.getElementById('repGenderFilter').value=''; document.getElementById('repDeptFilter').value=''; document.getElementById('repInsFilter').value=''; document.getElementById('repDistrictFilter').value=''; document.getElementById('repVisitFilter').value=''; document.getElementById('repSearch').value=''; renderReports();" style="font-size:10px; padding:4px 8px;"><i class="ti ti-x"></i> Clear</button>
@@ -3189,7 +3185,17 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
               <div class="form-group"><label>Patient pays (%) *</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="bPatientPayPercent" class="apple-input" min="0" max="100" step="1" value="100" oninput="updateInsuranceSharePreview()" style="font-weight:800;color:#0b57d0;"><span id="bInsuranceSharePreview" style="white-space:nowrap;font-size:10px;font-weight:700;color:var(--tm);">Insurance pays 0%</span></div><small style="font-size:9.5px;color:var(--tm);">Applied automatically to every patient bill. RSSB default: patient 15%.</small></div>
               <div class="form-group"><label>Patient Type *</label><select id="bPatientType" class="apple-input"><option>New</option><option>Returning</option></select></div>
               <div class="form-group"><label>Visit Type *</label><select id="bVisitType" class="apple-input"><option>OPD</option><option>Emergency</option><option>Referral</option><option>ANC</option><option>Maternity</option></select></div>
-              <div class="form-group"><label>Department *</label><select id="bDept" class="apple-input"><option>General</option><option>Cardiology</option><option>Neurology</option><option>Orthopedics</option><option>Pediatrics</option><option>ICU</option></select></div>
+              <div class="form-group form-grid-full" style="background:rgba(255,255,255,0.55); border:0.5px solid rgba(0,0,0,0.06); border-radius:12px; padding:10px 12px;">
+                <label style="display:block; margin-bottom:8px; font-size:12px;">Patient Location <span style="color:#d93025;">*</span> — <span style="font-weight:500; color:var(--tm);">Setting → Service → Specialty → Unit (precise tracing: e.g. Inpatient - Surgery - Cardiothoracic - ICU)</span></label>
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
+                  <div><small style="display:block; font-size:10px; color:var(--tm); margin-bottom:3px;">Setting (In/Out patient)</small><select id="bSetting" class="apple-input" onchange="window.syncDeptForm()"></select></div>
+                  <div><small style="display:block; font-size:10px; color:var(--tm); margin-bottom:3px;">Service type</small><select id="bServiceType" class="apple-input" onchange="window.deptTypeChanged()"></select></div>
+                  <div><small style="display:block; font-size:10px; color:var(--tm); margin-bottom:3px;">Specialty / Department</small><select id="bSpecialty" class="apple-input" onchange="window.syncDeptForm()"></select></div>
+                  <div><small style="display:block; font-size:10px; color:var(--tm); margin-bottom:3px;">Unit (optional)</small><select id="bUnit" class="apple-input" onchange="window.syncDeptForm()"></select></div>
+                </div>
+                <small id="bDeptPreview" style="display:block; margin-top:8px; font-size:11px; font-weight:700; color:#0b57d0;"></small>
+                <input type="hidden" id="bDept" value="">
+              </div>
               <div class="form-group"><label>Priority *</label><select id="bPri" class="apple-input"><option>low</option><option>medium</option><option>high</option><option>critical</option></select></div>
               <div class="form-group"><label>Blood Group</label><select id="bBloodGroup" class="apple-input"><option>O+</option><option>O-</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option></select></div>
               <div class="form-group"><label>Allergies</label><input type="text" id="bAllergies" placeholder="Penicillin, None" class="apple-input"></div>
@@ -3597,6 +3603,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
 <script src="pclinic-state.js"></script>
 <script src="shared.js" defer></script>
 <script src="patient-data.js"></script>
+<script src="pclinic-departments.js"></script>
 
 <!-- ===== MAIN APPLICATION ===== -->
 <script>
@@ -4320,6 +4327,7 @@ function selectPatientForEdit(id){
       set('bPatientType', p.patientType||'Returning');
       set('bVisitType', p.visitType||'OPD');
       set('bDept', p.department||'General');
+      if(window.PCLINIC_DEPTS) PCLINIC_DEPTS.applyDeptToForm(p);
       set('bPri', p.priority||'medium');
       set('bBloodGroup', p.bloodGroup||'');
       set('bAllergies', p.allergies||'');
@@ -4621,8 +4629,7 @@ function syncPediatricIdMode(){
   if(ped){
     if(label) label.textContent='Nat ID/PP (optional — child usually has none)';
     if(nid) nid.placeholder='Leave empty if no ID card';
-    var dept=document.getElementById('bDept');
-    if(dept && (!dept.value || dept.value==='General')) dept.value='Pediatrics';
+    if(window.PCLINIC_DEPTS){ var specSel=document.getElementById('bSpecialty'); if(specSel && specSel.value!=='pediatrics'){ specSel.value='pediatrics'; PCLINIC_DEPTS.syncDeptForm(); } }
     var help=document.getElementById('nidHelp');
     if(help && nid && !nid.value.trim()){ help.textContent='Pediatric: identity = hospital MRN + guardian ID'; help.style.color='#9a5700'; }
   } else {
@@ -4744,6 +4751,10 @@ async function registerPatient(){
   var patientType = document.getElementById('bPatientType') ? document.getElementById('bPatientType').value : 'New';
   var visitType = document.getElementById('bVisitType') ? document.getElementById('bVisitType').value : 'OPD';
   var department = document.getElementById('bDept') ? document.getElementById('bDept').value : 'General';
+  var deptSetting = document.getElementById('bSetting') ? document.getElementById('bSetting').value : '';
+  var deptServiceType = document.getElementById('bServiceType') ? document.getElementById('bServiceType').value : '';
+  var deptSpecialty = document.getElementById('bSpecialty') ? document.getElementById('bSpecialty').value : '';
+  var deptUnit = document.getElementById('bUnit') ? document.getElementById('bUnit').value : '';
   var priority = document.getElementById('bPri') ? document.getElementById('bPri').value : 'medium';
   var bloodGroup = document.getElementById('bBloodGroup') ? document.getElementById('bBloodGroup').value : '';
   var allergies = document.getElementById('bAllergies') ? document.getElementById('bAllergies').value.trim() : '';
@@ -4915,6 +4926,7 @@ async function registerPatient(){
       document.getElementById('bInsProviderOther').value='';
       document.getElementById('bInsScheme').value='';
       document.getElementById('bDept').value='';
+      if(window.PCLINIC_DEPTS) PCLINIC_DEPTS.resetDeptForm();
       document.getElementById('bPri').value='medium';
       document.getElementById('bBloodGroup').value='';
       document.getElementById('bReferralSource').value='';
@@ -4972,7 +4984,8 @@ function loadQueue(){
       dept: p.department || 'General',
       priority: p.priority || 'medium',
       since: p.queueAdded || Date.now(),
-      status: p.queueStatus || 'waiting'
+      status: p.queueStatus || 'waiting',
+      src: p
     };
   });
   var priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -4989,7 +5002,10 @@ function saveQueue(){
 function renderQueue(){
   var q=(document.getElementById('qSearch').value||'').toLowerCase();
   var fd=document.getElementById('qFDept').value;
-  var data=queue.filter(function(x){return(!fd||x.dept===fd)&&(!q||String(x.name||'').toLowerCase().indexOf(q)>-1);});
+  var data=queue.filter(function(x){
+    var deptOk=!fd || (x.src && window.PCLINIC_DEPTS ? PCLINIC_DEPTS.deptMatches(x.src,fd) : String(x.dept||'').toLowerCase()===String(fd).toLowerCase());
+    return deptOk && (!q||String(x.name||'').toLowerCase().indexOf(q)>-1);
+  });
   var tb=document.getElementById('qTbody');
   tb.replaceChildren();
   if(!data.length){
@@ -5041,7 +5057,7 @@ function renderHistory(){
   [['histTotalCount',all.length],['histTodayCount',todayCount],['histYesterdayCount',yesterdayCount],['histWeekCount',weekCount],['histcnt',all.length]].forEach(function(x){var el=document.getElementById(x[0]);if(el)el.textContent=String(x[1]);});
   var filtered=all.filter(function(p){
     if(statusFilter&&String(p.status||'').toLowerCase()!==statusFilter)return false;
-    if(deptFilter&&String(p.department||p.location||'').toLowerCase()!==deptFilter)return false;
+    if(deptFilter&&(window.PCLINIC_DEPTS?PCLINIC_DEPTS.deptMatches(p,deptFilter):String(p.department||p.location||'').toLowerCase()!==deptFilter))return false;
     var d=regDate(p);if(dateFilter!=='all'){if(!d)return false;d.setHours(0,0,0,0);if(dateFilter==='today'&&d.getTime()!==today.getTime())return false;if(dateFilter==='yesterday'&&d.getTime()!==yesterday.getTime())return false;if(dateFilter==='last7'&&d<last7)return false;if(dateFilter==='thisMonth'&&d<thisMonth)return false;if(dateFilter==='lastMonth'&&(d<lastMonth||d>lastMonthEnd))return false;}
     if(!q)return true;
     return [p.firstName,p.lastName,p.familyName,p.mrn,p.id,p.phone,p.nationalId,p.district,p.email,p.department,p.location].map(function(v){return String(v||'').toLowerCase();}).join(' ').indexOf(q)!==-1;
@@ -5098,7 +5114,7 @@ function getReportFilteredPatients(){
 
   return all.filter(function(p){
     if(genderFilter && String(p.gender||'').toLowerCase()!==genderFilter.toLowerCase()) return false;
-    if(deptFilter && String(p.department||p.location||'').toLowerCase()!==deptFilter.toLowerCase()) return false;
+    if(deptFilter && (window.PCLINIC_DEPTS ? !PCLINIC_DEPTS.deptMatches(p, deptFilter) : String(p.department||p.location||'').toLowerCase()!==deptFilter.toLowerCase())) return false;
     if(insFilter){
       var prov=(p.insurance&&p.insurance.provider?p.insurance.provider:'')+' '+(p.policyNumber||'');
       if(String(prov).toLowerCase().indexOf(insFilter.toLowerCase())===-1 && String(p.insurance||'').toLowerCase().indexOf(insFilter.toLowerCase())===-1) return false;
@@ -6323,6 +6339,8 @@ function populateSurgeryPatients() {
 // COMMON SERVER: reads patients from Firebase same as doctor dashboard via patient-data.js realtime sync
 function init(){
   document.querySelectorAll('.modal-overlay').forEach(function(modal){modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');});
+  // Precise location taxonomy: fill registration selects + grouped department filters
+  if(window.PCLINIC_DEPTS){ PCLINIC_DEPTS.initDeptRegistrationForm(); PCLINIC_DEPTS.refreshDeptFilters(); }
   // Set dates - NOT for DOB (DOB should be empty), only for appointments
   document.getElementById('apptDate').value = todayStr();
   document.getElementById('apptTime').value = '09:00';
