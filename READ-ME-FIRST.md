@@ -45,6 +45,7 @@ The current patient document is still monolithic. Several clinical roles must re
 
 ```bash
 npm --prefix functions install
+npm --prefix functions run test:verify-patch
 npm --prefix functions test
 npm --prefix functions run test:emulator
 npm --prefix tests install
@@ -52,6 +53,16 @@ npm --prefix tests run test:static
 npm --prefix tests run test:rules
 firebase deploy --only firestore:rules,functions,hosting
 ```
+
+`functions install` runs `scripts/patch-functions-config.cjs`, which stops the
+13.x Cloud Functions emulator from calling the `functions.config()` API that
+firebase-functions v7 removed — without it every callable dies with
+`Your function was killed because it raised an unhandled error` and
+`test:emulator` cannot run.
+If you skip `test:verify-patch` and the patch is missing, expect the emulator
+suite to fail for reasons that have nothing to do with your code. `npm test`
+also runs it. All four suites pass on Node 20 + JDK 11 (12/8/24 unit, static
+and rules tests, 10 for the radiology integration suite).
 
 Use a staging Firebase project first. Never test security rules against production patient data.
 

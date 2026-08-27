@@ -90,12 +90,14 @@ by a live ruleset whose `orders` create is stricter than its `patients` update.
 | # | Defect | Severity | Action |
 |---|---|---|---|
 | D1 | `tests/` has **no `package.json`** — `npm --prefix tests install` and `npm --prefix tests run test:static/test:rules` from `READ-ME-FIRST.md` cannot work; the rules suite could never run | High | **Fixed** — added `tests/package.json` (rules-unit-testing ^5, firebase ^12, firebase-tools 13.35.1 pinned; v15 needs Java 21, clinic machines usually have 11) |
-| D2 | `functions/package.json` `test:unit`/`test:integration` reference **missing** `test/radiology-domain.test.cjs` → `npm --prefix functions test` fails | Medium | Needs the file restored or the script trimmed |
+| D2 | `functions/package.json` `test:unit`/`test:integration` reference **missing** `test/radiology-domain.test.cjs` and `test/radiology-integration.test.cjs` → `npm --prefix functions test` fails | Medium | **Fixed 2026-08-27** — both files written (see §8). The radiology backend previously had **zero** test coverage |
 | D3 | Rules tests never tested doctor/nurse **order creation** — the failing path was uncovered | High | **Fixed** — test added (passes) |
 | D4 | `sync()` swallows the real Firestore error; `createOrderAsync` throws a generic message so the UI can't distinguish permission-denied from network loss | High | **Fixed** — `pclinic-orders.js` now stores `code + message` in `_syncError` and the toast shows it: *"...not accepted by the common server (permission-denied: Missing or insufficient permissions.)..."* |
 | D5 | App is served from GitHub Pages while the README assumes `firebase deploy hosting`; `.firebaserc` points to `pclinic-20d81` but hosting is not deployed there | Medium | Document the real deployment channel (or deploy hosting properly) |
 | D6 | Public GitHub repo while `READ-ME-FIRST.md` step 7 requires making it private; client API key is normal for Firebase web apps, but the security docs assume a private repo | Medium | Follow the README: make the repo private |
 | D7 | Monolithic patient document forces broad role access (acknowledged in README) | Design | Future: split collections as README plans |
+| D8 | **The radiology emulator test could never have worked.** `firebase-tools@13.35.1` (pinned for JDK 11) calls the legacy `functions.config()` in its emulator runtime on *every* request; `firebase-functions@7.3.2` replaced that API with a throwing getter, so each callable died with `Your function was killed because it raised an unhandled error` before `index.js` ran. firebase-tools 15.x removed the call but needs JDK 21 for the Firestore emulator | High | **Fixed 2026-08-27** — `scripts/patch-functions-config.cjs` (wired to `postinstall`) makes the removed accessor tolerant instead of fatal. Verified on JDK 11 + firebase-tools 13.35.1 |
+| D9 | The radiology callables and both `*AcknowledgeCritical` callables call `cleanText()` for `orderId`/`action`/`reason`/`reportId`/`text` **outside** a try/catch, unlike `labSpecimenTransition`/`labFinalize`. A malformed client payload (missing/oversized id) escapes as `internal` instead of `invalid-argument`, so the UI toast shows nothing useful and function-error alerting fires on user mistakes | Medium | **Fixed 2026-08-27** — the six call sites now wrap validation and `fail('invalid-argument', …)`, matching the lab convention. Covered by the new integration test |
 
 **Note:** `pclinic-sync-race-fix.patch` and `specimen-accept-fix.patch` are already applied in
 the current files (the async `submitLabRequest` and the lab-domain imports in
@@ -110,6 +112,47 @@ the current files (the async `submitLabRequest` and the lab-domain imports in
    accessions via `labSpecimenTransition` → results via `labFinalize` → cashier sees the bill.
 5. Copy the fixed files back into the repo and re-upload to GitHub Pages:
    `pclinic-orders.js` (better error messages) and `tests/package.json` + the new test.
+
+## 8. Addendum 2026-08-27 — radiology test suite restored (D2, D8, D9)
+
+Two files were missing and are now written against the real behaviour of
+`functions/radiology-domain.cjs` and the five `radiology*` callables:
+
+- `functions/test/radiology-domain.test.cjs` — 8 tests, pure logic: state
+  derivation from a client-controlled `radiologyState`/`status`, the forward
+  transition table (and that `reported`/`cancelled` are terminal), `cleanText`
+  limits, the exact normalised report shape, final-report requirements, and the
+  deterministic `rad_<orderId>` document id.
+- `functions/test/radiology-integration.test.cjs` — 10 tests against the
+  emulator, running the real `requireStaff()` authorisation and the real
+  transactions: full order→acquire→draft→sign walk, per-step audit trail,
+  final-report immutability + addendum-only amendment, idempotent transition
+  and acknowledgement retries, critical-alert routing to the ordering clinician
+  only, cross-role/inactive/unsigned/ghost-profile denial, and that rejected
+  calls leave the order untouched.
+
+It also asserts the *rules* side of the guarantee, in both directions: a
+radiologist cannot drive their own order from the browser
+(`departmentMayUpdateOrder()` deliberately omits `radiology`), and no client can
+write `radiologyReports`, `radiologyAddenda`, `criticalAlerts` or `auditLog`.
+
+The integration suite signs staff in with unsigned JWTs sent straight to the
+Functions emulator (which does not verify signatures in emulator mode). That
+keeps every uid deterministic so `/users/{uid}` profiles can be seeded up front,
+and avoids the Auth emulator, a service account, and any real API key.
+
+Verified on this machine (Node 20, JDK 11, firebase-tools 13.35.1):
+
+```
+npm --prefix functions test                  → 12 pass, 0 fail
+npm --prefix functions run test:emulator     → 10 pass, 0 fail
+npm --prefix tests run test:static           →  8 pass, 0 fail
+npm --prefix tests run test:rules            → 24 pass, 0 fail
+```
+
+Before D8 was fixed, `test:emulator` failed for *every* callable, which is worth
+remembering the next time a rules change is validated only through
+`tests run test:rules` — that path never touches `functions/index.js`.
 
 ---
 
