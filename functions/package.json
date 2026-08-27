@@ -6,14 +6,19 @@
     "node": "22"
   },
   "scripts": {
+    "postinstall": "node ../scripts/patch-functions-config.cjs",
     "test": "npm run test:unit",
     "test:unit": "node --test test/radiology-domain.test.cjs test/lab-domain.test.cjs",
-    "test:integration": "node --test test/radiology-integration.test.cjs",
-    "test:emulator": "../tests/node_modules/.bin/firebase emulators:exec --config ../firebase.json --project demo-pclinic --only firestore \"node --test test/radiology-integration.test.cjs\""
+    "test:verify-patch": "node ../scripts/patch-functions-config.cjs --check",
+    "test:emulator": "../tests/node_modules/.bin/firebase emulators:exec --config ../firebase.json --project demo-pclinic --only firestore,functions \"node --test --test-force-exit test/radiology-integration.test.cjs\""
   },
   "dependencies": {
     "firebase-admin": "14.2.0",
     "firebase-functions": "7.3.2"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
+    "firebase": "12.18.0"
   },
   "overrides": {
     "uuid": "11.1.1"

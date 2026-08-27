@@ -566,7 +566,12 @@ exports.labFinalize = onCall({ cors: true }, async (request) => {
  */
 exports.labAcknowledgeCritical = onCall(async (request) => {
   const staff = await requireStaff(request, ['doctor']);
-  const resultId = cleanText(request.data && request.data.resultId, 500, true, 'resultId');
+  let resultId;
+  try {
+    resultId = cleanText(request.data && request.data.resultId, 500, true, 'resultId');
+  } catch (error) {
+    fail('invalid-argument', error.message);
+  }
   const alertRef = db.collection('criticalAlerts').doc(resultId);
   const orderRef = db.collection('orders').doc(resultId);
 
@@ -595,9 +600,16 @@ exports.labAcknowledgeCritical = onCall(async (request) => {
 
 exports.radiologyTransition = onCall(async (request) => {
   const staff = await requireStaff(request, ['radio']);
-  const orderId = cleanText(request.data && request.data.orderId, 300, true, 'orderId');
-  const action = cleanText(request.data && request.data.action, 40, true, 'action');
-  const reason = cleanText(request.data && request.data.reason, 1000, false, 'reason');
+  let orderId;
+  let action;
+  let reason;
+  try {
+    orderId = cleanText(request.data && request.data.orderId, 300, true, 'orderId');
+    action = cleanText(request.data && request.data.action, 40, true, 'action');
+    reason = cleanText(request.data && request.data.reason, 1000, false, 'reason');
+  } catch (error) {
+    fail('invalid-argument', error.message);
+  }
   if (!['start', 'acquire', 'cancel'].includes(action)) fail('invalid-argument', 'Unknown radiology action.');
   if (action === 'cancel' && !reason) fail('invalid-argument', 'A cancellation reason is required.');
 
@@ -643,7 +655,12 @@ exports.radiologyTransition = onCall(async (request) => {
 
 exports.radiologySaveDraft = onCall(async (request) => {
   const staff = await requireStaff(request, ['radio']);
-  const orderId = cleanText(request.data && request.data.orderId, 300, true, 'orderId');
+  let orderId;
+  try {
+    orderId = cleanText(request.data && request.data.orderId, 300, true, 'orderId');
+  } catch (error) {
+    fail('invalid-argument', error.message);
+  }
   let report;
   try { report = normalizeReportInput(request.data && request.data.report); }
   catch (error) { fail('invalid-argument', error.message); }
@@ -679,7 +696,12 @@ exports.radiologySaveDraft = onCall(async (request) => {
 
 exports.radiologyFinalize = onCall(async (request) => {
   const staff = await requireStaff(request, ['radio']);
-  const orderId = cleanText(request.data && request.data.orderId, 300, true, 'orderId');
+  let orderId;
+  try {
+    orderId = cleanText(request.data && request.data.orderId, 300, true, 'orderId');
+  } catch (error) {
+    fail('invalid-argument', error.message);
+  }
   let report;
   try { report = validateFinalReport(normalizeReportInput(request.data && request.data.report)); }
   catch (error) { fail('invalid-argument', error.message); }
@@ -746,9 +768,16 @@ exports.radiologyFinalize = onCall(async (request) => {
 
 exports.radiologyAddendum = onCall(async (request) => {
   const staff = await requireStaff(request, ['radio']);
-  const reportId = cleanText(request.data && request.data.reportId, 500, true, 'reportId');
-  const text = cleanText(request.data && request.data.text, 10000, true, 'addendum text');
-  const reason = cleanText(request.data && request.data.reason, 1000, true, 'addendum reason');
+  let reportId;
+  let text;
+  let reason;
+  try {
+    reportId = cleanText(request.data && request.data.reportId, 500, true, 'reportId');
+    text = cleanText(request.data && request.data.text, 10000, true, 'addendum text');
+    reason = cleanText(request.data && request.data.reason, 1000, true, 'addendum reason');
+  } catch (error) {
+    fail('invalid-argument', error.message);
+  }
   const reportRef = db.collection('radiologyReports').doc(reportId);
   const addendumRef = db.collection('radiologyAddenda').doc();
 
@@ -782,7 +811,12 @@ exports.radiologyAddendum = onCall(async (request) => {
 
 exports.radiologyAcknowledgeCritical = onCall(async (request) => {
   const staff = await requireStaff(request, ['doctor']);
-  const reportId = cleanText(request.data && request.data.reportId, 500, true, 'reportId');
+  let reportId;
+  try {
+    reportId = cleanText(request.data && request.data.reportId, 500, true, 'reportId');
+  } catch (error) {
+    fail('invalid-argument', error.message);
+  }
   const alertRef = db.collection('criticalAlerts').doc(reportId);
   const reportRef = db.collection('radiologyReports').doc(reportId);
 
