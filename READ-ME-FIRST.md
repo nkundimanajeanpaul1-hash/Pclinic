@@ -37,6 +37,30 @@ It is **not** a declaration that the application is production-ready.
 
 See `RADIOLOGY_SETUP.md` before deploying the radiology workflow.
 
+## Clinical file records are now shared between computers
+
+Until 2026-08-27, `pclinic-file.js` `saveFile()` pushed each request/form record
+to `patients/{patientId}/files` but **nothing ever read that collection back**.
+`listFiles()` — the only reader used by `imaging-request.html`,
+`pclinic-filepage.js` and `medical-summary.html` — served `localStorage`
+(`pclinic_files`), so a record was visible only on the computer that created it,
+even though radiology's worklist (which does query Firestore) saw the order.
+
+`listFiles()` now merges the server records, `saveFile()` reports a rejected
+write instead of swallowing it (`.catch(function () {})` is gone), and failed
+records stay visible locally and are retryable via `pcFile.retryFileSync(id)`.
+
+- **No Firestore rules change was needed.** `patients/{id}/files` already had
+  `allow read: if patientReader()`; only the client was missing the download.
+  `tests/firestore.rules.test.mjs` now pins that: doctor/reception/nurse/radio/
+  lab/admin can read a colleague's file record, and cashier/finance/hr cannot.
+- **Cache-busting is mandatory for this deploy.** 52 pages reference
+  `pclinic-file.js?v=…`; the token is now `v=20260827_FILES`. Upload those pages
+  together with `pclinic-file.js` or some browsers keep the old script.
+- Firebase Storage is still **not** configured, so image/attachment payloads
+  remain disabled by design (`firestore.rules` rejects `data`/`photo`/`video`
+  keys on this path). This change shares the *records*, not image bytes.
+
 ## Important remaining limitation
 
 The current patient document is still monolithic. Several clinical roles must retain broad update access for the existing app to function. The next release must split demographics, encounters, notes, prescriptions, results, and billing into explicitly authorized collections.
@@ -50,6 +74,7 @@ npm --prefix functions test
 npm --prefix functions run test:emulator
 npm --prefix tests install
 npm --prefix tests run test:static
+npm --prefix tests run test:files
 npm --prefix tests run test:rules
 firebase deploy --only firestore:rules,functions,hosting
 ```

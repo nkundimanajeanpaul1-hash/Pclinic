@@ -119,3 +119,28 @@ Add radiology test suites; fix emulator compatibility and error codes
 - firebase.json: pin the Functions emulator port used by test:emulator
 - READ-ME-FIRST.md, EVALUATION_REPORT.md: document the new commands and findings
 ```
+
+---
+
+# Round 2 (same day) — cross-computer file records
+
+**Symptom:** an imaging request (or certificate/note form) is visible on the
+computer that created it — and radiology's worklist shows the order — but it is
+missing on every other computer.
+
+**Cause:** `saveFile()` pushed to `patients/{id}/files` but nothing read it back.
+`listFiles()` is `localStorage.getItem('pclinic_files')` only. Radiology sees the
+request because `pcOrders.create()` writes `orders` with `dept:'radiology'` and
+`pclinic-radiology.js:107` runs a real Firestore query.
+
+**Changed:** `pclinic-file.js` (server merge + honest write reporting + retry),
+`imaging-request.html` and `pclinic-filepage.js` (repaint on `pcFilesUpdated`),
+`tests/pclinic-file-sync.test.mjs` (new, 6 tests, runs the real shipping module),
+`tests/firestore.rules.test.mjs` (+2 tests), `tests/package.json` (`test:files`),
+50 pages for the cache-buster only.
+
+**`firestore.rules` is unchanged** — the reads were already permitted; only the
+client was missing the download.
+
+**Deploy:** upload `pclinic-file.js`, `pclinic-filepage.js` and the 51 pages
+together so the `?v=20260827_FILES` tokens match.

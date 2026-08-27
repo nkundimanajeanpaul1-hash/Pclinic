@@ -236,8 +236,237 @@
     }
 
     /* ══════════ FILE STORE ══════════ */
+    /* ══════════ FILE STORE — COMMON-SERVER SYNC ══════════
+       saveFile() always pushed to `patients/{id}/files`, but nothing in the
+       app ever read that collection back: listFiles() served localStorage
+       only, so a request filed on one computer was invisible on every other
+       one, while the radiology worklist (which does query Firestore) saw it
+       fine. This mirrors startLiveSync() in pclinic-orders.js so every
+       device converges on the same records, and it no longer swallows a
+       rejected write — a denied save now says so instead of looking saved.
+       Firestore is authoritative for anything it has confirmed. A local-only
+       record is therefore discarded once the server list arrives, unless it
+       is still pending confirmation or already flagged as failed, so a real
+       denial can never be hidden by the merge.                        */
+
+    var fileServer = {};      // patientId -> { id -> record } confirmed by Firestore
+    var fileErrors = {};      // patientId -> machine reason for the last failed sync
+    var fileUnsubs = {};      // patientId -> live-listener teardown
+    var fileLive = {};         // patientId -> true once a listener is subscribed
+    var fileLoaded = {};       // patientId -> true once the server has answered
+    var fileLoading = {};      // patientId -> true while a one-shot read is in flight
+
+    // Firestore Timestamps are objects; localStorage holds JSON and
+    // patients/{id}/files rejects data URLs, so flatten and drop non-JSON.
+    function toPlain(value) {
+        if (value && typeof value.toDate === 'function') {
+            try { return value.toDate().toISOString(); } catch (e) { return null; }
+        }
+        if (Array.isArray(value)) return value.map(toPlain);
+        if (value && typeof value === 'object') {
+            var out = {};
+            Object.keys(value).forEach(function (k) { out[k] = toPlain(value[k]); });
+            return out;
+        }
+        return value === undefined ? null : value;
+    }
+
+    function localFiles() { return read(DOCS_KEY, []); }
+
+    function mapFromSnapshot(snap) {
+        var map = {};
+        snap.forEach(function (d) {
+            var row = toPlain(d.data()) || {};
+            row.id = row.id || d.id;
+            map[String(row.id)] = row;
+        });
+        return map;
+    }
+
+    // Records saved while offline are mirrored into the store so a successful
+    // push never drops them out of the list.
+    function mirrorLocalIntoServerMap(pid) {
+        var map = fileServer[String(pid)];
+        if (!map) return;
+        var knownIds = Object.keys(map);
+        var added = 0;
+        localFiles().forEach(function (row) {
+            if (String(row.patientId) !== String(pid)) return;
+            if (!row.id || knownIds.indexOf(String(row.id)) !== -1) return;
+            map[String(row.id)] = row;
+            added++;
+        });
+        if (!added && !fileErrors[String(pid)]) return;
+        write(DOCS_KEY, Object.keys(map).map(function (id) { return map[id]; })
+            .sort(function (a, b) { return String(b.at || '').localeCompare(String(a.at || '')); }));
+    }
+
+    // One-shot read, used only when a live listener cannot be opened.
+    function publishPatientFiles(pid) {
+        pid = String(pid);
+        if (fileLoading[pid] || fileLive[pid]) return;
+        if (!window.firebaseDB || !window.firebaseFunctions) return;
+        var f = window.firebaseFunctions;
+        fileLoading[pid] = true;
+        try {
+            f.getDocs(f.collection(window.firebaseDB, 'patients/' + pid + '/files'))
+                .then(function (snap) {
+                    fileLoading[pid] = false;
+                    if (fileLive[pid]) return;      // a listener owns the data now
+                    fileServer[pid] = mapFromSnapshot(snap);
+                    fileLoaded[pid] = true;
+                    delete fileErrors[pid];
+                    mirrorLocalIntoServerMap(pid);
+                    window.dispatchEvent(new CustomEvent('pcFilesUpdated', { detail: { patientId: pid, count: snap.size } }));
+                })
+                .catch(function (error) {
+                    fileLoading[pid] = false;
+                    if (fileLive[pid]) return;
+                    fileErrors[pid] = (error && error.code ? error.code + ': ' : '') + ((error && error.message) || 'unknown');
+                    console.warn('[pclinic] patient file sync failed:', fileErrors[pid]);
+                    mirrorLocalIntoServerMap(pid);
+                    window.dispatchEvent(new CustomEvent('pcFilesUpdated', { detail: { patientId: pid, error: fileErrors[pid] } }));
+                });
+        } catch (e) {
+            fileLoading[pid] = false;
+            console.warn('[pclinic] patient file sync unavailable:', e && e.message);
+        }
+    }
+
+    function listenFiles(pid) {
+        pid = String(pid == null ? '' : pid);
+        if (!pid) return null;
+        if (fileUnsubs[pid]) return fileUnsubs[pid];
+        if (!window.firebaseDB || !window.firebaseFunctions) return null;
+        var f = window.firebaseFunctions;
+        try {
+            fileUnsubs[pid] = f.onSnapshot(
+                f.collection(window.firebaseDB, 'patients/' + pid + '/files'),
+                function (snap) {
+                    fileLive[pid] = true;
+                    fileLoaded[pid] = true;
+                    fileServer[pid] = mapFromSnapshot(snap);
+                    delete fileErrors[pid];
+                    mirrorLocalIntoServerMap(pid);
+                    window.dispatchEvent(new CustomEvent('pcFilesUpdated', { detail: { patientId: pid, count: snap.size } }));
+                },
+                function (error) {
+                    fileErrors[pid] = (error && error.code ? error.code + ': ' : '') + ((error && error.message) || 'unknown');
+                    console.warn('[pclinic] patient file listener failed:', fileErrors[pid]);
+                    try { if (fileUnsubs[pid]) { fileUnsubs[pid](); } } catch (e) {}
+                    delete fileUnsubs[pid];
+                    delete fileLive[pid];
+                    mirrorLocalIntoServerMap(pid);
+                    window.dispatchEvent(new CustomEvent('pcFilesUpdated', { detail: { patientId: pid, error: fileErrors[pid] } }));
+                }
+            );
+            // onSnapshot fires once immediately with the current contents, so
+            // there is no separate initial read to wait for.
+            if (fileUnsubs[pid]) fileLive[pid] = true;
+            else publishPatientFiles(pid);
+            return fileUnsubs[pid];
+        } catch (e) {
+            publishPatientFiles(pid);
+            return null;
+        }
+    }
+
+    function patchLocal(id, changes) {
+        var all = localFiles();
+        var i = all.findIndex(function (x) { return String(x.id) === String(id); });
+        if (i === -1) return;
+        Object.keys(changes).forEach(function (k) {
+            if (changes[k] === null) delete all[i][k]; else all[i][k] = changes[k];
+        });
+        write(DOCS_KEY, all);
+    }
+
+    function pushToServer(rec) {
+        if (!window.firebaseDB || !window.firebaseFunctions) {
+            patchLocal(rec.id, { _pending: null, _syncFailed: true,
+                _syncError: 'offline: Secure server connection is unavailable' });
+            return Promise.resolve(false);
+        }
+        var f = window.firebaseFunctions;
+        var payload = toPlain(rec);
+        payload.id = rec.id;
+        return f.setDoc(f.doc(window.firebaseDB, 'patients/' + rec.patientId + '/files', rec.id), payload)
+            .then(function () {
+                patchLocal(rec.id, { _pending: null, _syncFailed: null, _syncError: null });
+                var map = fileServer[String(rec.patientId)];
+                // Only merge once the server has actually answered for this
+                // patient; before that listFiles() already shows the local copy.
+                if (map && fileLoaded[String(rec.patientId)]) {
+                    map[String(rec.id)] = payload;
+                    mirrorLocalIntoServerMap(rec.patientId);
+                }
+                delete fileErrors[String(rec.patientId)];
+                return true;
+            })
+            .catch(function (error) {
+                var reason = (error && error.code ? error.code + ': ' : '') + ((error && error.message) || 'unknown');
+                console.error('[pclinic] patient file write rejected:', reason);
+                patchLocal(rec.id, { _pending: true, _syncFailed: true, _syncError: reason });
+                fileErrors[String(rec.patientId)] = reason;
+                window.dispatchEvent(new CustomEvent('pcFilesUpdated', {
+                    detail: { patientId: rec.patientId, id: rec.id, error: reason }
+                }));
+                if (window.pcToast) {
+                    window.pcToast('⚠️ This file was NOT saved to the common server (' + reason
+                        + '). It is visible on this computer only.', 'error', 9000);
+                }
+                return false;
+            });
+    }
+
+    function retrySync(recId) {
+        var row = localFiles().filter(function (x) { return String(x.id) === String(recId); })[0];
+        if (!row) return Promise.resolve(false);
+        var clean = {};
+        Object.keys(row).forEach(function (k) {
+            if (k !== '_syncFailed' && k !== '_syncError' && k !== '_pending') clean[k] = row[k];
+        });
+        patchLocal(recId, { _pending: true });
+        return pushToServer(clean);
+    }
+
+    function listFiles(patientId, type) {
+        var pid = String(patientId);
+        ensureListening(pid);
+        var local = localFiles().filter(function (f) {
+            if (String(f.patientId) !== pid) return false;
+            return !type || f.type === type;
+        });
+        var map = fileServer[pid];
+        if (!map) return local;
+        var out = [];
+        var seen = {};
+        // Server-confirmed records first, then in-flight or failed local ones.
+        Object.keys(map).map(function (id) { return map[id]; }).forEach(function (f) {
+            if (String(f.patientId) !== pid) return;
+            if (type && f.type !== type) return;
+            seen[String(f.id)] = true;
+            out.push(f);
+        });
+        local.forEach(function (f) {
+            if (seen[String(f.id)]) return;
+            out.push(f);
+        });
+        out.sort(function (a, b) { return String(b.at || '').localeCompare(String(a.at || '')); });
+        return out;
+    }
+
+    function ensureListening(pid) {
+        pid = String(pid == null ? '' : pid);
+        if (!pid || fileUnsubs[pid] || fileLoading[pid] || fileLoaded[pid]) return;
+        listenFiles(pid);
+        publishPatientFiles(pid);
+    }
+    function fileSyncError(patientId) {
+        return fileErrors[String(patientId)] || '';
+    }
     function saveFile(rec) {
-        var all = read(DOCS_KEY, []);
+        var all = localFiles();
         rec.id = rec.id || uid(rec.type || 'file');
         rec.at = rec.at || new Date().toISOString();
         rec.by = rec.by || staff().name || '';
@@ -248,24 +477,18 @@
         } else {
             all.unshift(rec);
         }
-        write(DOCS_KEY, all.slice(0, 400));
-        try {
-            if (window.firebaseDB && window.firebaseFunctions) {
-                var f = window.firebaseFunctions;
-                f.setDoc(f.doc(window.firebaseDB, 'patients/' + rec.patientId + '/files', rec.id), rec)
-                 .catch(function () {});
-            }
-        } catch (e) {}
+        // The cap is a stopgap for the browser mirror only. Firestore keeps
+        // every record, so the list is never truncated once the server answers.
+        var stored = write(DOCS_KEY, all.slice(0, 400));
+        if (!stored && window.pcToast) {
+            window.pcToast("⚠️ This computer's file store is full — the record is on the server only.", 'warning', 8000);
+        }
+        rec._pending = true;
+        ensureListening(rec.patientId);
+        pushToServer(rec);
         window.dispatchEvent(new CustomEvent('pcFilesUpdated', { detail: rec }));
         return rec;
     }
-    function listFiles(patientId, type) {
-        return read(DOCS_KEY, []).filter(function (f) {
-            if (String(f.patientId) !== String(patientId)) return false;
-            return !type || f.type === type;
-        });
-    }
-
     /* ══════════ 3. CLINICAL ACTION BAR (IMAGE 1 EXACT ALL PAGES & DASHBOARDS - 50% APPLE BG) ══════════ */
     /* ══════════════════════════════════════════════════════════════
        ADMIN ACTION BAR (#dcBar) — Bar 3 for the Admin Dashboard only.
@@ -2170,7 +2393,9 @@
         patient: patient, nameOf: nameOf, age: age, esc: esc, uid: uid, staff: staff,
         allDx: allDx, addDx: addDx, dxPicker: dxPicker,
         attachments: attachments, saveRdv: saveRdv,
-        save: saveFile, list: listFiles,
+        save: saveFile, list: listFiles, localList: localFiles,
+        listenFiles: listenFiles, retryFileSync: retrySync,
+        fileSyncError: fileSyncError,
         actionBar: actionBar, sheet: sheet, print: printDoc,
         renderDemoBar: renderPatientIdentificationBar,
         renderClinicalActionBar: renderClinicalActionBar,

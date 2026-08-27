@@ -801,6 +801,12 @@
     function init(cfg) {
         ensureApplePolish();
         CFG = cfg;
+        // Repaint when a record lands from the common server (records
+        // originate on other computers) or when a save is confirmed/rejected.
+        window.addEventListener('pcFilesUpdated', function () {
+            if (!P) return;                       // no patient resolved yet
+            renderHistory();
+        });
         document.title = 'PClinic — ' + cfg.title;
         var sub = $('#appSub'); if (sub) sub.textContent = cfg.sub || cfg.title;
 

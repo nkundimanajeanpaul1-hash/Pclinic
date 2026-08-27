@@ -141,7 +141,7 @@
 <script src="patient-data.js"></script>
 <script src="pclinic-orders.js"></script>
 <script src="pclinic-catalog.js"></script>
-<script src="pclinic-file.js?v=20260814_RAD"></script>
+<script src="pclinic-file.js?v=20260827_FILES"></script>
 <script src="pclinic-vitals.js"></script>
 
 <script>
@@ -370,10 +370,16 @@ requireAuth(['doctor']).then(function(s){
     window.currentStaff=s;
     $('#userName').textContent=s.name;
     $('#userAvatar').textContent=(s.name||'??').substring(0,2).toUpperCase();
+    // Records from other computers only arrive asynchronously from the common
+    // server, so the history must repaint when the download lands — otherwise
+    // a second machine opens this page and correctly shows "No imaging
+    // requested yet" even though the request exists in Firestore.
+    window.addEventListener('pcFilesUpdated', function(){ if(P) renderHistory(); });
+
     var tries=0;
     (function wait(){
         P=pcFile.patient();
-        if(P){renderHistory();return;}
+        if(P){pcFile.listenFiles(P.id); renderHistory(); return;}
         if(++tries<20)return setTimeout(wait,200);
         $('#pcfRoot').innerHTML='<div class="pcf-panel"><div class="pcf-empty">' +
             '<i class="ti ti-user-off"></i>No patient selected.<br>' +
