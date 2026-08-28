@@ -15,7 +15,8 @@
     <script type="module" src="firebase-config.js"></script>
     <script src="auth-guard.js"></script>
 <script src="pclinic-state.js"></script>
-<script src="pclinic-radiology.js?v=20260828_CALLS" defer></script>
+<script src="pclinic-radiology.js?v=20260828_MEDIA" defer></script>
+<script src="pclinic-radiology-media.js?v=20260828_MEDIA" defer></script>
 <script src="patient-data.js" defer></script>  
     
     <!-- Tabler Icons -->
@@ -1285,7 +1286,7 @@
         <div class="srow">
             <div class="sw">
                 <i class="ti ti-search"></i>
-                <input id="globalSearch" placeholder="Search patient name, MRN, or accession number…" oninput="filterTable(this.value)">
+                <input id="globalSearch" placeholder="Search patient name, MRN, or accession — press Enter to select" oninput="filterTable(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();window.selectSearchPatient&&window.selectSearchPatient();}">
             </div>
             <div class="kpis">
                 <div class="kpi kpi-blue" onclick="openModal('pending')"><i class="ti ti-hourglass"></i><span id="kpiPendingN">0 pending</span></div>

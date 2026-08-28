@@ -244,3 +244,88 @@ an unrecognised error is never handed raw HTML to a toast.
 
 `pclinic-radiology.js` changed again in round 5, so the token moved to
 `?v=20260828_CALLS` on the three pages that load it.
+
+---
+
+# Round 6 (2026-08-28) — radiology patient selection + study media
+
+## 1. Selected patient and the identification bar are now two-way
+
+- Clicking **any** worklist row sets the current patient and repaints the
+  identification bar, in every state. Previously only the patient picker and
+  `openReportFor()` called `setActivePatient()`, so a row could sit selected
+  with the bar still reading "No patient selected".
+- `globalSearch` keeps filtering as you type, and **Enter** now selects the
+  match. Selection is refused when the query matches more than one patient
+  (`"4 patients match — add the record number"`); silently picking the first
+  row would attach the wrong patient to a study.
+- The bar's own `pcPatientChanged` broadcast is now honoured by the dashboard,
+  so searching by family name / MRN / national ID in the bar makes that person
+  the current patient. An id-equality guard stops the two from re-notifying
+  each other.
+- A row whose patient is not in the registry says so instead of selecting
+  nothing quietly.
+
+## 2. Study media (images / web video)
+
+An **Images** button on each worklist row opens the upload sheet: choose files,
+they go to the private bucket, and they appear on the doctor's Radiology results
+page under the matching report.
+
+| Piece | File |
+|---|---|
+| Client module (upload, sign, list, remove, panel) | `pclinic-radiology-media.js` (new) |
+| Firestore metadata rules | `firestore.rules` → `match /radiologyMedia/{mediaId}` |
+| Bucket rules | `storage.rules` (new) |
+| Signed-URL + delete callables | `functions/index.js` → `radiologyMediaSign`, `radiologyMediaDelete` |
+| Upload entry point and panel | `radio-dashboard.js`, `radio-dashboard.html` |
+| Doctor-side display (metadata + thumbnails) | `imaging-results.html` |
+
+Design, per your answers: **signed URLs** (nothing reads the bucket directly;
+the callable checks the caller's profile and 10-minute expiry),
+**images + web video at 25 MB** (`image/jpeg|png|webp|gif`,
+`video/mp4|webm`), and no DICOM — a browser cannot render a series, so raw
+DICOM stays in PACS and the picker says so by name.
+
+Firestore holds **metadata only**: `storagePath`, `ext`, `mime`, `bytes`, `kind`,
+fileName and the uploader's identity. No `data`/`photo`/`video` key can be
+written, which is why this does not reopen the media hole the containment release
+closed. `allow update` is `false`: a filed study image cannot be swapped.
+`allow delete` is **uploader-only, admin included** — removing what a radiologist
+reviewed would destroy evidence, and that is decided on the order, not the file.
+
+### You must provision the bucket first
+
+Storage has never been enabled on `pclinic-20d81`, so uploads will report
+*"Firebase Storage is not enabled on project pclinic-20d81 yet"*. Console →
+Storage → Get started (default bucket `pclinic-20d81.appspot.com`), then:
+
+```bash
+firebase deploy --only storage,firestore:rules,functions
+```
+
+`pclinic-radiology-media.js` and the media panel are referenced by
+`?v=20260828_MEDIA`; upload those two HTML pages and `imaging-results.html`
+with it.
+
+## Bugs found while building this, all caught by the new tests
+
+- **`String()` is not a Firestore rules function.** An earlier "hardening" used
+  it in the media rule; the emulator reported `Function not found error: Name:
+  [String]` and denied every create. Rules compare `patientId` directly now —
+  the client writes both sides as strings.
+- **One-argument `.get('x')` is invalid** in rules (needs `map.get(key, default)`);
+  11 places in the new block. Each surfaced only as `permission-denied`.
+- **Path equality ignored the extension.** Comparing `radiology/{order}/{id}` to
+  the stored `radiology/{order}/{id}.jpg` denied every legitimate upload, so the
+  uploader declares `ext` and the rule re-derives the name.
+- `pcFile.sheet()` takes `build(body, close)`, not `onMount` — the first draft
+  opened an empty modal.
+- `pclinic-radiology.js` had drifted to a different cache token on two of three
+  pages; unified.
+- The client's `record()` helper in the rules test double-counted fetches through
+  two wrappers, which made an "exactly once" cleanup assertion fail.
+
+`tests/radiology-media-client.test.mjs` (9 tests) pins the orphan-cleanup path:
+when the object uploads but the record is refused, the file is deleted again, so
+a denied ruleset cannot quietly litter the bucket with unreadable patient images.

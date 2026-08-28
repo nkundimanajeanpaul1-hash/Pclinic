@@ -1,0 +1,62 @@
+rules_version = '2';
+
+// PClinic — Firebase Storage, radiology study media.
+//
+// Only two things live in this bucket: images and short web videos attached to a
+// radiology order, under  radiology/{orderId}/{mediaId}.{ext} .
+//
+// Read access is intentionally NOT granted here. Browsers never read the bucket
+// directly; the radiologyMediaSign Cloud Function returns a short-lived signed
+// URL after it has checked the caller's Firestore profile, the staff activity
+// flag and the order/patient linkage. That keeps "who may see this image" in one
+// place (the Firestore media record + callable) instead of two, and means a
+// revoked or deactivated account cannot keep reading through a cached rule.
+// Upload is the one direct operation a browser performs, so it is checked here.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedInStaff() {
+      return request.auth != null
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('active') == true
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('role') in ['radio', 'admin'];
+    }
+
+    function withinSizeLimit() {
+      // 25 MB. Anything larger is a full CT/MRI series and belongs in PACS,
+      // not in a phone-first clinic record.
+      return request.resource.size > 0 && request.resource.size <= 25 * 1024 * 1024;
+    }
+
+    function allowedContentType() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp|gif)')
+          || request.resource.contentType.matches('video/(mp4|webm)');
+    }
+
+    // The object name must be exactly radiology/{orderId}/{mediaId} with a safe
+    // extension, so an uploader cannot drop a file somewhere else in the bucket
+    // or overwrite another study's object.
+    function pathIsSane() {
+      return request.path.size() == 4
+        && request.path[0] == 'radiology'
+        && request.path[1].matches('^[A-Za-z0-9._-]{1,120}$')
+        && request.path[2].matches('^[A-Za-z0-9._-]{1,160}$')
+        && request.path[3].matches('^(jpg|jpeg|png|webp|gif|mp4|webm)$');
+    }
+
+    match /radiology/{orderId}/{mediaId}.{ext} {
+      allow write: if isSignedInStaff() && withinSizeLimit() && allowedContentType() && pathIsSane();
+      // Deleting is allowed only for the object the same staff member uploaded,
+      // and only as an undo: signed reports are immutable, media records are not
+      // deleted by the browser (see firestore.rules), so a stray file can be
+      // reaped without stranding a record. In practice the callable owns cleanup.
+      allow delete: if isSignedInStaff();
+      allow get, list: if false;
+    }
+
+    // Everything else in the bucket is invisible and unwritable, including the
+    // patient-photo paths the containment release disabled.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

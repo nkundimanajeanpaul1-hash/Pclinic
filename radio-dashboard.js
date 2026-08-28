@@ -244,8 +244,22 @@
                 if (state === 'pending') actions.appendChild(button('Start study', 'btn-s', function () { transitionOrder(order.id, 'start'); }));
                 if (state === 'in-progress') actions.appendChild(button('Mark acquired', 'btn-p', function () { transitionOrder(order.id, 'acquire'); }));
                 if (state === 'acquired' || state === 'reporting') actions.appendChild(button(state === 'reporting' ? 'Continue report' : 'Write report', 'btn-p', function () { openReportFor(order); }));
+                actions.appendChild(button('Images', 'btn-s', function () { openMediaSheet(order); }));
                 actions.appendChild(button('Cancel', 'btn-s', function () { transitionOrder(order.id, 'cancel'); }));
                 row.appendChild(actions);
+                // Selecting a study is also selecting its patient: until now the bar
+                // only updated from the picker, so the identification bar could sit on
+                // "No patient selected" while a row was plainly in front of you.
+                row.addEventListener('click', function () {
+                    var rowPatient = findPatient(order.patientId);
+                    if (!rowPatient) {
+                        notify('The patient on this study is not in the registry, so it cannot be selected. Search the record number in the bar above.', 'warning', 7000);
+                        return;
+                    }
+                    setActivePatient(rowPatient);
+                    currentOrder = order;
+                    renderWorklist();
+                });
                 row.addEventListener('dblclick', function () {
                     if (state === 'acquired' || state === 'reporting') openReportFor(order);
                 });
@@ -685,6 +699,36 @@
         };
         window.closeModal = function () { document.getElementById('modalBg').classList.remove('show'); };
 
+        function resolveSearchPatient(query) {
+            const text = String(query || '').trim().toLowerCase();
+            if (text.length < 2) return null;
+            const patients = (window.getPatients ? (window.getPatients() || []) : []);
+            const digits = text.replace(/\D/g, '');
+            const hit = patients.filter(function (p) {
+                const label = (nameOf(p) + ' ' + String(p.mrn || '') + ' ' + String(p.id || '') + ' ' + String(p.nationalId || '')).toLowerCase();
+                if (digits && [String(p.id || ''), String(p.mrn || ''), String(p.nationalId || '')].some(function (v) { return v.replace(/\D/g, '') === digits; })) return true;
+                return label.indexOf(text) !== -1;
+            });
+            // Ambiguous is not a selection: picking the first row would attach the
+            // wrong patient to a study, which is worse than asking again.
+            if (hit.length === 1) return hit[0];
+            if (hit.length > 1) { notify(hit.length + ' patients match — add the record number to narrow it down.', 'info', 6000); return null; }
+            const byOrder = radiologyState.orders.filter(function (o) {
+                return String(o.id || '').toLowerCase().indexOf(text) !== -1 || String(o.patientName || '').toLowerCase().indexOf(text) !== -1;
+            });
+            if (byOrder.length === 1) return findPatient(byOrder[0].patientId);
+            return null;
+        }
+
+        window.selectSearchPatient = function () {
+            const box = document.getElementById('globalSearch');
+            const found = resolveSearchPatient(box && box.value);
+            if (!found) { notify('No single patient matches that search.', 'warning'); return; }
+            setActivePatient(found);
+            renderAll();
+            notify('Selected ' + nameOf(found) + ' · MRN ' + String(found.mrn || found.id || ''), 'success');
+        };
+
         window.filterTable = function (query) {
             const needle = String(query || '').toLowerCase();
             document.querySelectorAll('table tbody tr').forEach(function (row) { row.style.display = !needle || row.textContent.toLowerCase().includes(needle) ? '' : 'none'; });
@@ -737,6 +781,94 @@
                 console.warn('Radiology authentication failed:', error && error.message);
             });
         });
+
+        // The bar's own search (pcFile.searchPatientRegistry) resolves a patient and
+        // broadcasts it. Honour that here so searching by name or MRN makes that the
+        // current patient everywhere, not just in the bar. The id guard keeps this from
+        // re-dispatching pcPatientChanged and ping-ponging with the bar.
+        window.addEventListener('pcPatientChanged', function (event) {
+            const incoming = event && event.detail;
+            if (!incoming || !incoming.id) { if (currentPatient) setActivePatient(null); return; }
+            const same = currentPatient && String(currentPatient.id) === String(incoming.id);
+            if (same) return;
+            const known = findPatient(incoming.id) || incoming;
+            if (known) setActivePatient(known);
+        });
+        window.addEventListener('pcRadiologyMediaChanged', function () {
+            if (currentOrder && document.getElementById('mediaHost')) renderMediaPanel(currentOrder);
+        });
+
+        /* ── study media: upload, list, view ── */
+        function openMediaSheet(order) {
+            if (!order) { notify('Select a study first.', 'warning'); return; }
+            setActivePatient(findPatient(order.patientId) || currentPatient);
+            if (window.pcFile && typeof window.pcFile.sheet === 'function') {
+                // pcFile.sheet hands the body to opts.build(body, close) — there is
+                // no onMount option; passing one would open an empty modal.
+                window.pcFile.sheet({
+                    title: 'Study media — ' + studyOf(order), icon: 'ti-photo', done: 'Done',
+                    // sheet() hands onClose the already-detached body, so it can only
+                    // be used to repaint the page behind the modal.
+                    onClose: function () { renderWorklist(); },
+                    build: function (body, close) {
+                        body.appendChild(buildMediaBlock(order, true));
+                        const note = document.createElement('div');
+                        note.style.cssText = 'font-size:10px;color:#6e6e73;margin-top:8px';
+                        note.textContent = 'Close this panel to refresh the worklist counts.';
+                        body.appendChild(note);
+                    }
+                });
+                return;
+            }
+            const host = document.getElementById('mediaHost');
+            if (host) { renderMediaPanel(order); host.scrollIntoView({ block: 'nearest' }); return; }
+            notify('The media panel is not available on this view.', 'warning');
+        }
+        window.openMediaSheet = openMediaSheet;
+
+        function buildMediaBlock(order, canManage) {
+            const wrap = document.createElement('div');
+            wrap.dataset.mediaFor = String(order.id);
+            const bar = document.createElement('div');
+            bar.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0';
+            wrap.appendChild(bar);
+            if (canManage) {
+                const pick = document.createElement('input');
+                pick.type = 'file'; pick.multiple = true; pick.accept = (window.pcRadioMedia && pcRadioMedia.ACCEPT) || '';
+                pick.style.cssText = 'font-size:11px';
+                bar.appendChild(pick);
+                pick.addEventListener('change', function () { uploadMedia(order, pick); });
+            }
+            const hint = document.createElement('span');
+            hint.style.cssText = 'font-size:10px;color:#6e6e73';
+            hint.textContent = 'JPEG / PNG / WebP / GIF / MP4 / WebM, 25 MB each. DICOM does not upload here.';
+            bar.appendChild(hint);
+            const panel = document.createElement('div');
+            panel.className = 'pc-media-host';
+            wrap.appendChild(panel);
+            if (window.pcRadioMedia) window.pcRadioMedia.mount(panel, order, { canManage: canManage });
+            return wrap;
+        }
+
+        function renderMediaPanel(order) {
+            const panel = document.querySelector('[data-media-for="' + String(order.id) + '"] .pc-media-host');
+            if (panel && window.pcRadioMedia) window.pcRadioMedia.mount(panel, order, { canManage: true });
+        }
+
+        async function uploadMedia(order, input) {
+            if (!window.pcRadioMedia) { notify('The media module did not load.', 'error'); return; }
+            const files = Array.prototype.slice.call(input.files || []);
+            if (!files.length) return;
+            let ok = 0; const problems = [];
+            for (const file of files) {
+                try { await window.pcRadioMedia.upload(order, file); ok++; }
+                catch (error) { problems.push((file && file.name ? file.name + ': ' : '') + ((error && error.message) || 'upload failed')); }
+            }
+            input.value = '';
+            if (ok) notify(ok + ' file(s) attached to this study and visible in Radiology results.', 'success', 6000);
+            if (problems.length) notify('⚠️ ' + problems.join(' · '), 'error', 12000);
+            renderMediaPanel(order);
+        }
 
         window.addEventListener('patientsUpdated', function () {
             if (!currentPatient && requestedPatientId) {
