@@ -414,3 +414,114 @@ describe('patient counter, billing and files', () => {
     }));
   });
 });
+
+describe('radiology study media', () => {
+  const ORDER = 'rad-order-media';
+  const PATH = `radiology/${ORDER}/rmed-1.jpg`;
+
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'orders', ORDER), {
+        id: ORDER, dept: 'radiology', type: 'imaging', patientId: '1001',
+        patientName: 'Aline Test', status: 'pending', orderedById: profiles.doctor.staffId,
+        orderedAt: 'test'
+      });
+    });
+  });
+
+  function record(overrides = {}) {
+    const base = {
+      id: 'rmed-1', orderId: ORDER, patientId: '1001', fileName: 'chest.jpg', ext: 'jpg',
+      mime: 'image/jpeg', kind: 'image', bytes: 240000,
+      sha256: '', at: 'test', byUid: profiles.radio.uid, byId: profiles.radio.staffId,
+      byName: profiles.radio.name, byRole: 'radio',
+      ...overrides
+    };
+    // storagePath follows the id unless a case overrides it explicitly, so a test
+    // that only changes the id does not trip the path clause for the wrong reason.
+    if (!Object.prototype.hasOwnProperty.call(overrides, 'storagePath')) {
+      base.storagePath = 'radiology/' + base.orderId + '/' + base.id + '.' + base.ext;
+    }
+    return base;
+  }
+
+  test('a radiologist files a study file and everyone clinical can read the record', async () => {
+    await assertSucceeds(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'), record()));
+    for (const role of ['doctor', 'nurse', 'lab', 'reception', 'admin']) {
+      await assertSucceeds(getDoc(doc(dbFor(role), 'radiologyMedia', 'rmed-1')),
+        `${role} must be able to see that a study has media`);
+    }
+    // Only metadata is in Firestore: pixels are never reachable through rules.
+    const snap = await getDoc(doc(dbFor('doctor'), 'radiologyMedia', 'rmed-1'));
+    assert.equal(snap.data().storagePath, PATH);
+    assert.equal(snap.data().data, undefined);
+  });
+
+  test('billing-only and non-active staff cannot see media records at all', async () => {
+    await assertSucceeds(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'), record()));
+    for (const role of ['cashier', 'finance', 'hr']) {
+      await assertFails(getDoc(doc(dbFor(role), 'radiologyMedia', 'rmed-1')));
+    }
+    await assertFails(getDoc(doc(dbFor('inactive'), 'radiologyMedia', 'rmed-1')));
+  });
+
+  test('only radiology and admin may file media, and never as someone else', async () => {
+    await assertFails(setDoc(doc(dbFor('doctor'), 'radiologyMedia', 'rmed-doc'), record({ id: 'rmed-doc' })));
+    await assertFails(setDoc(doc(dbFor('nurse'), 'radiologyMedia', 'rmed-nur'), record({ id: 'rmed-nur' })));
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-spoof'),
+      record({ id: 'rmed-spoof', ext: 'jpg', byUid: profiles.doctor.uid })));
+    await assertSucceeds(setDoc(doc(dbFor('admin'), 'radiologyMedia', 'rmed-adm'),
+      record({ id: 'rmed-adm', byUid: profiles.admin.uid })));
+  });
+
+  test('a record cannot point at another study object or another patient', async () => {
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'),
+      record({ storagePath: `radiology/${ORDER}/someone-else.jpg` })));   // id no longer matches the name
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'),
+      record({ storagePath: `radiology/other-order/rmed-1.jpg` })));        // escapes the order folder
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'),
+      record({ storagePath: 'radiology/other-order/rmed-1.jpg' })));
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'),
+      record({ storagePath: '../../etc/passwd' })));
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'),
+      record({ patientId: '9999' })));
+    // An order that does not exist must not gain media.
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'),
+      record({ orderId: 'rad-order-nope', storagePath: 'radiology/rad-order-nope/rmed-1.jpg' })));
+  });
+
+  test('inline bytes, disallowed formats and oversized files are refused', async () => {
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'), record({ data: 'AAAA' })));
+    // A .dcm *name* is only metadata: bytes never reach the bucket through
+    // Firestore, and storage.rules rejects the object itself. What the rules
+    // must refuse is an unlisted mime, which is what actually gates display.
+    await assertSucceeds(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-dcm'),
+      record({ id: 'rmed-dcm', mime: 'image/jpeg', fileName: 'study.dcm', ext: 'jpg' })));
+    // The declared extension must match the object name, or the record would
+    // describe a file that cannot be located for signing.
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-lie'),
+      record({ id: 'rmed-lie', ext: 'png', storagePath: `radiology/${ORDER}/rmed-lie.jpg` })));
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'),
+      record({ mime: 'application/dicom' })));
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'),
+      record({ mime: 'video/quicktime', kind: 'video', ext: 'mov', storagePath: `radiology/${ORDER}/rmed-1.mov` })));
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'), record({ bytes: 0 })));
+    await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'), record({ bytes: 26214401 })));
+    await assertSucceeds(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'), record({ bytes: 26214400 })));
+    await assertSucceeds(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-2'),
+      record({ id: 'rmed-2', mime: 'video/mp4', kind: 'video', ext: 'mp4', storagePath: `radiology/${ORDER}/rmed-2.mp4` })));
+  });
+
+  test('a filed media record can never be edited, and only its owner may remove it', async () => {
+    await assertSucceeds(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'), record()));
+    await assertFails(updateDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'), { fileName: 'swapped.jpg' }));
+    await assertFails(updateDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'), { storagePath: 'radiology/x/y' }));
+    await assertFails(deleteDoc(doc(dbFor('doctor'), 'radiologyMedia', 'rmed-1')));
+    await assertFails(deleteDoc(doc(dbFor('nurse'), 'radiologyMedia', 'rmed-1')));
+    // An admin who did not upload it may not quietly remove evidence either:
+    // admins act on the order, not on other people's files.
+    await assertFails(deleteDoc(doc(dbFor('admin'), 'radiologyMedia', 'rmed-1')));
+    await assertSucceeds(deleteDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1')));
+  });
+});
