@@ -842,3 +842,109 @@ exports.radiologyAcknowledgeCritical = onCall(async (request) => {
     return { reportId, acknowledged: true };
   });
 });
+
+/* ════════════════════════════════════════════════════════════════
+   RADIOLOGY STUDY MEDIA (images / web video)
+   The browser uploads straight to the private bucket under
+   radiology/{orderId}/{mediaId}.{ext} and files one metadata record in
+   radiologyMedia. Pixels are never read from the browser: this module
+   hands out short-lived signed URLs after checking the caller's staff
+   profile, so a revoked or deactivated account cannot keep viewing
+   images through a saved link, and no object path is guessable.
+   ════════════════════════════════════════════════════════════════ */
+const MEDIA_ID_RE = /^[A-Za-z0-9._-]{1,160}$/;
+const MEDIA_WINDOW_SECONDS = 600;
+
+async function mediaViewer(uid) {
+  const snap = await db.collection('users').doc(uid).get();
+  if (!snap.exists) fail('permission-denied', 'Staff profile is missing.');
+  const profile = snap.data() || {};
+  if (profile.active !== true) fail('permission-denied', 'Staff account is inactive.');
+  if (profile.role !== 'admin' && !['doctor', 'nurse', 'radio', 'lab', 'theater', 'beds'].includes(profile.role)) {
+    fail('permission-denied', 'Your role may not open radiology study media.');
+  }
+  return { uid, role: String(profile.role || ''), staffId: String(profile.staffId || ''), name: String(profile.name || profile.staffId || 'Staff') };
+}
+
+// Signs every media object for one order, for the next 10 minutes only.
+exports.radiologyMediaSign = onCall(async (request) => {
+  if (!request.auth || !request.auth.uid) fail('unauthenticated', 'Sign-in is required.');
+  const viewer = await mediaViewer(request.auth.uid);
+  const data = request.data || {};
+  let orderId;
+  try { orderId = cleanText(data.orderId, 300, true, 'orderId'); }
+  catch (error) { fail('invalid-argument', error.message); }
+
+  const orderSnap = await db.collection('orders').doc(orderId).get();
+  if (!orderSnap.exists) fail('not-found', 'Radiology order was not found.');
+  const order = { id: orderSnap.id, ...orderSnap.data() };
+  ensureImagingOrder(order);
+
+  const found = await db.collection('radiologyMedia').where('orderId', '==', orderId).get();
+  const bucket = admin.storage().bucket();
+  const items = [];
+  for (const docSnap of found.docs) {
+    const row = { id: docSnap.id, ...docSnap.data() };
+    const path = String(row.storagePath || '');
+    // Only ever sign the object this record names, and only inside its own order
+    // prefix: a tampered record must not become a reader for another study.
+    const expected = `radiology/${orderId}/${docSnap.id}`;
+    const declaredExt = String(row.ext || '').toLowerCase();
+    // Must agree with firestore.rules: the object is exactly radiology/{orderId}/{id}.{ext}
+    const sameFolder = path === `${expected}.${declaredExt}`
+      || (path.startsWith(`${expected}.`) && path.slice(expected.length + 1) === declaredExt);
+    if (!MEDIA_ID_RE.test(docSnap.id) || !sameFolder || !/^[a-z0-9]{2,4}$/.test(declaredExt)) {
+      console.warn(`radiologyMedia/${docSnap.id}: storagePath ${path} does not match its record, skipping`);
+      continue;
+    }
+    try {
+      const [url] = await bucket.file(path).getSignedUrl({
+        action: 'read', expires: Date.now() + MEDIA_WINDOW_SECONDS * 1000,
+      });
+      items.push({
+        id: docSnap.id, kind: row.kind || 'image', mime: row.mime || '', fileName: row.fileName || '',
+        bytes: Number(row.bytes) || 0, at: row.at || null, byName: row.byName || '', url, expiresIn: MEDIA_WINDOW_SECONDS,
+      });
+    } catch (error) {
+      // A missing object is a data condition, not a reason to fail the whole view.
+      console.warn(`radiologyMedia/${docSnap.id}: could not sign ${path}: ${error && error.message}`);
+      items.push({ id: docSnap.id, kind: row.kind || 'image', mime: row.mime || '', fileName: row.fileName || '', bytes: Number(row.bytes) || 0, at: row.at || null, byName: row.byName || '', error: 'object-unavailable' });
+    }
+  }
+  return { orderId, count: items.length, items };
+});
+
+// Undo the uploader's own upload before the study is signed.
+exports.radiologyMediaDelete = onCall(async (request) => {
+  const staff = await requireStaff(request, ['radio']);
+  let mediaId;
+  try { mediaId = cleanText(request.data && request.data.mediaId, 200, true, 'mediaId'); }
+  catch (error) { fail('invalid-argument', error.message); }
+  if (!MEDIA_ID_RE.test(mediaId)) fail('invalid-argument', 'The media id is not a valid document id.');
+  const ref = db.collection('radiologyMedia').doc(mediaId);
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) fail('not-found', 'Study media record was not found.');
+    const row = { id: snap.id, ...snap.data() };
+    if (staff.role !== 'admin' && String(row.byUid || '') !== staff.uid) {
+      fail('permission-denied', 'Only the person who attached a file may remove it.');
+    }
+    const orderSnap = await tx.get(db.collection('orders').doc(String(row.orderId || '')));
+    if (orderSnap.exists) {
+      const order = { id: orderSnap.id, ...orderSnap.data() };
+      if (deriveRadiologyState(order) === 'reported') {
+        fail('failed-precondition', 'This study is already reported; file an addendum rather than deleting its media.');
+      }
+    }
+    tx.delete(ref);
+    const path = String(row.storagePath || '');
+    // Only ever delete the object this record itself names.
+    if (path === `radiology/${row.orderId}/${mediaId}.${String(row.ext || '').toLowerCase()}`) {
+      try { await admin.storage().bucket().file(path).delete({ ignoreNotFound: true }); }
+      catch (error) { console.warn(`radiologyMedia/${mediaId}: object ${path} not removed: ${error && error.message}`); }
+    }
+    auditInTransaction(tx, staff, 'radiology.media.delete', 'radiologyMedia', mediaId, row.patientId, { orderId: row.orderId || null });
+    return { mediaId, orderId: row.orderId || null, removed: true };
+  });
+});
