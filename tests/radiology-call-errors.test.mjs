@@ -60,19 +60,67 @@ test('"internal" from a missing callable is explained, not echoed', async () => 
     () => null, (e) => e);
 
   assert.ok(error, 'the rejection must still propagate — never swallow it');
-  assert.match(error.message, /radiologyTransition is not deployed, is unreachable, or crashed/,
-    `toast still unhelpful: "${error.message}"`);
+  assert.match(error.message, /radiologyTransition is not deployed to Firebase project pclinic-20d81/,
+    `toast must not hedge once the platform gives a bare 404: "${error.message}"`);
+  assert.match(error.message, /africa-south1-radiologyTransition/,
+    'the message must name the Cloud Run service to look for');
   assert.match(error.message, /firebase deploy --only functions/, 'the message must name the fix');
   assert.match(error.message, /nothing was saved/, 'staff must know the study did not move');
   assert.equal(error.code, 'functions/internal', 'the machine code is kept for log-based debugging');
   assert.ok(error.cause, 'the original error must remain reachable for the console');
 });
 
-test('a not-deployed endpoint is distinguished from a crash', async () => {
+test('a deployed-but-crashing function is not reported as a missing deploy', async () => {
+  // A real crash reaches the JSON error path, so code and message are distinct.
+  const { pcRadiology } = load(rejectWith('functions/internal',
+    'Function error: TypeError: Cannot read properties of undefined (reading \'patientId\')'));
+  const error = await pcRadiology.transition('ord-1', 'start', '').then(() => null, (e) => e);
+  assert.match(error.message, /reached the server but failed to run/);
+  assert.doesNotMatch(error.message, /is not deployed/, 'a crash must not be mislabelled as a missing function');
+});
+
+test('the three shapes of a missing endpoint all read as "not deployed"', async () => {
+  const shapes = [
+    ['functions/internal', 'FirebaseError: functions/internal'],
+    ['functions/internal', 'internal'],
+    [undefined, '<html><head><title>404 Page not found</title></head></html>'],
+  ];
+  for (const [code, raw] of shapes) {
+    const { pcRadiology } = load(() => Promise.reject(Object.assign(new Error(raw), code ? { code } : {})));
+    const error = await pcRadiology.transition('ord-1', 'start', '').then(() => null, (e) => e);
+    assert.match(error.message, /is not deployed to Firebase project pclinic-20d81/,
+      `shape "${raw}" was misread: ${error.message}`);
+  }
+});
+
+test('a genuine crash whose text contains 404 is not called a missing deploy', async () => {
+  // Regression: an unanchored /404/ matched the "404" inside "TypeError".
+  const { pcRadiology } = load(rejectWith('functions/internal',
+    'Error 14 at node:120 in TypeError: failed to load firestore, retry code 404'));
+  const error = await pcRadiology.transition('ord-1', 'start', '').then(() => null, (e) => e);
+  assert.match(error.message, /reached the server but failed to run/);
+  assert.doesNotMatch(error.message, /is not deployed/);
+});
+
+test('an unrecognised error is summarised, and never handed to the toast as markup', async () => {
+  const { pcRadiology } = load(rejectWith('functions/internal',
+    '<html><body>some proxy page</body></html>'));
+  const error = await pcRadiology.transition('ord-1', 'start', '').then(() => null, (e) => e);
+  assert.doesNotMatch(error.message, /</, `raw markup reached the UI: ${error.message}`);
+  assert.match(error.message, /radiologyTransition/);
+});
+
+test('a not-found code names the function and carries the deploy command', async () => {
   const { pcRadiology } = load(rejectWith('functions/not-found', 'NOT_FOUND'));
   const error = await pcRadiology.saveDraft('ord-1', {}).then(() => null, (e) => e);
-  assert.match(error.message, /radiologySaveDraft does not exist in Firebase project/,
+  assert.match(error.message, /radiologySaveDraft is not deployed to Firebase project/,
     `got: "${error.message}"`);
+  assert.match(error.message, /firebase deploy --only functions/,
+    'every missing-function message must carry the command, not just advice');
+  // An explicit unimplemented code keeps its own wording.
+  const other = load(rejectWith('functions/unimplemented', 'unimplemented'));
+  const e2 = await other.pcRadiology.finalize('ord-1', {}).then(() => null, (e) => e);
+  assert.match(e2.message, /reached the server but failed to run|does not exist/);
 });
 
 test('session and network failures keep their own distinct advice', async () => {
