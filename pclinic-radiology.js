@@ -158,11 +158,43 @@
         state.ready = false;
     }
 
+    // Mirrors labReleaseErrorMessage() in pclinic-lab.js. The callable SDK rejects
+    // with the bare platform code, so a missing function used to surface as a toast
+    // reading only "internal" — which told the radiographer nothing and hid the fact
+    // that the fix is a deploy, not a retry.
+    function cloudCallErrorMessage(error, name) {
+        var code = String((error && error.code) || '');
+        var message = String((error && error.message) || error || 'Unknown common-server error');
+        message = message.replace(/^FirebaseError:\s*/i, '').replace(/^functions\/[a-z-]+:\s*/i, '');
+        if (code.indexOf('permission-denied') !== -1) {
+            return 'Your staff profile is not permitted to perform this radiology action. Confirm you are signed in with an active Radiology role.';
+        }
+        if (code.indexOf('unauthenticated') !== -1) {
+            return 'Your session expired. Sign in again before continuing.';
+        }
+        if (code.indexOf('unavailable') !== -1 || /Failed to fetch|NetworkError|ERR_/i.test(message)) {
+            return 'The common server is unreachable from this computer. Check the connection and retry; nothing was saved.';
+        }
+        if (code.indexOf('internal') !== -1 || /^internal$/i.test(message)) {
+            return name + ' is not deployed, is unreachable, or crashed on the server. Run `firebase deploy --only functions` for project pclinic-20d81 and read the Cloud Run log for this request; nothing was saved.';
+        }
+        if (code.indexOf('not-found') !== -1 || code.indexOf('unimplemented') !== -1) {
+            return name + ' does not exist in Firebase project pclinic-20d81. Deploy the functions before using this workflow.';
+        }
+        return message;
+    }
+
     function cloudCall(name, payload) {
         if (!window.pclinicCloudFunctions || typeof window.pclinicCloudFunctions.call !== 'function') {
             return Promise.reject(new Error('Secure radiology backend is not available. Deploy Firebase Functions first.'));
         }
-        return window.pclinicCloudFunctions.call(name, payload);
+        return window.pclinicCloudFunctions.call(name, payload).catch(function (error) {
+            var friendly = cloudCallErrorMessage(error, name);
+            var wrapped = new Error(friendly);
+            wrapped.code = (error && error.code) || 'functions/internal';
+            wrapped.cause = error;
+            throw wrapped;
+        });
     }
 
     function orderById(id) {
@@ -187,6 +219,7 @@
 
     window.pcRadiology = Object.freeze({
         init: init,
+        _callErrorMessageForTests: cloudCallErrorMessage,
         stop: stop,
         subscribe: subscribe,
         snapshot: cloneState,
