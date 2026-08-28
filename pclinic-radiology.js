@@ -87,6 +87,9 @@
         }, function (error) {
             state.error = error;
             console.error('Radiology Firestore subscription failed:', assign, error);
+            // Drop the memoised init so a later init() (the report page's
+            // "Try again") really resubscribes; otherwise the error is permanent.
+            try { stop(); } catch (e) {}
             emit();
         });
         unsubscribers.push(stop);
