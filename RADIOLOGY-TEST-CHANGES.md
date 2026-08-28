@@ -144,3 +144,103 @@ client was missing the download.
 
 **Deploy:** upload `pclinic-file.js`, `pclinic-filepage.js` and the 51 pages
 together so the `?v=20260827_FILES` tokens match.
+
+---
+
+# Round 3 (2026-08-28) — radiology reports page
+
+**Reported as:** "this error" on the imaging-results page —
+*"Image display requires an approved PACS/DICOMweb connection…"*
+
+**Finding:** that notice is not an error. It is unconditional static markup at
+`imaging-results.html:32`, so it renders for every patient whether or not
+anything is wrong. The real risk was that the panel below it can show "no
+reports" for three unrelated reasons, one of them a silent infrastructure
+failure.
+
+Fixed in `imaging-results.html`:
+
+1. **Errors are shown instead of hidden.** The whole boot ran inside
+   `.catch(function(){})`, and `pcRadiology.init()` rethrows on failure — so a
+   dead Firestore subscription (permissions, offline, bad config) looked exactly
+   like an empty queue. `initError` is now tracked and rendered with the machine
+   reason plus a **Try again** button, and the subscription is attached *before*
+   `init()` so a failed start still reaches the screen.
+2. **Report matching is tolerant.** `String(r.patientId) === String(patient.id
+   || patient.mrn)` silently dropped correctly-signed reports whenever the order
+   carried the MRN while the patient object had another internal id. Now matches
+   `id` / `mrn` / numeric MRN on either side, so a mismatch is visible rather
+   than reported as absence. The empty message names the MRN it checked.
+3. **Drafts are announced as drafts.** "No final radiology reports" is replaced
+   with "1 draft awaiting final signature by Radiology" when one exists — the
+   common real cause of an apparently empty panel.
+4. **The notice is conditional.** It shows only when that patient has a report
+   or draft, and is hidden on an empty queue.
+
+Also `pclinic-radiology.js`: a failed `onSnapshot` now calls `stop()`, which
+clears the memoised `initPromise`. Previously the error was permanent —
+re-initialising returned the same rejected promise and the dashboard stayed
+empty until a full page reload.
+
+**Tests:** `tests/imaging-results-page.test.mjs` (new, 11 tests) extracts the
+page's real inline script and runs it against a minimal DOM — it is what caught
+that my first `retryLoad()` never re-rendered on success.
+`npm --prefix tests run test:results`.
+
+**Not changed:** no `firestore.rules` edit. `radiologyReports` already allows
+`read` for doctor/nurse/radio, so if reports still do not appear, the cause is
+`status: 'draft'`, a genuinely absent report, or the rules deployed in the
+Firebase project differing from this file.
+
+---
+
+# Round 4–5 (2026-08-28) — "Start study" fails with `internal`
+
+**Actual cause, measured against the live project:**
+
+```
+GET/POST https://africa-south1-pclinic-20d81.cloudfunctions.net/labSpecimenTransition
+  -> 401 {"error":{"message":"Sign-in is required.","status":"UNAUTHENTICATED"}}   deployed
+  .../radiologyTransition            -> 404 "Page not found"   never deployed
+  .../radiologySaveDraft             -> 404   never deployed
+  .../radiologyFinalize              -> 404   never deployed
+  .../radiologyAddendum              -> 404   never deployed
+  .../radiologyAcknowledgeCritical   -> 404   never deployed
+```
+
+All three laboratory callables are live; **none** of the five radiology ones are.
+`REPLACE_INSTRUCTIONS.txt` listed only the three lab functions in its
+`--only functions:…` line, so anyone following it deploys the laboratory and
+silently skips radiology. Corrected in that file: use
+`firebase deploy --only functions,firestore:rules`.
+
+Until those five are deployed, "Start study" cannot move a study out of
+`pending`, so no acquisition, report, signature or addendum is possible. There
+is no client-side workaround — the state machine is backend-only by design.
+
+**Round 4** wrapped every radiology callable rejection with a readable message,
+following `labReleaseErrorMessage()` in `pclinic-lab.js`.
+
+**Round 5** corrected that message, because the first version hedged ("is not
+deployed, is unreachable, or crashed") and a reviewer would have redeployed
+without reading the log. A missing callable answers with a bare Cloud Run 404,
+which the SDK surfaces as `functions/internal` with **no** message, whereas a
+crash carries real text — so `cloudCallErrorMessage()` now decides on the raw
+string and says "is not deployed to project pclinic-20d81 in africa-south1"
+with the exact command and the Cloud Run service name to check.
+
+Two bugs in that first attempt were found by the new tests and fixed:
+
+- the routing test sat *inside* the `code.includes('internal')` branch, so a 404
+  arriving with no `code` at all — which is what Cloud Run actually returns —
+  skipped it and fell through to the raw-message fallback;
+- matching the status word as a substring would have misread ordinary crash text.
+  `BARE_STATUS` is anchored with `^…$` on the whole raw string, and a dedicated
+  test feeds it `"... (reading 'patientId')"` and `"retry code 404"` to prove a
+  real crash stays in the "reached the server but failed to run" branch.
+
+`tests/radiology-call-errors.test.mjs` (9 tests) pins all of it, including that
+an unrecognised error is never handed raw HTML to a toast.
+
+`pclinic-radiology.js` changed again in round 5, so the token moved to
+`?v=20260828_CALLS` on the three pages that load it.

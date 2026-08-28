@@ -29,14 +29,30 @@ NEW FILES TO ADD
 REQUIRED DEPLOYMENT
 firebase login
 firebase use pclinic-20d81
-firebase deploy --only functions:labSpecimenTransition,functions:labFinalize,functions:labAcknowledgeCritical,firestore:rules
+firebase deploy --only functions,firestore:rules
 firebase deploy --only hosting
 
-Or deploy everything:
-firebase deploy
+IMPORTANT — deploy functions by name only when you mean to limit the deploy.
+The previous version of this file listed only the three laboratory callables
+(labSpecimenTransition, labFinalize, labAcknowledgeCritical). Anyone following
+it deploys the laboratory and silently leaves the five radiology callables
+undeployed, which is exactly what happened on pclinic-20d81 on 2026-08-28:
 
-IMPORTANT
-Do not deploy hosting alone. The labSpecimenTransition function is required to
-safely accession or reject recovered legacy laboratory requests that have no
-/orders document. labFinalize is required for their final result release.
-After deployment, hard-refresh the laboratory dashboard before retesting.
+    https://africa-south1-pclinic-20d81.cloudfunctions.net/labSpecimenTransition
+        -> 401 {"error":{"message":"Sign-in is required.","status":"UNAUTHENTICATED"}}   (deployed)
+    .../radiologyTransition            -> 404 "Page not found"   (never deployed)
+    .../radiologySaveDraft             -> 404   (never deployed)
+    .../radiologyFinalize              -> 404   (never deployed)
+    .../radiologyAddendum              -> 404   (never deployed)
+    .../radiologyAcknowledgeCritical   -> 404   (never deployed)
+
+With radiologyTransition missing, "Start study" cannot move a study out of
+pending, so no report can be acquired, written or signed. `firebase deploy
+--only functions` deploys all eight and is the safe default.
+
+Do not deploy hosting alone. labSpecimenTransition and labFinalize are required
+to safely accession, reject and release recovered legacy laboratory requests that
+have no /orders document; the radiology callables are required for every imaging
+transition, draft, signature, addendum and critical acknowledgement.
+After deployment, hard-refresh the laboratory and radiology dashboards before
+retesting, and confirm in Cloud Run that a service exists for each name above.

@@ -164,8 +164,22 @@
     // that the fix is a deploy, not a retry.
     function cloudCallErrorMessage(error, name) {
         var code = String((error && error.code) || '');
-        var message = String((error && error.message) || error || 'Unknown common-server error');
-        message = message.replace(/^FirebaseError:\s*/i, '').replace(/^functions\/[a-z-]+:\s*/i, '');
+        var rawMessage = String((error && error.message) || error || 'Unknown common-server error');
+        var message = rawMessage.replace(/^FirebaseError:\s*/i, '').replace(/^functions\/[a-z-]+:\s*/i, '');
+        // A routing failure carries nothing but the status word. Anchor on the WHOLE
+        // raw string, never a substring: an unanchored /404/ matched the "404" inside
+        // "TypeError", which would have reported every real crash as "not deployed".
+        var BARE_STATUS = /^\s*(?:FirebaseError:\s*)?(?:functions\/)?(?:internal|unavailable|unknown|not-found|not_found|404)\s*(?:error)?\s*[.!]?\s*$/i;
+        // Checked FIRST, before any code test: a missing endpoint can arrive with no
+        // code at all (a raw Cloud Run 404 body), and a code of 'not-found' would
+        // otherwise be answered from the branch below without the deploy command.
+        var looksUnroutable = BARE_STATUS.test(rawMessage) ||
+            /404[^\d]{0,12}(not found|page not found)/i.test(rawMessage) ||
+            /<html|<!doctype html|may not comply with CORS/i.test(rawMessage) ||
+            (!code && !message.trim());
+        if (looksUnroutable) {
+            return name + ' is not deployed to Firebase project pclinic-20d81 in the africa-south1 region. Run `firebase deploy --only functions` and confirm a Cloud Run service named africa-south1-' + name + ' exists; nothing was saved.';
+        }
         if (code.indexOf('permission-denied') !== -1) {
             return 'Your staff profile is not permitted to perform this radiology action. Confirm you are signed in with an active Radiology role.';
         }
@@ -175,13 +189,22 @@
         if (code.indexOf('unavailable') !== -1 || /Failed to fetch|NetworkError|ERR_/i.test(message)) {
             return 'The common server is unreachable from this computer. Check the connection and retry; nothing was saved.';
         }
+        // A callable whose endpoint does not exist answers with a bare Cloud Run 404
+        // (plain HTML, no JSON envelope), which the SDK surfaces as `functions/internal`
+        // with an empty message — indistinguishable from a crash unless you check.
+        // Verified on pclinic-20d81 on 2026-08-28: undeployed radiologyTransition
+        // returned 404 while the deployed lab functions returned 401.
+        // Anything reaching here carries a real description, so it did run and failed.
         if (code.indexOf('internal') !== -1 || /^internal$/i.test(message)) {
-            return name + ' is not deployed, is unreachable, or crashed on the server. Run `firebase deploy --only functions` for project pclinic-20d81 and read the Cloud Run log for this request; nothing was saved.';
+            return name + ' reached the server but failed to run. Read the Cloud Run log for this request to see the exception; nothing was saved.';
         }
-        if (code.indexOf('not-found') !== -1 || code.indexOf('unimplemented') !== -1) {
+        if (code.indexOf('unimplemented') !== -1) {
             return name + ' does not exist in Firebase project pclinic-20d81. Deploy the functions before using this workflow.';
         }
-        return message;
+        // Fallback keeps the server's text but never hands raw markup to a toast.
+        var clean = message.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (!clean || /^https?:\/\/\S+$/.test(clean)) clean = name + ' failed on the common server.';
+        return clean;
     }
 
     function cloudCall(name, payload) {
