@@ -360,4 +360,57 @@ describe('patient counter, billing and files', () => {
     await assertFails(setDoc(doc(dbFor('doctor'), 'patients', '1001', 'files', 'f2'), { id: 'f2', patientId: 1001, type: 'photo', data: 'data:image/png;base64,abc' }));
     await assertFails(setDoc(doc(dbFor('doctor'), 'patients', '1001', 'files', 'f3'), { id: 'f3', patientId: 1001, type: 'note', attachments: [{ data: 'data:text/plain;base64,abc' }] }));
   });
+
+  // pclinic-file.js saveFile() writes patients/{id}/files and, after the 2026-08-27
+  // change, listFiles() also reads it back. These cases pin the cross-device read
+  // that the download path depends on: a record written by one staff member must be
+  // readable by another, and the billing-only roles must stay out.
+  test('a patient file written by one clinician is readable on another device', async () => {
+    await assertSucceeds(setDoc(doc(dbFor('doctor'), 'patients', '1001', 'files', 'img-1'), {
+      id: 'img-1', patientId: 1001, type: 'imaging', title: 'Imaging Request',
+      modality: 'xr', exams: ['Chest X-ray'], priority: 'urgent',
+      at: '2026-08-27T08:00:00.000Z', by: 'Test Doctor', byId: profiles.doctor.staffId,
+      orderId: 'ord-1', billId: 'bill-1', attachments: []
+    }));
+
+    // A *different* user reading the same subcollection is what the second
+    // computer does. getDocs on the collection is the exact query the client runs.
+    for (const role of ['reception', 'nurse', 'radio', 'lab', 'admin']) {
+      await assertSucceeds(getDoc(doc(dbFor(role), 'patients', '1001', 'files', 'img-1')),
+        `${role} cannot open a file another clinician saved`);
+      const snap = await getDocs(collection(dbFor(role), 'patients', '1001', 'files'));
+      assert.equal(snap.docs.map((d) => d.id).includes('img-1'), true,
+        `${role} cannot list the patient's files`);
+    }
+
+    // Roles denied the monolithic patient record stay denied here.
+    for (const role of ['cashier', 'finance', 'hr']) {
+      await assertFails(getDoc(doc(dbFor(role), 'patients', '1001', 'files', 'img-1')));
+      await assertFails(getDocs(collection(dbFor(role), 'patients', '1001', 'files')));
+    }
+    await assertFails(getDocs(collection(dbFor('inactive'), 'patients', '1001', 'files')));
+  });
+
+  test("a reader cannot forge or erase another clinician's file record", async () => {
+    await assertSucceeds(setDoc(doc(dbFor('doctor'), 'patients', '1001', 'files', 'img-2'), {
+      id: 'img-2', patientId: 1001, type: 'imaging', at: '2026-08-27T08:00:00.000Z',
+      byId: profiles.doctor.staffId, attachments: []
+    }));
+    // The nurse can read it but may not silently rewrite or delete the request.
+    await assertSucceeds(getDoc(doc(dbFor('nurse'), 'patients', '1001', 'files', 'img-2')));
+    await assertSucceeds(setDoc(doc(dbFor('nurse'), 'patients', '1001', 'files', 'img-3'), {
+      id: 'img-3', patientId: 1001, type: 'imaging', at: '2026-08-27T09:00:00.000Z',
+      byId: profiles.nurse.staffId, attachments: []
+    }));
+    await assertFails(updateDoc(doc(dbFor('nurse'), 'patients', '1001', 'files', 'img-2'),
+      { patientId: 1002 }));
+    // Deleting a filed clinical document is admin-only, same as the patient itself.
+    await assertFails(deleteDoc(doc(dbFor('nurse'), 'patients', '1001', 'files', 'img-2')));
+    await assertFails(deleteDoc(doc(dbFor('doctor'), 'patients', '1001', 'files', 'img-2')));
+    // A file must never be filed against the wrong chart.
+    await assertFails(setDoc(doc(dbFor('nurse'), 'patients', '1001', 'files', 'img-4'), {
+      id: 'img-4', patientId: 9999, type: 'imaging', at: '2026-08-27T09:00:00.000Z',
+      byId: profiles.nurse.staffId, attachments: []
+    }));
+  });
 });
