@@ -338,20 +338,20 @@ service cloud.firestore {
     }
 
     // ── OPERATING THEATER SCHEDULE ────────────────────────────────
-    // Surgeries are booked and advanced (scheduled → in-progress →
-    // completed / delayed / cancelled) by theater staff via the Common
-    // Server. Other clinical roles read the board. A surgery keeps its
-    // identity (id / createdById) across status updates so the audit
-    // trail cannot be rewritten from the browser.
+    // A DOCTOR books a surgery and advances its status (scheduled →
+    // in-progress → completed / delayed / cancelled). Every other role
+    // can only VIEW the booked list. A surgery keeps its identity
+    // (id / createdById) across status updates so the audit trail
+    // cannot be rewritten from the browser.
     match /theaterSurgeries/{surgeryId} {
       allow read: if hasRole(['doctor', 'nurse', 'reception', 'theater', 'beds']);
 
-      allow create: if hasRole(['theater'])
+      allow create: if hasRole(['doctor'])
         && request.resource.data.get('id', '') == surgeryId
         && request.resource.data.get('createdById', '') == staffId()
         && request.resource.data.get('status', '') == 'scheduled';
 
-      allow update: if hasRole(['theater'])
+      allow update: if hasRole(['doctor'])
         && request.resource.data.get('id', '') == resource.data.get('id', '')
         && request.resource.data.get('createdById', '') == resource.data.get('createdById', '')
         && request.resource.data.get('status', '') in ['scheduled', 'in-progress', 'completed', 'delayed', 'cancelled'];
@@ -360,10 +360,10 @@ service cloud.firestore {
     }
 
     // ── OPERATING THEATER REGISTRY ────────────────────────────────
-    // The list of rooms and their availability, managed by theater staff.
+    // The list of rooms and their availability, managed by doctors.
     match /theaters/{theaterId} {
       allow read: if hasRole(['doctor', 'nurse', 'reception', 'theater', 'beds']);
-      allow create, update: if hasRole(['theater'])
+      allow create, update: if hasRole(['doctor'])
         && request.resource.data.get('id', '') == theaterId;
       allow delete: if isAdmin();
     }

@@ -887,6 +887,28 @@
             bar.appendChild(b);
         });
 
+        // Nurse dashboard: append a Theater button that opens the Operating
+        // Theater board, carrying the selected patient (if any).
+        if (pathStr.indexOf('nurse-dashboard') !== -1) {
+            var thSep = document.createElement('span');
+            thSep.className = 'ab-sep';
+            bar.appendChild(thSep);
+            var thBtn = document.createElement('button');
+            thBtn.className = 'ab-btn ab-always';
+            thBtn.innerHTML = '<i class="ti ti-scissors"></i><span>Theater</span>';
+            thBtn.style.setProperty('--c', '#5c2475');
+            thBtn.style.setProperty('--b', '#f5eaff');
+            thBtn.onclick = function () {
+                var pid = '';
+                try {
+                    var pp = (window.pcFile && window.pcFile.patient && window.pcFile.patient()) || null;
+                    pid = (pp && pp.id) || localStorage.getItem('pclinic_active_patient') || '';
+                } catch (e) {}
+                location.href = 'theater-dashboard.html' + (pid ? '?patient=' + encodeURIComponent(pid) : '');
+            };
+            bar.appendChild(thBtn);
+        }
+
         syncActionBarState(currP);
     }
 

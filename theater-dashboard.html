@@ -1295,7 +1295,7 @@
                 <div class="panel-header">
                     <span class="panel-title"><i class="ti ti-clock" style="color:var(--ac)"></i> Upcoming Surgeries</span>
                     <div class="panel-actions">
-                        <button class="btn-p" onclick="openBookModal()"><i class="ti ti-plus"></i> Book Surgery</button>
+                        <button class="btn-p" id="btnBookSurgery" onclick="openBookModal()"><i class="ti ti-plus"></i> Book Surgery</button>
                         <button class="btn-export" onclick="exportSurgeries()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
@@ -1340,7 +1340,7 @@
                 <div class="panel-header">
                     <span class="panel-title"><i class="ti ti-bed" style="color:var(--ac)"></i> Operating Theaters</span>
                     <div class="panel-actions">
-                        <button class="btn-p" onclick="addTheater()"><i class="ti ti-plus"></i> Add Theater</button>
+                        <button class="btn-p" id="btnAddTheater" onclick="addTheater()"><i class="ti ti-plus"></i> Add Theater</button>
                         <button class="btn-export" onclick="exportTheaters()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
@@ -1407,8 +1407,11 @@
             </div>
             <div class="modal-body">
                 <div class="fg">
-                    <div class="fgl"><div class="lbl">Patient Name *</div><input class="fi" id="bookPatient" placeholder="Patient name" /></div>
-                    <div class="fgl"><div class="lbl">MRN</div><input class="fi" id="bookMRN" placeholder="e.g. 00-1882" /></div>
+                    <div class="fgl ff"><div class="lbl">Patient *</div>
+                        <input class="fi" id="bookPatientSearch" placeholder="Search registered patient by name or MRN…" autocomplete="off" />
+                        <div id="bookPatientResults" style="max-height:150px;overflow:auto;border:0.5px solid var(--bd);border-radius:8px;background:rgba(255,255,255,.5);"></div>
+                        <div id="bookPatientSelected" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--ac);font-weight:600;padding:7px 10px;background:var(--acb);border-radius:8px;"></div>
+                    </div>
                     <div class="fgl"><div class="lbl">Procedure *</div><input class="fi" id="bookProcedure" placeholder="e.g. CABG" /></div>
                     <div class="fgl"><div class="lbl">Procedure Type</div>
                         <select class="fi" id="bookType">
@@ -1428,12 +1431,7 @@
                         <select class="fi" id="bookAnaesthetist"></select>
                     </div>
                     <div class="fgl"><div class="lbl">Theater *</div>
-                        <select class="fi" id="bookTheater">
-                            <option>Theater 1</option>
-                            <option>Theater 2</option>
-                            <option>Theater 3</option>
-                            <option>Theater 4</option>
-                        </select>
+                        <select class="fi" id="bookTheater"></select>
                     </div>
                     <div class="fgl"><div class="lbl">Date *</div><input class="fi" type="date" id="bookDate" /></div>
                     <div class="fgl"><div class="lbl">Time *</div><input class="fi" type="time" id="bookTime" /></div>
@@ -1482,13 +1480,6 @@
         const SURGERIES_KEY = 'pclinic_theater_surgeries';
         const THEATERS_KEY  = 'pclinic_theater_theaters';
 
-        const DEFAULT_THEATERS = [
-            { id: 'th1', name: 'Theater 1', status: 'available',   utilization: 0, currentSurgery: '', surgeon: '', nextSurgery: '' },
-            { id: 'th2', name: 'Theater 2', status: 'available',   utilization: 0, currentSurgery: '', surgeon: '', nextSurgery: '' },
-            { id: 'th3', name: 'Theater 3', status: 'available',   utilization: 0, currentSurgery: '', surgeon: '', nextSurgery: '' },
-            { id: 'th4', name: 'Theater 4', status: 'maintenance', utilization: 0, currentSurgery: '', surgeon: '', nextSurgery: '' }
-        ];
-
         const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
         const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
         let currentWeekOffset = 0;
@@ -1509,6 +1500,106 @@
         function uid(prefix) { return (prefix || 'srg') + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7); }
         function staffName() { return (window.currentStaff && window.currentStaff.name) || ''; }
         function staffId() { return (window.currentStaff && (window.currentStaff.staffId || window.currentStaff.uid)) || ''; }
+        function escHtml(v) { var d = document.createElement('div'); d.textContent = (v == null) ? '' : String(v); return d.innerHTML; }
+
+        // ─── ROLE GATING: only a doctor can book or advance a surgery ───
+        function canManage() {
+            var r = (window.currentStaff && window.currentStaff.role) || '';
+            return r === 'doctor' || r === 'admin';
+        }
+
+        // ─── PATIENT PICKER (real registered patients only) ───
+        let selectedBookPatient = null;
+
+        function getPatientsList() {
+            try { if (typeof getPatients === 'function') { var l = getPatients() || []; if (l.length) return l; } } catch (e) {}
+            try { return JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch (e) { return []; }
+        }
+        function patientName(p) {
+            return (p.name || ((p.firstName || '') + ' ' + (p.lastName || '')).trim()) || ('Patient ' + (p.mrn || p.id));
+        }
+
+        function bindPatientPicker() {
+            var inp = document.getElementById('bookPatientSearch');
+            var res = document.getElementById('bookPatientResults');
+            if (!inp || !res) return;
+            inp.addEventListener('input', function () {
+                var q = inp.value.trim();
+                res.innerHTML = '';
+                if (!q) return;
+                var list = getPatientsList();
+                var low = q.toLowerCase();
+                var hits = list.filter(function (p) {
+                    var hay = patientName(p) + ' ' + (p.mrn || '') + ' ' + (p.id || '') + ' ' + (p.nationalId || '');
+                    return hay.toLowerCase().indexOf(low) !== -1;
+                }).slice(0, 20);
+                res.innerHTML = hits.map(function (p) {
+                    var nm = patientName(p);
+                    return '<div class="book-pat-row" data-id="' + escHtml(p.id) + '" data-mrn="' + escHtml(p.mrn || '') + '" data-name="' + escHtml(nm) + '" style="padding:8px 10px;cursor:pointer;border-bottom:0.5px solid var(--bd);">' +
+                        '<div style="font-weight:600;font-size:12.5px;">' + escHtml(nm) + '</div>' +
+                        '<div style="font-size:11px;color:var(--tm);">MRN ' + escHtml(p.mrn || p.id) + (p.dob ? ' · ' + new Date(p.dob).toLocaleDateString('en-GB') : '') + '</div></div>';
+                }).join('') || '<div style="padding:10px;color:var(--tm);font-size:12px;">No matching registered patients.</div>';
+            });
+            res.addEventListener('click', function (e) {
+                var row = e.target.closest('.book-pat-row');
+                if (!row) return;
+                selectBookPatient({ id: row.getAttribute('data-id'), mrn: row.getAttribute('data-mrn'), name: row.getAttribute('data-name') });
+            });
+        }
+
+        function selectBookPatient(p) {
+            selectedBookPatient = p;
+            var inp = document.getElementById('bookPatientSearch');
+            var sel = document.getElementById('bookPatientSelected');
+            var res = document.getElementById('bookPatientResults');
+            if (inp) inp.value = p.name;
+            if (res) res.innerHTML = '';
+            if (sel) { sel.style.display = 'flex'; sel.textContent = '👤 ' + p.name + ' · MRN ' + (p.mrn || p.id); }
+        }
+        function resetBookPatient() {
+            selectedBookPatient = null;
+            var inp = document.getElementById('bookPatientSearch');
+            var sel = document.getElementById('bookPatientSelected');
+            var res = document.getElementById('bookPatientResults');
+            if (inp) inp.value = '';
+            if (res) res.innerHTML = '';
+            if (sel) sel.style.display = 'none';
+        }
+
+        function populateTheaterDropdown() {
+            var tb = document.getElementById('bookTheater');
+            if (!tb) return;
+            var names = theaters.map(function (t) { return t.name; });
+            tb.innerHTML = names.length
+                ? names.map(function (n) { return '<option>' + n + '</option>'; }).join('')
+                : '<option value="">— No theaters yet —</option>';
+        }
+
+        // ─── APPLY ROLE GATING + CARRY ARRIVING PATIENT ───
+        function applyRoleGating() {
+            var manage = canManage();
+            function hide(id) { var el = document.getElementById(id); if (el) el.style.display = manage ? '' : 'none'; }
+            hide('btnBookSurgery');   // Upcoming panel "Book Surgery"
+            hide('btnAddTheater');    // Theaters panel "Add Theater"
+            var barBook = document.querySelector('[data-theater-book]');
+            if (barBook) barBook.style.display = manage ? '' : 'none';
+        }
+
+        function applyArrivingPatient() {
+            try {
+                var id = new URLSearchParams(location.search).get('patient');
+                if (!id) return;
+                var list = getPatientsList();
+                var p = null;
+                for (var i = 0; i < list.length; i++) {
+                    if (String(list[i].id) === String(id) || String(list[i].mrn) === String(id)) { p = list[i]; break; }
+                }
+                if (!p && typeof getPatient === 'function') { try { p = getPatient(id); } catch (e) {} }
+                if (!p) return;
+                selectBookPatient({ id: p.id, mrn: p.mrn || p.id, name: patientName(p) });
+                if (canManage()) openBookModal();
+            } catch (e) { console.warn('[theater] arriving patient:', e && e.message); }
+        }
 
         // ─── PERSIST A SURGERY TO THE COMMON SERVER ───
         async function saveSurgery(s) {
@@ -1577,7 +1668,8 @@
             }
             if (list && list.length) { theaters = list; }
             else if (local && local.length) { theaters = local; }
-            else { theaters = DEFAULT_THEATERS.slice(); localWrite(THEATERS_KEY, theaters); }
+            else { theaters = []; }
+            populateTheaterDropdown();
             renderAll();
         }
 
@@ -1597,13 +1689,6 @@
                     });
                 } catch (e) { console.warn('[theater] staff list unavailable:', e && e.message); }
             }
-            if (!docs.length) {
-                docs = [
-                    { id: 'doc-1', name: 'Dr. Eric Nkurunziza', specialty: 'Cardiac Surgery' },
-                    { id: 'doc-2', name: 'Dr. Grace Ineza', specialty: 'General Surgery' },
-                    { id: 'doc-3', name: 'Dr. Samuel Bizimana', specialty: 'Orthopedic' }
-                ];
-            }
             surgeons = docs.map(function (d) {
                 return { id: d.id, name: d.name, specialty: d.specialty || 'General Surgery',
                          surgeriesWeek: 0, surgeriesToday: 0, status: 'available' };
@@ -1616,7 +1701,9 @@
             var names = surgeons.map(function (s) { return s.name; });
             var sg = document.getElementById('bookSurgeon');
             var an = document.getElementById('bookAnaesthetist');
-            if (sg) sg.innerHTML = names.map(function (n) { return '<option>' + n + '</option>'; }).join('');
+            if (sg) sg.innerHTML = names.length
+                ? names.map(function (n) { return '<option>' + n + '</option>'; }).join('')
+                : '<option value="">— No doctors registered —</option>';
             if (an) an.innerHTML = '<option>Not assigned</option>' +
                 names.map(function (n) { return '<option>' + n + '</option>'; }).join('');
         }
@@ -1693,13 +1780,15 @@
 
         // ─── ADD THEATER ───
         async function addTheater() {
-            var name = prompt('New theater name (e.g. "Theater 5"):', 'Theater ' + (theaters.length + 1));
+            if (!canManage()) { showToast('🔒 Only a doctor can manage operating theaters', 'warning'); return; }
+            var name = prompt('New theater name (e.g. "Theater 1"):', 'Theater ' + (theaters.length + 1));
             if (!name) return;
             name = name.trim();
             if (theaters.some(function (t) { return String(t.name).toLowerCase() === name.toLowerCase(); })) {
                 showToast('⚠️ ' + name + ' already exists', 'warning'); return;
             }
             theaters.push({ id: uid('th'), name: name, status: 'available', utilization: 0, currentSurgery: '', surgeon: '', nextSurgery: '' });
+            populateTheaterDropdown();
             renderAll();
             await saveTheaters();
             showToast('✅ ' + name + ' added to the common server', 'success');
@@ -1863,6 +1952,11 @@
 
         function renderTheaters() {
             const container = document.getElementById('theaterGrid');
+            if (!theaters.length) {
+                container.innerHTML = '<div style="grid-column:1/-1;padding:28px;text-align:center;color:var(--tm);">No operating theaters yet.' +
+                    (canManage() ? ' Click "Add Theater" to create the first room.' : '') + '</div>';
+                return;
+            }
             const statusColors = {
                 'available': 'b-grn',
                 'in-use': 'b-org',
@@ -1910,7 +2004,7 @@
                     </div>
                     <div style="margin-top:8px;display:flex;gap:6px;">
                         <button class="btn-s" style="padding:2px 10px;font-size:10px;" onclick="showToast('📋 Viewing ${t.name} schedule','info')">Schedule</button>
-                        ${t.status === 'available' ? `<button class="btn-p" style="padding:2px 10px;font-size:10px;" onclick="openBookModal()">Book</button>` : ''}
+                        ${t.status === 'available' && canManage() ? `<button class="btn-p" style="padding:2px 10px;font-size:10px;" onclick="openBookModal()">Book</button>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -1918,6 +2012,10 @@
 
         function renderSurgeons() {
             const tbody = document.getElementById('surgeonsBody');
+            if (!surgeons.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--tm);">No surgeons registered yet.</td></tr>';
+                return;
+            }
             const statusColors = {
                 'available': 'b-grn',
                 'in-surgery': 'b-org',
@@ -2052,11 +2150,11 @@
                     </div>
                 </div>
                 <div class="fa" style="margin-top:4px;">
-                    ${s.status === 'scheduled' ? `
+                    ${canManage() && s.status === 'scheduled' ? `
                         <button class="btn-p" onclick="updateSurgeryStatus('${s.id}','in-progress');closeDetailModal();"><i class="ti ti-play"></i> Start Surgery</button>
                         <button class="btn-s" onclick="updateSurgeryStatus('${s.id}','delayed');closeDetailModal();" style="background:var(--orangeb);color:var(--oranged);"><i class="ti ti-clock"></i> Delay</button>
                     ` : ''}
-                    ${s.status === 'in-progress' ? `
+                    ${canManage() && s.status === 'in-progress' ? `
                         <button class="btn-p" onclick="updateSurgeryStatus('${s.id}','completed');closeDetailModal();" style="background:var(--green);"><i class="ti ti-check"></i> Complete</button>
                         <button class="btn-s" onclick="updateSurgeryStatus('${s.id}','delayed');closeDetailModal();" style="background:var(--orangeb);color:var(--oranged);"><i class="ti ti-clock"></i> Delay</button>
                     ` : ''}
@@ -2073,6 +2171,7 @@
 
         // ─── UPDATE SURGERY STATUS ───
         async function updateSurgeryStatus(id, status) {
+            if (!canManage()) { showToast('🔒 Only a doctor can change a surgery status', 'warning'); return; }
             const s = surgeries.find(s => String(s.id) === String(id));
             if (s) {
                 s.status = status;
@@ -2084,17 +2183,22 @@
 
         // ─── BOOK SURGERY ───
         function openBookModal() {
+            if (!canManage()) { showToast('🔒 Only a doctor can book a surgery', 'warning'); return; }
             document.getElementById('bookModal').classList.add('show');
             document.getElementById('bookDate').value = new Date().toISOString().slice(0, 10);
         }
 
         function closeBookModal() {
             document.getElementById('bookModal').classList.remove('show');
+            resetBookPatient();
         }
 
         async function submitBooking() {
-            const patient = document.getElementById('bookPatient').value.trim();
-            const mrn = document.getElementById('bookMRN').value.trim();
+            if (!canManage()) { showToast('🔒 Only a doctor can book a surgery', 'warning'); return; }
+            if (!selectedBookPatient) { showToast('⚠️ Select a registered patient from the list', 'warning'); return; }
+            const patient = selectedBookPatient.name;
+            const mrn = selectedBookPatient.mrn || '—';
+            const patientId = selectedBookPatient.id || '';
             const procedure = document.getElementById('bookProcedure').value.trim();
             const type = document.getElementById('bookType').value;
             const surgeon = document.getElementById('bookSurgeon').value;
@@ -2106,7 +2210,7 @@
             const priority = document.getElementById('bookPriority').value;
             const notes = document.getElementById('bookNotes').value.trim();
 
-            if (!patient || !procedure || !date || !time) {
+            if (!patientId || !procedure || !theater || !date || !time) {
                 showToast('⚠️ Please fill in all required fields.', 'warning');
                 return;
             }
@@ -2114,7 +2218,8 @@
             const newSurgery = {
                 id: uid('srg'),
                 patient,
-                mrn: mrn || '—',
+                mrn,
+                patientId,
                 procedure,
                 type,
                 surgeon,
@@ -2225,6 +2330,7 @@
         // ─── INIT ───
         console.log('🏥 PClinic Operating Theater Scheduling — Apple-Style');
         console.log('📌 Shortcuts: Ctrl+1-5 → Switch views, Ctrl+F → Search, Escape → Close modals');
+        bindPatientPicker();
         loadSurgeries();
         loadTheaters();
         loadSurgeons();
@@ -2232,10 +2338,12 @@
 
 
     <script>
-        requireAuth(['theater']).then(function(staff) {
+        requireAuth(['doctor', 'theater', 'nurse', 'reception']).then(function(staff) {
             window.currentStaff = staff;
             window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: staff }));
             console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
+            applyRoleGating();
+            applyArrivingPatient();
         }).catch(function(err) {
             console.warn('Auth guard redirect:', err && err.message);
         });

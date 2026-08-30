@@ -51,6 +51,16 @@
     window.dcImaging = function () { go('imaging-request.html'); };
     window.dcRx      = function () { go('prescription.html'); };
 
+    // Opens the Operating Theater board. Carries the selected patient (if any)
+    // so the theater page can pre-fill its booking form.
+    function openTheater() {
+        var p = P();
+        var url = 'theater-dashboard.html';
+        if (p && p.id) url += '?patient=' + encodeURIComponent(p.id);
+        location.href = url;
+    }
+    window.dcTheater = openTheater;
+
     /* ══════════ LOCATIONS ══════════ */
     var LOCATIONS = [
         { id:'OPD',       label:'OPD',            icon:'ti-door-enter' },
@@ -101,6 +111,7 @@
         { id:'rx',       label:'Prescription',    icon:'ti-pill',           grp:'order', run:function(){ go('prescription.html'); } },
         { id:'physio',   label:'Physio Request',  icon:'ti-accessible',     grp:'order', run:function(){ go('physio-request.html'); } },
         { id:'proc',     label:'Procedure',       icon:'ti-stethoscope',    grp:'order', run:function(){ if (window.dcProc) dcProc(); } },
+        { id:'theater',  label:'Theater',         icon:'ti-scissors',       grp:'order', run:function(){ openTheater(); } },
         { id:'vitals',   label:'Vitals',          icon:'ti-heartbeat',      grp:'clin',  run:function(){ if (window.pcVitals) pcVitals.open(); else legacy('viewAllVitals'); } },
         { id:'media',    label:'Media',           icon:'ti-photo',          grp:'media', menu:[
             { label:'Photos', icon:'ti-photo', run:function(){ media('photo'); } },
