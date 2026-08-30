@@ -10,7 +10,8 @@
     "test:results": "node --test imaging-results-page.test.mjs",
     "test:call-errors": "node --test radiology-call-errors.test.mjs",
     "test:media": "node --test radiology-media-client.test.mjs",
-    "test:media-button": "node --test --test-force-exit radiology-media-button.test.mjs"
+    "test:media-button": "node --test --test-force-exit radiology-media-button.test.mjs",
+    "test:selection": "node --test --test-force-exit radiology-selection.test.mjs"
   },
   "dependencies": {
     "@firebase/rules-unit-testing": "^5.0.2",
