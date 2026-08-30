@@ -742,11 +742,6 @@
             renderAdminActionBar(el);
             return;
         }
-        /* ── THEATER DASHBOARD: theater-management buttons only (no doctor buttons) ── */
-        if (pathStr.indexOf('theater-dashboard') !== -1) {
-            renderTheaterActionBar(el);
-            return;
-        }
 
         var currP = p || (window.pcFile && window.pcFile && window.pcFile.patient && window.pcFile.patient()) || { id: localStorage.getItem('pclinic_active_patient') || '' };
 
@@ -887,28 +882,6 @@
             bar.appendChild(b);
         });
 
-        // Nurse dashboard: append a Theater button that opens the Operating
-        // Theater board, carrying the selected patient (if any).
-        if (pathStr.indexOf('nurse-dashboard') !== -1) {
-            var thSep = document.createElement('span');
-            thSep.className = 'ab-sep';
-            bar.appendChild(thSep);
-            var thBtn = document.createElement('button');
-            thBtn.className = 'ab-btn ab-always';
-            thBtn.innerHTML = '<i class="ti ti-scissors"></i><span>Theater</span>';
-            thBtn.style.setProperty('--c', '#5c2475');
-            thBtn.style.setProperty('--b', '#f5eaff');
-            thBtn.onclick = function () {
-                var pid = '';
-                try {
-                    var pp = (window.pcFile && window.pcFile.patient && window.pcFile.patient()) || null;
-                    pid = (pp && pp.id) || localStorage.getItem('pclinic_active_patient') || '';
-                } catch (e) {}
-                location.href = 'theater-dashboard.html' + (pid ? '?patient=' + encodeURIComponent(pid) : '');
-            };
-            bar.appendChild(thBtn);
-        }
-
         syncActionBarState(currP);
     }
 
@@ -963,75 +936,6 @@
     }
 
     /* ══════════════════════════════════════════════════════════════
-       THEATER ACTION BAR (#dcBar) — Bar 3 for the Operating Theater
-       board. Theater-management buttons ONLY (booking, board views,
-       export, print, refresh). No doctor-dashboard / clinical patient
-       buttons. Every button dispatches to window.pcTheater, which the
-       theater-dashboard page exposes, so bookings and status changes
-       persist through the shared Common Server (Firestore).
-       ══════════════════════════════════════════════════════════════ */
-    function renderTheaterActionBar(targetEl) {
-        var el = document.getElementById('pcMasterHeader') || targetEl || document.body;
-        if (!el) return;
-        ensureActionBarStyles();
-
-        var bar = document.getElementById('dcBar');
-        if (!bar) {
-            bar = document.createElement('div');
-            bar.id = 'dcBar';
-            bar.className = 'dc-bar noprint';
-        }
-        if (bar.getAttribute('data-theater-complete') !== '1') {
-            bar.setAttribute('data-theater-complete', '1');
-            bar.innerHTML =
-                '<button type="button" class="ab-btn ab-always" data-theater-book="1" style="--c:#1a7a32;--b:#e9f9ee;--a:#198754;"><i class="ti ti-calendar-plus"></i>Book Surgery</button>' +
-                '<span class="ab-sep"></span>' +
-                '<button type="button" class="ab-btn ab-always" data-theater-view="overview" style="--c:#0b57d0;--b:#e8f0fe;--a:#0b57d0;"><i class="ti ti-chart-bar"></i>Overview</button>' +
-                '<button type="button" class="ab-btn ab-always" data-theater-view="schedule" style="--c:#8a5a00;--b:#fff7e6;--a:#d97706;"><i class="ti ti-calendar"></i>Schedule</button>' +
-                '<button type="button" class="ab-btn ab-always" data-theater-view="theaters" style="--c:#5c2475;--b:#f5eaff;--a:#7e22ce;"><i class="ti ti-bed"></i>Theaters</button>' +
-                '<button type="button" class="ab-btn ab-always" data-theater-view="surgeons" style="--c:#006b73;--b:#e6f8fa;--a:#008c99;"><i class="ti ti-user-md"></i>Surgeons</button>' +
-                '<button type="button" class="ab-btn ab-always" data-theater-view="procedures" style="--c:#6d28d9;--b:#f5eaff;--a:#7c3aed;"><i class="ti ti-clipboard-list"></i>Procedures</button>' +
-                '<span class="ab-sep"></span>' +
-                '<button type="button" class="ab-btn ab-always" data-theater-export="1" style="--c:#374151;--b:#f3f4f6;--a:#4b5563;"><i class="ti ti-download"></i>Export</button>' +
-                '<button type="button" class="ab-btn ab-always" data-theater-print="1" style="--c:#475569;--b:#f1f5f9;--a:#64748b;"><i class="ti ti-printer"></i>Print</button>' +
-                '<button type="button" class="ab-btn ab-always" data-theater-refresh="1" style="--c:#0066d6;--b:#eaf2ff;--a:#0284c7;"><i class="ti ti-refresh"></i>Refresh</button>';
-
-            function th(fn) { return (window.pcTheater && typeof window.pcTheater[fn] === 'function') ? window.pcTheater[fn] : null; }
-
-            var bookBtn = bar.querySelector('[data-theater-book]');
-            if (bookBtn) bookBtn.onclick = function () { var f = th('book'); if (f) f(); else alert('Theater board is still loading…'); };
-
-            var viewBtns = bar.querySelectorAll('[data-theater-view]');
-            for (var v = 0; v < viewBtns.length; v++) {
-                viewBtns[v].onclick = (function (btn) {
-                    return function () {
-                        var view = btn.getAttribute('data-theater-view');
-                        var f = th('nav'); if (f) f(view); else alert('Theater board is still loading…');
-                    };
-                })(viewBtns[v]);
-            }
-            var expBtn = bar.querySelector('[data-theater-export]');
-            if (expBtn) expBtn.onclick = function () { var f = th('export'); if (f) f(); else alert('Theater board is still loading…'); };
-            var prBtn = bar.querySelector('[data-theater-print]');
-            if (prBtn) prBtn.onclick = function () { var f = th('print'); if (f) f(); else window.print(); };
-            var rfBtn = bar.querySelector('[data-theater-refresh]');
-            if (rfBtn) rfBtn.onclick = function () { var f = th('refresh'); if (f) f(); };
-        }
-
-        // Keep the strict hierarchy inside #pcMasterHeader:
-        // 1st #pc_chuk_top_menu · 2nd #pc_common_demo_bar · 3rd #dcBar
-        var master = document.getElementById('pcMasterHeader') || el;
-        var demoBar = document.getElementById('pc_common_demo_bar');
-        if (demoBar && demoBar.parentNode) {
-            if (demoBar.nextSibling && demoBar.nextSibling !== bar) demoBar.parentNode.insertBefore(bar, demoBar.nextSibling);
-            else if (!demoBar.nextSibling) demoBar.parentNode.appendChild(bar);
-        } else if (bar.parentNode !== master) {
-            if (master.firstChild) master.insertBefore(bar, master.firstChild);
-            else master.appendChild(bar);
-        }
-    }
-
-    /* ══════════════════════════════════════════════════════════════
        RADIOLOGY ACTION BAR (#dcBar) — Bar 3 for the Radiology board.
        Radiology-only buttons + a patient selection button. Every
        radiology button stays LOCKED (greyed) until a patient is
@@ -1054,7 +958,7 @@
             bar.innerHTML =
                 '<button type="button" class="ab-btn ab-always" id="radSelBtn" style="--c:#0066d6;--b:#eaf2ff;--a:#0071e3;"><i class="ti ti-user-search"></i>Select patient</button>' +
                 '<span id="radBarPatient" style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:9px;background:rgba(0,0,0,.05);font-size:11.5px;font-weight:700;color:var(--tp,#1c1c1e);max-width:300px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">🔒 No patient selected</span>' +
-                '<button type="button" class="ab-btn ab-always ab-media" id="radMediaBtn" title="Attach images or clips to this patient\'s study. Works whether or not the study has been started." style="--c:#ffffff;--b:linear-gradient(180deg,#ff8a3d,#f2600c);--a:#ff9b57;"><i class="ti ti-photo-plus"></i>Add image result<span class="ab-badge" id="radMediaCnt">0</span></button>' +
+                '<button type="button" class="ab-btn ab-always ab-media" id="radMediaBtn" title="Attach images to this patient\'s study and write the radiology report. Works whether or not the study has been started." style="--c:#ffffff;--b:linear-gradient(180deg,#ff8a3d,#f2600c);--a:#ff9b57;"><i class="ti ti-photo-plus"></i>Add radiology result<span class="ab-badge" id="radMediaCnt">0</span></button>' +
                 '<span class="ab-sep"></span>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-view="overview" style="--c:#0b57d0;--b:#e8f0fe;--a:#0b57d0;"><i class="ti ti-chart-bar"></i>Overview</button>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-view="request" style="--c:#8a5a00;--b:#fff7e6;--a:#d97706;"><i class="ti ti-shield-lock"></i>Request policy</button>' +
@@ -1174,7 +1078,7 @@
         var mediaBtn = document.getElementById('radMediaBtn');
         if (mediaBtn) {
             mediaBtn.title = on
-                ? 'Attach images or clips to this patient\'s study. Works whether or not the study has been started.'
+                ? 'Attach images to this patient\'s study and write the radiology report. Works whether or not the study has been started.'
                 : 'Select a patient first — a study belongs to a patient, so nothing can be filed without one.';
             if (!on) mediaBtn.setAttribute('aria-disabled', 'true');
             else mediaBtn.removeAttribute('aria-disabled');
@@ -2638,14 +2542,6 @@
             var oldDemoAdm = document.getElementById('pc_common_demo_bar');
             if (oldDemoAdm && oldDemoAdm.parentNode) oldDemoAdm.parentNode.removeChild(oldDemoAdm);
             renderAdminActionBar(document.getElementById('pcMasterHeader') || document.body);
-            return;
-        }
-        /* ── THEATER DASHBOARD: CHUK top bar + theater action bar only ── */
-        if (pathStr.indexOf('theater-dashboard') !== -1) {
-            if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
-            var oldDemoTh = document.getElementById('pc_common_demo_bar');
-            if (oldDemoTh && oldDemoTh.parentNode) oldDemoTh.parentNode.removeChild(oldDemoTh);
-            renderTheaterActionBar(document.getElementById('pcMasterHeader') || document.body);
             return;
         }
         var master = document.getElementById('pcMasterHeader');
