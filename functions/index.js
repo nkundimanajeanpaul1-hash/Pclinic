@@ -4,6 +4,7 @@ const { setGlobalOptions } = require('firebase-functions/v2');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
+const { getStorage } = require('firebase-admin/storage');
 const {
   deriveRadiologyState,
   assertTransition,
@@ -881,7 +882,7 @@ exports.radiologyMediaSign = onCall(async (request) => {
   ensureImagingOrder(order);
 
   const found = await db.collection('radiologyMedia').where('orderId', '==', orderId).get();
-  const bucket = admin.storage().bucket();
+  const bucket = getStorage().bucket();
   const items = [];
   for (const docSnap of found.docs) {
     const row = { id: docSnap.id, ...docSnap.data() };
@@ -941,7 +942,7 @@ exports.radiologyMediaDelete = onCall(async (request) => {
     const path = String(row.storagePath || '');
     // Only ever delete the object this record itself names.
     if (path === `radiology/${row.orderId}/${mediaId}.${String(row.ext || '').toLowerCase()}`) {
-      try { await admin.storage().bucket().file(path).delete({ ignoreNotFound: true }); }
+      try { await getStorage().bucket().file(path).delete({ ignoreNotFound: true }); }
       catch (error) { console.warn(`radiologyMedia/${mediaId}: object ${path} not removed: ${error && error.message}`); }
     }
     auditInTransaction(tx, staff, 'radiology.media.delete', 'radiologyMedia', mediaId, row.patientId, { orderId: row.orderId || null });
