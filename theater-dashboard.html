@@ -1425,10 +1425,8 @@
                         </select>
                     </div>
                     <div class="fgl"><div class="lbl">Surgeon *</div>
-                        <select class="fi" id="bookSurgeon"></select>
-                    </div>
-                    <div class="fgl"><div class="lbl">Anaesthetist</div>
-                        <select class="fi" id="bookAnaesthetist"></select>
+                        <select class="fi" id="bookSurgeon" onchange="toggleSurgeonOther()"></select>
+                        <input class="fi" id="bookSurgeonOther" placeholder="Type surgeon name (visitor, other doctor…)" style="display:none;" autocomplete="off" />
                     </div>
                     <div class="fgl"><div class="lbl">Theater *</div>
                         <select class="fi" id="bookTheater"></select>
@@ -1700,12 +1698,29 @@
         function populateSurgeonDropdowns() {
             var names = surgeons.map(function (s) { return s.name; });
             var sg = document.getElementById('bookSurgeon');
-            var an = document.getElementById('bookAnaesthetist');
-            if (sg) sg.innerHTML = names.length
-                ? names.map(function (n) { return '<option>' + n + '</option>'; }).join('')
-                : '<option value="">— No doctors registered —</option>';
-            if (an) an.innerHTML = '<option>Not assigned</option>' +
-                names.map(function (n) { return '<option>' + n + '</option>'; }).join('');
+            if (sg) {
+                var opts = names.length
+                    ? names.map(function (n) { return '<option>' + n + '</option>'; }).join('')
+                    : '<option value="">— No doctors registered —</option>';
+                opts += '<option value="__other__">＋ Add other surgeon…</option>';
+                sg.innerHTML = opts;
+            }
+        }
+
+        // Show/hide the free-text surgeon box when "Add other surgeon…" is chosen.
+        function toggleSurgeonOther() {
+            var sg = document.getElementById('bookSurgeon');
+            var other = document.getElementById('bookSurgeonOther');
+            if (!sg || !other) return;
+            var show = sg.value === '__other__';
+            other.style.display = show ? '' : 'none';
+            if (show) other.focus();
+        }
+        function resetSurgeonOther() {
+            var other = document.getElementById('bookSurgeonOther');
+            if (other) { other.value = ''; other.style.display = 'none'; }
+            var sg = document.getElementById('bookSurgeon');
+            if (sg && sg.options.length) sg.value = sg.options[0].value;
         }
 
         function computeTheaterStatus() {
@@ -1761,8 +1776,8 @@
         function exportSurgeries() {
             if (!surgeries.length) { showToast('No surgeries to export', 'warning'); return; }
             downloadCSV('theater-surgeries.csv',
-                ['Patient', 'MRN', 'Procedure', 'Type', 'Surgeon', 'Anaesthetist', 'Theater', 'Date', 'Time', 'Duration', 'Priority', 'Status'],
-                surgeries.map(function (s) { return [s.patient, s.mrn, s.procedure, s.type, s.surgeon, s.anaesthetist, s.theater, s.date, s.time, s.duration, s.priority, s.status]; }));
+                ['Patient', 'MRN', 'Procedure', 'Type', 'Surgeon', 'Theater', 'Date', 'Time', 'Duration', 'Priority', 'Status'],
+                surgeries.map(function (s) { return [s.patient, s.mrn, s.procedure, s.type, s.surgeon, s.theater, s.date, s.time, s.duration, s.priority, s.status]; }));
             showToast('📊 Exported ' + surgeries.length + ' surgeries', 'success');
         }
         function exportTheaters() {
@@ -2128,7 +2143,6 @@
                     <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
                         <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Surgeon</div>
                         <div style="font-size:14px;font-weight:600;">${s.surgeon}</div>
-                        <div style="font-size:11px;color:var(--tm);">Anaesthetist: ${s.anaesthetist}</div>
                     </div>
                     <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 12px;">
                         <div style="font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.3px;font-weight:600;">Theater</div>
@@ -2191,6 +2205,7 @@
         function closeBookModal() {
             document.getElementById('bookModal').classList.remove('show');
             resetBookPatient();
+            resetSurgeonOther();
         }
 
         async function submitBooking() {
@@ -2201,8 +2216,9 @@
             const patientId = selectedBookPatient.id || '';
             const procedure = document.getElementById('bookProcedure').value.trim();
             const type = document.getElementById('bookType').value;
-            const surgeon = document.getElementById('bookSurgeon').value;
-            const anaesthetist = document.getElementById('bookAnaesthetist').value;
+            const surgeonSel = document.getElementById('bookSurgeon').value;
+            const surgeonOther = document.getElementById('bookSurgeonOther').value.trim();
+            const surgeon = (surgeonSel === '__other__' || surgeonSel === '') ? surgeonOther : surgeonSel;
             const theater = document.getElementById('bookTheater').value;
             const date = document.getElementById('bookDate').value;
             const time = document.getElementById('bookTime').value;
@@ -2210,7 +2226,7 @@
             const priority = document.getElementById('bookPriority').value;
             const notes = document.getElementById('bookNotes').value.trim();
 
-            if (!patientId || !procedure || !theater || !date || !time) {
+            if (!patientId || !procedure || !surgeon || !theater || !date || !time) {
                 showToast('⚠️ Please fill in all required fields.', 'warning');
                 return;
             }
@@ -2223,7 +2239,6 @@
                 procedure,
                 type,
                 surgeon,
-                anaesthetist: anaesthetist || 'Not assigned',
                 theater,
                 date,
                 time,

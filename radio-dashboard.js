@@ -327,10 +327,52 @@
             value('rptRadiologist', window.currentStaff && window.currentStaff.name || 'Radiologist');
             const local = new Date(); local.setMinutes(local.getMinutes() - local.getTimezoneOffset());
             value('rptDateTime', local.toISOString().slice(0, 16));
+            const mediaHost = document.getElementById('rptMediaHost');
+            if (mediaHost) { mediaHost.replaceChildren(); mediaHost.appendChild(buildMediaBlock(order, true)); }
             syncActionBarContext();
             switchView(document.querySelector('#dcBar [data-rad-view="report"]'), 'report');
         }
         window.openReportFor = openReportFor;
+
+        /* Bring an order to a state that can carry a report ('acquired' or
+           later) without making the radiographer click through Start/Mark
+           acquired first — filing images and a result together is exactly
+           what "acquire" means, and the backend is idempotent about it. */
+        async function ensureAcquiredForReporting(order) {
+            const state = stateOf(order);
+            if (state === 'pending') {
+                await window.pcRadiology.transition(order.id, 'start');
+                await window.pcRadiology.transition(order.id, 'acquire');
+                return 'acquired';
+            }
+            if (state === 'in-progress') {
+                await window.pcRadiology.transition(order.id, 'acquire');
+                return 'acquired';
+            }
+            return state;
+        }
+
+        /* Single entry point for "Add radiology result": upload images and
+           write the report on the same page, for any open study regardless
+           of where it currently sits in the workflow. */
+        async function openRadiologyResult(order, patient) {
+            if (!order) { notify('Select a study first.', 'warning'); return; }
+            let nextState;
+            try {
+                nextState = await ensureAcquiredForReporting(order);
+            } catch (error) {
+                console.error(error);
+                notify((error && error.message) || 'Could not prepare this study for reporting.', 'error', 7000);
+                return;
+            }
+            // The transition just committed on the server; don't wait on the
+            // Firestore listener to echo it back before opening the report —
+            // stamp the state we know is now true onto the order we already have.
+            const live = (window.pcRadiology && window.pcRadiology.orderById(order.id)) || order;
+            const ready = Object.assign({}, live, { radiologyState: nextState });
+            openReportFor(ready);
+        }
+        window.openRadiologyResult = openRadiologyResult;
 
         function collectReport() {
             if (!currentOrder || !currentPatient) throw new Error('Select an acquired imaging order first.');
@@ -864,7 +906,7 @@
                 notify('No open imaging study for ' + nameOf(patient) + '. Studies already reported have their images filed against the signed report.', 'info', 9000);
                 return;
             }
-            if (orders.length === 1) { openMediaSheet(orders[0], patient); return; }
+            if (orders.length === 1) { openRadiologyResult(orders[0], patient); return; }
             pickStudyForMedia(patient, orders);
         }
         window.addEventListener('pcRadioAddMedia', handleAddMediaRequest);
@@ -874,7 +916,7 @@
                 if (!(window.pcFile && typeof window.pcFile.sheet === 'function')) {
                     // No sheet host on this page: fall back to the newest study and
                     // say so, rather than silently attaching to a guessed order.
-                    openMediaSheet(orders[0], patient);
+                    openRadiologyResult(orders[0], patient);
                     return;
                 }
                 window.pcFile.sheet({
@@ -899,7 +941,7 @@
                             go.style.cssText = 'font-size:10px;font-weight:800;color:#f2600c';
                             go.textContent = 'ATTACH';
                             row.appendChild(go);
-                            row.onclick = function () { close(); setTimeout(function () { openMediaSheet(order, patient); }, 60); };
+                            row.onclick = function () { close(); setTimeout(function () { openRadiologyResult(order, patient); }, 60); };
                             body.appendChild(row);
                         });
                     }
