@@ -6,7 +6,7 @@
     "node": "22"
   },
   "scripts": {
-    "postinstall": "node ../scripts/patch-functions-config.cjs",
+    "postinstall": "test -f ../scripts/patch-functions-config.cjs && node ../scripts/patch-functions-config.cjs || true",
     "test": "npm run test:unit",
     "test:unit": "node --test test/radiology-domain.test.cjs test/lab-domain.test.cjs",
     "test:verify-patch": "node ../scripts/patch-functions-config.cjs --check",
