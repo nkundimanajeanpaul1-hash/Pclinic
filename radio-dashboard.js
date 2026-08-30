@@ -230,6 +230,7 @@
                 row.appendChild(cell); body.appendChild(row); return;
             }
             announceStudyCount();
+            highlightSelectedStudy();
             orders.forEach(function (order) {
                 const row = document.createElement('tr');
                 const state = stateOf(order);
@@ -248,18 +249,14 @@
                 actions.appendChild(button('Images', 'btn-s', function () { openMediaSheet(order); }));
                 actions.appendChild(button('Cancel', 'btn-s', function () { transitionOrder(order.id, 'cancel'); }));
                 row.appendChild(actions);
-                // Selecting a study is also selecting its patient: until now the bar
-                // only updated from the picker, so the identification bar could sit on
-                // "No patient selected" while a row was plainly in front of you.
+                // Selecting a study IS selecting its patient: the bar used to update
+                // only from the picker, so it could sit on "No patient selected" while
+                // a row was plainly in front of you. One handler only — the signed
+                // table has its own, and re-rendering here would rebuild this row mid-click.
+                row.dataset.studyId = String(order.id);
+                row.style.cursor = 'pointer';
                 row.addEventListener('click', function () {
-                    var rowPatient = findPatient(order.patientId);
-                    if (!rowPatient) {
-                        notify('The patient on this study is not in the registry, so it cannot be selected. Search the record number in the bar above.', 'warning', 7000);
-                        return;
-                    }
-                    setActivePatient(rowPatient);
-                    currentOrder = order;
-                    renderWorklist();
+                    selectStudy(order);
                 });
                 row.addEventListener('dblclick', function () {
                     if (state === 'acquired' || state === 'reporting') openReportFor(order);
@@ -800,6 +797,24 @@
         });
 
         /* ── the big bar button: resolve a study, then open the media sheet ── */
+        // The registry mirror is device-local and has been shown to lag; a study in
+        // front of the radiographer must still be selectable, and the bar must show
+        // who it belongs to. Identity fields come from the order, the patientId is
+        // the real record id so the files/sync layer queries the right subcollection.
+        function patientFromOrder(order) {
+            if (!order) return null;
+            var known = findPatient(order.patientId);
+            if (known) return known;
+            var name = String(order.patientName || '').trim();
+            var parts = name.split(/\s+/);
+            return {
+                id: String(order.patientId == null ? '' : order.patientId),
+                mrn: String(order.patientId == null ? '' : order.patientId),
+                firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '',
+                name: name, _fromOrder: true
+            };
+        }
+
         function openOrdersForPatient(patient) {
             if (!patient) return [];
             return (radiologyState.orders || []).filter(function (o) {
@@ -807,6 +822,29 @@
                     String(o.patientId || '') !== String(patient.mrn || '\u0000')) return false;
                 return stateOf(o) !== 'cancelled';
             }).sort(function (a, b) { return timestampMillis(b.orderedAt) - timestampMillis(a.orderedAt); });
+        }
+
+        function selectStudy(order) {
+            if (!order) return null;
+            var patient = patientFromOrder(order);
+            if (!patient.id) { notify('This study has no patient id, so it cannot be selected.', 'error', 7000); return null; }
+            if (!currentPatient || String(currentPatient.id) !== String(patient.id)) setActivePatient(patient);
+            currentOrder = order;
+            currentReport = window.pcRadiology ? window.pcRadiology.reportForOrder(order.id) : null;
+            highlightSelectedStudy();
+            announceStudyCount();
+            return patient;
+        }
+
+        function highlightSelectedStudy() {
+            var body = document.getElementById('worklistBody');
+            if (!body) return;
+            Array.prototype.forEach.call(body.querySelectorAll('tr'), function (tr) {
+                if (!tr.dataset.studyId) return;
+                var on = !!currentOrder && String(tr.dataset.studyId) === String(currentOrder.id);
+                tr.style.background = on ? 'rgba(0,113,227,.07)' : '';
+                tr.style.boxShadow = on ? 'inset 3px 0 0 #0071e3' : 'none';
+            });
         }
 
         function announceStudyCount() {
@@ -818,7 +856,8 @@
         function handleAddMediaRequest(event) {
             var patient = (event && event.detail && event.detail.patient) || currentPatient;
             if (!patient) { notify('Select a patient first.', 'warning'); return; }
-            // Attach to the current selection so a row click does not have to come first.
+            // Whatever the bar carried becomes the current selection, so the button
+            // both shows who you are working on and puts you to work on them.
             if (!currentPatient || String(currentPatient.id) !== String(patient.id)) setActivePatient(patient);
             var orders = openOrdersForPatient(patient);
             if (!orders.length) {
@@ -872,10 +911,9 @@
         /* ── study media: upload, list, view ── */
         function openMediaSheet(order, preferredPatient) {
             if (!order) { notify('Select a study first.', 'warning'); return; }
-            var target = preferredPatient || findPatient(order.patientId) || currentPatient;
-            if (!target) { notify('The patient on this study is not in the registry.', 'error', 7000); return; }
-            if (!currentPatient || String(currentPatient.id) !== String(target.id)) setActivePatient(target);
-            currentOrder = order;
+            var target = preferredPatient || patientFromOrder(order);
+            if (!target || !target.id) { notify('This study has no patient id, so nothing can be filed against it.', 'error', 7000); return; }
+            selectStudy(order);
             if (window.pcFile && typeof window.pcFile.sheet === 'function') {
                 // pcFile.sheet hands the body to opts.build(body, close) — there is
                 // no onMount option; passing one would open an empty modal.
