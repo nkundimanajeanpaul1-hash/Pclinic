@@ -117,14 +117,29 @@
         /* ── infrastructure: authoritative from the browser ───────── */
         infra: async function () {
             var out = [];
-            var bucket = await headStatus('https://storage.googleapis.com/storage/v1/b/' + PROJECT + '.appspot.com');
-            if (!bucket.ok) {
-                out.push(line('UNKNOWN', 'Storage bucket reachable', bucket.message));
-            } else if (bucket.status === 200) {
-                out.push(line('PASS', 'Storage bucket exists', 'pclinic-20d81.appspot.com responds 200'));
+            // The upload code reads the bucket name from firebaseApp.options.storageBucket
+            // (new projects use the firebasestorage.app domain). Probe both the configured
+            // name and the legacy appspot alias so a genuinely provisioned bucket passes
+            // regardless of which domain the project actually uses.
+            var configured = (window.firebaseApp && window.firebaseApp.options &&
+                window.firebaseApp.options.storageBucket) || (PROJECT + '.firebasestorage.app');
+            var candidates = [];
+            if (configured) candidates.push(configured);
+            candidates.push(PROJECT + '.appspot.com');
+            var found = null, firstErr = '';
+            for (var i = 0; i < candidates.length && !found; i++) {
+                var r = await headStatus('https://storage.googleapis.com/storage/v1/b/' + candidates[i]);
+                if (r.ok && r.status === 200) { found = candidates[i]; break; }
+                if (r.ok && r.status !== 200) firstErr = 'HTTP ' + r.status;
+                else if (!r.ok) firstErr = r.message;
+            }
+            if (found) {
+                out.push(line('PASS', 'Storage bucket exists', found + ' responds 200'));
+            } else if (!firstErr) {
+                out.push(line('UNKNOWN', 'Storage bucket reachable', 'no status readable'));
             } else {
                 out.push(line('FAIL', 'Storage bucket exists',
-                    'HTTP ' + bucket.status + ' — console → Storage → Get started. This is not fixable in code; uploads cannot work until it exists.'));
+                    firstErr + ' — console → Storage → Get started. This is not fixable in code; uploads cannot work until it exists.'));
             }
 
             var rules = await headStatus('https://firestore.googleapis.com/v1/projects/' + PROJECT +

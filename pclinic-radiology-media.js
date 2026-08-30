@@ -26,7 +26,19 @@
         'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
         'image/gif': 'gif', 'video/mp4': 'mp4', 'video/webm': 'webm'
     };
-    var BUCKET = 'pclinic-20d81.appspot.com';
+    // Bucket name lives in firebase-config.js (firebaseApp.options.storageBucket).
+    // New Firebase projects use the `firebasestorage.app` domain; the legacy
+    // `appspot.com` alias only exists on older projects. Reading it from the live
+    // config keeps upload and signing pointed at the same bucket, so they can
+    // never drift apart again.
+    function bucketName() {
+        try {
+            var configured = window.firebaseApp && window.firebaseApp.options &&
+                window.firebaseApp.options.storageBucket;
+            if (configured) return String(configured);
+        } catch (e) { /* fall through to default */ }
+        return 'pclinic-20d81.firebasestorage.app';
+    }
 
     function nowIso() { return new Date().toISOString(); }
     function uid(prefix) {
@@ -79,10 +91,16 @@
     }
 
     async function putObject(path, file, token) {
-        var url = 'https://storage.googleapis.com/storage/v1/b/' + encodeURIComponent(BUCKET) +
+        // Uploads go to the Firebase Storage endpoint (firebasestorage.googleapis.com),
+        // NOT the Google Cloud Storage JSON API (storage.googleapis.com). Only the
+        // Firebase endpoint accepts a Firebase Auth ID token and enforces
+        // storage.rules; the GCS JSON API expects a Google OAuth2 access token and
+        // would reject the upload with 401. uploadType=media sends the bytes in a
+        // single POST, which is fine at the 25 MB cap.
+        var url = 'https://firebasestorage.googleapis.com/v0/b/' + encodeURIComponent(bucketName()) +
             '/o?name=' + encodeURIComponent(path) + '&uploadType=media';
         var response = await fetch(url, {
-            method: 'PUT',
+            method: 'POST',
             headers: { Authorization: 'Bearer ' + token, 'Content-Type': file.type },
             body: file
         });
@@ -104,8 +122,13 @@
     }
 
     async function putObjectResumable(path, file, token) {
+        // Resumable fallback, on the same Firebase Storage endpoint, for regions
+        // where a single-shot media upload trips the CORS preflight. start
+        // initiates the session; the Location header returns a URL to PUT the
+        // bytes to. The session URL already carries its own upload token, so the
+        // body PUT needs no Authorization header.
         var start = await fetch(
-            'https://storage.googleapis.com/upload/storage/v1/b/' + encodeURIComponent(BUCKET) +
+            'https://firebasestorage.googleapis.com/v0/b/' + encodeURIComponent(bucketName()) +
             '/o?uploadType=resumable&name=' + encodeURIComponent(path),
             {
                 method: 'POST',
@@ -183,8 +206,8 @@
                 // The object exists but is not registered: nothing can ever sign it,
                 // so remove it rather than leaking an orphan file in the bucket.
                 try {
-                    await fetch('https://storage.googleapis.com/storage/v1/b/' +
-                        encodeURIComponent(BUCKET) + '/o/' + encodeURIComponent(path), {
+                    await fetch('https://firebasestorage.googleapis.com/v0/b/' +
+                        encodeURIComponent(bucketName()) + '/o/' + encodeURIComponent(path), {
                         method: 'DELETE', headers: { Authorization: 'Bearer ' + token }
                     });
                 } catch (cleanupError) { /* best effort */ }
