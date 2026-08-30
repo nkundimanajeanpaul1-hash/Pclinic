@@ -1212,9 +1212,9 @@
         </div>
         <div class="kpis">
             <div class="kpi kpi-blue" onclick="filterStatus('all')"><i class="ti ti-apps"></i> <span class="kpi-num">All</span></div>
-            <div class="kpi kpi-org" onclick="filterStatus('scheduled')"><i class="ti ti-clock"></i> <span class="kpi-num">5</span> scheduled</div>
-            <div class="kpi kpi-red" onclick="filterStatus('in-progress')"><i class="ti ti-activity"></i> <span class="kpi-num">3</span> in progress</div>
-            <div class="kpi kpi-grn" onclick="filterStatus('completed')"><i class="ti ti-circle-check"></i> <span class="kpi-num">8</span> completed</div>
+            <div class="kpi kpi-org" onclick="filterStatus('scheduled')"><i class="ti ti-clock"></i> <span class="kpi-num" id="kpiScheduled">0</span> scheduled</div>
+            <div class="kpi kpi-red" onclick="filterStatus('in-progress')"><i class="ti ti-activity"></i> <span class="kpi-num" id="kpiInProgress">0</span> in progress</div>
+            <div class="kpi kpi-grn" onclick="filterStatus('completed')"><i class="ti ti-circle-check"></i> <span class="kpi-num" id="kpiCompleted">0</span> completed</div>
         </div>
     </div>
 
@@ -1243,7 +1243,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="sc-top">
-                        <div><div class="sc-lbl">Theaters</div><div class="sc-val">4</div></div>
+                        <div><div class="sc-lbl">Theaters</div><div class="sc-val" id="statTheaters">4</div></div>
                         <div class="sc-ic" style="background:var(--purpleb)"><i class="ti ti-bed" style="color:var(--purple)"></i></div>
                     </div>
                     <div class="sc-sub">2 available, 1 in use, 1 cleaning</div>
@@ -1273,7 +1273,7 @@
                     <div class="panel-header">
                         <span class="panel-title"><i class="ti ti-calendar" style="color:var(--ac)"></i> Today's Schedule</span>
                         <div class="panel-actions">
-                            <span style="font-size:11px; color:var(--tm); font-weight:500;">Jun 30, 2026</span>
+                            <span style="font-size:11px; color:var(--tm); font-weight:500;" id="todayDateLabel"></span>
                         </div>
                     </div>
                     <div class="panel-body show" style="padding-top:8px;">
@@ -1296,7 +1296,7 @@
                     <span class="panel-title"><i class="ti ti-clock" style="color:var(--ac)"></i> Upcoming Surgeries</span>
                     <div class="panel-actions">
                         <button class="btn-p" onclick="openBookModal()"><i class="ti ti-plus"></i> Book Surgery</button>
-                        <button class="btn-export" onclick="showToast('📊 Exporting schedule...', 'info')"><i class="ti ti-download"></i> Export</button>
+                        <button class="btn-export" onclick="exportSurgeries()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
                 <div class="panel-body show">
@@ -1317,7 +1317,7 @@
                         <button class="btn-s" onclick="changeWeek(-1)"><i class="ti ti-chevron-left"></i></button>
                         <span style="font-size:12px; color:var(--tm); font-weight:500;" id="weekLabel">Jun 30 - Jul 6, 2026</span>
                         <button class="btn-s" onclick="changeWeek(1)"><i class="ti ti-chevron-right"></i></button>
-                        <button class="btn-export" onclick="showToast('🖨️ Printing schedule...', 'info')"><i class="ti ti-printer"></i></button>
+                        <button class="btn-export" onclick="window.print()"><i class="ti ti-printer"></i></button>
                     </div>
                 </div>
                 <div class="panel-body show" style="overflow-x:auto;">
@@ -1340,8 +1340,8 @@
                 <div class="panel-header">
                     <span class="panel-title"><i class="ti ti-bed" style="color:var(--ac)"></i> Operating Theaters</span>
                     <div class="panel-actions">
-                        <button class="btn-p" onclick="showToast('🏥 Adding new theater...', 'info')"><i class="ti ti-plus"></i> Add Theater</button>
-                        <button class="btn-export" onclick="showToast('📊 Exporting theater data...', 'info')"><i class="ti ti-download"></i> Export</button>
+                        <button class="btn-p" onclick="addTheater()"><i class="ti ti-plus"></i> Add Theater</button>
+                        <button class="btn-export" onclick="exportTheaters()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
                 <div class="panel-body show">
@@ -1356,7 +1356,7 @@
                 <div class="panel-header">
                     <span class="panel-title"><i class="ti ti-user-md" style="color:var(--ac)"></i> Surgeon Schedule</span>
                     <div class="panel-actions">
-                        <button class="btn-export" onclick="showToast('📊 Exporting surgeon data...', 'info')"><i class="ti ti-download"></i> Export</button>
+                        <button class="btn-export" onclick="exportSurgeons()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
                 <div class="panel-body show">
@@ -1384,7 +1384,7 @@
                             <option value="Urology">Urology</option>
                             <option value="Ophthalmology">Ophthalmology</option>
                         </select>
-                        <button class="btn-export" onclick="showToast('📊 Exporting procedures...', 'info')"><i class="ti ti-download"></i> Export</button>
+                        <button class="btn-export" onclick="exportSurgeries()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
                 <div class="panel-body show">
@@ -1422,21 +1422,10 @@
                         </select>
                     </div>
                     <div class="fgl"><div class="lbl">Surgeon *</div>
-                        <select class="fi" id="bookSurgeon">
-                            
-                            <option>Dr. Eric Nkurunziza</option>
-                            <option>Dr. Grace Ineza</option>
-                            
-                            <option>Dr. Samuel Bizimana</option>
-                        </select>
+                        <select class="fi" id="bookSurgeon"></select>
                     </div>
                     <div class="fgl"><div class="lbl">Anaesthetist</div>
-                        <select class="fi" id="bookAnaesthetist">
-                            <option>Dr. James Ochieng</option>
-                            <option>Dr. Sarah Wanjiru</option>
-                            
-                            <option>Not assigned</option>
-                        </select>
+                        <select class="fi" id="bookAnaesthetist"></select>
                     </div>
                     <div class="fgl"><div class="lbl">Theater *</div>
                         <select class="fi" id="bookTheater">
@@ -1483,14 +1472,247 @@
     <!-- ═══ JAVASCRIPT ═══ -->
     <script>
         // ─── DATA ───
-        const surgeries = []; // ⛔ NO TEMPLATE DATA — populated from the Common Server once the theater board is rebuilt
+        // Surgeries, theaters and surgeons are loaded from the Common Server
+        // (Firestore) with a localStorage mirror so the board still paints
+        // offline. No template / hardcoded records.
+        let surgeries = [];   // from the theaterSurgeries collection (Common Server)
+        let surgeons = [];    // staff with role 'doctor' (users collection)
+        let theaters = [];    // from the theaters collection (Common Server)
 
-        const surgeons = []; // ⛔ NO TEMPLATE DATA — from pclinic_staff once rebuilt
+        const SURGERIES_KEY = 'pclinic_theater_surgeries';
+        const THEATERS_KEY  = 'pclinic_theater_theaters';
 
+        const DEFAULT_THEATERS = [
+            { id: 'th1', name: 'Theater 1', status: 'available',   utilization: 0, currentSurgery: '', surgeon: '', nextSurgery: '' },
+            { id: 'th2', name: 'Theater 2', status: 'available',   utilization: 0, currentSurgery: '', surgeon: '', nextSurgery: '' },
+            { id: 'th3', name: 'Theater 3', status: 'available',   utilization: 0, currentSurgery: '', surgeon: '', nextSurgery: '' },
+            { id: 'th4', name: 'Theater 4', status: 'maintenance', utilization: 0, currentSurgery: '', surgeon: '', nextSurgery: '' }
+        ];
 
         const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
         const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
         let currentWeekOffset = 0;
+        let surgeryUnsub = null;
+
+        // ─── COMMON SERVER HELPERS ───
+        function fbReady() { return !!(window.firebaseDB && window.firebaseFunctions && window.firebaseReady); }
+        function waitFb(ms) {
+            return new Promise(function (res) {
+                if (fbReady()) return res(true);
+                var t; var fn = function () { clearTimeout(t); res(fbReady()); };
+                window.addEventListener('firebaseReady', fn, { once: true });
+                t = setTimeout(fn, ms || 6000);
+            });
+        }
+        function localRead(key, fb) { try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fb; } catch (e) { return fb; } }
+        function localWrite(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} }
+        function uid(prefix) { return (prefix || 'srg') + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7); }
+        function staffName() { return (window.currentStaff && window.currentStaff.name) || ''; }
+        function staffId() { return (window.currentStaff && (window.currentStaff.staffId || window.currentStaff.uid)) || ''; }
+
+        // ─── PERSIST A SURGERY TO THE COMMON SERVER ───
+        async function saveSurgery(s) {
+            localWrite(SURGERIES_KEY, surgeries);
+            await waitFb(4000);
+            if (!fbReady()) { showToast('⚠️ Offline — surgery saved on this computer only', 'warning'); return; }
+            var f = window.firebaseFunctions;
+            try {
+                await f.setDoc(f.doc(window.firebaseDB, 'theaterSurgeries', s.id), s);
+            } catch (err) {
+                var reason = (err && (err.code || err.message)) || 'unknown';
+                console.error('[theater] surgery save rejected:', reason);
+                showToast('⚠️ Not saved to the common server (' + reason + ')', 'error');
+            }
+        }
+
+        async function saveTheaters() {
+            localWrite(THEATERS_KEY, theaters);
+            await waitFb(4000);
+            if (!fbReady()) return;
+            var f = window.firebaseFunctions;
+            try {
+                for (var i = 0; i < theaters.length; i++) {
+                    await f.setDoc(f.doc(window.firebaseDB, 'theaters', theaters[i].id), theaters[i]);
+                }
+            } catch (err) {
+                console.error('[theater] theater save rejected:', err && (err.code || err.message));
+                showToast('⚠️ Theater change not saved to the common server', 'error');
+            }
+        }
+
+        // ─── LOAD SURGERIES FROM THE COMMON SERVER (live) ───
+        async function loadSurgeries() {
+            var local = localRead(SURGERIES_KEY, []);
+            if (local.length) { surgeries = local; renderAll(); }
+            await waitFb(6000);
+            if (!fbReady()) return;
+            var f = window.firebaseFunctions;
+            try {
+                surgeryUnsub = f.onSnapshot(f.collection(window.firebaseDB, 'theaterSurgeries'), function (snap) {
+                    var map = [];
+                    snap.forEach(function (d) { var r = d.data() || {}; r.id = r.id || d.id; map.push(r); });
+                    map.sort(function (a, b) {
+                        return String(b.date || '').localeCompare(String(a.date || '')) ||
+                               String(b.time || '').localeCompare(String(a.time || ''));
+                    });
+                    surgeries = map;
+                    localWrite(SURGERIES_KEY, map);
+                    renderAll();
+                }, function (err) { console.warn('[theater] surgery listener failed:', err && err.message); });
+            } catch (e) { console.warn('[theater] surgery listener unavailable:', e && e.message); }
+        }
+
+        // ─── LOAD THEATERS FROM THE COMMON SERVER ───
+        async function loadTheaters() {
+            var local = localRead(THEATERS_KEY, null);
+            await waitFb(6000);
+            var list = null;
+            if (fbReady()) {
+                var f = window.firebaseFunctions;
+                try {
+                    var snap = await f.getDocs(f.collection(window.firebaseDB, 'theaters'));
+                    list = [];
+                    snap.forEach(function (d) { var r = d.data() || {}; r.id = r.id || d.id; list.push(r); });
+                } catch (e) { console.warn('[theater] theaters load failed:', e && e.message); }
+            }
+            if (list && list.length) { theaters = list; }
+            else if (local && local.length) { theaters = local; }
+            else { theaters = DEFAULT_THEATERS.slice(); localWrite(THEATERS_KEY, theaters); }
+            renderAll();
+        }
+
+        // ─── LOAD SURGEONS (doctors) + populate dropdowns ───
+        async function loadSurgeons() {
+            var docs = [];
+            await waitFb(6000);
+            if (fbReady()) {
+                var f = window.firebaseFunctions;
+                try {
+                    var snap = await f.getDocs(f.collection(window.firebaseDB, 'users'));
+                    snap.forEach(function (d) {
+                        var p = d.data() || {};
+                        if (p.role === 'doctor' && p.active !== false) {
+                            docs.push({ id: d.id, name: p.name || ('Dr. ' + (p.staffId || '')), specialty: p.specialty || 'General Surgery' });
+                        }
+                    });
+                } catch (e) { console.warn('[theater] staff list unavailable:', e && e.message); }
+            }
+            if (!docs.length) {
+                docs = [
+                    { id: 'doc-1', name: 'Dr. Eric Nkurunziza', specialty: 'Cardiac Surgery' },
+                    { id: 'doc-2', name: 'Dr. Grace Ineza', specialty: 'General Surgery' },
+                    { id: 'doc-3', name: 'Dr. Samuel Bizimana', specialty: 'Orthopedic' }
+                ];
+            }
+            surgeons = docs.map(function (d) {
+                return { id: d.id, name: d.name, specialty: d.specialty || 'General Surgery',
+                         surgeriesWeek: 0, surgeriesToday: 0, status: 'available' };
+            });
+            populateSurgeonDropdowns();
+            renderAll();
+        }
+
+        function populateSurgeonDropdowns() {
+            var names = surgeons.map(function (s) { return s.name; });
+            var sg = document.getElementById('bookSurgeon');
+            var an = document.getElementById('bookAnaesthetist');
+            if (sg) sg.innerHTML = names.map(function (n) { return '<option>' + n + '</option>'; }).join('');
+            if (an) an.innerHTML = '<option>Not assigned</option>' +
+                names.map(function (n) { return '<option>' + n + '</option>'; }).join('');
+        }
+
+        function computeTheaterStatus() {
+            var today = new Date().toISOString().slice(0, 10);
+            theaters.forEach(function (t) {
+                var cur = surgeries.find(function (s) { return s.theater === t.name && s.status === 'in-progress'; });
+                var nxt = surgeries.find(function (s) { return s.theater === t.name && s.status === 'scheduled' && s.date >= today; });
+                t.currentSurgery = cur ? (cur.patient + ' — ' + cur.procedure) : '';
+                t.surgeon = cur ? cur.surgeon : '';
+                t.nextSurgery = nxt ? (nxt.time + ' ' + nxt.procedure) : '';
+                if (cur) t.status = 'in-use';
+                else if (t.status === 'in-use') t.status = 'available';
+                var dayList = surgeries.filter(function (s) { return s.theater === t.name && s.date === today; });
+                t.utilization = Math.min(100, Math.round(dayList.length * 20));
+            });
+        }
+
+        function renderAll() {
+            updateKpiChips();
+            computeTheaterStatus();
+            renderOverview();
+            renderSchedule();
+            renderTheaters();
+            renderSurgeons();
+            renderProcedures();
+            renderUpcoming();
+        }
+
+        function updateKpiChips() {
+            var el = function (id) { return document.getElementById(id); };
+            var scheduled = surgeries.filter(function (s) { return s.status === 'scheduled'; }).length;
+            var inProg = surgeries.filter(function (s) { return s.status === 'in-progress'; }).length;
+            var completed = surgeries.filter(function (s) { return s.status === 'completed'; }).length;
+            if (el('kpiScheduled')) el('kpiScheduled').textContent = scheduled;
+            if (el('kpiInProgress')) el('kpiInProgress').textContent = inProg;
+            if (el('kpiCompleted')) el('kpiCompleted').textContent = completed;
+            if (el('statTheaters')) el('statTheaters').textContent = theaters.length;
+            if (el('todayDateLabel')) el('todayDateLabel').textContent = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        }
+
+        // ─── CSV EXPORT ───
+        function downloadCSV(filename, headers, rows) {
+            var esc = function (v) { v = (v == null) ? '' : String(v); return '"' + v.replace(/"/g, '""') + '"'; };
+            var csv = [headers.map(esc).join(',')].concat(rows.map(function (r) { return r.map(esc).join(','); })).join('\r\n');
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 200);
+        }
+        function exportSurgeries() {
+            if (!surgeries.length) { showToast('No surgeries to export', 'warning'); return; }
+            downloadCSV('theater-surgeries.csv',
+                ['Patient', 'MRN', 'Procedure', 'Type', 'Surgeon', 'Anaesthetist', 'Theater', 'Date', 'Time', 'Duration', 'Priority', 'Status'],
+                surgeries.map(function (s) { return [s.patient, s.mrn, s.procedure, s.type, s.surgeon, s.anaesthetist, s.theater, s.date, s.time, s.duration, s.priority, s.status]; }));
+            showToast('📊 Exported ' + surgeries.length + ' surgeries', 'success');
+        }
+        function exportTheaters() {
+            if (!theaters.length) { showToast('No theaters to export', 'warning'); return; }
+            downloadCSV('theaters.csv', ['Theater', 'Status', 'Utilization %', 'Current Surgery', 'Surgeon', 'Next'],
+                theaters.map(function (t) { return [t.name, t.status, t.utilization, t.currentSurgery, t.surgeon, t.nextSurgery]; }));
+            showToast('📊 Exported theaters', 'success');
+        }
+        function exportSurgeons() {
+            if (!surgeons.length) { showToast('No surgeons to export', 'warning'); return; }
+            downloadCSV('surgeons.csv', ['Surgeon', 'Specialty', 'Surgeries This Week', 'Surgeries Today', 'Status'],
+                surgeons.map(function (s) { return [s.name, s.specialty, s.surgeriesWeek, s.surgeriesToday, s.status]; }));
+            showToast('📊 Exported surgeons', 'success');
+        }
+
+        // ─── ADD THEATER ───
+        async function addTheater() {
+            var name = prompt('New theater name (e.g. "Theater 5"):', 'Theater ' + (theaters.length + 1));
+            if (!name) return;
+            name = name.trim();
+            if (theaters.some(function (t) { return String(t.name).toLowerCase() === name.toLowerCase(); })) {
+                showToast('⚠️ ' + name + ' already exists', 'warning'); return;
+            }
+            theaters.push({ id: uid('th'), name: name, status: 'available', utilization: 0, currentSurgery: '', surgeon: '', nextSurgery: '' });
+            renderAll();
+            await saveTheaters();
+            showToast('✅ ' + name + ' added to the common server', 'success');
+        }
+
+        // ─── BRIDGE USED BY THE SHARED THEATER ACTION BAR ───
+        window.pcTheater = {
+            book: function () { openBookModal(); },
+            nav: function (view) { switchTab(view, document.querySelector('[data-tab="' + view + '"]')); },
+            export: function () { exportSurgeries(); },
+            print: function () { window.print(); },
+            refresh: function () { loadSurgeries(); loadTheaters(); }
+        };
 
         // ─── RENDER FUNCTIONS ───
         function renderOverview() {
@@ -1531,7 +1753,7 @@
                     'delayed': 'b-amber'
                 };
                 container.innerHTML = todaySorted.map(s => `
-                    <div style="display:flex;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--bd);gap:10px;cursor:pointer;" onclick="viewSurgery(${s.id})">
+                    <div style="display:flex;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--bd);gap:10px;cursor:pointer;" onclick="viewSurgery('${s.id}')">
                         <div style="min-width:60px;font-weight:600;color:var(--ac);font-size:12px;">${s.time}</div>
                         <div style="flex:1;">
                             <div style="font-weight:600;font-size:13px;">${s.patient}</div>
@@ -1552,7 +1774,7 @@
 
         function renderUtilizationChart() {
             const container = document.getElementById('utilizationChart');
-            const total = theaters.length;
+            const total = theaters.length || 1;
             const inUse = theaters.filter(t => t.status === 'in-use').length;
             const available = theaters.filter(t => t.status === 'available').length;
             const cleaning = theaters.filter(t => t.status === 'cleaning').length;
@@ -1616,8 +1838,8 @@
                     const date = new Date(weekStart);
                     date.setDate(date.getDate() + idx);
                     const dateStr = date.toISOString().slice(0, 10);
-                    const surgery = surgeries.find(s => s.date === dateStr && s.time <= time && s.time > time);
-                    if (surgery && surgery.time === time) {
+                    const surgery = surgeries.find(s => s.date === dateStr && s.time === time);
+                    if (surgery) {
                         const statusColors = {
                             'scheduled': 'b-blue',
                             'in-progress': 'b-org',
@@ -1625,7 +1847,7 @@
                             'cancelled': 'b-red',
                             'delayed': 'b-amber'
                         };
-                        html += `<div class="scell surgery" onclick="viewSurgery(${surgery.id})">
+                        html += `<div class="scell surgery" onclick="viewSurgery('${surgery.id}')">
                             <span class="s-name">${surgery.patient.split(' ')[0]}</span>
                             <span class="s-time">${surgery.procedure.slice(0,8)}</span>
                             <span class="s-status badge ${statusColors[surgery.status]||'b-blue'}">${surgery.status.slice(0,3)}</span>
@@ -1733,7 +1955,7 @@
                 'delayed': 'b-amber'
             };
             tbody.innerHTML = filtered.map(s => `
-                <tr onclick="viewSurgery(${s.id})" style="cursor:pointer;">
+                <tr onclick="viewSurgery('${s.id}')" style="cursor:pointer;">
                     <td style="font-weight:500;">${s.patient}</td>
                     <td style="font-weight:600;color:var(--ac)">${s.procedure}</td>
                     <td>${s.type}</td>
@@ -1766,7 +1988,7 @@
                 'delayed': 'b-amber'
             };
             tbody.innerHTML = upcoming.map(s => `
-                <tr onclick="viewSurgery(${s.id})" style="cursor:pointer;">
+                <tr onclick="viewSurgery('${s.id}')" style="cursor:pointer;">
                     <td style="font-weight:500;">${s.patient}</td>
                     <td style="font-weight:600;color:var(--ac)">${s.procedure}</td>
                     <td>${s.surgeon}</td>
@@ -1775,7 +1997,7 @@
                     <td>${s.time}</td>
                     <td><span class="badge ${statusColors[s.status]||'b-blue'}">${s.status.replace('-',' ').charAt(0).toUpperCase()+s.status.replace('-',' ').slice(1)}</span></td>
                     <td>
-                        <button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="event.stopPropagation();viewSurgery(${s.id})">View</button>
+                        <button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="event.stopPropagation();viewSurgery('${s.id}')">View</button>
                     </td>
                 </tr>
             `).join('');
@@ -1783,7 +2005,7 @@
 
         // ─── VIEW SURGERY DETAILS ───
         function viewSurgery(id) {
-            const s = surgeries.find(s => s.id === id);
+            const s = surgeries.find(s => String(s.id) === String(id));
             if (!s) return;
             const statusColors = {
                 'scheduled': 'b-blue',
@@ -1831,15 +2053,15 @@
                 </div>
                 <div class="fa" style="margin-top:4px;">
                     ${s.status === 'scheduled' ? `
-                        <button class="btn-p" onclick="updateSurgeryStatus(${s.id},'in-progress');closeDetailModal();"><i class="ti ti-play"></i> Start Surgery</button>
-                        <button class="btn-s" onclick="updateSurgeryStatus(${s.id},'delayed');closeDetailModal();" style="background:var(--orangeb);color:var(--oranged);"><i class="ti ti-clock"></i> Delay</button>
+                        <button class="btn-p" onclick="updateSurgeryStatus('${s.id}','in-progress');closeDetailModal();"><i class="ti ti-play"></i> Start Surgery</button>
+                        <button class="btn-s" onclick="updateSurgeryStatus('${s.id}','delayed');closeDetailModal();" style="background:var(--orangeb);color:var(--oranged);"><i class="ti ti-clock"></i> Delay</button>
                     ` : ''}
                     ${s.status === 'in-progress' ? `
-                        <button class="btn-p" onclick="updateSurgeryStatus(${s.id},'completed');closeDetailModal();" style="background:var(--green);"><i class="ti ti-check"></i> Complete</button>
-                        <button class="btn-s" onclick="updateSurgeryStatus(${s.id},'delayed');closeDetailModal();" style="background:var(--orangeb);color:var(--oranged);"><i class="ti ti-clock"></i> Delay</button>
+                        <button class="btn-p" onclick="updateSurgeryStatus('${s.id}','completed');closeDetailModal();" style="background:var(--green);"><i class="ti ti-check"></i> Complete</button>
+                        <button class="btn-s" onclick="updateSurgeryStatus('${s.id}','delayed');closeDetailModal();" style="background:var(--orangeb);color:var(--oranged);"><i class="ti ti-clock"></i> Delay</button>
                     ` : ''}
-                    <button class="btn-s" onclick="closeDetailModal(); showToast('📊 Exporting ${s.patient} record...','info')"><i class="ti ti-download"></i> Export</button>
-                    <button class="btn-export" onclick="closeDetailModal(); showToast('🖨️ Printing details...','info')"><i class="ti ti-printer"></i> Print</button>
+                    <button class="btn-s" onclick="closeDetailModal(); exportSurgeries()"><i class="ti ti-download"></i> Export</button>
+                    <button class="btn-export" onclick="closeDetailModal(); window.print()"><i class="ti ti-printer"></i> Print</button>
                 </div>
             `;
             document.getElementById('detailModal').classList.add('show');
@@ -1850,15 +2072,13 @@
         }
 
         // ─── UPDATE SURGERY STATUS ───
-        function updateSurgeryStatus(id, status) {
-            const s = surgeries.find(s => s.id === id);
+        async function updateSurgeryStatus(id, status) {
+            const s = surgeries.find(s => String(s.id) === String(id));
             if (s) {
                 s.status = status;
-                renderOverview();
-                renderSchedule();
-                renderProcedures();
-                renderUpcoming();
+                renderAll();
                 showToast(`✅ ${s.patient} — Status updated to ${status}`, 'success');
+                await saveSurgery(s);
             }
         }
 
@@ -1872,7 +2092,7 @@
             document.getElementById('bookModal').classList.remove('show');
         }
 
-        function submitBooking() {
+        async function submitBooking() {
             const patient = document.getElementById('bookPatient').value.trim();
             const mrn = document.getElementById('bookMRN').value.trim();
             const procedure = document.getElementById('bookProcedure').value.trim();
@@ -1892,7 +2112,7 @@
             }
 
             const newSurgery = {
-                id: surgeries.length + 1,
+                id: uid('srg'),
                 patient,
                 mrn: mrn || '—',
                 procedure,
@@ -1905,16 +2125,17 @@
                 duration,
                 priority,
                 status: 'scheduled',
-                notes: notes || 'Pre-op workup in progress.'
+                notes: notes || 'Pre-op workup in progress.',
+                createdAt: new Date().toISOString(),
+                createdBy: staffName(),
+                createdById: staffId()
             };
 
             surgeries.push(newSurgery);
             closeBookModal();
-            renderOverview();
-            renderSchedule();
-            renderProcedures();
-            renderUpcoming();
+            renderAll();
             showToast(`✅ Surgery booked for ${patient} on ${date} at ${time}`, 'success');
+            await saveSurgery(newSurgery);
         }
 
         // ─── WEEK NAVIGATION ───
@@ -1957,11 +2178,7 @@
             const target = document.getElementById('view-' + name);
             if (target) target.style.display = 'block';
             showToast('📂 Switched to ' + name.charAt(0).toUpperCase() + name.slice(1), 'info');
-            if (name === 'overview') renderOverview();
-            if (name === 'schedule') renderSchedule();
-            if (name === 'theaters') renderTheaters();
-            if (name === 'surgeons') renderSurgeons();
-            if (name === 'procedures') renderProcedures();
+            renderAll();
         }
 
         // ─── TOAST ───
@@ -2008,12 +2225,9 @@
         // ─── INIT ───
         console.log('🏥 PClinic Operating Theater Scheduling — Apple-Style');
         console.log('📌 Shortcuts: Ctrl+1-5 → Switch views, Ctrl+F → Search, Escape → Close modals');
-        renderOverview();
-        renderSchedule();
-        renderTheaters();
-        renderSurgeons();
-        renderProcedures();
-        renderUpcoming();
+        loadSurgeries();
+        loadTheaters();
+        loadSurgeons();
     </script>
 
 

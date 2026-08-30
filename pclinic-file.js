@@ -742,6 +742,11 @@
             renderAdminActionBar(el);
             return;
         }
+        /* ── THEATER DASHBOARD: theater-management buttons only (no doctor buttons) ── */
+        if (pathStr.indexOf('theater-dashboard') !== -1) {
+            renderTheaterActionBar(el);
+            return;
+        }
 
         var currP = p || (window.pcFile && window.pcFile && window.pcFile.patient && window.pcFile.patient()) || { id: localStorage.getItem('pclinic_active_patient') || '' };
 
@@ -933,6 +938,75 @@
 
     function actionBar(targetEl, p) {
         return renderClinicalActionBar(targetEl, p);
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       THEATER ACTION BAR (#dcBar) — Bar 3 for the Operating Theater
+       board. Theater-management buttons ONLY (booking, board views,
+       export, print, refresh). No doctor-dashboard / clinical patient
+       buttons. Every button dispatches to window.pcTheater, which the
+       theater-dashboard page exposes, so bookings and status changes
+       persist through the shared Common Server (Firestore).
+       ══════════════════════════════════════════════════════════════ */
+    function renderTheaterActionBar(targetEl) {
+        var el = document.getElementById('pcMasterHeader') || targetEl || document.body;
+        if (!el) return;
+        ensureActionBarStyles();
+
+        var bar = document.getElementById('dcBar');
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.id = 'dcBar';
+            bar.className = 'dc-bar noprint';
+        }
+        if (bar.getAttribute('data-theater-complete') !== '1') {
+            bar.setAttribute('data-theater-complete', '1');
+            bar.innerHTML =
+                '<button type="button" class="ab-btn ab-always" data-theater-book="1" style="--c:#1a7a32;--b:#e9f9ee;--a:#198754;"><i class="ti ti-calendar-plus"></i>Book Surgery</button>' +
+                '<span class="ab-sep"></span>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-view="overview" style="--c:#0b57d0;--b:#e8f0fe;--a:#0b57d0;"><i class="ti ti-chart-bar"></i>Overview</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-view="schedule" style="--c:#8a5a00;--b:#fff7e6;--a:#d97706;"><i class="ti ti-calendar"></i>Schedule</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-view="theaters" style="--c:#5c2475;--b:#f5eaff;--a:#7e22ce;"><i class="ti ti-bed"></i>Theaters</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-view="surgeons" style="--c:#006b73;--b:#e6f8fa;--a:#008c99;"><i class="ti ti-user-md"></i>Surgeons</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-view="procedures" style="--c:#6d28d9;--b:#f5eaff;--a:#7c3aed;"><i class="ti ti-clipboard-list"></i>Procedures</button>' +
+                '<span class="ab-sep"></span>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-export="1" style="--c:#374151;--b:#f3f4f6;--a:#4b5563;"><i class="ti ti-download"></i>Export</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-print="1" style="--c:#475569;--b:#f1f5f9;--a:#64748b;"><i class="ti ti-printer"></i>Print</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-refresh="1" style="--c:#0066d6;--b:#eaf2ff;--a:#0284c7;"><i class="ti ti-refresh"></i>Refresh</button>';
+
+            function th(fn) { return (window.pcTheater && typeof window.pcTheater[fn] === 'function') ? window.pcTheater[fn] : null; }
+
+            var bookBtn = bar.querySelector('[data-theater-book]');
+            if (bookBtn) bookBtn.onclick = function () { var f = th('book'); if (f) f(); else alert('Theater board is still loading…'); };
+
+            var viewBtns = bar.querySelectorAll('[data-theater-view]');
+            for (var v = 0; v < viewBtns.length; v++) {
+                viewBtns[v].onclick = (function (btn) {
+                    return function () {
+                        var view = btn.getAttribute('data-theater-view');
+                        var f = th('nav'); if (f) f(view); else alert('Theater board is still loading…');
+                    };
+                })(viewBtns[v]);
+            }
+            var expBtn = bar.querySelector('[data-theater-export]');
+            if (expBtn) expBtn.onclick = function () { var f = th('export'); if (f) f(); else alert('Theater board is still loading…'); };
+            var prBtn = bar.querySelector('[data-theater-print]');
+            if (prBtn) prBtn.onclick = function () { var f = th('print'); if (f) f(); else window.print(); };
+            var rfBtn = bar.querySelector('[data-theater-refresh]');
+            if (rfBtn) rfBtn.onclick = function () { var f = th('refresh'); if (f) f(); };
+        }
+
+        // Keep the strict hierarchy inside #pcMasterHeader:
+        // 1st #pc_chuk_top_menu · 2nd #pc_common_demo_bar · 3rd #dcBar
+        var master = document.getElementById('pcMasterHeader') || el;
+        var demoBar = document.getElementById('pc_common_demo_bar');
+        if (demoBar && demoBar.parentNode) {
+            if (demoBar.nextSibling && demoBar.nextSibling !== bar) demoBar.parentNode.insertBefore(bar, demoBar.nextSibling);
+            else if (!demoBar.nextSibling) demoBar.parentNode.appendChild(bar);
+        } else if (bar.parentNode !== master) {
+            if (master.firstChild) master.insertBefore(bar, master.firstChild);
+            else master.appendChild(bar);
+        }
     }
 
     /* ══════════════════════════════════════════════════════════════
@@ -2542,6 +2616,14 @@
             var oldDemoAdm = document.getElementById('pc_common_demo_bar');
             if (oldDemoAdm && oldDemoAdm.parentNode) oldDemoAdm.parentNode.removeChild(oldDemoAdm);
             renderAdminActionBar(document.getElementById('pcMasterHeader') || document.body);
+            return;
+        }
+        /* ── THEATER DASHBOARD: CHUK top bar + theater action bar only ── */
+        if (pathStr.indexOf('theater-dashboard') !== -1) {
+            if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
+            var oldDemoTh = document.getElementById('pc_common_demo_bar');
+            if (oldDemoTh && oldDemoTh.parentNode) oldDemoTh.parentNode.removeChild(oldDemoTh);
+            renderTheaterActionBar(document.getElementById('pcMasterHeader') || document.body);
             return;
         }
         var master = document.getElementById('pcMasterHeader');

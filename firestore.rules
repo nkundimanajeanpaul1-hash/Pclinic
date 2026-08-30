@@ -337,6 +337,37 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── OPERATING THEATER SCHEDULE ────────────────────────────────
+    // Surgeries are booked and advanced (scheduled → in-progress →
+    // completed / delayed / cancelled) by theater staff via the Common
+    // Server. Other clinical roles read the board. A surgery keeps its
+    // identity (id / createdById) across status updates so the audit
+    // trail cannot be rewritten from the browser.
+    match /theaterSurgeries/{surgeryId} {
+      allow read: if hasRole(['doctor', 'nurse', 'reception', 'theater', 'beds']);
+
+      allow create: if hasRole(['theater'])
+        && request.resource.data.get('id', '') == surgeryId
+        && request.resource.data.get('createdById', '') == staffId()
+        && request.resource.data.get('status', '') == 'scheduled';
+
+      allow update: if hasRole(['theater'])
+        && request.resource.data.get('id', '') == resource.data.get('id', '')
+        && request.resource.data.get('createdById', '') == resource.data.get('createdById', '')
+        && request.resource.data.get('status', '') in ['scheduled', 'in-progress', 'completed', 'delayed', 'cancelled'];
+
+      allow delete: if isAdmin();
+    }
+
+    // ── OPERATING THEATER REGISTRY ────────────────────────────────
+    // The list of rooms and their availability, managed by theater staff.
+    match /theaters/{theaterId} {
+      allow read: if hasRole(['doctor', 'nurse', 'reception', 'theater', 'beds']);
+      allow create, update: if hasRole(['theater'])
+        && request.resource.data.get('id', '') == theaterId;
+      allow delete: if isAdmin();
+    }
+
     // ── SERVER-BACKED STAFF NOTIFICATIONS ─────────────────────────
     match /notifications/{notificationId} {
       allow read: if messageAddressedToCaller(resource.data);
