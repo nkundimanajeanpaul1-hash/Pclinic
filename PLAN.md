@@ -119,3 +119,22 @@ Answer one question and everything else follows: **is the project on Blaze?**
 If yes, do steps 1–3 and I will take it from the failure log of step 4.
 If no, say so and I will scope Path B properly rather than hand you a plan that
 cannot execute.
+
+## Update 2026-08-30 — Add-image-result button (round 10)
+
+A large orange **Add image result** button now sits in the radiology bar, right
+after the patient chip. Locked (grey, `aria-disabled`, explanatory tooltip) until
+a patient is selected; live the moment one is. Its badge counts the patient's
+open studies — 1 opens the sheet directly, several opens a picker, and the picker
+refuses to guess.
+
+**This part works without `radiologyTransition` being deployed**, by design: an
+image can be attached to a requested study regardless of whether the study has
+been started. It still needs the Storage bucket to accept the file — without it
+the upload reports "Firebase Storage is not enabled on project pclinic-20d81
+yet", which is the same one-time console step already blocking everything else.
+Viewing still needs `radiologyMediaSign`.
+
+96 tests now pass locally (8 static, 6 files, 11 results, 9 media, 8 media-button,
+9 call-errors, 12 functions unit, 32 rules, plus the 10 radiology integration
+checks), and `test:media-button` is wired into CI.

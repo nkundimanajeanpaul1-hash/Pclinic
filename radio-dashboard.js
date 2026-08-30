@@ -229,6 +229,7 @@
                 cell.textContent = radiologyState.error ? 'Radiology queue unavailable. Check Firebase permissions and connection.' : 'No active imaging requests.';
                 row.appendChild(cell); body.appendChild(row); return;
             }
+            announceStudyCount();
             orders.forEach(function (order) {
                 const row = document.createElement('tr');
                 const state = stateOf(order);
@@ -798,10 +799,83 @@
             if (currentOrder && document.getElementById('mediaHost')) renderMediaPanel(currentOrder);
         });
 
+        /* ── the big bar button: resolve a study, then open the media sheet ── */
+        function openOrdersForPatient(patient) {
+            if (!patient) return [];
+            return (radiologyState.orders || []).filter(function (o) {
+                if (String(o.patientId || '') !== String(patient.id) &&
+                    String(o.patientId || '') !== String(patient.mrn || '\u0000')) return false;
+                return stateOf(o) !== 'cancelled';
+            }).sort(function (a, b) { return timestampMillis(b.orderedAt) - timestampMillis(a.orderedAt); });
+        }
+
+        function announceStudyCount() {
+            if (window.pcRadioBar && typeof window.pcRadioBar.setStudyCount === 'function') {
+                window.pcRadioBar.setStudyCount(currentPatient ? openOrdersForPatient(currentPatient).length : 0);
+            }
+        }
+
+        function handleAddMediaRequest(event) {
+            var patient = (event && event.detail && event.detail.patient) || currentPatient;
+            if (!patient) { notify('Select a patient first.', 'warning'); return; }
+            // Attach to the current selection so a row click does not have to come first.
+            if (!currentPatient || String(currentPatient.id) !== String(patient.id)) setActivePatient(patient);
+            var orders = openOrdersForPatient(patient);
+            if (!orders.length) {
+                notify('No open imaging study for ' + nameOf(patient) + '. Studies already reported have their images filed against the signed report.', 'info', 9000);
+                return;
+            }
+            if (orders.length === 1) { openMediaSheet(orders[0], patient); return; }
+            pickStudyForMedia(patient, orders);
+        }
+        window.addEventListener('pcRadioAddMedia', handleAddMediaRequest);
+
+        function pickStudyForMedia(patient, orders) {
+            var open = function () {
+                if (!(window.pcFile && typeof window.pcFile.sheet === 'function')) {
+                    // No sheet host on this page: fall back to the newest study and
+                    // say so, rather than silently attaching to a guessed order.
+                    openMediaSheet(orders[0], patient);
+                    return;
+                }
+                window.pcFile.sheet({
+                    title: 'Which study for ' + nameOf(patient) + '?', icon: 'ti-photo-plus', done: 'Cancel',
+                    build: function (body, close) {
+                        orders.forEach(function (order) {
+                            var row = document.createElement('button');
+                            row.type = 'button';
+                            row.style.cssText = 'display:flex;width:100%;gap:10px;align-items:center;text-align:left;padding:10px 12px;margin:6px 0;border:1px solid #d2d2d7;border-radius:10px;background:#fff;cursor:pointer;font:inherit';
+                            var main = document.createElement('div');
+                            main.style.cssText = 'flex:1;min-width:0';
+                            var t = document.createElement('div');
+                            t.style.cssText = 'font-weight:800;font-size:12.5px';
+                            t.textContent = studyOf(order) || 'Study';
+                            var m = document.createElement('div');
+                            m.style.cssText = 'font-size:10.5px;color:#6e6e73;margin-top:2px';
+                            m.textContent = order.id + ' · ' + String(order.priority || 'routine').toUpperCase() +
+                                ' · ' + stateOf(order).replace('-', ' ') + ' · ' + timeAgo(order.orderedAt);
+                            main.appendChild(t); main.appendChild(m);
+                            row.appendChild(main);
+                            var go = document.createElement('span');
+                            go.style.cssText = 'font-size:10px;font-weight:800;color:#f2600c';
+                            go.textContent = 'ATTACH';
+                            row.appendChild(go);
+                            row.onclick = function () { close(); setTimeout(function () { openMediaSheet(order, patient); }, 60); };
+                            body.appendChild(row);
+                        });
+                    }
+                });
+            };
+            open();
+        }
+
         /* ── study media: upload, list, view ── */
-        function openMediaSheet(order) {
+        function openMediaSheet(order, preferredPatient) {
             if (!order) { notify('Select a study first.', 'warning'); return; }
-            setActivePatient(findPatient(order.patientId) || currentPatient);
+            var target = preferredPatient || findPatient(order.patientId) || currentPatient;
+            if (!target) { notify('The patient on this study is not in the registry.', 'error', 7000); return; }
+            if (!currentPatient || String(currentPatient.id) !== String(target.id)) setActivePatient(target);
+            currentOrder = order;
             if (window.pcFile && typeof window.pcFile.sheet === 'function') {
                 // pcFile.sheet hands the body to opts.build(body, close) — there is
                 // no onMount option; passing one would open an empty modal.
@@ -809,7 +883,7 @@
                     title: 'Study media — ' + studyOf(order), icon: 'ti-photo', done: 'Done',
                     // sheet() hands onClose the already-detached body, so it can only
                     // be used to repaint the page behind the modal.
-                    onClose: function () { renderWorklist(); },
+                    onClose: function () { renderWorklist(); announceStudyCount(); },
                     build: function (body, close) {
                         body.appendChild(buildMediaBlock(order, true));
                         const note = document.createElement('div');
@@ -868,6 +942,7 @@
             if (ok) notify(ok + ' file(s) attached to this study and visible in Radiology results.', 'success', 6000);
             if (problems.length) notify('⚠️ ' + problems.join(' · '), 'error', 12000);
             renderMediaPanel(order);
+            announceStudyCount();
         }
 
         window.addEventListener('patientsUpdated', function () {

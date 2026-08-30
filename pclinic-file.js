@@ -596,6 +596,14 @@
         setPatient: function (patient) {
             window.__pcRadioSelectedPatient = patient || null;
             updateRadioBarState(patient || null);
+        },
+        // Badge on the media button: how many studies still need their image.
+        setStudyCount: function (n) {
+            var b = document.getElementById('radMediaCnt');
+            if (!b) return;
+            var v = Number(n) || 0;
+            b.textContent = String(v);
+            b.style.display = v ? 'inline-flex' : 'none';
         }
     };
 
@@ -693,6 +701,13 @@
             '.ab-btn.ab-active { background:var(--a,#0071e3) !important; color:#fff !important; border-color:var(--a,#0071e3) !important; box-shadow:0 3px 10px color-mix(in srgb, var(--a,#0071e3) 30%, transparent); }' +
             '.ab-btn.ab-off { opacity:.34; filter:grayscale(.7); pointer-events:none; }' +
             '.ab-btn.ab-context-off { opacity:.58; filter:saturate(.65); }' +
+            '.ab-btn.ab-media { height:38px; padding:0 16px; font-size:13px; font-weight:800; letter-spacing:.01em; border-color:rgba(0,0,0,.16); box-shadow:0 1px 5px rgba(242,96,12,.38); }' +
+            '.ab-btn.ab-media .ab-badge { color:#fff; background:rgba(255,255,255,.26); border:.5px solid rgba(255,255,255,.42); min-width:19px; padding:0 5px; }' +
+            '.ab-btn.ab-media.ab-context-off { background:#e9eaee !important; color:#8b8d96 !important; border-color:rgba(0,0,0,.08) !important; box-shadow:none !important; cursor:not-allowed; }' +
+            '.ab-btn.ab-media.ab-context-off .ab-badge { background:rgba(0,0,0,.06); color:#8b8d96; border-color:transparent; }' +
+            '.ab-btn.ab-media:not(.ab-context-off) i { animation:pcMediaPulse 2.6s ease-in-out infinite; }' +
+            '@keyframes pcMediaPulse { 0%,100%{transform:scale(1)} 45%{transform:scale(1.14)} }' +
+            '@media (prefers-reduced-motion:reduce){ .ab-btn.ab-media:not(.ab-context-off) i{animation:none} }' +
             '[data-theme="dark"] .ab-btn { border-color:color-mix(in srgb,var(--a,#8e8e93) 45%,#2c2c2e); background:#2c2c2e; background:color-mix(in srgb,var(--a,#8e8e93) 20%,#1c1c1e); color:#f5f5f7; }' +
             '.ab-badge { min-width:16px; height:16px; border-radius:8px; background:#ff3b30; color:#fff; font-size:9.5px; font-weight:800; display:none; align-items:center; justify-content:center; padding:0 4px; }' +
             '.ab-menu { position:fixed; z-index:9800; min-width:238px; padding:6px; border-radius:13px; background:var(--s1, #fff); border:.5px solid rgba(0,0,0,.1); box-shadow:0 14px 44px rgba(0,0,0,.24); opacity:0; transform:translateY(-6px) scale(.97); transition:opacity .2s, transform .24s cubic-bezier(.34,1.56,.64,1); pointer-events:none; }' +
@@ -943,6 +958,7 @@
             bar.innerHTML =
                 '<button type="button" class="ab-btn ab-always" id="radSelBtn" style="--c:#0066d6;--b:#eaf2ff;--a:#0071e3;"><i class="ti ti-user-search"></i>Select patient</button>' +
                 '<span id="radBarPatient" style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:9px;background:rgba(0,0,0,.05);font-size:11.5px;font-weight:700;color:var(--tp,#1c1c1e);max-width:300px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">🔒 No patient selected</span>' +
+                '<button type="button" class="ab-btn ab-always ab-media" id="radMediaBtn" title="Attach images or clips to this patient\'s study. Works whether or not the study has been started." style="--c:#ffffff;--b:linear-gradient(180deg,#ff8a3d,#f2600c);--a:#ff9b57;"><i class="ti ti-photo-plus"></i>Add image result<span class="ab-badge" id="radMediaCnt">0</span></button>' +
                 '<span class="ab-sep"></span>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-view="overview" style="--c:#0b57d0;--b:#e8f0fe;--a:#0b57d0;"><i class="ti ti-chart-bar"></i>Overview</button>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-view="request" style="--c:#8a5a00;--b:#fff7e6;--a:#d97706;"><i class="ti ti-shield-lock"></i>Request policy</button>' +
@@ -956,6 +972,20 @@
                 '<button type="button" class="ab-btn ab-always" data-rad-help="1" title="Help and keyboard shortcuts" style="--c:#0066d6;--b:#eaf2ff;--a:#0284c7;"><i class="ti ti-help"></i>Help</button>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-settings="1" title="Radiology settings" style="--c:#475569;--b:#f1f5f9;--a:#64748b;"><i class="ti ti-settings"></i>Settings</button>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-logout="1" title="Sign out securely" style="--c:#8a1f1a;--b:#ffebe9;--a:#c2413b;"><i class="ti ti-logout"></i>Logout</button>';
+
+            var mediaBtn = document.getElementById('radMediaBtn');
+            if (mediaBtn) {
+                mediaBtn.addEventListener('click', function () {
+                    var p = window.__pcRadioSelectedPatient || (window.currentPatient || null);
+                    if (!p || !p.id) {
+                        if (window.pcToast) window.pcToast('🔒 Select a patient first, then attach the study image.', 'warning', 6000);
+                        var sb = document.getElementById('radSelBtn');
+                        if (sb) sb.click();
+                        return;
+                    }
+                    window.dispatchEvent(new CustomEvent('pcRadioAddMedia', { detail: { patient: p } }));
+                });
+            }
 
             var selBtn = document.getElementById('radSelBtn');
             if (selBtn) selBtn.onclick = function() {
@@ -1038,10 +1068,20 @@
                 chip.textContent = '🔒 No patient selected';
             }
         }
-        var btns = bar.querySelectorAll('[data-rad-view="report"], [data-rad-print]');
+        var btns = bar.querySelectorAll('[data-rad-view="report"], [data-rad-print], #radMediaBtn');
         for (var i = 0; i < btns.length; i++) {
             if (on) btns[i].classList.remove('ab-context-off');
             else btns[i].classList.add('ab-context-off');
+        }
+        // The media button is the one action a radiologist is waiting on, so its
+        // locked state is spelled out rather than only implied by low opacity.
+        var mediaBtn = document.getElementById('radMediaBtn');
+        if (mediaBtn) {
+            mediaBtn.title = on
+                ? 'Attach images or clips to this patient\'s study. Works whether or not the study has been started.'
+                : 'Select a patient first — a study belongs to a patient, so nothing can be filed without one.';
+            if (!on) mediaBtn.setAttribute('aria-disabled', 'true');
+            else mediaBtn.removeAttribute('aria-disabled');
         }
         if (window.__pcRadioBarState !== on) {
             window.__pcRadioBarState = on;
