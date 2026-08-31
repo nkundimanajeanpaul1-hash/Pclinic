@@ -1377,6 +1377,69 @@
                 font-size: 10px;
             }
         }
+
+        /* ─── STAFF ROLE FILTER (segmented pill buttons) ─── */
+        .role-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+        .role-filter .role-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 30px;
+            padding: 0 13px;
+            border-radius: 980px;
+            border: 0.5px solid var(--bd);
+            background: rgba(255, 255, 255, 0.66);
+            -webkit-backdrop-filter: saturate(180%) blur(14px);
+            backdrop-filter: saturate(180%) blur(14px);
+            color: var(--ts);
+            font-family: inherit;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0,0,0,.05), inset 0 1px 0 rgba(255,255,255,.85);
+            transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s, background .2s, color .2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .role-filter .role-pill:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 6px 16px rgba(0,0,0,.10);
+        }
+        .role-filter .role-pill:active {
+            transform: scale(.94);
+            transition-duration: .08s;
+        }
+        .role-filter .role-pill .r-count {
+            font-size: 9.5px;
+            font-weight: 800;
+            background: rgba(0,0,0,.06);
+            color: var(--tm);
+            border-radius: 20px;
+            padding: 1px 7px;
+        }
+        .role-filter .role-pill.active {
+            background: var(--ac);
+            color: #fff;
+            border-color: var(--ac);
+            box-shadow: 0 4px 14px var(--acl);
+        }
+        .role-filter .role-pill.active .r-count {
+            background: rgba(255,255,255,.24);
+            color: #fff;
+        }
+        .role-filter .role-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: var(--tm);
+            margin-right: 2px;
+        }
     </style>
     <!-- ═══ iOS 26 LIQUID GLASS THEME (loaded last so it wins the cascade) ═══ -->
     <link rel="stylesheet" href="pclinic-ios26.css?v=20260831_IOS26" />
@@ -1555,25 +1618,14 @@
                             <option value="Finance">Finance</option>
                             <option value="HR">HR</option>
                         </select>
-                        <select class="fi" style="width:auto;font-size:11px;padding:5px 10px;" id="staffFilterRole" onchange="renderStaff()">
-                            <option value="all">All Roles</option>
-                            <option value="Doctor">Doctor</option>
-                            <option value="Nurse">Nurse</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Receptionist">Receptionist</option>
-                            <option value="Pharmacist">Pharmacist</option>
-                            <option value="Lab Technician">Lab Technician</option>
-                            <option value="Radiologist">Radiologist</option>
-                            <option value="Finance Officer">Finance Officer</option>
-                            <option value="HR Officer">HR Officer</option>
-                        </select>
+                        <div class="role-filter" id="staffRoleButtons"></div>
                         <button class="btn-p" onclick="openStaffForm()"><i class="ti ti-plus"></i> Add Staff</button>
                         <button class="btn-export" onclick="exportStaffCSV()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
                 <div class="panel-body show">
                     <table class="wtbl" id="staffTable">
-                        <thead><tr><th>Employee</th><th>Role</th><th>Department</th><th>Email</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Employee</th><th>Department</th><th>Email</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody id="staffBody"></tbody>
                     </table>
                 </div>
@@ -1858,6 +1910,7 @@
         let rosterEntries = [];  // current week's shifts, from `shiftRoster`
         let rosterWeekStart = null;
         let currentStaffFilter = 'all';
+        let currentRoleFilter = 'all';
         let editingStaffId = null;
 
         const STAFF_KEY = 'pclinic_hr_staff';
@@ -2027,6 +2080,7 @@
 
         function renderAll() {
             updateKpis(); updateStats(); updateLeaveSummary(); updatePayrollSummary(); updateRecruitSummary();
+            renderRoleButtons();
             renderStaff(); renderLeave(); renderPayroll(); renderRecruitment(); renderRecent();
             renderDeptChart(); renderStatusChart();
         }
@@ -2094,7 +2148,7 @@
 
         function renderStaff() {
             var dept = document.getElementById('staffFilterDept') ? document.getElementById('staffFilterDept').value : 'all';
-            var role = document.getElementById('staffFilterRole') ? document.getElementById('staffFilterRole').value : 'all';
+            var role = currentRoleFilter;
             var filtered = staffData.filter(function (s) {
                 return (dept === 'all' || s.dept === dept)
                     && (role === 'all' || s.role === role)
@@ -2102,7 +2156,7 @@
             });
             var tbody = document.getElementById('staffBody');
             if (!filtered.length) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--tm)">No staff found. Use "Add Staff" to register the first employee.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--tm)">No staff found. Use "Add Staff" to register the first employee.</td></tr>';
                 return;
             }
             tbody.innerHTML = filtered.map(function (s) {
@@ -2110,9 +2164,9 @@
                 return '<tr>' +
                     '<td><div style="display:flex;align-items:center;gap:10px;">' +
                     '<div class="emp-photo" style="background:' + esc(s.color || avatarColor(s.name)) + '">' + esc(s.initials || initials(s.name)) + '</div>' +
-                    '<div style="font-weight:600;">' + esc(s.name) + '</div></div></td>' +
-                    '<td>' + esc(s.role) + '</td>' +
-                    '<td>' + esc(s.dept) + '</td>' +
+                    '<div><div style="font-weight:600;">' + esc(s.name) + '</div>' +
+                    '<div style="font-size:10.5px;font-weight:700;color:var(--ac);margin-top:1px;">' + esc(s.role || '—') + '</div></div></div></td>' +
+                    '<td>' + esc(s.dept || '—') + '</td>' +
                     '<td style="font-size:11px;color:var(--tm)">' + esc(s.email || '—') + '</td>' +
                     '<td style="font-size:11px;color:var(--tm)">' + esc(s.phone || '—') + '</td>' +
                     '<td><span class="badge ' + badge + '">' + esc(String(s.status).charAt(0).toUpperCase() + String(s.status).slice(1)) + '</span></td>' +
@@ -2121,6 +2175,37 @@
                     '<button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--acb);color:var(--ach);" onclick="openStaffForm(\'' + esc(s.id) + '\')">Edit</button>' +
                     '</td></tr>';
             }).join('');
+        }
+
+        // Builds the segmented role-filter buttons: "All Staff" first, then one
+        // button per distinct role found in the staff records (Nurse, Doctor,
+        // Admin, …). "All Staff" shows everyone with their role under the name.
+        function renderRoleButtons() {
+            var host = document.getElementById('staffRoleButtons');
+            if (!host) return;
+            // Distinct roles in insertion-independent, human order.
+            var roles = [];
+            var seen = {};
+            staffData.forEach(function (s) {
+                var r = s.role || 'Unassigned';
+                if (!seen[r]) { seen[r] = true; roles.push(r); }
+            });
+            roles.sort(function (a, b) { return a.localeCompare(b); });
+            var count = function (r) { return staffData.filter(function (s) { return (s.role || 'Unassigned') === r; }).length; };
+
+            var html = '<span class="role-label">Role</span>';
+            html += '<button class="role-pill' + (currentRoleFilter === 'all' ? ' active' : '') + '" onclick="setRoleFilter(\'all\')">👥 All Staff <span class="r-count">' + staffData.length + '</span></button>';
+            roles.forEach(function (r) {
+                html += '<button class="role-pill' + (currentRoleFilter === r ? ' active' : '') + '" onclick="setRoleFilter(\'' + esc(r).replace(/'/g, "\\'") + '\')">' + esc(r) + ' <span class="r-count">' + count(r) + '</span></button>';
+            });
+            host.innerHTML = html;
+        }
+
+        // Called by the role pill buttons; 'all' shows every staff member.
+        function setRoleFilter(role) {
+            currentRoleFilter = role || 'all';
+            renderRoleButtons();
+            renderStaff();
         }
 
         function renderLeave() {
@@ -2629,5 +2714,5 @@
             console.warn('Auth guard redirect:', err && err.message);
         });
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a33db0118c2105c0',t:'MTc4ODE5NjYzNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
