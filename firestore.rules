@@ -368,6 +368,41 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── HR STAFF RECORDS ─────────────────────────────────────────
+    // A dedicated HR-managed directory (richer than the auth profile):
+    // name, role, department, contact details, salary/allowances/
+    // deductions, leave balances and status. HR manages it; admin too.
+    match /staffRecords/{recordId} {
+      allow read: if hasRole(['hr', 'admin']);
+      allow create, update: if hasRole(['hr', 'admin'])
+        && request.resource.data.get('id', '') == recordId;
+      allow delete: if isAdmin();
+    }
+
+    // ── HR LEAVE REQUESTS ────────────────────────────────────────
+    match /leaveRequests/{requestId} {
+      allow read: if hasRole(['hr', 'admin']);
+      allow create, update: if hasRole(['hr', 'admin'])
+        && request.resource.data.get('id', '') == requestId;
+      allow delete: if isAdmin();
+    }
+
+    // ── HR SHIFT ROSTER (one document per week) ──────────────────
+    match /shiftRoster/{weekId} {
+      allow read: if hasRole(['hr', 'admin']);
+      allow create, update: if hasRole(['hr', 'admin'])
+        && request.resource.data.get('id', '') == weekId;
+      allow delete: if isAdmin();
+    }
+
+    // ── HR JOB POSTINGS ──────────────────────────────────────────
+    match /jobPostings/{postingId} {
+      allow read: if hasRole(['hr', 'admin']);
+      allow create, update: if hasRole(['hr', 'admin'])
+        && request.resource.data.get('id', '') == postingId;
+      allow delete: if isAdmin();
+    }
+
     // ── SERVER-BACKED STAFF NOTIFICATIONS ─────────────────────────
     match /notifications/{notificationId} {
       allow read: if messageAddressedToCaller(resource.data);

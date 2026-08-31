@@ -1439,10 +1439,10 @@
             </div>
         </div>
         <div class="kpis">
-            <div class="kpi kpi-purple" onclick="filterStaff('all')"><i class="ti ti-users"></i> <span class="kpi-num">42</span> total</div>
-            <div class="kpi kpi-grn" onclick="filterStaff('active')"><i class="ti ti-circle-check"></i> <span class="kpi-num">36</span> active</div>
-            <div class="kpi kpi-org" onclick="filterStaff('on-leave')"><i class="ti ti-calendar"></i> <span class="kpi-num">4</span> on leave</div>
-            <div class="kpi kpi-red" onclick="filterStaff('inactive')"><i class="ti ti-user-off"></i> <span class="kpi-num">2</span> inactive</div>
+            <div class="kpi kpi-purple" onclick="filterStaff('all')"><i class="ti ti-users"></i> <span class="kpi-num" id="kpiTotal">0</span> total</div>
+            <div class="kpi kpi-grn" onclick="filterStaff('active')"><i class="ti ti-circle-check"></i> <span class="kpi-num" id="kpiActive">0</span> active</div>
+            <div class="kpi kpi-org" onclick="filterStaff('on-leave')"><i class="ti ti-calendar"></i> <span class="kpi-num" id="kpiLeave">0</span> on leave</div>
+            <div class="kpi kpi-red" onclick="filterStaff('inactive')"><i class="ti ti-user-off"></i> <span class="kpi-num" id="kpiInactive">0</span> inactive</div>
         </div>
     </div>
 
@@ -1455,43 +1455,43 @@
             <div class="stats-grid" id="statsGrid">
                 <div class="stat-card">
                     <div class="sc-top">
-                        <div><div class="sc-lbl">Total Staff</div><div class="sc-val" id="statTotal">42</div></div>
+                        <div><div class="sc-lbl">Total Staff</div><div class="sc-val" id="statTotal">0</div></div>
                         <div class="sc-ic" style="background:var(--acb)"><i class="ti ti-users" style="color:var(--ac)"></i></div>
                     </div>
-                    <div class="sc-sub">+3 this month</div>
-                    <span class="trend up">↑ 7.7%</span>
+                    <div class="sc-sub" id="statTotalSub">—</div>
+                    <span class="trend neutral" id="statTotalTrend">—</span>
                 </div>
                 <div class="stat-card">
                     <div class="sc-top">
-                        <div><div class="sc-lbl">Active Staff</div><div class="sc-val" id="statActive">36</div></div>
+                        <div><div class="sc-lbl">Active Staff</div><div class="sc-val" id="statActive">0</div></div>
                         <div class="sc-ic" style="background:var(--greenb)"><i class="ti ti-circle-check" style="color:var(--green)"></i></div>
                     </div>
-                    <div class="sc-sub">85.7% of total</div>
-                    <span class="trend up">↑ 2</span>
+                    <div class="sc-sub" id="statActiveSub">—</div>
+                    <span class="trend neutral" id="statActiveTrend">—</span>
                 </div>
                 <div class="stat-card">
                     <div class="sc-top">
-                        <div><div class="sc-lbl">On Leave</div><div class="sc-val" id="statLeave">4</div></div>
+                        <div><div class="sc-lbl">On Leave</div><div class="sc-val" id="statLeave">0</div></div>
                         <div class="sc-ic" style="background:var(--orangeb)"><i class="ti ti-calendar" style="color:var(--orange)"></i></div>
                     </div>
-                    <div class="sc-sub">2 pending approvals</div>
+                    <div class="sc-sub" id="statLeaveSub">—</div>
                     <span class="trend neutral">—</span>
                 </div>
                 <div class="stat-card">
                     <div class="sc-top">
-                        <div><div class="sc-lbl">Departments</div><div class="sc-val">8</div></div>
+                        <div><div class="sc-lbl">Departments</div><div class="sc-val" id="statDepts">0</div></div>
                         <div class="sc-ic" style="background:var(--purpleb)"><i class="ti ti-building-hospital" style="color:var(--purple)"></i></div>
                     </div>
-                    <div class="sc-sub">Avg 5.3 staff per dept</div>
+                    <div class="sc-sub" id="statDeptsSub">—</div>
                     <span class="trend neutral">—</span>
                 </div>
                 <div class="stat-card">
                     <div class="sc-top">
-                        <div><div class="sc-lbl">Monthly Payroll</div><div class="sc-val">KES 2.8M</div></div>
+                        <div><div class="sc-lbl">Monthly Payroll</div><div class="sc-val" id="statPayroll">RWF 0</div></div>
                         <div class="sc-ic" style="background:var(--tealbg)"><i class="ti ti-credit-card" style="color:var(--teal)"></i></div>
                     </div>
-                    <div class="sc-sub">+4.2% from last month</div>
-                    <span class="trend up">↑ 4.2%</span>
+                    <div class="sc-sub" id="statPayrollSub">—</div>
+                    <span class="trend neutral">—</span>
                 </div>
             </div>
 
@@ -1520,7 +1520,7 @@
                 <div class="panel-header">
                     <span class="panel-title"><i class="ti ti-activity" style="color:var(--ac)"></i> Recent HR Activity</span>
                     <div class="panel-actions">
-                        <button class="btn-export" onclick="showToast('📊 Exporting activity log...', 'info')"><i class="ti ti-download"></i> Export</button>
+                        <button class="btn-export" onclick="exportRecentCSV()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
                 <div class="panel-body show">
@@ -1565,7 +1565,7 @@
                             <option value="Finance Officer">Finance Officer</option>
                             <option value="HR Officer">HR Officer</option>
                         </select>
-                        <button class="btn-p" onclick="showToast('👤 Opening new staff form...', 'info')"><i class="ti ti-plus"></i> Add Staff</button>
+                        <button class="btn-p" onclick="openStaffForm()"><i class="ti ti-plus"></i> Add Staff</button>
                         <button class="btn-export" onclick="exportStaffCSV()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
@@ -1591,27 +1591,27 @@
                             <option value="rejected">Rejected</option>
                             <option value="completed">Completed</option>
                         </select>
-                        <button class="btn-p" onclick="showToast('📅 Opening leave request form...', 'info')"><i class="ti ti-calendar-plus"></i> New Request</button>
-                        <button class="btn-export" onclick="showToast('📊 Exporting leave data...', 'info')"><i class="ti ti-download"></i> Export</button>
+                        <button class="btn-p" onclick="openLeaveModal()"><i class="ti ti-calendar-plus"></i> New Request</button>
+                        <button class="btn-export" onclick="exportLeaveCSV()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
                 <div class="panel-body show">
                     <!-- Leave Summary -->
                     <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px;">
                         <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
-                            <div style="font-size:20px; font-weight:700; color:var(--ac);">5</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--ac);" id="sumPending">0</div>
                             <div style="font-size:10px; color:var(--tm);">Pending</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
-                            <div style="font-size:20px; font-weight:700; color:var(--green);">12</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--green);" id="sumApproved">0</div>
                             <div style="font-size:10px; color:var(--tm);">Approved</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
-                            <div style="font-size:20px; font-weight:700; color:var(--red);">2</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--red);" id="sumRejected">0</div>
                             <div style="font-size:10px; color:var(--tm);">Rejected</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
-                            <div style="font-size:20px; font-weight:700; color:var(--teal);">8</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--teal);" id="sumCompleted">0</div>
                             <div style="font-size:10px; color:var(--tm);">Completed</div>
                         </div>
                     </div>
@@ -1627,12 +1627,13 @@
         <div id="view-shifts" style="display:none;">
             <div class="main-panel">
                 <div class="panel-header">
-                    <span class="panel-title"><i class="ti ti-clock" style="color:var(--ac)"></i> Shift Roster — This Week</span>
+                    <span class="panel-title"><i class="ti ti-clock" style="color:var(--ac)"></i> Shift Roster</span>
                     <div class="panel-actions">
-                        <button class="btn-s" onclick="showToast('⬅️ Previous week', 'info')"><i class="ti ti-chevron-left"></i></button>
-                        <span style="font-size:12px; color:var(--tm); font-weight:500;">Jun 29 - Jul 5, 2026</span>
-                        <button class="btn-s" onclick="showToast('➡️ Next week', 'info')"><i class="ti ti-chevron-right"></i></button>
-                        <button class="btn-export" onclick="showToast('🖨️ Printing roster...', 'info')"><i class="ti ti-printer"></i></button>
+                        <button class="btn-s" onclick="changeRosterWeek(-1)"><i class="ti ti-chevron-left"></i></button>
+                        <span style="font-size:12px; color:var(--tm); font-weight:500;" id="rosterWeekLabel"></span>
+                        <button class="btn-s" onclick="changeRosterWeek(1)"><i class="ti ti-chevron-right"></i></button>
+                        <button class="btn-p" onclick="saveRoster()"><i class="ti ti-device-floppy"></i> Save Roster</button>
+                        <button class="btn-export" onclick="window.print()"><i class="ti ti-printer"></i></button>
                     </div>
                 </div>
                 <div class="panel-body show" style="overflow-x:auto;">
@@ -1655,29 +1656,29 @@
         <div id="view-payroll" style="display:none;">
             <div class="main-panel">
                 <div class="panel-header">
-                    <span class="panel-title"><i class="ti ti-credit-card" style="color:var(--ac)"></i> Payroll Summary — June 2026</span>
+                    <span class="panel-title"><i class="ti ti-credit-card" style="color:var(--ac)"></i> Payroll Summary</span>
                     <div class="panel-actions">
-                        <button class="btn-export" onclick="showToast('📄 Generating payslips...', 'info')"><i class="ti ti-file-type-pdf"></i> Generate Payslips</button>
-                        <button class="btn-export" onclick="showToast('📊 Exporting payroll...', 'info')"><i class="ti ti-download"></i> Export</button>
+                        <button class="btn-p" onclick="markAllPaid()"><i class="ti ti-check"></i> Mark All Paid</button>
+                        <button class="btn-export" onclick="exportPayrollCSV()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
                 <div class="panel-body show">
                     <!-- Payroll Stats -->
                     <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px;">
                         <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
-                            <div style="font-size:20px; font-weight:700; color:var(--ac);">KES 2.8M</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--ac);" id="payTotal">RWF 0</div>
                             <div style="font-size:10px; color:var(--tm);">Total Payroll</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
-                            <div style="font-size:20px; font-weight:700; color:var(--green);">KES 66.7K</div>
-                            <div style="font-size:10px; color:var(--tm);">Average Salary</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--green);" id="payAvg">RWF 0</div>
+                            <div style="font-size:10px; color:var(--tm);">Average Net Pay</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
-                            <div style="font-size:20px; font-weight:700; color:var(--orange);">KES 420K</div>
-                            <div style="font-size:10px; color:var(--tm);">Highest Salary</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--orange);" id="payHigh">RWF 0</div>
+                            <div style="font-size:10px; color:var(--tm);">Highest Net Pay</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
-                            <div style="font-size:20px; font-weight:700; color:var(--purple);">42</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--purple);" id="payPaid">0</div>
                             <div style="font-size:10px; color:var(--tm);">Employees Paid</div>
                         </div>
                     </div>
@@ -1695,22 +1696,22 @@
                 <div class="panel-header">
                     <span class="panel-title"><i class="ti ti-user-plus" style="color:var(--ac)"></i> Recruitment & Job Openings</span>
                     <div class="panel-actions">
-                        <button class="btn-p" onclick="showToast('📋 Opening new job posting...', 'info')"><i class="ti ti-plus"></i> New Job Posting</button>
-                        <button class="btn-export" onclick="showToast('📊 Exporting recruitment data...', 'info')"><i class="ti ti-download"></i> Export</button>
+                        <button class="btn-p" onclick="openJobModal()"><i class="ti ti-plus"></i> New Job Posting</button>
+                        <button class="btn-export" onclick="exportRecruitmentCSV()"><i class="ti ti-download"></i> Export</button>
                     </div>
                 </div>
                 <div class="panel-body show">
                     <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px;">
                         <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
-                            <div style="font-size:20px; font-weight:700; color:var(--ac);">6</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--ac);" id="sumOpen">0</div>
                             <div style="font-size:10px; color:var(--tm);">Open Positions</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
-                            <div style="font-size:20px; font-weight:700; color:var(--orange);">24</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--orange);" id="sumApplicants">0</div>
                             <div style="font-size:10px; color:var(--tm);">Applicants</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.3); border-radius:8px; padding:10px 14px; text-align:center;">
-                            <div style="font-size:20px; font-weight:700; color:var(--green);">4</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--green);" id="sumReviewing">0</div>
                             <div style="font-size:10px; color:var(--tm);">In Review</div>
                         </div>
                     </div>
@@ -1735,6 +1736,99 @@
         </div>
     </div>
 
+    <!-- ═══ MODAL: ADD / EDIT STAFF ═══ -->
+    <div class="modal-overlay" id="staffFormModal" onclick="if(event.target===this)closeStaffForm()">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title" id="staffFormTitle">Add Staff</span>
+                <button class="modal-close" onclick="closeStaffForm()"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="fg">
+                    <div class="fgl"><div class="lbl">Full Name *</div><input class="fi" id="sfName" placeholder="e.g. Mugisha Jean" /></div>
+                    <div class="fgl"><div class="lbl">Role *</div>
+                        <select class="fi" id="sfRole">
+                            <option>Doctor</option><option>Nurse</option><option>Admin</option><option>Receptionist</option>
+                            <option>Pharmacist</option><option>Lab Technician</option><option>Radiologist</option>
+                            <option>Finance Officer</option><option>HR Officer</option>
+                        </select>
+                    </div>
+                    <div class="fgl"><div class="lbl">Department *</div>
+                        <select class="fi" id="sfDept">
+                            <option>General</option><option>Administration</option><option>Cardiology</option><option>Neurology</option>
+                            <option>Orthopedics</option><option>Pediatrics</option><option>ICU</option><option>Radiology</option>
+                            <option>Laboratory</option><option>Pharmacy</option><option>Finance</option><option>HR</option>
+                        </select>
+                    </div>
+                    <div class="fgl"><div class="lbl">Status</div>
+                        <select class="fi" id="sfStatus"><option>active</option><option>on-leave</option><option>inactive</option></select>
+                    </div>
+                    <div class="fgl"><div class="lbl">Email</div><input class="fi" id="sfEmail" placeholder="name@hospital.rw" /></div>
+                    <div class="fgl"><div class="lbl">Phone</div><input class="fi" id="sfPhone" placeholder="+250 78…" /></div>
+                    <div class="fgl"><div class="lbl">Base Salary (RWF) *</div><input class="fi" type="number" id="sfSalary" placeholder="e.g. 800000" /></div>
+                    <div class="fgl"><div class="lbl">Allowances (RWF)</div><input class="fi" type="number" id="sfAllowances" placeholder="0" value="0" /></div>
+                    <div class="fgl"><div class="lbl">Deductions (RWF)</div><input class="fi" type="number" id="sfDeductions" placeholder="0" value="0" /></div>
+                    <div class="fgl"><div class="lbl">Join Date</div><input class="fi" type="date" id="sfJoined" /></div>
+                </div>
+                <div class="fa">
+                    <button class="btn-p" onclick="saveStaff()"><i class="ti ti-device-floppy"></i> Save Staff</button>
+                    <button class="btn-s" onclick="closeStaffForm()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: NEW LEAVE REQUEST ═══ -->
+    <div class="modal-overlay" id="leaveModal" onclick="if(event.target===this)closeLeaveModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">New Leave Request</span>
+                <button class="modal-close" onclick="closeLeaveModal()"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="fg">
+                    <div class="fgl"><div class="lbl">Employee *</div><select class="fi" id="lvEmployee"></select></div>
+                    <div class="fgl"><div class="lbl">Leave Type *</div>
+                        <select class="fi" id="lvType"><option>Annual</option><option>Sick</option><option>Study</option><option>Compensatory</option><option>Unpaid</option></select>
+                    </div>
+                    <div class="fgl"><div class="lbl">From *</div><input class="fi" type="date" id="lvFrom" /></div>
+                    <div class="fgl"><div class="lbl">To *</div><input class="fi" type="date" id="lvTo" /></div>
+                    <div class="fgl ff"><div class="lbl">Reason / Notes</div><textarea class="ta" id="lvReason" style="min-height:50px;" placeholder="Reason for leave…"></textarea></div>
+                </div>
+                <div class="fa">
+                    <button class="btn-p" onclick="submitLeave()"><i class="ti ti-calendar-plus"></i> Submit Request</button>
+                    <button class="btn-s" onclick="closeLeaveModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: NEW JOB POSTING ═══ -->
+    <div class="modal-overlay" id="jobModal" onclick="if(event.target===this)closeJobModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">New Job Posting</span>
+                <button class="modal-close" onclick="closeJobModal()"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="fg">
+                    <div class="fgl"><div class="lbl">Position *</div><input class="fi" id="jobPosition" placeholder="e.g. Senior Nurse" /></div>
+                    <div class="fgl"><div class="lbl">Department *</div>
+                        <select class="fi" id="jobDept">
+                            <option>General</option><option>Administration</option><option>Cardiology</option><option>Neurology</option>
+                            <option>Orthopedics</option><option>Pediatrics</option><option>ICU</option><option>Radiology</option>
+                            <option>Laboratory</option><option>Pharmacy</option><option>Finance</option><option>HR</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="fa">
+                    <button class="btn-p" onclick="submitJob()"><i class="ti ti-briefcase"></i> Post Job</button>
+                    <button class="btn-s" onclick="closeJobModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ─── POLISH: TOAST CONTAINER ─── -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -1749,432 +1843,785 @@
 
     <!-- ═══ JAVASCRIPT ═══ -->
     <script>
-        // ─── UPDATE BREADCRUMB ───
-        if (typeof updateBreadcrumb !== 'undefined') {
-            updateBreadcrumb('HR & Staff Management');
-        }
+// ─── UPDATE BREADCRUMB ───
+        if (typeof updateBreadcrumb !== 'undefined') { updateBreadcrumb('HR & Staff Management'); }
 
         // ─── DATA ───
-        const staffData = [];
-        // ⛔ NO TEMPLATE DATA — staff comes from the Common Server (pclinic_staff)
-        function loadStaffFromServer() {
-            try {
-                const list = JSON.parse(localStorage.getItem('pclinic_staff') || '[]');
-                staffData.length = 0;
-                list.forEach(function (s, i) {
-                    const nm = s.name || ((s.firstName || '') + ' ' + (s.lastName || '')).trim() || ('Staff ' + (i + 1));
-                    const parts = nm.split(/\s+/);
-                    staffData.push({ id: s.id || s.staffId || ('st' + i), name: nm, role: s.role || 'Staff',
-                        dept: s.department || s.dept || 'General', email: s.email || '—', phone: s.phone || '—',
-                        status: s.status || 'active', initials: ((parts[0] || 'S').charAt(0) + ((parts[1] || '').charAt(0) || '')).toUpperCase(),
-                        color: '#0071e3', salary: s.salary || 0 });
-                });
-            } catch (e) {}
+        // Staff, leave and job postings load from the Common Server (Firestore)
+        // with a localStorage mirror so the board still paints offline. No
+        // template / hardcoded records. Currency is RWF.
+        let staffData = [];      // from the `staffRecords` collection
+        let leaveRequests = [];  // from the `leaveRequests` collection
+        let jobPostings = [];    // from the `jobPostings` collection
+        let rosterEntries = [];  // current week's shifts, from `shiftRoster`
+        let rosterWeekStart = null;
+        let currentStaffFilter = 'all';
+        let editingStaffId = null;
+
+        const STAFF_KEY = 'pclinic_hr_staff';
+        const LEAVE_KEY = 'pclinic_hr_leave';
+        const JOBS_KEY  = 'pclinic_hr_jobs';
+
+        const SHIFT_ORDER = ['O', 'M', 'A', 'N'];
+        const SHIFT_LABELS = { M: 'Morning', A: 'Afternoon', N: 'Night', O: 'Off' };
+        const SHIFT_CLASSES = { M: 'shift-morning', A: 'shift-afternoon', N: 'shift-night', O: 'off' };
+
+        // ─── HELPERS ───
+        function esc(v) { var d = document.createElement('div'); d.textContent = (v == null) ? '' : String(v); return d.innerHTML; }
+        function rwf(n) { return 'RWF ' + Number(n || 0).toLocaleString(); }
+        function fbReady() { return !!(window.firebaseDB && window.firebaseFunctions && window.firebaseReady); }
+        function waitFb(ms) {
+            return new Promise(function (res) {
+                if (fbReady()) return res(true);
+                var t; var fn = function () { clearTimeout(t); res(fbReady()); };
+                window.addEventListener('firebaseReady', fn, { once: true });
+                t = setTimeout(fn, ms || 6000);
+            });
+        }
+        function localRead(key, fb) { try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fb; } catch (e) { return fb; } }
+        function localWrite(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} }
+        function uid(prefix) { return (prefix || 'hr') + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7); }
+        function staffName() { return (window.currentStaff && window.currentStaff.name) || ''; }
+        function staffId() { return (window.currentStaff && (window.currentStaff.staffId || window.currentStaff.uid)) || ''; }
+        function canManage() {
+            var r = (window.currentStaff && window.currentStaff.role) || '';
+            return r === 'hr' || r === 'admin';
+        }
+        function initials(name) {
+            var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '?';
+            return ((parts[0].charAt(0)) + ((parts[1] || '').charAt(0) || '')).toUpperCase();
+        }
+        function avatarColor(name) {
+            var colors = ['#5856d6', '#0071e3', '#1a7a32', '#b5006e', '#7a4500', '#007080', '#5c2475', '#8a1f1a'];
+            var h = 0; for (var i = 0; i < String(name || '').length; i++) h = (h * 31 + String(name).charCodeAt(i)) >>> 0;
+            return colors[h % colors.length];
+        }
+        function daysBetween(from, to) {
+            if (!from || !to) return 0;
+            var a = new Date(from), b = new Date(to);
+            if (isNaN(a) || isNaN(b)) return 0;
+            return Math.round((b - a) / 86400000) + 1;
+        }
+        function weekKey(d) {
+            var x = new Date(d || rosterWeekStart || new Date());
+            return 'wk-' + x.toISOString().slice(0, 10);
+        }
+        function weekStartMonday(d) {
+            var x = new Date(d || new Date());
+            var day = x.getDay();
+            var diff = x.getDate() - day + (day === 0 ? -6 : 1);
+            x.setDate(diff); x.setHours(0, 0, 0, 0);
+            return x;
         }
 
-        const leaveRequests = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
+        // ─── PERSIST (Common Server) ───
+        async function saveStaffRecord(rec) {
+            localWrite(STAFF_KEY, staffData);
+            await waitFb(4000);
+            if (!fbReady()) { showToast('⚠️ Offline — staff saved on this computer only', 'warning'); return; }
+            var f = window.firebaseFunctions;
+            try { await f.setDoc(f.doc(window.firebaseDB, 'staffRecords', rec.id), rec); }
+            catch (err) { showToast('⚠️ Not saved to the common server (' + (err && (err.code || err.message)) + ')', 'error'); }
+        }
+        async function saveLeaveRequest(rec) {
+            localWrite(LEAVE_KEY, leaveRequests);
+            await waitFb(4000);
+            if (!fbReady()) { showToast('⚠️ Offline — request saved on this computer only', 'warning'); return; }
+            var f = window.firebaseFunctions;
+            try { await f.setDoc(f.doc(window.firebaseDB, 'leaveRequests', rec.id), rec); }
+            catch (err) { showToast('⚠️ Not saved to the common server (' + (err && (err.code || err.message)) + ')', 'error'); }
+        }
+        async function saveJobPosting(rec) {
+            localWrite(JOBS_KEY, jobPostings);
+            await waitFb(4000);
+            if (!fbReady()) { showToast('⚠️ Offline — posting saved on this computer only', 'warning'); return; }
+            var f = window.firebaseFunctions;
+            try { await f.setDoc(f.doc(window.firebaseDB, 'jobPostings', rec.id), rec); }
+            catch (err) { showToast('⚠️ Not saved to the common server (' + (err && (err.code || err.message)) + ')', 'error'); }
+        }
+        async function saveRosterDoc() {
+            await waitFb(4000);
+            if (!fbReady()) { showToast('⚠️ Offline — roster saved on this computer only', 'warning'); return; }
+            var f = window.firebaseFunctions;
+            var id = weekKey(rosterWeekStart);
+            try {
+                await f.setDoc(f.doc(window.firebaseDB, 'shiftRoster', id), {
+                    id: id, weekStart: rosterWeekStart.toISOString().slice(0, 10),
+                    entries: rosterEntries, savedAt: new Date().toISOString(), savedBy: staffName()
+                });
+                showToast('✅ Roster saved to the common server', 'success');
+            } catch (err) { showToast('⚠️ Roster not saved (' + (err && (err.code || err.message)) + ')', 'error'); }
+        }
 
-        const deptCounts = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
+        // ─── LOADERS (Common Server + live sync) ───
+        async function loadStaff() {
+            var local = localRead(STAFF_KEY, []);
+            if (local.length) { staffData = local; renderAll(); }
+            await waitFb(6000);
+            if (!fbReady()) return;
+            var f = window.firebaseFunctions;
+            try {
+                f.onSnapshot(f.collection(window.firebaseDB, 'staffRecords'), function (snap) {
+                    var map = [];
+                    snap.forEach(function (d) { var r = d.data() || {}; r.id = r.id || d.id; map.push(r); });
+                    map.sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
+                    staffData = map;
+                    localWrite(STAFF_KEY, map);
+                    renderAll();
+                }, function (err) { console.warn('[hr] staff listener failed:', err && err.message); });
+            } catch (e) { console.warn('[hr] staff listener unavailable:', e && e.message); }
+        }
+        async function loadLeave() {
+            var local = localRead(LEAVE_KEY, []);
+            if (local.length) { leaveRequests = local; renderAll(); }
+            await waitFb(6000);
+            if (!fbReady()) return;
+            var f = window.firebaseFunctions;
+            try {
+                f.onSnapshot(f.collection(window.firebaseDB, 'leaveRequests'), function (snap) {
+                    var map = [];
+                    snap.forEach(function (d) { var r = d.data() || {}; r.id = r.id || d.id; map.push(r); });
+                    map.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
+                    leaveRequests = map;
+                    localWrite(LEAVE_KEY, map);
+                    renderAll();
+                }, function (err) { console.warn('[hr] leave listener failed:', err && err.message); });
+            } catch (e) { console.warn('[hr] leave listener unavailable:', e && e.message); }
+        }
+        async function loadJobs() {
+            var local = localRead(JOBS_KEY, []);
+            if (local.length) { jobPostings = local; renderAll(); }
+            await waitFb(6000);
+            if (!fbReady()) return;
+            var f = window.firebaseFunctions;
+            try {
+                f.onSnapshot(f.collection(window.firebaseDB, 'jobPostings'), function (snap) {
+                    var map = [];
+                    snap.forEach(function (d) { var r = d.data() || {}; r.id = r.id || d.id; map.push(r); });
+                    map.sort(function (a, b) { return String(b.posted || '').localeCompare(String(a.posted || '')); });
+                    jobPostings = map;
+                    localWrite(JOBS_KEY, map);
+                    renderAll();
+                }, function (err) { console.warn('[hr] job listener failed:', err && err.message); });
+            } catch (e) { console.warn('[hr] job listener unavailable:', e && e.message); }
+        }
+        async function loadRoster() {
+            rosterWeekStart = weekStartMonday(new Date());
+            await waitFb(6000);
+            var f = window.firebaseFunctions;
+            if (fbReady()) {
+                try {
+                    var snap = await f.getDoc(f.doc(window.firebaseDB, 'shiftRoster', weekKey(rosterWeekStart)));
+                    if (snap && snap.exists()) { var d = snap.data() || {}; rosterEntries = d.entries || []; }
+                    else rosterEntries = [];
+                } catch (e) { console.warn('[hr] roster load failed:', e && e.message); }
+            }
+            renderRoster();
+        }
 
-        const recentActivity = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
+        // ─── RENDER ───
+        function activeStaff() { return staffData.filter(function (s) { return s.status !== 'inactive'; }); }
 
-        const rosterData = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
+        function renderAll() {
+            updateKpis(); updateStats(); updateLeaveSummary(); updatePayrollSummary(); updateRecruitSummary();
+            renderStaff(); renderLeave(); renderPayroll(); renderRecruitment(); renderRecent();
+            renderDeptChart(); renderStatusChart();
+        }
 
-        const payrollData = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
+        function updateKpis() {
+            var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+            set('kpiTotal', staffData.length);
+            set('kpiActive', staffData.filter(function (s) { return s.status === 'active'; }).length);
+            set('kpiLeave', staffData.filter(function (s) { return s.status === 'on-leave'; }).length);
+            set('kpiInactive', staffData.filter(function (s) { return s.status === 'inactive'; }).length);
+        }
 
-        const recruitmentData = []; // ⛔ NO TEMPLATE DATA — Common Server once rebuilt
+        function updateStats() {
+            var total = staffData.length;
+            var active = staffData.filter(function (s) { return s.status === 'active'; }).length;
+            var onLeave = staffData.filter(function (s) { return s.status === 'on-leave'; }).length;
+            var depts = {};
+            staffData.forEach(function (s) { depts[s.dept || 'General'] = 1; });
+            var payroll = 0;
+            activeStaff().forEach(function (s) { payroll += (Number(s.salary) || 0) + (Number(s.allowances) || 0) - (Number(s.deductions) || 0); });
 
-        let currentStaffFilter = 'all';
+            var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+            set('statTotal', total); set('statTotalSub', deptCount() + ' departments');
+            set('statActive', active); set('statActiveSub', total ? Math.round((active / total) * 100) + '% of staff' : '—');
+            set('statLeave', onLeave); set('statLeaveSub', pendingLeaveCount() + ' pending requests');
+            set('statDepts', Object.keys(depts).length); set('statDeptsSub', 'avg ' + (total ? Math.round(total / Math.max(1, Object.keys(depts).length)) : 0) + ' staff/dept');
+            set('statPayroll', rwf(payroll)); set('statPayrollSub', active + ' active staff');
+            var t = document.getElementById('statTotalTrend'); if (t) { t.textContent = '—'; t.className = 'trend neutral'; }
+            var at = document.getElementById('statActiveTrend'); if (at) { at.textContent = '—'; at.className = 'trend neutral'; }
+        }
 
-        // ─── RENDER FUNCTIONS ───
-        function renderStaff() {
-            const dept = document.getElementById('staffFilterDept').value;
-            const role = document.getElementById('staffFilterRole').value;
-            const filtered = staffData.filter(s => {
-                const matchDept = dept === 'all' || s.dept === dept;
-                const matchRole = role === 'all' || s.role === role;
-                const matchStatus = currentStaffFilter === 'all' || s.status === currentStaffFilter;
-                return matchDept && matchRole && matchStatus;
+        function deptCount() {
+            var d = {}; staffData.forEach(function (s) { d[s.dept || 'General'] = 1; }); return Object.keys(d).length;
+        }
+        function pendingLeaveCount() { return leaveRequests.filter(function (l) { return l.status === 'pending'; }).length; }
+
+        function updateLeaveSummary() {
+            var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+            set('sumPending', leaveRequests.filter(function (l) { return l.status === 'pending'; }).length);
+            set('sumApproved', leaveRequests.filter(function (l) { return l.status === 'approved'; }).length);
+            set('sumRejected', leaveRequests.filter(function (l) { return l.status === 'rejected'; }).length);
+            set('sumCompleted', leaveRequests.filter(function (l) { return l.status === 'completed'; }).length);
+        }
+
+        function updatePayrollSummary() {
+            var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+            var list = activeStaff();
+            var total = 0, high = 0, paid = 0;
+            list.forEach(function (s) {
+                var net = (Number(s.salary) || 0) + (Number(s.allowances) || 0) - (Number(s.deductions) || 0);
+                total += net; if (net > high) high = net; if (s.payStatus === 'paid') paid++;
             });
-            const tbody = document.getElementById('staffBody');
-            if (filtered.length === 0) {
-                tbody.innerHTML =
-                    '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--tm)">No staff found matching filters.</td></tr>';
+            set('payTotal', rwf(total));
+            set('payAvg', list.length ? rwf(Math.round(total / list.length)) : 'RWF 0');
+            set('payHigh', rwf(high));
+            set('payPaid', paid);
+        }
+
+        function updateRecruitSummary() {
+            var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+            set('sumOpen', jobPostings.filter(function (j) { return j.status === 'open'; }).length);
+            set('sumApplicants', jobPostings.reduce(function (a, j) { return a + (Number(j.applicants) || 0); }, 0));
+            set('sumReviewing', jobPostings.filter(function (j) { return j.status === 'reviewing'; }).length);
+        }
+
+        function renderStaff() {
+            var dept = document.getElementById('staffFilterDept') ? document.getElementById('staffFilterDept').value : 'all';
+            var role = document.getElementById('staffFilterRole') ? document.getElementById('staffFilterRole').value : 'all';
+            var filtered = staffData.filter(function (s) {
+                return (dept === 'all' || s.dept === dept)
+                    && (role === 'all' || s.role === role)
+                    && (currentStaffFilter === 'all' || s.status === currentStaffFilter);
+            });
+            var tbody = document.getElementById('staffBody');
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--tm)">No staff found. Use "Add Staff" to register the first employee.</td></tr>';
                 return;
             }
-            tbody.innerHTML = filtered.map(s => `
-                <tr>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <div class="emp-photo" style="background:${s.color}">${s.initials}</div>
-                            <div style="font-weight:600;">${s.name}</div>
-                        </div>
-                    </td>
-                    <td>${s.role}</td>
-                    <td>${s.dept}</td>
-                    <td style="font-size:11px;color:var(--tm)">${s.email}</td>
-                    <td style="font-size:11px;color:var(--tm)">${s.phone}</td>
-                    <td><span class="badge ${s.status==='active'?'b-grn':s.status==='on-leave'?'b-org':'b-red'}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
-                    <td>
-                        <button class="btn-s" style="padding:2px 10px;font-size:10px;" onclick="openProfile(${s.id})">View</button>
-                        <button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--acb);color:var(--ach);" onclick="showToast('✏️ Editing ${s.name}','info')">Edit</button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = filtered.map(function (s) {
+                var badge = s.status === 'active' ? 'b-grn' : s.status === 'on-leave' ? 'b-org' : 'b-red';
+                return '<tr>' +
+                    '<td><div style="display:flex;align-items:center;gap:10px;">' +
+                    '<div class="emp-photo" style="background:' + esc(s.color || avatarColor(s.name)) + '">' + esc(s.initials || initials(s.name)) + '</div>' +
+                    '<div style="font-weight:600;">' + esc(s.name) + '</div></div></td>' +
+                    '<td>' + esc(s.role) + '</td>' +
+                    '<td>' + esc(s.dept) + '</td>' +
+                    '<td style="font-size:11px;color:var(--tm)">' + esc(s.email || '—') + '</td>' +
+                    '<td style="font-size:11px;color:var(--tm)">' + esc(s.phone || '—') + '</td>' +
+                    '<td><span class="badge ' + badge + '">' + esc(String(s.status).charAt(0).toUpperCase() + String(s.status).slice(1)) + '</span></td>' +
+                    '<td>' +
+                    '<button class="btn-s" style="padding:2px 10px;font-size:10px;" onclick="openProfile(\'' + esc(s.id) + '\')">View</button> ' +
+                    '<button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--acb);color:var(--ach);" onclick="openStaffForm(\'' + esc(s.id) + '\')">Edit</button>' +
+                    '</td></tr>';
+            }).join('');
         }
 
         function renderLeave() {
-            const filter = document.getElementById('leaveFilter').value;
-            const filtered = leaveRequests.filter(l => filter === 'all' || l.status === filter);
-            const tbody = document.getElementById('leaveBody');
-            if (filtered.length === 0) {
-                tbody.innerHTML =
-                    '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--tm)">No leave requests found.</td></tr>';
+            var filter = document.getElementById('leaveFilter') ? document.getElementById('leaveFilter').value : 'all';
+            var filtered = leaveRequests.filter(function (l) { return filter === 'all' || l.status === filter; });
+            var tbody = document.getElementById('leaveBody');
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--tm)">No leave requests found.</td></tr>';
                 return;
             }
-            tbody.innerHTML = filtered.map(l => `
-                <tr>
-                    <td style="font-weight:500;">${l.employee}</td>
-                    <td>${l.type}</td>
-                    <td style="font-size:11px;">${l.from}</td>
-                    <td style="font-size:11px;">${l.to}</td>
-                    <td style="font-weight:600;">${l.days}</td>
-                    <td><span class="badge ${l.status==='approved'?'b-grn':l.status==='pending'?'b-org':l.status==='rejected'?'b-red':'b-teal'}">${l.status.charAt(0).toUpperCase()+l.status.slice(1)}</span></td>
-                    <td>
-                        ${l.status==='pending'?`
-                            <button class="btn-p" style="padding:2px 8px;font-size:10px;" onclick="approveLeave(${l.id})">Approve</button>
-                            <button class="btn-s" style="padding:2px 8px;font-size:10px;background:var(--redb);color:var(--redd);" onclick="rejectLeave(${l.id})">Reject</button>
-                        `:''}
-                        <button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="showToast('📄 Viewing leave details','info')">View</button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = filtered.map(function (l) {
+                var badge = l.status === 'approved' ? 'b-grn' : l.status === 'pending' ? 'b-org' : l.status === 'rejected' ? 'b-red' : 'b-teal';
+                var actions = '';
+                if (l.status === 'pending') {
+                    actions = '<button class="btn-p" style="padding:2px 8px;font-size:10px;" onclick="approveLeave(\'' + esc(l.id) + '\')">Approve</button> ' +
+                              '<button class="btn-s" style="padding:2px 8px;font-size:10px;background:var(--redb);color:var(--redd);" onclick="rejectLeave(\'' + esc(l.id) + '\')">Reject</button> ';
+                }
+                return '<tr>' +
+                    '<td style="font-weight:500;">' + esc(l.employee) + '</td>' +
+                    '<td>' + esc(l.type) + '</td>' +
+                    '<td style="font-size:11px;">' + esc(l.from) + '</td>' +
+                    '<td style="font-size:11px;">' + esc(l.to) + '</td>' +
+                    '<td style="font-weight:600;">' + esc(l.days) + '</td>' +
+                    '<td><span class="badge ' + badge + '">' + esc(String(l.status).charAt(0).toUpperCase() + String(l.status).slice(1)) + '</span></td>' +
+                    '<td>' + actions + '<button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="showToast(\'📄 ' + esc(l.employee) + ': ' + esc(l.type) + ' (' + esc(l.from) + ' → ' + esc(l.to) + ') ' + esc(l.reason || '') + '\',\'info\')">View</button></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function rosterRows() {
+            return activeStaff().map(function (s) {
+                var entry = rosterEntries.find(function (e) { return String(e.employeeId) === String(s.id); });
+                return { employeeId: s.id, employee: s.name, shifts: entry ? entry.shifts : ['O','O','O','O','O','O','O'] };
+            });
         }
 
         function renderRoster() {
-            const container = document.getElementById('rosterGrid');
-            const shiftLabels = { 'M': 'Morning', 'A': 'Afternoon', 'N': 'Night', 'O': 'Off' };
-            const shiftClasses = { 'M': 'shift-morning', 'A': 'shift-afternoon', 'N': 'shift-night', 'O': 'off' };
-            let html = '';
-            rosterData.forEach(row => {
-                html += `<div class="rh" style="font-size:10px;font-weight:600;color:var(--tp);">${row.employee}</div>`;
-                row.shifts.forEach((s, idx) => {
-                    html += `<div class="rcell ${shiftClasses[s]||''}" title="${shiftLabels[s]||s}">
-                        ${s !== 'O' ? `<span class="emp-initial">${s}</span>` : '—'}
-                    </div>`;
+            var container = document.getElementById('rosterGrid');
+            if (!rosterWeekStart) { container.innerHTML = ''; return; }
+            var label = document.getElementById('rosterWeekLabel');
+            if (label) {
+                var end = new Date(rosterWeekStart); end.setDate(end.getDate() + 6);
+                label.textContent = rosterWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' - ' + end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + end.getFullYear();
+            }
+            var dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+            var html = '<div class="rh">Staff</div>';
+            for (var i = 0; i < 7; i++) {
+                var d = new Date(rosterWeekStart); d.setDate(d.getDate() + i);
+                html += '<div class="rh">' + dayNames[i] + '<div style="font-size:8px;color:var(--tm);font-weight:500;">' + d.getDate() + '/' + (d.getMonth() + 1) + '</div></div>';
+            }
+            var rows = rosterRows();
+            if (!rows.length) {
+                html += '<div class="rcell" style="grid-column:1/-1;padding:16px;color:var(--tm);">Register staff first — they appear here for shift assignment.</div>';
+            }
+            rows.forEach(function (row) {
+                html += '<div class="rh" style="font-size:10px;font-weight:600;color:var(--tp);">' + esc(row.employee) + '</div>';
+                row.shifts.forEach(function (s, idx) {
+                    html += '<div class="rcell ' + (SHIFT_CLASSES[s] || '') + '" data-emp="' + esc(row.employeeId) + '" data-idx="' + idx + '" onclick="cycleShift(this)" title="' + (SHIFT_LABELS[s] || s) + '">' + (s !== 'O' ? s : '—') + '</div>';
                 });
             });
             container.innerHTML = html;
         }
 
         function renderPayroll() {
-            const tbody = document.getElementById('payrollBody');
-            tbody.innerHTML = payrollData.map(p => {
-                const net = p.base + p.allowances - p.deductions;
-                return `
-                    <tr>
-                        <td style="font-weight:500;">${p.employee}</td>
-                        <td>${p.role}</td>
-                        <td>${p.dept}</td>
-                        <td style="font-weight:600;">KES ${p.base.toLocaleString()}</td>
-                        <td style="color:var(--green)">KES ${p.allowances.toLocaleString()}</td>
-                        <td style="color:var(--red)">KES ${p.deductions.toLocaleString()}</td>
-                        <td style="font-weight:700;color:var(--ac)">KES ${net.toLocaleString()}</td>
-                        <td><span class="badge ${p.status==='paid'?'b-grn':'b-org'}">${p.status.charAt(0).toUpperCase()+p.status.slice(1)}</span></td>
-                    </tr>
-                `;
+            var tbody = document.getElementById('payrollBody');
+            var list = activeStaff();
+            if (!list.length) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--tm)">No staff records for payroll.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.map(function (p) {
+                var net = (Number(p.salary) || 0) + (Number(p.allowances) || 0) - (Number(p.deductions) || 0);
+                return '<tr>' +
+                    '<td style="font-weight:500;">' + esc(p.name) + '</td>' +
+                    '<td>' + esc(p.role) + '</td>' +
+                    '<td>' + esc(p.dept) + '</td>' +
+                    '<td style="font-weight:600;">' + rwf(p.salary) + '</td>' +
+                    '<td style="color:var(--green)">' + rwf(p.allowances) + '</td>' +
+                    '<td style="color:var(--red)">' + rwf(p.deductions) + '</td>' +
+                    '<td style="font-weight:700;color:var(--ac)">' + rwf(net) + '</td>' +
+                    '<td><span class="badge ' + (p.payStatus === 'paid' ? 'b-grn' : 'b-org') + '">' + (p.payStatus === 'paid' ? 'Paid' : 'Pending') + '</span></td>' +
+                    '</tr>';
             }).join('');
         }
 
         function renderRecruitment() {
-            const tbody = document.getElementById('recruitmentBody');
-            const statusColors = {
-                'open': 'b-blue',
-                'reviewing': 'b-org',
-                'closed': 'b-grn',
-                'filled': 'b-purple'
-            };
-            tbody.innerHTML = recruitmentData.map(r => `
-                <tr>
-                    <td style="font-weight:600;color:var(--ac)">${r.position}</td>
-                    <td>${r.dept}</td>
-                    <td style="font-weight:600;">${r.applicants}</td>
-                    <td><span class="badge ${statusColors[r.status]||'b-grn'}">${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span></td>
-                    <td>${r.posted}</td>
-                    <td>
-                        <button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="showToast('📄 Viewing ${r.position}','info')">View</button>
-                        ${r.status==='open'||r.status==='reviewing'?`<button class="btn-p" style="padding:2px 8px;font-size:10px;" onclick="showToast('📋 Managing applicants for ${r.position}','info')">Manage</button>`:''}
-                    </td>
-                </tr>
-            `).join('');
+            var tbody = document.getElementById('recruitmentBody');
+            if (!jobPostings.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--tm)">No job postings yet. Use "New Job Posting" to add one.</td></tr>';
+                return;
+            }
+            var statusColors = { open: 'b-blue', reviewing: 'b-org', closed: 'b-grn', filled: 'b-purple' };
+            tbody.innerHTML = jobPostings.map(function (r) {
+                var actions = '<button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="addApplicant(\'' + esc(r.id) + '\')">＋1 Applicant</button> ';
+                if (r.status === 'open' || r.status === 'reviewing') actions += '<button class="btn-p" style="padding:2px 8px;font-size:10px;" onclick="advanceJob(\'' + esc(r.id) + '\')">Advance</button>';
+                return '<tr>' +
+                    '<td style="font-weight:600;color:var(--ac)">' + esc(r.position) + '</td>' +
+                    '<td>' + esc(r.dept) + '</td>' +
+                    '<td style="font-weight:600;">' + esc(r.applicants || 0) + '</td>' +
+                    '<td><span class="badge ' + (statusColors[r.status] || 'b-grn') + '">' + esc(String(r.status).charAt(0).toUpperCase() + String(r.status).slice(1)) + '</span></td>' +
+                    '<td>' + esc(r.posted) + '</td>' +
+                    '<td>' + actions + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function buildRecentActivity() {
+            var out = [];
+            staffData.forEach(function (s) {
+                if (s.joinedAt) out.push({ employee: s.name, action: 'Joined the team', dept: s.dept || '—', date: s.joinedAt, status: 'active' });
+            });
+            leaveRequests.forEach(function (l) {
+                var st = staffData.find(function (s) { return String(s.id) === String(l.employeeId) || s.name === l.employee; });
+                out.push({ employee: l.employee, action: 'Leave request — ' + l.type, dept: st ? st.dept : '—', date: l.createdAt, status: l.status });
+            });
+            out.sort(function (a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
+            return out.slice(0, 8);
         }
 
         function renderRecent() {
-            const tbody = document.getElementById('recentBody');
-            const statusColors = {
-                'pending': 'b-org',
-                'approved': 'b-grn',
-                'rejected': 'b-red',
-                'completed': 'b-teal'
-            };
-            tbody.innerHTML = recentActivity.map(a => `
-                <tr>
-                    <td style="font-weight:500;">${a.employee}</td>
-                    <td>${a.action}</td>
-                    <td>${a.dept}</td>
-                    <td style="font-size:11px;color:var(--tm)">${a.date}</td>
-                    <td><span class="badge ${statusColors[a.status]||'b-grn'}">${a.status.charAt(0).toUpperCase()+a.status.slice(1)}</span></td>
-                </tr>
-            `).join('');
+            var tbody = document.getElementById('recentBody');
+            var recent = buildRecentActivity();
+            if (!recent.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--tm)">No recent activity.</td></tr>';
+                return;
+            }
+            var statusColors = { pending: 'b-org', approved: 'b-grn', rejected: 'b-red', completed: 'b-teal', active: 'b-grn' };
+            tbody.innerHTML = recent.map(function (a) {
+                var fmt = '';
+                try { fmt = new Date(a.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { fmt = esc(a.date || ''); }
+                return '<tr>' +
+                    '<td style="font-weight:500;">' + esc(a.employee) + '</td>' +
+                    '<td>' + esc(a.action) + '</td>' +
+                    '<td>' + esc(a.dept) + '</td>' +
+                    '<td style="font-size:11px;color:var(--tm)">' + fmt + '</td>' +
+                    '<td><span class="badge ' + (statusColors[a.status] || 'b-grn') + '">' + esc(String(a.status).charAt(0).toUpperCase() + String(a.status).slice(1)) + '</span></td>' +
+                    '</tr>';
+            }).join('');
         }
 
         function renderDeptChart() {
-            const container = document.getElementById('deptChart');
-            const max = Math.max(...deptCounts.map(d => d.count));
-            container.innerHTML = `
-                <div style="display:flex;align-items:flex-end;gap:6px;height:100px;padding:4px 0;flex-wrap:wrap;">
-                    ${deptCounts.map(d => `
-                        <div style="flex:1;min-width:30px;display:flex;flex-direction:column;align-items:center;gap:4px;">
-                            <div style="font-size:9px;font-weight:600;color:var(--tm);">${d.count}</div>
-                            <div style="width:100%;max-width:30px;height:${(d.count/max)*80+4}px;min-height:6px;border-radius:4px 4px 0 0;background:linear-gradient(to top, var(--ac), var(--ach));"></div>
-                            <div style="font-size:8px;color:var(--tm);text-align:center;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;">${d.dept.slice(0,5)}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            var container = document.getElementById('deptChart');
+            var counts = {};
+            staffData.forEach(function (s) { var d = s.dept || 'General'; counts[d] = (counts[d] || 0) + 1; });
+            var keys = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+            if (!keys.length) { container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--tm);">No staff yet.</div>'; return; }
+            var max = Math.max.apply(null, keys.map(function (k) { return counts[k]; })) || 1;
+            container.innerHTML = '<div style="display:flex;align-items:flex-end;gap:6px;height:100px;padding:4px 0;flex-wrap:wrap;">' +
+                keys.map(function (d) {
+                    return '<div style="flex:1;min-width:30px;display:flex;flex-direction:column;align-items:center;gap:4px;">' +
+                        '<div style="font-size:9px;font-weight:600;color:var(--tm);">' + counts[d] + '</div>' +
+                        '<div style="width:100%;max-width:30px;height:' + Math.round((counts[d] / max) * 80 + 4) + 'px;min-height:6px;border-radius:4px 4px 0 0;background:linear-gradient(to top, var(--ac), var(--ach));"></div>' +
+                        '<div style="font-size:8px;color:var(--tm);text-align:center;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;">' + esc(d.slice(0, 5)) + '</div>' +
+                        '</div>';
+                }).join('') + '</div>';
         }
 
         function renderStatusChart() {
-            const container = document.getElementById('statusChart');
-            const active = staffData.filter(s => s.status === 'active').length;
-            const onLeave = staffData.filter(s => s.status === 'on-leave').length;
-            const inactive = staffData.filter(s => s.status === 'inactive').length;
-            const total = staffData.length;
-            const pctActive = Math.round((active / total) * 100);
-            const pctLeave = Math.round((onLeave / total) * 100);
-            const pctInactive = Math.round((inactive / total) * 100);
-            container.innerHTML = `
-                <div style="padding:8px 0;">
-                    <div style="display:flex;height:20px;border-radius:10px;overflow:hidden;background:var(--s3);">
-                        <div style="width:${pctActive}%;background:var(--green);transition:width 0.6s var(--spring);"></div>
-                        <div style="width:${pctLeave}%;background:var(--orange);transition:width 0.6s var(--spring);"></div>
-                        <div style="width:${pctInactive}%;background:var(--red);transition:width 0.6s var(--spring);"></div>
-                    </div>
-                    <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">
-                        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--tm);">
-                            <span style="width:10px;height:10px;border-radius:3px;background:var(--green);"></span>
-                            Active: ${active} (${pctActive}%)
-                        </span>
-                        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--tm);">
-                            <span style="width:10px;height:10px;border-radius:3px;background:var(--orange);"></span>
-                            On Leave: ${onLeave} (${pctLeave}%)
-                        </span>
-                        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--tm);">
-                            <span style="width:10px;height:10px;border-radius:3px;background:var(--red);"></span>
-                            Inactive: ${inactive} (${pctInactive}%)
-                        </span>
-                    </div>
-                </div>
-            `;
+            var container = document.getElementById('statusChart');
+            var active = staffData.filter(function (s) { return s.status === 'active'; }).length;
+            var onLeave = staffData.filter(function (s) { return s.status === 'on-leave'; }).length;
+            var inactive = staffData.filter(function (s) { return s.status === 'inactive'; }).length;
+            var total = staffData.length || 1;
+            var pA = Math.round((active / total) * 100), pL = Math.round((onLeave / total) * 100), pI = Math.round((inactive / total) * 100);
+            container.innerHTML = '<div style="padding:8px 0;">' +
+                '<div style="display:flex;height:20px;border-radius:10px;overflow:hidden;background:var(--s3);">' +
+                '<div style="width:' + pA + '%;background:var(--green);transition:width 0.6s var(--spring);"></div>' +
+                '<div style="width:' + pL + '%;background:var(--orange);transition:width 0.6s var(--spring);"></div>' +
+                '<div style="width:' + pI + '%;background:var(--red);transition:width 0.6s var(--spring);"></div></div>' +
+                '<div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">' +
+                '<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--tm);"><span style="width:10px;height:10px;border-radius:3px;background:var(--green);"></span> Active: ' + active + '</span>' +
+                '<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--tm);"><span style="width:10px;height:10px;border-radius:3px;background:var(--orange);"></span> On Leave: ' + onLeave + '</span>' +
+                '<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--tm);"><span style="width:10px;height:10px;border-radius:3px;background:var(--red);"></span> Inactive: ' + inactive + '</span></div></div>';
         }
 
-        // ─── STAFF PROFILE MODAL ───
+        // ─── STAFF FORM ───
+        function openStaffForm(id) {
+            if (!canManage()) { showToast('🔒 Only HR can manage staff records', 'warning'); return; }
+            editingStaffId = id || null;
+            var title = document.getElementById('staffFormTitle');
+            var rec = id ? staffData.find(function (s) { return String(s.id) === String(id); }) : null;
+            if (title) title.textContent = rec ? 'Edit Staff' : 'Add Staff';
+            document.getElementById('sfName').value = rec ? rec.name : '';
+            document.getElementById('sfRole').value = rec ? rec.role : 'Doctor';
+            document.getElementById('sfDept').value = rec ? rec.dept : 'General';
+            document.getElementById('sfStatus').value = rec ? rec.status : 'active';
+            document.getElementById('sfEmail').value = rec ? (rec.email || '') : '';
+            document.getElementById('sfPhone').value = rec ? (rec.phone || '') : '';
+            document.getElementById('sfSalary').value = rec ? (rec.salary || '') : '';
+            document.getElementById('sfAllowances').value = rec ? (rec.allowances || 0) : 0;
+            document.getElementById('sfDeductions').value = rec ? (rec.deductions || 0) : 0;
+            document.getElementById('sfJoined').value = rec && rec.joinedAt ? rec.joinedAt.slice(0, 10) : new Date().toISOString().slice(0, 10);
+            document.getElementById('staffFormModal').classList.add('show');
+        }
+        function closeStaffForm() {
+            document.getElementById('staffFormModal').classList.remove('show');
+            editingStaffId = null;
+        }
+        async function saveStaff() {
+            if (!canManage()) { showToast('🔒 Only HR can manage staff records', 'warning'); return; }
+            var name = document.getElementById('sfName').value.trim();
+            var role = document.getElementById('sfRole').value;
+            var dept = document.getElementById('sfDept').value;
+            var status = document.getElementById('sfStatus').value;
+            var email = document.getElementById('sfEmail').value.trim();
+            var phone = document.getElementById('sfPhone').value.trim();
+            var salary = parseInt(document.getElementById('sfSalary').value) || 0;
+            var allowances = parseInt(document.getElementById('sfAllowances').value) || 0;
+            var deductions = parseInt(document.getElementById('sfDeductions').value) || 0;
+            var joined = document.getElementById('sfJoined').value || new Date().toISOString().slice(0, 10);
+            if (!name) { showToast('⚠️ Name is required', 'warning'); return; }
+
+            var rec = editingStaffId ? staffData.find(function (s) { return String(s.id) === String(editingStaffId); }) : null;
+            if (rec) {
+                rec.name = name; rec.role = role; rec.dept = dept; rec.status = status; rec.email = email; rec.phone = phone;
+                rec.salary = salary; rec.allowances = allowances; rec.deductions = deductions; rec.joinedAt = joined;
+                rec.initials = initials(name);
+            } else {
+                rec = {
+                    id: uid('st'), name: name, role: role, dept: dept, status: status, email: email, phone: phone,
+                    salary: salary, allowances: allowances, deductions: deductions, joinedAt: joined,
+                    payStatus: 'pending', initials: initials(name), color: avatarColor(name),
+                    leaveBalance: { annual: 21, sick: 15, study: 5, compensatory: 0 },
+                    leaveUsed: { annual: 0, sick: 0, study: 0, compensatory: 0 },
+                    createdAt: new Date().toISOString(), createdBy: staffName(), createdById: staffId()
+                };
+                staffData.push(rec);
+            }
+            closeStaffForm();
+            renderAll();
+            await saveStaffRecord(rec);
+            showToast('✅ ' + name + ' saved to the common server', 'success');
+        }
+
+        // ─── STAFF PROFILE ───
         function openProfile(id) {
-            const staff = staffData.find(s => s.id === id);
+            var staff = staffData.find(function (s) { return String(s.id) === String(id); });
             if (!staff) return;
-            const leaveBalances = {
-                'Annual': 12,
-                'Sick': 8,
-                'Study': 4,
-                'Compensatory': 2
-            };
-            const leaveUsed = {
-                'Annual': 5,
-                'Sick': 2,
-                'Study': 1,
-                'Compensatory': 0
-            };
-            document.getElementById('profileModalTitle').textContent = `Profile — ${staff.name}`;
-            document.getElementById('profileModalBody').innerHTML = `
-                <div class="profile-top">
-                    <div class="profile-photo" style="background:${staff.color}">${staff.initials}</div>
-                    <div class="profile-info">
-                        <div class="pname">${staff.name}</div>
-                        <div class="prole">${staff.role}</div>
-                        <div class="pdept">${staff.dept}</div>
-                    </div>
-                </div>
-                <div class="profile-grid">
-                    <div class="pg-item"><div class="pg-label">Email</div><div class="pg-val">${staff.email}</div></div>
-                    <div class="pg-item"><div class="pg-label">Phone</div><div class="pg-val">${staff.phone}</div></div>
-                    <div class="pg-item"><div class="pg-label">Status</div><div class="pg-val"><span class="badge ${staff.status==='active'?'b-grn':staff.status==='on-leave'?'b-org':'b-red'}">${staff.status.charAt(0).toUpperCase()+staff.status.slice(1)}</span></div></div>
-                    <div class="pg-item"><div class="pg-label">Salary</div><div class="pg-val">KES ${staff.salary.toLocaleString()}</div></div>
-                </div>
-                <div class="section-title"><i class="ti ti-calendar"></i> Leave Balance</div>
-                ${Object.keys(leaveBalances).map(type => `
-                    <div class="leave-bar-wrap">
-                        <span class="lb-label">${type}</span>
-                        <div class="lb-track">
-                            <div class="lb-fill" style="width:${(leaveUsed[type]/leaveBalances[type])*100}%;background:${(leaveUsed[type]/leaveBalances[type])>0.8?'var(--red)':(leaveUsed[type]/leaveBalances[type])>0.5?'var(--orange)':'var(--green)'}"></div>
-                        </div>
-                        <span class="lb-val">${leaveUsed[type]} / ${leaveBalances[type]}</span>
-                    </div>
-                `).join('')}
-                <div class="fa" style="margin-top:12px;">
-                    <button class="btn-s" onclick="showToast('📄 Exporting ${staff.name}\\'s record...','info')"><i class="ti ti-download"></i> Export Record</button>
-                    <button class="btn-s" onclick="showToast('✉️ Sending email to ${staff.name}','info')"><i class="ti ti-mail"></i> Contact</button>
-                    <button class="btn-export" onclick="closeProfileModal(); showToast('🖨️ Printing profile...','info')"><i class="ti ti-printer"></i> Print</button>
-                </div>
-            `;
+            var bal = staff.leaveBalance || { annual: 21, sick: 15, study: 5, compensatory: 0 };
+            var used = staff.leaveUsed || { annual: 0, sick: 0, study: 0, compensatory: 0 };
+            var types = ['Annual', 'Sick', 'Study', 'Compensatory'];
+            document.getElementById('profileModalTitle').textContent = 'Profile — ' + staff.name;
+            document.getElementById('profileModalBody').innerHTML =
+                '<div class="profile-top">' +
+                '<div class="profile-photo" style="background:' + esc(staff.color || avatarColor(staff.name)) + '">' + esc(staff.initials || initials(staff.name)) + '</div>' +
+                '<div class="profile-info"><div class="pname">' + esc(staff.name) + '</div><div class="prole">' + esc(staff.role) + '</div><div class="pdept">' + esc(staff.dept) + '</div></div></div>' +
+                '<div class="profile-grid">' +
+                '<div class="pg-item"><div class="pg-label">Email</div><div class="pg-val">' + esc(staff.email || '—') + '</div></div>' +
+                '<div class="pg-item"><div class="pg-label">Phone</div><div class="pg-val">' + esc(staff.phone || '—') + '</div></div>' +
+                '<div class="pg-item"><div class="pg-label">Status</div><div class="pg-val"><span class="badge ' + (staff.status === 'active' ? 'b-grn' : staff.status === 'on-leave' ? 'b-org' : 'b-red') + '">' + esc(String(staff.status).charAt(0).toUpperCase() + String(staff.status).slice(1)) + '</span></div></div>' +
+                '<div class="pg-item"><div class="pg-label">Net Salary</div><div class="pg-val">' + rwf((Number(staff.salary) || 0) + (Number(staff.allowances) || 0) - (Number(staff.deductions) || 0)) + '</div></div>' +
+                '</div>' +
+                '<div class="section-title"><i class="ti ti-calendar"></i> Leave Balance</div>' +
+                types.map(function (t) {
+                    var key = t.toLowerCase(); var b = bal[key] || 0; var u = used[key] || 0; var pct = b ? Math.round((u / b) * 100) : 0;
+                    var col = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--orange)' : 'var(--green)';
+                    return '<div class="leave-bar-wrap"><span class="lb-label">' + t + '</span>' +
+                        '<div class="lb-track"><div class="lb-fill" style="width:' + pct + '%;background:' + col + '"></div></div>' +
+                        '<span class="lb-val">' + u + ' / ' + b + '</span></div>';
+                }).join('') +
+                '<div class="fa" style="margin-top:12px;">' +
+                '<button class="btn-s" onclick="openStaffForm(\'' + esc(staff.id) + '\')"><i class="ti ti-pencil"></i> Edit</button>' +
+                '<button class="btn-export" onclick="closeProfileModal(); window.print()"><i class="ti ti-printer"></i> Print</button></div>';
             document.getElementById('profileModal').classList.add('show');
         }
-
         function closeProfileModal() {
             document.getElementById('profileModal').classList.remove('show');
         }
 
-        // ─── LEAVE ACTIONS ───
-        function approveLeave(id) {
-            const leave = leaveRequests.find(l => l.id === id);
-            if (leave) {
-                leave.status = 'approved';
-                renderLeave();
-                if (typeof showToast === 'function') {
-                    showToast(`✅ ${leave.employee}'s leave approved`, 'success');
-                }
+        // ─── LEAVE ───
+        function openLeaveModal() {
+            if (!canManage()) { showToast('🔒 Only HR can manage leave', 'warning'); return; }
+            var sel = document.getElementById('lvEmployee');
+            if (sel) {
+                sel.innerHTML = activeStaff().map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.name) + '</option>'; }).join('')
+                    || '<option value="">— No active staff —</option>';
             }
+            document.getElementById('lvFrom').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('lvTo').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('lvReason').value = '';
+            document.getElementById('leaveModal').classList.add('show');
+        }
+        function closeLeaveModal() { document.getElementById('leaveModal').classList.remove('show'); }
+        async function submitLeave() {
+            if (!canManage()) { showToast('🔒 Only HR can manage leave', 'warning'); return; }
+            var empId = document.getElementById('lvEmployee').value;
+            var emp = staffData.find(function (s) { return String(s.id) === String(empId); });
+            var type = document.getElementById('lvType').value;
+            var from = document.getElementById('lvFrom').value;
+            var to = document.getElementById('lvTo').value;
+            var reason = document.getElementById('lvReason').value.trim();
+            if (!emp || !from || !to) { showToast('⚠️ Employee and dates are required', 'warning'); return; }
+            var days = daysBetween(from, to);
+            if (days < 1) { showToast('⚠️ "To" date must be on or after "From"', 'warning'); return; }
+            var rec = {
+                id: uid('lv'), employeeId: emp.id, employee: emp.name, type: type,
+                from: from, to: to, days: days, reason: reason, status: 'pending',
+                createdAt: new Date().toISOString(), createdBy: staffName(), createdById: staffId()
+            };
+            leaveRequests.unshift(rec);
+            closeLeaveModal();
+            renderAll();
+            await saveLeaveRequest(rec);
+            showToast('✅ Leave request submitted for ' + emp.name, 'success');
+        }
+        async function approveLeave(id) {
+            var l = leaveRequests.find(function (x) { return String(x.id) === String(id); });
+            if (l) { l.status = 'approved'; renderAll(); await saveLeaveRequest(l); showToast('✅ ' + l.employee + ' leave approved', 'success'); }
+        }
+        async function rejectLeave(id) {
+            var l = leaveRequests.find(function (x) { return String(x.id) === String(id); });
+            if (l) { l.status = 'rejected'; renderAll(); await saveLeaveRequest(l); showToast('❌ ' + l.employee + ' leave rejected', 'error'); }
         }
 
-        function rejectLeave(id) {
-            const leave = leaveRequests.find(l => l.id === id);
-            if (leave) {
-                leave.status = 'rejected';
-                renderLeave();
-                if (typeof showToast === 'function') {
-                    showToast(`❌ ${leave.employee}'s leave rejected`, 'error');
-                }
-            }
+        // ─── ROSTER ───
+        function changeRosterWeek(delta) {
+            rosterWeekStart.setDate(rosterWeekStart.getDate() + delta * 7);
+            rosterEntries = [];
+            loadRoster();
+        }
+        function cycleShift(cell) {
+            var empId = cell.getAttribute('data-emp');
+            var idx = parseInt(cell.getAttribute('data-idx'), 10);
+            var emp = staffData.find(function (s) { return String(s.id) === String(empId); });
+            if (!emp) return;
+            var entry = rosterEntries.find(function (e) { return String(e.employeeId) === String(empId); });
+            if (!entry) { entry = { employeeId: emp.id, employee: emp.name, shifts: ['O','O','O','O','O','O','O'] }; rosterEntries.push(entry); }
+            var cur = entry.shifts[idx] || 'O';
+            entry.shifts[idx] = SHIFT_ORDER[(SHIFT_ORDER.indexOf(cur) + 1) % SHIFT_ORDER.length];
+            renderRoster();
         }
 
-        // ─── SEARCH ───
+        // ─── PAYROLL ───
+        async function markAllPaid() {
+            if (!canManage()) { showToast('🔒 Only HR can run payroll', 'warning'); return; }
+            activeStaff().forEach(function (s) { s.payStatus = 'paid'; });
+            renderAll();
+            for (var i = 0; i < staffData.length; i++) await saveStaffRecord(staffData[i]);
+            showToast('✅ Marked all staff as paid', 'success');
+        }
+
+        // ─── RECRUITMENT ───
+        function openJobModal() {
+            if (!canManage()) { showToast('🔒 Only HR can manage recruitment', 'warning'); return; }
+            document.getElementById('jobPosition').value = '';
+            document.getElementById('jobDept').value = 'General';
+            document.getElementById('jobModal').classList.add('show');
+        }
+        function closeJobModal() { document.getElementById('jobModal').classList.remove('show'); }
+        async function submitJob() {
+            if (!canManage()) { showToast('🔒 Only HR can manage recruitment', 'warning'); return; }
+            var position = document.getElementById('jobPosition').value.trim();
+            var dept = document.getElementById('jobDept').value;
+            if (!position) { showToast('⚠️ Position is required', 'warning'); return; }
+            var rec = {
+                id: uid('job'), position: position, dept: dept, applicants: 0, status: 'open',
+                posted: new Date().toISOString().slice(0, 10), createdAt: new Date().toISOString(), createdBy: staffName(), createdById: staffId()
+            };
+            jobPostings.unshift(rec);
+            closeJobModal();
+            renderAll();
+            await saveJobPosting(rec);
+            showToast('✅ "' + position + '" posted', 'success');
+        }
+        async function advanceJob(id) {
+            var j = jobPostings.find(function (x) { return String(x.id) === String(id); });
+            if (!j) return;
+            var order = ['open', 'reviewing', 'closed', 'filled'];
+            var next = order[(order.indexOf(j.status) + 1) % order.length];
+            j.status = next;
+            renderAll();
+            await saveJobPosting(j);
+            showToast('✅ "' + j.position + '" → ' + next, 'success');
+        }
+        async function addApplicant(id) {
+            var j = jobPostings.find(function (x) { return String(x.id) === String(id); });
+            if (!j) return;
+            j.applicants = (Number(j.applicants) || 0) + 1;
+            renderAll();
+            await saveJobPosting(j);
+        }
+
+        // ─── SEARCH / FILTER / TABS ───
         function handleSearch(query) {
-            const q = query.toLowerCase().trim();
-            const rows = document.querySelectorAll('#staffBody tr, #leaveBody tr, #payrollBody tr, #recruitmentBody tr');
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = (!q || text.includes(q)) ? '' : 'none';
+            var q = query.toLowerCase().trim();
+            document.querySelectorAll('#staffBody tr, #leaveBody tr, #payrollBody tr, #recruitmentBody tr').forEach(function (row) {
+                row.style.display = (!q || row.textContent.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
             });
         }
-
-        // ─── FILTER STAFF ───
         function filterStaff(status) {
             currentStaffFilter = status;
             renderStaff();
-            // Switch to staff view
             switchTab('staff', document.querySelector('[data-tab="staff"]'));
         }
-
-        // ─── TAB SWITCHING ───
         function switchTab(name, btn) {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(function (t) { t.classList.remove('active'); });
             if (btn) btn.classList.add('active');
-            document.querySelectorAll('[id^="view-"]').forEach(v => v.style.display = 'none');
-            const target = document.getElementById('view-' + name);
+            document.querySelectorAll('[id^="view-"]').forEach(function (v) { v.style.display = 'none'; });
+            var target = document.getElementById('view-' + name);
             if (target) target.style.display = 'block';
-            if (typeof showToast === 'function') {
-                showToast('📂 Switched to ' + name.charAt(0).toUpperCase() + name.slice(1), 'info');
-            }
             if (name === 'staff') renderStaff();
             if (name === 'leave') renderLeave();
             if (name === 'shifts') renderRoster();
             if (name === 'payroll') renderPayroll();
             if (name === 'recruitment') renderRecruitment();
+            if (name === 'overview') renderAll();
         }
 
-        // ─── EXPORT STAFF CSV ───
-        function exportStaffCSV() {
-            let csv = 'Name,Role,Department,Email,Phone,Status\n';
-            staffData.forEach(s => {
-                csv += `${s.name},${s.role},${s.dept},${s.email},${s.phone},${s.status}\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `staff_${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-            if (typeof showToast === 'function') {
-                showToast('📥 Staff CSV exported', 'success');
-            }
+        // ─── CSV EXPORT ───
+        function downloadCSV(filename, headers, rows) {
+            var q = function (v) { v = (v == null) ? '' : String(v); return '"' + v.replace(/"/g, '""') + '"'; };
+            var csv = [headers.map(q).join(',')].concat(rows.map(function (r) { return r.map(q).join(','); })).join('\r\n');
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = filename;
+            document.body.appendChild(a); a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 200);
         }
+        function exportStaffCSV() {
+            downloadCSV('staff_directory.csv', ['Name', 'Role', 'Department', 'Email', 'Phone', 'Status', 'Net Pay (RWF)'],
+                staffData.map(function (s) { return [s.name, s.role, s.dept, s.email, s.phone, s.status, (Number(s.salary) || 0) + (Number(s.allowances) || 0) - (Number(s.deductions) || 0)]; }));
+            showToast('📥 Staff CSV exported', 'success');
+        }
+        function exportLeaveCSV() {
+            downloadCSV('leave_requests.csv', ['Employee', 'Type', 'From', 'To', 'Days', 'Status'],
+                leaveRequests.map(function (l) { return [l.employee, l.type, l.from, l.to, l.days, l.status]; }));
+            showToast('📥 Leave CSV exported', 'success');
+        }
+        function exportPayrollCSV() {
+            downloadCSV('payroll.csv', ['Employee', 'Role', 'Department', 'Base', 'Allowances', 'Deductions', 'Net', 'Status'],
+                activeStaff().map(function (p) { return [p.name, p.role, p.dept, p.salary, p.allowances, p.deductions, (Number(p.salary) || 0) + (Number(p.allowances) || 0) - (Number(p.deductions) || 0), p.payStatus || 'pending']; }));
+            showToast('📥 Payroll CSV exported', 'success');
+        }
+        function exportRecruitmentCSV() {
+            downloadCSV('recruitment.csv', ['Position', 'Department', 'Applicants', 'Status', 'Posted'],
+                jobPostings.map(function (r) { return [r.position, r.dept, r.applicants, r.status, r.posted]; }));
+            showToast('📥 Recruitment CSV exported', 'success');
+        }
+        function exportRecentCSV() {
+            downloadCSV('recent_activity.csv', ['Employee', 'Action', 'Department', 'Date', 'Status'],
+                buildRecentActivity().map(function (a) { return [a.employee, a.action, a.dept, a.date, a.status]; }));
+            showToast('📥 Activity CSV exported', 'success');
+        }
+
+        // ─── BRIDGE FOR THE SHARED HR ACTION BAR ───
+        window.pcHR = {
+            addStaff: function () { openStaffForm(); },
+            newLeave: function () { openLeaveModal(); },
+            newJob: function () { openJobModal(); },
+            export: function () { exportStaffCSV(); },
+            print: function () { window.print(); },
+            refresh: function () { loadStaff(); loadLeave(); loadJobs(); loadRoster(); }
+        };
 
         // ─── TOAST WRAPPER ───
         function showToast(msg, type) {
-            if (typeof window.showToast === 'function') {
-                window.showToast(msg, type || 'info');
-            } else {
-                const container = document.getElementById('toastContainer');
-                if (container) {
-                    const toast = document.createElement('div');
-                    toast.className = 'toast ' + (type || 'info');
-                    const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-                    toast.textContent = (icons[type] || 'ℹ️') + ' ' + msg;
-                    container.appendChild(toast);
-                    setTimeout(() => toast.classList.add('show'), 10);
-                    setTimeout(() => {
-                        toast.classList.remove('show');
-                        setTimeout(() => toast.remove(), 400);
-                    }, 3500);
-                } else {
-                    alert(msg);
-                }
-            }
+            if (typeof window.showToast === 'function') { window.showToast(msg, type || 'info'); return; }
+            var container = document.getElementById('toastContainer');
+            if (container) {
+                var toast = document.createElement('div');
+                toast.className = 'toast ' + (type || 'info');
+                var icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+                toast.textContent = (icons[type] || 'ℹ️') + ' ' + msg;
+                container.appendChild(toast);
+                setTimeout(function () { toast.classList.add('show'); }, 10);
+                setTimeout(function () { toast.classList.remove('show'); setTimeout(function () { toast.remove(); }, 400); }, 3500);
+            } else alert(msg);
         }
 
         // ─── KEYBOARD SHORTCUTS ───
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.ctrlKey && e.key >= '1' && e.key <= '6') {
                 e.preventDefault();
-                const tabs = document.querySelectorAll('.nav-tab');
-                const idx = parseInt(e.key) - 1;
+                var tabs = document.querySelectorAll('.nav-tab');
+                var idx = parseInt(e.key) - 1;
                 if (tabs[idx]) tabs[idx].click();
             }
-            if (e.ctrlKey && e.key === 'f') {
-                e.preventDefault();
-                document.getElementById('searchInput').focus();
-            }
-            if (e.key === 'Escape') {
-                closeProfileModal();
-            }
+            if (e.ctrlKey && e.key === 'f') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+            if (e.key === 'Escape') { closeProfileModal(); closeStaffForm(); closeLeaveModal(); closeJobModal(); }
         });
 
-        // ─── HAPTIC FEEDBACK ───
-        document.addEventListener('click', function(e) {
+        // ─── HAPTIC ───
+        document.addEventListener('click', function (e) {
             if (navigator.vibrate) {
-                const target = e.target.closest('.nav-tab, .btn-p, .btn-s, .btn-export, .kpi, .tb-btn, .user-chip');
-                if (target) navigator.vibrate(8);
+                var t = e.target.closest('.nav-tab, .btn-p, .btn-s, .btn-export, .kpi, .tb-btn, .user-chip, .rcell');
+                if (t) navigator.vibrate(8);
             }
         });
 
         // ─── INIT ───
-        loadStaffFromServer();
-        console.log('👥 PClinic HR & Staff Management Dashboard — Apple-Style Enhanced');
-        console.log('📌 Shortcuts: Ctrl+D (Dark Mode), Ctrl+/ (Help), Ctrl+L (Logout)');
-        renderStaff();
-        renderLeave();
-        renderRoster();
-        renderPayroll();
-        renderRecruitment();
-        renderRecent();
-        renderDeptChart();
-        renderStatusChart();
+        loadStaff();
+        loadLeave();
+        loadJobs();
+        loadRoster();
+        renderAll();
+        console.log('👥 PClinic HR & Staff Management — Common Server (Firestore)');
     </script>
 
 
     <script>
-        requireAuth(['hr']).then(function(staff) {
+        requireAuth(['hr', 'admin']).then(function(staff) {
             window.currentStaff = staff;
+            window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: staff }));
             console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
         }).catch(function(err) {
             console.warn('Auth guard redirect:', err && err.message);

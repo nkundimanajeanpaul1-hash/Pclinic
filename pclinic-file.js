@@ -742,6 +742,16 @@
             renderAdminActionBar(el);
             return;
         }
+        /* ── THEATER DASHBOARD: theater-management buttons only (no doctor buttons) ── */
+        if (pathStr.indexOf('theater-dashboard') !== -1) {
+            renderTheaterActionBar(el);
+            return;
+        }
+        /* ── HR DASHBOARD: HR-management buttons only (no doctor buttons) ── */
+        if (pathStr.indexOf('hr-dashboard') !== -1) {
+            renderHRActionBar(el);
+            return;
+        }
 
         var currP = p || (window.pcFile && window.pcFile && window.pcFile.patient && window.pcFile.patient()) || { id: localStorage.getItem('pclinic_active_patient') || '' };
 
@@ -882,6 +892,28 @@
             bar.appendChild(b);
         });
 
+        // Nurse dashboard: append a Theater button that opens the Operating
+        // Theater board, carrying the selected patient (if any).
+        if (pathStr.indexOf('nurse-dashboard') !== -1) {
+            var thSep = document.createElement('span');
+            thSep.className = 'ab-sep';
+            bar.appendChild(thSep);
+            var thBtn = document.createElement('button');
+            thBtn.className = 'ab-btn ab-always';
+            thBtn.innerHTML = '<i class="ti ti-scissors"></i><span>Theater</span>';
+            thBtn.style.setProperty('--c', '#5c2475');
+            thBtn.style.setProperty('--b', '#f5eaff');
+            thBtn.onclick = function () {
+                var pid = '';
+                try {
+                    var pp = (window.pcFile && window.pcFile.patient && window.pcFile.patient()) || null;
+                    pid = (pp && pp.id) || localStorage.getItem('pclinic_active_patient') || '';
+                } catch (e) {}
+                location.href = 'theater-dashboard.html' + (pid ? '?patient=' + encodeURIComponent(pid) : '');
+            };
+            bar.appendChild(thBtn);
+        }
+
         syncActionBarState(currP);
     }
 
@@ -933,6 +965,130 @@
 
     function actionBar(targetEl, p) {
         return renderClinicalActionBar(targetEl, p);
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       THEATER ACTION BAR (#dcBar) — Bar 3 for the Operating Theater
+       board. Theater-management buttons ONLY (booking, board views,
+       export, print, refresh). No doctor-dashboard / clinical patient
+       buttons. Every button dispatches to window.pcTheater, which the
+       theater-dashboard page exposes, so bookings and status changes
+       persist through the shared Common Server (Firestore).
+       ══════════════════════════════════════════════════════════════ */
+    function renderTheaterActionBar(targetEl) {
+        var el = document.getElementById('pcMasterHeader') || targetEl || document.body;
+        if (!el) return;
+        ensureActionBarStyles();
+
+        var bar = document.getElementById('dcBar');
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.id = 'dcBar';
+            bar.className = 'dc-bar noprint';
+        }
+        if (bar.getAttribute('data-theater-complete') !== '1') {
+            bar.setAttribute('data-theater-complete', '1');
+            bar.innerHTML =
+                '<button type="button" class="ab-btn ab-always" data-theater-book="1" style="--c:#1a7a32;--b:#e9f9ee;--a:#198754;"><i class="ti ti-calendar-plus"></i>Book Surgery</button>' +
+                '<span class="ab-sep"></span>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-view="overview" style="--c:#0b57d0;--b:#e8f0fe;--a:#0b57d0;"><i class="ti ti-chart-bar"></i>Overview</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-view="schedule" style="--c:#8a5a00;--b:#fff7e6;--a:#d97706;"><i class="ti ti-calendar"></i>Schedule</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-view="theaters" style="--c:#5c2475;--b:#f5eaff;--a:#7e22ce;"><i class="ti ti-bed"></i>Theaters</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-view="surgeons" style="--c:#006b73;--b:#e6f8fa;--a:#008c99;"><i class="ti ti-user-md"></i>Surgeons</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-view="procedures" style="--c:#6d28d9;--b:#f5eaff;--a:#7c3aed;"><i class="ti ti-clipboard-list"></i>Procedures</button>' +
+                '<span class="ab-sep"></span>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-export="1" style="--c:#374151;--b:#f3f4f6;--a:#4b5563;"><i class="ti ti-download"></i>Export</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-print="1" style="--c:#475569;--b:#f1f5f9;--a:#64748b;"><i class="ti ti-printer"></i>Print</button>' +
+                '<button type="button" class="ab-btn ab-always" data-theater-refresh="1" style="--c:#0066d6;--b:#eaf2ff;--a:#0284c7;"><i class="ti ti-refresh"></i>Refresh</button>';
+
+            function th(fn) { return (window.pcTheater && typeof window.pcTheater[fn] === 'function') ? window.pcTheater[fn] : null; }
+
+            var bookBtn = bar.querySelector('[data-theater-book]');
+            if (bookBtn) bookBtn.onclick = function () { var f = th('book'); if (f) f(); else alert('Theater board is still loading…'); };
+
+            var viewBtns = bar.querySelectorAll('[data-theater-view]');
+            for (var v = 0; v < viewBtns.length; v++) {
+                viewBtns[v].onclick = (function (btn) {
+                    return function () {
+                        var view = btn.getAttribute('data-theater-view');
+                        var f = th('nav'); if (f) f(view); else alert('Theater board is still loading…');
+                    };
+                })(viewBtns[v]);
+            }
+            var expBtn = bar.querySelector('[data-theater-export]');
+            if (expBtn) expBtn.onclick = function () { var f = th('export'); if (f) f(); else alert('Theater board is still loading…'); };
+            var prBtn = bar.querySelector('[data-theater-print]');
+            if (prBtn) prBtn.onclick = function () { var f = th('print'); if (f) f(); else window.print(); };
+            var rfBtn = bar.querySelector('[data-theater-refresh]');
+            if (rfBtn) rfBtn.onclick = function () { var f = th('refresh'); if (f) f(); };
+        }
+
+        // Keep the strict hierarchy inside #pcMasterHeader:
+        // 1st #pc_chuk_top_menu · 2nd #pc_common_demo_bar · 3rd #dcBar
+        var master = document.getElementById('pcMasterHeader') || el;
+        var demoBar = document.getElementById('pc_common_demo_bar');
+        if (demoBar && demoBar.parentNode) {
+            if (demoBar.nextSibling && demoBar.nextSibling !== bar) demoBar.parentNode.insertBefore(bar, demoBar.nextSibling);
+            else if (!demoBar.nextSibling) demoBar.parentNode.appendChild(bar);
+        } else if (bar.parentNode !== master) {
+            if (master.firstChild) master.insertBefore(bar, master.firstChild);
+            else master.appendChild(bar);
+        }
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       HR ACTION BAR (#dcBar) — Bar 3 for the HR & Staff Management
+       board. HR-management buttons only (add staff, leave request, job
+       posting, export, print, refresh). No doctor / clinical patient
+       buttons. Dispatches to window.pcHR exposed by hr-dashboard.html.
+       ══════════════════════════════════════════════════════════════ */
+    function renderHRActionBar(targetEl) {
+        var el = document.getElementById('pcMasterHeader') || targetEl || document.body;
+        if (!el) return;
+        ensureActionBarStyles();
+
+        var bar = document.getElementById('dcBar');
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.id = 'dcBar';
+            bar.className = 'dc-bar noprint';
+        }
+        if (bar.getAttribute('data-hr-complete') !== '1') {
+            bar.setAttribute('data-hr-complete', '1');
+            bar.innerHTML =
+                '<button type="button" class="ab-btn ab-always" data-hr-addstaff="1" style="--c:#1a7a32;--b:#e9f9ee;--a:#198754;"><i class="ti ti-user-plus"></i>Add Staff</button>' +
+                '<button type="button" class="ab-btn ab-always" data-hr-leave="1" style="--c:#8a5a00;--b:#fff7e6;--a:#d97706;"><i class="ti ti-calendar-plus"></i>New Leave</button>' +
+                '<button type="button" class="ab-btn ab-always" data-hr-job="1" style="--c:#5c2475;--b:#f5eaff;--a:#7e22ce;"><i class="ti ti-briefcase"></i>New Job</button>' +
+                '<span class="ab-sep"></span>' +
+                '<button type="button" class="ab-btn ab-always" data-hr-export="1" style="--c:#374151;--b:#f3f4f6;--a:#4b5563;"><i class="ti ti-download"></i>Export</button>' +
+                '<button type="button" class="ab-btn ab-always" data-hr-print="1" style="--c:#475569;--b:#f1f5f9;--a:#64748b;"><i class="ti ti-printer"></i>Print</button>' +
+                '<button type="button" class="ab-btn ab-always" data-hr-refresh="1" style="--c:#0066d6;--b:#eaf2ff;--a:#0284c7;"><i class="ti ti-refresh"></i>Refresh</button>';
+
+            function hf(fn) { return (window.pcHR && typeof window.pcHR[fn] === 'function') ? window.pcHR[fn] : null; }
+
+            var asBtn = bar.querySelector('[data-hr-addstaff]');
+            if (asBtn) asBtn.onclick = function () { var f = hf('addStaff'); if (f) f(); else alert('HR board is still loading…'); };
+            var lvBtn = bar.querySelector('[data-hr-leave]');
+            if (lvBtn) lvBtn.onclick = function () { var f = hf('newLeave'); if (f) f(); else alert('HR board is still loading…'); };
+            var jbBtn = bar.querySelector('[data-hr-job]');
+            if (jbBtn) jbBtn.onclick = function () { var f = hf('newJob'); if (f) f(); else alert('HR board is still loading…'); };
+            var exBtn = bar.querySelector('[data-hr-export]');
+            if (exBtn) exBtn.onclick = function () { var f = hf('export'); if (f) f(); else alert('HR board is still loading…'); };
+            var prBtn = bar.querySelector('[data-hr-print]');
+            if (prBtn) prBtn.onclick = function () { var f = hf('print'); if (f) f(); else window.print(); };
+            var rfBtn = bar.querySelector('[data-hr-refresh]');
+            if (rfBtn) rfBtn.onclick = function () { var f = hf('refresh'); if (f) f(); };
+        }
+
+        var master = document.getElementById('pcMasterHeader') || el;
+        var demoBar = document.getElementById('pc_common_demo_bar');
+        if (demoBar && demoBar.parentNode) {
+            if (demoBar.nextSibling && demoBar.nextSibling !== bar) demoBar.parentNode.insertBefore(bar, demoBar.nextSibling);
+            else if (!demoBar.nextSibling) demoBar.parentNode.appendChild(bar);
+        } else if (bar.parentNode !== master) {
+            if (master.firstChild) master.insertBefore(bar, master.firstChild);
+            else master.appendChild(bar);
+        }
     }
 
     /* ══════════════════════════════════════════════════════════════
@@ -2542,6 +2698,22 @@
             var oldDemoAdm = document.getElementById('pc_common_demo_bar');
             if (oldDemoAdm && oldDemoAdm.parentNode) oldDemoAdm.parentNode.removeChild(oldDemoAdm);
             renderAdminActionBar(document.getElementById('pcMasterHeader') || document.body);
+            return;
+        }
+        /* ── THEATER DASHBOARD: CHUK top bar + theater action bar only ── */
+        if (pathStr.indexOf('theater-dashboard') !== -1) {
+            if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
+            var oldDemoTh = document.getElementById('pc_common_demo_bar');
+            if (oldDemoTh && oldDemoTh.parentNode) oldDemoTh.parentNode.removeChild(oldDemoTh);
+            renderTheaterActionBar(document.getElementById('pcMasterHeader') || document.body);
+            return;
+        }
+        /* ── HR DASHBOARD: CHUK top bar + HR action bar only ── */
+        if (pathStr.indexOf('hr-dashboard') !== -1) {
+            if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
+            var oldDemoHr = document.getElementById('pc_common_demo_bar');
+            if (oldDemoHr && oldDemoHr.parentNode) oldDemoHr.parentNode.removeChild(oldDemoHr);
+            renderHRActionBar(document.getElementById('pcMasterHeader') || document.body);
             return;
         }
         var master = document.getElementById('pcMasterHeader');
