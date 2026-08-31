@@ -1026,10 +1026,10 @@
         // Keep the strict hierarchy inside #pcMasterHeader:
         // 1st #pc_chuk_top_menu · 2nd #pc_common_demo_bar · 3rd #dcBar
         var master = document.getElementById('pcMasterHeader') || el;
-        var demoBar = document.getElementById('pc_common_demo_bar');
-        if (demoBar && demoBar.parentNode) {
-            if (demoBar.nextSibling && demoBar.nextSibling !== bar) demoBar.parentNode.insertBefore(bar, demoBar.nextSibling);
-            else if (!demoBar.nextSibling) demoBar.parentNode.appendChild(bar);
+        var chuk = document.getElementById('pc_chuk_top_menu');
+        if (chuk && chuk.parentNode) {
+            if (chuk.nextSibling && chuk.nextSibling !== bar) chuk.parentNode.insertBefore(bar, chuk.nextSibling);
+            else if (!chuk.nextSibling) chuk.parentNode.appendChild(bar);
         } else if (bar.parentNode !== master) {
             if (master.firstChild) master.insertBefore(bar, master.firstChild);
             else master.appendChild(bar);
@@ -1081,10 +1081,12 @@
         }
 
         var master = document.getElementById('pcMasterHeader') || el;
-        var demoBar = document.getElementById('pc_common_demo_bar');
-        if (demoBar && demoBar.parentNode) {
-            if (demoBar.nextSibling && demoBar.nextSibling !== bar) demoBar.parentNode.insertBefore(bar, demoBar.nextSibling);
-            else if (!demoBar.nextSibling) demoBar.parentNode.appendChild(bar);
+        var chuk = document.getElementById('pc_chuk_top_menu');
+        // ── CHUK TOP BAR IS ALWAYS THE TOPMOST BAR ──
+        // Force the hierarchy: 1st #pc_chuk_top_menu, 2nd #dcBar (HR bar).
+        if (chuk && chuk.parentNode) {
+            if (chuk.parentNode.firstChild !== chuk) chuk.parentNode.insertBefore(chuk, chuk.parentNode.firstChild);
+            if (chuk.nextSibling !== bar) chuk.parentNode.insertBefore(bar, chuk.nextSibling);
         } else if (bar.parentNode !== master) {
             if (master.firstChild) master.insertBefore(bar, master.firstChild);
             else master.appendChild(bar);
@@ -2713,6 +2715,14 @@
             if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
             var oldDemoHr = document.getElementById('pc_common_demo_bar');
             if (oldDemoHr && oldDemoHr.parentNode) oldDemoHr.parentNode.removeChild(oldDemoHr);
+            // ── CHUK TOP BAR ON TOP OF EVERYTHING ──
+            // Re-assert the master header as the very first element of
+            // <body>, so the CHUK strip sits above the page's own
+            // nav-tabs / search row / content on the HR dashboard.
+            var _m = document.getElementById('pcMasterHeader');
+            if (_m && _m.parentNode === document.body && document.body.firstChild !== _m) {
+                document.body.insertBefore(_m, document.body.firstChild);
+            }
             renderHRActionBar(document.getElementById('pcMasterHeader') || document.body);
             return;
         }
