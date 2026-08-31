@@ -1904,14 +1904,31 @@
         // Staff, leave and job postings load from the Common Server (Firestore)
         // with a localStorage mirror so the board still paints offline. No
         // template / hardcoded records. Currency is RWF.
-        let staffData = [];      // from the `staffRecords` collection
-        let leaveRequests = [];  // from the `leaveRequests` collection
-        let jobPostings = [];    // from the `jobPostings` collection
-        let rosterEntries = [];  // current week's shifts, from `shiftRoster`
+        let staffRecordsData = []; // HR-managed records, from `staffRecords`
+        let authUsers = [];        // auth profiles from the `users` collection
+        let staffData = [];        // MERGED view = staffRecords ∪ users (the directory)
+        let leaveRequests = [];    // from the `leaveRequests` collection
+        let jobPostings = [];      // from the `jobPostings` collection
+        let rosterEntries = [];    // current week's shifts, from `shiftRoster`
         let rosterWeekStart = null;
         let currentStaffFilter = 'all';
         let currentRoleFilter = 'all';
         let editingStaffId = null;
+
+        // ─── ROLE LABELS (auth `users` roles → HR display names) ───
+        const ROLE_LABELS = {
+            doctor: 'Doctor', nurse: 'Nurse', admin: 'Admin', reception: 'Receptionist',
+            lab: 'Lab Technician', pharmacy: 'Pharmacist', radio: 'Radiologist',
+            physio: 'Physiotherapist', cashier: 'Cashier', finance: 'Finance Officer',
+            hr: 'HR Officer', inventory: 'Inventory Manager', theater: 'Theater Staff',
+            beds: 'Bed Manager', midwife: 'Midwife'
+        };
+        function roleLabel(role) {
+            role = String(role || '').trim();
+            if (!role) return 'Unassigned';
+            if (ROLE_LABELS[role.toLowerCase()]) return ROLE_LABELS[role.toLowerCase()];
+            return role.charAt(0).toUpperCase() + role.slice(1);
+        }
 
         const STAFF_KEY = 'pclinic_hr_staff';
         const LEAVE_KEY = 'pclinic_hr_leave';
@@ -2012,7 +2029,7 @@
         // ─── LOADERS (Common Server + live sync) ───
         async function loadStaff() {
             var local = localRead(STAFF_KEY, []);
-            if (local.length) { staffData = local; renderAll(); }
+            if (local.length) { staffRecordsData = local; rebuildStaff(); }
             await waitFb(6000);
             if (!fbReady()) return;
             var f = window.firebaseFunctions;
@@ -2021,11 +2038,79 @@
                     var map = [];
                     snap.forEach(function (d) { var r = d.data() || {}; r.id = r.id || d.id; map.push(r); });
                     map.sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
-                    staffData = map;
+                    staffRecordsData = map;
                     localWrite(STAFF_KEY, map);
-                    renderAll();
+                    rebuildStaff();
                 }, function (err) { console.warn('[hr] staff listener failed:', err && err.message); });
             } catch (e) { console.warn('[hr] staff listener unavailable:', e && e.message); }
+        }
+
+        // Pulls every registered staff member from the `users` collection —
+        // the same Common Server accounts used at login (doctor, admin,
+        // nurse, …). These are merged into the directory so staff who were
+        // registered before this HR board existed still appear here.
+        async function loadAuthUsers() {
+            await waitFb(6000);
+            if (!fbReady()) return;
+            var f = window.firebaseFunctions;
+            try {
+                f.onSnapshot(f.collection(window.firebaseDB, 'users'), function (snap) {
+                    var map = [];
+                    snap.forEach(function (d) {
+                        var raw = d.data() || {};
+                        map.push(mapUserToStaff(d.id, raw));
+                    });
+                    authUsers = map;
+                    rebuildStaff();
+                }, function (err) { console.warn('[hr] users listener failed:', err && err.message); });
+            } catch (e) { console.warn('[hr] users listener unavailable:', e && e.message); }
+        }
+
+        // Converts a `users/{uid}` auth profile into the HR directory shape.
+        function mapUserToStaff(uid, u) {
+            u = u || {};
+            var name = u.name || (u.staffId ? 'Staff ' + u.staffId : 'Staff');
+            return {
+                id: String(uid || ''),
+                _source: 'users',
+                staffId: String(u.staffId || ''),
+                name: name,
+                role: roleLabel(u.role),
+                dept: u.department || u.dept || 'General',
+                status: (u.active !== false) ? 'active' : 'inactive',
+                email: u.email || '',
+                phone: u.phone || '',
+                salary: 0, allowances: 0, deductions: 0,
+                payStatus: 'pending',
+                initials: initials(name),
+                color: avatarColor(name),
+                joinedAt: u.joinedAt || '',
+                leaveBalance: { annual: 21, sick: 15, study: 5, compensatory: 0 },
+                leaveUsed: { annual: 0, sick: 0, study: 0, compensatory: 0 }
+            };
+        }
+
+        // Merges the HR `staffRecords` with the `users` auth profiles into the
+        // single `staffData` directory. A user already present as a staff
+        // record (matched by staffId or name) is not duplicated.
+        function rebuildStaff() {
+            var merged = staffRecordsData.slice();
+            var known = {};
+            merged.forEach(function (s) {
+                if (s.staffId) known['id:' + String(s.staffId).toLowerCase()] = true;
+                known['name:' + String(s.name || '').trim().toLowerCase()] = true;
+            });
+            authUsers.forEach(function (u) {
+                var k = u.staffId ? 'id:' + String(u.staffId).toLowerCase() : null;
+                var nk = 'name:' + String(u.name || '').trim().toLowerCase();
+                if ((k && known[k]) || known[nk]) return;
+                merged.push(u);
+                if (k) known[k] = true;
+                known[nk] = true;
+            });
+            merged.sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
+            staffData = merged;
+            renderAll();
         }
         async function loadLeave() {
             var local = localRead(LEAVE_KEY, []);
@@ -2657,7 +2742,7 @@
             newJob: function () { openJobModal(); },
             export: function () { exportStaffCSV(); },
             print: function () { window.print(); },
-            refresh: function () { loadStaff(); loadLeave(); loadJobs(); loadRoster(); }
+            refresh: function () { loadStaff(); loadAuthUsers(); loadLeave(); loadJobs(); loadRoster(); }
         };
 
         // ─── TOAST WRAPPER ───
@@ -2697,6 +2782,7 @@
 
         // ─── INIT ───
         loadStaff();
+        loadAuthUsers();
         loadLeave();
         loadJobs();
         loadRoster();
@@ -2714,5 +2800,5 @@
             console.warn('Auth guard redirect:', err && err.message);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a33db0118c2105c0',t:'MTc4ODE5NjYzNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a33dbd551bf105c0',t:'MTc4ODE5NzE3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
