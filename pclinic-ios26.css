@@ -1,0 +1,278 @@
+/* ═══════════════════════════════════════════════════════════════════
+   PCLINIC — iOS 26 "LIQUID GLASS" THEME
+   Full-page translucent glass treatment for the Radiology and HR
+   dashboards. Loaded AFTER pclinic-ui.css and each page's inline
+   <style> so its !important rules win the cascade.
+
+   • Platinum mesh backdrop (fixed, colourful ambient washes)
+   • Liquid-glass surfaces: translucent tint + saturate blur + 1px
+     specular top highlight + layered soft shadows
+   • Superellipse corners, iOS pill buttons, spring physics
+   • Dark-mode vibrancy via [data-theme="dark"]
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────
+   1. PAGE BACKDROP — platinum mesh (fixed)
+   ───────────────────────────────────────────── */
+html,
+body {
+    background-color: #f5f5f7 !important;
+}
+body {
+    background-image:
+        radial-gradient(1100px 620px at 8% -8%,  rgba(88, 86, 214, 0.12), transparent 55%),
+        radial-gradient(1000px 660px at 94% -2%, rgba(0, 113, 227, 0.10), transparent 55%),
+        radial-gradient(920px 660px at 50% 112%, rgba(52, 199, 89, 0.08), transparent 55%) !important;
+    background-attachment: fixed !important;
+}
+.app {
+    background: transparent !important;
+}
+
+/* ─────────────────────────────────────────────
+   2. LIQUID-GLASS SURFACES
+   ───────────────────────────────────────────── */
+/* Block cards & tiles */
+.panel,
+.main-panel,
+.stat-card,
+.sc,
+.ov-c,
+.mod-card,
+.pg-item,
+.study-item {
+    background: rgba(255, 255, 255, 0.58) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.75) !important;
+    border-radius: 20px !important;
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.04),
+        0 12px 32px rgba(0, 0, 0, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.panel:hover,
+.stat-card:hover,
+.sc:hover,
+.ov-c:hover,
+.mod-card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.06),
+        0 18px 44px rgba(0, 0, 0, 0.10),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+/* KPI chips — keep their compact pill feel */
+.kpi {
+    background: rgba(255, 255, 255, 0.62) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+    backdrop-filter: saturate(180%) blur(20px) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+    border-radius: 18px !important;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s !important;
+}
+.kpi:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.82) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+/* ─────────────────────────────────────────────
+   3. TOP STRIPS (search row, nav tabs, secondary nav)
+   ───────────────────────────────────────────── */
+.srow,
+.nav-tabs,
+.tb2,
+.search-row {
+    background: rgba(255, 255, 255, 0.55) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(22px) !important;
+    backdrop-filter: saturate(180%) blur(22px) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.7) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Search fields */
+.sw,
+.search-wrap {
+    background: rgba(255, 255, 255, 0.66) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(14px) !important;
+    backdrop-filter: saturate(180%) blur(14px) !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 20px !important;
+}
+
+/* ─────────────────────────────────────────────
+   4. INPUTS
+   ───────────────────────────────────────────── */
+.fi,
+.ta {
+    background: rgba(255, 255, 255, 0.66) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(12px) !important;
+    backdrop-filter: saturate(180%) blur(12px) !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.09) !important;
+    border-radius: 12px !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    transition: border-color 0.2s, box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.2s !important;
+}
+.fi:focus,
+.ta:focus {
+    background: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.14), inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* ─────────────────────────────────────────────
+   5. BUTTONS — iOS pills with spring physics
+   ───────────────────────────────────────────── */
+.btn-p,
+.btn-s,
+.btn-export,
+.prt,
+.nav-tab,
+.t2tab {
+    border-radius: 980px !important;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.34s cubic-bezier(0.4, 0, 0.2, 1),
+        background 0.25s, filter 0.25s !important;
+}
+.btn-p:hover,
+.btn-s:hover,
+.btn-export:hover,
+.prt:hover,
+.nav-tab:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12) !important;
+}
+.btn-p:active,
+.btn-s:active,
+.btn-export:active,
+.prt:active,
+.nav-tab:active {
+    transform: scale(0.94);
+    transition-duration: 0.08s !important;
+}
+
+/* Primary keeps its own accent colour, gains an iOS glow */
+.btn-p {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+.btn-p:hover {
+    filter: brightness(1.05);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Secondary / export buttons → frosted pill */
+.btn-s,
+.btn-export,
+.prt {
+    background: rgba(255, 255, 255, 0.66) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(14px) !important;
+    backdrop-filter: saturate(180%) blur(14px) !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ─────────────────────────────────────────────
+   6. MODALS — floating glass sheet
+   ───────────────────────────────────────────── */
+.modal {
+    background: rgba(255, 255, 255, 0.72) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(28px) !important;
+    backdrop-filter: saturate(180%) blur(28px) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+    border-radius: 22px !important;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.12),
+        0 28px 80px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+/* ─────────────────────────────────────────────
+   7. TABLES — softer header on glass
+   ───────────────────────────────────────────── */
+.tbl th,
+.wtbl th {
+    background: rgba(0, 0, 0, 0.03) !important;
+    color: rgba(0, 0, 0, 0.55) !important;
+}
+.tbl tbody tr:hover td,
+.wtbl tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.55) !important;
+}
+
+/* ─────────────────────────────────────────────
+   8. ENTRANCE — gentle spring rise on load
+   ───────────────────────────────────────────── */
+@keyframes ios26Rise {
+    from { opacity: 0; transform: translateY(12px) scale(0.985); }
+    to   { opacity: 1; transform: none; }
+}
+.panel,
+.main-panel,
+.stat-card,
+.sc,
+.ov-c,
+.mod-card {
+    animation: ios26Rise 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ─────────────────────────────────────────────
+   9. DARK MODE — vibrancy
+   ───────────────────────────────────────────── */
+[data-theme="dark"] body,
+body.dark-mode {
+    background-color: #0d0d12 !important;
+    background-image:
+        radial-gradient(1100px 620px at 8% -8%, rgba(120, 118, 240, 0.16), transparent 55%),
+        radial-gradient(1000px 660px at 94% -2%, rgba(0, 113, 227, 0.14), transparent 55%),
+        radial-gradient(920px 660px at 50% 112%, rgba(52, 199, 89, 0.10), transparent 55%) !important;
+}
+[data-theme="dark"] .panel,
+[data-theme="dark"] .main-panel,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .sc,
+[data-theme="dark"] .ov-c,
+[data-theme="dark"] .mod-card,
+[data-theme="dark"] .pg-item,
+[data-theme="dark"] .study-item,
+[data-theme="dark"] .kpi,
+[data-theme="dark"] .srow,
+[data-theme="dark"] .nav-tabs,
+[data-theme="dark"] .tb2,
+[data-theme="dark"] .search-row,
+[data-theme="dark"] .modal {
+    background: rgba(32, 32, 40, 0.66) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.4),
+        0 14px 36px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+[data-theme="dark"] .fi,
+[data-theme="dark"] .ta,
+[data-theme="dark"] .sw,
+[data-theme="dark"] .search-wrap {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+[data-theme="dark"] .btn-s,
+[data-theme="dark"] .btn-export,
+[data-theme="dark"] .prt {
+    background: rgba(255, 255, 255, 0.10) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+/* ─────────────────────────────────────────────
+   10. REDUCED MOTION
+   ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .panel, .main-panel, .stat-card, .sc, .ov-c, .mod-card {
+        animation: none !important;
+    }
+}

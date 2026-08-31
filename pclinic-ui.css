@@ -1276,6 +1276,24 @@ body.compact .patient-card, body.compact .card {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    /* ── STICKY APP CHROME ──
+       Keeps the CHUK top bar (and the action/demo bars beneath it)
+       pinned to the top of every page while the content scrolls.
+       Frosted so scrolling content blurs beneath it, iOS-style. */
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 500 !important;
+    background: rgba(245, 245, 247, 0.78) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.10) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
+}
+[data-theme="dark"] #pcMasterHeader.pc-master-header,
+body.dark-mode #pcMasterHeader.pc-master-header {
+    background: rgba(22, 22, 25, 0.78) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
 }
 
 .chuk-top-menu {
@@ -1284,8 +1302,10 @@ body.compact .patient-card, body.compact .card {
     align-items: center !important;
     gap: 8px !important;
     padding: 8px 10px 8px 12px !important;
-    background: #f0f0f5 !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    background: rgba(245, 245, 247, 0.55) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(22px) !important;
+    backdrop-filter: saturate(180%) blur(22px) !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.07) !important;
     border-bottom: none !important;
     border-top-left-radius: 16px !important;
     border-top-right-radius: 16px !important;
