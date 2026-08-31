@@ -32,19 +32,22 @@ service firebase.storage {
           || request.resource.contentType.matches('video/(mp4|webm)');
     }
 
-    // The object name must be exactly radiology/{orderId}/{mediaId} with a safe
-    // extension, so an uploader cannot drop a file somewhere else in the bucket
-    // or overwrite another study's object.
-    function pathIsSane() {
-      return request.path.size() == 4
-        && request.path[0] == 'radiology'
-        && request.path[1].matches('^[A-Za-z0-9._-]{1,120}$')
-        && request.path[2].matches('^[A-Za-z0-9._-]{1,160}$')
-        && request.path[3].matches('^(jpg|jpeg|png|webp|gif|mp4|webm)$');
+    // The object name must be exactly radiology/{orderId}/{mediaId}.{ext} with a
+    // safe extension, so an uploader cannot drop a file somewhere else in the
+    // bucket or overwrite another study's object. orderId/mediaId/ext are the
+    // match block's own captured variables — radiology/{orderId}/{mediaId}.{ext}
+    // is 3 slash-separated segments (mediaId and ext share one segment, split on
+    // the dot by the match pattern itself), so re-deriving this from
+    // request.path and indexing a 4th segment never matches and previously
+    // caused every upload to be denied.
+    function pathIsSane(orderId, mediaId, ext) {
+      return orderId.matches('^[A-Za-z0-9._-]{1,120}$')
+        && mediaId.matches('^[A-Za-z0-9._-]{1,160}$')
+        && ext in ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'webm'];
     }
 
     match /radiology/{orderId}/{mediaId}.{ext} {
-      allow write: if isSignedInStaff() && withinSizeLimit() && allowedContentType() && pathIsSane();
+      allow write: if isSignedInStaff() && withinSizeLimit() && allowedContentType() && pathIsSane(orderId, mediaId, ext);
       // Deleting is allowed only for the object the same staff member uploaded,
       // and only as an undo: signed reports are immutable, media records are not
       // deleted by the browser (see firestore.rules), so a stray file can be
