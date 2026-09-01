@@ -1117,6 +1117,7 @@
                 '<button type="button" class="ab-btn ab-always" id="radSelBtn" style="--c:#0066d6;--b:#eaf2ff;--a:#0071e3;"><i class="ti ti-user-search"></i>Select patient</button>' +
                 '<span id="radBarPatient" style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:9px;background:rgba(0,0,0,.05);font-size:11.5px;font-weight:700;color:var(--tp,#1c1c1e);max-width:300px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">🔒 No patient selected</span>' +
                 '<button type="button" class="ab-btn ab-always ab-media" id="radMediaBtn" title="Attach images to this patient\'s study and write the radiology report. Works whether or not the study has been started." style="--c:#ffffff;--b:linear-gradient(180deg,#ff8a3d,#f2600c);--a:#ff9b57;"><i class="ti ti-photo-plus"></i>Add radiology result<span class="ab-badge" id="radMediaCnt">0</span></button>' +
+                '<button type="button" class="ab-btn ab-always" id="radViewerBtn" title="Open the DICOM viewer for the selected patient\'s study — view, window/level, zoom and upload images." style="--c:#ffffff;--b:linear-gradient(180deg,#3a3a3c,#1c1c1e);--a:#4a9eff;"><i class="ti ti-photo-scan"></i>Open DICOM viewer</button>' +
                 '<span class="ab-sep"></span>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-view="overview" style="--c:#0b57d0;--b:#e8f0fe;--a:#0b57d0;"><i class="ti ti-chart-bar"></i>Overview</button>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-view="request" style="--c:#8a5a00;--b:#fff7e6;--a:#d97706;"><i class="ti ti-shield-lock"></i>Request policy</button>' +
@@ -1142,6 +1143,22 @@
                         return;
                     }
                     window.dispatchEvent(new CustomEvent('pcRadioAddMedia', { detail: { patient: p } }));
+                });
+            }
+
+            // "Open DICOM viewer": same patient gate as the media button, its own
+            // event so the dashboard can open the viewer without any workflow hop.
+            var viewerBtn = document.getElementById('radViewerBtn');
+            if (viewerBtn) {
+                viewerBtn.addEventListener('click', function () {
+                    var p = window.__pcRadioSelectedPatient || (window.currentPatient || null);
+                    if (!p || !p.id) {
+                        if (window.pcToast) window.pcToast('🔒 Select a patient first, then open the DICOM viewer.', 'warning', 6000);
+                        var sb2 = document.getElementById('radSelBtn');
+                        if (sb2) sb2.click();
+                        return;
+                    }
+                    window.dispatchEvent(new CustomEvent('pcRadioOpenViewer', { detail: { patient: p } }));
                 });
             }
 
@@ -1226,10 +1243,18 @@
                 chip.textContent = '🔒 No patient selected';
             }
         }
-        var btns = bar.querySelectorAll('[data-rad-view="report"], [data-rad-print], #radMediaBtn');
+        var btns = bar.querySelectorAll('[data-rad-view="report"], [data-rad-print], #radMediaBtn, #radViewerBtn');
         for (var i = 0; i < btns.length; i++) {
             if (on) btns[i].classList.remove('ab-context-off');
             else btns[i].classList.add('ab-context-off');
+        }
+        var viewerBtn = document.getElementById('radViewerBtn');
+        if (viewerBtn) {
+            viewerBtn.title = on
+                ? 'Open the DICOM viewer for the selected patient\'s study — view, window/level, zoom and upload images.'
+                : 'Select a patient first — the viewer shows the images of one patient\'s study.';
+            if (!on) viewerBtn.setAttribute('aria-disabled', 'true');
+            else viewerBtn.removeAttribute('aria-disabled');
         }
         // The media button is the one action a radiologist is waiting on, so its
         // locked state is spelled out rather than only implied by low opacity.

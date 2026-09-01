@@ -913,6 +913,33 @@
         }
         window.addEventListener('pcRadioAddMedia', handleAddMediaRequest);
 
+        /* ── the bar's "Open DICOM viewer" button ──
+           Prefer the study already selected in the worklist; otherwise resolve
+           the patient's open studies exactly like "Add radiology result" does. */
+        function handleOpenViewerRequest(event) {
+            var patient = (event && event.detail && event.detail.patient) || currentPatient;
+            if (!patient) { notify('Select a patient first.', 'warning'); return; }
+            if (!currentPatient || String(currentPatient.id) !== String(patient.id)) setActivePatient(patient);
+            if (currentOrder && String(currentOrder.patientId) === String(patient.id)) {
+                openImageViewer(currentOrder, patient);
+                return;
+            }
+            var orders = openOrdersForPatient(patient);
+            if (!orders.length) {
+                // Nothing open: fall back to the newest reported study so its filed
+                // images can still be reviewed, else say so.
+                var reported = (radiologyState.orders || []).filter(function (o) {
+                    return String(o.patientId || '') === String(patient.id) && stateOf(o) === 'reported';
+                }).sort(function (a, b) { return timestampMillis(b.orderedAt) - timestampMillis(a.orderedAt); });
+                if (reported.length) { openImageViewer(reported[0], patient); return; }
+                notify('No imaging study for ' + nameOf(patient) + '. An imaging request must exist before images can be viewed or attached.', 'info', 9000);
+                return;
+            }
+            if (orders.length === 1) { openImageViewer(orders[0], patient); return; }
+            pickStudyForMedia(patient, orders);
+        }
+        window.addEventListener('pcRadioOpenViewer', handleOpenViewerRequest);
+
         /* ── "Add radiology result" → open the DICOM viewer right away ── */
         function viewerOrderFor(order, patient) {
             return {

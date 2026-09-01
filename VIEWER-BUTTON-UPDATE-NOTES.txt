@@ -1,0 +1,31 @@
+PClinic — Update package (2026-09-02): "Open DICOM viewer" button on the radiology action bar
+=============================================================================================
+
+Extract this zip into your Pclinic project folder (the folder that contains
+radio-dashboard.html). It overwrites the 4 files below and adds this note.
+
+WHAT GOES WHERE
+---------------
+1) pclinic-file.js                         -> project ROOT
+   New #radViewerBtn "Open DICOM viewer" button next to "Add radiology result",
+   locked until a patient is selected; dispatches the pcRadioOpenViewer event.
+
+2) radio-dashboard.js                      -> project ROOT
+   New handleOpenViewerRequest listener: opens the shared DICOM viewer
+   (PcDicomViewer.open, canManage:true) for the selected/open study.
+   Never changes workflow state, never jumps to the report writer.
+
+3) radio-dashboard.html                    -> project ROOT
+   Cache tags bumped to ?v=20260902_VIEWERBTN for pclinic-file.js and
+   radio-dashboard.js. REQUIRED — without this browsers keep the old scripts.
+
+4) tests/radiology-media-button.test.mjs   -> tests/ folder
+   4 new tests for the button (12/12 pass). Run: npm --prefix tests run test:media-button
+
+DEPLOY
+------
+  - GitHub Pages: commit + push the 3 root files.
+  - Firebase Hosting:  firebase deploy --only hosting
+    (Hosting is still serving the Aug-30 files, which have no DICOM viewer at all —
+     this deploy is what makes the viewer appear on pclinic-20d81.web.app.)
+  - Then hard-refresh the radiology page (Ctrl/Cmd+Shift+R).
