@@ -664,5 +664,10 @@
         });
     }
 
-    window.PcDicomViewer = { open: open, parseDicomImage: parseDicomImage };
+    window.PcDicomViewer = { open: open, parseDicomImage: parseDicomImage, preload: function () { return ensureLibs().catch(function () {}); } };
+
+    // Preload the imaging libraries in the background as soon as this script
+    // loads, so the first "Add radiology result" click opens the viewer
+    // immediately instead of waiting on the CDN fetch then.
+    ensureLibs().catch(function () {});
 })();

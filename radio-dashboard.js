@@ -906,17 +906,36 @@
                 notify('No open imaging study for ' + nameOf(patient) + '. Studies already reported have their images filed against the signed report.', 'info', 9000);
                 return;
             }
-            if (orders.length === 1) { openRadiologyResult(orders[0], patient); return; }
+            // Open the DICOM viewer immediately — no intermediate state change,
+            // no report-writer hop. One open study: open it straight away.
+            if (orders.length === 1) { openImageViewer(orders[0], patient); return; }
             pickStudyForMedia(patient, orders);
         }
         window.addEventListener('pcRadioAddMedia', handleAddMediaRequest);
+
+        /* ── "Add radiology result" → open the DICOM viewer right away ── */
+        function viewerOrderFor(order, patient) {
+            return {
+                id: String(order && order.id),
+                study: studyOf(order),
+                patientName: String((order && order.patientName) || nameOf(patient) || ''),
+                patientId: order && order.patientId
+            };
+        }
+
+        function openImageViewer(order, patient) {
+            if (!order) { notify('Select a study first.', 'warning'); return; }
+            if (!window.PcDicomViewer) { notify('The DICOM viewer did not load.', 'error', 6000); return; }
+            window.PcDicomViewer.open(viewerOrderFor(order, patient), { canManage: true });
+        }
+        window.openImageViewer = openImageViewer;
 
         function pickStudyForMedia(patient, orders) {
             var open = function () {
                 if (!(window.pcFile && typeof window.pcFile.sheet === 'function')) {
                     // No sheet host on this page: fall back to the newest study and
                     // say so, rather than silently attaching to a guessed order.
-                    openRadiologyResult(orders[0], patient);
+                    openImageViewer(orders[0], patient);
                     return;
                 }
                 window.pcFile.sheet({
@@ -941,7 +960,7 @@
                             go.style.cssText = 'font-size:10px;font-weight:800;color:#f2600c';
                             go.textContent = 'ATTACH';
                             row.appendChild(go);
-                            row.onclick = function () { close(); setTimeout(function () { openRadiologyResult(order, patient); }, 60); };
+                            row.onclick = function () { close(); setTimeout(function () { openImageViewer(order, patient); }, 60); };
                             body.appendChild(row);
                         });
                     }
