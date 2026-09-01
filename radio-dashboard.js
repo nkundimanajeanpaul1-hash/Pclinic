@@ -737,7 +737,7 @@
             setting('Signed-in staff', (window.currentStaff && window.currentStaff.name ? window.currentStaff.name : 'Radiologist') + ' · role ' + (window.currentStaff && window.currentStaff.role || 'radio'), null);
             document.getElementById('modalBg').classList.add('show');
         };
-        window.closeModal = function () { document.getElementById('modalBg').classList.remove('show'); };
+        window.closeModal = function () { var m = document.getElementById('modalBg'); if (m) m.classList.remove('show'); };
 
         function resolveSearchPatient(query) {
             const text = String(query || '').trim().toLowerCase();
@@ -785,8 +785,8 @@
             syncThemeControl();
             notify(dark ? 'Dark theme enabled.' : 'Light theme enabled.', 'info');
         };
-        window.openShortcuts = function () { document.getElementById('shortcutsModal').classList.add('show'); };
-        window.closeShortcuts = function () { document.getElementById('shortcutsModal').classList.remove('show'); };
+        window.openShortcuts = function () { var m = document.getElementById('shortcutsModal'); if (m) m.classList.add('show'); };
+        window.closeShortcuts = function () { var m = document.getElementById('shortcutsModal'); if (m) m.classList.remove('show'); };
         window.handleLogout = function () { return window.pclinicLogout ? window.pclinicLogout() : window.location.replace('login.html'); };
 
         // Retained only so legacy viewer controls fail closed rather than error.
@@ -914,29 +914,47 @@
         window.addEventListener('pcRadioAddMedia', handleAddMediaRequest);
 
         /* ── the bar's "Open DICOM viewer" button ──
-           Prefer the study already selected in the worklist; otherwise resolve
-           the patient's open studies exactly like "Add radiology result" does. */
+           ALWAYS lands in the PClinic DICOM Viewer page. Every study of the
+           selected patient (open first, then reported; cancelled excluded) is
+           listed in the viewer's explorer; the first one is displayed and the
+           others are one click away inside the viewer. A patient with no study
+           still gets the viewer, empty, with the reason shown in the viewport —
+           never just a toast. */
+        function viewerStudiesFor(patient) {
+            if (!patient) return [];
+            var mine = (radiologyState.orders || []).filter(function (o) {
+                return (String(o.patientId || '') === String(patient.id) ||
+                        String(o.patientId || '') === String(patient.mrn || '\u0000')) &&
+                    stateOf(o) !== 'cancelled';
+            });
+            var rank = { pending: 0, 'in-progress': 0, acquired: 0, reporting: 0, reported: 1 };
+            mine.sort(function (a, b) {
+                var r = (rank[stateOf(a)] ?? 2) - (rank[stateOf(b)] ?? 2);
+                return r || (timestampMillis(b.orderedAt) - timestampMillis(a.orderedAt));
+            });
+            return mine.map(function (o) {
+                var v = viewerOrderFor(o, patient);
+                v.state = stateOf(o);
+                return v;
+            });
+        }
+
         function handleOpenViewerRequest(event) {
             var patient = (event && event.detail && event.detail.patient) || currentPatient;
             if (!patient) { notify('Select a patient first.', 'warning'); return; }
             if (!currentPatient || String(currentPatient.id) !== String(patient.id)) setActivePatient(patient);
-            if (currentOrder && String(currentOrder.patientId) === String(patient.id)) {
-                openImageViewer(currentOrder, patient);
-                return;
+            if (!window.PcDicomViewer) { notify('The DICOM viewer did not load. Refresh the page (Ctrl/Cmd+Shift+R).', 'error', 8000); return; }
+            var studies = viewerStudiesFor(patient);
+            var first = null;
+            if (currentOrder && String(currentOrder.patientId) === String(patient.id) && stateOf(currentOrder) !== 'cancelled') {
+                first = studies.filter(function (s) { return String(s.id) === String(currentOrder.id); })[0] || null;
             }
-            var orders = openOrdersForPatient(patient);
-            if (!orders.length) {
-                // Nothing open: fall back to the newest reported study so its filed
-                // images can still be reviewed, else say so.
-                var reported = (radiologyState.orders || []).filter(function (o) {
-                    return String(o.patientId || '') === String(patient.id) && stateOf(o) === 'reported';
-                }).sort(function (a, b) { return timestampMillis(b.orderedAt) - timestampMillis(a.orderedAt); });
-                if (reported.length) { openImageViewer(reported[0], patient); return; }
-                notify('No imaging study for ' + nameOf(patient) + '. An imaging request must exist before images can be viewed or attached.', 'info', 9000);
-                return;
+            if (!first) first = studies[0] || null;
+            if (first) {
+                var live = window.pcRadiology && window.pcRadiology.orderById(first.id);
+                if (live) selectStudy(live);
             }
-            if (orders.length === 1) { openImageViewer(orders[0], patient); return; }
-            pickStudyForMedia(patient, orders);
+            window.PcDicomViewer.open(first || { id: '', patientId: patient.id, patientName: nameOf(patient), study: '' }, { canManage: true, studies: studies });
         }
         window.addEventListener('pcRadioOpenViewer', handleOpenViewerRequest);
 

@@ -1132,13 +1132,17 @@
                 '<button type="button" class="ab-btn ab-always" data-rad-settings="1" title="Radiology settings" style="--c:#475569;--b:#f1f5f9;--a:#64748b;"><i class="ti ti-settings"></i>Settings</button>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-logout="1" title="Sign out securely" style="--c:#8a1f1a;--b:#ffebe9;--a:#c2413b;"><i class="ti ti-logout"></i>Logout</button>';
 
-            var mediaBtn = document.getElementById('radMediaBtn');
+            // Look the controls up INSIDE the bar: on first render #dcBar is still
+            // detached (it is inserted into #pcMasterHeader further down), so
+            // document.getElementById() returned null here and no handler was ever
+            // attached — the buttons rendered but did nothing.
+            var mediaBtn = bar.querySelector('#radMediaBtn');
             if (mediaBtn) {
                 mediaBtn.addEventListener('click', function () {
                     var p = window.__pcRadioSelectedPatient || (window.currentPatient || null);
                     if (!p || !p.id) {
                         if (window.pcToast) window.pcToast('🔒 Select a patient first, then attach the study image.', 'warning', 6000);
-                        var sb = document.getElementById('radSelBtn');
+                        var sb = bar.querySelector('#radSelBtn');
                         if (sb) sb.click();
                         return;
                     }
@@ -1148,13 +1152,13 @@
 
             // "Open DICOM viewer": same patient gate as the media button, its own
             // event so the dashboard can open the viewer without any workflow hop.
-            var viewerBtn = document.getElementById('radViewerBtn');
+            var viewerBtn = bar.querySelector('#radViewerBtn');
             if (viewerBtn) {
                 viewerBtn.addEventListener('click', function () {
                     var p = window.__pcRadioSelectedPatient || (window.currentPatient || null);
                     if (!p || !p.id) {
                         if (window.pcToast) window.pcToast('🔒 Select a patient first, then open the DICOM viewer.', 'warning', 6000);
-                        var sb2 = document.getElementById('radSelBtn');
+                        var sb2 = bar.querySelector('#radSelBtn');
                         if (sb2) sb2.click();
                         return;
                     }
@@ -1162,7 +1166,7 @@
                 });
             }
 
-            var selBtn = document.getElementById('radSelBtn');
+            var selBtn = bar.querySelector('#radSelBtn');
             if (selBtn) selBtn.onclick = function() {
                 if (window.radioSelectPatient) window.radioSelectPatient();
                 else if (window.pcFile && window.pcFile.openAdminPatientPicker) window.pcFile.openAdminPatientPicker();

@@ -35,6 +35,8 @@
     var filteredSet = [];
     var libsPromise = null;
     var drag = null;
+    var onMove = null;       // window mousemove handler (removed on close)
+    var onUp = null;         // window mouseup handler (removed on close)
     var plainEl = null;       // <img>/<video> for non-dicom
 
     function el(tag, cls, text) {
@@ -351,13 +353,51 @@
     }
 
     /* ── left tree ──────────────────────────────────────────── */
+    // Weasis-style explorer: the patient, then EVERY study passed in
+    // openOpts.studies (the current one expanded with its images), so the
+    // radiographer can move between the patient's studies without leaving
+    // the viewer. A single study (the old callers) renders exactly as before.
+    function studyLabel(o) {
+        var name = (o && (o.study || o.id)) || 'Study';
+        var state = o && o.state ? String(o.state).replace('-', ' ') : '';
+        return state ? name + ' · ' + state : name;
+    }
+    function switchStudy(order) {
+        if (!order || !currentOrder || String(order.id) === String(currentOrder.id)) return;
+        clearPlain();
+        currentOrder = order;
+        currentItem = null; imageSet = []; filteredSet = [];
+        var meta = root.querySelector('.dv-meta'); if (meta) meta.replaceChildren();
+        showOverlayMessage('Loading study images…');
+        renderTree();
+        reload();
+    }
     function renderTree() {
         var tree = root.querySelector('.dv-tree');
         tree.replaceChildren();
         var patient = (currentOrder && currentOrder.patientName) || 'Patient';
         var pNode = el('div', 'dv-node patient', patient);
         tree.appendChild(pNode);
-        var sNode = el('div', 'dv-node study', (currentOrder && (currentOrder.study || currentOrder.id)) || 'Study');
+        var studies = (openOpts && Array.isArray(openOpts.studies) && openOpts.studies.length) ? openOpts.studies : [];
+        var hasCurrent = currentOrder && currentOrder.id;
+        if (!hasCurrent && !studies.length) {
+            tree.appendChild(el('div', 'dv-empty', 'No imaging study for this patient yet. Images can be attached once a clinician has placed an imaging request.'));
+            return;
+        }
+        // Other studies of the same patient, selectable.
+        studies.forEach(function (o) {
+            if (hasCurrent && String(o.id) === String(currentOrder.id)) return;
+            var n = el('div', 'dv-node study dv-study-pick', studyLabel(o));
+            n.setAttribute('data-study-id', String(o.id));
+            n.title = 'Open this study';
+            n.style.cursor = 'pointer';
+            n.onclick = function () { switchStudy(o); };
+            tree.appendChild(n);
+        });
+        if (!hasCurrent) return;
+        var sNode = el('div', 'dv-node study active-study', studyLabel(currentOrder));
+        sNode.style.color = 'var(--dv-tx)';
+        sNode.style.fontWeight = '600';
         tree.appendChild(sNode);
         if (!filteredSet.length) {
             tree.appendChild(el('div', 'dv-empty', 'No images attached to this study.'));
@@ -438,7 +478,8 @@
             drag = { x: e.clientX, y: e.clientY, button: e.button, vp: null };
             if (currentImage && window.cornerstone) drag.vp = window.cornerstone.getViewport(enabledElement);
         });
-        window.addEventListener('mousemove', function (e) {
+        onMove = function (e) {
+            if (!root) return;
             updatePixel(e);
             if (!drag) return;
             var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
@@ -461,8 +502,10 @@
                 applyPlainTransform(plainEl, s);
             }
             updateStatus();
-        });
-        window.addEventListener('mouseup', function () { drag = null; });
+        };
+        onUp = function () { drag = null; };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
         target.addEventListener('wheel', function (e) {
             e.preventDefault();
             if (currentImage && window.cornerstone) {
@@ -533,6 +576,10 @@
 
     /* ── upload (radio / entry mode) ────────────────────────── */
     function doUpload() {
+        if (!currentOrder || !currentOrder.id) {
+            toast('No imaging study to attach images to — a clinician must place an imaging request for this patient first.');
+            return;
+        }
         var input = el('input');
         input.type = 'file'; input.multiple = true;
         input.accept = (window.pcRadioMedia && window.pcRadioMedia.ACCEPT ? window.pcRadioMedia.ACCEPT : '') + ',.dcm,application/dicom';
@@ -672,6 +719,13 @@
     }
 
     function reload() {
+        if (!currentOrder || !currentOrder.id) {
+            // Patient-only open: the frame is up, there is just nothing to fetch.
+            imageSet = []; filteredSet = [];
+            renderTree();
+            showOverlayMessage('No imaging study for this patient yet.\nImages can be attached once a clinician has placed an imaging request.');
+            return;
+        }
         fetchMedia(currentOrder, function (err, set) {
             if (err) { toast('Could not load images: ' + err.message); showOverlayMessage('Could not load study images\n' + err.message); return; }
             imageSet = set;
@@ -687,17 +741,23 @@
     }
 
     function close() {
+        if (window.cornerstone && enabledElement) { try { window.cornerstone.disable(enabledElement); } catch (e) {} }
         if (root && root.parentNode) root.parentNode.removeChild(root);
-        root = null; enabledElement = null; currentImage = null; currentItem = null; plainEl = null;
+        root = null; enabledElement = null; enablePromise = null; currentImage = null; currentItem = null; plainEl = null; drag = null;
         window.removeEventListener('keydown', onKey);
+        if (onMove) window.removeEventListener('mousemove', onMove);
+        if (onUp) window.removeEventListener('mouseup', onUp);
+        onMove = null; onUp = null;
     }
     function onKey(e) {
         if (e.key === 'Escape') close();
     }
 
     function open(order, opts) {
+        if (root) close();
         currentOrder = order || {};
         openOpts = opts || {};
+        imageSet = []; filteredSet = []; currentFrame = 0; totalFrames = 1;
         // Build the UI immediately — the dark viewer frame must appear the
         // instant the button is clicked, with no wait on the CDN imaging
         // libraries. Those load lazily only when a DICOM is actually opened.
@@ -706,7 +766,7 @@
         reload();
     }
 
-    window.PcDicomViewer = { open: open, parseDicomImage: parseDicomImage, preload: function () { return ensureLibs().catch(function () {}); } };
+    window.PcDicomViewer = { open: open, close: close, isOpen: function () { return !!root; }, parseDicomImage: parseDicomImage, preload: function () { return ensureLibs().catch(function () {}); } };
 
     // Preload the imaging libraries in the background as soon as this script
     // loads, so the first "Add radiology result" click opens the viewer
