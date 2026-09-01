@@ -23,6 +23,7 @@
     var DICOMPARSER_URL = 'https://unpkg.com/dicom-parser@1.8.21/dist/dicomParser.min.js';
 
     var root = null;          // overlay DOM
+    var centerEl = null;      // the .dv-center viewport element (always present)
     var enabledElement = null;// cornerstone-enabled canvas wrapper
     var enablePromise = null; // resolves when cornerstone.enable() is done
     var currentItem = null;   // the media record being displayed
@@ -76,10 +77,15 @@
     }
 
     function toast(msg, ok) {
-        if (!root) return;
-        var t = el('div', 'dv-toast' + (ok ? ' ok' : ''), msg);
-        root.appendChild(t);
-        setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 4500);
+        if (root) {
+            var t = el('div', 'dv-toast' + (ok ? ' ok' : ''), msg);
+            root.appendChild(t);
+            setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 4500);
+        } else if (window.pcToast) {
+            window.pcToast(String(msg || ''), ok ? 'success' : 'error', 5000);
+        } else if (window.sharedShowToast) {
+            window.sharedShowToast(String(msg || ''), ok ? 'success' : 'error', 5000);
+        }
     }
 
     /* ── DICOM decode (uncompressed, single/multi-frame) ─────── */
@@ -210,9 +216,24 @@
     }
 
     /* ── cornerstone display ─────────────────────────────────── */
+    function clearCornerstone() {
+        // Remove any cornerstone canvas wrapper left in the viewport.
+        var center = root.querySelector('.dv-center');
+        if (!center) return;
+        Array.prototype.forEach.call(center.querySelectorAll('.cornerstone-canvas-wrapper, canvas'), function (n) {
+            if (n.parentNode) n.parentNode.removeChild(n);
+        });
+        if (window.cornerstone && enabledElement) {
+            try { window.cornerstone.disable(enabledElement); } catch (e) {}
+        }
+        enabledElement = null;
+        enablePromise = null;
+        currentImage = null;
+    }
     function clearPlain() {
         if (plainEl && plainEl.parentNode) plainEl.parentNode.removeChild(plainEl);
         plainEl = null;
+        clearCornerstone();
         var overlay = root.querySelector('.dv-overlay-msg');
         if (overlay) overlay.remove();
     }
@@ -231,25 +252,41 @@
         setStatus('Pixel', '—');
     }
 
+    // Lazily load cornerstone + dicom-parser and enable the viewport element.
+    // Called only when a DICOM is actually opened, so the viewer frame itself
+    // never depends on the CDN.
+    function ensureEnabled() {
+        if (enablePromise) return enablePromise;
+        var center = root.querySelector('.dv-center');
+        enablePromise = ensureLibs().then(function () {
+            return window.cornerstone.enable(center);
+        }).then(function (e) {
+            enabledElement = e;
+            return e;
+        });
+        return enablePromise;
+    }
+
     function displayDicom(item, url) {
         clearPlain();
         var overlay = root.querySelector('.dv-overlay-msg');
         if (overlay) overlay.remove();
         var center = root.querySelector('.dv-center');
-        var loading = el('div', 'dv-loading', 'Decoding DICOM…');
+        var loading = el('div', 'dv-loading', 'Loading image engine…');
         center.appendChild(loading);
 
-        fetch(url).then(function (resp) {
-            if (!resp.ok) throw new Error('Could not fetch image data (' + resp.status + '). If this is a CORS error, configure CORS on the storage bucket.');
+        var gotBuf = fetch(url).then(function (resp) {
+            if (!resp.ok) throw new Error('Could not fetch image data (' + resp.status + ').');
             return resp.arrayBuffer();
-        }).then(function (buf) {
+        });
+        var gotEngine = ensureEnabled();
+
+        Promise.all([gotBuf, gotEngine]).then(function (res) {
             if (loading.parentNode) loading.parentNode.removeChild(loading);
-            var image = parseDicomImage(buf, (currentOrder && currentOrder.id) || 'study', 0);
+            var image = parseDicomImage(res[0], (currentOrder && currentOrder.id) || 'study', 0);
             currentImage = image;
             totalFrames = image.numFrames || 1; currentFrame = 0;
-            return (enablePromise || Promise.resolve()).then(function () {
-                return window.cornerstone.displayImage(enabledElement, image);
-            });
+            return window.cornerstone.displayImage(enabledElement, image);
         }).then(function () {
             updateStatus();
         }).catch(function (e) {
@@ -364,7 +401,7 @@
         if (slot) slot.textContent = value;
     }
     function updateStatus() {
-        if (currentImage) {
+        if (currentImage && window.cornerstone && enabledElement) {
             var vp = window.cornerstone.getViewport(enabledElement);
             setStatus('Frame', (currentFrame + 1) + '/' + totalFrames);
             setStatus('Zoom', Math.round((vp.scale || 1) * 100) + '%');
@@ -372,7 +409,7 @@
         }
     }
     function updatePixel(event) {
-        if (!currentImage || !window.cornerstone) return;
+        if (!currentImage || !window.cornerstone || !enabledElement) return;
         var rect = enabledElement.getBoundingClientRect();
         var x = event.clientX - rect.left, y = event.clientY - rect.top;
         if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
@@ -392,19 +429,20 @@
         Array.prototype.forEach.call(root.querySelectorAll('[data-tool]'), function (b) {
             b.classList.toggle('active', b.getAttribute('data-tool') === t);
         });
-        if (enabledElement) enabledElement.style.cursor = t === 'wl' ? 'crosshair' : (t === 'pan' ? 'grab' : 'ns-resize');
+        if (centerEl) centerEl.style.cursor = t === 'wl' ? 'crosshair' : (t === 'pan' ? 'grab' : 'ns-resize');
     }
-    function bindTools() {
-        enabledElement.addEventListener('mousedown', function (e) {
+    function bindTools(target) {
+        centerEl = target;
+        target.addEventListener('mousedown', function (e) {
             if (!currentImage && !plainEl) return;
             drag = { x: e.clientX, y: e.clientY, button: e.button, vp: null };
-            if (currentImage) drag.vp = window.cornerstone.getViewport(enabledElement);
+            if (currentImage && window.cornerstone) drag.vp = window.cornerstone.getViewport(enabledElement);
         });
         window.addEventListener('mousemove', function (e) {
             updatePixel(e);
             if (!drag) return;
             var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-            if (currentImage) {
+            if (currentImage && window.cornerstone) {
                 var vp = window.cornerstone.getViewport(enabledElement);
                 if (activeTool === 'wl' && drag.button === 0) {
                     vp.voi.windowWidth = Math.max(1, (drag.vp.voi.windowWidth || 1) + dy);
@@ -416,16 +454,18 @@
                     vp.scale = Math.max(0.1, Math.min(20, (drag.vp.scale || 1) * (1 + dy / 200)));
                 }
                 window.cornerstone.setViewport(enabledElement, vp);
-            } else if (plainEl && plainEl.tagName === 'IMG') {
-                var sc = (drag.vp && drag.vp.scale) || 1;
-                // plain image zoom via transform scale on wheel only; pan via translate
+            } else if (plainEl) {
+                var s = parseFloat(plainEl.dataset.scale) || 1;
+                plainEl.dataset.tx = ((parseFloat(plainEl.dataset.tx) || 0) + dx) + 'px';
+                plainEl.dataset.ty = ((parseFloat(plainEl.dataset.ty) || 0) + dy) + 'px';
+                applyPlainTransform(plainEl, s);
             }
             updateStatus();
         });
         window.addEventListener('mouseup', function () { drag = null; });
-        enabledElement.addEventListener('wheel', function (e) {
+        target.addEventListener('wheel', function (e) {
             e.preventDefault();
-            if (currentImage) {
+            if (currentImage && window.cornerstone) {
                 var vp = window.cornerstone.getViewport(enabledElement);
                 var f = e.deltaY < 0 ? 1.1 : 0.9;
                 vp.scale = Math.max(0.1, Math.min(20, (vp.scale || 1) * f));
@@ -434,10 +474,14 @@
                 var s = (parseFloat(plainEl.dataset.scale) || 1) * (e.deltaY < 0 ? 1.1 : 0.9);
                 s = Math.max(0.2, Math.min(10, s));
                 plainEl.dataset.scale = s;
-                plainEl.style.transform = 'scale(' + s + ')';
+                applyPlainTransform(plainEl, s);
             }
             updateStatus();
         }, { passive: false });
+    }
+    function applyPlainTransform(img, s) {
+        img.style.transform = 'translate(' + (parseFloat(img.dataset.tx) || 0) + 'px,' +
+            (parseFloat(img.dataset.ty) || 0) + 'px) scale(' + s + ')';
     }
 
     /* ── toolbar actions ────────────────────────────────────── */
@@ -470,11 +514,11 @@
         currentFrame = next;
         // re-parse the same item at the new frame index
         var item = currentItem;
-        fetch(item.signed.url).then(function (r) { return r.arrayBuffer(); }).then(function (buf) {
+        ensureEnabled().then(function () {
+            return fetch(item.signed.url).then(function (r) { return r.arrayBuffer(); });
+        }).then(function (buf) {
             currentImage = parseDicomImage(buf, (currentOrder && currentOrder.id) || 'study', currentFrame);
-            return (enablePromise || Promise.resolve()).then(function () {
-                return window.cornerstone.displayImage(enabledElement, currentImage);
-            });
+            return window.cornerstone.displayImage(enabledElement, currentImage);
         }).then(function () { updateStatus(); }).catch(function (e) { toast(e.message); });
     }
     function doFit() { doReset(); }
@@ -606,10 +650,9 @@
 
         inp1.addEventListener('input', applyFilters);
 
-        enablePromise = window.cornerstone.enable(center).then(function (e) {
-            enabledElement = e;
-            bindTools();
-        }).catch(function (e) { showOverlayMessage('Image engine failed to start: ' + e.message); });
+        // Bind mouse tools to the center element right away (works for plain
+        // images/video too). Cornerstone is enabled lazily in displayDicom().
+        bindTools(center);
     }
 
     function tool(key, label, handler, icon) {
@@ -655,13 +698,12 @@
     function open(order, opts) {
         currentOrder = order || {};
         openOpts = opts || {};
-        ensureLibs().then(function () {
-            buildUI();
-            window.addEventListener('keydown', onKey);
-            reload();
-        }).catch(function (e) {
-            toast('Could not start the viewer: ' + e.message);
-        });
+        // Build the UI immediately — the dark viewer frame must appear the
+        // instant the button is clicked, with no wait on the CDN imaging
+        // libraries. Those load lazily only when a DICOM is actually opened.
+        buildUI();
+        window.addEventListener('keydown', onKey);
+        reload();
     }
 
     window.PcDicomViewer = { open: open, parseDicomImage: parseDicomImage, preload: function () { return ensureLibs().catch(function () {}); } };
