@@ -362,15 +362,26 @@ test('with a patient selected the viewer button dispatches pcRadioOpenViewer car
   assert.ok(btn.classList.contains('ab-context-off'), 'deselecting must lock it again');
 });
 
-test('the bar and the dashboard agree on the open-viewer event, and it opens the DICOM viewer', () => {
+test('the bar and the dashboard agree on the open-viewer event, and it ALWAYS opens the DICOM viewer page', () => {
   const bar = readFileSync(resolve(ROOT, 'pclinic-file.js'), 'utf8');
   const dash = readFileSync(resolve(ROOT, 'radio-dashboard.js'), 'utf8');
   assert.match(bar, /new CustomEvent\('pcRadioOpenViewer'/, 'the bar no longer dispatches pcRadioOpenViewer');
   assert.match(dash, /addEventListener\('pcRadioOpenViewer'/, 'the dashboard no longer listens for pcRadioOpenViewer');
-  const handler = dash.slice(dash.indexOf('function handleOpenViewerRequest'), dash.indexOf('window.addEventListener(\'pcRadioOpenViewer\''));
-  assert.match(handler, /openImageViewer\(/, 'the handler must open the DICOM viewer');
-  assert.doesNotMatch(handler, /radiologyTransition|openReportFor|openRadiologyResult/, 'opening the viewer must not change workflow state or hop to the report writer');
-  const opener = dash.slice(dash.indexOf('function openImageViewer'), dash.indexOf('window.openImageViewer'));
-  assert.match(opener, /PcDicomViewer\.open\(/, 'openImageViewer must call the shared DICOM viewer');
-  assert.match(opener, /canManage:\s*true/, 'radiology must be able to upload from the viewer');
+  const handler = dash.slice(dash.indexOf('function handleOpenViewerRequest'), dash.indexOf("window.addEventListener('pcRadioOpenViewer'"));
+  assert.match(handler, /PcDicomViewer\.open\(/, 'the handler must open the PClinic DICOM viewer page');
+  assert.match(handler, /studies:\s*studies/, 'the patient\'s studies must be handed to the viewer explorer');
+  assert.match(handler, /canManage:\s*true/, 'radiology must be able to upload from the viewer');
+  // A patient with no study must still land in the viewer (empty), not in a toast.
+  assert.match(handler, /first \|\| \{ id: ''/, 'no study must still open the viewer with an empty study');
+  assert.doesNotMatch(handler, /radiologyTransition|openReportFor|openRadiologyResult|pickStudyForMedia/, 'opening the viewer must not change workflow state, hop to the report writer, or stop at a chooser');
+});
+
+test('the viewer itself tolerates a patient with no study and lists every study handed to it', () => {
+  const viewer = readFileSync(resolve(ROOT, 'pclinic-dicom-viewer.js'), 'utf8');
+  assert.match(viewer, /if \(!currentOrder \|\| !currentOrder\.id\)/, 'reload() must short-circuit when there is no study');
+  assert.match(viewer, /openOpts\.studies/, 'the explorer must render openOpts.studies');
+  assert.match(viewer, /function switchStudy/, 'studies in the explorer must be switchable');
+  assert.match(viewer, /if \(root\) close\(\);/, 'a second open must replace, not stack, the viewer');
+  assert.match(viewer, /window\.removeEventListener\('mousemove', onMove\)/, 'window listeners must be removed on close');
+  assert.match(viewer, /close: close, isOpen:/, 'close/isOpen must be exported');
 });
