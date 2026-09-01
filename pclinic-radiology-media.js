@@ -24,7 +24,8 @@
     var MAX_BYTES = 25 * 1024 * 1024;
     var ALLOWED = {
         'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
-        'image/gif': 'gif', 'video/mp4': 'mp4', 'video/webm': 'webm'
+        'image/gif': 'gif', 'video/mp4': 'mp4', 'video/webm': 'webm',
+        'application/dicom': 'dcm'
     };
     // Bucket name lives in firebase-config.js (firebaseApp.options.storageBucket).
     // New Firebase projects use the `firebasestorage.app` domain; the legacy
@@ -60,12 +61,16 @@
     function inspect(file) {
         if (!file) return { ok: false, reason: 'No file was selected.' };
         var mime = String(file.type || '').toLowerCase();
+        // Some operating systems report DICOM files with an empty MIME type.
+        // Recognise them by their .dcm extension so real studies can be viewed.
+        var name = String(file.name || '').toLowerCase();
+        if (!mime && name.slice(-4) === '.dcm') mime = 'application/dicom';
         if (!Object.prototype.hasOwnProperty.call(ALLOWED, mime)) {
             return {
                 ok: false,
                 reason: 'Only these formats are accepted: ' + Object.keys(ALLOWED).join(', ') +
-                    '. A raw DICOM series (' + (String(file.name).split('.').pop() || 'unknown') +
-                    ') cannot be displayed here and must stay in PACS.'
+                    ', plus DICOM (.dcm). A file of type ' + (mime || 'unknown') +
+                    ' cannot be displayed here.'
             };
         }
         if (!(file.size > 0)) return { ok: false, reason: 'The file is empty.' };

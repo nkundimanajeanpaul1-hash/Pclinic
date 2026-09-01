@@ -1,0 +1,176 @@
+/* ============================================================
+   PCLINIC — DICOM VIEWER  (Weasis-style dark imaging workstation)
+   One shared component rendered full-page inside BOTH the
+   radiology image-entry page and the doctor's image-result
+   page, so the two are pixel-identical. Palette matched to a
+   Weasis v4.7.3 dark LAF: #1b1b1b viewport, #2f2f2f panels,
+   #3c3c3c toolbars, light gray text.
+   ============================================================ */
+
+#pcdv-root, #pcdv-root * { box-sizing: border-box; }
+
+#pcdv-root {
+  --dv-bg0: #1b1b1b;   /* viewport / deepest */
+  --dv-bg1: #232323;   /* panels */
+  --dv-bg2: #2f2f2f;   /* toolbars / headers */
+  --dv-bg3: #3c3c3c;   /* hover / raised */
+  --dv-bd:  #3a3a3a;   /* borders */
+  --dv-tx:  #d7d7d7;   /* primary text */
+  --dv-dim: #8a8a8a;   /* secondary text */
+  --dv-ac:  #4a9eff;   /* accent blue */
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  background: var(--dv-bg1);
+  color: var(--dv-tx);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── TOP TOOLBAR ─────────────────────────────────────────── */
+#pcdv-root .dv-top {
+  height: 42px;
+  flex: 0 0 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  background: var(--dv-bg2);
+  border-bottom: 1px solid var(--dv-bd);
+}
+#pcdv-root .dv-top .dv-title {
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: .2px;
+  white-space: nowrap;
+  margin-right: 6px;
+  display: flex; align-items: center; gap: 7px;
+}
+#pcdv-root .dv-top .dv-title .dv-logo {
+  width: 20px; height: 20px; border-radius: 5px;
+  background: linear-gradient(135deg, #4a9eff, #2b5fd0);
+  color: #fff; font-size: 11px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+#pcdv-root .dv-top .dv-sub { font-size: 11px; color: var(--dv-dim); font-weight: 400; }
+#pcdv-root .dv-sep { width: 1px; height: 22px; background: var(--dv-bd); margin: 0 4px; flex: 0 0 1px; }
+#pcdv-root .dv-spacer { flex: 1; }
+#pcdv-root .dv-tool {
+  min-width: 30px; height: 30px; padding: 0 7px;
+  border: none; border-radius: 6px; background: transparent;
+  color: var(--dv-tx); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  font-size: 12px; white-space: nowrap;
+}
+#pcdv-root .dv-tool:hover { background: var(--dv-bg3); }
+#pcdv-root .dv-tool:disabled { opacity: .35; cursor: default; }
+#pcdv-root .dv-tool.active { background: var(--dv-ac); color: #fff; }
+#pcdv-root .dv-tool svg { width: 18px; height: 18px; display: block; }
+#pcdv-root .dv-tool.primary { background: #2563eb; color: #fff; }
+#pcdv-root .dv-tool.primary:hover { background: #1d4ed8; }
+#pcdv-root .dv-tool.ghost { border: 1px solid var(--dv-bd); }
+
+/* ── MAIN ROW ───────────────────────────────────────────── */
+#pcdv-root .dv-main { flex: 1; display: flex; min-height: 0; }
+
+/* left explorer */
+#pcdv-root .dv-left {
+  flex: 0 0 300px; width: 300px;
+  display: flex; flex-direction: column; min-height: 0;
+  background: var(--dv-bg1); border-right: 1px solid var(--dv-bd);
+}
+#pcdv-root .dv-left .dv-panel-title {
+  height: 34px; flex: 0 0 34px; display: flex; align-items: center; gap: 8px;
+  padding: 0 10px; font-weight: 700; font-size: 12px;
+  text-transform: uppercase; letter-spacing: .4px; color: var(--dv-tx);
+  background: var(--dv-bg2); border-bottom: 1px solid var(--dv-bd);
+}
+#pcdv-root .dv-search {
+  flex: 0 0 auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 7px;
+}
+#pcdv-root .dv-search input {
+  width: 100%; height: 30px; padding: 0 10px 0 30px;
+  border: 1px solid var(--dv-bd); border-radius: 6px; background: var(--dv-bg0);
+  color: var(--dv-tx); font-size: 12px; outline: none;
+}
+#pcdv-root .dv-search input:focus { border-color: var(--dv-ac); }
+#pcdv-root .dv-search .dv-sbox { position: relative; }
+#pcdv-root .dv-search .dv-sbox svg {
+  position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; color: var(--dv-dim);
+}
+#pcdv-root .dv-tree {
+  flex: 1; overflow: auto; padding: 6px 8px;
+}
+#pcdv-root .dv-node { padding: 4px 6px; border-radius: 5px; cursor: default; }
+#pcdv-root .dv-node:hover { background: var(--dv-bg3); }
+#pcdv-root .dv-node.patient { font-weight: 700; font-size: 12.5px; margin-top: 4px; }
+#pcdv-root .dv-node.study { color: var(--dv-dim); font-size: 11.5px; padding-left: 18px; }
+#pcdv-root .dv-node.series {
+  display: flex; align-items: center; gap: 8px; padding: 4px 6px 4px 30px;
+  cursor: pointer; font-size: 12px;
+}
+#pcdv-root .dv-node.series.active { background: var(--dv-ac); color: #fff; }
+#pcdv-root .dv-node .dv-thumb {
+  width: 30px; height: 30px; border-radius: 4px; background: #000 center/cover no-repeat;
+  border: 1px solid var(--dv-bd); flex: 0 0 30px; display: flex; align-items: center;
+  justify-content: center; font-size: 9px; color: var(--dv-dim); overflow: hidden;
+}
+#pcdv-root .dv-node .dv-series-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#pcdv-root .dv-empty { padding: 14px 10px; color: var(--dv-dim); font-size: 12px; }
+
+/* center viewport */
+#pcdv-root .dv-center {
+  flex: 1; min-width: 0; position: relative;
+  background: #000; display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+#pcdv-root .dv-center canvas { display: block; }
+#pcdv-root .dv-center img.dv-plain { max-width: 100%; max-height: 100%; object-fit: contain; }
+#pcdv-root .dv-center video.dv-plain { max-width: 100%; max-height: 100%; }
+#pcdv-root .dv-center .dv-overlay-msg {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px; color: var(--dv-dim);
+  font-size: 13px; text-align: center; padding: 20px;
+}
+#pcdv-root .dv-center .dv-loading { font-size: 12px; color: #4a9eff; }
+
+/* right panel */
+#pcdv-root .dv-right {
+  flex: 0 0 280px; width: 280px; min-height: 0; overflow: auto;
+  background: var(--dv-bg1); border-left: 1px solid var(--dv-bd);
+  display: flex; flex-direction: column;
+}
+#pcdv-root .dv-right .dv-panel-title {
+  height: 34px; flex: 0 0 34px; display: flex; align-items: center;
+  padding: 0 10px; font-weight: 700; font-size: 12px; text-transform: uppercase;
+  letter-spacing: .4px; background: var(--dv-bg2); border-bottom: 1px solid var(--dv-bd);
+}
+#pcdv-root .dv-meta { padding: 10px 12px; font-size: 12px; }
+#pcdv-root .dv-meta .dv-row { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px solid #2a2a2a; }
+#pcdv-root .dv-meta .dv-row .k { color: var(--dv-dim); }
+#pcdv-root .dv-meta .dv-row .v { color: var(--dv-tx); text-align: right; word-break: break-word; }
+
+/* ── BOTTOM STATUS BAR ───────────────────────────────────── */
+#pcdv-root .dv-bottom {
+  height: 26px; flex: 0 0 26px;
+  display: flex; align-items: center; gap: 18px;
+  padding: 0 12px; background: var(--dv-bg2);
+  border-top: 1px solid var(--dv-bd); font-size: 11.5px; color: var(--dv-dim);
+  white-space: nowrap; overflow: hidden;
+}
+#pcdv-root .dv-bottom b { color: var(--dv-tx); font-weight: 600; }
+
+/* ── TOAST ───────────────────────────────────────────────── */
+#pcdv-root .dv-toast {
+  position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+  background: #c0392b; color: #fff; padding: 8px 14px; border-radius: 7px;
+  font-size: 12.5px; box-shadow: 0 6px 24px rgba(0,0,0,.4); max-width: 90%;
+  z-index: 10; animation: dv-in .2s ease;
+}
+#pcdv-root .dv-toast.ok { background: #1a7f37; }
+@keyframes dv-in { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }

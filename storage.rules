@@ -29,7 +29,8 @@ service firebase.storage {
 
     function allowedContentType() {
       return request.resource.contentType.matches('image/(jpeg|png|webp|gif)')
-          || request.resource.contentType.matches('video/(mp4|webm)');
+          || request.resource.contentType.matches('video/(mp4|webm)')
+          || request.resource.contentType.matches('application/dicom');
     }
 
     // The object name must be exactly radiology/{orderId}/{mediaId}.{ext} with a
@@ -43,7 +44,7 @@ service firebase.storage {
     function pathIsSane(orderId, mediaId, ext) {
       return orderId.matches('^[A-Za-z0-9._-]{1,120}$')
         && mediaId.matches('^[A-Za-z0-9._-]{1,160}$')
-        && ext in ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'webm'];
+        && ext in ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'webm', 'dcm'];
     }
 
     match /radiology/{orderId}/{mediaId}.{ext} {

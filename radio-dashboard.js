@@ -986,6 +986,15 @@
             const bar = document.createElement('div');
             bar.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0';
             wrap.appendChild(bar);
+            const viewerBtn = document.createElement('button');
+            viewerBtn.type = 'button';
+            viewerBtn.textContent = 'Open DICOM viewer';
+            viewerBtn.style.cssText = 'font:inherit;font-size:11px;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid #d1d1d6;background:#1b1b1b;color:#fff;cursor:pointer';
+            viewerBtn.onclick = function () {
+                if (window.PcDicomViewer) window.PcDicomViewer.open(order, { canManage: canManage });
+                else notify('The DICOM viewer did not load.', 'warning');
+            };
+            bar.appendChild(viewerBtn);
             if (canManage) {
                 const pick = document.createElement('input');
                 pick.type = 'file'; pick.multiple = true; pick.accept = (window.pcRadioMedia && pcRadioMedia.ACCEPT) || '';
@@ -995,7 +1004,7 @@
             }
             const hint = document.createElement('span');
             hint.style.cssText = 'font-size:10px;color:#6e6e73';
-            hint.textContent = 'JPEG / PNG / WebP / GIF / MP4 / WebM, 25 MB each. DICOM does not upload here.';
+            hint.textContent = 'JPEG / PNG / WebP / GIF / MP4 / WebM / DICOM (.dcm), 25 MB each.';
             bar.appendChild(hint);
             const panel = document.createElement('div');
             panel.className = 'pc-media-host';

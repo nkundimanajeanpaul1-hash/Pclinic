@@ -261,7 +261,7 @@ service cloud.firestore {
           && request.resource.data.get('kind', null) in ['image', 'video']
           && request.resource.data.get('mime', null) in [
               'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-              'video/mp4', 'video/webm']
+              'video/mp4', 'video/webm', 'application/dicom']
           && request.resource.data.get('bytes', 0) is int
           && request.resource.data.get('bytes', null) > 0
           && request.resource.data.get('bytes', null) <= 26214400
