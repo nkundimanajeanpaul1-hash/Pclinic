@@ -209,7 +209,7 @@ test('the radiology bar carries a prominent Add-image-result button', () => {
   const { win, byId } = boot();
   const btn = byId.get('radMediaBtn');
   assert.ok(btn, 'the bar was rendered but #radMediaBtn is missing');
-  assert.match(btn.textContent, /Add image result/);
+  assert.match(btn.textContent, /Add radiology result/);
   assert.ok(String(btn.className).includes('ab-media'), 'button is missing its prominence class');
   assert.equal(win.document.body.querySelectorAll('#radMediaBtn').length, 1, 'button must appear exactly once');
   assert.equal(btn.children.filter((c) => c.tagName === 'SPAN' && /ab-badge/.test(c.className)).length, 1,
@@ -317,4 +317,60 @@ test('upload does not require the study to have been started', () => {
   assert.doesNotMatch(handler, /stateOf\((\w+)\)\s*!==\s*'cancelled'\s*\)\s*\.length\s*===\s*0/, 'media must not be gated on transition state');
   assert.match(handler, /openOrdersForPatient/, 'the handler must resolve studies for the selected patient');
   assert.doesNotMatch(handler, /radiologyTransition/, 'media must not depend on the transition callable');
+});
+
+/* ── the "Open DICOM viewer" button on the same bar ───────────── */
+
+test('the radiology bar carries an Open-DICOM-viewer button', () => {
+  const { win, byId } = boot();
+  const btn = byId.get('radViewerBtn');
+  assert.ok(btn, 'the bar was rendered but #radViewerBtn is missing');
+  assert.match(btn.textContent, /Open DICOM viewer/);
+  assert.equal(win.document.body.querySelectorAll('#radViewerBtn').length, 1, 'button must appear exactly once');
+  const icon = btn.children.find((c) => c.tagName === 'I');
+  assert.ok(icon, 'button needs its icon');
+  assert.match(icon.className, /ti-photo-scan/);
+});
+
+test('the viewer button is locked without a patient and never opens the viewer for nobody', () => {
+  const { win, byId } = boot();
+  const btn = byId.get('radViewerBtn');
+  assert.ok(btn.classList.contains('ab-context-off'), 'button should start disabled');
+  assert.equal(btn.getAttribute('aria-disabled'), 'true');
+  assert.match(btn.title, /Select a patient first/);
+  const seen = [];
+  win.addEventListener('pcRadioOpenViewer', (e) => seen.push(e.detail));
+  const toastsBefore = win.__toasts.length;
+  btn.click();
+  assert.equal(seen.length, 0, 'a locked button must not dispatch an open-viewer request');
+  assert.equal(win.__toasts.length, toastsBefore + 1, 'a locked click must explain itself');
+  assert.match(win.__toasts[win.__toasts.length - 1].m, /Select a patient first/);
+});
+
+test('with a patient selected the viewer button dispatches pcRadioOpenViewer carrying that patient', () => {
+  const { win, byId } = boot();
+  win.pcRadioBar.setPatient({ id: '1002', mrn: '1002', firstName: 'Djuma', lastName: 'Nshuti' });
+  const btn = byId.get('radViewerBtn');
+  assert.equal(btn.classList.contains('ab-context-off'), false);
+  assert.equal(btn.getAttribute('aria-disabled'), null);
+  const seen = [];
+  win.addEventListener('pcRadioOpenViewer', (e) => seen.push(e.detail && e.detail.patient));
+  btn.click();
+  assert.equal(seen.length, 1, 'must dispatch exactly once');
+  assert.equal(String(seen[0].id), '1002');
+  win.pcRadioBar.setPatient(null);
+  assert.ok(btn.classList.contains('ab-context-off'), 'deselecting must lock it again');
+});
+
+test('the bar and the dashboard agree on the open-viewer event, and it opens the DICOM viewer', () => {
+  const bar = readFileSync(resolve(ROOT, 'pclinic-file.js'), 'utf8');
+  const dash = readFileSync(resolve(ROOT, 'radio-dashboard.js'), 'utf8');
+  assert.match(bar, /new CustomEvent\('pcRadioOpenViewer'/, 'the bar no longer dispatches pcRadioOpenViewer');
+  assert.match(dash, /addEventListener\('pcRadioOpenViewer'/, 'the dashboard no longer listens for pcRadioOpenViewer');
+  const handler = dash.slice(dash.indexOf('function handleOpenViewerRequest'), dash.indexOf('window.addEventListener(\'pcRadioOpenViewer\''));
+  assert.match(handler, /openImageViewer\(/, 'the handler must open the DICOM viewer');
+  assert.doesNotMatch(handler, /radiologyTransition|openReportFor|openRadiologyResult/, 'opening the viewer must not change workflow state or hop to the report writer');
+  const opener = dash.slice(dash.indexOf('function openImageViewer'), dash.indexOf('window.openImageViewer'));
+  assert.match(opener, /PcDicomViewer\.open\(/, 'openImageViewer must call the shared DICOM viewer');
+  assert.match(opener, /canManage:\s*true/, 'radiology must be able to upload from the viewer');
 });
