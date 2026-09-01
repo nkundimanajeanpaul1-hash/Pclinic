@@ -290,8 +290,13 @@ service cloud.firestore {
         && request.resource.data.get('id', null) == mediaId
         && safeMediaWrite()
         && exists(/databases/$(database)/documents/orders/$(request.resource.data.get('orderId', null)))
-        && get(/databases/$(database)/documents/orders/$(request.resource.data.get('orderId', null))).data.get('patientId', '')
-             == request.resource.data.get('patientId', '');
+        // patientId is a NUMBER on patients/orders (e.g. 1001) but the media
+        // uploader stores it as a STRING ("1001"). A raw `==` here is
+        // type-sensitive, so number != string and every upload was denied as
+        // "permission denied" even though the IDs were the same. Cast both
+        // sides to string so the linkage check is type-agnostic.
+        && string(get(/databases/$(database)/documents/orders/$(request.resource.data.get('orderId', null))).data.get('patientId', ''))
+             == string(request.resource.data.get('patientId', ''));
 
       allow update: if false;
       // Uploader-only, admin included: letting a supervisor remove a
