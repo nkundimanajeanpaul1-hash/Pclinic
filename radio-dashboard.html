@@ -1269,8 +1269,8 @@
     <link rel="stylesheet" href="pclinic-ios26.css?v=20260831_IOS26" />
     <!-- ═══ DICOM VIEWER (shared with doctor image-results page) ═══ -->
     <link rel="stylesheet" href="pclinic-dicom-viewer.css?v=20260901_DICOM" />
-    <script src="pclinic-file.js?v=20260902_VIEWERBTN" defer></script>
-    <script src="pclinic-dicom-viewer.js?v=20260902_VIEWERBTN" defer></script>
+    <script src="pclinic-file.js?v=20260902_IDBAR" defer></script>
+    <script src="pclinic-dicom-viewer.js?v=20260902_IDBAR" defer></script>
 </head>
 <body>
 
@@ -1556,15 +1556,15 @@
     <!-- ═══ SHARED JAVASCRIPT ═══ -->
     <script src="shared.js" defer></script>
 
-    <script src="radio-dashboard.js?v=20260902_VIEWERBTN" defer></script>
+    <script src="radio-dashboard.js?v=20260902_IDBAR" defer></script>
 
 
     <!-- ═══ PATIENT GATE LOCK (radiology views) ═══ -->
     <div id="gateLock" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(245,245,247,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);align-items:center;justify-content:center;padding:20px;">
         <div style="max-width:420px;width:100%;background:rgba(255,255,255,.85);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);border:.5px solid rgba(0,0,0,.12);border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,.28);padding:28px 24px;text-align:center;">
             <div style="font-size:42px;">🔒</div>
-            <div style="font-weight:800;font-size:16px;margin-top:8px;">No patient selected</div>
-            <div style="color:#6e6e73;font-size:12.5px;margin-top:6px;">This radiology view works on the selected patient. Pick a patient to unlock New imaging request, Report writer and the Image viewer.</div>
+            <div style="font-weight:800;font-size:16px;margin-top:8px;">No patient in the identification bar</div>
+            <div style="color:#6e6e73;font-size:12.5px;margin-top:6px;">Every radiology action works on the patient shown in the identification bar above. Select a patient (button below, the bar's Find field, or a worklist row) to unlock the worklist actions, images, report writer and printing.</div>
             <button onclick="window.radioSelectPatient && window.radioSelectPatient()" style="margin-top:16px;border:0;border-radius:22px;padding:10px 22px;background:linear-gradient(180deg,#0a84ff,#0071e3);color:#fff;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,113,227,.35);">👤 Select patient</button>
         </div>
     </div>

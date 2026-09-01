@@ -1,0 +1,89 @@
+PClinic — radiology: selection ⇄ patient identification bar = ONE truth
+========================================================================
+Build tag: 20260902_IDBAR      (supersedes pclinic-viewer-button-update.zip v2;
+                                this zip CONTAINS everything from that one too)
+
+WHAT CHANGED (behaviour)
+------------------------
+1. Selecting a patient — by the "Select patient" picker, a worklist row, a
+   worklist row button (Start / Acquire / Write report / Images / Cancel),
+   a report card (print / addendum), the ?patient= URL or the stored active
+   patient at page load — IMMEDIATELY writes that patient into the patient
+   identification bar (Family name, Firstname, DOB, Nat ID, Record number,
+   Person ID, archive code …). Same tick, no delay.
+
+2. Identifying a patient in the identification bar (type an MRN / name / ID
+   and press Find or Enter) makes that patient THE selected patient
+   everywhere: action-bar chip, dashboard currentPatient, report writer,
+   viewer, media. Whatever was selected before is dropped, together with
+   the study/report that belonged to it.
+
+3. "Clear" in the identification bar clears the selection: chip goes back to
+   "🔒 No patient selected", every patient button locks, the work-area lock
+   ("No patient in the identification bar") appears, stored id removed.
+
+4. NO patient action runs while the identification bar is empty:
+   - Add radiology result, Open DICOM viewer (already locked, still locked)
+   - Report writer view / Image viewer view (nav refused, stays on Overview)
+   - Worklist Start / Acquire / Cancel  → the row's patient is put into the
+     bar first (row = selection), THEN the action runs. If the row belongs to
+     a different patient than the bar can show, the action is blocked with
+     "Patient/order mismatch".
+   - Save / sign report, addendum, print report
+   - Study media sheet and image upload (upload is also checked against the
+     bar: "belongs to a different patient than the one in the identification
+     bar. Upload blocked.")
+   Each refusal shows a toast "🔒 Select a patient first — <action> works on
+   the patient shown in the identification bar." and re-shows the lock.
+
+5. The lock overlay now starts BELOW the header, so the identification bar
+   (Find / Clear) and the action bar's "Select patient" remain clickable —
+   that is where the patient gets chosen.
+
+6. Page load: the identification bar and the dashboard now read the SAME
+   stored id (localStorage pclinic_active_patient, plus session/URL) through
+   one function, so they can never restore two different patients.
+
+FILES IN THIS ZIP (extract over the project root, overwrite)
+-------------------------------------------------------------
+  radio-dashboard.js        setActivePatient() is the single writer:
+                            writeIdentificationBar() + requirePatient() gate,
+                            every action funnelled through it; gate lock
+                            positioned below the header; restore path.
+  pclinic-file.js           clearPatientBar() now dispatches
+                            pcPatientChanged {detail:null}; (+ v2 changes:
+                            #radViewerBtn, bar handlers bound before mount).
+  radio-dashboard.html      lock text; cache tags -> ?v=20260902_IDBAR
+  imaging-results.html      viewer cache tag -> ?v=20260902_IDBAR
+  pclinic-dicom-viewer.js   (unchanged from v2: multi-study explorer etc.)
+  tests/radiology-media-button.test.mjs   15 tests (2 new: Clear → null
+                            event + relock; every action gated)
+  tests/radiology-selection.test.mjs      updated: setActivePatient must
+                            write the identification bar
+
+Shared code note: pclinic-file.js is used by every dashboard. The only
+shared-behaviour change is that Clear now announces "no patient"
+(detail:null). All existing listeners were checked: doctor-*, lab,
+medical-summary, lab-results already handle a null detail (they clear/lock),
+so no other page breaks.
+
+VERIFIED
+--------
+  node --test:  radiology-media-button 15/15, radiology-selection 8/8,
+                radiology-call-errors 9/9, imaging-results-page 11/11,
+                pclinic-file-sync 6/6  (dashboard-role-contracts 7/8 and
+                radiology-media-client 7/9 are pre-existing failures, untouched)
+  Real browser (Chromium/Playwright) on the radiology page, 12/12:
+    start locked+bar empty · lock below header · no patient: report/viewer/
+    Add result/DICOM viewer refused · picker → bar filled · bar Find → chip &
+    selection follow · worklist row → bar switches · Start runs for the
+    identified patient · viewer opens · Clear → all locked · action on another
+    row re-identifies that patient first · reload restores the same patient
+    in bar and selection · 0 page errors.
+
+DEPLOY
+------
+  1. Extract zip over the project, commit + push the 5 root files (+ tests).
+  2. firebase deploy --only hosting      (GitHub Pages updates on push)
+  3. Hard refresh (Ctrl/Cmd+Shift+R) — the new ?v=20260902_IDBAR tags force
+     browsers to fetch the new js.

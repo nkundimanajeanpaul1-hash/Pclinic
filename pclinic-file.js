@@ -2032,6 +2032,11 @@
             if (window.pcFile && window.pcFile.renderDemoBar) window.pcFile.renderDemoBar(master, cleared);
             if (window.pcToast) pcToast('Cleared', 'info');
         } catch(e){}
+        // The identification bar IS the selection. Clearing it must clear the
+        // page's selected patient too, or the dashboard keeps working on a
+        // patient nobody can see any more. Kept outside the try above so a
+        // cosmetic re-render failure can never leave a ghost selection behind.
+        try { window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: null })); } catch(e){}
     }
     function openWardPicker() {
         try {

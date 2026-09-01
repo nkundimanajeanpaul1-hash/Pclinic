@@ -95,16 +95,51 @@
             return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
         }
 
+        /* ONE patient, ONE truth.
+           setActivePatient() is the only place the selected patient changes.
+           It writes, in the same tick: the module state, window.currentPatient,
+           the identification bar (name / DOB / MRN / IDs), the action-bar chip,
+           and the stored id (session + local, the identification bar restores
+           from local). Every other entry point — picker, worklist row, search
+           box, the identification bar's own Find/Clear, URL ?patient= — ends
+           here, so the bar can never show one patient while another is selected. */
+        function writeIdentificationBar(patient) {
+            if (!(window.pcFile && typeof window.pcFile.renderDemoBar === 'function')) return;
+            var master = document.getElementById('pcMasterHeader') || document.body;
+            var payload = patient || { _cleared: true, id: '', mrn: '', lastName: '', firstName: '', nationalId: '', department: '', dob: '', gender: '', archiveCode: '' };
+            try { window.pcFile.renderDemoBar(master, payload); } catch (error) { console.warn('identification bar not updated:', error); }
+            // renderDemoBar rebuilds the header strip; the action bar must stay
+            // directly beneath it, so let the bar module re-anchor and relock.
+            if (window.pcRadioBar && window.pcRadioBar.refresh) { try { window.pcRadioBar.refresh(patient || null); } catch (error) {} }
+        }
+
         function setActivePatient(patient) {
-            currentPatient = patient || null;
+            var next = patient && patient.id ? patient : null;
+            var changed = String(currentPatient && currentPatient.id || '') !== String(next && next.id || '');
+            currentPatient = next;
             window.currentPatient = currentPatient;
+            window.__pcRadioSelectedPatient = currentPatient;
             try {
-                if (patient) sessionStorage.setItem('pclinic_active_patient', String(patient.id));
-                else sessionStorage.removeItem('pclinic_active_patient');
+                if (next) { sessionStorage.setItem('pclinic_active_patient', String(next.id)); localStorage.setItem('pclinic_active_patient', String(next.id)); }
+                else { sessionStorage.removeItem('pclinic_active_patient'); localStorage.removeItem('pclinic_active_patient'); }
             } catch (error) {}
+            // A different patient invalidates the study/report that belonged to the old one.
+            if (changed) { currentOrder = null; currentReport = null; }
+            writeIdentificationBar(currentPatient);
             window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: currentPatient }));
             if (window.pcRadioBar && window.pcRadioBar.setPatient) window.pcRadioBar.setPatient(currentPatient);
             fillRequestDefaults();
+            if (changed) { highlightSelectedStudy(); announceStudyCount(); syncActionBarContext(); }
+            if (!currentPatient) showGateLock(true); else showGateLock(false);
+        }
+
+        /* Hard gate: nothing patient-related runs without a patient in the
+           identification bar. Returns the patient or null (after explaining). */
+        function requirePatient(what) {
+            if (currentPatient && currentPatient.id) return currentPatient;
+            notify('🔒 Select a patient first' + (what ? ' — ' + what + ' works on the patient shown in the identification bar.' : '.'), 'warning', 6000);
+            showGateLock(true);
+            return null;
         }
 
         function updateViewerContext() {
@@ -122,7 +157,11 @@
 
         function switchView(element, name) {
             if (!views.includes(name)) name = 'overview';
-            if (name === 'report' && (!currentOrder || !currentPatient)) {
+            // "request" is the read-only policy page (it even offers "Select patient"), so it stays open.
+            if ((name === 'report' || name === 'viewer') && !requirePatient(name === 'report' ? 'The report writer' : 'The image viewer')) {
+                name = 'overview';
+                element = document.querySelector('#dcBar [data-rad-view="overview"]');
+            } else if (name === 'report' && !currentOrder) {
                 notify('Select an acquired study from the worklist before opening the report writer.', 'warning');
                 name = 'worklist';
                 element = document.querySelector('#dcBar [data-rad-view="worklist"]');
@@ -139,7 +178,7 @@
             if (name === 'worklist') renderWorklist();
             if (name === 'viewer') updateViewerContext();
             renderSecondaryNavigation(name);
-            showGateLock(false);
+            showGateLock(!currentPatient);
         }
         window.switchView = switchView;
 
@@ -178,6 +217,13 @@
         async function transitionOrder(orderId, action) {
             const order = window.pcRadiology && window.pcRadiology.orderById(orderId);
             if (!order) { notify('Order not found.', 'error'); return; }
+            // Acting on a study selects its patient: the identification bar must
+            // show who this Start/Acquire/Cancel is for before it happens.
+            selectStudy(order);
+            if (!requirePatient('This study action')) return;
+            if (String(order.patientId) !== String(currentPatient.id) && String(order.patientId) !== String(currentPatient.mrn || '\u0000')) {
+                notify('Patient/order mismatch — the identification bar shows a different patient. Action blocked.', 'error', 7000); return;
+            }
             let reason = '';
             if (action === 'cancel') {
                 reason = window.prompt('Reason for cancelling this imaging request?') || '';
@@ -308,8 +354,8 @@
             if (!['acquired', 'reporting', 'reported'].includes(state)) {
                 notify('Complete image acquisition before writing the report.', 'warning'); return;
             }
-            currentOrder = order;
-            setActivePatient(patient);
+            setActivePatient(patient);   // identification bar first …
+            currentOrder = order;         // … then the study that belongs to it
             currentReport = window.pcRadiology.reportForOrder(order.id);
             if (currentReport && currentReport.status === 'final') {
                 printReportFile(currentReport.id);
@@ -375,7 +421,8 @@
         window.openRadiologyResult = openRadiologyResult;
 
         function collectReport() {
-            if (!currentOrder || !currentPatient) throw new Error('Select an acquired imaging order first.');
+            if (!currentPatient) throw new Error('🔒 No patient in the identification bar. Select the patient first.');
+            if (!currentOrder) throw new Error('Select an acquired imaging order first.');
             if (String(currentOrder.patientId) !== String(currentPatient.id) && String(currentOrder.patientId) !== String(currentPatient.mrn)) {
                 throw new Error('Patient/order mismatch. Reporting is blocked.');
             }
@@ -434,6 +481,9 @@
         window.signReport = signReport;
 
         async function addAddendum(reportId) {
+            const rep = window.pcRadiology && window.pcRadiology.reportById(reportId);
+            if (rep) { const owner = findPatient(rep.patientId) || { id: String(rep.patientId), mrn: String(rep.patientMrn || rep.patientId), name: rep.patientName || '' }; if (!currentPatient || String(currentPatient.id) !== String(owner.id)) setActivePatient(owner); }
+            if (!requirePatient('An addendum')) return;
             const reason = window.prompt('Reason for this addendum?');
             if (!reason || !reason.trim()) return;
             const addendum = window.prompt('Addendum text:');
@@ -557,7 +607,16 @@
 
         function showGateLock(on) {
             const lock = document.getElementById('gateLock');
-            if (lock) lock.style.display = on ? 'flex' : 'none';
+            if (!lock) return;
+            lock.style.display = on ? 'flex' : 'none';
+            if (!on) return;
+            // The lock covers the WORK area only. The header (CHUK menu, the
+            // identification bar with its Find/Clear, and the action bar with
+            // Select patient) stays usable — that is where the patient is chosen.
+            const header = document.getElementById('pcMasterHeader');
+            const top = header ? Math.ceil(header.getBoundingClientRect().bottom) : 0;
+            lock.style.top = top + 'px';
+            lock.style.inset = top + 'px 0 0 0';
         }
 
         window.radioNav = function (view) {
@@ -637,6 +696,9 @@
         function printReportFile(reportId) {
             const report = window.pcRadiology && window.pcRadiology.reportById(reportId);
             if (!report || report.status !== 'final') { notify('Final saved report not found.', 'warning'); return; }
+            // Printing a report selects its patient — the bar shows whose report is printing.
+            { const owner = findPatient(report.patientId) || { id: String(report.patientId), mrn: String(report.patientMrn || report.patientId), name: report.patientName || '' }; if (!currentPatient || String(currentPatient.id) !== String(owner.id)) setActivePatient(owner); }
+            if (!requirePatient('Printing')) return;
             currentReport = report;
             syncActionBarContext();
             const addenda = window.pcRadiology.addendaForReport(report.id);
@@ -806,8 +868,11 @@
             window.requireAuth(['radio']).then(async function (staff) {
                 window.currentStaff = staff;
                 setStaffChip();
-                requestedPatientId = new URLSearchParams(window.location.search).get('patient') || sessionStorage.getItem('pclinic_active_patient') || '';
-                if (requestedPatientId) setActivePatient(findPatient(requestedPatientId));
+                requestedPatientId = new URLSearchParams(window.location.search).get('patient') || sessionStorage.getItem('pclinic_active_patient') || localStorage.getItem('pclinic_active_patient') || '';
+                // Whatever the identification bar restored (pclinic-file.js reads the
+                // same stored id) becomes the selection, and vice-versa — one truth.
+                const restored = requestedPatientId ? findPatient(requestedPatientId) : null;
+                setActivePatient(restored);
                 await window.pcRadiology.init({ staff: staff });
                 unsubscribeRadiology = window.pcRadiology.subscribe(function (snapshot) {
                     radiologyState = snapshot;
@@ -897,7 +962,7 @@
 
         function handleAddMediaRequest(event) {
             var patient = (event && event.detail && event.detail.patient) || currentPatient;
-            if (!patient) { notify('Select a patient first.', 'warning'); return; }
+            if (!patient || !patient.id) { requirePatient('Adding a radiology result'); return; }
             // Whatever the bar carried becomes the current selection, so the button
             // both shows who you are working on and puts you to work on them.
             if (!currentPatient || String(currentPatient.id) !== String(patient.id)) setActivePatient(patient);
@@ -941,7 +1006,7 @@
 
         function handleOpenViewerRequest(event) {
             var patient = (event && event.detail && event.detail.patient) || currentPatient;
-            if (!patient) { notify('Select a patient first.', 'warning'); return; }
+            if (!patient || !patient.id) { requirePatient('The DICOM viewer'); return; }
             if (!currentPatient || String(currentPatient.id) !== String(patient.id)) setActivePatient(patient);
             if (!window.PcDicomViewer) { notify('The DICOM viewer did not load. Refresh the page (Ctrl/Cmd+Shift+R).', 'error', 8000); return; }
             var studies = viewerStudiesFor(patient);
@@ -970,6 +1035,8 @@
 
         function openImageViewer(order, patient) {
             if (!order) { notify('Select a study first.', 'warning'); return; }
+            if (patient && patient.id && (!currentPatient || String(currentPatient.id) !== String(patient.id))) setActivePatient(patient);
+            if (!requirePatient('The DICOM viewer')) return;
             if (!window.PcDicomViewer) { notify('The DICOM viewer did not load.', 'error', 6000); return; }
             window.PcDicomViewer.open(viewerOrderFor(order, patient), { canManage: true });
         }
@@ -1020,6 +1087,7 @@
             var target = preferredPatient || patientFromOrder(order);
             if (!target || !target.id) { notify('This study has no patient id, so nothing can be filed against it.', 'error', 7000); return; }
             selectStudy(order);
+            if (!requirePatient('Study media')) return;
             if (window.pcFile && typeof window.pcFile.sheet === 'function') {
                 // pcFile.sheet hands the body to opts.build(body, close) — there is
                 // no onMount option; passing one would open an empty modal.
@@ -1084,6 +1152,10 @@
 
         async function uploadMedia(order, input) {
             if (!window.pcRadioMedia) { notify('The media module did not load.', 'error'); return; }
+            if (!requirePatient('Uploading images')) { input.value = ''; return; }
+            if (String(order.patientId) !== String(currentPatient.id) && String(order.patientId) !== String(currentPatient.mrn || '\u0000')) {
+                notify('This study belongs to a different patient than the one in the identification bar. Upload blocked.', 'error', 8000); input.value = ''; return;
+            }
             const files = Array.prototype.slice.call(input.files || []);
             if (!files.length) return;
             let ok = 0; const problems = [];
