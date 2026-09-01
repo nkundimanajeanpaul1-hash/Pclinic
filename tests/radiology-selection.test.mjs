@@ -168,8 +168,10 @@ test('the row click handler is single and no longer blocks on the registry', () 
 
 test('the bar still receives the patient so it renders in the identification bar', () => {
   // setActivePatient is what feeds the bar; assert it is still the single channel.
-  const body = SRC.slice(SRC.indexOf('function setActivePatient(patient)'), SRC.indexOf('function setActivePatient(patient)') + 900);
+  // (the function grew when it started writing the identification bar as well — one truth — so take it whole)
+  const body = SRC.slice(SRC.indexOf('function setActivePatient(patient)'), SRC.indexOf('function setActivePatient(patient)') + 2500);
   const cut = body.slice(0, body.indexOf('\n        }') + 1);
+  assert.match(cut, /writeIdentificationBar\(currentPatient\)/, 'a selected patient must be written into the identification bar immediately');
   assert.match(cut, /window\.pcRadioBar && .*setPatient/, 'the bar must be told on every selection');
   assert.match(cut, /pcPatientChanged/, 'other widgets rely on this event');
   assert.match(cut, /sessionStorage\.setItem\('pclinic_active_patient'/, 'selection must survive a reload');

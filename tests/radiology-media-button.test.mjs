@@ -385,3 +385,48 @@ test('the viewer itself tolerates a patient with no study and lists every study 
   assert.match(viewer, /window\.removeEventListener\('mousemove', onMove\)/, 'window listeners must be removed on close');
   assert.match(viewer, /close: close, isOpen:/, 'close/isOpen must be exported');
 });
+
+/* ── selection ⇄ identification bar: one truth ───────────────── */
+
+test('clearing the identification bar clears the selection (pcPatientChanged null) and relocks every patient button', () => {
+  const { win, byId } = boot();
+  const seen = [];
+  win.addEventListener('pcPatientChanged', (e) => seen.push(e.detail));
+  win.pcRadioBar.setPatient({ id: '1002', mrn: '1002', firstName: 'Djuma', lastName: 'Nshuti' });
+  assert.ok(!byId.get('radViewerBtn').classList.contains('ab-context-off'), 'a selected patient must unlock the bar');
+  win.pcFile.clearPatientBar();
+  assert.equal(seen.length, 1, 'Clear must announce the change exactly once');
+  assert.equal(seen[0], null, 'Clear must announce "no patient" (detail null), not a ghost patient');
+  assert.equal(win.localStorage.getItem('pclinic_active_patient'), null, 'the stored active patient must go too');
+  // the dashboard turns that null into setActivePatient(null); the bar module locks itself on the same event
+  for (const id of ['radViewerBtn', 'radMediaBtn']) {
+    assert.ok(byId.get(id).classList.contains('ab-context-off'), id + ' must be locked once the identification bar is empty');
+  }
+});
+
+test('the dashboard funnels every entry point through setActivePatient, which writes the identification bar and gates all actions', () => {
+  const dash = readFileSync(resolve(ROOT, 'radio-dashboard.js'), 'utf8');
+  const setter = dash.slice(dash.indexOf('function setActivePatient'), dash.indexOf('function requirePatient'));
+  assert.match(setter, /writeIdentificationBar\(currentPatient\)/, 'selecting a patient must write the identification bar immediately');
+  assert.match(setter, /localStorage\.setItem\('pclinic_active_patient'/, 'the id the identification bar restores from must be kept in step');
+  assert.match(setter, /showGateLock\(true\)/, 'no patient ⇒ the work area must lock');
+  const writer = dash.slice(dash.indexOf('function writeIdentificationBar'), dash.indexOf('function setActivePatient'));
+  assert.match(writer, /renderDemoBar\(master, payload\)/, 'the shared identification bar (pclinic-file.js renderDemoBar) is the single display');
+  assert.match(writer, /_cleared:\s*true/, 'a null patient must blank the bar, not leave the previous patient on screen');
+  // the listener that receives the identification bar's own Find/Clear
+  const listener = dash.slice(dash.indexOf("window.addEventListener('pcPatientChanged'"), dash.indexOf("window.addEventListener('pcRadiologyMediaChanged'"));
+  assert.match(listener, /if \(!incoming \|\| !incoming\.id\) \{ if \(currentPatient\) setActivePatient\(null\)/, 'bar Clear must clear the selection');
+  assert.match(listener, /setActivePatient\(known\)/, 'bar Find must make that patient the selected one');
+  // every patient action is gated on the identified patient
+  for (const fn of ['transitionOrder', 'collectReport', 'addAddendum', 'printReportFile', 'handleAddMediaRequest', 'handleOpenViewerRequest', 'openMediaSheet', 'uploadMedia', 'openImageViewer']) {
+    const start = dash.indexOf('function ' + fn + '(');
+    assert.ok(start > -1, fn + ' not found');
+    const body = dash.slice(start, start + 1400);
+    assert.ok(/requirePatient\(|No patient in the identification bar/.test(body), fn + ' must refuse to run without a patient in the identification bar');
+  }
+  // acting on a study that belongs to someone else than the identified patient is refused
+  assert.match(dash, /Patient\/order mismatch/, 'a study of another patient than the bar must be blocked, not silently acted on');
+  assert.match(dash, /belongs to a different patient than the one in the identification bar\. Upload blocked/, 'uploads are checked against the bar too');
+  // startup: whatever id the bar restores from is also the selection
+  assert.match(dash, /localStorage\.getItem\('pclinic_active_patient'\) \|\| '';\s*[\s\S]{0,400}setActivePatient\(restored\)/, 'restore must go through setActivePatient so bar and selection start equal');
+});
