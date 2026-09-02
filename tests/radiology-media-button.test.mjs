@@ -325,7 +325,7 @@ test('the radiology bar carries an Open-DICOM-viewer button', () => {
   const { win, byId } = boot();
   const btn = byId.get('radViewerBtn');
   assert.ok(btn, 'the bar was rendered but #radViewerBtn is missing');
-  assert.match(btn.textContent, /Open DICOM viewer/);
+  assert.match(btn.textContent, /Open DICOM to add radiology result/);
   assert.equal(win.document.body.querySelectorAll('#radViewerBtn').length, 1, 'button must appear exactly once');
   const icon = btn.children.find((c) => c.tagName === 'I');
   assert.ok(icon, 'button needs its icon');
