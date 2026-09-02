@@ -8,7 +8,7 @@
   "scripts": {
     "postinstall": "test -f ../scripts/patch-functions-config.cjs && node ../scripts/patch-functions-config.cjs || true",
     "test": "npm run test:unit",
-    "test:unit": "node --test test/radiology-domain.test.cjs test/lab-domain.test.cjs",
+    "test:unit": "node --test test/radiology-domain.test.cjs test/lab-domain.test.cjs test/radiology-media.test.cjs",
     "test:verify-patch": "node ../scripts/patch-functions-config.cjs --check",
     "test:emulator": "../tests/node_modules/.bin/firebase emulators:exec --config ../firebase.json --project demo-pclinic --only firestore,functions \"node --test --test-force-exit test/radiology-integration.test.cjs\""
   },

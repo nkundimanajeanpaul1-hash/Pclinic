@@ -24,6 +24,7 @@ const {
   legacyOrderIdForRequest,
   materializeLegacyOrder,
 } = require('./lab-domain.cjs');
+const { viewUrlFor } = require('./radiology-media.cjs');
 
 initializeApp();
 setGlobalOptions({ region: 'africa-south1', maxInstances: 20 });
@@ -884,6 +885,7 @@ exports.radiologyMediaSign = onCall(async (request) => {
   const found = await db.collection('radiologyMedia').where('orderId', '==', orderId).get();
   const bucket = getStorage().bucket();
   const items = [];
+  let signingProblem = '';
   for (const docSnap of found.docs) {
     const row = { id: docSnap.id, ...docSnap.data() };
     const path = String(row.storagePath || '');
@@ -898,21 +900,32 @@ exports.radiologyMediaSign = onCall(async (request) => {
       console.warn(`radiologyMedia/${docSnap.id}: storagePath ${path} does not match its record, skipping`);
       continue;
     }
-    try {
-      const [url] = await bucket.file(path).getSignedUrl({
-        action: 'read', expires: Date.now() + MEDIA_WINDOW_SECONDS * 1000,
-      });
-      items.push({
-        id: docSnap.id, kind: row.kind || 'image', mime: row.mime || '', fileName: row.fileName || '',
-        bytes: Number(row.bytes) || 0, at: row.at || null, byName: row.byName || '', url, expiresIn: MEDIA_WINDOW_SECONDS,
-      });
-    } catch (error) {
-      // A missing object is a data condition, not a reason to fail the whole view.
-      console.warn(`radiologyMedia/${docSnap.id}: could not sign ${path}: ${error && error.message}`);
-      items.push({ id: docSnap.id, kind: row.kind || 'image', mime: row.mime || '', fileName: row.fileName || '', bytes: Number(row.bytes) || 0, at: row.at || null, byName: row.byName || '', error: 'object-unavailable' });
+    const base = {
+      id: docSnap.id, kind: row.kind || 'image', mime: row.mime || '', fileName: row.fileName || '',
+      bytes: Number(row.bytes) || 0, at: row.at || null, byName: row.byName || '',
+    };
+    // Signed URL when the runtime may sign; otherwise a download-token link
+    // (see radiology-media.cjs). Once signing has failed for one object it will
+    // fail for all of them in this call, so the error is carried forward instead
+    // of paying the IAM round-trip again per file.
+    const resolved = await viewUrlFor(bucket.file(path), {
+      bucketName: bucket.name, expiresInSeconds: MEDIA_WINDOW_SECONDS, skipSigning: signingProblem,
+    });
+    if (resolved.signError && !signingProblem) {
+      signingProblem = resolved.signError;
+      console.warn(`radiologyMediaSign: signed URLs unavailable (${signingProblem}); serving download-token links. ` +
+        'To restore expiring links grant roles/iam.serviceAccountTokenCreator to the functions service account.');
+    }
+    if (resolved.url) {
+      items.push({ ...base, url: resolved.url, mode: resolved.mode, expiresIn: resolved.mode === 'signed' ? MEDIA_WINDOW_SECONDS : 0 });
+    } else {
+      // A missing object is a data condition, not a reason to fail the whole view —
+      // but the viewer must be able to say WHY there is nothing to show.
+      console.warn(`radiologyMedia/${docSnap.id}: no view URL for ${path}: ${resolved.reason}`);
+      items.push({ ...base, error: resolved.error, reason: resolved.reason });
     }
   }
-  return { orderId, count: items.length, items };
+  return { orderId, count: items.length, items, signing: signingProblem ? 'token-fallback' : 'signed', signingProblem: signingProblem || null };
 });
 
 // Undo the uploader's own upload before the study is signed.
