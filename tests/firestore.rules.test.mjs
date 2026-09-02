@@ -502,8 +502,12 @@ describe('radiology study media', () => {
     // describe a file that cannot be located for signing.
     await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-lie'),
       record({ id: 'rmed-lie', ext: 'png', storagePath: `radiology/${ORDER}/rmed-lie.jpg` })));
+    // DICOM is an accepted study format since the workstation update; an unlisted
+    // raster type such as TIFF is what must still be refused.
+    await assertSucceeds(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-dicom'),
+      record({ id: 'rmed-dicom', mime: 'application/dicom', fileName: 'hand.dcm', ext: 'dcm' })));
     await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'),
-      record({ mime: 'application/dicom' })));
+      record({ mime: 'image/tiff' })));
     await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'),
       record({ mime: 'video/quicktime', kind: 'video', ext: 'mov', storagePath: `radiology/${ORDER}/rmed-1.mov` })));
     await assertFails(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1'), record({ bytes: 0 })));
@@ -523,5 +527,89 @@ describe('radiology study media', () => {
     // admins act on the order, not on other people's files.
     await assertFails(deleteDoc(doc(dbFor('admin'), 'radiologyMedia', 'rmed-1')));
     await assertSucceeds(deleteDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-1')));
+  });
+});
+
+describe('radiology annotations (workstation drawings, key images, notes)', () => {
+  const ORDER = 'rad-order-anno';
+  const MEDIA = 'rmed-anno';
+
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'orders', ORDER), {
+        id: ORDER, dept: 'radiology', type: 'imaging', patientId: 1001,
+        patientName: 'Aline Test', status: 'in-progress', orderedById: profiles.doctor.staffId,
+        orderedAt: 'test'
+      });
+      await setDoc(doc(db, 'radiologyMedia', MEDIA), {
+        id: MEDIA, orderId: ORDER, patientId: '1001', fileName: 'hand.dcm', ext: 'dcm',
+        mime: 'application/dicom', kind: 'image', bytes: 512000, sha256: '', at: 'test',
+        storagePath: `radiology/${ORDER}/${MEDIA}.dcm`,
+        byUid: profiles.radio.uid, byId: profiles.radio.staffId, byName: profiles.radio.name, byRole: 'radio'
+      });
+    });
+  });
+
+  function anno(who, overrides = {}) {
+    const p = profiles[who];
+    const base = {
+      id: `${MEDIA}_${p.uid}`, mediaId: MEDIA, orderId: ORDER, patientId: '1001',
+      measurements: [{ tool: 'Length', uuid: 'u1', frame: 0, json: '{"handles":{"start":{"x":1,"y":2},"end":{"x":9,"y":9}}}' }],
+      keyImage: true, note: 'Fracture line visible', byUid: p.uid, byId: p.staffId, byName: p.name, byRole: p.role,
+      updatedAt: '2026-09-02T10:00:00.000Z', client: 'pcdv/1',
+      ...overrides
+    };
+    return base;
+  }
+  const ref = (who, id) => doc(dbFor(who), 'radiologyAnnotations', id || `${MEDIA}_${profiles[who].uid}`);
+
+  test('doctors, radiology and admin save their own drawings; every clinical reader sees them', async () => {
+    await assertSucceeds(setDoc(ref('doctor'), anno('doctor')));
+    await assertSucceeds(setDoc(ref('radio'), anno('radio')));
+    await assertSucceeds(setDoc(ref('admin'), anno('admin')));
+    for (const role of ['doctor', 'nurse', 'radio', 'lab', 'reception', 'admin', 'theater', 'beds']) {
+      await assertSucceeds(getDoc(ref(role, `${MEDIA}_${profiles.doctor.uid}`)), `${role} must see the doctor's drawings`);
+      const snap = await getDocs(query(collection(dbFor(role), 'radiologyAnnotations'), where('orderId', '==', ORDER)));
+      assert.equal(snap.size, 3, `${role} lists every author for the study`);
+    }
+    for (const role of ['cashier', 'finance', 'hr', 'inactive']) {
+      await assertFails(getDoc(ref(role, `${MEDIA}_${profiles.doctor.uid}`)));
+    }
+  });
+
+  test('nurses and other roles cannot write; nobody writes as someone else or under a foreign id', async () => {
+    await assertFails(setDoc(ref('nurse'), anno('nurse')));
+    await assertFails(setDoc(ref('lab'), anno('lab')));
+    await assertFails(setDoc(ref('inactive'), anno('inactive')));
+    // spoofed author
+    await assertFails(setDoc(ref('doctor'), anno('doctor', { byUid: profiles.radio.uid })));
+    // id must be <mediaId>_<uid>
+    await assertFails(setDoc(ref('doctor', `${MEDIA}_${profiles.radio.uid}`), anno('doctor', { id: `${MEDIA}_${profiles.radio.uid}` })));
+    await assertFails(setDoc(ref('doctor', 'free-id'), anno('doctor', { id: 'free-id' })));
+  });
+
+  test('an annotation must describe a real image of the same study and patient, and carry no pixels', async () => {
+    await assertFails(setDoc(ref('doctor', `ghost_${profiles.doctor.uid}`), anno('doctor', { id: `ghost_${profiles.doctor.uid}`, mediaId: 'ghost' })));
+    await assertFails(setDoc(ref('doctor'), anno('doctor', { orderId: 'other-order' })));
+    await assertFails(setDoc(ref('doctor'), anno('doctor', { patientId: '9999' })));
+    await assertFails(setDoc(ref('doctor'), anno('doctor', { data: 'AAAA' })));
+    await assertFails(setDoc(ref('doctor'), anno('doctor', { dataUrl: 'data:image/png;base64,AAAA' })));
+    await assertFails(setDoc(ref('doctor'), anno('doctor', { measurements: 'not-a-list' })));
+    await assertFails(setDoc(ref('doctor'), anno('doctor', { keyImage: 'yes' })));
+    await assertFails(setDoc(ref('doctor'), anno('doctor', { note: 'x'.repeat(4001) })));
+    await assertSucceeds(setDoc(ref('doctor'), anno('doctor', { note: 'x'.repeat(4000), measurements: [] })));
+  });
+
+  test('authors edit and remove only their own document, and cannot re-point it at another image', async () => {
+    await assertSucceeds(setDoc(ref('doctor'), anno('doctor')));
+    await assertSucceeds(setDoc(ref('doctor'), anno('doctor', { note: 'updated', keyImage: false })));
+    await assertFails(setDoc(ref('radio', `${MEDIA}_${profiles.doctor.uid}`), anno('doctor', { note: 'hijack' })));
+    await assertFails(updateDoc(ref('radio', `${MEDIA}_${profiles.doctor.uid}`), { note: 'hijack' }));
+    await assertFails(updateDoc(ref('admin', `${MEDIA}_${profiles.doctor.uid}`), { note: 'admin hijack' }));
+    await assertFails(setDoc(ref('doctor'), anno('doctor', { mediaId: 'rmed-other' })));
+    await assertFails(deleteDoc(ref('radio', `${MEDIA}_${profiles.doctor.uid}`)));
+    await assertFails(deleteDoc(ref('admin', `${MEDIA}_${profiles.doctor.uid}`)));
+    await assertSucceeds(deleteDoc(ref('doctor')));
   });
 });

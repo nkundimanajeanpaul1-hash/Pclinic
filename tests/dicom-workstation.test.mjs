@@ -151,3 +151,36 @@ test('preliminary images are labelled and the report tab reads the signed report
   assert.match(SRC, /pcRadioMedia\.localUrlFor|M\.localUrlFor/, 'own uploads must display before the server can sign them');
   assert.match(SRC, /deleteIfHandleOutsideImage: false/, 'a measurement dragged past the edge must be clamped, not deleted');
 });
+
+test('drawings, key images and notes are saved to the common server through pcRadioAnnotations', () => {
+  const api = loadViewer();
+  assert.equal(typeof api.saveNow, 'function', 'pages can force a flush (e.g. before navigating away)');
+  assert.equal(typeof api.toggleKeyImage, 'function');
+  assert.equal(typeof api.annotations, 'function');
+  // wiring inside the viewer
+  assert.match(SRC, /window\.pcRadioAnnotations/, 'viewer talks to the annotations module');
+  assert.match(SRC, /A\.subscribe\(id, function \(rows, err\)/, 'subscribes per study, every author');
+  assert.match(SRC, /anno\.timer = setTimeout\(flushAnnotations, 1000\)/, 'auto-save 1 s after the last change');
+  assert.match(SRC, /'Saved ✓ ' \+ fmtDateTime/, 'Saved ✓ indicator');
+  assert.match(SRC, /Retrying…/, 'failed saves retry by themselves');
+  assert.match(SRC, /_pcRemote/, 'colleagues\' drawings are marked read-only');
+  assert.match(SRC, /'pagehide', unloadBound/, 'a pending save is flushed when the tab closes');
+  assert.match(SRC, /data-id="key"|'key'/, 'key-image button in the tool bar');
+  // pages load the module (with cache-busting) before the viewer
+  for (const page of ['imaging-results.html', 'radio-dashboard.html']) {
+    const html = readFileSync(resolve(ROOT, page), 'utf8');
+    const iAnno = html.indexOf('pclinic-radiology-annotations.js?v=');
+    const iViewer = html.indexOf('pclinic-dicom-viewer.js?v=');
+    assert.ok(iAnno > 0, page + ' loads pclinic-radiology-annotations.js');
+    assert.ok(iAnno < iViewer, page + ' loads the annotations module before the viewer');
+  }
+  // rules: the collection exists, is readable by patient readers and writable only by the author
+  const rules = readFileSync(resolve(ROOT, 'firestore.rules'), 'utf8');
+  const block = rules.slice(rules.indexOf('match /radiologyAnnotations/'), rules.indexOf('match /billingPatientDirectory/'));
+  assert.ok(block.length > 200, 'radiologyAnnotations rules present');
+  assert.match(block, /allow get, list: if patientReader\(\)/);
+  assert.match(block, /allow create: if hasRole\(\['doctor', 'radio', 'admin'\]\)/);
+  assert.match(block, /exists\(mediaPath\(\)\)/, 'an annotation must point at a real image record');
+  assert.match(block, /resource\.data\.get\('byUid', null\) == request\.auth\.uid/, 'update/delete only by the author');
+  assert.match(block, /hasAny\(\['data', 'dataUrl', 'base64'/, 'never pixels');
+});
