@@ -1,0 +1,16 @@
+PClinic — radiology action bar: button rename
+=============================================
+Build tag: 20260902_DICOMBTN
+
+"Open DICOM viewer"  →  "Open DICOM to add radiology result"
+(button #radViewerBtn on the radiology action bar; behaviour unchanged)
+
+Also updated: its tooltip and the locked-state toast
+("🔒 Select a patient first, then open DICOM to add the radiology result.").
+
+FILES (extract over the project root, overwrite)
+  pclinic-file.js                          label / tooltip / toast text
+  radio-dashboard.html                     cache tag pclinic-file.js?v=20260902_DICOMBTN
+  tests/radiology-media-button.test.mjs    expectation updated (15/15 pass)
+
+DEPLOY: commit + push the 2 root files, firebase deploy --only hosting, hard refresh.
