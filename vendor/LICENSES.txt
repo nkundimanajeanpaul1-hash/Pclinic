@@ -1,0 +1,20 @@
+Third-party viewer libraries, self-hosted so PClinic works under its own
+Content-Security-Policy and on a clinic LAN without internet.
+
+cornerstone-core 2.6.1            MIT   https://github.com/cornerstonejs/cornerstone
+cornerstone-math 0.1.10           MIT   https://github.com/cornerstonejs/cornerstoneMath
+cornerstone-tools 6.0.10          MIT   https://github.com/cornerstonejs/cornerstoneTools
+hammer.js 2.0.8                   MIT   https://github.com/hammerjs/hammer.js
+dicom-parser 1.8.21               MIT   https://github.com/cornerstonejs/dicomParser
+cornerstone-wado-image-loader 4.13.2 (NoWebWorkers bundle: JPEG baseline/lossless,
+  JPEG-LS (CharLS), JPEG 2000 (OpenJPEG), HTJ2K (OpenJPH), RLE decoders inlined)
+                                  MIT   https://github.com/cornerstonejs/cornerstoneWADOImageLoader
+
+PClinic modifications to cornerstoneWADOImageLoader.bundle.min.js (kept minimal, marked "PClinic patch"):
+  1. The 1.2 MB inline copy of the decode worker source was removed; the worker is
+     always started from vendor/index.worker.bundle.min.worker.js.
+  2. The worker factory starts the worker from that file URL first. The library's
+     default blob:/data: inline worker is blocked *silently* by a strict
+     Content-Security-Policy (no exception is thrown), which left every decode
+     task hanging. A URL worker carries its own CSP (see firebase.json), so the
+     page itself never needs 'unsafe-eval'.
