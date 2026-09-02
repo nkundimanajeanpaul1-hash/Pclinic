@@ -41,6 +41,24 @@
         return 'pclinic-20d81.firebasestorage.app';
     }
 
+    // Firebase Storage mints a download token for every object uploaded through
+    // its endpoint and returns it in the upload response (`downloadTokens`). We
+    // keep it IN MEMORY ONLY, for this page session, so the person who just
+    // uploaded an image sees it at once even while the signing function on the
+    // server is unavailable. Never written to Firestore (the record schema is
+    // fixed by firestore.rules) and never persisted on the device.
+    var localUrls = {};
+    function rememberLocalUrl(mediaId, path, uploaded) {
+        try {
+            var tok = uploaded && uploaded.downloadTokens ? String(uploaded.downloadTokens).split(',')[0].trim() : '';
+            if (!tok) return '';
+            var url = 'https://firebasestorage.googleapis.com/v0/b/' + encodeURIComponent(bucketName()) +
+                '/o/' + encodeURIComponent(path) + '?alt=media&token=' + encodeURIComponent(tok);
+            localUrls[String(mediaId)] = url;
+            return url;
+        } catch (e) { return ''; }
+    }
+
     function nowIso() { return new Date().toISOString(); }
     function uid(prefix) {
         return (prefix || 'med') + '-' + Date.now().toString(36) + '-' +
@@ -186,7 +204,7 @@
             var mediaId = uid('rmed');
             var path = objectPath(String(order.id), mediaId, check.ext);
             var token = await idToken();
-            await putObject(path, file, token);
+            var uploaded = await putObject(path, file, token);
 
             var record = {
                 id: mediaId,
@@ -220,9 +238,13 @@
                     ((error && error.message) || 'permission problem') +
                     '. Deploy the updated firestore.rules, then retry.');
             }
+            rememberLocalUrl(mediaId, path, uploaded);
             window.dispatchEvent(new CustomEvent('pcRadiologyMediaChanged', { detail: record }));
             return record;
         },
+
+        /** URL of a file uploaded in THIS page session (memory only), else ''. */
+        localUrlFor(mediaId) { return localUrls[String(mediaId)] || ''; },
 
         /** Signed, short-lived view URLs for one order. */
         async urlsFor(orderId) {

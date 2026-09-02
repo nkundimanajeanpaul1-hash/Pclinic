@@ -1,61 +1,54 @@
-PClinic — "No view URL for this file yet — is radiologyMediaSign deployed?"
-=========================================================================
-Build tag: 20260902_MEDIAURL     (this zip also contains the DICOM-button
-                                  changes, tag 20260902_DICOMONLY)
+PClinic — "This file is registered but cannot be displayed" / "No view URL…"
+==========================================================================
+Build tag: 20260902_MEDIAURL2
 
-WHAT WAS HAPPENING
-------------------
-Your upload DID succeed: the file is in the bucket and its record is in
-Firestore (that is why "download.png" appears in the explorer). What failed
-is the LAST step — turning the stored file into a link the browser may open.
+WHY YOU STILL SAW AN ERROR AFTER THE LAST ZIP
+---------------------------------------------
+The message on your screen ("…older radiologyMediaSign build…") is the NEW
+viewer telling you that the SERVER side was not updated. The check I ran:
 
-radiologyMediaSign creates that link with getSignedUrl(). On Cloud Functions
-the Admin SDK has no private key, so signing goes through the IAM
-"signBlob" API, which needs the functions' service account to have the role
-  roles/iam.serviceAccountTokenCreator
-on itself. That role is not granted by default. Without it getSignedUrl()
-throws, the function caught the error, and returned the item WITHOUT a url —
-and the viewer, seeing no url, printed the generic guess "is
-radiologyMediaSign deployed?" (it was deployed; it just could not sign).
+   GitHub main  functions/index.js ........ has the fix  (uploaded)   ✔
+   github.io    pclinic-dicom-viewer.js ... new build served          ✔
+   web.app      pclinic-dicom-viewer.js ... OLD build (no firebase deploy --only hosting)
+   Cloud Function radiologyMediaSign ...... OLD build (no firebase deploy --only functions)
 
-THE FIX (two layers)
---------------------
-1. Server, functions/radiology-media.cjs (new) + functions/index.js:
-   - try the signed URL as before;
-   - if signing fails, FALL BACK to a Firebase download-token link
-     (the same kind of link the Firebase client SDK's getDownloadURL() gives:
-     .../o/radiology%2F{order}%2F{id}.png?alt=media&token=…). This needs only
-     storage.objects.update, which the function already has. The token is
-     stored on the object once and reused, never rotated.
-   - every item now carries WHY when there is still no url
-     (error: object-missing | object-unavailable, reason: "…"), and the
-     response says which mode it used (signing: 'signed' | 'token-fallback').
-   Result: images display immediately after deploying functions, even
-   before the IAM role is granted.
+Uploading files to GitHub only changes the web pages. A Cloud Function is
+code that runs INSIDE Firebase; it is only replaced by running, from the
+project folder on your computer:
 
-2. Browser, pclinic-dicom-viewer.js + pclinic-radiology-media.js:
-   - the viewer shows the real reason instead of the "is it deployed?" guess
-     (e.g. the signBlob permission text, "the upload did not complete", or
-     "the common server is not connected"); the file stays listed and its
-     Study info still renders;
-   - a one-time console note explains how to restore expiring links when the
-     token fallback is in use.
+      firebase deploy --only functions
 
-DEPLOY (in this order)
-----------------------
-  1. Extract the zip over the project root.
-  2. cd functions && npm install          (no new dependencies; safe)
-  3. firebase deploy --only functions:radiologyMediaSign
-     (or: firebase deploy --only functions)
-  4. firebase deploy --only hosting        (+ push to GitHub)
-  5. Hard refresh, select the patient, "Open DICOM to add radiology result"
-     → download.png now displays.
+Until that runs, the old function keeps answering "no link" for every
+image, whatever the browser does.
+
+WHAT THIS ZIP ADDS (so you are not stuck meanwhile)
+----------------------------------------------------
+1. The person who uploads an image now sees it IMMEDIATELY, even with the
+   old server. Firebase Storage returns a download token with every upload;
+   the browser keeps it in memory for the page session and uses it to show
+   the image. (Not saved anywhere; other users need the server fix.)
+2. For other users / after a reload, the viewer shows plainly what is wrong
+   and the exact command to run, instead of a technical guess.
+3. Everything from the previous zip (server fallback to token links, real
+   reasons per file, DICOM-only button).
+
+DEPLOY — DO ALL THREE, IN THIS ORDER
+------------------------------------
+  1. Extract this zip over the project folder (overwrite).
+  2. Terminal, inside the project folder:
+         cd functions
+         npm install
+         cd ..
+         firebase deploy --only functions
+     Wait for "Deploy complete!". (If it asks to enable APIs, answer yes.)
+  3. firebase deploy --only hosting     (and upload to GitHub as usual)
+  4. Hard refresh the page (Cmd/Ctrl+Shift+R), select the patient, open DICOM:
+     download.png displays — for everyone.
 
 OPTIONAL — restore 10-minute expiring links (recommended for privacy)
 --------------------------------------------------------------------
-Grant the signing permission to the functions' runtime service account.
-Project number 267628417218. Try the App Engine default account first; if
-your functions run as the compute account, use the second command:
+Give the functions' service account the role "Service Account Token Creator"
+(project number 267628417218):
 
   gcloud iam service-accounts add-iam-policy-binding \
       pclinic-20d81@appspot.gserviceaccount.com \
@@ -67,35 +60,31 @@ your functions run as the compute account, use the second command:
       --member="serviceAccount:267628417218-compute@developer.gserviceaccount.com" \
       --role="roles/iam.serviceAccountTokenCreator" --project=pclinic-20d81
 
-Also make sure the IAM Service Account Credentials API is enabled:
   gcloud services enable iamcredentials.googleapis.com --project=pclinic-20d81
 
-(Console route: IAM & Admin → Service Accounts → the functions account →
-Permissions → Grant access → same account as principal → role
-"Service Account Token Creator".) Once granted, the function automatically
-goes back to signed 10-minute links — no redeploy needed.
+Console route: IAM & Admin → Service Accounts → the functions account →
+Permissions → Grant access → same account as principal → "Service Account
+Token Creator". The function switches back to signed links by itself.
 
 FILES IN THIS ZIP
 -----------------
-  functions/radiology-media.cjs             NEW: viewUrlFor() signed→token fallback
+  functions/radiology-media.cjs             viewUrlFor(): signed → token fallback
   functions/index.js                        radiologyMediaSign uses it, returns reasons
   functions/package.json                    test:unit includes the new test
-  functions/test/radiology-media.test.cjs   NEW: 6 unit tests (18/18 unit total)
-  pclinic-dicom-viewer.js                   real reason on screen, no guessing
-  pclinic-radiology-media.js                report-card "Open" says the real reason
+  functions/test/radiology-media.test.cjs   6 unit tests
+  pclinic-radiology-media.js                remembers the upload's download token (memory)
+  pclinic-dicom-viewer.js                   shows own upload at once; plain-language reasons
   radio-dashboard.html / imaging-results.html / doctor-dashboard.html
-                                            cache tags -> ?v=20260902_MEDIAURL
-  (plus, from the previous zip) pclinic-file.js, radio-dashboard.js,
-  tests/radiology-media-button.test.mjs, DICOM-BUTTON-NOTES.txt
+                                            cache tags -> ?v=20260902_MEDIAURL2
+  pclinic-file.js, radio-dashboard.js       (DICOM-only button, unchanged since last zip)
+  tests/radiology-media-button.test.mjs, tests/radiology-media-client.test.mjs
+  DICOM-BUTTON-NOTES.txt                    previous change set
 
 VERIFIED
 --------
-  functions unit tests 18/18 (6 new: signed ok · signBlob denied → token
-  link minted · existing token reused · skip after first failure ·
-  object missing → actionable reason · other storage failure keeps both causes)
-  browser tests: media-button 12/12, selection 8/8, call-errors 9/9,
-  imaging-results 11/11, file-sync 6/6
-  Real browser: viewer with (a) sign call failing → explains the signBlob
-  error; (b) old server build → explains and points to the deploy; (c) object
-  missing → "upload did not complete, remove and re-upload"; (d) token-fallback
-  response → the image DISPLAYS. 0 page errors.
+  functions unit 18/18 · media-button 13/13 · media-client 9/11 (2 stale,
+  pre-existing) · selection 8/8 · call-errors 9/9 · imaging-results 11/11 ·
+  file-sync 6/6.
+  Real browser against a fake OLD server: upload through the viewer's Upload
+  button → image displays immediately; reopen → still displayed; another user
+  → clear instruction text; 0 page errors.

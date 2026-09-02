@@ -217,19 +217,29 @@
             signed.forEach(function (s) { byId[String(s.id)] = s; });
             var set = meta.map(function (m) {
                 var hit = byId[String(m.id)] || null;
+                var local = false;
+                if (!(hit && hit.url) && window.pcRadioMedia && typeof window.pcRadioMedia.localUrlFor === 'function') {
+                    // Just uploaded in this session: show it from the upload's own
+                    // download token while the server cannot hand out links.
+                    var lu = window.pcRadioMedia.localUrlFor(m.id);
+                    if (lu) { hit = { id: String(m.id), url: lu, mode: 'local' }; local = true; }
+                }
                 var problem = '';
                 if (hit && hit.url) problem = '';
                 else if (hit && hit.reason) problem = String(hit.reason);
                 else if (hit && hit.error) {
                     // Older deployments of radiologyMediaSign return only a bare code.
                     problem = hit.error === 'object-unavailable'
-                        ? 'The server could not produce a link for this file (older radiologyMediaSign build: usually the signBlob permission is missing on the Cloud Functions service account). Deploy the updated functions to get the automatic fallback.'
+                        ? 'The image is stored safely, but the Cloud Function "radiologyMediaSign" running in Firebase is still the previous version and is not allowed to create image links.\n' +
+                          'This is server-side: uploading web files to GitHub / Hosting cannot fix it. Do ONE of these once:\n' +
+                          '  • from the project folder run:  firebase deploy --only functions\n' +
+                          '  • or in Google Cloud console → IAM, give the functions service account the role "Service Account Token Creator".'
                         : String(hit.error);
                 }
                 else if (callProblem) problem = callProblem;
                 else if (signed.length || out.count === 0) problem = 'The signing service returned no entry for this file — its record may not match its stored object (radiology/' + order.id + '/' + m.id + '.' + (m.ext || '?') + ').';
                 else problem = 'The signing service returned nothing for this study.';
-                return { meta: m, signed: hit && hit.url ? hit : null, id: String(m.id), problem: problem };
+                return { meta: m, signed: hit && hit.url ? hit : null, id: String(m.id), problem: problem, local: local };
             });
             cb(null, set);
         }).catch(function (e) { cb(e, []); });
@@ -344,6 +354,10 @@
         else { showPlain('img', url); }
         markActive(item.id);
         renderMeta(item);
+        if (item.local && !window.__pcLocalPreviewNoted) {
+            window.__pcLocalPreviewNoted = true;
+            toast('Showing the copy you just uploaded. Other users will see it once the server is updated (see the message on any other file).');
+        }
     }
 
     function showOverlayMessage(text) {
