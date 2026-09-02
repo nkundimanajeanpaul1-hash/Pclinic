@@ -1,8 +1,24 @@
 [
   {
-    "origin": ["https://pclinic-20d81.web.app", "https://pclinic-20d81.firebaseapp.com", "http://localhost:5000"],
-    "method": ["GET", "HEAD"],
+    "origin": [
+      "https://pclinic-20d81.web.app",
+      "https://pclinic-20d81.firebaseapp.com",
+      "http://localhost:5000",
+      "https://nkundimanajeanpaul1-hash.github.io"
+    ],
+    "method": [
+      "GET",
+      "HEAD"
+    ],
     "maxAgeSeconds": 3600,
-    "responseHeader": ["Content-Type", "Content-Disposition", "Content-Length", "X-Goog-Meta-FirebaseStorageDownloadTokens"]
+    "responseHeader": [
+      "Accept-Ranges",
+      "Content-Disposition",
+      "Content-Length",
+      "Content-Range",
+      "Content-Type",
+      "ETag",
+      "X-Goog-Meta-FirebaseStorageDownloadTokens"
+    ]
   }
 ]

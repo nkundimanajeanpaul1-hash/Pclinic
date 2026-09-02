@@ -1,0 +1,128 @@
+PClinic — Doctor's Imaging Results = Weasis-style DICOM workstation (Zip A)
+==========================================================================
+Build tag: 20260902_WORKSTATION
+This zip CONTAINS the two earlier, still-undeployed change sets as well
+(media-URL fix 20260902_MEDIAURL2 and the DICOM-only button 20260902_DICOMONLY),
+so extracting this one alone brings the project to the current state.
+
+WHAT YOU GET
+------------
+Doctor dashboard → Imaging Results (imaging-results.html) is now a full-page
+workstation laid out like your screenshot, under the PClinic header and the
+patient identification bar:
+
+  left    DICOM EXPLORER — Search patient…, Search tags…, Studies / DICOM tags
+          tabs, Patient → Study (state pill) → thumbnails (drag a thumbnail
+          into any viewport). Right-click a thumbnail (radiology) → remove.
+  top     TOOL BAR — Explorer · Export ▾ · Window/Level · Pan · Zoom · + − ·
+          Fit · Layout ▾ · Sync · Reset · Ruler · Angle · ROI ▾ (rectangle,
+          ellipse, freehand, bidirectional, Cobb, W/L-from-region) · Probe ·
+          Arrow/text · Delete ▾ · Magnify · Rotate ▾ (rotate 90/180, flip H/V,
+          free rotate) · Flip · Invert · Presets ▾ (per-modality W/L presets +
+          colour maps) · Cine · ‹ › · Full screen  (+ Upload for radiology)
+  centre  "Image Viewer" tab, 1×1 … 2×3 viewports, corner overlays (patient /
+          ID / DOB-sex-age · study / date / modality / institution / series ·
+          Frame / Zoom / Window-Level · matrix / pixel spacing / file / uploader),
+          scale bar (mm/cm or pix), orientation letters L/R/A/P/H/F that follow
+          rotation and flips, PRELIMINARY banner until a report is signed,
+          cine bar (play/pause, slider, fps), double-click = maximise.
+  right   vertical tabs Display · Image Tools · Draw & Measure · Study Info ·
+          Report (findings, impression, addenda, critical flag, signer, Print/PDF).
+  bottom  status bar (patient · study · file · tool · live pixel value / HU);
+          the former report list is kept underneath in a "Radiology reports"
+          drawer (count badge, Print / PDF, acknowledge critical, "Show images
+          in workstation").
+
+  Every tool works on JPEG/PNG/WebP AND on DICOM: uncompressed, RLE, JPEG
+  baseline, JPEG-LS, JPEG 2000, HTJ2K, multi-frame (cine). CT values read
+  in HU; measurements in mm / mm² when the file carries pixel spacing, else
+  px / px². Keyboard: ← → frames/images, + − 0 zoom, R/⇧R rotate, H/V flip,
+  I invert, F full screen, Space cine, Del delete selected, W/P/Z/L/A/M tools,
+  Esc close (modal). Touch: one finger = tool, pinch = zoom, two fingers = pan.
+  Phone/tablet: explorer and side panels become drawers; tool bar scrolls.
+
+  One patient truth: identification-bar Find/Clear ⇄ explorer patient search
+  ⇄ ?patient= URL ⇄ workstation, exactly as on the radiology dashboard.
+  Doctors see images as soon as radiology uploads them (marked PRELIMINARY,
+  decision D1); doctors are read-only; radiology's "Open DICOM to add radiology
+  result" opens the SAME workstation as a modal with Upload/Remove (D3).
+
+  Saving measurements / key images / notes to the common server is Zip B
+  (the Draw & Measure panel says so); export a screenshot meanwhile.
+
+FILES (extract over the project root, overwrite)
+------------------------------------------------
+  vendor/                      NEW  self-hosted viewer libraries (1.9 MB, cached
+                                    a week): cornerstone-core/-math/-tools,
+                                    hammer, dicom-parser, cornerstoneWADOImageLoader
+                                    + its decode worker. LICENSES.txt inside.
+  pclinic-dicom-viewer.js      REWRITTEN  the workstation (modal + inline modes)
+  pclinic-dicom-viewer.css     REWRITTEN  dark Weasis-style theme, responsive
+  imaging-results.html         REWRITTEN  header + identification bar + workstation
+                                    + report drawer (all previous report logic kept)
+  radio-dashboard.js           radiology opens the workstation with upload rights
+                                    and the identified patient
+  radio-dashboard.html         cache tags → ?v=20260902_WORKSTATION
+  firebase.json                CSP: pages get worker-src 'self' blob: and
+                                    'wasm-unsafe-eval' (NO external hosts, NO
+                                    unsafe-eval on pages); the single decode-worker
+                                    file gets its own CSP with 'unsafe-eval' (the
+                                    codecs need it) — rule placed last so it wins;
+                                    vendor/ cached 7 days.
+  cors.json                    + https://nkundimanajeanpaul1-hash.github.io,
+                                    Content-Range/Accept-Ranges/ETag headers
+  tests/dicom-workstation.test.mjs   NEW  10 unit/contract tests
+  tests/radiology-media-button.test.mjs, tests/imaging-results-page.test.mjs  updated
+  (+ from the earlier zips) functions/radiology-media.cjs, functions/index.js,
+    functions/package.json, functions/test/radiology-media.test.cjs,
+    pclinic-radiology-media.js, pclinic-file.js, doctor-dashboard.html,
+    tests/radiology-media-client.test.mjs, MEDIA-URL-FIX-NOTES.txt,
+    DICOM-BUTTON-NOTES.txt, DOCTOR-IMAGE-VIEWER-PLAN.md (the approved plan)
+
+DEPLOY — in this order
+----------------------
+  1. Extract the zip over the project folder (overwrite). Commit + push.
+  2. Terminal in the project folder:
+        cd functions && npm install && cd ..
+        firebase deploy --only functions          (radiologyMediaSign fallback)
+        firebase deploy --only hosting            (pages + vendor/ + new CSP)
+  3. Bucket CORS (ONE time; needed so the browser may READ the image bytes
+     for DICOM decoding and measurements — without it JPEG/PNG still show as
+     plain pictures but DICOM cannot be decoded):
+        gsutil cors set cors.json gs://pclinic-20d81.firebasestorage.app
+     No gsutil? Open https://console.cloud.google.com/?cloudshell=true
+     (project pclinic-20d81), click "Open editor", upload cors.json, then run
+     the same command in the Cloud Shell terminal.
+  4. If not done yet: IAM → compute service account → add role
+     "Service Account Token Creator" (or rely on the token fallback from step 2).
+  5. Hard refresh (Cmd/Ctrl+Shift+R). Doctor: select patient → Imaging Results.
+     Radiology: select patient → Open DICOM to add radiology result.
+
+VERIFIED
+--------
+  Real browser (Chromium, production CSP headers from firebase.json applied):
+    doctor page 48/48 — mount under header, 26 tool-bar controls, 5 side tabs,
+    explorer + thumbnails, JPEG 2000 / JPEG-LS / uncompressed / RLE / cine /
+    PNG all display, overlays, scale bar, orientation letters, PRELIMINARY
+    banner, ruler (mm), ellipse ROI (area/mean/SD), angle, rectangle ROI,
+    arrow+text, delete, W/L drag, presets, colour map, invert, rotate (letters
+    rotate too), flip, zoom, pan, reset, magnify, frames, cine, wheel scroll,
+    2×2 layout, PNG in 2nd viewport, CT in 3rd without banner, HU probe (40 HU),
+    CT Brain preset, sync, maximise, Display / Report / Study Info / Image
+    Tools panels, tag search, explorer patient search → bar follows, bar Find →
+    workstation follows, bar Clear → empties, export PNG + original, keyboard,
+    report drawer + "Show images", phone drawer; 0 page errors.
+    radiology modal 10/10 — locked without patient, opens for the identified
+    patient with Upload, upload PNG + DICOM → both attached and shown at once,
+    remove, Esc, single instance, "no images yet → Upload" hint.
+    tool bar fits one row from 1024 px wide; side tabs never overflow.
+  node --test: dicom-workstation 10/10, imaging-results-page 11/11,
+    radiology-media-button 13/13, selection 8/8, call-errors 9/9,
+    pclinic-file-sync 6/6, media-client 9/11 (2 pre-existing stale),
+    functions unit 18/18.
+
+NEXT — Zip B (after you confirm A works on your site)
+-----------------------------------------------------
+  measurements / key-image flags / viewer note saved per image per user to
+  the common server (new radiologyAnnotations collection + rules), restored on
+  reopen for everyone with the author's name; "Saved ✓" indicator.

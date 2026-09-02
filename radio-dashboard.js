@@ -1005,7 +1005,8 @@
                 var live = window.pcRadiology && window.pcRadiology.orderById(first.id);
                 if (live) selectStudy(live);
             }
-            window.PcDicomViewer.open(first || { id: '', patientId: patient.id, patientName: nameOf(patient), study: '' }, { canManage: true, studies: studies });
+            // One workstation for radiology and doctors: radiology opens it with Upload/Remove on.
+            window.PcDicomViewer.open(first || { id: '', patientId: patient.id, patientName: nameOf(patient), study: '' }, { canManage: true, studies: studies, patient: patient });
         }
         window.addEventListener('pcRadioOpenViewer', handleOpenViewerRequest);
 
@@ -1024,7 +1025,7 @@
             if (patient && patient.id && (!currentPatient || String(currentPatient.id) !== String(patient.id))) setActivePatient(patient);
             if (!requirePatient('The DICOM viewer')) return;
             if (!window.PcDicomViewer) { notify('The DICOM viewer did not load.', 'error', 6000); return; }
-            window.PcDicomViewer.open(viewerOrderFor(order, patient), { canManage: true });
+            window.PcDicomViewer.open(viewerOrderFor(order, patient), { canManage: true, patient: patient || currentPatient, studies: viewerStudiesFor(patient || currentPatient) });
         }
         window.openImageViewer = openImageViewer;
 
@@ -1069,7 +1070,7 @@
             viewerBtn.textContent = 'Open DICOM viewer';
             viewerBtn.style.cssText = 'font:inherit;font-size:11px;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid #d1d1d6;background:#1b1b1b;color:#fff;cursor:pointer';
             viewerBtn.onclick = function () {
-                if (window.PcDicomViewer) window.PcDicomViewer.open(order, { canManage: canManage });
+                if (window.PcDicomViewer) window.PcDicomViewer.open(viewerOrderFor(order, currentPatient), { canManage: canManage, patient: currentPatient, studies: viewerStudiesFor(currentPatient) });
                 else notify('The DICOM viewer did not load.', 'warning');
             };
             bar.appendChild(viewerBtn);
