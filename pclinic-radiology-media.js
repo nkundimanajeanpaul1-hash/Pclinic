@@ -334,7 +334,9 @@
                     media.urlsFor(order.id).then(function (out) {
                         var hit = ((out && out.items) || []).filter(function (i) { return String(i.id) === String(row.id); })[0];
                         if (!hit || !hit.url) {
-                            say('No view URL for this file yet — is the radiologyMediaSign function deployed?', 'warning');
+                            var why = (hit && (hit.reason || hit.error)) || (out && out.error === 'backend-unavailable'
+                                ? 'the common server is not connected' : 'the signing service returned no entry for this file');
+                            say('This image cannot be opened: ' + why, 'warning');
                             return;
                         }
                         if (row.kind === 'video') {

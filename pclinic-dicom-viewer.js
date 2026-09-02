@@ -192,15 +192,44 @@
     function fetchMedia(order, cb) {
         var listP = window.pcRadioMedia && window.pcRadioMedia.listFor
             ? window.pcRadioMedia.listFor(order.id) : Promise.resolve([]);
-        var urlP = window.pcRadioMedia && window.pcRadioMedia.urlsFor
-            ? window.pcRadioMedia.urlsFor(order.id) : Promise.resolve({ items: [] });
+        // The URL call is kept separate from the metadata call on purpose: when it
+        // fails (function not deployed, signing not permitted, session expired…)
+        // the study list must still render and each file must carry the REASON,
+        // so the viewer can say what is wrong instead of guessing.
+        var urlP = (window.pcRadioMedia && window.pcRadioMedia.urlsFor
+            ? Promise.resolve().then(function () { return window.pcRadioMedia.urlsFor(order.id); })
+            : Promise.resolve({ items: [] })
+        ).then(function (out) { return out || { items: [] }; })
+         .catch(function (e) { return { items: [], error: 'sign-call-failed', reason: (e && e.message) || String(e) }; });
         Promise.all([listP, urlP]).then(function (res) {
             var meta = res[0] || [];
-            var signed = res[1] && res[1].items ? res[1].items : [];
+            var out = res[1] || {};
+            var signed = out.items || [];
+            var callProblem = out.error === 'backend-unavailable'
+                ? 'The common server is not connected (sign in and wait for Firebase to connect).'
+                : (out.error ? String(out.reason || out.error) : '');
+            if (out.signing === 'token-fallback' && out.signingProblem && !window.__pcSigningNoteShown) {
+                window.__pcSigningNoteShown = true;
+                console.warn('[pclinic] radiologyMediaSign is serving download-token links because signed URLs failed: ' + out.signingProblem +
+                    ' — grant roles/iam.serviceAccountTokenCreator to the Cloud Functions service account to restore 10-minute links.');
+            }
             var byId = {};
             signed.forEach(function (s) { byId[String(s.id)] = s; });
             var set = meta.map(function (m) {
-                return { meta: m, signed: byId[String(m.id)] || null, id: String(m.id) };
+                var hit = byId[String(m.id)] || null;
+                var problem = '';
+                if (hit && hit.url) problem = '';
+                else if (hit && hit.reason) problem = String(hit.reason);
+                else if (hit && hit.error) {
+                    // Older deployments of radiologyMediaSign return only a bare code.
+                    problem = hit.error === 'object-unavailable'
+                        ? 'The server could not produce a link for this file (older radiologyMediaSign build: usually the signBlob permission is missing on the Cloud Functions service account). Deploy the updated functions to get the automatic fallback.'
+                        : String(hit.error);
+                }
+                else if (callProblem) problem = callProblem;
+                else if (signed.length || out.count === 0) problem = 'The signing service returned no entry for this file — its record may not match its stored object (radiology/' + order.id + '/' + m.id + '.' + (m.ext || '?') + ').';
+                else problem = 'The signing service returned nothing for this study.';
+                return { meta: m, signed: hit && hit.url ? hit : null, id: String(m.id), problem: problem };
             });
             cb(null, set);
         }).catch(function (e) { cb(e, []); });
@@ -301,7 +330,15 @@
         currentItem = item;
         currentImage = null;
         var url = item.signed && item.signed.url;
-        if (!url) { showOverlayMessage('No view URL for this file yet — is radiologyMediaSign deployed?'); return; }
+        if (!url) {
+            clearPlain();
+            showOverlayMessage('This file is registered but cannot be displayed.\n' +
+                (item.problem || 'The signing service returned no URL for it.') +
+                '\n\nFile: ' + String((item.meta && item.meta.fileName) || item.id));
+            markActive(item.id);
+            renderMeta(item);
+            return;
+        }
         if (isDicom(item)) { displayDicom(item, url); }
         else if (isVideo(item)) { showPlain('video', url); }
         else { showPlain('img', url); }
