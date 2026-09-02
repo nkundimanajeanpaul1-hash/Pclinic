@@ -4,15 +4,17 @@
  * tests/radiology-media-button.test.mjs
  *
  * Renders the real clinical action bar (pclinic-file.js) against a small DOM
- * and asserts the behaviour of the big "Add image result" button:
+ * and asserts the behaviour of the radiology bar's media entry point.
  *
- *   - it exists in the radiology bar and is unmistakably present;
- *   - it is locked while no patient is selected, and clicking it with no
- *     patient must NOT dispatch an add-media event (that would let a study
- *     image be filed against nobody);
- *   - selecting a patient unlocks it, and clicking then dispatches
- *     pcRadioAddMedia carrying exactly that patient;
- *   - pcRadioBar.setStudyCount drives the badge, including hiding it at zero.
+ * History: the bar used to carry a separate "Add radiology result" button
+ * (#radMediaBtn, event pcRadioAddMedia). It was removed — results are added
+ * through the single "Open DICOM to add radiology result" button
+ * (#radViewerBtn, event pcRadioOpenViewer). These tests guard that:
+ *
+ *   - the old button / event do not come back (a dead duplicate entry point);
+ *   - the DICOM button is locked while no patient is selected and never opens
+ *     the viewer for nobody; selecting a patient unlocks it;
+ *   - selection ⇄ identification bar stay one truth.
  *
  * Run:  npm --prefix tests run test:media-button
  */
@@ -205,85 +207,32 @@ function store() {
 
 /* ── the bar on the radiology page ────────────────────────────── */
 
-test('the radiology bar carries a prominent Add-image-result button', () => {
+test('the separate "Add radiology result" button is gone — the DICOM button is the single entry point', () => {
   const { win, byId } = boot();
-  const btn = byId.get('radMediaBtn');
-  assert.ok(btn, 'the bar was rendered but #radMediaBtn is missing');
-  assert.match(btn.textContent, /Add radiology result/);
-  assert.ok(String(btn.className).includes('ab-media'), 'button is missing its prominence class');
-  assert.equal(win.document.body.querySelectorAll('#radMediaBtn').length, 1, 'button must appear exactly once');
-  assert.equal(btn.children.filter((c) => c.tagName === 'SPAN' && /ab-badge/.test(c.className)).length, 1,
-    'the button must carry exactly one count badge');
-  const icon = btn.children.find((c) => c.tagName === 'I');
-  assert.ok(icon, 'button needs its icon to be scannable at a glance among 13 bar controls');
-  // className is what the module's own selectors match on; attrs is an
-  // implementation detail of this shim and must not be the thing under test.
-  assert.match(icon.className, /ti-photo-plus/);
-  assert.ok(byId.get('radMediaCnt'), 'the count badge element is missing');
+  assert.equal(byId.get('radMediaBtn'), undefined, 'the removed #radMediaBtn came back');
+  assert.equal(win.document.body.querySelectorAll('#radMediaBtn').length, 0, 'the removed #radMediaBtn came back');
+  assert.equal(byId.get('radMediaCnt'), undefined, 'the old count badge came back');
+  const bar = win.document.getElementById('dcBar');
+  assert.equal(bar.querySelectorAll('.ab-media').length, 0, 'no button may reuse the removed prominence class');
+  const viewer = byId.get('radViewerBtn');
+  assert.ok(viewer, 'the DICOM button must exist');
+  assert.match(viewer.textContent, /Open DICOM to add radiology result/);
+  assert.equal(win.document.body.querySelectorAll('#radViewerBtn').length, 1, 'exactly one DICOM button');
+  // nothing on the page may still say the old label
+  assert.doesNotMatch(String(bar.textContent), /Add radiology result/, 'the old label is still rendered somewhere in the bar');
 });
 
-test('the button is locked, not merely dim, while no patient is selected', () => {
-  const { win, byId } = boot();
-  const btn = byId.get('radMediaBtn');
-  assert.ok(btn.classList.contains('ab-context-off'), 'button should start disabled');
-  assert.equal(btn.getAttribute('aria-disabled'), 'true', 'assistive tech must be told it is disabled');
-  assert.match(btn.title, /Select a patient first/);
-
-  const seen = [];
-  win.addEventListener('pcRadioAddMedia', (e) => seen.push(e.detail));
-  const toastsBefore = win.__toasts.length;
-  btn.click();
-  assert.equal(seen.length, 0, 'a locked button must not dispatch an add-media request');
-  assert.equal(win.__toasts.length, toastsBefore + 1, 'a locked click must explain itself, not fail silently');
-  assert.match(win.__toasts[win.__toasts.length - 1].m, /Select a patient first/);
-});
-
-test('selecting a patient unlocks it and clicking carries that patient', () => {
-  const { win, byId } = boot();
-  const patient = { id: '1002', mrn: '1002', firstName: 'Djuma', lastName: 'Nshuti' };
-  win.pcRadioBar.setPatient(patient);
-
-  const btn = byId.get('radMediaBtn');
-  assert.equal(btn.classList.contains('ab-context-off'), false, 'selecting a patient must enable the button');
-  assert.equal(btn.getAttribute('aria-disabled'), null);
-
-  const seen = [];
-  win.addEventListener('pcRadioAddMedia', (e) => seen.push(e.detail && e.detail.patient));
-  btn.click();
-  assert.equal(seen.length, 1, 'an enabled button must dispatch exactly once');
-  assert.equal(String(seen[0].id), '1002', 'the event must carry the selected patient, not a guess');
-});
-
-test('the badge tracks how many studies still need their image', () => {
-  const { win, byId } = boot();
-  win.pcRadioBar.setPatient({ id: '1002', mrn: '1002' });
-  const badge = byId.get('radMediaCnt');
-  win.pcRadioBar.setStudyCount(0);
-  assert.equal(badge.textContent, '0');
-  assert.equal(badge.style.display, 'none', 'a zero badge must disappear, not shout "0"');
-  win.pcRadioBar.setStudyCount(2);
-  assert.equal(badge.textContent, '2');
-  assert.equal(badge.style.display, 'inline-flex');
-  win.pcRadioBar.setStudyCount('3');
-  assert.equal(badge.textContent, '3', 'a numeric string from the caller must still work');
-});
-
-test('clearing the patient re-locks the button', () => {
-  const { win, byId } = boot();
-  win.pcRadioBar.setPatient({ id: '1002', mrn: '1002' });
-  win.pcRadioBar.setStudyCount(1);
-  win.pcRadioBar.setPatient(null);
-  const btn = byId.get('radMediaBtn');
-  assert.ok(btn.classList.contains('ab-context-off'), 'deselecting must lock the button again');
-  assert.equal(byId.get('radMediaCnt').style.display, 'inline-flex', 'badge state must not be corrupted by locking');
+test('pcRadioBar.setStudyCount is a safe no-op now that the badge is gone', () => {
+  const { win } = boot();
+  assert.doesNotThrow(() => { win.pcRadioBar.setStudyCount(3); win.pcRadioBar.setStudyCount(0); });
 });
 
 test('the button does not leak onto non-radiology pages', () => {
   // pclinic-file.js is loaded by every clinical page; the radiology bar must
   // stay scoped to radio-dashboard, or 51 other pages grow a dead button.
   const onOther = boot({ onRadioPage: false, path: '/doctor-dashboard.html' });
-  assert.equal(onOther.document.getElementById('radMediaBtn'), null,
-    'the Add-image button appeared on a non-radiology page');
+  assert.equal(onOther.document.getElementById('radViewerBtn'), null,
+    'the DICOM button appeared on a non-radiology page');
   // #dcBar is the SHARED clinical bar, present on many pages by design; only the
   // radiology button set is scoped. Assert the scope marker, not the bar's absence.
   const otherBar = onOther.document.getElementById('dcBar');
@@ -297,26 +246,26 @@ test('the button does not leak onto non-radiology pages', () => {
 
 /* ── the two halves must stay wired to each other ─────────────── */
 
-test('the bar and the dashboard agree on the event name', () => {
+test('the old pcRadioAddMedia event is dead on both sides, and pcRadioOpenViewer is live on both', () => {
   const bar = readFileSync(resolve(ROOT, 'pclinic-file.js'), 'utf8');
   const dash = readFileSync(resolve(ROOT, 'radio-dashboard.js'), 'utf8');
-  const dispatched = [...bar.matchAll(/new CustomEvent\('(pcRadioAddMedia)'/g)].map((m) => m[1]);
-  const listened = [...dash.matchAll(/addEventListener\('(pcRadioAddMedia)'/g)].map((m) => m[1]);
-  assert.ok(dispatched.length >= 1, 'the bar no longer dispatches pcRadioAddMedia — the button is dead');
-  assert.ok(listened.length >= 1, 'the dashboard no longer listens for pcRadioAddMedia — the button does nothing');
-
-  assert.match(dash, /setStudyCount/, 'the dashboard must keep the badge in step');
-  assert.match(bar, /setStudyCount:\s*function/, 'the bar must expose setStudyCount');
+  assert.doesNotMatch(bar, /new CustomEvent\('pcRadioAddMedia'/, 'the bar still dispatches the removed event');
+  assert.doesNotMatch(dash, /addEventListener\('pcRadioAddMedia'/, 'the dashboard still listens for the removed event');
+  assert.doesNotMatch(dash, /function handleAddMediaRequest|function pickStudyForMedia/, 'dead handlers of the removed button are still there');
+  assert.doesNotMatch(bar, /id="radMediaBtn"/, 'the removed button markup is still there');
+  assert.match(bar, /new CustomEvent\('pcRadioOpenViewer'/, 'the DICOM button must dispatch pcRadioOpenViewer');
+  assert.match(dash, /addEventListener\('pcRadioOpenViewer'/, 'the dashboard must listen for pcRadioOpenViewer');
 });
 
-test('upload does not require the study to have been started', () => {
+test('opening DICOM to add a result does not require the study to have been started', () => {
   // Deliberate: radiologyTransition is not deployed on this project, so gating
   // media on an acquired study would make the button useless today.
   const dash = readFileSync(resolve(ROOT, 'radio-dashboard.js'), 'utf8');
-  const handler = dash.slice(dash.indexOf('function handleAddMediaRequest'), dash.indexOf('function pickStudyForMedia'));
-  assert.doesNotMatch(handler, /stateOf\((\w+)\)\s*!==\s*'cancelled'\s*\)\s*\.length\s*===\s*0/, 'media must not be gated on transition state');
-  assert.match(handler, /openOrdersForPatient/, 'the handler must resolve studies for the selected patient');
+  const start = dash.indexOf('function viewerStudiesFor');
+  const handler = dash.slice(start, dash.indexOf("window.addEventListener('pcRadioOpenViewer'", start));
+  assert.ok(handler.length > 0, 'viewerStudiesFor / handleOpenViewerRequest not found');
   assert.doesNotMatch(handler, /radiologyTransition/, 'media must not depend on the transition callable');
+  assert.doesNotMatch(handler, /\bacquired\b[^\n]*return;/, 'media must not be gated on the acquired state');
 });
 
 /* ── the "Open DICOM viewer" button on the same bar ───────────── */
@@ -399,7 +348,7 @@ test('clearing the identification bar clears the selection (pcPatientChanged nul
   assert.equal(seen[0], null, 'Clear must announce "no patient" (detail null), not a ghost patient');
   assert.equal(win.localStorage.getItem('pclinic_active_patient'), null, 'the stored active patient must go too');
   // the dashboard turns that null into setActivePatient(null); the bar module locks itself on the same event
-  for (const id of ['radViewerBtn', 'radMediaBtn']) {
+  for (const id of ['radViewerBtn']) {
     assert.ok(byId.get(id).classList.contains('ab-context-off'), id + ' must be locked once the identification bar is empty');
   }
 });
@@ -418,7 +367,7 @@ test('the dashboard funnels every entry point through setActivePatient, which wr
   assert.match(listener, /if \(!incoming \|\| !incoming\.id\) \{ if \(currentPatient\) setActivePatient\(null\)/, 'bar Clear must clear the selection');
   assert.match(listener, /setActivePatient\(known\)/, 'bar Find must make that patient the selected one');
   // every patient action is gated on the identified patient
-  for (const fn of ['transitionOrder', 'collectReport', 'addAddendum', 'printReportFile', 'handleAddMediaRequest', 'handleOpenViewerRequest', 'openMediaSheet', 'uploadMedia', 'openImageViewer']) {
+  for (const fn of ['transitionOrder', 'collectReport', 'addAddendum', 'printReportFile', 'handleOpenViewerRequest', 'openMediaSheet', 'uploadMedia', 'openImageViewer']) {
     const start = dash.indexOf('function ' + fn + '(');
     assert.ok(start > -1, fn + ' not found');
     const body = dash.slice(start, start + 1400);
