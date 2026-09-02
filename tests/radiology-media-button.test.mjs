@@ -327,11 +327,11 @@ test('the bar and the dashboard agree on the open-viewer event, and it ALWAYS op
 
 test('the viewer itself tolerates a patient with no study and lists every study handed to it', () => {
   const viewer = readFileSync(resolve(ROOT, 'pclinic-dicom-viewer.js'), 'utf8');
-  assert.match(viewer, /if \(!currentOrder \|\| !currentOrder\.id\)/, 'reload() must short-circuit when there is no study');
-  assert.match(viewer, /openOpts\.studies/, 'the explorer must render openOpts.studies');
-  assert.match(viewer, /function switchStudy/, 'studies in the explorer must be switchable');
-  assert.match(viewer, /if \(root\) close\(\);/, 'a second open must replace, not stack, the viewer');
-  assert.match(viewer, /window\.removeEventListener\('mousemove', onMove\)/, 'window listeners must be removed on close');
+  assert.match(viewer, /No imaging study for this patient yet\./, 'a patient without a study must land in the viewer with an explanation, not a toast');
+  assert.match(viewer, /openOpts\.studies/, 'the explorer must list the studies handed in by the dashboard');
+  assert.match(viewer, /function switchStudy|selectStudy: function/, 'studies in the explorer must be switchable');
+  assert.match(viewer, /if \(root\) close\(\); mode = 'modal'/, 'a second open must replace, not stack, the viewer');
+  assert.match(viewer, /window\.removeEventListener\('keydown', onKeyBound\)/, 'window listeners must be removed on close');
   assert.match(viewer, /close: close, isOpen:/, 'close/isOpen must be exported');
 });
 
@@ -382,8 +382,8 @@ test('the dashboard funnels every entry point through setActivePatient, which wr
 
 test('the viewer falls back to the uploader\'s own download-token link and otherwise explains the real reason', () => {
   const viewer = readFileSync(resolve(ROOT, 'pclinic-dicom-viewer.js'), 'utf8');
-  const fm = viewer.slice(viewer.indexOf('function fetchMedia'), viewer.indexOf('function isDicom'));
-  assert.match(fm, /pcRadioMedia\.localUrlFor/, 'a file uploaded in this session must be viewable at once');
+  const fm = viewer.slice(viewer.indexOf('function fetchMedia'), viewer.indexOf('function studiesForPatient'));
+  assert.match(fm, /M\.localUrlFor/, 'a file uploaded in this session must be viewable at once');
   assert.match(fm, /byId\[String\(m\.id\)\]/, 'the server URL is still preferred when present');
   assert.match(fm, /sign-call-failed/, 'a failing sign call must not hide the study list');
   assert.doesNotMatch(viewer, /is radiologyMediaSign deployed\?/, 'the old guessing message must be gone');
