@@ -190,3 +190,28 @@ test('without the common server the work is refused clearly, not queued blindly'
   assert.match(err.message, /Sign in and wait for the common server/);
   assert.equal(harness.fetches.length, 0);
 });
+
+
+/* ── the uploader must see their own image even while the server cannot sign ── */
+
+test('the download token returned by the upload is remembered in memory and turned into a view URL', async () => {
+  const { media, fetch } = makeBackend();
+  fetch.impl = async (url, init) => ({
+    ok: true, status: 200, headers: { get: () => null }, text: async () => '',
+    json: async () => ({ name: 'radiology/rad-order-7/x.jpg', downloadTokens: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' }),
+  });
+  const rec = await media.upload({ id: 'rad-order-7', patientId: '1002' }, file());
+  const url = media.localUrlFor(rec.id);
+  assert.match(url, /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/pclinic-20d81\.firebasestorage\.app\/o\/radiology%2Frad-order-7%2F/);
+  assert.match(url, /\?alt=media&token=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee$/);
+  assert.equal(media.localUrlFor('someone-elses-file'), '', 'only files uploaded in this session are known locally');
+  // never persisted: the token is not part of the Firestore record (schema is fixed by firestore.rules)
+  assert.equal(Object.prototype.hasOwnProperty.call(rec, 'url'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(rec, 'downloadTokens'), false);
+});
+
+test('an upload response without a token leaves no local URL and does not throw', async () => {
+  const { media } = makeBackend();
+  const rec = await media.upload({ id: 'rad-order-7', patientId: '1002' }, file());
+  assert.equal(media.localUrlFor(rec.id), '');
+});

@@ -379,3 +379,13 @@ test('the dashboard funnels every entry point through setActivePatient, which wr
   // startup: whatever id the bar restores from is also the selection
   assert.match(dash, /localStorage\.getItem\('pclinic_active_patient'\) \|\| '';\s*[\s\S]{0,400}setActivePatient\(restored\)/, 'restore must go through setActivePatient so bar and selection start equal');
 });
+
+test('the viewer falls back to the uploader\'s own download-token link and otherwise explains the real reason', () => {
+  const viewer = readFileSync(resolve(ROOT, 'pclinic-dicom-viewer.js'), 'utf8');
+  const fm = viewer.slice(viewer.indexOf('function fetchMedia'), viewer.indexOf('function isDicom'));
+  assert.match(fm, /pcRadioMedia\.localUrlFor/, 'a file uploaded in this session must be viewable at once');
+  assert.match(fm, /byId\[String\(m\.id\)\]/, 'the server URL is still preferred when present');
+  assert.match(fm, /sign-call-failed/, 'a failing sign call must not hide the study list');
+  assert.doesNotMatch(viewer, /is radiologyMediaSign deployed\?/, 'the old guessing message must be gone');
+  assert.match(viewer, /firebase deploy --only functions/, 'the fix instruction must be on screen for the old server build');
+});
