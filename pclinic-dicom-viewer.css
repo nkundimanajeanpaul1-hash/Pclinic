@@ -250,3 +250,20 @@
   .pcdv .dv-toolbar, .pcdv .dv-explorer, .pcdv .dv-side, .pcdv .dv-status-bar, .pcdv .dv-title, .pcdv .dv-tabstrip { display: none !important; }
   .pcdv { position: static; height: auto; }
 }
+
+/* ── annotations on the common server (Zip B) ─────────────────────── */
+.dv-thumb .dv-an { position: absolute; bottom: 14px; right: 3px; font-size: 9px; color: #fff; background: rgba(74,158,255,.85); border-radius: 4px; padding: 0 3px; }
+.dv-mi-row.remote { border-style: dashed; border-color: #4f7f66; }
+.dv-mi-row.remote .dv-mi-ico { background: #2f5a45; }
+.dv-mi-row .dv-mi-del:disabled { cursor: default; opacity: .8; }
+.dv-mi-row .dv-mi-del:disabled:hover { background: transparent; color: var(--dv-muted); }
+.dv-note-input { width: 100%; box-sizing: border-box; resize: vertical; min-height: 58px; background: var(--dv-bg3); color: var(--dv-text); border: 1px solid var(--dv-line); border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 12px; }
+.dv-note-input:focus { outline: none; border-color: var(--dv-accent); }
+.dv-note-input:disabled { opacity: .6; }
+.dv-colleague { background: var(--dv-bg3); border: 1px dashed #4f7f66; border-radius: 8px; padding: 7px 9px; margin-top: 6px; font-size: 12px; }
+.dv-colleague b { display: block; color: #7fd3a5; font-size: 12px; }
+.dv-colleague span { display: block; color: var(--dv-muted); font-size: 11px; margin-top: 2px; }
+.dv-colleague pre { margin: 5px 0 0; white-space: pre-wrap; font: inherit; font-size: 12px; color: var(--dv-text); }
+.dv-status-bar .dv-save.ok { color: var(--dv-ok); }
+.dv-status-bar .dv-save.err { color: var(--dv-danger); }
+.dv-tb[data-id="key"].active svg { fill: var(--dv-warn); stroke: var(--dv-warn); }

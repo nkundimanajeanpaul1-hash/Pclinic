@@ -1,0 +1,104 @@
+PCLINIC — IMAGING WORKSTATION, ZIP B: SAVE TO THE COMMON SERVER
+================================================================
+Date: 2026-09-02        Builds on Zip A (this zip CONTAINS Zip A — extract only this one)
+
+WHAT YOU GET
+------------
+Everything a doctor or radiologist does in the workstation is now kept on the
+common server and comes back for everyone, on any device:
+
+  • Measurements / drawings (ruler, angle, Cobb, rectangle/ellipse/freehand ROI,
+    bidirectional, probe, arrow + text) — saved per image, per frame, per author.
+  • Key images — ★ button in the tool bar (or key K, or the switch in
+    Draw & Measure ▸ Common server). Starred thumbnails show ★; the image
+    overlay shows "★ KEY IMAGE"; Study Info lists it.
+  • A short note per image ("My note on this image", Draw & Measure panel).
+  • "Saved ✓ 02 Sept 2026, 19:54" in the status bar (bottom right).
+    While typing/drawing it says "Unsaved changes…" then "Saving…".
+    Saving happens by itself 1 second after the last change — no Save button.
+    If the server refuses or the connection drops it says
+    "Not saved — <reason> Retrying…" in red and retries (5 s, 15 s, then every
+    30 s); clicking the indicator retries at once. Closing the page, switching
+    patient/study or pressing Esc flushes pending work first.
+
+  • Colleagues' work: every doctor/radiologist sees everyone's drawings on the
+    image. Your own are yellow and editable; a colleague's are green, locked
+    (🔒 in the list, "by Dr Alice"), cannot be moved or deleted by you
+    ("Delete all" leaves them alone). Their key-image mark and note appear
+    under "From colleagues" with name, role and time.
+  • Nurses see everything read-only (no ★, note box disabled).
+  • Radiology's modal viewer (Open DICOM to add radiology result) saves the
+    same way — one viewer, one store.
+  • Same user in two tabs/devices: a drawing deleted on one disappears on the
+    other (uuid-based sync) without touching what is being drawn right now.
+
+WHERE IT IS STORED
+------------------
+Firestore collection  radiologyAnnotations/{mediaId}_{uid}
+  id, mediaId, orderId, patientId, byUid, byId, byName, byRole,
+  measurements: [{tool, uuid, frame, json}], keyImage, note, updatedAt, client
+Only a description of the drawing (tool + handle coordinates + cached stats).
+Never pixels, never the image — the security of study images is unchanged.
+A document that becomes empty (no drawings, no ★, blank note) is deleted.
+
+Rules (firestore.rules):
+  read           every clinical role that may read the patient (patientReader)
+  create/update  doctor, radio, admin — only as themselves, only for an image
+                 record that exists in radiologyMedia and belongs to the same
+                 order/patient, only the allowed keys, ≤300 drawings, note ≤4000
+  delete         the author only (admins cannot remove a colleague's drawing)
+
+FILES (extract over the project root, replace when asked)
+---------------------------------------------------------
+NEW     pclinic-radiology-annotations.js     the save/subscribe module (window.pcRadioAnnotations)
+CHANGED pclinic-dicom-viewer.js              save/restore/lock logic, ★ button, K key, note, Saved ✓
+CHANGED pclinic-dicom-viewer.css             styles for locked rows, note box, colleague cards, ★
+CHANGED firestore.rules                      + radiologyAnnotations block (before billingPatientDirectory)
+CHANGED imaging-results.html                 loads the module; cache tags ?v=20260902_ANNOT
+CHANGED radio-dashboard.html                 loads the module; cache tags ?v=20260902_ANNOT
+CHANGED tests/firestore.rules.test.mjs       + 4 rules tests (and DICOM mime is now accepted)
+NEW     tests/radiology-annotations.test.mjs 9 unit tests for the module
+CHANGED tests/dicom-workstation.test.mjs     + 1 wiring test (11 total)
+CHANGED tests/package.json                   test:annotations / test:workstation scripts
+(+ every Zip A file: vendor/, viewer, firebase.json, cors.json, functions/, …)
+
+DEPLOY (in this order)
+----------------------
+1. Extract this zip over the project, push to GitHub as usual.
+2. Firestore rules — REQUIRED, otherwise every save says
+   "Not saved — The server refused the save (permission)…":
+       firebase deploy --only firestore:rules
+   (no terminal? Firebase console ▸ Firestore Database ▸ Rules ▸ paste the
+    whole firestore.rules file ▸ Publish)
+3. If Zip A was not deployed yet:
+       cd functions && npm install && cd ..
+       firebase deploy --only functions
+       gsutil cors set cors.json gs://pclinic-20d81.firebasestorage.app   (one time)
+4. Hosting:
+       firebase deploy --only hosting
+5. Hard refresh (Ctrl/Cmd+Shift+R) on imaging-results.html and the radiology dashboard.
+
+VERIFIED (Chromium, production CSP headers, real DICOM samples)
+-----------------------------------------------------------------
+Doctor page E2E 46/46: draw → "Saved ✓" within 1 s → document shape correct →
+key image + note saved → thumbnails ★/✎ → switch image and back → reload page:
+all drawings/★/note restored, editable → delete from list updates server →
+radiologist sees doctor's work locked with author, Delete/Delete-all cannot
+touch it, own rectangle saved in its own document, doctor tab updates live →
+multi-frame: drawn on frame 3, restored on frame 3 only → nurse read-only →
+server failure shows red "Not saved… Retrying…" and recovers by itself,
+nothing lost → second tab of the same user syncs deletions → switching study
+while a save is in flight still lands → no console errors, no CSP violations.
+Radiology modal E2E 7/7 (incl. Esc right after drawing → flushed on close).
+Firestore rules (emulator) 36/36. Unit: annotations 9/9, workstation 11/11,
+imaging-results 11/11, media-button 13/13, selection 8/8, call-errors 9/9,
+file-sync 6/6 (media-client 9/11 and role-contracts 7/8 are pre-existing).
+
+LIMITS (by design)
+------------------
+• You can only edit/delete your own drawings; a colleague's must be changed by
+  them (or deleted in the Firestore console by an admin).
+• Plain JPEG/PNG shown as "plain image" (bucket CORS not set) cannot carry
+  measurements — set the bucket CORS (Zip A notes).
+• Drawings are per image file; if radiology removes and re-uploads a file it
+  gets a new id and the old drawings no longer apply.

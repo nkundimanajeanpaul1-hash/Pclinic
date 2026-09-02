@@ -306,6 +306,60 @@ service cloud.firestore {
         && resource.data.get('byUid', null) == request.auth.uid;
     }
 
+    // ── RADIOLOGY ANNOTATIONS (workstation drawings, key images, notes) ──
+    // One document per image per author: radiologyAnnotations/{mediaId}_{uid}.
+    // It only DESCRIBES measurements drawn on top of an image (tool + JSON
+    // handles), a key-image flag and a short note — never pixels. Every
+    // clinical role that may read the patient sees everyone's annotations;
+    // only the author (doctor, radio, admin) writes or deletes their own, and
+    // only for an image record that really exists in radiologyMedia.
+    match /radiologyAnnotations/{annotationId} {
+      function safeAnnotation() {
+        return request.resource.data.keys().hasOnly([
+            'id', 'mediaId', 'orderId', 'patientId', 'measurements', 'keyImage', 'note',
+            'byUid', 'byId', 'byName', 'byRole', 'updatedAt', 'client'
+          ])
+          && request.resource.data.get('id', null) == annotationId
+          && request.resource.data.get('byUid', null) == request.auth.uid
+          && request.resource.data.get('mediaId', null) is string
+          && request.resource.data.get('mediaId', null).matches('^[A-Za-z0-9._-]{1,120}$')
+          && annotationId == request.resource.data.get('mediaId', null) + '_' + request.auth.uid
+          && request.resource.data.get('orderId', null) is string
+          && request.resource.data.get('orderId', null).size() > 0
+          && request.resource.data.get('patientId', '') is string
+          && request.resource.data.get('measurements', null) is list
+          && request.resource.data.get('measurements', null).size() <= 300
+          && request.resource.data.get('keyImage', null) is bool
+          && request.resource.data.get('note', null) is string
+          && request.resource.data.get('note', null).size() <= 4000
+          && request.resource.data.get('updatedAt', null) is string
+          && request.resource.data.get('byName', '') is string
+          && request.resource.data.get('byName', '').size() <= 120
+          && !request.resource.data.keys().hasAny(['data', 'dataUrl', 'base64', 'photo', 'photos', 'video', 'videos']);
+      }
+      function mediaPath() {
+        return /databases/$(database)/documents/radiologyMedia/$(request.resource.data.get('mediaId', null));
+      }
+
+      allow get, list: if patientReader();
+
+      allow create: if hasRole(['doctor', 'radio', 'admin'])
+        && safeAnnotation()
+        && exists(mediaPath())
+        && get(mediaPath()).data.get('orderId', '') == request.resource.data.get('orderId', null)
+        && string(get(mediaPath()).data.get('patientId', '')) == string(request.resource.data.get('patientId', ''));
+
+      // Authors edit their own document only, and cannot re-point it at another image.
+      allow update: if hasRole(['doctor', 'radio', 'admin'])
+        && safeAnnotation()
+        && resource.data.get('byUid', null) == request.auth.uid
+        && request.resource.data.get('mediaId', null) == resource.data.get('mediaId', null)
+        && request.resource.data.get('orderId', null) == resource.data.get('orderId', null);
+
+      allow delete: if activeStaff()
+        && resource.data.get('byUid', null) == request.auth.uid;
+    }
+
     // ── RESTRICTED BILLING PATIENT DIRECTORY ─────────────────────
     // Contains no clinical notes, diagnoses, contact details or national ID.
     match /billingPatientDirectory/{patientId} {

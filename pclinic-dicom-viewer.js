@@ -67,7 +67,7 @@
         return s;
     }
     var ICON = {
-        explorer: [['M4 5h16v14H4z'], [['path', { d: 'M9 5v14' }]]], upload: [['M12 16V4', 'M7 9l5-5 5 5', 'M5 20h14']], download: [['M12 4v12', 'M7 11l5 5 5-5', 'M5 20h14']],
+        explorer: [['M4 5h16v14H4z'], [['path', { d: 'M9 5v14' }]]], star: [['M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z']], lock: [['M6 11h12v9H6z', 'M9 11V8a3 3 0 0 1 6 0v3']], upload: [['M12 16V4', 'M7 9l5-5 5 5', 'M5 20h14']], download: [['M12 4v12', 'M7 11l5 5 5-5', 'M5 20h14']],
         wl: [['M12 3a9 9 0 1 0 0 18V3z'], [['circle', { cx: 12, cy: 12, r: 9 }]]], pan: [['M12 3v18', 'M3 12h18', 'M9 6l3-3 3 3', 'M9 18l3 3 3-3', 'M6 9l-3 3 3 3', 'M18 9l3 3-3 3']],
         zoom: [['M21 21l-5.2-5.2', 'M11 8v6', 'M8 11h6'], [['circle', { cx: 11, cy: 11, r: 7 }]]], zoomin: [['M21 21l-5.2-5.2', 'M11 8v6', 'M8 11h6'], [['circle', { cx: 11, cy: 11, r: 7 }]]], zoomout: [['M21 21l-5.2-5.2', 'M8 11h6'], [['circle', { cx: 11, cy: 11, r: 7 }]]],
         fit: [['M4 9V4h5', 'M20 9V4h-5', 'M4 15v5h5', 'M20 15v5h-5']], layout: [['M4 4h16v16H4z', 'M12 4v16', 'M4 12h16']], sync: [['M4 12a8 8 0 0 1 14-5', 'M18 3v4h-4', 'M20 12a8 8 0 0 1-14 5', 'M6 21v-4h4']],
@@ -244,6 +244,11 @@
     var leftTool = 'Wwwc', wheelMode = 'scroll', overlaysOn = true, scaleOn = true, orientOn = true, interpOff = false;
     var explorerTab = 'studies', explorerOpen = true, sidePanel = null, cine = { on: false, fps: 15 };
     var onKeyBound = null, onResizeBound = null, dragItem = null, pointerVp = null, toastTimer = null, menuEl = null, docClickBound = null, onFsBound = null;
+    /* ── annotations on the common server (pclinic-radiology-annotations.js) ──
+       anno.rows: every author's document for the current study; anno.mine[mediaId]: my
+       working copy per image; anno.dirty: images whose changes are not yet written. */
+    var unloadBound = null;
+    var anno = { rows: [], stop: null, orderId: null, mine: {}, dirty: {}, timer: null, saving: false, lastSaved: null, error: null, restoring: false, loadedFor: {} };
 
     function $(sel) { return root ? root.querySelector(sel) : null; }
     function toast(msg, kind) { if (!root) return; var old = $('.dv-toast'); if (old) old.remove(); var t = el('div', 'dv-toast' + (kind === 'ok' ? ' ok' : kind === 'err' ? ' err' : ''), msg); root.appendChild(t); clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.remove(); }, kind === 'err' ? 9000 : 4200); }
@@ -301,6 +306,7 @@
         t.appendChild(tb('probe', 'Probe', 'Pixel value probe', function () { setLeftTool('Probe'); }, { tool: 'Probe', iconOnly: true }));
         t.appendChild(tb('arrow', 'Arrow', 'Arrow with text annotation', function () { setLeftTool('ArrowAnnotate'); }, { tool: 'ArrowAnnotate', mid: true }));
         t.appendChild(tb('trash', 'Delete', 'Delete measurements', function (e, b) { openMenu(b, deleteMenu()); }, { menu: true, mid: true }));
+        t.appendChild(tb('star', 'Key image', 'Mark / unmark this image as a key image (saved to the common server, K)', function () { toggleKeyImage(); }, { id: 'key', mid: true }));
         t.appendChild(sep());
         t.appendChild(tb('magnify', 'Magnify', 'Magnifying glass (drag)', function () { setLeftTool('Magnify'); }, { tool: 'Magnify', iconOnly: true }));
         t.appendChild(tb('rotate', 'Rotate', 'Rotate / flip', function (e, b) { openMenu(b, rotateMenu()); }, { menu: true }));
@@ -349,7 +355,7 @@
     function buildStatusBar() {
         var s = el('div', 'dv-status-bar');
         [['patient', 'Patient'], ['study', 'Study'], ['file', 'File'], ['tool', 'Tool'], ['pix', 'Pixel']].forEach(function (k) { var sp = el('span', k[0] === 'pix' ? 'dv-opt' : ''); sp.setAttribute('data-st', k[0]); sp.appendChild(document.createTextNode(k[1] + ': ')); sp.appendChild(el('b', null, '—')); s.appendChild(sp); });
-        s.appendChild(el('div', 'dv-spacer')); var sv = el('span', 'dv-save'); sv.setAttribute('data-st', 'save'); sv.appendChild(el('b', null, '')); s.appendChild(sv);
+        s.appendChild(el('div', 'dv-spacer')); var sv = el('span', 'dv-save'); sv.setAttribute('data-st', 'save'); sv.appendChild(el('b', null, '')); sv.style.cursor = 'pointer'; sv.onclick = function () { if (Object.keys(anno.dirty).length) { clearTimeout(anno.timer); flushAnnotations(); } }; s.appendChild(sv);
         return s;
     }
     function buildCineBar(bar) {
@@ -400,7 +406,8 @@
     function clearViewport(v) {
         stopClip(); if (v.video) { try { v.video.pause(); } catch (e) {} v.video.remove(); v.video = null; }
         if (v.plain) { v.plain.remove(); v.plain = null; }
-        if (v.enabled && cs()) { try { cst().clearToolState(v.host, 'stack'); MEASURE_TOOLS.forEach(function (t) { cst().clearToolState(v.host, t); }); cs().disable(v.host); } catch (e) {} v.enabled = false; }
+        // Measurements live in cornerstone's per-imageId store (and on the common server), so they come back when the image is reopened.
+        if (v.enabled && cs()) { try { cst().clearToolState(v.host, 'stack'); cs().disable(v.host); } catch (e) {} v.enabled = false; }
         v.item = null; v.imageIds = []; v.frame = 0; v.el.classList.remove('dv-no-ov'); v.hint.textContent = 'Empty viewport.'; v.hint.style.display = ''; clearOverlays(v);
         var pre = v.el.querySelector('.dv-prelim'); if (pre) pre.remove(); var ld = v.el.querySelector('.dv-loading'); if (ld) ld.remove();
     }
@@ -425,7 +432,7 @@
                 if (v.item !== item) return; item.image = image; item.frames = ids.length;
                 cs().displayImage(v.host, image); var vpState = cs().getDefaultViewportForImage(v.host, image); if (interpOff) vpState.pixelReplication = true; cs().setViewport(v.host, vpState);
                 applyBindings(); loading.remove(); v.host.style.width = v.host.style.height = '100%';
-                cs().resize(v.host, true); drawTextOverlays(v); updateCineBar(v); ensureThumb(item, image); refreshPanels();
+                cs().resize(v.host, true); restoreAnnotations(v, item); drawTextOverlays(v); updateCineBar(v); ensureThumb(item, image); refreshPanels(); updateKeyButton();
                 if (item.local) toast('Showing the copy you just uploaded. Others will see it once the server link service is updated.', 'ok');
             });
         }).catch(function (e) {
@@ -461,7 +468,12 @@
         // whose 'measurementadded' handler causes a re-layout / cancels its drag).
         var panelTimer = null; function refreshDrawPanel() { clearTimeout(panelTimer); panelTimer = setTimeout(function () { if (sidePanel === 'draw') renderPanel(); }, 120); }
         ['cornerstonetoolsmeasurementcompleted', 'cornerstonetoolsmeasurementremoved', 'cornerstonetoolsmouseup', 'cornerstonetoolstouchend', 'cornerstonetoolsmouseclick', 'cornerstonetoolstap'].forEach(function (ev) { v.host.addEventListener(ev, refreshDrawPanel); });
-        v.host.addEventListener('cornerstonetoolsmeasurementadded', function (e) { var d = e.detail && e.detail.measurementData; if (d && !d._pcSeq) d._pcSeq = ++measureSeq; });
+        v.host.addEventListener('cornerstonetoolsmeasurementadded', function (e) { var d = e.detail && e.detail.measurementData; if (d && !d._pcSeq) d._pcSeq = ++measureSeq; if (d && !anno.restoring && !d._pcRemote && annoEnabled()) d._pcOwner = myUid(); });
+        // Anything that changes a drawing schedules a save to the common server (1 s after the last change).
+        var markTimer = null; function changed(e) { if (anno.restoring) return; var d = e && e.detail && e.detail.measurementData; if (d && d._pcRemote) return; if (!v.item) return; clearTimeout(markTimer); markTimer = setTimeout(function () { if (v.item) markDirty(v.item); }, 150); }
+        ['cornerstonetoolsmeasurementcompleted', 'cornerstonetoolsmeasurementremoved', 'cornerstonetoolsmeasurementmodified'].forEach(function (ev) { v.host.addEventListener(ev, changed); });
+        // A colleague's drawing is locked: it cannot be dragged, edited or deleted here (they own it).
+        v.host.addEventListener('cornerstonetoolsmeasurementremoved', function (e) { var d = e.detail && e.detail.measurementData; if (d && d._pcRemote && !anno.restoring) { try { cst().globalImageIdSpecificToolStateManager.addImageIdToolState(cs().getImage(v.host).imageId, e.detail.toolName || e.detail.toolType, d); cs().updateImage(v.host); toast('That drawing belongs to ' + (d._pcBy || 'a colleague') + ' — only they can change it.'); } catch (err) {} } });
     }
     function syncFrameFromStack(v) { try { var st = cst().getToolState(v.host, 'stack'); if (st && st.data && st.data[0]) { var idx = st.data[0].currentImageIdIndex || 0; if (v.imageIds.length > 1) { var cur = cs().getImage(v.host); var i2 = cur ? v.imageIds.indexOf(cur.imageId) : -1; v.frame = i2 >= 0 ? i2 : idx; } else v.frame = 0; } } catch (e) {} }
     function currentImage(v) { v = v || vp(); if (!v || !v.enabled) return null; try { return cs().getImage(v.host); } catch (e) { return null; } }
@@ -492,7 +504,7 @@
         } else if (item.kind === 'video') { lines.push('Video'); }
         o.bl.textContent = lines.join('\n');
         var br = []; if (image) { br.push(image.columns + ' × ' + image.rows + (image.color ? ' RGB' : (ds && ds.uint16('x00280100') ? ' · ' + ds.uint16('x00280101') + ' bit' : ''))); if (image.rowPixelSpacing) br.push('Pixel ' + Number(image.rowPixelSpacing).toFixed(3) + ' mm'); }
-        br.push(String(item.meta.fileName || '')); if (item.meta.byName) br.push('by ' + item.meta.byName + (item.meta.at ? ' · ' + fmtDateTime(item.meta.at) : '')); o.br.textContent = br.join('\n');
+        if (keyImageOf(item)) br.push('★ KEY IMAGE'); br.push(String(item.meta.fileName || '')); if (item.meta.byName) br.push('by ' + item.meta.byName + (item.meta.at ? ' · ' + fmtDateTime(item.meta.at) : '')); o.br.textContent = br.join('\n');
         // orientation letters
         var ori = (orientOn && vs && ds) ? rotateOrientation(baseOrientation(ds), vs) : null;
         v.el.querySelector('.dv-orient.n').textContent = ori ? ori.top : ''; v.el.querySelector('.dv-orient.s').textContent = ori ? ori.bottom : ''; v.el.querySelector('.dv-orient.w').textContent = ori ? ori.left : ''; v.el.querySelector('.dv-orient.e').textContent = ori ? ori.right : '';
@@ -571,13 +583,120 @@
     }
     function deleteMeasurements(which) {
         var v = vp(); if (!v || !v.enabled) return; var T = cst(); var removed = 0;
-        MEASURE_TOOLS.forEach(function (t) { var st = T.getToolState(v.host, t); if (!st || !st.data) return; if (which === 'all') { removed += st.data.length; T.clearToolState(v.host, t); } else { st.data.slice().forEach(function (d) { if (d.active) { T.removeToolState(v.host, t, d); removed++; } }); } });
+        MEASURE_TOOLS.forEach(function (t) { var st = T.getToolState(v.host, t); if (!st || !st.data) return; st.data.slice().forEach(function (d) { if (d._pcRemote) return; if (which === 'all' || d.active) { T.removeToolState(v.host, t, d); removed++; } }); });
+        if (removed) markDirty(v.item);
         cs().updateImage(v.host); if (sidePanel === 'draw') renderPanel(); toast(removed ? removed + ' measurement' + (removed === 1 ? '' : 's') + ' removed.' : (which === 'all' ? 'No measurements on this image.' : 'Select a measurement first (click it), then delete.'));
     }
     var measureSeq = 0;
     function measurementsOf(v) { var out = []; var T = cst(); if (!T || !v || !v.enabled) return out; MEASURE_TOOLS.forEach(function (t) { var st = T.getToolState(v.host, t); if (st && st.data) st.data.forEach(function (d, i) { if (!d._pcSeq) d._pcSeq = ++measureSeq; out.push({ tool: t, data: d, index: i }); }); }); out.sort(function (a, b) { return a.data._pcSeq - b.data._pcSeq; }); return out; }
 
     /* ── menus ─────────────────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════════════
+       Saving drawings / key images / notes to the common server
+       ══════════════════════════════════════════════════════════════ */
+    function annoApi() { return window.pcRadioAnnotations || null; }
+    function annoEnabled() { return !!annoApi(); }
+    function annoCanWrite() { var A = annoApi(); return !!(A && A.canWrite()); }
+    function myUid() { var A = annoApi(); return A ? A.me().uid : ''; }
+    function setSaveState(kind, text) { var sv = root ? $('.dv-status-bar .dv-save') : null; if (!sv) return; sv.className = 'dv-save' + (kind ? ' ' + kind : ''); sv.querySelector('b').textContent = text || ''; sv.title = kind === 'err' ? (anno.error || '') : ''; }
+    function frameOf(imageId) { var m = /[?&]frame=(\d+)/.exec(String(imageId || '')); return m ? parseInt(m[1], 10) : 0; }
+    /** Strip render-only fields so a measurement round-trips through JSON (cornerstone stores handles + cached stats). */
+    function serialiseMeasurement(d) {
+        var out = {}; Object.keys(d).forEach(function (k) { if (k === 'active' || k === '_pcSeq' || k === '_pcOwner' || k === '_pcRemote' || k === 'invalidated' || k === 'uuid') return; var v = d[k]; if (typeof v === 'function' || v === undefined) return; out[k] = v; });
+        out.visible = true; out.active = false; return JSON.parse(JSON.stringify(out));
+    }
+    /** All my measurements on every frame of this item, as {tool, uuid, frame, json}. */
+    function collectMeasurements(item) {
+        var T = cst(), M = T && T.globalImageIdSpecificToolStateManager; var list = []; if (!M || !item || !item.imageIds) return list;
+        item.imageIds.forEach(function (id) {
+            var st = M.saveImageIdToolState(id); if (!st) return;
+            MEASURE_TOOLS.forEach(function (tool) { var s = st[tool]; if (!s || !s.data) return; s.data.forEach(function (d) { if (d._pcRemote) return; if (d.complete === false || d.handles && d.handles.end && d.handles.end.active && !d.complete && tool === 'FreehandRoi') return; if (!d.uuid) d.uuid = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); list.push({ tool: tool, uuid: d.uuid, frame: frameOf(id), json: JSON.stringify(serialiseMeasurement(d)), _ref: d }); }); });
+        });
+        return list;
+    }
+    function stripRefs(list) { return list.map(function (m) { return { tool: m.tool, uuid: m.uuid, frame: m.frame, json: m.json }; }); }
+    function mineFor(item) { if (!item) return null; var rec = anno.mine[item.id]; if (!rec) rec = anno.mine[item.id] = { keyImage: false, note: '' }; return rec; }
+    function myRowFor(mediaId) { var uid = myUid(); return anno.rows.filter(function (r) { return String(r.mediaId) === String(mediaId) && r.byUid === uid; })[0] || null; }
+    function othersFor(mediaId) { var uid = myUid(); return anno.rows.filter(function (r) { return String(r.mediaId) === String(mediaId) && r.byUid !== uid; }); }
+    function keyImageOf(item) { if (!item) return false; var me = mineFor(item); if (me.keyImage) return true; return anno.rows.some(function (r) { return String(r.mediaId) === String(item.id) && r.keyImage; }); }
+    /** Subscribe to the study's annotation documents (all authors). */
+    function watchAnnotations(study) {
+        var A = annoApi(); var id = study ? String(study.id) : null;
+        if (anno.orderId === id) return; if (anno.stop) { try { anno.stop(); } catch (e) {} anno.stop = null; }
+        anno.orderId = id; anno.rows = []; anno.loadedFor = {}; anno.error = null; if (!Object.keys(anno.dirty).length && !anno.saving) setSaveState('', '');
+        if (!A || !id) return;
+        anno.stop = A.subscribe(id, function (rows, err) {
+            if (err) { anno.error = (err && err.message) || String(err); setSaveState('err', 'Server drawings unavailable'); return; }
+            anno.rows = rows || [];
+            // my working copies follow the server unless I have unsaved edits
+            anno.rows.forEach(function (r) { if (r.byUid !== myUid()) return; if (anno.dirty[r.mediaId]) return; var me = anno.mine[r.mediaId] || (anno.mine[r.mediaId] = {}); me.keyImage = !!r.keyImage; me.note = String(r.note || ''); });
+            viewports.forEach(function (v) { if (v.enabled && v.item) restoreAnnotations(v, v.item); });
+            renderExplorer(); if (sidePanel === 'draw' || sidePanel === 'info') renderPanel();
+            if (!anno.saving && !Object.keys(anno.dirty).length) { var mine = anno.rows.filter(function (r) { return r.byUid === myUid(); }); var last = mine.map(function (r) { return r.updatedAt; }).sort().pop(); setSaveState(last ? 'ok' : '', last ? 'Saved ✓ ' + fmtDateTime(last) : (anno.rows.length ? anno.rows.length + ' saved annotation' + (anno.rows.length === 1 ? '' : 's') + ' from colleagues' : '')); }
+        });
+    }
+    /** Put the server's drawings (mine editable, colleagues' locked) onto this image's frames. */
+    function restoreAnnotations(v, item) {
+        var T = cst(), M = T && T.globalImageIdSpecificToolStateManager; if (!M || !item || !item.imageIds || !item.imageIds.length) return;
+        var rows = anno.rows.filter(function (r) { return String(r.mediaId) === String(item.id); });
+        var sig = JSON.stringify(rows.map(function (r) { return [r.id, r.updatedAt]; })); if (anno.loadedFor[item.id] === sig) return;
+        anno.restoring = true;
+        try {
+            var uid = myUid();
+            var myRow = rows.filter(function (r) { return r.byUid === uid; })[0]; var mineDirty = !!anno.dirty[item.id];
+            var serverMine = {}; if (myRow) (myRow.measurements || []).forEach(function (m) { serverMine[m.uuid] = m; });
+            var keepMine = {}; // uuid → local object kept as-is (being dragged / selected, or unsaved)
+            item.imageIds.forEach(function (id) { var st = M.saveImageIdToolState(id); if (!st) return; MEASURE_TOOLS.forEach(function (tool) { var s = st[tool]; if (!s || !s.data) return; s.data = s.data.filter(function (d) {
+                if (d._pcRemote) return false;                       // colleagues' copies: always rebuilt from the server
+                if (d._pcOwner !== uid || mineDirty) return true;    // not mine, or I have unsaved edits → local wins
+                if (!d._pcSynced) return true;                       // drawn here and never written yet (e.g. save in flight) → keep
+                if (d.active && serverMine[d.uuid]) { keepMine[d.uuid] = true; return true; } // being handled right now → keep the live object
+                return false;                                        // my synced copy → replaced by the server's version (or gone if deleted elsewhere)
+            }); }); });
+            rows.forEach(function (r) {
+                var mine = r.byUid === uid; if (mine && mineDirty) return; // my unsaved local state wins
+                (r.measurements || []).forEach(function (m) {
+                    if (mine && keepMine[m.uuid]) return;
+                    var frame = Math.min(item.imageIds.length - 1, Math.max(0, m.frame || 0)); var imageId = item.imageIds[frame]; var d = null; try { d = JSON.parse(m.json); } catch (e) { return; }
+                    if (!d || typeof d !== 'object') return; d.uuid = m.uuid; d.active = false; d.visible = true; d.invalidated = true; d._pcSeq = ++measureSeq;
+                    if (mine) { d._pcOwner = uid; d._pcSynced = true; } else { d._pcRemote = true; d._pcBy = r.byName || r.byRole || 'colleague'; d.color = '#7fd3a5'; d._pcOwner = r.byUid; }
+                    M.addImageIdToolState(imageId, m.tool, d);
+                });
+            });
+            anno.loadedFor[item.id] = sig;
+            if (v.enabled) { try { cs().updateImage(v.host); } catch (e) {} }
+        } finally { anno.restoring = false; }
+    }
+    function markDirty(item) { if (!item || !annoEnabled()) return; if (!annoCanWrite()) return; anno.dirty[item.id] = item; setSaveState('busy', 'Unsaved changes…'); clearTimeout(anno.timer); anno.timer = setTimeout(flushAnnotations, 1000); }
+    /** Write every dirty image (debounced 1 s after the last change). */
+    function flushAnnotations() {
+        var A = annoApi(); if (!A) return; var ids = Object.keys(anno.dirty); if (!ids.length || anno.saving) return;
+        var items = ids.map(function (k) { return anno.dirty[k]; }).filter(function (it) { return it && it.meta; });
+        if (!items.length) { anno.dirty = {}; return; }
+        anno.saving = true; setSaveState('busy', 'Saving…');
+        // Snapshot NOW: a study switch or close() resets the working copies while the write is still in flight.
+        var jobs = items.map(function (it) { var me = mineFor(it); var study = it.study || currentStudy || {}; var ms = collectMeasurements(it); return { it: it, refs: ms.map(function (m) { return m._ref; }), payload: { mediaId: it.id, orderId: study.id || it.meta.orderId, patientId: it.meta.patientId || study.patientId || (patient && (patient.id || patient.mrn)) || '', measurements: stripRefs(ms), keyImage: !!me.keyImage, note: me.note || '' } }; });
+        var chain = Promise.resolve(); var failed = null;
+        jobs.forEach(function (job) {
+            chain = chain.then(function () {
+                return A.save(job.payload)
+                    .then(function (r) { delete anno.dirty[job.it.id]; anno.lastSaved = r.at; anno.loadedFor[job.it.id] = null; job.refs.forEach(function (d) { if (d) d._pcSynced = true; }); }, function (e) { failed = e; });
+            });
+        });
+        chain.then(function () {
+            anno.saving = false;
+            if (failed) {
+                // Keep the work marked dirty and retry by itself (5 s, 15 s, then every 30 s) — a dropped connection must not lose a drawing.
+                anno.error = failed.message; anno.retries = (anno.retries || 0) + 1; var wait = anno.retries === 1 ? 5000 : anno.retries === 2 ? 15000 : 30000;
+                setSaveState('err', 'Not saved — ' + failed.message + ' Retrying…'); if (anno.retries === 1) toast('Could not save to the common server: ' + failed.message, 'err');
+                clearTimeout(anno.timer); anno.timer = setTimeout(flushAnnotations, wait); return;
+            }
+            anno.retries = 0; anno.error = null; setSaveState('ok', 'Saved ✓ ' + fmtDateTime(anno.lastSaved));
+            if (Object.keys(anno.dirty).length) { anno.timer = setTimeout(flushAnnotations, 300); }
+        });
+    }
+    function toggleKeyImage(item) { item = item || (vp() && vp().item); if (!item) { toast('Load an image first.'); return; } if (!annoCanWrite()) { toast(annoEnabled() ? 'Key images are saved for doctors and radiology only.' : 'The common server is not connected.'); return; } var me = mineFor(item); me.keyImage = !me.keyImage; markDirty(item); renderExplorer(); if (sidePanel === 'draw') renderPanel(); toast(me.keyImage ? '★ Marked as key image — saving to the common server.' : 'Key image mark removed.', 'ok'); updateKeyButton(); }
+    function updateKeyButton() { var b = $('.dv-tb[data-id="key"]'); if (!b) return; var it = vp() && vp().item; b.classList.toggle('active', !!(it && mineFor(it).keyImage)); }
     function openMenu(anchor, items) {
         closeMenu(); menuEl = el('div', 'dv-menu'); menuEl.setAttribute('role', 'menu');
         items.forEach(function (it) {
@@ -640,6 +759,7 @@
                         var t = el('div', 'dv-thumb' + (currentItem && currentItem.id === item.id ? ' active' : '')); t.setAttribute('data-id', item.id); t.title = (item.meta.fileName || item.id) + (item.meta.byName ? '\nby ' + item.meta.byName : '') + (item.meta.at ? '\n' + fmtDateTime(item.meta.at) : '') + (item.problem ? '\n⚠ ' + item.problem.split('\n')[0] : ''); t.draggable = true;
                         if (item.thumb) { t.appendChild(item.thumb.cloneNode(true)); } else if (item.kind === 'image' && item.url) { t.style.backgroundImage = 'url("' + item.url + '")'; } else t.textContent = item.kind === 'video' ? '▶' : item.kind === 'dicom' ? 'DCM' : '?';
                         if (!item.url) t.textContent = '⚠'; if (item.frames > 1) t.appendChild(el('span', 'dv-fr', item.frames + 'f'));
+                        if (keyImageOf(item)) { t.classList.add('dv-key'); t.title += '\n★ key image'; } var nAnno = anno.rows.filter(function (r) { return String(r.mediaId) === String(item.id) && ((r.measurements && r.measurements.length) || r.note); }).length; if (nAnno) { t.appendChild(el('span', 'dv-an', '✎' + (nAnno > 1 ? nAnno : ''))); t.title += '\n✎ ' + nAnno + ' saved annotation set' + (nAnno === 1 ? '' : 's'); }
                         t.appendChild(el('span', 'dv-tn', item.meta.fileName || item.id)); t.onclick = function () { displayItem(item); }; t.ondragstart = function (e) { dragItem = item; e.dataTransfer.setData('text/plain', item.id); }; t.ondragend = function () { dragItem = null; };
                         if (openOpts.canManage) { t.oncontextmenu = function (e) { e.preventDefault(); openMenu(t, [{ label: 'Open in active viewport', icon: 'display', run: function () { displayItem(item); } }, { label: 'Download', icon: 'download', run: function () { displayItem(item); setTimeout(downloadOriginal, 300); } }, '-', { label: 'Remove this file from the study', icon: 'trash', run: function () { removeItem(item); } }]); }; }
                         th.appendChild(t);
@@ -678,6 +798,18 @@
     /* ── side panels ───────────────────────────────────────────── */
     function openSidePanel(name) { sidePanel = name; $('.dv-panel').classList.toggle('open', !!name); root.querySelectorAll('.dv-stab').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-stab') === name); }); if (name) renderPanel(); setTimeout(function () { viewports.forEach(function (v) { if (v.enabled) { try { cs().resize(v.host, true); } catch (e) {} } }); }, 30); }
     function refreshPanels() { if (sidePanel) renderPanel(); if (explorerTab === 'tags') renderTags(); updateInvertButton(); }
+    function renderSavingSection(sec, v, item) {
+        if (!annoEnabled()) { sec.appendChild(el('div', 'dv-note', 'Saving to the common server is not available on this page (pclinic-radiology-annotations.js is not loaded).')); return; }
+        if (!item) { sec.appendChild(el('div', 'dv-note', 'Load an image to save drawings, a key-image mark and a note for it.')); return; }
+        var me = mineFor(item); var canW = annoCanWrite(); var A = annoApi();
+        if (!canW) sec.appendChild(el('div', 'dv-note', A.me().uid ? 'Your role (' + (A.me().role || '?') + ') can view saved drawings but not add its own.' : 'Sign in to save drawings.'));
+        var row = el('div', 'dv-toggle'); row.appendChild(el('span', null, '★ Key image')); var sw = el('button', 'dv-sw' + (me.keyImage ? ' on' : '')); sw.setAttribute('role', 'switch'); sw.setAttribute('aria-checked', me.keyImage ? 'true' : 'false'); sw.setAttribute('data-anno', 'key'); sw.disabled = !canW; sw.onclick = function () { toggleKeyImage(item); }; row.appendChild(sw); sec.appendChild(row);
+        var f = el('div', 'dv-field'); f.appendChild(el('label', null, 'My note on this image')); var ta = el('textarea', 'dv-note-input'); ta.rows = 3; ta.maxLength = 4000; ta.placeholder = canW ? 'e.g. subtle cortical break, compare with previous film…' : 'read-only'; ta.value = me.note || ''; ta.disabled = !canW; ta.setAttribute('data-anno', 'note');
+        ta.oninput = function () { me.note = ta.value; markDirty(item); }; f.appendChild(ta); sec.appendChild(f);
+        var others = othersFor(item.id); var mineRow = myRowFor(item.id);
+        var meta = el('div', 'dv-note'); meta.textContent = mineRow ? 'Your last save: ' + fmtDateTime(mineRow.updatedAt) + (mineRow.measurements.length ? ' · ' + mineRow.measurements.length + ' drawing' + (mineRow.measurements.length === 1 ? '' : 's') : '') : (canW ? 'Nothing saved by you for this image yet. Drawings, the key-image mark and the note are saved automatically 1 s after each change.' : ''); sec.appendChild(meta);
+        if (others.length) { var h = el('h4', null, 'From colleagues'); h.style.marginTop = '10px'; sec.appendChild(h); others.forEach(function (r) { var c = el('div', 'dv-colleague'); c.appendChild(el('b', null, (r.byName || r.byRole || 'Colleague') + (r.byRole ? ' · ' + r.byRole : ''))); c.appendChild(el('span', null, [r.keyImage ? '★ key image' : '', r.measurements.length ? r.measurements.length + ' drawing' + (r.measurements.length === 1 ? '' : 's') : '', fmtDateTime(r.updatedAt)].filter(Boolean).join(' · '))); if (r.note) c.appendChild(el('pre', null, r.note)); sec.appendChild(c); }); }
+    }
     function renderPanel() {
         var body = $('.dv-panel-body'), title = $('.dv-panel-title'); if (!body) return; body.replaceChildren();
         var v = vp(); var img = currentImage(v); var item = v && v.item; var vs = null; try { vs = v && v.enabled ? cs().getViewport(v.host) : null; } catch (e) {}
@@ -706,15 +838,15 @@
             var d1 = sec('Tools'); var rd = el('div', 'dv-btnrow'); d1.appendChild(rd); ['Length', 'Angle', 'CobbAngle', 'RectangleRoi', 'EllipticalRoi', 'FreehandRoi', 'Bidirectional', 'Probe', 'ArrowAnnotate', 'Eraser'].forEach(function (n) { chip(rd, TOOL_LABEL[n], leftTool === n, function () { setLeftTool(n); }); });
             var d2 = sec('Measurements on this image'); var ms = measurementsOf(v);
             if (!item) d2.appendChild(el('div', 'dv-note', 'Load an image first.')); else if (!ms.length) d2.appendChild(el('div', 'dv-note', 'None yet. Pick a tool above and draw on the image. Click a drawing to select it; drag its handles to adjust.'));
-            else { var lst = el('div', 'dv-mlist'); ms.forEach(function (m, i) { var r = el('div', 'dv-mi-row' + (m.data.active ? ' active' : '')); var ic = el('span', 'dv-mi-ico'); ic.appendChild(icon({ Length: 'ruler', Angle: 'angle', CobbAngle: 'angle', RectangleRoi: 'roi', EllipticalRoi: 'ellipse', FreehandRoi: 'freehand', Bidirectional: 'bidir', Probe: 'probe', ArrowAnnotate: 'arrow' }[m.tool] || 'draw')); r.appendChild(ic); var tx = el('span', 'dv-mi-txt'); tx.appendChild(el('b', null, (i + 1) + '. ' + TOOL_LABEL[m.tool])); tx.appendChild(el('span', null, describeMeasurement(m.tool, m.data, img))); r.appendChild(tx); var del = el('button', 'dv-mi-del', '✕'); del.title = 'Delete'; del.onclick = function () { cst().removeToolState(v.host, m.tool, m.data); cs().updateImage(v.host); renderPanel(); }; r.appendChild(del); r.onclick = function (e) { if (e.target === del) return; ms.forEach(function (o) { o.data.active = o === m; }); cs().updateImage(v.host); renderPanel(); }; lst.appendChild(r); }); d2.appendChild(lst); var rr = el('div', 'dv-btnrow'); rr.style.marginTop = '8px'; d2.appendChild(rr); chip(rr, 'Delete all', false, function () { deleteMeasurements('all'); }, 'danger'); }
+            else { var lst = el('div', 'dv-mlist'); ms.forEach(function (m, i) { var r = el('div', 'dv-mi-row' + (m.data.active ? ' active' : '') + (m.data._pcRemote ? ' remote' : '')); var ic = el('span', 'dv-mi-ico'); ic.appendChild(icon({ Length: 'ruler', Angle: 'angle', CobbAngle: 'angle', RectangleRoi: 'roi', EllipticalRoi: 'ellipse', FreehandRoi: 'freehand', Bidirectional: 'bidir', Probe: 'probe', ArrowAnnotate: 'arrow' }[m.tool] || 'draw')); r.appendChild(ic); var tx = el('span', 'dv-mi-txt'); tx.appendChild(el('b', null, (i + 1) + '. ' + TOOL_LABEL[m.tool])); tx.appendChild(el('span', null, describeMeasurement(m.tool, m.data, img) + (m.data._pcRemote ? ' · by ' + (m.data._pcBy || 'colleague') : ''))); r.appendChild(tx); var del = el('button', 'dv-mi-del', m.data._pcRemote ? '🔒' : '✕'); del.title = m.data._pcRemote ? 'Saved by ' + (m.data._pcBy || 'a colleague') + ' — only they can delete it' : 'Delete'; if (m.data._pcRemote) del.disabled = true; del.onclick = function () { if (m.data._pcRemote) return; cst().removeToolState(v.host, m.tool, m.data); cs().updateImage(v.host); markDirty(v.item); renderPanel(); }; r.appendChild(del); r.onclick = function (e) { if (e.target === del) return; ms.forEach(function (o) { o.data.active = o === m; }); cs().updateImage(v.host); renderPanel(); }; lst.appendChild(r); }); d2.appendChild(lst); var rr = el('div', 'dv-btnrow'); rr.style.marginTop = '8px'; d2.appendChild(rr); chip(rr, 'Delete all', false, function () { deleteMeasurements('all'); }, 'danger'); }
             var d3 = sec('Units'); d3.appendChild(el('div', 'dv-note', img && img.rowPixelSpacing ? 'Pixel spacing ' + Number(img.rowPixelSpacing).toFixed(3) + ' mm — lengths in mm, areas in mm².' + (img.intercept === -1024 ? ' CT values in HU.' : '') : 'No pixel spacing in this file — lengths are in pixels, areas in px². (Plain JPEG/PNG exports never carry calibration.)'));
-            var d4 = sec('Saving'); d4.appendChild(el('div', 'dv-note', 'Saving measurements and key images to the common server arrives in the next update; for now export a screenshot to keep them.'));
+            var d4 = sec('Common server'); renderSavingSection(d4, v, item);
         } else if (sidePanel === 'info') {
             title.textContent = 'Study Info'; var kv = el('div', 'dv-kv'); body.appendChild(kv);
             function k(a, b) { if (b == null || b === '') return; kv.appendChild(el('span', 'k', a)); kv.appendChild(el('span', 'v', String(b))); }
             k('Patient', nameOf(patient)); k('MRN / ID', patient && (patient.mrn || patient.id)); k('Sex / age', patient && [sexOf(patient), ageOf(patient.dob)].filter(Boolean).join(' · ')); k('DOB', patient && patient.dob ? fmtDate(patient.dob) : '');
             if (currentStudy) { k('Study', studyLabel(currentStudy)); k('Requested', currentStudy.orderedAt ? fmtDateTime(currentStudy.orderedAt) : ''); k('Status', currentStudy.state); k('Priority', currentStudy.priority); k('Order id', currentStudy.id); k('Files', studyMedia(currentStudy).length); }
-            if (item) { var ds2 = dataSetOf(item); k('File', item.meta.fileName); k('Type', item.kind.toUpperCase()); k('MIME', item.meta.mime); k('Size', bytesOf(item.meta.bytes)); k('Uploaded', fmtDateTime(item.meta.at)); k('By', item.meta.byName); if (ds2) { k('Modality', ds2.string('x00080060')); k('Description', ds2.string('x00081030')); k('Series', ds2.string('x0008103e')); k('Body part', ds2.string('x00180015')); k('View', ds2.string('x00185101')); k('Institution', ds2.string('x00080080')); k('Manufacturer', [ds2.string('x00080070'), ds2.string('x00081090')].filter(Boolean).join(' ')); k('Acquired', ds2.string('x00080020') ? dcmDate(ds2.string('x00080020')) + ' ' + dcmTime(ds2.string('x00080030')) : ''); k('Matrix', ds2.uint16('x00280011') + ' × ' + ds2.uint16('x00280010')); k('Frames', item.frames); k('Bits', ds2.uint16('x00280101') + '/' + ds2.uint16('x00280100')); k('Pixel spacing', ds2.string('x00280030') || ds2.string('x00181164')); k('Photometric', ds2.string('x00280004')); k('Transfer syntax', ds2.string('x00020010')); k('Accession', ds2.string('x00080050')); k('Study UID', ds2.string('x0020000d')); k('SOP UID', ds2.string('x00080018')); } if (img) k('Displayed', img.columns + ' × ' + img.rows); if (item.mode) k('Link', item.signed && item.signed.mode); }
+            if (item) { var ds2 = dataSetOf(item); k('File', item.meta.fileName); if (annoEnabled()) { var an = anno.rows.filter(function (r) { return String(r.mediaId) === String(item.id); }); k('Key image', keyImageOf(item) ? '★ yes' : 'no'); k('Saved annotations', an.length ? an.map(function (r) { return (r.byName || r.byRole || '?') + ' (' + r.measurements.length + ')'; }).join(', ') : 'none'); } k('Type', item.kind.toUpperCase()); k('MIME', item.meta.mime); k('Size', bytesOf(item.meta.bytes)); k('Uploaded', fmtDateTime(item.meta.at)); k('By', item.meta.byName); if (ds2) { k('Modality', ds2.string('x00080060')); k('Description', ds2.string('x00081030')); k('Series', ds2.string('x0008103e')); k('Body part', ds2.string('x00180015')); k('View', ds2.string('x00185101')); k('Institution', ds2.string('x00080080')); k('Manufacturer', [ds2.string('x00080070'), ds2.string('x00081090')].filter(Boolean).join(' ')); k('Acquired', ds2.string('x00080020') ? dcmDate(ds2.string('x00080020')) + ' ' + dcmTime(ds2.string('x00080030')) : ''); k('Matrix', ds2.uint16('x00280011') + ' × ' + ds2.uint16('x00280010')); k('Frames', item.frames); k('Bits', ds2.uint16('x00280101') + '/' + ds2.uint16('x00280100')); k('Pixel spacing', ds2.string('x00280030') || ds2.string('x00181164')); k('Photometric', ds2.string('x00280004')); k('Transfer syntax', ds2.string('x00020010')); k('Accession', ds2.string('x00080050')); k('Study UID', ds2.string('x0020000d')); k('SOP UID', ds2.string('x00080018')); } if (img) k('Displayed', img.columns + ' × ' + img.rows); if (item.mode) k('Link', item.signed && item.signed.mode); }
             var b2 = el('div', 'dv-btnrow'); b2.style.marginTop = '12px'; body.appendChild(b2); var bt = el('button', 'dv-chip', 'Browse all DICOM tags'); bt.onclick = function () { explorerTab = 'tags'; if (!explorerOpen) toggleExplorer(); renderExplorer(); }; b2.appendChild(bt);
         } else if (sidePanel === 'report') {
             title.textContent = 'Report'; var rep = reportFor(currentStudy); var wrap = el('div', 'dv-report'); body.appendChild(wrap);
@@ -735,7 +867,7 @@
 
     /* ── patient / study selection ─────────────────────────────── */
     function selectPatient(p, opts) {
-        opts = opts || {}; patient = p || null; setStatus('patient', patient ? nameOf(patient) + (patient.mrn ? ' · ' + patient.mrn : '') : '—');
+        opts = opts || {}; flushNow(); watchAnnotations(null); patient = p || null; setStatus('patient', patient ? nameOf(patient) + (patient.mrn ? ' · ' + patient.mrn : '') : '—');
         var live = studiesForPatient(patient);
         if (openOpts.studies && openOpts.studies.length && !opts.recompute) {
             // Studies handed in by the dashboard, enriched with what the live snapshot knows (date, priority).
@@ -757,6 +889,7 @@
     }
     function selectStudy(study, opts) {
         opts = opts || {}; if (!study) return; currentStudy = study; setStatus('study', studyLabel(study)); if (!opts.keepViewport) { currentItem = null; }
+        if (!opts.keepViewport) flushNow(); watchAnnotations(study);
         renderExplorer(); if (sidePanel) renderPanel();
         reloadStudy(study, false, function (set) { if (!opts.keepViewport && set.length && !(vp() && vp().item && vp().item.study === study)) displayItem(set[0]); else if (!set.length) showNoImagesHint(study); });
     }
@@ -805,7 +938,7 @@
         else if (k === '+' || k === '=') zoomBy(1.25); else if (k === '-') zoomBy(0.8); else if (k === '0') fitToWindow();
         else if (k === 'r') rotate(90); else if (k === 'R') rotate(-90); else if (k === 'h' || k === 'H') flip('h'); else if (k === 'v' || k === 'V') flip('v'); else if (k === 'i' || k === 'I') invert(); else if (k === 'f' || k === 'F') toggleFullscreen();
         else if (k === ' ') { if (cine.on) { toggleCinePlay(); e.preventDefault(); } } else if (k === 'Delete' || k === 'Backspace') { deleteMeasurements('selected'); e.preventDefault(); }
-        else if (k === 'w' || k === 'W') setLeftTool('Wwwc'); else if (k === 'p' || k === 'P') setLeftTool('Pan'); else if (k === 'z' || k === 'Z') setLeftTool('Zoom'); else if (k === 'l' || k === 'L') setLeftTool('Length'); else if (k === 'a' || k === 'A') setLeftTool('Angle'); else if (k === 'm' || k === 'M') setLeftTool('Magnify');
+        else if (k === 'w' || k === 'W') setLeftTool('Wwwc'); else if (k === 'p' || k === 'P') setLeftTool('Pan'); else if (k === 'z' || k === 'Z') setLeftTool('Zoom'); else if (k === 'l' || k === 'L') setLeftTool('Length'); else if (k === 'a' || k === 'A') setLeftTool('Angle'); else if (k === 'm' || k === 'M') setLeftTool('Magnify'); else if (k === 'k' || k === 'K') toggleKeyImage();
     }
     function onResize() {
         if (mode === 'inline' && host && root) {
@@ -827,6 +960,7 @@
     function start(opts) {
         openOpts = opts || {}; build();
         onKeyBound = onKey; window.addEventListener('keydown', onKeyBound); onResizeBound = onResize; window.addEventListener('resize', onResizeBound);
+        if (!unloadBound) { unloadBound = function () { try { flushNow(); } catch (e) {} }; window.addEventListener('pagehide', unloadBound); window.addEventListener('beforeunload', unloadBound); }
         onFsBound = function () { var b = $('.dv-tb[data-id="full"]'); if (b) b.classList.toggle('active', !!document.fullscreenElement); onResize(); }; document.addEventListener('fullscreenchange', onFsBound);
         setLeftTool(leftTool); if (openOpts.canManage) $('.dv-tb[data-id="explorer"]').classList.add('active'); else $('.dv-tb[data-id="explorer"]').classList.add('active');
         ensureLibs().catch(function (e) { toast('Imaging libraries: ' + (e && e.message), 'err'); });
@@ -850,15 +984,16 @@
     }
     function setPatient(p) { if (!root) return; if ((p && p.id) === (patient && patient.id) && p) return; openOpts.studies = null; selectPatient(p, { recompute: true }); }
     function refreshStudies() { if (!root || !patient) return; var keep = currentStudy && currentStudy.id; openOpts.studies = null; studies = studiesForPatient(patient); renderExplorer(); var s = studies.filter(function (x) { return x.id === keep; })[0]; if (s) { currentStudy = s; renderExplorer(); if (sidePanel) renderPanel(); viewports.forEach(drawTextOverlays); } else if (studies.length && !currentStudy) selectStudy(studies[0]); }
+    function flushNow() { if (Object.keys(anno.dirty).length) { clearTimeout(anno.timer); flushAnnotations(); } }
     function close() {
-        if (!root) return; stopClip(); closeMenu(); viewports.forEach(function (v) { try { if (v.enabled && cs()) { cst().clearToolState(v.host, 'stack'); cs().disable(v.host); } } catch (e) {} }); viewports = [];
+        if (!root) return; flushNow(); stopClip(); closeMenu(); if (anno.stop) { try { anno.stop(); } catch (e) {} } anno.stop = null; anno.orderId = null; anno.rows = []; anno.loadedFor = {}; // dirty/mine survive: an in-flight or retrying save still completes viewports.forEach(function (v) { try { if (v.enabled && cs()) { cst().clearToolState(v.host, 'stack'); cs().disable(v.host); } } catch (e) {} }); viewports = [];
         if (synchronizers) { synchronizers.forEach(function (s) { try { s.destroy(); } catch (e) {} }); synchronizers = null; syncOn = false; }
         if (root.parentNode) root.parentNode.removeChild(root); root = null; host = null; patient = null; studies = []; currentStudy = null; currentItem = null; mediaByStudy = {}; sidePanel = null; maximised = null; cine.on = false;
         if (onKeyBound) window.removeEventListener('keydown', onKeyBound); if (onResizeBound) window.removeEventListener('resize', onResizeBound); if (onFsBound) document.removeEventListener('fullscreenchange', onFsBound); onKeyBound = onResizeBound = onFsBound = null;
         if (headerObserver) { try { headerObserver.disconnect(); } catch (e) {} headerObserver = null; }
         if (mode === 'modal') document.body.style.overflow = ''; document.body.classList.remove('pcdv-fullpage');
     }
-    var api = { open: open, mount: mount, close: close, isOpen: function () { return !!root; }, setPatient: setPatient, refreshStudies: refreshStudies, selectStudy: function (id) { var s = studies.filter(function (x) { return String(x.id) === String(id); })[0]; if (s) selectStudy(s); }, switchStudy: switchStudy, preload: function () { return ensureLibs(); }, current: function () { return { patient: patient, study: currentStudy, item: vp() && vp().item, tool: leftTool, layout: layoutSpec.slice() }; }, _internal: { describeMeasurement: describeMeasurement, baseOrientation: baseOrientation, rotateOrientation: rotateOrientation, niceStep: niceStep, dirLabel: dirLabel } };
+    var api = { open: open, mount: mount, close: close, isOpen: function () { return !!root; }, setPatient: setPatient, refreshStudies: refreshStudies, selectStudy: function (id) { var s = studies.filter(function (x) { return String(x.id) === String(id); })[0]; if (s) selectStudy(s); }, switchStudy: switchStudy, preload: function () { return ensureLibs(); }, saveNow: flushNow, toggleKeyImage: toggleKeyImage, annotations: function () { return { rows: anno.rows.slice(), dirty: Object.keys(anno.dirty), orderId: anno.orderId }; }, current: function () { return { patient: patient, study: currentStudy, item: vp() && vp().item, tool: leftTool, layout: layoutSpec.slice() }; }, _internal: { describeMeasurement: describeMeasurement, baseOrientation: baseOrientation, rotateOrientation: rotateOrientation, niceStep: niceStep, dirLabel: dirLabel } };
     window.PcDicomViewer = api;
     // Warm the libraries while the user is still on the dashboard, so the first click opens instantly.
     if (!window.__pcdvNoPreload) { var warm = function () { try { if ('requestIdleCallback' in window) requestIdleCallback(function () { ensureLibs().catch(function () {}); }); else setTimeout(function () { ensureLibs().catch(function () {}); }, 1500); } catch (e) {} }; if (document.readyState === 'complete') warm(); else window.addEventListener('load', warm); }
