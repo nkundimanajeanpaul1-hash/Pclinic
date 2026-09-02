@@ -1,0 +1,37 @@
+PClinic — radiology action bar: ONE button to add results
+=========================================================
+Build tag: 20260902_DICOMONLY   (includes the earlier rename, tag 20260902_DICOMBTN)
+
+1. RENAMED   "Open DICOM viewer"  →  "Open DICOM to add radiology result"
+             (#radViewerBtn; tooltip + locked toast updated to match)
+
+2. REMOVED   the orange "Add radiology result" button (#radMediaBtn) and its
+             count badge. Results are now added only through the DICOM button:
+             select patient → Open DICOM to add radiology result → the viewer
+             opens with every study of that patient in the explorer → Upload.
+             Removed with it (dead code): the pcRadioAddMedia event, its
+             dashboard handler (handleAddMediaRequest), the study picker used
+             only by that button (pickStudyForMedia), the button's CSS/pulse
+             animation. pcRadioBar.setStudyCount is kept as a harmless no-op.
+
+   Unchanged: the DICOM button's patient gate (locked + "🔒 Select a patient
+   first…" toast without a patient), the worklist row buttons (Start study /
+   Images / Write report / Cancel), the "Images" sheet on a study card, the
+   identification-bar ⇄ selection sync.
+
+FILES (extract over the project root, overwrite)
+  pclinic-file.js                          button removed, rename, CSS cleanup
+  radio-dashboard.js                       dead handler/picker removed
+  radio-dashboard.html                     cache tags -> ?v=20260902_DICOMONLY
+  tests/radiology-media-button.test.mjs    rewritten for the single button (12/12)
+
+VERIFIED
+  node --test: media-button 12/12, selection 8/8, call-errors 9/9,
+               imaging-results-page 11/11, pclinic-file-sync 6/6
+  Real browser (Chromium): bar shows Select patient · <patient chip> ·
+  Open DICOM to add radiology result · Overview … ; old button/label gone
+  everywhere; no patient → locked toast, no viewer; patient selected →
+  identification bar filled, DICOM button unlocked, viewer opens for the
+  patient's study; worklist rows intact; 0 page errors.
+
+DEPLOY: push the 3 root files, firebase deploy --only hosting, hard refresh.
