@@ -613,3 +613,40 @@ describe('radiology annotations (workstation drawings, key images, notes)', () =
     await assertSucceeds(deleteDoc(ref('doctor')));
   });
 });
+
+describe('admin patient-data Imaging tab (live Common Server view)', () => {
+  // The tab issues exactly these queries (see admin-dashboard.html renderPatientImaging).
+  const q = (role, col, field, values) => getDocs(query(collection(dbFor(role), col), where(field, 'in', values)));
+
+  test('admin can run the orders + bills patient queries the tab subscribes to', async () => {
+    const orders = await assertSucceeds(q('admin', 'orders', 'patientId', ['1001', 1001]));
+    assert.deepEqual(orders.docs.map((d) => d.id).sort(), ['img-order-1', 'lab-order-1']);
+    const bills = await assertSucceeds(q('admin', 'bills', 'patientId', ['1001', 1001]));
+    assert.deepEqual(bills.docs.map((d) => d.id), ['bill-1']);
+    await assertSucceeds(getDoc(doc(dbFor('admin'), 'bills', 'bill-1')));
+  });
+
+  test('admin can run the per-order children queries (media, report, addenda, alerts, annotations)', async () => {
+    await assertSucceeds(setDoc(doc(dbFor('radio'), 'radiologyMedia', 'rmed-adm'), {
+      id: 'rmed-adm', orderId: 'img-order-1', patientId: '1001', fileName: 'x.dcm', mime: 'application/dicom', kind: 'image',
+      bytes: 10, storagePath: 'radiology/img-order-1/rmed-adm.dcm', ext: 'dcm', at: 'test',
+      byUid: profiles.radio.uid, byId: profiles.radio.staffId, byName: 'Radio', byRole: 'radio',
+    }));
+    await assertSucceeds(q('admin', 'radiologyMedia', 'orderId', ['img-order-1']));
+    await assertSucceeds(q('admin', 'radiologyReports', 'orderId', ['img-order-1']));
+    await assertSucceeds(q('admin', 'radiologyAddenda', 'reportId', ['rad-report-1']));
+    await assertSucceeds(q('admin', 'criticalAlerts', 'reportId', ['rad-report-1']));
+    await assertSucceeds(q('admin', 'radiologyAnnotations', 'orderId', ['img-order-1']));
+  });
+
+  test('bills stay closed to clinical roles and the ledger stays admin-read-only from the browser', async () => {
+    for (const role of ['doctor', 'nurse', 'reception', 'radio', 'hr']) {
+      await assertFails(getDoc(doc(dbFor(role), 'bills', 'bill-1')), `${role} must not read bills`);
+    }
+    // Deleting an order / bill / report from the browser is still refused for the admin:
+    // the Imaging tab deletes through the adminImagingDelete Cloud Function (Admin SDK + audit log).
+    await assertFails(deleteDoc(doc(dbFor('admin'), 'bills', 'bill-1')));
+    await assertFails(deleteDoc(doc(dbFor('admin'), 'orders', 'img-order-1')));
+    await assertFails(deleteDoc(doc(dbFor('admin'), 'radiologyReports', 'rad-report-1')));
+  });
+});
