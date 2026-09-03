@@ -1,0 +1,61 @@
+PCLINIC — ZIP C : ADMIN DASHBOARD ▸ PATIENT DATA ▸ IMAGING (live from the Common Server)
+=========================================================================================
+Zip C = everything from Zip A + Zip B (doctor DICOM workstation, saved measurements)
+        + this change. Extract it over the project folder and let it overwrite.
+
+WHAT WAS WRONG
+--------------
+The admin "Imaging Requests" tab read `patient.imagingRequests[]` from the browser's
+copy of the patient — nothing in PClinic ever writes that field, so the tab was always
+"No imaging requests recorded". The real data lives on the Common Server (Firestore):
+  orders (dept radiology)  →  radiologyMedia (+ Storage files)  →  radiologyReports
+  (+ radiologyAddenda, criticalAlerts, radiologyAnnotations)   →  bills (orderId)
+Also, deleting a bill in the admin Bills tab only removed it from the browser; the live
+sync put it straight back.
+
+WHAT CHANGED
+------------
+admin-dashboard.html
+  • Imaging tab now SUBSCRIBES to the Common Server (live, no refresh needed):
+    one card per radiology request: exam, state pill, priority, requested by/when,
+    Images (file, size, uploader, time, [Delete]), Result (Final/Preliminary, impression,
+    signed by/when, [View] [Delete result]), Bill (number, status, total, paid,
+    [View] [Delete bill]), header button [Delete request + images + result + bill],
+    [Open workstation] opens imaging-results.html for that patient/order, [Refresh].
+  • All deletes call the new Cloud Function adminImagingDelete (admin only, audited):
+      scope 'images' + mediaId  → one image (+ its saved drawings)
+      scope 'images'            → all images of the request
+      scope 'report'            → report, addenda, alert → request goes back to "acquired"
+      scope 'bill'              → the bill (refused if money was already paid; you are
+                                  asked to confirm a FORCED delete)
+      scope 'all'               → request + images + report + drawings + bill
+  • Bills tab: deleting a bill that belongs to a request now goes through the same
+    function (server + browser), so it stays deleted.
+functions/admin-imaging.cjs (new) + functions/index.js  → adminImagingDelete
+  (Admin SDK: deletes Storage objects first, then Firestore docs in batches ≤450,
+   writes auditLog action admin.imaging.delete).
+firestore.rules  → admin may READ `bills` (needed by the Bills + Imaging tabs).
+  Browser deletes of orders/bills/reports are still refused: only the function deletes.
+tests: functions/test/admin-imaging.test.cjs (11 unit), tests/firestore.rules.test.mjs
+  (+3 → 39 rules tests), Playwright smoke of the tab 18/18.
+
+DEPLOY (all three are needed)
+-----------------------------
+  firebase deploy --only functions,firestore:rules,hosting
+    functions        → publishes adminImagingDelete (until then the buttons say
+                       "The function adminImagingDelete is not deployed yet")
+    firestore:rules  → lets the admin read bills (until then the Bill row/Bills tab
+                       shows a permission error)
+    hosting          → the new admin-dashboard.html
+  Then hard-refresh (Ctrl+Shift+R) the admin dashboard.
+  Console alternative for the rules: Firestore ▸ Rules ▸ paste firestore.rules ▸ Publish.
+
+IF SOMETHING LOOKS WRONG
+------------------------
+  "Could not read the Common Server: … index …" → open the link Firestore prints in
+    the browser console (F12) and click Create index (single-field `in` queries
+    normally need none).
+  "permission-denied" on bills → the rules were not published yet.
+  Images still listed after delete → the admin deletes on the server; the tab repaints
+    from the server snapshot within a second. Check the browser console for the
+    function error.

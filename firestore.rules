@@ -476,7 +476,10 @@ service cloud.firestore {
 
     // ── BILLS ────────────────────────────────────────────────────
     match /bills/{billId} {
-      allow read: if hasRole(['cashier', 'finance']);
+      // cashier/finance run the ledger; the admin reads it for the
+      // patient-data "Bills" and "Imaging" tabs (deletes go through the
+      // adminImagingDelete Cloud Function, never from the browser).
+      allow read: if hasRole(['cashier', 'finance', 'admin']);
 
       allow create: if hasRole(['doctor', 'nurse', 'reception', 'cashier'])
         && request.resource.data.get('id', '') == billId

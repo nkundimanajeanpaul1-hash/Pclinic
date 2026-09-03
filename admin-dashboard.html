@@ -1876,7 +1876,7 @@
             pdCat('identification', document.querySelector('[data-pd="identification"]'));
             document.getElementById('patientDataModal').classList.add('show');
         }
-        function closePatientData() { document.getElementById('patientDataModal').classList.remove('show'); }
+        function closePatientData() { document.getElementById('patientDataModal').classList.remove('show'); pdImagingStop(); pdImaging.pid = null; }
 
         function pdCat(cat, btn) {
             document.querySelectorAll('#pd_cat_tabs .btn').forEach(function(b){ b.classList.remove('active'); });
@@ -2272,109 +2272,199 @@
             var b = allBills().find(function(x){ return String(x.id) === String(id) || String(x.number) === String(id); });
             if (!b) return;
             if (!confirm('Permanently DELETE bill ' + (b.number || b.id) + ' from the cashier ledger? This cannot be undone.')) return;
-            var bills = allBills().filter(function(x){ return String(x.id) !== String(b.id); });
-            writeJSON('pclinic_bills', bills);
-            try { window.dispatchEvent(new CustomEvent('billsUpdated')); window.dispatchEvent(new Event('storage')); } catch(e){}
-            showToast('🗑️ Bill deleted from the Common Server', 'info');
-            loadBills();
-            pdCat('bills', document.querySelector('[data-pd="bills"]'));
+            function dropLocal() {
+                var bills = allBills().filter(function(x){ return String(x.id) !== String(b.id); });
+                writeJSON('pclinic_bills', bills);
+                try { window.dispatchEvent(new CustomEvent('billsUpdated')); window.dispatchEvent(new Event('storage')); } catch(e){}
+                loadBills();
+                pdCat('bills', document.querySelector('[data-pd="bills"]'));
+            }
+            if (b.orderId && window.pclinicCloudFunctions && typeof window.pclinicCloudFunctions.call === 'function') {
+                // bill raised by a request (imaging/lab) → delete it on the Common Server through the
+                // admin function; a browser-only delete would be re-added by the live sync.
+                showToast('⏳ Deleting bill on the Common Server…', 'info');
+                pdImagingCall({ orderId: String(b.orderId), scope: 'bill' }).then(function () {
+                    dropLocal(); showToast('🗑️ Bill ' + (b.number || b.id) + ' deleted from the Common Server', 'success');
+                }).catch(function (e) {
+                    var msg = (e && e.message) || String(e);
+                    if (/already has .* paid/i.test(msg) && confirm(msg + '\n\nDelete it anyway (forced)?')) {
+                        return pdImagingCall({ orderId: String(b.orderId), scope: 'bill', force: true }).then(function () {
+                            dropLocal(); showToast('🗑️ Bill ' + (b.number || b.id) + ' deleted from the Common Server (forced)', 'success');
+                        }).catch(function (e2) { showToast('❌ ' + ((e2 && e2.message) || e2), 'error'); });
+                    }
+                    showToast('❌ ' + msg, 'error');
+                });
+                return;
+            }
+            dropLocal();
+            showToast('🗑️ Bill removed from this device' + (b.orderId ? '' : ' (it was never on the Common Server)'), 'info');
         }
 
-        /* ── CATEGORY 4: IMAGING (requests + results — edit/delete any) ── */
+        /* ── CATEGORY 4: IMAGING — live from the Common Server ──────────────
+           Imaging requests are radiology ORDERS (Firestore `orders`, dept
+           'radiology'), the images are `radiologyMedia` (+ Storage), the results
+           are `radiologyReports` / `radiologyAddenda` / `criticalAlerts`, the
+           drawings are `radiologyAnnotations` and the money is `bills`. The old
+           tab read patient.imagingRequests[] from the browser copy of the patient
+           record, which nobody writes any more — hence "No imaging requests
+           recorded" while radiology had images and a signed report.
+           Deleting goes through the admin-only callable adminImagingDelete
+           (browser rules deny these deletes on purpose) and is audited. ── */
+        var pdImaging = { pid: null, seq: 0, orders: [], media: {}, reports: {}, addenda: {}, alerts: {}, annotations: {}, bills: [], error: '', loading: false, unsub: [] };
+        function fs() { return window.firebaseDB && window.firebaseFunctions ? window.firebaseFunctions : null; }
+        function pdImagingStop() { pdImaging.unsub.forEach(function (u) { try { u(); } catch (e) {} }); pdImaging.unsub = []; }
+        function radStateOf(o) {
+            if (!o) return 'pending';
+            var valid = ['pending', 'in-progress', 'acquired', 'reporting', 'reported', 'cancelled'];
+            if (valid.indexOf(o.radiologyState) !== -1) return o.radiologyState;
+            if (o.status === 'cancelled') return 'cancelled'; if (o.status === 'completed') return 'reported'; if (o.status === 'in-progress') return 'in-progress';
+            return 'pending';
+        }
+        function whenStr(v) { if (!v) return ''; var d = (v && typeof v === 'object' && v.seconds) ? new Date(v.seconds * 1000) : (v && typeof v.toDate === 'function' ? v.toDate() : new Date(v)); return isNaN(d) ? String(v) : d.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+        function pdImagingIdKeys(p) { var out = []; [p.id, p.mrn].forEach(function (v) { if (v == null || v === '') return; var s = String(v).replace(/^MOD-/i, ''); if (out.indexOf(s) === -1) out.push(s); }); return out; }
         function renderPatientImaging(p) {
-            var reqs = (p.imagingRequests || []).concat(p.radiologyRequests || []);
-            var results = Array.isArray(p.imagingResults) ? p.imagingResults : [];
-            var html = '';
-
-            html += '<div style="font-weight:800;margin-bottom:8px;"><i class="ti ti-radio"></i> Imaging Requests (' + reqs.length + ')</div>';
-            if (!reqs.length) html += pdEmpty('No imaging requests recorded for this patient.');
-            reqs.forEach(function(r, i){
+            var body = document.getElementById('pd_body');
+            var keys = pdImagingIdKeys(p);
+            if (pdImaging.pid !== pidRaw(p)) { pdImagingStop(); pdImaging = { pid: pidRaw(p), seq: 0, orders: [], media: {}, reports: {}, addenda: {}, alerts: {}, annotations: {}, bills: [], error: '', loading: true, unsub: [] }; }
+            var f = fs();
+            if (!f) { body.innerHTML = pdEmpty('⏳ Connecting to the Common Server… (sign in again if this does not change)'); if (!pdImaging._retry) { pdImaging._retry = setTimeout(function () { pdImaging._retry = null; if (pdPatientId === String(p.id)) renderPatientImaging(p); }, 1200); } return; }
+            if (!pdImaging.unsub.length) {
+                var db = window.firebaseDB; var seq = ++pdImaging.seq;
+                function sub(q, assign) {
+                    try {
+                        pdImaging.unsub.push(f.onSnapshot(q, function (snap) {
+                            if (seq !== pdImaging.seq) return; var rows = []; snap.forEach(function (d) { rows.push(Object.assign({ id: d.id }, d.data())); }); assign(rows); pdImaging.loading = false; pdImaging.error = ''; paintPatientImaging();
+                        }, function (err) { if (seq !== pdImaging.seq) return; pdImaging.loading = false; pdImaging.error = (err && err.message) || String(err); paintPatientImaging(); }));
+                    } catch (e) { pdImaging.error = e.message; }
+                }
+                // orders: patientId is a number on old orders and a string on new ones → query both forms
+                var pidVariants = []; keys.forEach(function (k) { pidVariants.push(k); if (/^\d+$/.test(k) && pidVariants.indexOf(Number(k)) === -1) pidVariants.push(Number(k)); });
+                sub(f.query(f.collection(db, 'orders'), f.where('patientId', 'in', pidVariants.slice(0, 10))), function (rows) {
+                    pdImaging.orders = rows.filter(function (o) { return o.dept === 'radiology' || o.type === 'imaging'; }).sort(function (a, b) { return String(b.orderedAt || '').localeCompare(String(a.orderedAt || '')); });
+                    pdImagingWatchChildren(f, db, seq);
+                });
+                sub(f.query(f.collection(db, 'bills'), f.where('patientId', 'in', pidVariants.slice(0, 10))), function (rows) { pdImaging.bills = rows; });
+            }
+            paintPatientImaging();
+        }
+        function pdImagingWatchChildren(f, db, seq) {
+            // per-order children (media, report, addenda, alerts, annotations) — one listener each per collection, filtered by orderId in (≤10 per query)
+            if (pdImaging._childUnsub) { pdImaging._childUnsub.forEach(function (u) { try { u(); } catch (e) {} }); }
+            pdImaging._childUnsub = [];
+            var ids = pdImaging.orders.map(function (o) { return String(o.id); }); if (!ids.length) { paintPatientImaging(); return; }
+            function chunks(a) { var out = []; for (var i = 0; i < a.length; i += 10) out.push(a.slice(i, i + 10)); return out; }
+            [['radiologyMedia', 'media'], ['radiologyReports', 'reports'], ['radiologyAddenda', 'addenda'], ['criticalAlerts', 'alerts'], ['radiologyAnnotations', 'annotations']].forEach(function (pair) {
+                chunks(ids).forEach(function (chunk) {
+                    try {
+                        var u = f.onSnapshot(f.query(f.collection(db, pair[0]), f.where('orderId', 'in', chunk)), function (snap) {
+                            if (seq !== pdImaging.seq) return; var by = pdImaging[pair[1]]; chunk.forEach(function (id) { by[id] = []; });
+                            snap.forEach(function (d) { var row = Object.assign({ id: d.id }, d.data()); (by[String(row.orderId)] = by[String(row.orderId)] || []).push(row); });
+                            paintPatientImaging();
+                        }, function (err) { console.warn('[admin imaging] ' + pair[0] + ':', err && err.message); });
+                        pdImaging._childUnsub.push(u); pdImaging.unsub.push(u);
+                    } catch (e) {}
+                });
+            });
+        }
+        function radPill(state) { var c = { pending: 'blue', 'in-progress': 'yellow', acquired: 'yellow', reporting: 'yellow', reported: 'green', cancelled: 'red' }[state] || 'blue'; return '<span class="badge ' + c + '">' + esc(state) + '</span>'; }
+        function paintPatientImaging() {
+            var body = document.getElementById('pd_body'); if (!body || pdPatientId == null) return;
+            var active = document.querySelector('#pd_cat_tabs .btn.active'); if (!active || active.getAttribute('data-pd') !== 'imaging') return;
+            var I = pdImaging; var html = '';
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">' +
+                '<div style="font-weight:800;"><i class="ti ti-radio"></i> Imaging Requests (' + I.orders.length + ') <span style="font-weight:500;color:#6e6e73;font-size:11px;">· live from the Common Server</span></div>' +
+                '<div style="display:flex;gap:6px;">' +
+                    '<button class="btn btn-sm btn-blue" onclick="pdOpenWorkstation()"><i class="ti ti-photo-scan"></i> Open workstation</button>' +
+                    '<button class="btn btn-sm" onclick="pdImagingRefresh()"><i class="ti ti-refresh"></i> Refresh</button>' +
+                '</div></div>';
+            if (I.error) html += '<div style="background:#fff1f0;border:0.5px solid #ffa39e;color:#a8071a;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:8px;">⚠️ Could not read the Common Server: ' + esc(I.error) + '<br>If it says <b>index</b>: open the link in the browser console once to create it. If it says <b>permission</b>: deploy the latest firestore.rules.</div>';
+            if (I.loading && !I.orders.length && !I.error) { body.innerHTML = html + pdEmpty('⏳ Loading imaging requests from the Common Server…'); return; }
+            if (!I.orders.length && !I.error) html += pdEmpty('No imaging request on the Common Server for this patient.<br><span style="font-size:11px;">Requests are created by a doctor in <b>Imaging Request</b>; they appear here the moment they are sent.</span>');
+            I.orders.forEach(function (o) {
+                var state = radStateOf(o); var media = I.media[o.id] || []; var rep = (I.reports[o.id] || [])[0] || null; var adds = I.addenda[o.id] || []; var alert = (I.alerts[o.id] || [])[0] || null; var annos = I.annotations[o.id] || [];
+                var bills = I.bills.filter(function (b) { return String(b.orderId || '') === String(o.id) || (o.billId && String(b.id) === String(o.billId)); });
+                var exam = (o.items || []).map(function (it) { return it.name; }).filter(Boolean).join(', ') || o.study || o.modalityLabel || 'Imaging study';
+                var idAttr = esc(String(o.id));
+                var bodyHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">';
+                // images
+                bodyHtml += '<div style="background:#f5f5f7;border-radius:10px;padding:8px 10px;"><div style="font-weight:700;margin-bottom:4px;"><i class="ti ti-photo"></i> Images (' + media.length + ')' + (annos.length ? ' · ' + annos.length + ' annotation set' + (annos.length === 1 ? '' : 's') : '') + '</div>';
+                if (!media.length) bodyHtml += '<div style="color:#6e6e73;">No image uploaded by radiology yet.</div>';
+                media.slice().sort(function (a, b) { return String(a.at || '').localeCompare(String(b.at || '')); }).forEach(function (m) {
+                    bodyHtml += '<div style="display:flex;justify-content:space-between;gap:6px;align-items:center;padding:2px 0;"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(m.fileName || m.id) + '">' + esc(m.fileName || m.id) + ' <span style="color:#6e6e73;">' + esc(((Number(m.bytes) || 0) / 1024).toFixed(0)) + ' KB · ' + esc(m.byName || '') + ' · ' + esc(whenStr(m.at)) + '</span></span>' +
+                        '<button class="btn btn-sm btn-red" title="Delete this image from the Common Server" onclick="adminDeleteImagingMedia(\'' + esc(String(m.id)) + '\',\'' + idAttr + '\')"><i class="ti ti-trash"></i></button></div>';
+                });
+                if (media.length > 1) bodyHtml += '<div style="margin-top:6px;"><button class="btn btn-sm btn-red" onclick="adminDeleteImaging(\'' + idAttr + '\',\'images\')"><i class="ti ti-trash"></i> Delete all images</button></div>';
+                bodyHtml += '</div>';
+                // result
+                bodyHtml += '<div style="background:#f5f5f7;border-radius:10px;padding:8px 10px;"><div style="font-weight:700;margin-bottom:4px;"><i class="ti ti-report-medical"></i> Result</div>';
+                if (!rep) bodyHtml += '<div style="color:#6e6e73;">No report yet' + (state === 'reported' ? ' (order marked reported but no report document found)' : '') + '.</div>';
+                else {
+                    bodyHtml += '<div>' + (rep.status === 'final' ? '<span class="badge green">Final · signed</span>' : '<span class="badge yellow">Draft</span>') + (rep.critical ? ' <span class="badge red">CRITICAL' + (alert && alert.acknowledged ? ' · acknowledged' : '') + '</span>' : '') + '</div>' +
+                        (rep.impression ? '<div style="margin-top:4px;"><b>Impression:</b> ' + esc(String(rep.impression).slice(0, 220)) + (String(rep.impression).length > 220 ? '…' : '') + '</div>' : '') +
+                        (rep.findings && !rep.impression ? '<div style="margin-top:4px;"><b>Findings:</b> ' + esc(String(rep.findings).slice(0, 220)) + '</div>' : '') +
+                        '<div style="color:#6e6e73;margin-top:2px;">' + esc(rep.status === 'final' ? 'Signed by ' + (rep.signedByName || rep.byName || 'Radiology') + ' · ' + whenStr(rep.signedAt || rep.finalizedAt || rep.updatedAt) : 'Last saved ' + whenStr(rep.updatedAt || rep.savedAt)) + (adds.length ? ' · ' + adds.length + ' addend' + (adds.length === 1 ? 'um' : 'a') : '') + '</div>' +
+                        '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;"><button class="btn btn-sm btn-blue" onclick="pdOpenWorkstation(\'' + idAttr + '\')"><i class="ti ti-eye"></i> View</button><button class="btn btn-sm btn-red" onclick="adminDeleteImaging(\'' + idAttr + '\',\'report\')"><i class="ti ti-trash"></i> Delete result</button></div>';
+                }
+                bodyHtml += '</div>';
+                // bill
+                bodyHtml += '<div style="background:#f5f5f7;border-radius:10px;padding:8px 10px;grid-column:1/-1;"><div style="font-weight:700;margin-bottom:4px;"><i class="ti ti-receipt"></i> Bill' + (bills.length > 1 ? 's' : '') + (bills.length ? '' : ' — none linked to this request') + '</div>';
+                bills.forEach(function (b) {
+                    bodyHtml += '<div style="display:flex;justify-content:space-between;gap:6px;align-items:center;flex-wrap:wrap;"><span>' + esc(b.number || b.id) + ' · ' + statusPill(b) + ' · ' + money(b.total) + ' total · ' + money(b.paid) + ' paid</span>' +
+                        '<span style="display:flex;gap:6px;"><button class="btn btn-sm btn-blue" onclick="viewBill(\'' + esc(String(b.id)) + '\')"><i class="ti ti-eye"></i> View</button><button class="btn btn-sm btn-red" onclick="adminDeleteImaging(\'' + idAttr + '\',\'bill\')"><i class="ti ti-trash"></i> Delete bill</button></span></div>';
+                });
+                bodyHtml += '</div></div>';
                 html += pdCard(
-                    '<i class="ti ti-radio" style="color:#5c2475;"></i> ' + esc(r.exam || r.modality || r.type || ('Imaging request ' + (i + 1))),
-                    esc((r.bodyPart || r.region || '') + (r.clinicalInfo ? ' • ' + r.clinicalInfo : '') + (r.date ? ' • ' + new Date(r.date).toLocaleDateString('en-GB') : '') + (r.status ? ' • ' + r.status : '')),
-                    '<button class="btn btn-sm btn-blue" onclick="adminEditImagingRequest(' + i + ')"><i class="ti ti-edit"></i> Edit</button>' +
-                    '<button class="btn btn-sm btn-red" onclick="adminDeleteImagingRequest(' + i + ')"><i class="ti ti-trash"></i> Delete</button>'
+                    '<i class="ti ti-radio" style="color:#5c2475;"></i> ' + esc(exam) + ' ' + radPill(state) + (o.priority && o.priority !== 'routine' ? ' <span class="badge red">' + esc(o.priority) + '</span>' : ''),
+                    esc('Requested ' + whenStr(o.orderedAt) + (o.orderedBy ? ' by ' + o.orderedBy : '') + (o.notes ? ' • ' + o.notes : '') + ' • order ' + o.id),
+                    '<button class="btn btn-sm btn-red" onclick="adminDeleteImaging(\'' + idAttr + '\',\'all\')"><i class="ti ti-trash"></i> Delete request + images + result + bill</button>',
+                    bodyHtml
                 );
             });
-
-            html += '<div style="font-weight:800;margin:18px 0 8px;"><i class="ti ti-photo-scan"></i> Imaging Results (' + results.length + ')</div>';
-            if (!results.length) html += pdEmpty('No imaging results yet — they appear when Radiology reports them.');
-            results.forEach(function(r, i){
-                html += pdCard(
-                    '<i class="ti ti-photo-scan" style="color:#4338ca;"></i> ' + esc(r.exam || r.modality || r.type || ('Imaging result ' + (i + 1))),
-                    esc('Findings: ' + (r.findings || r.report || r.impression || '—') + (r.date ? ' • ' + new Date(r.date).toLocaleDateString('en-GB') : '')),
-                    '<button class="btn btn-sm btn-blue" onclick="adminEditImagingResult(' + i + ')"><i class="ti ti-edit"></i> Edit</button>' +
-                    '<button class="btn btn-sm btn-red" onclick="adminDeleteImagingResult(' + i + ')"><i class="ti ti-trash"></i> Delete</button>'
-                );
-            });
-
-            html += '<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">' +
-                '<button class="btn btn-blue" onclick="adminAddImagingRequest()"><i class="ti ti-plus"></i> Add Request</button>' +
-                '<button class="btn btn-purple" onclick="adminAddImagingResult()"><i class="ti ti-plus"></i> Add Result</button>' +
-            '</div>';
-
-            document.getElementById('pd_body').innerHTML = html;
+            body.innerHTML = html;
         }
-        function adminAddImagingRequest() {
-            var exam = prompt('Imaging exam / modality (e.g. CT Brain):'); if (exam === null) return;
-            var region = prompt('Body part / region:'); if (region === null) return;
-            persistPatientChange(pdPatientId, function(pat){
-                pat.imagingRequests = pat.imagingRequests || [];
-                pat.imagingRequests.push({ exam: exam, bodyPart: region, status: 'pending', date: new Date().toISOString(), requestedBy: 'Admin' });
+        function pdImagingRefresh() { pdImagingStop(); pdImaging.pid = null; var p = freshPatient(pdPatientId); if (p) renderPatientImaging(p); }
+        function pdOpenWorkstation(orderId) { var p = freshPatient(pdPatientId); if (!p) return; try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch (e) {} window.open('imaging-results.html?patient=' + encodeURIComponent(p.id) + (orderId ? '&order=' + encodeURIComponent(orderId) : ''), '_blank', 'noopener'); }
+        function pdImagingCall(data) {
+            if (!window.pclinicCloudFunctions || typeof window.pclinicCloudFunctions.call !== 'function') return Promise.reject(new Error('The Common Server functions are not reachable. Deploy the Cloud Functions (firebase deploy --only functions) and retry.'));
+            return window.pclinicCloudFunctions.call('adminImagingDelete', data).catch(function (e) {
+                var msg = (e && e.message) || String(e);
+                if (/not-found|NOT_FOUND|not found/i.test(msg) && /function|adminImagingDelete/i.test(msg)) msg = 'The function adminImagingDelete is not deployed yet. Run: firebase deploy --only functions';
+                throw new Error(msg);
             });
-            showToast('✅ Imaging request added', 'success');
-            pdCat('imaging', document.querySelector('[data-pd="imaging"]'));
         }
-        function adminAddImagingResult() {
-            var exam = prompt('Imaging exam (e.g. Chest X-Ray):'); if (exam === null) return;
-            var findings = prompt('Findings / report text:'); if (findings === null) return;
-            persistPatientChange(pdPatientId, function(pat){
-                pat.imagingResults = pat.imagingResults || [];
-                pat.imagingResults.push({ exam: exam, findings: findings, date: new Date().toISOString(), reportedBy: 'Admin' });
+        function adminDeleteImaging(orderId, scope) {
+            var o = pdImaging.orders.filter(function (x) { return String(x.id) === String(orderId); })[0]; if (!o) { showToast('❌ Request not found', 'error'); return; }
+            var exam = (o.items || []).map(function (it) { return it.name; }).filter(Boolean).join(', ') || 'Imaging study';
+            var what = { all: 'the WHOLE imaging request "' + exam + '" — order, every image, the result, drawings and the linked bill', images: 'ALL images of "' + exam + '" (and the drawings made on them)', report: 'the RESULT (report, addenda, critical alert) of "' + exam + '" — radiology will have to report it again', bill: 'the BILL linked to "' + exam + '"' }[scope];
+            if (!confirm('Permanently delete ' + what + ' from the Common Server?\n\nThis cannot be undone and is recorded in the audit log.')) return;
+            showToast('⏳ Deleting on the Common Server…', 'info');
+            pdImagingCall({ orderId: String(orderId), scope: scope }).then(function (r) {
+                showToast('🗑️ ' + (r && r.summary ? r.summary.charAt(0).toUpperCase() + r.summary.slice(1) : 'Deleted') + ' — every dashboard sees this now', 'success');
+                if (r && r.blockedBills && r.blockedBills.length) { setTimeout(function () { if (confirm('Bill ' + r.blockedBills[0].number + ' ' + r.blockedBills[0].reason + '\n\nDelete it anyway?')) { pdImagingCall({ orderId: String(orderId), scope: 'bill', force: true }).then(function () { showToast('🗑️ Bill deleted', 'success'); }).catch(function (e) { showToast('❌ ' + e.message, 'error'); }); } }, 300); }
+                try { window.dispatchEvent(new CustomEvent('ordersUpdated')); window.dispatchEvent(new CustomEvent('billsUpdated')); } catch (e) {}
+                loadBills();
+            }).catch(function (e) {
+                var msg = e.message || String(e);
+                if (/already has .* paid/.test(msg)) { if (confirm(msg + '\n\nDelete it anyway?')) { pdImagingCall({ orderId: String(orderId), scope: scope, force: true }).then(function (r) { showToast('🗑️ ' + (r.summary || 'Deleted'), 'success'); loadBills(); }).catch(function (e2) { showToast('❌ ' + e2.message, 'error'); }); } return; }
+                showToast('❌ ' + msg, 'error');
             });
-            showToast('✅ Imaging result added', 'success');
-            pdCat('imaging', document.querySelector('[data-pd="imaging"]'));
         }
-        function adminEditImagingRequest(i) {
-            var p = freshPatient(pdPatientId); if (!p) return;
-            var r = (p.imagingRequests || [])[i]; if (!r) return;
-            var exam = prompt('Exam / modality:', r.exam || r.modality || ''); if (exam === null) return;
-            var region = prompt('Body part / region:', r.bodyPart || r.region || ''); if (region === null) return;
-            persistPatientChange(pdPatientId, function(pat){
-                var rr = (pat.imagingRequests || [])[i];
-                if (rr) { rr.exam = exam; rr.bodyPart = region; }
-            });
-            showToast('✏️ Imaging request updated', 'success');
-            pdCat('imaging', document.querySelector('[data-pd="imaging"]'));
+        function adminDeleteImagingMedia(mediaId, orderId) {
+            var m = (pdImaging.media[orderId] || []).filter(function (x) { return String(x.id) === String(mediaId); })[0]; if (!m) return;
+            if (!confirm('Delete the image "' + (m.fileName || m.id) + '" from the Common Server? The drawings made on it go with it.')) return;
+            showToast('⏳ Deleting image…', 'info');
+            pdImagingCall({ orderId: String(orderId), scope: 'images', mediaId: String(mediaId) }).then(function (r) {
+                showToast('🗑️ Image deleted from the Common Server' + (r && r.removed && r.removed.annotations ? ' (+' + r.removed.annotations + ' drawing set' + (r.removed.annotations === 1 ? '' : 's') + ')' : ''), 'success');
+            }).catch(function (e) { showToast('❌ ' + ((e && e.message) || e), 'error'); });
         }
-        function adminDeleteImagingRequest(i) {
-            if (!confirm('Delete this imaging request?')) return;
-            persistPatientChange(pdPatientId, function(pat){
-                if (Array.isArray(pat.imagingRequests)) pat.imagingRequests.splice(i, 1);
-            });
-            showToast('🗑️ Imaging request deleted', 'info');
-            pdCat('imaging', document.querySelector('[data-pd="imaging"]'));
-        }
-        function adminEditImagingResult(i) {
-            var p = freshPatient(pdPatientId); if (!p) return;
-            var r = (p.imagingResults || [])[i]; if (!r) return;
-            var exam = prompt('Exam:', r.exam || r.modality || ''); if (exam === null) return;
-            var findings = prompt('Findings / report:', r.findings || r.report || ''); if (findings === null) return;
-            persistPatientChange(pdPatientId, function(pat){
-                var rr = (pat.imagingResults || [])[i];
-                if (rr) { rr.exam = exam; rr.findings = findings; }
-            });
-            showToast('✏️ Imaging result updated', 'success');
-            pdCat('imaging', document.querySelector('[data-pd="imaging"]'));
-        }
-        function adminDeleteImagingResult(i) {
-            if (!confirm('Delete this imaging result?')) return;
-            persistPatientChange(pdPatientId, function(pat){
-                if (Array.isArray(pat.imagingResults)) pat.imagingResults.splice(i, 1);
-            });
-            showToast('🗑️ Imaging result deleted', 'info');
-            pdCat('imaging', document.querySelector('[data-pd="imaging"]'));
-        }
+        // keep the old names alive for any caller, pointing at the live view
+        function adminAddImagingRequest() { showToast('Imaging requests are created by a doctor in Imaging Request (they carry the bill and reach radiology).', 'info'); }
+        function adminAddImagingResult() { showToast('Results are written and signed by radiology in the Report writer.', 'info'); }
+        function adminEditImagingRequest(orderId) { showToast('Imaging requests are edited by the requesting doctor; the admin can delete them here.', 'info'); }
+        function adminEditImagingResult(orderId) { pdOpenWorkstation(orderId); }
+        function adminDeleteImagingRequest(orderId) { adminDeleteImaging(orderId, 'all'); }
+        function adminDeleteImagingResult(orderId) { adminDeleteImaging(orderId, 'report'); }
+        window.addEventListener('beforeunload', pdImagingStop);
 
         /* ══════════════ EXPOSE TO ACTION BAR + GLOBAL ══════════════ */
         window.pcAdmin = {
@@ -2444,6 +2534,13 @@
         window.adminDeleteImagingRequest = adminDeleteImagingRequest;
         window.adminEditImagingResult = adminEditImagingResult;
         window.adminDeleteImagingResult = adminDeleteImagingResult;
+        // live Imaging tab (Common Server) — used by the inline onclick handlers of the cards
+        window.adminDeleteImaging = adminDeleteImaging;
+        window.adminDeleteImagingMedia = adminDeleteImagingMedia;
+        window.pdOpenWorkstation = pdOpenWorkstation;
+        window.pdImagingRefresh = pdImagingRefresh;
+        window.pdImagingStop = pdImagingStop;
+        window.pdImaging = function () { return pdImaging; };
         window.showToast = window.showToast || showToast;
         window.loadPatientsFromData = loadPatients;   // backward-compatible name
         window.deletePatientFromAdmin = deletePatientFromAdmin;
