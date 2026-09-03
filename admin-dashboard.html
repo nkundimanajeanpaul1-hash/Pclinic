@@ -850,6 +850,7 @@
             var toast = document.createElement('div');
             toast.className = 'toast ' + (type || 'info');
             var icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+            message = String(message == null ? '' : message).replace(/^\s*(✅|❌|⚠️|ℹ️|🗑️|⏳)\s*/, function (m0, ic) { return (ic === icons[type || 'info']) ? '' : m0; });
             toast.textContent = (icons[type] || 'ℹ️') + ' ' + message;
             container.appendChild(toast);
             setTimeout(function(){ toast.classList.add('show'); }, 10);
@@ -2377,6 +2378,7 @@
                     '<button class="btn btn-sm btn-blue" onclick="pdOpenWorkstation()"><i class="ti ti-photo-scan"></i> Open workstation</button>' +
                     '<button class="btn btn-sm" onclick="pdImagingRefresh()"><i class="ti ti-refresh"></i> Refresh</button>' +
                 '</div></div>';
+            if (I.fnMissing) html += '<div style="background:#fffbe6;border:0.5px solid #ffe58f;color:#874d00;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:8px;">⚠️ <b>The admin delete function is not deployed on the Common Server yet.</b> Images can still be removed one by one (radiology function). Deleting a <b>result</b>, a <b>bill</b> or a <b>whole request</b> needs, once, on a computer with the project folder: <code>firebase deploy --only functions</code></div>';
             if (I.error) html += '<div style="background:#fff1f0;border:0.5px solid #ffa39e;color:#a8071a;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:8px;">⚠️ Could not read the Common Server: ' + esc(I.error) + '<br>If it says <b>index</b>: open the link in the browser console once to create it. If it says <b>permission</b>: deploy the latest firestore.rules.</div>';
             if (I.loading && !I.orders.length && !I.error) { body.innerHTML = html + pdEmpty('⏳ Loading imaging requests from the Common Server…'); return; }
             if (!I.orders.length && !I.error) html += pdEmpty('No imaging request on the Common Server for this patient.<br><span style="font-size:11px;">Requests are created by a doctor in <b>Imaging Request</b>; they appear here the moment they are sent.</span>');
@@ -2424,12 +2426,32 @@
         }
         function pdImagingRefresh() { pdImagingStop(); pdImaging.pid = null; var p = freshPatient(pdPatientId); if (p) renderPatientImaging(p); }
         function pdOpenWorkstation(orderId) { var p = freshPatient(pdPatientId); if (!p) return; try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch (e) {} window.open('imaging-results.html?patient=' + encodeURIComponent(p.id) + (orderId ? '&order=' + encodeURIComponent(orderId) : ''), '_blank', 'noopener'); }
+        var PD_FN_MISSING_MSG = 'The admin delete function (adminImagingDelete) is not on the Common Server yet. Run once on a computer with the project:  firebase deploy --only functions';
+        function pdFnCode(e) { return String((e && e.code) || '').replace(/^functions\//, '').toLowerCase(); }
+        function pdServerReachable() {
+            // radiologyMediaDelete has been deployed for a long time; ANY real callable answer (even "invalid-argument") proves the
+            // Common Server is reachable, so an "internal"/404 from adminImagingDelete means that function is simply not deployed.
+            return window.pclinicCloudFunctions.call('radiologyMediaDelete', {}).then(function () { return true; }, function (e) {
+                var c = pdFnCode(e); return c !== 'internal' && c !== 'unavailable' && c !== 'deadline-exceeded';
+            });
+        }
         function pdImagingCall(data) {
-            if (!window.pclinicCloudFunctions || typeof window.pclinicCloudFunctions.call !== 'function') return Promise.reject(new Error('The Common Server functions are not reachable. Deploy the Cloud Functions (firebase deploy --only functions) and retry.'));
-            return window.pclinicCloudFunctions.call('adminImagingDelete', data).catch(function (e) {
-                var msg = (e && e.message) || String(e);
-                if (/not-found|NOT_FOUND|not found/i.test(msg) && /function|adminImagingDelete/i.test(msg)) msg = 'The function adminImagingDelete is not deployed yet. Run: firebase deploy --only functions';
-                throw new Error(msg);
+            if (!window.pclinicCloudFunctions || typeof window.pclinicCloudFunctions.call !== 'function') return Promise.reject(Object.assign(new Error('The Common Server functions are not reachable from this page (firebase-config.js did not load). Reload and sign in again.'), { code: 'unavailable' }));
+            return window.pclinicCloudFunctions.call('adminImagingDelete', data).then(function (r) { pdImaging.fnMissing = false; return r; }, function (e) {
+                var code = pdFnCode(e), msg = (e && e.message) || String(e);
+                var looksMissing = code === 'not-found' || (code === 'internal' && /^internal$/i.test(msg.trim())) || (/not[- ]?found/i.test(msg) && /function|adminImagingDelete/i.test(msg));
+                if (!looksMissing) throw Object.assign(new Error(msg), { code: code || 'unknown' });
+                return pdServerReachable().then(function (up) {
+                    if (up) { pdImaging.fnMissing = true; paintPatientImaging(); throw Object.assign(new Error(PD_FN_MISSING_MSG), { code: 'not-deployed' }); }
+                    throw Object.assign(new Error('The Common Server did not answer. Check the internet connection and retry.'), { code: 'unavailable' });
+                });
+            });
+        }
+        // Fallback while adminImagingDelete is not deployed: the radiology function that IS on the server lets an admin remove
+        // one image record + its file (refused once the study is reported). Drawings on it are cleaned up later by the admin function.
+        function pdLegacyMediaDelete(mediaId) {
+            return window.pclinicCloudFunctions.call('radiologyMediaDelete', { mediaId: String(mediaId) }).then(function () { return { removed: { media: 1, objects: 1, annotations: 0 }, legacy: true }; }, function (e) {
+                throw Object.assign(new Error((e && e.message) || String(e)), { code: pdFnCode(e) || 'unknown' });
             });
         }
         function adminDeleteImaging(orderId, scope) {
@@ -2438,7 +2460,12 @@
             var what = { all: 'the WHOLE imaging request "' + exam + '" — order, every image, the result, drawings and the linked bill', images: 'ALL images of "' + exam + '" (and the drawings made on them)', report: 'the RESULT (report, addenda, critical alert) of "' + exam + '" — radiology will have to report it again', bill: 'the BILL linked to "' + exam + '"' }[scope];
             if (!confirm('Permanently delete ' + what + ' from the Common Server?\n\nThis cannot be undone and is recorded in the audit log.')) return;
             showToast('⏳ Deleting on the Common Server…', 'info');
-            pdImagingCall({ orderId: String(orderId), scope: scope }).then(function (r) {
+            pdImagingCall({ orderId: String(orderId), scope: scope }).catch(function (e) {
+                if (e.code !== 'not-deployed' || scope !== 'images') throw e;
+                var list = (pdImaging.media[String(orderId)] || []).slice(); if (!list.length) throw e;
+                return list.reduce(function (chain, m) { return chain.then(function (n) { return pdLegacyMediaDelete(m.id).then(function () { return n + 1; }); }); }, Promise.resolve(0))
+                    .then(function (n) { return { summary: n + ' image' + (n === 1 ? '' : 's') + ' removed (via the radiology function — deploy the Cloud Functions for full admin deletes)', removed: { media: n }, blockedBills: [] }; });
+            }).then(function (r) {
                 showToast('🗑️ ' + (r && r.summary ? r.summary.charAt(0).toUpperCase() + r.summary.slice(1) : 'Deleted') + ' — every dashboard sees this now', 'success');
                 if (r && r.blockedBills && r.blockedBills.length) { setTimeout(function () { if (confirm('Bill ' + r.blockedBills[0].number + ' ' + r.blockedBills[0].reason + '\n\nDelete it anyway?')) { pdImagingCall({ orderId: String(orderId), scope: 'bill', force: true }).then(function () { showToast('🗑️ Bill deleted', 'success'); }).catch(function (e) { showToast('❌ ' + e.message, 'error'); }); } }, 300); }
                 try { window.dispatchEvent(new CustomEvent('ordersUpdated')); window.dispatchEvent(new CustomEvent('billsUpdated')); } catch (e) {}
@@ -2453,9 +2480,16 @@
             var m = (pdImaging.media[orderId] || []).filter(function (x) { return String(x.id) === String(mediaId); })[0]; if (!m) return;
             if (!confirm('Delete the image "' + (m.fileName || m.id) + '" from the Common Server? The drawings made on it go with it.')) return;
             showToast('⏳ Deleting image…', 'info');
-            pdImagingCall({ orderId: String(orderId), scope: 'images', mediaId: String(mediaId) }).then(function (r) {
-                showToast('🗑️ Image deleted from the Common Server' + (r && r.removed && r.removed.annotations ? ' (+' + r.removed.annotations + ' drawing set' + (r.removed.annotations === 1 ? '' : 's') + ')' : ''), 'success');
-            }).catch(function (e) { showToast('❌ ' + ((e && e.message) || e), 'error'); });
+            pdImagingCall({ orderId: String(orderId), scope: 'images', mediaId: String(mediaId) }).catch(function (e) {
+                if (e.code !== 'not-deployed') throw e;
+                return pdLegacyMediaDelete(mediaId);
+            }).then(function (r) {
+                showToast('🗑️ Image deleted from the Common Server' + (r && r.removed && r.removed.annotations ? ' (+' + r.removed.annotations + ' drawing set' + (r.removed.annotations === 1 ? '' : 's') + ')' : '') + (r && r.legacy ? ' — via the radiology function; deploy the Cloud Functions for full admin deletes' : ''), 'success');
+            }).catch(function (e) {
+                var msg = (e && e.message) || String(e);
+                if (/already reported/i.test(msg)) msg += ' (delete the RESULT first, or deploy the Cloud Functions so the admin can delete reported studies)';
+                showToast('❌ ' + msg, 'error');
+            });
         }
         // keep the old names alive for any caller, pointing at the live view
         function adminAddImagingRequest() { showToast('Imaging requests are created by a doctor in Imaging Request (they carry the bill and reach radiology).', 'info'); }

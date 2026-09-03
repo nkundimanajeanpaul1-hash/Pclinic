@@ -50,6 +50,18 @@ DEPLOY (all three are needed)
   Then hard-refresh (Ctrl+Shift+R) the admin dashboard.
   Console alternative for the rules: Firestore ▸ Rules ▸ paste firestore.rules ▸ Publish.
 
+WHY YOU SAW "❌ internal" (3 Sep)
+--------------------------------
+The page was the new one (GitHub Pages) but the Cloud Function adminImagingDelete
+was NOT on the server (the functions were never redeployed — the URL answers 404),
+and the Firebase SDK reports a missing function as the bare word "internal".
+Until the functions are deployed:
+  • deleting ONE image / ALL images still works — the page now falls back to the
+    radiology function that is already on the server (refused for reported studies);
+  • deleting a RESULT, a BILL or a WHOLE REQUEST shows a clear message and a yellow
+    banner in the tab: run  firebase deploy --only functions  once.
+After the deploy everything goes through adminImagingDelete automatically.
+
 IF SOMETHING LOOKS WRONG
 ------------------------
   "Could not read the Common Server: … index …" → open the link Firestore prints in
