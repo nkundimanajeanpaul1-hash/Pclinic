@@ -3,7 +3,7 @@ rules_version = '2';
 // PClinic — Firebase Storage, radiology study media.
 //
 // Only two things live in this bucket: images and short web videos attached to a
-// radiology order, under  radiology/{orderId}/{mediaId}.{ext} .
+// radiology order, under radiology/{orderId}/{fileName}.
 //
 // Read access is intentionally NOT granted here. Browsers never read the bucket
 // directly; the radiologyMediaSign Cloud Function returns a short-lived signed
@@ -33,32 +33,17 @@ service firebase.storage {
           || request.resource.contentType.matches('application/dicom');
     }
 
-    // The object name must be exactly radiology/{orderId}/{mediaId}.{ext} with a
-    // safe extension, so an uploader cannot drop a file somewhere else in the
-    // bucket or overwrite another study's object. orderId/mediaId/ext are the
-    // match block's own captured variables — radiology/{orderId}/{mediaId}.{ext}
-    // is 3 slash-separated segments (mediaId and ext share one segment, split on
-    // the dot by the match pattern itself), so re-deriving this from
-    // request.path and indexing a 4th segment never matches and previously
-    // caused every upload to be denied.
-    function pathIsSane(orderId, mediaId, ext) {
+    function pathIsSane(orderId, fileName) {
       return orderId.matches('^[A-Za-z0-9._-]{1,120}$')
-        && mediaId.matches('^[A-Za-z0-9._-]{1,160}$')
-        && ext in ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'webm', 'dcm'];
+        && fileName.matches('^[A-Za-z0-9._-]{1,160}\\.(jpg|jpeg|png|webp|gif|mp4|webm|dcm)$');
     }
 
-    match /radiology/{orderId}/{mediaId}.{ext} {
-      allow write: if isSignedInStaff() && withinSizeLimit() && allowedContentType() && pathIsSane(orderId, mediaId, ext);
-      // Deleting is allowed only for the object the same staff member uploaded,
-      // and only as an undo: signed reports are immutable, media records are not
-      // deleted by the browser (see firestore.rules), so a stray file can be
-      // reaped without stranding a record. In practice the callable owns cleanup.
+    match /radiology/{orderId}/{fileName} {
+      allow write: if isSignedInStaff() && withinSizeLimit() && allowedContentType() && pathIsSane(orderId, fileName);
       allow delete: if isSignedInStaff();
       allow get, list: if false;
     }
 
-    // Everything else in the bucket is invisible and unwritable, including the
-    // patient-photo paths the containment release disabled.
     match /{allPaths=**} {
       allow read, write: if false;
     }
