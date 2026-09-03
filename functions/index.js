@@ -25,6 +25,7 @@ const {
   materializeLegacyOrder,
 } = require('./lab-domain.cjs');
 const { viewUrlFor } = require('./radiology-media.cjs');
+const { deleteImagingStudy } = require('./admin-imaging.cjs');
 
 initializeApp();
 setGlobalOptions({ region: 'africa-south1', maxInstances: 20 });
@@ -962,3 +963,32 @@ exports.radiologyMediaDelete = onCall(async (request) => {
     return { mediaId, orderId: row.orderId || null, removed: true };
   });
 });
+
+/**
+ * adminImagingDelete — admin-only removal of an imaging request and/or what hangs
+ * off it (images in Storage + radiologyMedia, report/addenda/alert, workstation
+ * annotations, the linked bill). Browser rules deny every one of those deletes on
+ * purpose; this is the single audited path.
+ *   data: { orderId, scope: 'all'|'images'|'report'|'bill', force?: boolean }
+ */
+exports.adminImagingDelete = onCall(async (request) => {
+  const staff = await requireStaff(request, ['admin']);
+  if (staff.role !== 'admin') fail('permission-denied', 'Only an administrator may delete imaging records.');
+  let orderId, scope, mediaId;
+  try {
+    orderId = cleanText(request.data && request.data.orderId, 200, true, 'orderId');
+    scope = cleanText(request.data && request.data.scope, 20, false, 'scope') || 'all';
+    mediaId = cleanText(request.data && request.data.mediaId, 200, false, 'mediaId') || null;
+  } catch (error) { fail('invalid-argument', error.message); }
+  const force = request.data && request.data.force === true;
+  try {
+    return await deleteImagingStudy(
+      { db, bucket: getStorage().bucket(), FieldValue, Timestamp, staff, log: (m) => console.warn(m) },
+      { orderId, scope, force, mediaId }
+    );
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    fail(error && error.code && /^[a-z-]+$/.test(error.code) ? error.code : 'internal', (error && error.message) || 'The delete failed.');
+  }
+});
+
