@@ -2,10 +2,12 @@
   "firestore": {
     "rules": "firestore.rules"
   },
-  "storage": {
-    "bucket": "pclinic-20d81.firebasestorage.app",
-    "rules": "storage.rules"
-  },
+  "storage": [
+    {
+      "bucket": "pclinic-20d81.firebasestorage.app",
+      "rules": "storage.rules"
+    }
+  ],
   "hosting": {
     "public": ".",
     "ignore": [
