@@ -9,6 +9,14 @@
     }
   ],
   "hosting": {
+    "cleanUrls": true,
+    "redirects": [
+      {
+        "source": "/",
+        "destination": "/index",
+        "type": 301
+      }
+    ],
     "public": ".",
     "ignore": [
       "firebase.json",
