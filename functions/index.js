@@ -746,6 +746,181 @@ exports.adminPurgeTemplateData = onCall({ cors: true }, async (request) => {
   };
 });
 
+exports.adminDeletePatientsCascade = onCall({ cors: true }, async (request) => {
+  const staff = await requireStaff(request, ['admin']);
+  if (staff.role !== 'admin') fail('permission-denied', 'Only an administrator may delete patient records.');
+
+  const data = request.data || {};
+  const dryRun = data.dryRun !== false;
+  if (!dryRun && String(data.confirm || '') !== 'DELETE_PATIENTS_CASCADE') {
+    fail('invalid-argument', 'Confirmation phrase missing.');
+  }
+
+  const rawIds = Array.isArray(data.patientIds) ? data.patientIds : [];
+  if (!rawIds.length) fail('invalid-argument', 'Provide at least one patient ID.');
+
+  const patientIds = Array.from(new Set(rawIds.map((value) => {
+    try {
+      return normalizePatientId(value);
+    } catch (error) {
+      fail('invalid-argument', error.message);
+    }
+  })));
+
+  function norm(value) {
+    return String(value == null ? '' : value).replace(/^MOD-/i, '').trim();
+  }
+  function fullName(row, fallbackId) {
+    const name = String(row && row.name || '').trim();
+    if (name) return name;
+    const built = [row && row.firstName || '', row && row.lastName || ''].join(' ').trim();
+    return built || ('Patient ' + String(fallbackId || ''));
+  }
+  function addRef(map, ref) {
+    if (ref && ref.path) map.set(ref.path, ref);
+  }
+  async function commitDeletes(refs) {
+    for (let i = 0; i < refs.length; i += 400) {
+      const batch = db.batch();
+      refs.slice(i, i + 400).forEach((ref) => batch.delete(ref));
+      await batch.commit();
+    }
+  }
+
+  const patientSet = new Set(patientIds.map((id) => String(id)));
+  const patientSnapshots = await Promise.all(patientIds.map((id) => db.collection('patients').doc(String(id)).get()));
+  const patientDocs = [];
+  const patientRows = [];
+  const missingPatients = [];
+  patientSnapshots.forEach((snap, index) => {
+    const id = String(patientIds[index]);
+    if (!snap.exists) {
+      missingPatients.push(id);
+      return;
+    }
+    const row = snap.data() || {};
+    patientDocs.push(snap.ref);
+    patientRows.push({ id, name: fullName(row, id), mrn: String(row.mrn || id) });
+  });
+
+  const fileRefs = new Map();
+  for (const id of patientIds) {
+    const filesSnap = await db.collection('patients').doc(String(id)).collection('files').get();
+    filesSnap.forEach((docSnap) => addRef(fileRefs, docSnap.ref));
+  }
+
+  const orderRefs = new Map();
+  const orderIds = new Set();
+  const orderSnaps = await db.collection('orders').get();
+  orderSnaps.forEach((snap) => {
+    const row = snap.data() || {};
+    if (patientSet.has(norm(row.patientId))) {
+      addRef(orderRefs, snap.ref);
+      orderIds.add(String(snap.id));
+      orderIds.add(String(row.id || ''));
+    }
+  });
+
+  const billRefs = new Map();
+  const billSnaps = await db.collection('bills').get();
+  billSnaps.forEach((snap) => {
+    const row = snap.data() || {};
+    if (patientSet.has(norm(row.patientId)) || orderIds.has(String(row.orderId || ''))) {
+      addRef(billRefs, snap.ref);
+    }
+  });
+
+  const messageRefs = new Map();
+  const messageSnaps = await db.collection('messages').get();
+  messageSnaps.forEach((snap) => {
+    const row = snap.data() || {};
+    if (patientSet.has(norm(row.patientId)) || orderIds.has(String(row.orderId || '')) || orderIds.has(String(row.resultId || ''))) {
+      addRef(messageRefs, snap.ref);
+    }
+  });
+
+  const criticalRefs = new Map();
+  const criticalSnaps = await db.collection('criticalAlerts').get();
+  criticalSnaps.forEach((snap) => {
+    const row = snap.data() || {};
+    if (patientSet.has(norm(row.patientId)) || orderIds.has(String(row.orderId || '')) || orderIds.has(String(row.resultId || ''))) {
+      addRef(criticalRefs, snap.ref);
+    }
+  });
+
+  const labCriticalRefs = new Map();
+  const labCriticalSnaps = await db.collection('labCriticalAlerts').get();
+  labCriticalSnaps.forEach((snap) => {
+    const row = snap.data() || {};
+    if (patientSet.has(norm(row.patientId)) || orderIds.has(String(row.orderId || '')) || orderIds.has(String(row.resultId || ''))) {
+      addRef(labCriticalRefs, snap.ref);
+    }
+  });
+
+  const billingDirectoryRefs = new Map();
+  for (const id of patientIds) {
+    const ref = db.collection('billingPatientDirectory').doc(String(id));
+    const snap = await ref.get();
+    if (snap.exists) addRef(billingDirectoryRefs, ref);
+  }
+
+  const preview = {
+    dryRun,
+    patientIds,
+    patientsFound: patientRows,
+    missingPatients,
+    deleteCounts: {
+      patients: patientDocs.length,
+      patientFiles: fileRefs.size,
+      orders: orderRefs.size,
+      bills: billRefs.size,
+      messages: messageRefs.size,
+      criticalAlerts: criticalRefs.size,
+      labCriticalAlerts: labCriticalRefs.size,
+      billingDirectory: billingDirectoryRefs.size,
+    },
+    confirmationPhrase: 'DELETE_PATIENTS_CASCADE'
+  };
+
+  if (dryRun) return preview;
+
+  await commitDeletes(Array.from(messageRefs.values()));
+  await commitDeletes(Array.from(criticalRefs.values()));
+  await commitDeletes(Array.from(labCriticalRefs.values()));
+  await commitDeletes(Array.from(billRefs.values()));
+  await commitDeletes(Array.from(fileRefs.values()));
+  await commitDeletes(Array.from(orderRefs.values()));
+  await commitDeletes(Array.from(billingDirectoryRefs.values()));
+  await commitDeletes(patientDocs);
+
+  await db.collection('auditLog').add({
+    actorUid: staff.uid,
+    actorStaffId: staff.staffId,
+    actorName: staff.name,
+    actorRole: staff.role,
+    action: 'admin.patient.cascade-delete',
+    resourceType: 'patient',
+    resourceId: patientIds.join(','),
+    patientId: null,
+    details: preview,
+    at: Timestamp.now(),
+  });
+
+  return {
+    dryRun: false,
+    patientIds,
+    deletedPatients: patientDocs.length,
+    deletedPatientFiles: fileRefs.size,
+    deletedOrders: orderRefs.size,
+    deletedBills: billRefs.size,
+    deletedMessages: messageRefs.size,
+    deletedCriticalAlerts: criticalRefs.size,
+    deletedLabCriticalAlerts: labCriticalRefs.size,
+    deletedBillingDirectory: billingDirectoryRefs.size,
+    missingPatients,
+  };
+});
+
 exports.radiologyTransition = onCall(async (request) => {
   const staff = await requireStaff(request, ['radio']);
   let orderId;
