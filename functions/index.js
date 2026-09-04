@@ -601,6 +601,151 @@ exports.labAcknowledgeCritical = onCall(async (request) => {
   });
 });
 
+exports.adminPurgeTemplateData = onCall({ cors: true }, async (request) => {
+  const staff = await requireStaff(request, ['admin']);
+  if (staff.role !== 'admin') fail('permission-denied', 'Only an administrator may purge template data.');
+  const data = request.data || {};
+  const dryRun = data.dryRun !== false;
+  if (!dryRun && String(data.confirm || '') !== 'PURGE_TEMPLATE_DATA') {
+    fail('invalid-argument', 'Confirmation phrase missing.');
+  }
+
+  const templateNames = new Set([
+    'john kamau', 'grace wanjiru', 'amina hassan', 'samuel otieno', 'peter omondi',
+    'mary wanjiku', 'david mwangi', 'jane doe', 'john doe', 'peter njoroge',
+    'paul kamau', 'esther wanjiku', 'ann muthua', 'joseph kamau', 'david otieno',
+    'susan njeri', 'jane smith', 'peter m.', 'peter m',
+    'nsanzintwari saratiel', 'kamanzi jean de dieu', 'mukandori lyne',
+    'kagabo pierre', 'uwase marie', 'uwimana jean', 'mukamana ange',
+    'habimana eric', 'nyiraneza diane', 'bizimana alain', 'irakoze claire',
+    'ntakirutimana r.', 'umubyeyi sara'
+  ]);
+  const templateBillIds = new Set([
+    'inv-2026-0089', 'inv-2026-0088', 'inv-2026-0087', 'inv-2026-0086', 'inv-2026-0085',
+    'inv-2025-0014', 'inv-2025-0013', 'inv-2025-0012', 'inv-2025-0011', 'inv-2025-0010',
+    'inv-2025-0009', 'inv-2025-0008', 'inv-2025-0007', 'inv-2025-0006', 'inv-2025-0005'
+  ]);
+
+  function personName(row) {
+    return String(
+      row && (row.name || [row.firstName || '', row.lastName || ''].join(' ').trim()) || ''
+    ).toLowerCase().trim();
+  }
+
+  function isFabricatedLabRequest(entry) {
+    return !!entry && !!entry.testName && !entry.requestedBy && !entry.timestamp;
+  }
+
+  function isFabricatedLabOrder(row) {
+    if (!row) return false;
+    if (row.type !== 'lab' && row.dept !== 'lab') return false;
+    const idOk = /^LAB-\d+-10[12]$/i.test(String(row.id || ''));
+    const byOk = String(row.orderedBy || '') === 'Dr. Mutua (CHUK OPD)';
+    const noteOk = String(row.notes || '').indexOf('Fasting specimen required') === 0;
+    return idOk && byOk && noteOk;
+  }
+
+  const patientSnaps = await db.collection('patients').get();
+  const orderSnaps = await db.collection('orders').get();
+  const billSnaps = await db.collection('bills').get();
+
+  const deletePatientRefs = [];
+  const updatePatients = [];
+  patientSnaps.forEach((snap) => {
+    const data = snap.data() || {};
+    const lowerName = personName(data);
+    if (templateNames.has(lowerName)) {
+      deletePatientRefs.push(snap.ref);
+      return;
+    }
+    const labRequests = Array.isArray(data.labRequests) ? data.labRequests : [];
+    const cleaned = labRequests.filter((entry) => !isFabricatedLabRequest(entry));
+    if (cleaned.length !== labRequests.length) {
+      updatePatients.push({ ref: snap.ref, patientId: snap.id, labRequests: cleaned });
+    }
+  });
+
+  const deleteOrderRefs = [];
+  orderSnaps.forEach((snap) => {
+    const data = snap.data() || {};
+    if (templateNames.has(String(data.patientName || '').toLowerCase().trim()) || isFabricatedLabOrder(data)) {
+      deleteOrderRefs.push(snap.ref);
+    }
+  });
+
+  const deleteBillRefs = [];
+  billSnaps.forEach((snap) => {
+    const data = snap.data() || {};
+    const lowerName = String(data.patientName || '').toLowerCase().trim();
+    const lowerId = String(data.id || data.number || '').toLowerCase().trim();
+    if (templateNames.has(lowerName) || templateBillIds.has(lowerId)) {
+      deleteBillRefs.push(snap.ref);
+    }
+  });
+
+  if (dryRun) {
+    return {
+      dryRun: true,
+      deletedPatients: deletePatientRefs.length,
+      updatedPatients: updatePatients.length,
+      deletedOrders: deleteOrderRefs.length,
+      deletedBills: deleteBillRefs.length,
+      confirmationPhrase: 'PURGE_TEMPLATE_DATA'
+    };
+  }
+
+  async function commitInBatches(refs, action) {
+    for (let i = 0; i < refs.length; i += 400) {
+      const batch = db.batch();
+      refs.slice(i, i + 400).forEach((ref) => batch[action](ref));
+      await batch.commit();
+    }
+  }
+
+  for (let i = 0; i < updatePatients.length; i += 400) {
+    const batch = db.batch();
+    updatePatients.slice(i, i + 400).forEach((row) => {
+      batch.update(row.ref, {
+        labRequests: row.labRequests,
+        updatedAt: Timestamp.now(),
+        updatedBy: staff.name,
+        updatedById: staff.staffId,
+      });
+    });
+    await batch.commit();
+  }
+
+  await commitInBatches(deleteOrderRefs, 'delete');
+  await commitInBatches(deleteBillRefs, 'delete');
+  await commitInBatches(deletePatientRefs, 'delete');
+
+  await db.collection('auditLog').add({
+    actorUid: staff.uid,
+    actorStaffId: staff.staffId,
+    actorName: staff.name,
+    actorRole: staff.role,
+    action: 'admin.template-data.purge',
+    resourceType: 'maintenance',
+    resourceId: 'template-data',
+    patientId: null,
+    details: {
+      deletedPatients: deletePatientRefs.length,
+      updatedPatients: updatePatients.length,
+      deletedOrders: deleteOrderRefs.length,
+      deletedBills: deleteBillRefs.length,
+    },
+    at: Timestamp.now(),
+  });
+
+  return {
+    dryRun: false,
+    deletedPatients: deletePatientRefs.length,
+    updatedPatients: updatePatients.length,
+    deletedOrders: deleteOrderRefs.length,
+    deletedBills: deleteBillRefs.length,
+  };
+});
+
 exports.radiologyTransition = onCall(async (request) => {
   const staff = await requireStaff(request, ['radio']);
   let orderId;
