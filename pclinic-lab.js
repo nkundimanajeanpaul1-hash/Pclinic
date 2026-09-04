@@ -317,6 +317,20 @@
         return list || [];
     }
 
+    function hasCommonServerPatientRecord(patientId) {
+        var idStr = stripMod(patientId).toLowerCase();
+        if (!idStr) return false;
+        var list = allPatients();
+        for (var i = 0; i < list.length; i++) {
+            if (stripMod(list[i].id).toLowerCase() === idStr ||
+                String(list[i].mrn || '').toLowerCase() === idStr ||
+                String(list[i].nationalId || '').toLowerCase() === idStr) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function fallbackPatientFromLabOrders(pid) {
         var idStr = stripMod(pid).toLowerCase();
         if (!idStr) return null;

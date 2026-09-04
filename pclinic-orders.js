@@ -496,16 +496,33 @@
         }
     }
 
-    function getOrders(filter) {
-        var all = aggregateCommonServerLabOrders(read(ORDERS_KEY, []));
-        if (!filter) return all;
-        return all.filter(function (o) {
+    function applyOrderFilter(list, filter) {
+        if (!filter) return list;
+        return list.filter(function (o) {
             if (filter.dept    && o.dept    !== filter.dept)    return false;
             if (filter.type    && o.type    !== filter.type)    return false;
             if (filter.status  && o.status  !== filter.status)  return false;
             if (filter.patientId != null && String(o.patientId) !== String(filter.patientId)) return false;
             return true;
         });
+    }
+
+    function isServerConfirmedOrder(order) {
+        if (!order || !order.id) return false;
+        if (order._legacyLocalOnly) return false;
+        if (order._syncFailed) return false;
+        if (isPending(order.id)) return false;
+        return true;
+    }
+
+    function getServerConfirmedOrders(filter) {
+        var all = read(ORDERS_KEY, []).filter(isServerConfirmedOrder);
+        return applyOrderFilter(all, filter);
+    }
+
+    function getOrders(filter) {
+        var all = aggregateCommonServerLabOrders(read(ORDERS_KEY, []));
+        return applyOrderFilter(all, filter);
     }
 
     /* createOrder({ patientId, patientName, type, items:[{code,name,price,qty}],
@@ -1746,7 +1763,7 @@
     window.pcOrders = {
         create: createOrder, createAsync: createOrderAsync,
         update: updateOrder, updateAsync: updateOrderAsync, applyServerPatch: applyServerOrderPatch,
-        cancel: cancelOrder, complete: completeOrder, list: getOrders, pending: pendingCount, DEPT_OF: DEPT_OF,
+        cancel: cancelOrder, complete: completeOrder, list: getOrders, listServerConfirmed: getServerConfirmedOrders, pending: pendingCount, DEPT_OF: DEPT_OF,
         purge: purgeTemplateLabOrdersFromStorage, aggregate: aggregateCommonServerLabOrders,
         purgeAllTemplateData: purgeAllTemplateData,
         ensureTariffSeeded: ensureTariffSeeded, SEED_LAB_EXAMS: SEED_LAB_EXAMS,
