@@ -1850,9 +1850,9 @@
         var mrnEl  = document.getElementById('spec_pat_mrn');
         var barBox = document.getElementById('spec_barcode_box');
 
-        var accText = accEl ? accEl.textContent : 'ACC: LAB-MOD-001-2026';
+        var accText = accEl ? accEl.textContent : 'ACC: Pending accession';
         var nameText = nameEl ? nameEl.textContent : 'Patient Name';
-        var mrnText  = mrnEl ? mrnEl.textContent : 'MRN MOD-001';
+        var mrnText  = mrnEl ? mrnEl.textContent : 'MRN —';
         var barSvg   = barBox ? barBox.innerHTML : '';
 
         var printWin = window.open('', '_blank', 'width=450,height=300');
@@ -2094,11 +2094,11 @@
         var barBox = document.getElementById('qc_barcode_box');
 
         var map = {
-            sysmex: ['Sysmex XN-550 Haematology Analyser • SN-882190', 'QC-SYS-2026'],
-            cobas:  ['Cobas C311 Chemistry & Immuno-Analyser • SN-401128', 'QC-COB-2026'],
-            vitek:  ['VITEK 2 Microbiology ID/AST System • SN-991044', 'QC-VIT-2026'],
-            acltop: ['ACL TOP 300 Coagulation Analyser • SN-110942', 'QC-ACL-2026'],
-            all:    ['All Multidisciplinary Instruments (System QC Register)', 'QC-ALL-2026']
+            sysmex: ['Sysmex XN-550 Haematology Analyser • SN-882190', 'QC-SYSMEX-LIVE'],
+            cobas:  ['Cobas C311 Chemistry & Immuno-Analyser • SN-401128', 'QC-COBAS-LIVE'],
+            vitek:  ['VITEK 2 Microbiology ID/AST System • SN-991044', 'QC-VITEK-LIVE'],
+            acltop: ['ACL TOP 300 Coagulation Analyser • SN-110942', 'QC-ACLTOP-LIVE'],
+            all:    ['All Multidisciplinary Instruments (System QC Register)', 'QC-ALL-LIVE']
         };
 
         var info = map[activeQcType] || map.sysmex;
@@ -2188,11 +2188,13 @@
         printWin.document.write('th { background: #f5f5f7; }');
         printWin.document.write('<\\/style>');
         printWin.document.write('<\\/head><body>');
+        var qcId = (document.getElementById('qc_acc_id') && document.getElementById('qc_acc_id').textContent) || ('QC-' + String(activeQcType || 'sysmex').toUpperCase() + '-LIVE');
+        var qcName = (document.getElementById('qc_banner_name') && document.getElementById('qc_banner_name').textContent) || 'Laboratory Analyzer';
         printWin.document.write('<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0071e3;padding-bottom:16px;">');
         printWin.document.write('<div><h2 style="color:#0071e3;font-size:20px;font-weight:800;">PCLINIC • MEDICAL OFFICIAL DOCUMENT</h2><div style="font-size:12px;font-weight:700;">DAILY LABORATORY QUALITY CONTROL CERTIFICATE</div></div>');
-        printWin.document.write('<div>' + generateSVGBarcode('QC-SYS-2026') + '</div>');
+        printWin.document.write('<div>' + generateSVGBarcode(qcId) + '</div>');
         printWin.document.write('</div>');
-        printWin.document.write('<div style="margin:18px 0;font-size:13px;"><strong>Instrument:</strong> Sysmex XN-550 / Cobas C311 &nbsp; • &nbsp; <strong>Date:</strong> ' + new Date().toLocaleDateString('en-GB') + ' &nbsp; • &nbsp; <strong>Status:</strong> WESTGARD IN CONTROL (2SD LIMITS)</div>');
+        printWin.document.write('<div style="margin:18px 0;font-size:13px;"><strong>Instrument:</strong> ' + esc(qcName) + ' &nbsp; • &nbsp; <strong>Date:</strong> ' + new Date().toLocaleDateString('en-GB') + ' &nbsp; • &nbsp; <strong>Status:</strong> WESTGARD IN CONTROL (2SD LIMITS)</div>');
         printWin.document.write('<table><thead><tr><th>Control Parameter</th><th>Target Range</th><th>Lot Number</th><th>Value</th><th>Westgard Status</th></tr></thead>');
         printWin.document.write('<tbody>');
         printWin.document.write('<tr><td>Haemoglobin — Control L1 Normal</td><td>11.5–12.5 g/dL</td><td>Lot: HC-2026-04A</td><td>11.9</td><td>✓ IN CONTROL • 1SD</td></tr>');
@@ -2459,11 +2461,12 @@
         var dateColl = document.getElementById('mic_date_coll');
         var dateRep  = document.getElementById('mic_date_rep');
 
-        var orgVal = orgIn ? orgIn.value : 'E.coli';
-        var colVal = colIn ? colIn.value : '100 Cfu/ml.';
-        var sampleVal = sampleIn ? sampleIn.value : 'Blood';
-        var noteVal   = noteIn ? noteIn.value : 'Sterile after 48 Hours. Incubation at 37°C.';
-        var collVal   = (dateColl && dateColl.value) ? dateColl.value.split('-').reverse().join('/') : '03/12/2024';
+        var barBox = document.getElementById('mic_barcode_box');
+        var orgVal = orgIn ? orgIn.value : '';
+        var colVal = colIn ? colIn.value : '';
+        var sampleVal = sampleIn ? sampleIn.value : '';
+        var noteVal   = noteIn ? noteIn.value : '';
+        var collVal   = (dateColl && dateColl.value) ? dateColl.value.split('-').reverse().join('/') : new Date().toLocaleDateString('en-GB');
         var repVal    = (dateRep && dateRep.value) ? dateRep.value.split('-').reverse().join('/') : new Date().toLocaleDateString('en-GB');
 
         var tbody = document.getElementById('pcLabMicroTable');
@@ -2505,7 +2508,7 @@
         printWin.document.write('<div>');
         printWin.document.write('<div><strong>Date of Sample Collection:</strong> ' + esc(collVal) + '</div>');
         printWin.document.write('<div><strong>Date of Reporting:</strong> ' + esc(repVal) + '</div>');
-        printWin.document.write('<div style="margin-top:6px;">' + generateSVGBarcode('LAB-MOD-001-2026') + '</div>');
+        printWin.document.write('<div style="margin-top:6px;">' + ((barBox && barBox.innerHTML) ? barBox.innerHTML : generateSVGBarcode('LAB-MICRO-LIVE')) + '</div>');
         printWin.document.write('</div>');
         printWin.document.write('<div>');
         printWin.document.write('<div><strong>Sample Type:</strong> ' + esc(sampleVal) + '</div>');

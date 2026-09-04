@@ -763,13 +763,28 @@
         }
     ];
 
+    function isPlaceholderExam(exam) {
+        if (!exam) return true;
+        var name = String(exam.name || '').toLowerCase();
+        if (!name) return true;
+        if (name.indexOf('name to verify') !== -1) return true;
+        var params = Array.isArray(exam.parameters) ? exam.parameters : [];
+        return params.some(function (parameter) {
+            return String((parameter && parameter.name) || '').toLowerCase().indexOf('name to verify') !== -1;
+        });
+    }
+
+    var PUBLIC_LAB_CATALOG = LAB_CATALOG.filter(function (exam) {
+        return !isPlaceholderExam(exam);
+    });
+
     /* ── public API ── */
-    function list() { return LAB_CATALOG.slice(); }
+    function list() { return PUBLIC_LAB_CATALOG.slice(); }
 
     function byCode(code) {
         var wanted = String(code || '').toUpperCase();
-        for (var i = 0; i < LAB_CATALOG.length; i++) {
-            if (String(LAB_CATALOG[i].code || '').toUpperCase() === wanted) return LAB_CATALOG[i];
+        for (var i = 0; i < PUBLIC_LAB_CATALOG.length; i++) {
+            if (String(PUBLIC_LAB_CATALOG[i].code || '').toUpperCase() === wanted) return PUBLIC_LAB_CATALOG[i];
         }
         return null;
     }
@@ -777,21 +792,21 @@
     function findByName(name) {
         var wanted = String(name || '').toLowerCase().trim();
         if (!wanted) return null;
-        for (var i = 0; i < LAB_CATALOG.length; i++) {
-            var n = String(LAB_CATALOG[i].name || '').toLowerCase();
-            if (n === wanted) return LAB_CATALOG[i];
+        for (var i = 0; i < PUBLIC_LAB_CATALOG.length; i++) {
+            var n = String(PUBLIC_LAB_CATALOG[i].name || '').toLowerCase();
+            if (n === wanted) return PUBLIC_LAB_CATALOG[i];
         }
-        for (var j = 0; j < LAB_CATALOG.length; j++) {
-            var n2 = String(LAB_CATALOG[j].name || '').toLowerCase();
-            if (n2 && (n2.indexOf(wanted) !== -1 || wanted.indexOf(n2) !== -1)) return LAB_CATALOG[j];
+        for (var j = 0; j < PUBLIC_LAB_CATALOG.length; j++) {
+            var n2 = String(PUBLIC_LAB_CATALOG[j].name || '').toLowerCase();
+            if (n2 && (n2.indexOf(wanted) !== -1 || wanted.indexOf(n2) !== -1)) return PUBLIC_LAB_CATALOG[j];
         }
         return null;
     }
 
     function parameterByCode(code) {
         var wanted = String(code || '').toUpperCase();
-        for (var i = 0; i < LAB_CATALOG.length; i++) {
-            var params = LAB_CATALOG[i].parameters || [];
+        for (var i = 0; i < PUBLIC_LAB_CATALOG.length; i++) {
+            var params = PUBLIC_LAB_CATALOG[i].parameters || [];
             for (var j = 0; j < params.length; j++) {
                 if (String(params[j].code || '').toUpperCase() === wanted) return params[j];
             }
@@ -811,7 +826,7 @@
         return Number(exam && exam.price) > 0 ? Number(exam.price) : PLACEHOLDER_PRICE;
     }
 
-    function count() { return LAB_CATALOG.length; }
+    function count() { return PUBLIC_LAB_CATALOG.length; }
 
     window.pcLabCatalog = {
         list: list,

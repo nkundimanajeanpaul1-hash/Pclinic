@@ -226,6 +226,27 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── LAB QUALITY CONTROL LOGS ─────────────────────────────────
+    // One document per analyzer per day, written by lab staff so QC moves
+    // out of localStorage and becomes server-authoritative across devices.
+    match /labQcLogs/{logId} {
+      allow read: if hasRole(['lab']);
+      allow create, update: if hasRole(['lab'])
+        && request.resource.data.get('analyzer', '') is string
+        && request.resource.data.get('date', '') is string;
+      allow delete: if isAdmin();
+    }
+
+    // ── BLOOD BANK INVENTORY ──────────────────────────────────────
+    // Live unit counts are managed by laboratory / blood-bank staff.
+    match /bloodBankInventory/{entryId} {
+      allow read: if hasRole(['lab']);
+      allow create, update: if hasRole(['lab'])
+        && request.resource.data.get('product', '') is string
+        && request.resource.data.get('group', '') is string;
+      allow delete: if isAdmin();
+    }
+
     // ── RADIOLOGY REPORTING ───────────────────────────────────────
     // Reports, addenda and critical alerts are written only by trusted
     // callable functions using the Admin SDK. Browser clients are read-only.

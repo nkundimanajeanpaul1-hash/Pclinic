@@ -20,6 +20,238 @@
       {
         "source": "/index",
         "destination": "/index.html"
+      },
+      {
+        "source": "/CHUK-TOP-BAR-CODE",
+        "destination": "/CHUK-TOP-BAR-CODE.html"
+      },
+      {
+        "source": "/Complete-Patient-Bar-Preview",
+        "destination": "/Complete-Patient-Bar-Preview.html"
+      },
+      {
+        "source": "/Finance-dashboard",
+        "destination": "/Finance-dashboard.html"
+      },
+      {
+        "source": "/admin-dashboard",
+        "destination": "/admin-dashboard.html"
+      },
+      {
+        "source": "/admission-form",
+        "destination": "/admission-form.html"
+      },
+      {
+        "source": "/appointment-file",
+        "destination": "/appointment-file.html"
+      },
+      {
+        "source": "/appointments",
+        "destination": "/appointments.html"
+      },
+      {
+        "source": "/beds-dashboard",
+        "destination": "/beds-dashboard.html"
+      },
+      {
+        "source": "/beds-setup",
+        "destination": "/beds-setup.html"
+      },
+      {
+        "source": "/billing",
+        "destination": "/billing.html"
+      },
+      {
+        "source": "/cashier-dashboard",
+        "destination": "/cashier-dashboard.html"
+      },
+      {
+        "source": "/clinical-note",
+        "destination": "/clinical-note.html"
+      },
+      {
+        "source": "/deaths-registry",
+        "destination": "/deaths-registry.html"
+      },
+      {
+        "source": "/discharge-summary",
+        "destination": "/discharge-summary.html"
+      },
+      {
+        "source": "/doctor-dashboard",
+        "destination": "/doctor-dashboard.html"
+      },
+      {
+        "source": "/ecg-form",
+        "destination": "/ecg-form.html"
+      },
+      {
+        "source": "/global-examinations",
+        "destination": "/global-examinations.html"
+      },
+      {
+        "source": "/hospitalization-certificate",
+        "destination": "/hospitalization-certificate.html"
+      },
+      {
+        "source": "/hr-dashboard",
+        "destination": "/hr-dashboard.html"
+      },
+      {
+        "source": "/hub",
+        "destination": "/hub.html"
+      },
+      {
+        "source": "/icu-surveillance",
+        "destination": "/icu-surveillance.html"
+      },
+      {
+        "source": "/imaging-request",
+        "destination": "/imaging-request.html"
+      },
+      {
+        "source": "/imaging-results",
+        "destination": "/imaging-results.html"
+      },
+      {
+        "source": "/injection-registry",
+        "destination": "/injection-registry.html"
+      },
+      {
+        "source": "/inventory-dashboard",
+        "destination": "/inventory-dashboard.html"
+      },
+      {
+        "source": "/lab-dashboard",
+        "destination": "/lab-dashboard.html"
+      },
+      {
+        "source": "/lab-request",
+        "destination": "/lab-request.html"
+      },
+      {
+        "source": "/lab-results",
+        "destination": "/lab-results.html"
+      },
+      {
+        "source": "/login",
+        "destination": "/login.html"
+      },
+      {
+        "source": "/malnutrition-followup",
+        "destination": "/malnutrition-followup.html"
+      },
+      {
+        "source": "/medical-certificate",
+        "destination": "/medical-certificate.html"
+      },
+      {
+        "source": "/medical-report",
+        "destination": "/medical-report.html"
+      },
+      {
+        "source": "/medical-summary",
+        "destination": "/medical-summary.html"
+      },
+      {
+        "source": "/messages",
+        "destination": "/messages.html"
+      },
+      {
+        "source": "/nurse-dashboard",
+        "destination": "/nurse-dashboard.html"
+      },
+      {
+        "source": "/nursing-note",
+        "destination": "/nursing-note.html"
+      },
+      {
+        "source": "/opd-file",
+        "destination": "/opd-file.html"
+      },
+      {
+        "source": "/opd_file",
+        "destination": "/opd_file.html"
+      },
+      {
+        "source": "/pansement-registry",
+        "destination": "/pansement-registry.html"
+      },
+      {
+        "source": "/pharmacy-dashboard",
+        "destination": "/pharmacy-dashboard.html"
+      },
+      {
+        "source": "/physio-dashboard",
+        "destination": "/physio-dashboard.html"
+      },
+      {
+        "source": "/physio-request",
+        "destination": "/physio-request.html"
+      },
+      {
+        "source": "/prescription",
+        "destination": "/prescription.html"
+      },
+      {
+        "source": "/procedure-note",
+        "destination": "/procedure-note.html"
+      },
+      {
+        "source": "/psychiatric-care",
+        "destination": "/psychiatric-care.html"
+      },
+      {
+        "source": "/queue",
+        "destination": "/queue.html"
+      },
+      {
+        "source": "/radio-dashboard",
+        "destination": "/radio-dashboard.html"
+      },
+      {
+        "source": "/receipt",
+        "destination": "/receipt.html"
+      },
+      {
+        "source": "/reception-dashboard",
+        "destination": "/reception-dashboard.html"
+      },
+      {
+        "source": "/referral",
+        "destination": "/referral.html"
+      },
+      {
+        "source": "/sick-leave",
+        "destination": "/sick-leave.html"
+      },
+      {
+        "source": "/surgical-note",
+        "destination": "/surgical-note.html"
+      },
+      {
+        "source": "/test-topbar",
+        "destination": "/test-topbar.html"
+      },
+      {
+        "source": "/theater-dashboard",
+        "destination": "/theater-dashboard.html"
+      },
+      {
+        "source": "/transfer-form",
+        "destination": "/transfer-form.html"
+      },
+      {
+        "source": "/transfusion-registry",
+        "destination": "/transfusion-registry.html"
+      },
+      {
+        "source": "/triage-form",
+        "destination": "/triage-form.html"
+      },
+      {
+        "source": "/ward-round",
+        "destination": "/ward-round.html"
       }
     ],
     "public": ".",

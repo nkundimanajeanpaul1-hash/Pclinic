@@ -396,7 +396,7 @@
 
             <div class="message" id="message"></div>
 
-            <a href="index.html" class="back-link">← Back to Home</a>
+            <a href="index" class="back-link">← Back to Home</a>
         </div>
     </div>
 
@@ -534,7 +534,7 @@
                             await window.pclinicClearFirebaseCache();
                         }
                     } catch (e) {}
-                    window.location.replace('login.html');
+                    window.location.replace('login');
                     return;
                 }
 
@@ -603,7 +603,7 @@
 
                     showMessage(`✅ Welcome, ${profile.name || staffId}!`, 'success');
                     // Redirect right away — no artificial waiting.
-                    window.location.replace('hub.html');
+                    window.location.replace('hub');
 
                 } catch (err) {
                     console.error('Login error:', err);

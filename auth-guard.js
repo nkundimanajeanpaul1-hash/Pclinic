@@ -46,7 +46,7 @@
         }
         // replace() not href: a signed-out user pressing Back must not be
         // able to re-enter a protected page from the bfcache.
-        window.location.replace('login.html');
+        window.location.replace('login');
     }
 
     // "Hub first": if someone opens a dashboard URL directly but isn't
@@ -57,11 +57,11 @@
             try { sessionStorage.setItem('pclinic_auth_message', reason); } catch (e) {}
         }
         var here = window.location.pathname.split('/').pop();
-        if (here === 'hub.html') {           // never redirect hub to itself
-            window.location.replace('login.html');
+        if (here === 'hub.html' || here === 'hub') {           // never redirect hub to itself
+            window.location.replace('login');
             return;
         }
-        window.location.replace('hub.html');
+        window.location.replace('hub');
     }
 
     // ─── MAIN GUARD ───
@@ -170,7 +170,7 @@
                     await window.pclinicClearFirebaseCache();
                 }
             } catch (e) {}
-            window.location.replace('login.html');
+            window.location.replace('login');
         };
     }
 

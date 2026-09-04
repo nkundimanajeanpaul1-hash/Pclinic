@@ -164,7 +164,7 @@
         const currentPath = window.location.pathname.split('/').pop();
         const pageTitle = pageName || currentPath.replace('.html', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         breadcrumb.innerHTML = `
-            <a href="hub.html">🏥 Hub</a>
+            <a href="hub">🏥 Hub</a>
             <span class="separator">›</span>
             <span class="current">${pageTitle}</span>
         `;
@@ -188,7 +188,7 @@
                 e.preventDefault();
                 if (confirm('Are you sure you want to sign out?')) {
                     localStorage.removeItem('pclinic_remember_user');
-                    window.location.href = 'login.html';
+                    window.location.href = 'login';
                 }
             }
             // Escape → Close shortcuts

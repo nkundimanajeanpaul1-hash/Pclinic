@@ -16,6 +16,7 @@
 <script src="pclinic-worklist.js" defer></script>
 <script src="pclinic-lab-catalog.js" defer></script>
 <script src="pclinic-lab.js" defer></script>
+<script src="pclinic-lab-live.js" defer></script>
 <script src="shared.js" defer></script>
 
 <!-- ─── PATIENT DATA SYSTEM ─── -->          
@@ -1758,41 +1759,41 @@
                 <i class="ti ti-keyboard"></i>
             </button>
 
-            <div class="tb-btn" onclick="showToast('🔔 2 new notifications', 'info')"><i class="ti ti-bell"></i><div class="notif-dot"></div></div>
+            <div class="tb-btn" onclick="showToast('🔔 Notifications are driven by live server events when configured.', 'info')"><i class="ti ti-bell"></i><div class="notif-dot"></div></div>
             <div class="tb-btn" onclick="showToast('⚙️ Settings', 'info')"><i class="ti ti-settings"></i></div>
-            <div class="user-chip" onclick="showToast('👤 MLT Martin Odhiambo', 'info')">
-                <div class="ua">MO</div>
-                <span class="uname">MLT Odhiambo</span>
+            <div class="user-chip" onclick="showToast('👤 Authenticated laboratory user', 'info')">
+                <div class="ua" id="labUserInitials">LU</div>
+                <span class="uname" id="labUserName">Laboratory User</span>
             </div>
             <div class="tb-btn" onclick="showToast('🚪 Logout', 'warning')"><i class="ti ti-logout"></i></div>
         </div>
     </div>
 
     <!-- ─── POLISH: BREADCRUMB ─── -->
-    <div class="breadcrumb" id="breadcrumb" style="display:flex;justify-content:space-between;align-items:center;" style="display: none !important;" style="display: none !important;">
+    <div class="breadcrumb" id="breadcrumb" style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-            <a href="hub.html">🏥 Hub</a>
+            <a href="hub">🏥 Hub</a>
             <span class="separator">›</span>
             <span class="current">Laboratory</span>
         </div>
         <div style="display:flex;gap:8px;font-size:12px;">
-            <a href="doctor-dashboard.html" class="btn-apple" style="text-decoration:none;"><i class="ti ti-user-check"></i> Doctor Dashboard</a>
-            <a href="lab-request.html" class="btn-apple" style="text-decoration:none;"><i class="ti ti-test-pipe"></i> New Lab Request</a>
-            <a href="lab-results.html" class="btn-apple" style="text-decoration:none;"><i class="ti ti-chart-bar"></i> Cumulative Matrix</a>
+            <a href="doctor-dashboard" class="btn-apple" style="text-decoration:none;"><i class="ti ti-user-check"></i> Doctor Dashboard</a>
+            <a href="lab-request" class="btn-apple" style="text-decoration:none;"><i class="ti ti-test-pipe"></i> New Lab Request</a>
+            <a href="lab-results" class="btn-apple" style="text-decoration:none;"><i class="ti ti-chart-bar"></i> Cumulative Matrix</a>
         </div>
     </div>
 
     <!-- ═══ NAV TABS ═══ -->
     <div class="nav-tabs" id="navTabs">
         <button class="nav-tab active" data-tab="overview" onclick="switchTab('overview',this)"><i class="ti ti-layout-dashboard"></i> Overview</button>
-        <button class="nav-tab" data-tab="specimen" onclick="switchTab('specimen',this)"><i class="ti ti-test-pipe"></i> Specimen <span class="ncnt">7</span></button>
-        <button class="nav-tab" data-tab="worklist" onclick="switchTab('worklist',this)"><i class="ti ti-list-check"></i> Worklist <span class="ncnt">18</span></button>
+        <button class="nav-tab" data-tab="specimen" onclick="switchTab('specimen',this)"><i class="ti ti-test-pipe"></i> Specimen <span class="ncnt" id="labSpecimenTabCount">0</span></button>
+        <button class="nav-tab" data-tab="worklist" onclick="switchTab('worklist',this)"><i class="ti ti-list-check"></i> Worklist <span class="ncnt" id="labWorklistTabCount">0</span></button>
         <button class="nav-tab" data-tab="results" onclick="switchTab('results',this)"><i class="ti ti-report-analytics"></i> Results</button>
         <button class="nav-tab" data-tab="pathology" onclick="switchTab('pathology',this)"><i class="ti ti-microscope"></i> Pathology</button>
         <button class="nav-tab" data-tab="microbio" onclick="switchTab('microbio',this)"><i class="ti ti-virus"></i> Microbiology</button>
         <button class="nav-tab" data-tab="bloodbank" onclick="switchTab('bloodbank',this)"><i class="ti ti-droplet"></i> Blood Bank</button>
         <button class="nav-tab" data-tab="qc" onclick="switchTab('qc',this)"><i class="ti ti-chart-line"></i> QC</button>
-        <button class="nav-tab" data-tab="reports" onclick="switchTab('reports',this)"><i class="ti ti-printer"></i> Reports <span class="ncnt">3</span></button>
+        <button class="nav-tab" data-tab="reports" onclick="switchTab('reports',this)"><i class="ti ti-printer"></i> Reports <span class="ncnt" id="labReportsTabCount">0</span></button>
     </div>
 
     <!-- ═══ SUB NAV (dynamic) ═══ -->
@@ -1868,7 +1869,7 @@
                         <div>
                             <div style="font-size:11px;color:#64748b;">Patient Name & MRN</div>
                             <div id="spec_pat_name" style="font-size:15px;font-weight:800;color:#1d1d1f;margin-top:2px;">Awaiting patient selection…</div>
-                            <div id="spec_pat_mrn" style="font-size:12px;font-weight:600;color:#007080;margin-top:2px;">MRN MOD-001 • STAT Order</div>
+                            <div id="spec_pat_mrn" style="font-size:12px;font-weight:600;color:#007080;margin-top:2px;">MRN — • No active order selected</div>
                         </div>
                         <div>
                             <div style="font-size:11px;color:#64748b;">Requesting Clinician & Department</div>
@@ -1877,7 +1878,7 @@
                         <div>
                             <div style="font-size:11px;color:#64748b;">Auto-Generated Accession Barcode</div>
                             <div style="margin-top:6px;" id="spec_barcode_box"></div>
-                            <div id="spec_acc_no" style="font-size:11px;font-weight:700;color:#1d1d1f;margin-top:2px;">ACC: LAB-MOD-001-2026</div>
+                            <div id="spec_acc_no" style="font-size:11px;font-weight:700;color:#1d1d1f;margin-top:2px;">ACC: Pending accession</div>
                         </div>
                     </div>
 
@@ -1907,7 +1908,7 @@
                         </div>
                         <div>
                             <div style="font-size:11px;color:#64748b;">Received By</div>
-                            <div style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-top:2px;">MLT Martin Odhiambo • PClinic MOD</div>
+                            <div id="spec_received_by" style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-top:2px;">Awaiting authenticated laboratory user…</div>
                         </div>
                     </div>
 
@@ -2000,10 +2001,10 @@
                     <div class="path-body">
                         <div id="pathScopeNote" style="margin-bottom:10px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
                         <div class="fg">
-                            <div class="fgl"><div class="lbl">Histology number</div><input class="fi" value="HIST-0629-014" /></div>
+                            <div class="fgl"><div class="lbl">Histology number</div><input class="fi" id="path_case_id" placeholder="Auto-generated when patient is selected" /></div>
                             <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="path_patient_name" placeholder="Selected patient…" readonly /></div>
                             <div class="fgl"><div class="lbl">Specimen type</div>
-                                <select class="fi">
+                                <select class="fi" id="path_specimen_type">
                                     <option>Excision biopsy</option>
                                     <option>Incision biopsy</option>
                                     <option>Core needle biopsy</option>
@@ -2017,23 +2018,23 @@
                                     <option>Placenta</option>
                                 </select>
                             </div>
-                            <div class="fgl"><div class="lbl">Anatomical site</div><input class="fi" placeholder="e.g. Right breast, 2 o'clock, 3 cm from nipple" /></div>
-                            <div class="fgl"><div class="lbl">Clinician and department</div><input class="fi" placeholder="Clinician name" /></div>
-                            <div class="fgl"><div class="lbl">Date specimen taken</div><input class="fi" type="date" value="2026-06-29" /></div>
+                            <div class="fgl"><div class="lbl">Anatomical site</div><input class="fi" id="path_site" placeholder="e.g. Right breast, 2 o'clock, 3 cm from nipple" /></div>
+                            <div class="fgl"><div class="lbl">Clinician and department</div><input class="fi" id="path_clinician" placeholder="Clinician name" /></div>
+                            <div class="fgl"><div class="lbl">Date specimen taken</div><input class="fi" id="path_specimen_date" type="date" /></div>
                         </div>
                     </div>
                 </div>
                 <div class="path-card">
                     <div class="path-head"><i class="ti ti-eye"></i>Macroscopic examination</div>
-                    <div class="path-body"><textarea class="ta" style="min-height:70px;" placeholder="Size, shape, colour, consistency, cut surface, margins, fixation status…"></textarea></div>
+                    <div class="path-body"><textarea class="ta" id="path_macro" style="min-height:70px;" placeholder="Size, shape, colour, consistency, cut surface, margins, fixation status…"></textarea></div>
                 </div>
                 <div class="path-card">
                     <div class="path-head"><i class="ti ti-microscope"></i>Microscopic examination</div>
                     <div class="path-body">
-                        <textarea class="ta" style="min-height:80px;" placeholder="Histological description — architecture, cell morphology, staining characteristics, mitoses, necrosis, invasion…"></textarea>
+                        <textarea class="ta" id="path_micro" style="min-height:80px;" placeholder="Histological description — architecture, cell morphology, staining characteristics, mitoses, necrosis, invasion…"></textarea>
                         <div class="fg" style="margin-top:8px;">
-                            <div class="fgl"><div class="lbl">Special stains</div><input class="fi" placeholder="e.g. H&E, PAS, Ziehl-Neelsen, Gram…" /></div>
-                            <div class="fgl"><div class="lbl">Immunohistochemistry</div><input class="fi" placeholder="e.g. ER +ve, PR −ve, Ki67 40%…" /></div>
+                            <div class="fgl"><div class="lbl">Special stains</div><input class="fi" id="path_stains" placeholder="e.g. H&E, PAS, Ziehl-Neelsen, Gram…" /></div>
+                            <div class="fgl"><div class="lbl">Immunohistochemistry</div><input class="fi" id="path_ihc" placeholder="e.g. ER +ve, PR −ve, Ki67 40%…" /></div>
                         </div>
                     </div>
                 </div>
@@ -2041,17 +2042,17 @@
                     <div class="path-head"><i class="ti ti-report"></i>Diagnosis and comments</div>
                     <div class="path-body">
                         <div class="fg">
-                            <div class="fgl"><div class="lbl">Histological diagnosis</div><input class="fi" placeholder="e.g. Invasive ductal carcinoma, grade II" /></div>
-                            <div class="fgl"><div class="lbl">ICD-O code</div><input class="fi" placeholder="e.g. 8500/3" /></div>
-                            <div class="fgl ff"><div class="lbl">Comment and recommendation</div><textarea class="ta" style="min-height:50px;" placeholder="Clinical correlation, further testing recommended, staging suggestion…"></textarea></div>
-                            <div class="fgl"><div class="lbl">Reporting pathologist</div><input class="fi" placeholder="Dr. …" /></div>
-                            <div class="fgl"><div class="lbl">Date of report</div><input class="fi" type="date" value="2026-06-29" /></div>
+                            <div class="fgl"><div class="lbl">Histological diagnosis</div><input class="fi" id="path_diagnosis" placeholder="e.g. Invasive ductal carcinoma, grade II" /></div>
+                            <div class="fgl"><div class="lbl">ICD-O code</div><input class="fi" id="path_icdo" placeholder="e.g. 8500/3" /></div>
+                            <div class="fgl ff"><div class="lbl">Comment and recommendation</div><textarea class="ta" id="path_comment" style="min-height:50px;" placeholder="Clinical correlation, further testing recommended, staging suggestion…"></textarea></div>
+                            <div class="fgl"><div class="lbl">Reporting pathologist</div><input class="fi" id="path_pathologist" placeholder="Dr. …" /></div>
+                            <div class="fgl"><div class="lbl">Date of report</div><input class="fi" id="path_report_date" type="date" /></div>
                         </div>
                     </div>
                 </div>
                 <div class="fa">
-                    <button class="btn-p" onclick="showToast('📤 Pathology report issued', 'success')">Issue pathology report</button>
-                    <button class="btn-s" onclick="showToast('💾 Draft saved', 'info')">Save draft</button>
+                    <button class="btn-p" onclick="pcLabEngine.issuePathologyReport()">Issue pathology report</button>
+                    <button class="btn-s" onclick="pcLabEngine.savePathologyDraft()">Save draft</button>
                     <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print</button>
                 </div>
             </div>
@@ -2080,7 +2081,7 @@
                         <h2 style="font-size:20px;font-weight:800;color:#1d1d1f;letter-spacing:0.5px;text-transform:uppercase;">MICROBIOLOGY</h2>
                         <div style="font-size:15px;font-weight:800;color:#0071e3;margin-top:3px;">Culture and Sensitivity</div>
                         <div style="margin-top:8px;">
-                            <input type="text" id="mic_incubation_note" value="Sterile after 48 Hours. Incubation at 37°C." style="text-align:center;width:100%;max-width:450px;border:0.5px solid rgba(0,0,0,0.12);border-radius:8px;padding:4px 12px;font-size:12.5px;font-weight:600;color:#3a3a3c;background:#f5f5f7;" />
+                            <input type="text" id="mic_incubation_note" placeholder="e.g. No growth after 48 hours. Incubation at 37°C." style="text-align:center;width:100%;max-width:450px;border:0.5px solid rgba(0,0,0,0.12);border-radius:8px;padding:4px 12px;font-size:12.5px;font-weight:600;color:#3a3a3c;background:#f5f5f7;" />
                         </div>
                     </div>
 
@@ -2089,11 +2090,11 @@
                         <div style="display:flex;flex-direction:column;gap:8px;background:#f8f9fa;padding:16px;border-radius:12px;border:0.5px solid rgba(0,0,0,0.08);">
                             <div style="display:flex;align-items:center;justify-content:space-between;">
                                 <span style="font-weight:600;color:#64748b;">Date of Sample Collection:</span>
-                                <input type="date" id="mic_date_coll" value="2024-12-03" class="fi" style="width:140px;height:30px;font-weight:700;background:#ebeef3;" />
+                                <input type="date" id="mic_date_coll" class="fi" style="width:140px;height:30px;font-weight:700;background:#ebeef3;" />
                             </div>
                             <div style="display:flex;align-items:center;justify-content:space-between;">
                                 <span style="font-weight:600;color:#64748b;">Date of Reporting:</span>
-                                <input type="date" id="mic_date_rep" value="2024-12-06" class="fi" style="width:140px;height:30px;font-weight:700;background:#ebeef3;" />
+                                <input type="date" id="mic_date_rep" class="fi" style="width:140px;height:30px;font-weight:700;background:#ebeef3;" />
                             </div>
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
                                 <span style="font-weight:600;color:#64748b;">Official System Barcode:</span>
@@ -2105,15 +2106,15 @@
                         <div style="display:flex;flex-direction:column;gap:8px;background:#f8f9fa;padding:16px;border-radius:12px;border:0.5px solid rgba(0,0,0,0.08);">
                             <div style="display:flex;align-items:center;justify-content:space-between;">
                                 <span style="font-weight:600;color:#64748b;">Sample Type:</span>
-                                <input type="text" id="mic_sample_type" value="Blood" class="fi" style="width:180px;height:30px;font-weight:700;background:#ebeef3;" />
+                                <input type="text" id="mic_sample_type" placeholder="Sample type" class="fi" style="width:180px;height:30px;font-weight:700;background:#ebeef3;" />
                             </div>
                             <div style="display:flex;align-items:center;justify-content:space-between;">
                                 <span style="font-weight:600;color:#64748b;">Organism Isolated:</span>
-                                <input type="text" id="mic_organism" value="E.coli" class="fi" style="width:180px;height:30px;font-weight:800;color:#0071e3;background:#ebeef3;" />
+                                <input type="text" id="mic_organism" placeholder="Organism or No growth" class="fi" style="width:180px;height:30px;font-weight:800;color:#0071e3;background:#ebeef3;" />
                             </div>
                             <div style="display:flex;align-items:center;justify-content:space-between;">
                                 <span style="font-weight:600;color:#64748b;">Colony Count:</span>
-                                <input type="text" id="mic_colony_count" value="100 Cfu/ml." class="fi" style="width:180px;height:30px;font-weight:700;background:#ebeef3;" />
+                                <input type="text" id="mic_colony_count" placeholder="Colony count" class="fi" style="width:180px;height:30px;font-weight:700;background:#ebeef3;" />
                             </div>
                         </div>
                     </div>
@@ -2123,7 +2124,7 @@
                 <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.04);overflow:hidden;margin-bottom:18px;">
                     <div style="padding:14px 20px;background:#eaf2ff;border-bottom:1.5px solid #0071e3;display:flex;justify-content:space-between;align-items:center;">
                         <span style="font-size:13.5px;font-weight:800;color:#0071e3;">ANTIBIOTIC SUSCEPTIBILITY PROFILE (100/100 EDITABLE REPERTOIRE)</span>
-                        <span style="font-size:11.5px;font-weight:700;color:#3a3a3c;">MLT Martin Odhiambo • MOD Clinical Authority</span>
+                        <span id="mic_verified_by" style="font-size:11.5px;font-weight:700;color:#3a3a3c;">Awaiting authenticated laboratory user…</span>
                     </div>
                     <table class="wtbl" style="width:100%;border-collapse:collapse;font-size:13px;">
                         <thead>
@@ -2174,50 +2175,44 @@
                     <div id="bbScopeNote" style="margin-bottom:10px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
                     <div class="fg">
                         <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="bb_xm_patient" placeholder="Selected patient…" readonly /></div>
-                        <div class="fgl"><div class="lbl">Request date and time</div><input class="fi" type="datetime-local" value="2026-06-29T09:00" /></div>
-                        <div class="fgl"><div class="lbl">Patient blood group</div><select class="fi"><option>O+</option><option>O−</option><option>A+</option><option>A−</option><option>B+</option><option>B−</option><option>AB+</option><option>AB−</option><option>Unknown — test first</option></select></div>
-                        <div class="fgl"><div class="lbl">Units requested</div><input class="fi" type="number" value="2" min="1" /></div>
-                        <div class="fgl"><div class="lbl">Product type</div><select class="fi"><option>Whole blood</option><option>Packed red cells (PRC)</option><option>Fresh frozen plasma (FFP)</option><option>Platelets concentrate</option><option>Cryoprecipitate</option></select></div>
-                        <div class="fgl"><div class="lbl">Clinical indication</div><input class="fi" placeholder="e.g. Haemoglobin 7.2 g/dL — surgical patient" /></div>
-                        <div class="fgl"><div class="lbl">Requesting clinician</div><input class="fi" value="" placeholder="Requesting clinician" /></div>
-                        <div class="fgl"><div class="lbl">Required by (time)</div><input class="fi" type="datetime-local" value="2026-06-29T12:00" /></div>
+                        <div class="fgl"><div class="lbl">Request date and time</div><input class="fi" id="bb_request_at" type="datetime-local" /></div>
+                        <div class="fgl"><div class="lbl">Patient blood group</div><select class="fi" id="bb_patient_group"><option>O+</option><option>O−</option><option>A+</option><option>A−</option><option>B+</option><option>B−</option><option>AB+</option><option>AB−</option><option>Unknown — test first</option></select></div>
+                        <div class="fgl"><div class="lbl">Units requested</div><input class="fi" id="bb_units_requested" type="number" min="1" /></div>
+                        <div class="fgl"><div class="lbl">Product type</div><select class="fi" id="bb_product_type"><option>Whole blood</option><option>Packed red cells (PRC)</option><option>Fresh frozen plasma (FFP)</option><option>Platelets concentrate</option><option>Cryoprecipitate</option></select></div>
+                        <div class="fgl"><div class="lbl">Clinical indication</div><input class="fi" id="bb_clinical_indication" placeholder="e.g. Haemoglobin 7.2 g/dL — surgical patient" /></div>
+                        <div class="fgl"><div class="lbl">Requesting clinician</div><input class="fi" id="bb_requesting_clinician" placeholder="Requesting clinician" /></div>
+                        <div class="fgl"><div class="lbl">Required by (time)</div><input class="fi" id="bb_required_by" type="datetime-local" /></div>
                         <div class="section-title"><i class="ti ti-flask"></i>Crossmatch result</div>
-                        <div class="fgl"><div class="lbl">Compatibility test</div><select class="fi"><option>Compatible — issue approved</option><option>Incompatible — hold</option><option>Weak reaction — further testing</option><option>Pending</option></select></div>
-                        <div class="fgl"><div class="lbl">Donor unit numbers</div><input class="fi" placeholder="e.g. BLK-2026-04411, BLK-2026-04412" /></div>
-                        <div class="fgl"><div class="lbl">Performed by (MLT)</div><input class="fi" value="MLT Martin Odhiambo" /></div>
-                        <div class="fgl"><div class="lbl">Date and time issued</div><input class="fi" type="datetime-local" /></div>
-                        <div class="fgl ff"><div class="lbl">Notes</div><textarea class="ta" style="min-height:45px;" placeholder="Special requirements, irradiated blood, CMV negative, phenotype matched…"></textarea></div>
+                        <div class="fgl"><div class="lbl">Compatibility test</div><select class="fi" id="bb_compatibility_test"><option>Compatible — issue approved</option><option>Incompatible — hold</option><option>Weak reaction — further testing</option><option>Pending</option></select></div>
+                        <div class="fgl"><div class="lbl">Donor unit numbers</div><input class="fi" id="bb_donor_units" placeholder="e.g. BLK-2026-04411, BLK-2026-04412" /></div>
+                        <div class="fgl"><div class="lbl">Performed by (MLT)</div><input class="fi" id="bb_performed_by" readonly /></div>
+                        <div class="fgl"><div class="lbl">Date and time issued</div><input class="fi" id="bb_issued_at" type="datetime-local" /></div>
+                        <div class="fgl ff"><div class="lbl">Notes</div><textarea class="ta" id="bb_notes" style="min-height:45px;" placeholder="Special requirements, irradiated blood, CMV negative, phenotype matched…"></textarea></div>
                     </div>
                     <div class="fa">
-                        <button class="btn-p" onclick="showToast('🩸 Blood units issued', 'success')">Issue blood units</button>
-                        <button class="btn-s" onclick="showToast('💾 Request saved', 'info')">Save request</button>
+                        <button class="btn-p" onclick="pcLabEngine.issueBloodUnits()">Issue blood units</button>
+                        <button class="btn-s" onclick="pcLabEngine.saveBloodBankRequest()">Save request</button>
                     </div>
                 </div>
                 <div id="bb-group" class="bb-panel">
                     <div class="fg">
                         <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="bb_grp_patient" placeholder="Selected patient…" readonly /></div>
-                        <div class="fgl"><div class="lbl">Sample accession</div><input class="fi" placeholder="LAB-0629-…" /></div>
+                        <div class="fgl"><div class="lbl">Sample accession</div><input class="fi" id="bb_group_accession" placeholder="LAB-0629-…" /></div>
                         <div class="section-title"><i class="ti ti-dna"></i>ABO grouping</div>
-                        <div class="fgl"><div class="lbl">Anti-A reaction</div><select class="fi"><option>Positive (agglutination)</option><option>Negative</option></select></div>
-                        <div class="fgl"><div class="lbl">Anti-B reaction</div><select class="fi"><option>Positive (agglutination)</option><option>Negative</option></select></div>
-                        <div class="fgl"><div class="lbl">Anti-D reaction</div><select class="fi"><option>Positive (agglutination)</option><option>Negative</option><option>Weak — du testing required</option></select></div>
-                        <div class="fgl"><div class="lbl">Resulting blood group</div><select class="fi"><option>O Rh(D) Positive</option><option>O Rh(D) Negative</option><option>A Rh(D) Positive</option><option>A Rh(D) Negative</option><option>B Rh(D) Positive</option><option>B Rh(D) Negative</option><option>AB Rh(D) Positive</option><option>AB Rh(D) Negative</option></select></div>
-                        <div class="fgl ff"><div class="lbl">Comments</div><textarea class="ta" style="min-height:40px;" placeholder="Discrepancy, repeat testing, unusual findings…"></textarea></div>
+                        <div class="fgl"><div class="lbl">Anti-A reaction</div><select class="fi" id="bb_anti_a"><option>Positive (agglutination)</option><option>Negative</option></select></div>
+                        <div class="fgl"><div class="lbl">Anti-B reaction</div><select class="fi" id="bb_anti_b"><option>Positive (agglutination)</option><option>Negative</option></select></div>
+                        <div class="fgl"><div class="lbl">Anti-D reaction</div><select class="fi" id="bb_anti_d"><option>Positive (agglutination)</option><option>Negative</option><option>Weak — du testing required</option></select></div>
+                        <div class="fgl"><div class="lbl">Resulting blood group</div><select class="fi" id="bb_group_result"><option>O Rh(D) Positive</option><option>O Rh(D) Negative</option><option>A Rh(D) Positive</option><option>A Rh(D) Negative</option><option>B Rh(D) Positive</option><option>B Rh(D) Negative</option><option>AB Rh(D) Positive</option><option>AB Rh(D) Negative</option></select></div>
+                        <div class="fgl ff"><div class="lbl">Comments</div><textarea class="ta" id="bb_group_comments" style="min-height:40px;" placeholder="Discrepancy, repeat testing, unusual findings…"></textarea></div>
                     </div>
-                    <div class="fa"><button class="btn-p" onclick="showToast('✅ Blood group saved', 'success')">Save blood group</button></div>
+                    <div class="fa"><button class="btn-p" onclick="pcLabEngine.saveBloodGrouping()">Save blood group</button></div>
                 </div>
                 <div id="bb-inv" class="bb-panel">
                     <div style="font-size:11px;font-weight:600;color:var(--t4);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Current blood bank inventory</div>
                     <table class="wtbl">
                         <thead><tr><th>Product</th><th>Group</th><th>Units available</th><th>Expiry (nearest)</th><th>Status</th></tr></thead>
-                        <tbody>
-                            <tr><td>Packed red cells</td><td>O+</td><td style="font-weight:600;">8</td><td>02 Jul 2026</td><td><span class="badge b-grn">Adequate</span></td></tr>
-                            <tr><td>Packed red cells</td><td>O−</td><td style="font-weight:600;color:var(--redd);">1</td><td>30 Jun 2026</td><td><span class="badge b-red">Critical — reorder</span></td></tr>
-                            <tr><td>Packed red cells</td><td>A+</td><td style="font-weight:600;">5</td><td>05 Jul 2026</td><td><span class="badge b-grn">Adequate</span></td></tr>
-                            <tr><td>Packed red cells</td><td>B+</td><td style="font-weight:600;color:var(--oranged);">2</td><td>01 Jul 2026</td><td><span class="badge b-org">Low — monitor</span></td></tr>
-                            <tr><td>Fresh frozen plasma</td><td>AB</td><td style="font-weight:600;">12</td><td>12 Jul 2026</td><td><span class="badge b-grn">Adequate</span></td></tr>
-                            <tr><td>Platelet concentrate</td><td>Mixed</td><td style="font-weight:600;color:var(--oranged);">3</td><td>30 Jun 2026</td><td><span class="badge b-org">Low — monitor</span></td></tr>
-                            <tr><td>Cryoprecipitate</td><td>—</td><td style="font-weight:600;">6</td><td>15 Jul 2026</td><td><span class="badge b-grn">Adequate</span></td></tr>
+                        <tbody id="bbInventoryTable">
+                            <tr><td colspan="5" style="text-align:center;padding:24px;color:#8e8e93;">No live blood bank inventory records yet.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -2236,11 +2231,11 @@
                     <div>
                         <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700;">Select Laboratory Analyzer:</div>
                         <div id="qc_analyzer_pills" style="display:flex;flex-wrap:wrap;gap:6px;">
-                            <button type="button" class="qc-pill active" onclick="pcLabEngine.selectQcAnalyzer('sysmex', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid #0071e3;background:#eaf2ff;color:#0071e3;font-weight:700;font-size:11.5px;cursor:pointer;">🔬 Sysmex XN-550</button>
-                            <button type="button" class="qc-pill" onclick="pcLabEngine.selectQcAnalyzer('cobas', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">⚗️ Cobas C311</button>
-                            <button type="button" class="qc-pill" onclick="pcLabEngine.selectQcAnalyzer('vitek', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🧫 VITEK 2</button>
-                            <button type="button" class="qc-pill" onclick="pcLabEngine.selectQcAnalyzer('acltop', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🩸 ACL TOP</button>
-                            <button type="button" class="qc-pill" onclick="pcLabEngine.selectQcAnalyzer('all', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">⚡ ALL INSTRUMENTS</button>
+                            <button type="button" class="qc-pill active" data-qc-analyzer="sysmex" onclick="pcLabEngine.selectQcAnalyzer('sysmex', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid #0071e3;background:#eaf2ff;color:#0071e3;font-weight:700;font-size:11.5px;cursor:pointer;">🔬 Sysmex XN-550</button>
+                            <button type="button" class="qc-pill" data-qc-analyzer="cobas" onclick="pcLabEngine.selectQcAnalyzer('cobas', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">⚗️ Cobas C311</button>
+                            <button type="button" class="qc-pill" data-qc-analyzer="vitek" onclick="pcLabEngine.selectQcAnalyzer('vitek', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🧫 VITEK 2</button>
+                            <button type="button" class="qc-pill" data-qc-analyzer="acltop" onclick="pcLabEngine.selectQcAnalyzer('acltop', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🩸 ACL TOP</button>
+                            <button type="button" class="qc-pill" data-qc-analyzer="all" onclick="pcLabEngine.selectQcAnalyzer('all', this)" style="padding:6px 14px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">⚡ ALL INSTRUMENTS</button>
                         </div>
                     </div>
                 </div>
@@ -2250,7 +2245,7 @@
                     <div>
                         <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;">ACTIVE ANALYZER & SHIFT</div>
                         <div id="qc_banner_name" style="font-size:16px;font-weight:800;color:#1d1d1f;margin-top:2px;">Sysmex XN-550 Haematology Analyser • SN-882190</div>
-                        <div id="qc_banner_shift" style="font-size:12px;font-weight:600;color:#0071e3;margin-top:2px;">Morning Shift (06:00–14:00) • Calibrated Valid 30 Days</div>
+                        <div id="qc_banner_shift" style="font-size:12px;font-weight:600;color:#0071e3;margin-top:2px;">Awaiting today's QC authorization</div>
                     </div>
                     <div style="text-align:center;">
                         <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;">WESTGARD MULTI-RULE COMPLIANCE</div>
@@ -2261,7 +2256,7 @@
                     <div style="text-align:right;">
                         <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;">QC BARCODE CERTIFICATE</div>
                         <div style="margin-top:4px;" id="qc_barcode_box"></div>
-                        <div id="qc_acc_id" style="font-size:11px;font-weight:700;color:#1d1d1f;margin-top:2px;">QC-SYS-2026</div>
+                        <div id="qc_acc_id" style="font-size:11px;font-weight:700;color:#1d1d1f;margin-top:2px;">QC-SYSMEX-LIVE</div>
                     </div>
                 </div>
 
@@ -2269,7 +2264,7 @@
                 <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.04);overflow:hidden;margin-bottom:20px;">
                     <div style="padding:14px 20px;background:#eaf2ff;border-bottom:1.5px solid #0071e3;display:flex;justify-content:space-between;align-items:center;">
                         <span style="font-size:13.5px;font-weight:800;color:#0071e3;">DAILY QUALITY CONTROL PARAMETER REGISTER (EDITABLE TECHNOLOGIST ENTRY)</span>
-                        <span style="font-size:11.5px;font-weight:700;color:#3a3a3c;">MLT Martin Odhiambo • PClinic MOD Authority</span>
+                        <span id="qc_verified_by" style="font-size:11.5px;font-weight:700;color:#3a3a3c;">Awaiting authenticated laboratory user…</span>
                     </div>
                     <table class="wtbl" style="width:100%;border-collapse:collapse;font-size:13px;">
                         <thead>
@@ -2307,7 +2302,7 @@
                 <div class="panel-header">
                     <span class="panel-title">Laboratory reports — release and print</span>
                     <div class="panel-actions">
-                        <span style="font-size:11px;background:var(--redb);color:var(--redd);padding:2px 8px;border-radius:10px;font-weight:600;">0 awaiting release</span>
+                        <span id="repAwaitingReleaseBadge" style="font-size:11px;background:var(--redb);color:var(--redd);padding:2px 8px;border-radius:10px;font-weight:600;">0 awaiting release</span>
                     </div>
                 </div>
                 <div id="repScopeNote" style="margin-bottom:12px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
@@ -2316,31 +2311,31 @@
                         <div class="sc-ic" style="background:var(--acb)"><i class="ti ti-test-pipe" style="color:var(--ac)"></i></div>
                         <div class="sc-lbl">Specimens today</div>
                         <div class="sc-val" id="sc-specimens-today">0</div>
-                        <div class="sc-sub">+8 since 6 AM</div>
+                        <div class="sc-sub" id="sc-specimens-sub">Live queue summary</div>
                     </div>
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--orangeb)"><i class="ti ti-hourglass" style="color:var(--orange)"></i></div>
                         <div class="sc-lbl">Pending results</div>
                         <div class="sc-val" id="sc-pending-val">0</div>
-                        <div class="sc-sub">Oldest: 3 hrs</div>
+                        <div class="sc-sub" id="sc-pending-sub">Waiting for live order data</div>
                     </div>
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--greenb)"><i class="ti ti-circle-check" style="color:var(--green)"></i></div>
                         <div class="sc-lbl">Verified today</div>
                         <div class="sc-val" id="sc-verified-val">0</div>
-                        <div class="sc-sub">Avg TAT: 52 min</div>
+                        <div class="sc-sub" id="sc-verified-sub">Waiting for verified-result data</div>
                     </div>
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--redb)"><i class="ti ti-alert-triangle" style="color:var(--red)"></i></div>
                         <div class="sc-lbl">Critical values</div>
                         <div class="sc-val" id="sc-critical-val">0</div>
-                        <div class="sc-sub">Notified to ward</div>
+                        <div class="sc-sub" id="sc-critical-sub">Critical alerts are derived from live orders</div>
                     </div>
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--purpleb)"><i class="ti ti-bolt" style="color:var(--purple)"></i></div>
                         <div class="sc-lbl">STAT requests</div>
                         <div class="sc-val" id="sc-stat-val">0</div>
-                        <div class="sc-sub">All in progress</div>
+                        <div class="sc-sub" id="sc-stat-sub">Live STAT queue summary</div>
                     </div>
                 </div>
 
@@ -2368,7 +2363,7 @@
                         <div>
                             <div style="font-size:11px;color:#64748b;">Patient Name & MRN</div>
                             <div id="rep_pat_name" style="font-size:15px;font-weight:800;color:#1d1d1f;margin-top:2px;">Awaiting patient selection…</div>
-                            <div id="rep_pat_mrn" style="font-size:12px;font-weight:600;color:#007080;margin-top:2px;">MRN MOD-001 • Verified Report</div>
+                            <div id="rep_pat_mrn" style="font-size:12px;font-weight:600;color:#007080;margin-top:2px;">MRN — • No verified report selected</div>
                         </div>
                         <div>
                             <div style="font-size:11px;color:#64748b;">Ordering Clinician & Department</div>
@@ -2377,7 +2372,7 @@
                         <div>
                             <div style="font-size:11px;color:#64748b;">Official System Barcode</div>
                             <div style="margin-top:6px;" id="rep_barcode_box"></div>
-                            <div id="rep_acc_no" style="font-size:11px;font-weight:700;color:#1d1d1f;margin-top:2px;">ACC: LAB-MOD-001-2026</div>
+                            <div id="rep_acc_no" style="font-size:11px;font-weight:700;color:#1d1d1f;margin-top:2px;">ACC: Awaiting verified report</div>
                         </div>
                     </div>
 
@@ -2389,16 +2384,16 @@
                         <div>
                             <div style="font-size:11px;color:#64748b;">Official Report Status</div>
                             <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-                                <span style="background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:12px;padding:5px 12px;border-radius:20px;">✓ OFFICIALLY VERIFIED & RELEASED</span>
+                                <span id="rep_status_badge" style="background:#f5f5f7;color:#3a3a3c;font-weight:800;font-size:12px;padding:5px 12px;border-radius:20px;">Awaiting verified report</span>
                             </div>
                         </div>
                         <div>
                             <div style="font-size:11px;color:#64748b;">Turnaround Time (TAT) Metric</div>
-                            <div style="font-size:13px;font-weight:700;color:#1d1d1f;margin-top:2px;">32 min (Target: ≤ 60 min) • Fasting OK</div>
+                            <div id="rep_tat_text" style="font-size:13px;font-weight:700;color:#1d1d1f;margin-top:2px;">TAT will appear after a verified report is selected.</div>
                         </div>
                         <div>
                             <div style="font-size:11px;color:#64748b;">Verifying Senior MLT</div>
-                            <div style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-top:2px;">MLT Martin Odhiambo • MOD Authority</div>
+                            <div id="rep_verified_by" style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-top:2px;">Awaiting authenticated laboratory user…</div>
                         </div>
                     </div>
 
