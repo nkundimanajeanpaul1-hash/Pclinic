@@ -40,4 +40,4 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: Deploy to Firebase
-        run: firebase deploy --project pclinic-20d81 --only hosting,functions,firestore:rules,storage --non-interactive
+        run: firebase deploy --project pclinic-20d81 --only hosting --non-interactive
