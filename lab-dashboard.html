@@ -2628,7 +2628,9 @@
 
         // ─── MODAL (100% Common Server Powered • SELECTED PATIENT ONLY) ───
         function openModal(type) {
-            var orders = (window.pcLabEngine && typeof getLabOrders === 'function') ? getLabOrders() : (window.pcOrders ? pcOrders.list({dept:'lab'}) : []);
+            var orders = (window.pcLabEngine && typeof pcLabEngine.listVisibleLabOrders === 'function')
+                ? pcLabEngine.listVisibleLabOrders()
+                : ((window.pcLabEngine && typeof getLabOrders === 'function') ? getLabOrders() : (window.pcOrders ? pcOrders.list({dept:'lab'}) : []));
             var title = 'Laboratory Queue';
             var filtered = [];
             var hdrs = ['Acc. no.', 'Patient', 'Test', 'Priority', 'Status'];

@@ -102,6 +102,9 @@
     }
 
     function listLabOrders() {
+        if (window.pcLabEngine && typeof window.pcLabEngine.listVisibleLabOrders === 'function') {
+            return window.pcLabEngine.listVisibleLabOrders() || [];
+        }
         if (!window.pcOrders || typeof window.pcOrders.list !== 'function') return [];
         return window.pcOrders.list({ dept: 'lab' }).filter(function (order) {
             return String(order && order.status || '').toLowerCase() !== 'cancelled';

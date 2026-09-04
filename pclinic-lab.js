@@ -2589,6 +2589,7 @@
         selectLabPatient: selectLabPatient,
         clearLabSelection: clearLabSelection,
         getSelectedLabPatient: getSelectedLabPatient,
+        listVisibleLabOrders: getLabOrders,
         updateSelectionUI: updateSelectionUI,
         openResultModal: openResultModal,
         closeResultModal: closeResultModal,
