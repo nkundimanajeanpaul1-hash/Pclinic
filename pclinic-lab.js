@@ -317,6 +317,30 @@
         return list || [];
     }
 
+    function fallbackPatientFromLabOrders(pid) {
+        var idStr = stripMod(pid).toLowerCase();
+        if (!idStr) return null;
+        var orders = [];
+        try { orders = getLabOrders() || []; } catch (e) {}
+        for (var i = 0; i < orders.length; i++) {
+            var order = orders[i] || {};
+            var orderPid = stripMod(order.patientId).toLowerCase();
+            if (orderPid !== idStr) continue;
+            var displayName = String(order.patientName || order.name || '').trim() || ('Patient ' + stripMod(pid));
+            return {
+                id: stripMod(order.patientId || pid),
+                mrn: stripMod(order.patientId || pid),
+                name: displayName,
+                firstName: displayName.split(/\s+/).slice(0, -1).join(' '),
+                lastName: displayName.split(/\s+/).slice(-1).join(''),
+                sex: order.patientSex || order.sex || '',
+                dateOfBirth: order.patientDob || order.dob || '',
+                __labFallback: true
+            };
+        }
+        return null;
+    }
+
     function findPatientById(pid) {
         var idStr = stripMod(pid).toLowerCase();
         if (!idStr) return null;
@@ -328,7 +352,7 @@
                 return list[i];
             }
         }
-        return null;
+        return fallbackPatientFromLabOrders(pid);
     }
 
     function patientDisplayName(p) {
@@ -365,7 +389,7 @@
     function selectLabPatient(pid) {
         var p = findPatientById(pid);
         if (!p) {
-            if (window.showToast) showToast('❌ Patient not found in Common Server', 'error');
+            if (window.showToast) showToast('❌ Patient record is not available yet. Refresh the page and try again.', 'error');
             return;
         }
         try {
@@ -384,7 +408,9 @@
         try { window.dispatchEvent(new CustomEvent('labSelectionChanged', { detail: p })); } catch(e){}
         updateSelectionUI();
         repaintAll();
-        if (window.showToast) showToast('👤 Selected patient: ' + patientDisplayName(p), 'success');
+        if (window.showToast) {
+            showToast('👤 Selected patient: ' + patientDisplayName(p) + (p.__labFallback ? ' (loaded from live order queue)' : ''), 'success');
+        }
     }
 
     /* ── CLEAR selection → bar empties + buttons lock again ── */
