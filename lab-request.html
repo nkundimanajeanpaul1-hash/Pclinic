@@ -913,6 +913,284 @@
             line-height: 1.45;
         }
 
+        .lab-confirm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10020;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.26);
+            backdrop-filter: blur(18px) saturate(160%);
+            -webkit-backdrop-filter: blur(18px) saturate(160%);
+        }
+
+        .lab-confirm-modal {
+            width: min(680px, 100%);
+            max-height: min(84vh, 860px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.82));
+            border: 0.5px solid rgba(255,255,255,0.55);
+            box-shadow: 0 24px 80px rgba(15, 23, 42, 0.20), 0 8px 30px rgba(15, 23, 42, 0.10);
+            animation: fadeIn 0.22s var(--smooth);
+        }
+
+        .lab-confirm-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 20px 22px 14px;
+            border-bottom: 0.5px solid rgba(0,0,0,0.06);
+            background: rgba(255,255,255,0.42);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .lab-confirm-title-wrap {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .lab-confirm-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,113,227,0.10);
+            color: var(--ac);
+            font-size: 20px;
+            flex-shrink: 0;
+            box-shadow: inset 0 0 0 0.5px rgba(0,113,227,0.12);
+        }
+
+        .lab-confirm-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--tp);
+            line-height: 1.2;
+        }
+
+        .lab-confirm-subtitle {
+            margin-top: 4px;
+            font-size: 12px;
+            color: var(--tm);
+            line-height: 1.45;
+        }
+
+        .lab-confirm-close {
+            width: 34px;
+            height: 34px;
+            border: 0;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.05);
+            color: var(--ts);
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.22s var(--spring);
+            flex-shrink: 0;
+        }
+
+        .lab-confirm-close:hover {
+            transform: scale(1.05);
+            background: rgba(0,0,0,0.08);
+        }
+
+        .lab-confirm-body {
+            padding: 18px 22px 20px;
+            overflow-y: auto;
+        }
+
+        .lab-confirm-patient {
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(0,113,227,0.06);
+            border: 0.5px solid rgba(0,113,227,0.12);
+            margin-bottom: 14px;
+        }
+
+        .lab-confirm-patient .k {
+            display: block;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--tm);
+            margin-bottom: 4px;
+        }
+
+        .lab-confirm-patient .v {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--tp);
+        }
+
+        .lab-confirm-meta {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .lab-confirm-meta-card {
+            padding: 11px 12px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.62);
+            border: 0.5px solid rgba(0,0,0,0.06);
+        }
+
+        .lab-confirm-meta-card .k {
+            display: block;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: var(--tm);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+        }
+
+        .lab-confirm-meta-card .v {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--tp);
+        }
+
+        .lab-confirm-list {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .lab-confirm-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 14px;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.72);
+            border: 0.5px solid rgba(0,0,0,0.06);
+        }
+
+        .lab-confirm-row-main {
+            min-width: 0;
+        }
+
+        .lab-confirm-row-name {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--tp);
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .lab-confirm-row-code {
+            margin-top: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(0,113,227,0.08);
+            color: var(--ac);
+            font-size: 10.5px;
+            font-weight: 700;
+        }
+
+        .lab-confirm-row-price {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--ac);
+            white-space: nowrap;
+        }
+
+        .lab-confirm-footnote {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255,149,0,0.08);
+            border: 0.5px solid rgba(255,149,0,0.14);
+            font-size: 11.5px;
+            color: var(--oranged);
+            line-height: 1.5;
+        }
+
+        .lab-confirm-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 16px 22px 20px;
+            border-top: 0.5px solid rgba(0,0,0,0.06);
+            background: rgba(255,255,255,0.42);
+        }
+
+        .lab-confirm-btn {
+            min-width: 132px;
+            height: 42px;
+            padding: 0 18px;
+            border-radius: 14px;
+            border: 0;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 700;
+            transition: all 0.22s var(--spring);
+        }
+
+        .lab-confirm-btn.secondary {
+            background: rgba(0,0,0,0.05);
+            color: var(--ts);
+            border: 0.5px solid rgba(0,0,0,0.08);
+        }
+
+        .lab-confirm-btn.primary {
+            background: linear-gradient(180deg, #1382f6, #0071e3);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(0,113,227,0.25);
+        }
+
+        .lab-confirm-btn:hover,
+        .lab-confirm-btn:focus-visible,
+        .lab-confirm-close:focus-visible {
+            outline: none;
+            transform: scale(1.03);
+        }
+
+        .lab-confirm-btn.primary:hover {
+            box-shadow: 0 10px 26px rgba(0,113,227,0.32);
+        }
+
+        @media (max-width: 640px) {
+            .lab-confirm-modal {
+                width: 100%;
+                border-radius: 20px;
+            }
+            .lab-confirm-meta {
+                grid-template-columns: 1fr;
+            }
+            .lab-confirm-row {
+                grid-template-columns: 1fr;
+                align-items: flex-start;
+            }
+            .lab-confirm-row-price {
+                white-space: normal;
+            }
+            .lab-confirm-actions {
+                justify-content: stretch;
+            }
+            .lab-confirm-btn {
+                width: 100%;
+            }
+        }
+
         /* Shared patient identification bar stays visible on lab request */
         #pcMasterHeader, #pcMasterHeader.pc-master-header {
             display: flex !important;
@@ -1073,6 +1351,27 @@
         </div>
     </div>
 
+    <!-- ─── APPLE-STYLE SUBMIT CONFIRMATION MODAL ─── -->
+    <div class="lab-confirm-overlay" id="labConfirmOverlay" onclick="if(event.target===this) closeLabSubmitConfirmation(false)">
+        <div class="lab-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="labConfirmTitle">
+            <div class="lab-confirm-head">
+                <div class="lab-confirm-title-wrap">
+                    <div class="lab-confirm-icon"><i class="ti ti-send"></i></div>
+                    <div>
+                        <div class="lab-confirm-title" id="labConfirmTitle">Confirm laboratory request</div>
+                        <div class="lab-confirm-subtitle">Review the exact tests before they are sent to Laboratory.</div>
+                    </div>
+                </div>
+                <button class="lab-confirm-close" type="button" onclick="closeLabSubmitConfirmation(false)" aria-label="Close confirmation">✕</button>
+            </div>
+            <div class="lab-confirm-body" id="labConfirmBody"></div>
+            <div class="lab-confirm-actions">
+                <button class="lab-confirm-btn secondary" type="button" id="labConfirmCancelBtn">Cancel</button>
+                <button class="lab-confirm-btn primary" type="button" id="labConfirmApproveBtn">Send to Laboratory</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================================
         // LAB REQUEST FORM - Standalone Module
@@ -1080,6 +1379,7 @@
 
         let selectedLabTests = [];
         let currentPatient = null;
+        let pendingLabConfirmResolver = null;
 
         // ─── TOAST SYSTEM ───
         function showToast(message, type) {
@@ -1183,6 +1483,58 @@
             });
             lines.push('', 'Priority: ' + prettyPriority(priority), 'Sample Type: ' + (sampleType || '--'), 'Total: ' + rws(total), '', 'Only these ' + items.length + ' test(s) will be submitted.', '', 'Continue?');
             return lines.join('\n');
+        }
+        function closeLabSubmitConfirmation(confirmed) {
+            const overlay = document.getElementById('labConfirmOverlay');
+            if (overlay) overlay.style.display = 'none';
+            document.body.style.overflow = '';
+            const resolve = pendingLabConfirmResolver;
+            pendingLabConfirmResolver = null;
+            if (resolve) resolve(confirmed === true);
+        }
+        function showLabSubmitConfirmationModal(items, priority, sampleType) {
+            const overlay = document.getElementById('labConfirmOverlay');
+            const body = document.getElementById('labConfirmBody');
+            const cancelBtn = document.getElementById('labConfirmCancelBtn');
+            const approveBtn = document.getElementById('labConfirmApproveBtn');
+            if (!overlay || !body || !cancelBtn || !approveBtn) {
+                return Promise.resolve(window.confirm(buildLabSubmitConfirmationText(items, priority, sampleType)));
+            }
+            if (pendingLabConfirmResolver) {
+                closeLabSubmitConfirmation(false);
+            }
+            const total = items.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qty) || 1)), 0);
+            const patientLabel = currentPatient
+                ? ((currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '')).trim() + ' — ' + (currentPatient.mrn || currentPatient.id || 'N/A')
+                : 'No patient selected';
+            body.innerHTML = '' +
+                '<div class="lab-confirm-patient">' +
+                    '<span class="k">Patient</span>' +
+                    '<div class="v">' + escHtml(patientLabel) + '</div>' +
+                '</div>' +
+                '<div class="lab-confirm-meta">' +
+                    '<div class="lab-confirm-meta-card"><span class="k">Priority</span><div class="v">' + escHtml(prettyPriority(priority)) + '</div></div>' +
+                    '<div class="lab-confirm-meta-card"><span class="k">Sample Type</span><div class="v">' + escHtml(sampleType || '--') + '</div></div>' +
+                    '<div class="lab-confirm-meta-card"><span class="k">Total</span><div class="v">' + escHtml(rws(total)) + '</div></div>' +
+                '</div>' +
+                '<div class="lab-confirm-list">' + items.map(function(item, index) {
+                    return '<div class="lab-confirm-row">' +
+                        '<div class="lab-confirm-row-main">' +
+                            '<div class="lab-confirm-row-name">' + (index + 1) + '. ' + escHtml(item.name || 'Laboratory test') + '</div>' +
+                            '<div class="lab-confirm-row-code"><i class="ti ti-barcode"></i> ' + escHtml(item.code || 'No code') + '</div>' +
+                        '</div>' +
+                        '<div class="lab-confirm-row-price">' + escHtml(rws(item.price)) + '</div>' +
+                    '</div>';
+                }).join('') + '</div>' +
+                '<div class="lab-confirm-footnote">Only these <strong>' + items.length + '</strong> test(s) will be sent to Laboratory. The background stays blurred so you can verify before final submit.</div>';
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            cancelBtn.onclick = function () { closeLabSubmitConfirmation(false); };
+            approveBtn.onclick = function () { closeLabSubmitConfirmation(true); };
+            setTimeout(function () { approveBtn.focus(); }, 20);
+            return new Promise(function(resolve) {
+                pendingLabConfirmResolver = resolve;
+            });
         }
         function getConfirmedPatientLabOrders() {
             if (!currentPatient) return [];
@@ -1621,7 +1973,8 @@ async function submitLabRequest() {
     const clinicianId = getRequestingClinicianId();
     const items = buildLabOrderItems();
 
-    if (!window.confirm(buildLabSubmitConfirmationText(items, priority, sampleType))) {
+    const confirmed = await showLabSubmitConfirmationModal(items, priority, sampleType);
+    if (!confirmed) {
         return;
     }
 
@@ -1915,6 +2268,14 @@ function toggleHistoryDetails(idx) {
         document.addEventListener('DOMContentLoaded', function() {
     console.log('🧪 Lab Request Form Loaded');
     renderLabTariffTests();
+    document.addEventListener('keydown', function (e) {
+        const overlay = document.getElementById('labConfirmOverlay');
+        if (!overlay || overlay.style.display !== 'flex') return;
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeLabSubmitConfirmation(false);
+        }
+    });
     // ⛔ NO TEMPLATE DOCTOR: prefill the requesting doctor with the REAL
     // logged-in staff member (parent Doctor Dashboard or current session).
     try {
@@ -2107,6 +2468,7 @@ function toggleHistoryDetails(idx) {
         window.openRequestHistory = openRequestHistory;
         window.closeRequestHistory = closeRequestHistory;
         window.toggleHistoryDetails = toggleHistoryDetails;
+        window.closeLabSubmitConfirmation = closeLabSubmitConfirmation;
     </script>
 
 
