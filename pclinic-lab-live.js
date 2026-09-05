@@ -123,33 +123,25 @@
     }
 
     function groupLabOrders(orders, filterFn) {
-        var map = Object.create(null);
-        (orders || []).forEach(function (order) {
-            if (!order || !order.patientId) return;
-            if (typeof filterFn === 'function' && !filterFn(order)) return;
+        return (orders || []).filter(function (order) {
+            if (!order || !order.patientId) return false;
+            if (typeof filterFn === 'function' && !filterFn(order)) return false;
+            return true;
+        }).sort(function (a, b) {
+            return new Date(orderTimestamp(b) || 0).getTime() - new Date(orderTimestamp(a) || 0).getTime();
+        }).map(function (order) {
             var patientId = stripMod(order.patientId);
-            var key = patientId + '__' + orderDateKey(order);
-            if (!map[key]) {
-                map[key] = {
-                    key: key,
-                    patientId: patientId,
-                    patientName: order.patientName || ('Patient ' + patientId),
-                    orderedAt: orderTimestamp(order),
-                    dateStr: orderDateKey(order),
-                    priority: String(order.priority || 'routine').toLowerCase(),
-                    orders: []
-                };
-            }
-            map[key].orders.push(order);
-            var status = String(order.status || 'pending').toLowerCase();
-            if (status === 'in-progress') map[key].status = 'in-progress';
-            else if (!map[key].status) map[key].status = status;
-            if (String(order.priority || '').toLowerCase() === 'stat') map[key].priority = 'stat';
-            if (!map[key].orderedAt || new Date(orderTimestamp(order)) < new Date(map[key].orderedAt)) {
-                map[key].orderedAt = orderTimestamp(order);
-            }
+            return {
+                key: String(order.id || (patientId + '__' + orderDateKey(order))),
+                patientId: patientId,
+                patientName: order.patientName || ('Patient ' + patientId),
+                orderedAt: orderTimestamp(order),
+                dateStr: orderDateKey(order),
+                priority: String(order.priority || 'routine').toLowerCase(),
+                status: String(order.status || 'pending').toLowerCase(),
+                orders: [order]
+            };
         });
-        return Object.keys(map).map(function (key) { return map[key]; });
     }
 
     function resolveGroup(groupKey, filterFn) {
@@ -305,10 +297,10 @@
         }).length;
         setText('labSpecimenTabCount', groups.length);
         setText('labWorklistTabCount', pending + progress);
-        setText('sc-specimens-sub', groups.length ? 'Live order groups from common server' : 'No live laboratory orders yet');
+        setText('sc-specimens-sub', groups.length ? 'Live laboratory requests from common server' : 'No live laboratory orders yet');
         setText('sc-pending-sub', (pending + progress) ? ((pending + progress) + ' active request' + ((pending + progress) === 1 ? '' : 's')) : 'No pending laboratory work');
         setText('sc-verified-sub', verified ? (verified + ' server-confirmed result set' + (verified === 1 ? '' : 's')) : 'No verified results yet');
-        setText('sc-critical-sub', critical ? (critical + ' STAT / critical order group' + (critical === 1 ? '' : 's')) : 'No critical orders currently flagged');
+        setText('sc-critical-sub', critical ? (critical + ' STAT / critical request' + (critical === 1 ? '' : 's')) : 'No critical orders currently flagged');
         setText('sc-stat-sub', statOpen ? (statOpen + ' STAT request' + (statOpen === 1 ? '' : 's') + ' still open') : 'No open STAT requests');
     }
 

@@ -285,11 +285,73 @@
         return String(value || '').replace(/[^a-zA-Z0-9_-]/g, '_');
     }
 
+    function normaliseOrderStatus(status) {
+        var raw = String(status || 'pending').toLowerCase();
+        if (raw === 'completed' || raw === 'final' || raw === 'verified') return 'completed';
+        if (raw === 'in-progress' || raw === 'processing') return 'in-progress';
+        if (raw === 'cancelled' || raw === 'rejected') return 'cancelled';
+        return 'pending';
+    }
+
+    function primaryOrder(group) {
+        return group && Array.isArray(group.orders) && group.orders.length ? group.orders[0] : null;
+    }
+
+    function plannedAccessionNo(groupOrOrder) {
+        var order = groupOrOrder && Array.isArray(groupOrOrder.orders) ? primaryOrder(groupOrOrder) : groupOrOrder;
+        if (!order) return '—';
+        if (order.accessionNo) return String(order.accessionNo);
+        var patientId = stripMod((order && order.patientId) || (groupOrOrder && groupOrOrder.patientId) || 'UNKNOWN');
+        var dateStr = String((order && order.orderedAt) || (groupOrOrder && groupOrOrder.dateStr) || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
+        var orderTail = String(order.id || 'LIVE').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        orderTail = orderTail.slice(-6) || 'LIVE';
+        return 'LAB-' + patientId + '-' + dateStr.slice(5).replace('-', '') + '-' + orderTail;
+    }
+
+    function displayAccessionNo(groupOrOrder) {
+        var order = groupOrOrder && Array.isArray(groupOrOrder.orders) ? primaryOrder(groupOrOrder) : groupOrOrder;
+        if (!order) return '—';
+        if (order.accessionNo) return String(order.accessionNo);
+        if (order.id) return String(order.id);
+        return plannedAccessionNo(groupOrOrder);
+    }
+
+    function groupTestNames(group) {
+        var names = [];
+        ((group && group.orders) || []).forEach(function(order) {
+            (order.items || []).forEach(function(item) {
+                if (names.indexOf(item.name) === -1) names.push(item.name);
+            });
+        });
+        return names;
+    }
+
+    function groupTestCount(group) {
+        var count = 0;
+        ((group && group.orders) || []).forEach(function(order) {
+            count += Array.isArray(order.items) ? order.items.length : 0;
+        });
+        return count;
+    }
+
     /* ── Get All Lab Orders from Common Server ── */
     function getLabOrders() {
-        if (!window.pcOrders || typeof pcOrders.list !== 'function') return [];
-        return pcOrders.list({ dept: 'lab' }).filter(function(o) {
-            return o.status !== 'cancelled';
+        if (!window.pcOrders) return [];
+        var list = [];
+        try {
+            if (typeof pcOrders.listServerConfirmed === 'function') {
+                list = pcOrders.listServerConfirmed({ dept: 'lab' }) || [];
+            } else if (typeof pcOrders.list === 'function') {
+                list = pcOrders.list({ dept: 'lab' }).filter(function(order) {
+                    return !order._legacyLocalOnly && !order._syncFailed;
+                });
+            }
+        } catch (e) {
+            console.warn('Unable to load server-confirmed lab orders:', e);
+            list = [];
+        }
+        return list.filter(function(o) {
+            return normaliseOrderStatus(o.status) !== 'cancelled';
         });
     }
 
@@ -568,7 +630,7 @@
             var option = document.createElement('option');
             option.value = group.key;
             option.textContent = group.patientName + ' — MRN MOD-' + group.patientId +
-                ' (' + group.orders.length + ' order' + (group.orders.length === 1 ? '' : 's') + ' • ' + String(group.priority).toUpperCase() + ')';
+                ' (' + groupTestCount(group) + ' test' + (groupTestCount(group) === 1 ? '' : 's') + ' • ' + String(group.priority).toUpperCase() + ')';
             selector.appendChild(option);
         }
         selector.value = group.key;
@@ -592,12 +654,16 @@
         var selId = sel ? stripMod(sel.id).toLowerCase() : '';
         var orders = getLabOrders();
         var groups = groupOrdersByPatientAndDate(orders);
-        var g = null;
-        if (selId) {
-            for (var i = 0; i < groups.length; i++) {
-                if (stripMod(groups[i].patientId).toLowerCase() === selId) { g = groups[i]; break; }
-            }
-        }
+        var patientGroups = selId ? groups.filter(function(group) {
+            return stripMod(group.patientId).toLowerCase() === selId;
+        }) : [];
+        var firstPatientGroup = patientGroups[0] || null;
+        var firstCompletedGroup = patientGroups.filter(function(group) {
+            return group.status === 'completed';
+        })[0] || null;
+        var firstMicroGroup = patientGroups.filter(function(group) {
+            return isMicrobiologyOrder(primaryOrder(group));
+        })[0] || null;
 
         var specSel = document.getElementById('specSmartPatientSelect');
         if (specSel) {
@@ -613,9 +679,9 @@
 
         var repSel = document.getElementById('repSmartPatientSelect');
         if (repSel) {
-            if (g && g.status === 'completed') {
-                repSel.value = g.key;
-                selectReportPatient(g.key, true);
+            if (firstCompletedGroup) {
+                repSel.value = firstCompletedGroup.key;
+                selectReportPatient(firstCompletedGroup.key, true);
             } else {
                 repSel.value = '';
                 resetReportsPanel();
@@ -624,9 +690,12 @@
 
         var micSel = document.getElementById('micSmartPatientSelect');
         if (micSel) {
-            if (g) {
-                micSel.value = g.key;
-                selectMicrobioPatient(g.key, true);
+            if (firstMicroGroup) {
+                micSel.value = firstMicroGroup.key;
+                selectMicrobioPatient(firstMicroGroup.key, true);
+            } else if (firstPatientGroup) {
+                micSel.value = '';
+                resetMicrobioPanel();
             } else {
                 micSel.value = '';
                 resetMicrobioPanel();
@@ -697,41 +766,24 @@
         updateSelectionUI();
     }
 
-    /* ── ONE AUTHORITATIVE MASTER ROW PER PATIENT / DATE (NO REPEATED NAMES) ── */
+    /* ── ONE SERVER-CONFIRMED LAB REQUEST PER VISIBLE ROW (NO SAME-DAY MERGE) ── */
     function groupOrdersByPatientAndDate(orders) {
-        var map = {};
-        var groups = [];
-        orders.forEach(function(o) {
+        return (Array.isArray(orders) ? orders.slice() : []).sort(function(a, b) {
+            return new Date(b.orderedAt || 0) - new Date(a.orderedAt || 0);
+        }).map(function(o) {
             var pIdStr = String(o.patientId || '').replace(/^MOD-/i, '').trim() || 'UNKNOWN';
             var dateStr = String(o.orderedAt || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
-            var key = pIdStr + '___' + dateStr;
-            if (!map[key]) {
-                map[key] = {
-                    key: key,
-                    patientId: pIdStr,
-                    patientName: o.patientName || ('Patient ' + pIdStr),
-                    orderedAt: o.orderedAt || new Date().toISOString(),
-                    dateStr: dateStr,
-                    orders: [],
-                    status: 'pending',
-                    priority: 'routine'
-                };
-                groups.push(map[key]);
-            }
-            map[key].orders.push(o);
-            if (o.priority === 'stat') map[key].priority = 'stat';
-            else if (o.priority === 'urgent' && map[key].priority !== 'stat') map[key].priority = 'urgent';
+            return {
+                key: String(o.id || (pIdStr + '___' + dateStr)),
+                patientId: pIdStr,
+                patientName: o.patientName || ('Patient ' + pIdStr),
+                orderedAt: o.orderedAt || new Date().toISOString(),
+                dateStr: dateStr,
+                orders: [o],
+                status: normaliseOrderStatus(o.status),
+                priority: String(o.priority || 'routine').toLowerCase()
+            };
         });
-        // Derive the aggregate state after all orders have been collected.
-        // Previously a completed-only group remained "pending" forever.
-        groups.forEach(function(group) {
-            var states = group.orders.map(function(order) { return String(order.status || 'pending').toLowerCase(); });
-            if (states.length && states.every(function(state) { return state === 'completed'; })) group.status = 'completed';
-            else if (states.some(function(state) { return state === 'in-progress' || state === 'completed'; })) group.status = 'in-progress';
-            else if (states.length && states.every(function(state) { return state === 'cancelled'; })) group.status = 'cancelled';
-            else group.status = 'pending';
-        });
-        return groups;
     }
 
     /* ── Render Overview Worklist (One Master Row per Patient) ── */
@@ -751,14 +803,8 @@
 
         var topGroups = groups.slice(0, 8);
         el.innerHTML = topGroups.map(function(g) {
-            var testNames = [];
-            g.orders.forEach(function(o) {
-                (o.items || []).forEach(function(it) {
-                    if (testNames.indexOf(it.name) === -1) testNames.push(it.name);
-                });
-            });
-            var itemsStr = testNames.join(', ');
-            var accNo = 'LAB-' + g.patientId + '-' + g.dateStr.slice(5).replace('-', '');
+            var itemsStr = groupTestNames(g).join(', ');
+            var accNo = displayAccessionNo(g);
             var rowSelClass = isSelectedRow(g) ? 'row-selected' : '';
 
             return '<tr data-lab-row="' + esc(g.patientId) + '" class="' + rowSelClass + '" style="cursor:pointer;transition:background .15s;" onclick="pcLabEngine.selectLabPatient(\'' + esc(g.patientId) + '\')">' +
@@ -828,14 +874,8 @@
 
         var html = '';
         filteredGroups.forEach(function(g) {
-            var testNames = [];
-            g.orders.forEach(function(o) {
-                (o.items || []).forEach(function(it) {
-                    if (testNames.indexOf(it.name) === -1) testNames.push(it.name);
-                });
-            });
-            var itemsStr = testNames.join(', ');
-            var accNo = 'LAB-' + g.patientId + '-' + g.dateStr.slice(5).replace('-', '');
+            var itemsStr = groupTestNames(g).join(', ');
+            var accNo = displayAccessionNo(g);
 
             var isUnfolded = openGroups[g.key] === true;
             var chevronStyle = isUnfolded ? 'transform:rotate(90deg);' : 'transform:rotate(0deg);';
@@ -857,7 +897,7 @@
                         '<button class="btn-select-lab" onclick="event.stopPropagation(); pcLabEngine.selectLabPatient(\'' + esc(g.patientId) + '\')">✓ Select</button>' +
                         '<button onclick="event.stopPropagation(); pcLabEngine.togglePatientGroup(\'' + esc(g.key) + '\')" ' +
                                 'style="height:30px;padding:0 14px;border-radius:9px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#1c1c1e;font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.05);margin-left:6px;">' +
-                            '📂 <span style="color:#007080;">' + g.orders.length + ' Orders</span> — Unfold & Enter Results <span id="chev_' + esc(g.key) + '" style="display:inline-block;transition:transform 0.28s;' + chevronStyle + '">▶</span>' +
+                            '📂 <span style="color:#007080;">' + groupTestCount(g) + ' Test' + (groupTestCount(g) === 1 ? '' : 's') + '</span> — Open Request <span id="chev_' + esc(g.key) + '" style="display:inline-block;transition:transform 0.28s;' + chevronStyle + '">▶</span>' +
                         '</button>' +
                     '</td>' +
                     '</tr>';
@@ -961,7 +1001,7 @@
 
         var footer = allCompleted
             ? '<button onclick="pcLabEngine.printReportModal(\'' + esc(ordersSorted[ordersSorted.length - 1].id) + '\')" style="height:38px;padding:0 18px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;font-weight:750;cursor:pointer;">🖨️ View final report</button>'
-            : '<button class="lab-release-btn" onclick="pcLabEngine.saveDayResults(\'' + esc(group.key) + '\',this)" style="height:40px;padding:0 24px;border-radius:10px;border:0;background:#007080;color:#fff;font-weight:850;font-size:12.5px;cursor:pointer;box-shadow:0 3px 10px rgba(0,112,128,.28);">💾 Validate &amp; Release the Day\u2019s Requests (' + nonFinalCount + ')</button>';
+            : '<button class="lab-release-btn" onclick="pcLabEngine.saveDayResults(\'' + esc(group.key) + '\',this)" style="height:40px;padding:0 24px;border-radius:10px;border:0;background:#007080;color:#fff;font-weight:850;font-size:12.5px;cursor:pointer;box-shadow:0 3px 10px rgba(0,112,128,.28);">💾 Validate &amp; Release Request</button>';
 
         var html = '<div style="display:flex;flex-direction:column;gap:16px;">' +
             '<section class="lab-order-result-section lab-day-result-section" data-lab-day-key="' + esc(group.key) + '" style="background:#fff;border-radius:16px;border:1px solid rgba(0,0,0,.12);box-shadow:0 6px 22px rgba(0,0,0,.06);overflow:hidden;">' +
@@ -970,8 +1010,8 @@
                 '<div style="font-size:11.5px;color:#334155;margin-top:3px;">Patient: <strong>' + esc(pName) + '</strong> • MRN ' + esc(mrn) + ' • Request(s): <strong>' + orderIdsStr + '</strong></div></div>' + stateChip +
               '</div>' +
               '<div style="padding:16px 20px;">' +
-                '<div style="font-size:12px;font-weight:800;color:#004a52;margin-bottom:8px;">REQUESTED TESTS — ENTER EVERY REQUIRED RESULT (ALL REQUESTS OF THIS DAY)</div>' + bodyHtml +
-                '<label style="display:block;font-size:11px;font-weight:800;color:#475569;margin:12px 0 5px;">Laboratory comments / interpretation (applies to all requests of this day)</label>' +
+                '<div style="font-size:12px;font-weight:800;color:#004a52;margin-bottom:8px;">REQUESTED TESTS — ENTER EVERY REQUIRED RESULT FOR THIS REQUEST</div>' + bodyHtml +
+                '<label style="display:block;font-size:11px;font-weight:800;color:#475569;margin:12px 0 5px;">Laboratory comments / interpretation (for this request)</label>' +
                 '<textarea class="lab-order-comments"' + (allCompleted ? ' readonly' : '') + ' placeholder="Optional validated comment for the requesting clinician" style="width:100%;min-height:64px;resize:vertical;border:1px solid #cbd5e1;border-radius:9px;padding:9px 11px;font:12px inherit;background:' + (allCompleted ? '#f1f5f9' : '#fff') + ';">' + esc(ordersSorted[0].labComments || '') + '</textarea>' +
               '</div>' +
               '<div style="padding:13px 20px;background:#f8f9fa;border-top:1px solid rgba(0,0,0,.09);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
@@ -1266,7 +1306,7 @@
     async function saveDayResults(groupKey, button) {
         var group = groupOrdersByPatientAndDate(getLabOrders()).filter(function (row) { return row.key === groupKey; })[0];
         if (!group) {
-            if (window.showToast) showToast('❌ The laboratory requests for this day were not found.', 'error');
+            if (window.showToast) showToast('❌ The laboratory request was not found.', 'error');
             return false;
         }
         var section = document.querySelector('.lab-day-result-section[data-lab-day-key="' + groupKey + '"]');
@@ -1305,7 +1345,7 @@
 
         var nonFinal = group.orders.filter(function (o) { return String(o.status || '').toLowerCase() !== 'completed'; });
         if (!nonFinal.length) {
-            if (window.showToast) showToast('ℹ️ All requests of this day are already final.', 'info');
+            if (window.showToast) showToast('ℹ️ This laboratory request is already final.', 'info');
             return true;
         }
         var orderWithNoValues = nonFinal.filter(function (o) { return !(resultsByOrder[String(o.id)] && resultsByOrder[String(o.id)].length); })[0];
@@ -1323,8 +1363,8 @@
         var allResults = nonFinal.reduce(function (acc, o) { return acc.concat(resultsByOrder[String(o.id)] || []); }, []);
         var hasCritical = allResults.some(function (row) { return String(row.flag).indexOf('Critical') !== -1; });
         var promptText = hasCritical
-            ? 'This day contains a CRITICAL result. Final release will urgently notify the requesting doctor and cannot be undone. Release ALL requests of this day?'
-            : 'Validate and permanently release the results of ALL ' + nonFinal.length + ' request(s) of this day? Final results cannot be overwritten.';
+            ? 'This request contains a CRITICAL result. Final release will urgently notify the requesting doctor and cannot be undone. Continue?'
+            : 'Validate and permanently release the results of this laboratory request? Final results cannot be overwritten.';
         if (!window.confirm(promptText)) return false;
 
         var commentsEl = section.querySelector('.lab-order-comments');
@@ -1356,7 +1396,7 @@
                 } catch (eventError) {}
             }
             if (window.showToast) {
-                showToast(hasCritical ? '🚨 Critical results released — urgent alert sent to the requesting doctor.' : '✅ All requests of this day were released on the common server and sent to the requesting doctor.', 'success');
+                showToast(hasCritical ? '🚨 Critical results released — urgent alert sent to the requesting doctor.' : '✅ This laboratory request was released on the common server and sent to the requesting doctor.', 'success');
             }
             repaintAll();
             return true;
@@ -1368,7 +1408,7 @@
             if (button && document.body.contains(button)) {
                 button.disabled = false;
                 button.style.opacity = '1';
-                button.textContent = originalText || '💾 Validate & Release the Day\u2019s Requests';
+                button.textContent = originalText || '💾 Validate & Release Request';
             }
         }
     }
@@ -1397,8 +1437,8 @@
         }
 
         tbody.innerHTML = groups.map(function(g) {
-            var itemsStr = g.orders.map(function(o){ return (o.items || []).map(function(it){ return it.name; }).join(', '); }).join(', ');
-            var accNo = 'LAB-' + g.patientId + '-' + g.dateStr.slice(5).replace('-', '');
+            var itemsStr = groupTestNames(g).join(', ');
+            var accNo = displayAccessionNo(g);
             return '<tr>' +
                    '<td style="font-weight:700;color:var(--ac,#007080)">' + esc(accNo) + '</td>' +
                    '<td><div style="font-weight:700;color:#1d1d1f;font-size:13.5px;">' + esc(g.patientName) + '</div>' +
@@ -1673,7 +1713,7 @@
         }
 
         groups.forEach(function(g) {
-            var label = g.patientName + ' — MRN MOD-' + g.patientId + ' (' + g.orders.length + ' tests • ' + String(g.priority).toUpperCase() + ')';
+            var label = g.patientName + ' — MRN MOD-' + g.patientId + ' (' + groupTestCount(g) + ' test' + (groupTestCount(g) === 1 ? '' : 's') + ' • ' + String(g.priority).toUpperCase() + ')';
             optionsHtml += '<option value="' + esc(g.key) + '">' + esc(label) + '</option>';
         });
 
@@ -1702,7 +1742,7 @@
         var barBox = document.getElementById('spec_barcode_box');
         var testsBox = document.getElementById('spec_ordered_tests');
 
-        var accNo = 'LAB-' + g.patientId + '-' + g.dateStr.slice(5).replace('-', '');
+        var accNo = displayAccessionNo(g);
 
         if (nameEl) nameEl.textContent = g.patientName;
         if (mrnEl)  mrnEl.textContent  = 'MRN MOD-' + g.patientId + ' • ' + String(g.priority).toUpperCase() + ' Order';
@@ -1861,7 +1901,7 @@
             return false;
         }
         ensureSpecimenSelectorOption(selector, group);
-        var accessionNo = 'LAB-' + group.patientId + '-' + group.dateStr.slice(5).replace('-', '');
+        var accessionNo = plannedAccessionNo(group);
         var notesEl = document.getElementById('spec_notes_in');
         try {
             var responses = await transitionSpecimenGroupOnServer(group.orders, 'accession', {
@@ -1971,7 +2011,7 @@
         }
 
         groups.forEach(function(g) {
-            var label = g.patientName + ' — MRN MOD-' + g.patientId + ' (' + g.orders.length + ' tests • VERIFIED)';
+            var label = g.patientName + ' — MRN MOD-' + g.patientId + ' (' + groupTestCount(g) + ' test' + (groupTestCount(g) === 1 ? '' : 's') + ' • VERIFIED)';
             optionsHtml += '<option value="' + esc(g.key) + '">' + esc(label) + '</option>';
         });
 
@@ -2001,7 +2041,7 @@
         var barBox = document.getElementById('rep_barcode_box');
         var chipsBox = document.getElementById('rep_matrix_chips');
 
-        var accNo = 'LAB-' + g.patientId + '-' + g.dateStr.slice(5).replace('-', '');
+        var accNo = displayAccessionNo(g);
 
         if (nameEl) nameEl.textContent = g.patientName;
         if (mrnEl)  mrnEl.textContent  = 'MRN MOD-' + g.patientId + ' • Verified Report';
@@ -2092,8 +2132,8 @@
         }
 
         tbody.innerHTML = groups.map(function(g) {
-            var itemsStr = g.orders.map(function(o){ return (o.items || []).map(function(it){ return it.name; }).join(', '); }).join(', ');
-            var accNo = 'LAB-' + g.patientId + '-' + g.dateStr.slice(5).replace('-', '');
+            var itemsStr = groupTestNames(g).join(', ');
+            var accNo = displayAccessionNo(g);
             return '<tr>' +
                    '<td style="font-weight:700;color:var(--ac,#007080)">' + esc(accNo) + '</td>' +
                    '<td><div style="font-weight:700;color:#1d1d1f;font-size:13.5px;">' + esc(g.patientName) + '</div>' +
@@ -2311,7 +2351,7 @@
         }
 
         groups.forEach(function(g) {
-            var label = g.patientName + ' — MRN MOD-' + g.patientId + ' (Blood / Microbiology Culture)';
+            var label = g.patientName + ' — MRN MOD-' + g.patientId + ' (' + groupTestCount(g) + ' microbiology test' + (groupTestCount(g) === 1 ? '' : 's') + ')';
             optionsHtml += '<option value="' + esc(g.key) + '">' + esc(label) + '</option>';
         });
 
@@ -2335,7 +2375,7 @@
         if (!g) return;
 
         var barBox = document.getElementById('mic_barcode_box');
-        var accNo = 'LAB-' + g.patientId + '-' + g.dateStr.slice(5).replace('-', '');
+        var accNo = displayAccessionNo(g);
 
         if (barBox) barBox.innerHTML = generateSVGBarcode(accNo);
 

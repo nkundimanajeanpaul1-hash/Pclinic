@@ -800,6 +800,119 @@
             border-radius: 8px;
         }
 
+        .lab-hint-box {
+            margin-bottom: 10px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(255,149,0,0.08);
+            border: 0.5px solid rgba(255,149,0,0.18);
+        }
+
+        .lab-hint-title {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--oranged);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .lab-hint-sub {
+            margin-top: 4px;
+            font-size: 11px;
+            color: var(--oranged);
+            opacity: 0.95;
+        }
+
+        .lab-hint-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .lab-hint-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.55);
+            border: 0.5px solid rgba(255,149,0,0.14);
+        }
+
+        .lab-hint-tests {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--tp);
+            line-height: 1.45;
+            flex: 1 1 260px;
+        }
+
+        .lab-hint-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 11px;
+            color: var(--tm);
+        }
+
+        .selection-preview {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(0,113,227,0.05);
+            border: 0.5px solid rgba(0,113,227,0.15);
+        }
+
+        .selection-preview-head {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--ac);
+        }
+
+        .selection-preview-empty {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--tm);
+        }
+
+        .selection-preview-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .selection-preview-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.8);
+            border: 0.5px solid rgba(0,113,227,0.12);
+            font-size: 11px;
+            color: var(--tp);
+        }
+
+        .selection-preview-chip strong {
+            color: var(--ac);
+        }
+
+        .selection-preview-foot {
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--tm);
+            line-height: 1.45;
+        }
+
         /* Shared patient identification bar stays visible on lab request */
         #pcMasterHeader, #pcMasterHeader.pc-master-header {
             display: flex !important;
@@ -873,6 +986,7 @@
                     </label>
                     <span class="selected-count">Selected: <strong id="selectedTestCount">0</strong> tests</span>
                 </div>
+                <div id="recentLabHints" class="lab-hint-box" hidden></div>
                 <div style="border: 0.5px solid rgba(0,0,0,0.04); border-radius: 12px; padding: 12px; background: rgba(255,255,255,0.2);">
                     <div class="lab-grid" id="labTestGrid">
                         <!-- ═══ THE SAME 4-COLUMN CATEGORY TABLE AS BEFORE ═══
@@ -902,6 +1016,10 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <div id="selectedTestsPreview" class="selection-preview">
+                        <div class="selection-preview-head"><i class="ti ti-send"></i> Exact tests that will be sent to Laboratory</div>
+                        <div class="selection-preview-empty">No tests selected yet.</div>
                     </div>
             <div class="form-row">
                 <div>
@@ -985,6 +1103,149 @@
         function rws(n) { return 'RWF ' + (Number(n) || 0).toLocaleString('en-US'); }
         function escAttr(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
         function escHtml(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function prettyPriority(value) {
+            const raw = String(value || 'Routine').trim().toLowerCase();
+            if (raw === 'stat') return 'STAT';
+            if (!raw) return 'Routine';
+            return raw.charAt(0).toUpperCase() + raw.slice(1);
+        }
+        function normaliseLabRequestStatus(status) {
+            const raw = String(status || 'pending').trim().toLowerCase();
+            if (raw === 'completed' || raw === 'verified' || raw === 'final') return 'Completed';
+            if (raw === 'cancelled' || raw === 'rejected') return 'Cancelled';
+            if (raw === 'in-progress' || raw === 'processing') return 'In Progress';
+            return 'Pending';
+        }
+        function historyStatusClass(status) {
+            const normalized = normaliseLabRequestStatus(status).toLowerCase().replace(/\s+/g, '-');
+            return normalized === 'in-progress' ? 'pending' : normalized;
+        }
+        function requestHistoryKey(req, fallbackKey) {
+            if (!req) return String(fallbackKey || 'lab-request');
+            const explicit = req.orderId || req.id;
+            if (explicit) return String(explicit);
+            const tests = Array.isArray(req.tests) ? req.tests.join('|') : '';
+            return String(fallbackKey || 'lab-request') + '::' + String(req.timestamp || req.date || req.orderedAt || '') + '::' + tests;
+        }
+        function getRequestingClinicianName() {
+            if (window.currentStaff && window.currentStaff.name) return String(window.currentStaff.name).trim();
+            const docIn = document.getElementById('labDoctor');
+            return docIn && docIn.value ? String(docIn.value).trim() : 'Unknown';
+        }
+        function getRequestingClinicianId() {
+            return (window.currentStaff && (window.currentStaff.staffId || window.currentStaff.id)) || '';
+        }
+        function extractLabSampleType(value) {
+            const text = String(value || '').trim();
+            if (!text) return '--';
+            const lower = text.toLowerCase();
+            const marker = lower.indexOf('sample:');
+            if (marker === -1) return text;
+            const remainder = text.slice(marker + 'sample:'.length);
+            return remainder.split('·')[0].split('|')[0].split('\n')[0].trim() || '--';
+        }
+        function buildLabOrderItems() {
+            return selectedLabTests.map((test, index) => {
+                const cleanName = String(test && test.name || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+                return {
+                    code: String(test && test.code || ('LAB-' + (cleanName || 'CUSTOM').slice(0, 10) + '-' + (index + 1))),
+                    name: String(test && test.name || 'Laboratory test'),
+                    qty: 1,
+                    price: Number(test && test.price) || 0
+                };
+            });
+        }
+        function renderSelectedTestsPreview() {
+            const box = document.getElementById('selectedTestsPreview');
+            if (!box) return;
+            const items = buildLabOrderItems();
+            if (!items.length) {
+                box.innerHTML = '<div class="selection-preview-head"><i class="ti ti-send"></i> Exact tests that will be sent to Laboratory</div>' +
+                    '<div class="selection-preview-empty">No tests selected yet.</div>';
+                return;
+            }
+            const total = items.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qty) || 1)), 0);
+            box.innerHTML = '<div class="selection-preview-head"><i class="ti ti-send"></i> Exact tests that will be sent to Laboratory</div>' +
+                '<div class="selection-preview-list">' + items.map(item =>
+                    '<span class="selection-preview-chip"><strong>' + escHtml(item.code || '—') + '</strong> ' + escHtml(item.name) +
+                    ' <span style="color:var(--tm);">' + rws(item.price) + '</span></span>'
+                ).join('') + '</div>' +
+                '<div class="selection-preview-foot"><strong>' + items.length + '</strong> test(s) will be sent exactly as listed above. Total charge: <strong>' + rws(total) + '</strong>. Nothing else will be auto-added.</div>';
+        }
+        function buildLabSubmitConfirmationText(items, priority, sampleType) {
+            const total = items.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qty) || 1)), 0);
+            const lines = [
+                'Please confirm the exact laboratory request that will be sent:',
+                ''
+            ];
+            items.forEach((item, index) => {
+                lines.push((index + 1) + '. ' + item.name + (item.code ? ' [' + item.code + ']' : '') + ' — ' + rws(item.price));
+            });
+            lines.push('', 'Priority: ' + prettyPriority(priority), 'Sample Type: ' + (sampleType || '--'), 'Total: ' + rws(total), '', 'Only these ' + items.length + ' test(s) will be submitted.', '', 'Continue?');
+            return lines.join('\n');
+        }
+        function getConfirmedPatientLabOrders() {
+            if (!currentPatient) return [];
+            try {
+                if (window.pcOrders && typeof window.pcOrders.listServerConfirmed === 'function') {
+                    return window.pcOrders.listServerConfirmed({ dept: 'lab', patientId: currentPatient.id }) || [];
+                }
+            } catch (e) {}
+            try {
+                return JSON.parse(localStorage.getItem('pclinic_orders') || '[]').filter(o => {
+                    return String(o.patientId) === String(currentPatient.id) && o.type === 'lab' && !o._legacyLocalOnly && !o._syncFailed;
+                });
+            } catch (e) {
+                return [];
+            }
+        }
+        function renderRecentLabRequestHints() {
+            const box = document.getElementById('recentLabHints');
+            if (!box) return;
+            if (!currentPatient) {
+                box.hidden = true;
+                box.innerHTML = '';
+                return;
+            }
+            const now = Date.now();
+            const sevenDays = 7 * 24 * 60 * 60 * 1000;
+            const hints = getPatientLabRequests()
+                .filter(req => {
+                    const status = normaliseLabRequestStatus(req.status);
+                    if (status === 'Cancelled') return false;
+                    const at = new Date(req.timestamp || req.date || req.orderedAt || 0).getTime();
+                    const recent = at && !isNaN(at) && (now - at <= sevenDays);
+                    return status === 'Pending' || status === 'In Progress' || recent;
+                })
+                .sort((a, b) => new Date(b.timestamp || b.date || 0) - new Date(a.timestamp || a.date || 0))
+                .slice(0, 4);
+            if (!hints.length) {
+                box.hidden = true;
+                box.innerHTML = '';
+                return;
+            }
+            box.hidden = false;
+            box.innerHTML = '<div class="lab-hint-title"><i class="ti ti-history"></i> Recent / pending requests for this patient</div>' +
+                '<div class="lab-hint-sub">Shown only as history. Nothing is auto-selected.</div>' +
+                '<div class="lab-hint-list">' + hints.map(req => {
+                    const tests = Array.isArray(req.tests) ? req.tests.filter(Boolean) : [];
+                    const meta = [
+                        labRequestDateLabel(req.timestamp || req.date || req.orderedAt),
+                        prettyPriority(req.priority || 'Routine'),
+                        req.sampleType ? extractLabSampleType(req.sampleType) : '--',
+                        req.requestedBy || '--'
+                    ].filter(Boolean);
+                    return '<div class="lab-hint-item">' +
+                        '<div class="lab-hint-tests">' + escHtml(tests.join(', ') || 'No tests recorded') + '</div>' +
+                        '<div class="lab-hint-meta"><span class="history-badge ' + historyStatusClass(req.status) + '">' + escHtml(normaliseLabRequestStatus(req.status)) + '</span><span>' + escHtml(meta.join(' • ')) + '</span></div>' +
+                        '</div>';
+                }).join('') + '</div>';
+        }
+        function labRequestDateLabel(value) {
+            if (!value) return 'Unknown date';
+            const dt = new Date(value);
+            return isNaN(dt.getTime()) ? String(value) : dt.toLocaleString();
+        }
 
         // ─── TARIFF-DRIVEN TEST TABLE — same layout as the original ───
         var LAB_CATEGORIES = [
@@ -1138,6 +1399,7 @@
             if (countEl) {
                 countEl.textContent = selectedLabTests.length;
             }
+            renderSelectedTestsPreview();
         }
 
         // ─── ADD CUSTOM LAB TEST ───
@@ -1310,50 +1572,14 @@ function loadPatientData(patient) {
     return false;
 }
 
-// ─── AUTO-TICK RECENT LAB REQUESTS (WITHIN 10 MINS OR PENDING) ───
+// ─── RECENT / PENDING REQUEST HINTS (HISTORY ONLY — NEVER AUTO-TICK) ───
 function autoTickRecentLabRequests() {
-    if (!currentPatient) return;
     try {
-        const now = Date.now();
-        const tenMins = 10 * 60 * 1000;
-        let recentTests = new Set();
-
-        // 1. Check patient labRequests
-        const reqs = getPatientLabRequests();
-        reqs.forEach(req => {
-            const isRecent = req.timestamp && (now - new Date(req.timestamp).getTime() <= tenMins);
-            const isPending = req.status === 'Pending' || req.status === 'pending';
-            if ((isRecent || isPending) && Array.isArray(req.tests)) {
-                req.tests.forEach(t => recentTests.add(t));
-            }
-        });
-
-        // 2. Check pclinic_orders for this patient
-        const orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
-        orders.forEach(o => {
-            if (String(o.patientId) === String(currentPatient.id) && o.type === 'lab') {
-                const isRecent = o.orderedAt && (now - new Date(o.orderedAt).getTime() <= tenMins);
-                const isPending = !o.status || o.status.toLowerCase() === 'pending';
-                if ((isRecent || isPending) && Array.isArray(o.items)) {
-                    o.items.forEach(it => recentTests.add(it.name));
-                }
-            }
-        });
-
-        if (recentTests.size > 0) {
-            document.querySelectorAll('.lab-test-item input[type="checkbox"]').forEach(cb => {
-                if (recentTests.has(cb.value)) {
-                    cb.checked = true;
-                    cb.closest('.lab-test-item').classList.add('selected');
-                }
-            });
-            updateSelectedTests();
-            showToast(`⏳ ${recentTests.size} requested test(s) within 10 mins kept ticked (Control/Pending)`, 'info');
-        }
+        renderRecentLabRequestHints();
     } catch(e) {
-        console.warn('autoTickRecentLabRequests error:', e);
+        console.warn('renderRecentLabRequestHints error:', e);
     }
-}     
+}
 
 
 
@@ -1389,71 +1615,99 @@ async function submitLabRequest() {
         return;
     }
 
-    const labRequest = {
-        id: Date.now(),
-        patientId: currentPatient.id,
-        patientName: (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || ''),
-        mrn: currentPatient.mrn || 'N/A',
-        tests: selectedLabTests.map(t => t.name),
-        priority: document.getElementById('labPriority').value,
-        sampleType: document.getElementById('labSampleType').value,
-        clinicalDetails: 'Lab tests requested',
-        requestedBy: (window.currentStaff && window.currentStaff.name) || document.getElementById('labDoctor').value || 'Unknown',
-        requestedById: (window.currentStaff && window.currentStaff.staffId) || '',
-        status: 'Pending',
-        timestamp: new Date().toISOString()
-    };
+    const priority = document.getElementById('labPriority').value;
+    const sampleType = document.getElementById('labSampleType').value;
+    const clinicianName = getRequestingClinicianName();
+    const clinicianId = getRequestingClinicianId();
+    const items = buildLabOrderItems();
+
+    if (!window.confirm(buildLabSubmitConfirmationText(items, priority, sampleType))) {
+        return;
+    }
 
     try {
         if (!window.currentStaff || !window.currentStaff.staffId) {
             throw new Error('Your authenticated staff profile is not ready. Reload the page and sign in again.');
         }
-
-        // Save the request once to the authoritative patient record. The old
-        // flow pushed into the parent object and then pushed again locally,
-        // producing duplicate laboratory requests.
-        const patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
-        const index = patients.findIndex(p => String(p.id) === String(currentPatient.id) || String(p.mrn) === String(currentPatient.mrn || currentPatient.id));
-        if (index === -1) throw new Error('The selected patient was not found on the common server.');
-        const requests = Array.isArray(patients[index].labRequests) ? patients[index].labRequests.slice() : [];
-        if (!requests.some(request => String(request.id) === String(labRequest.id))) requests.push(labRequest);
-        if (typeof updatePatient !== 'function') throw new Error('The secure patient service is unavailable.');
-        const savedPatient = await updatePatient(patients[index].id, { labRequests: requests });
-        if (!savedPatient) throw new Error('The patient laboratory request was not accepted by the common server.');
-        currentPatient = savedPatient;
-
-        // Create and await the REAL order document. Success is shown only
-        // after Firestore confirms it; this prevents local-only requests from
-        // reaching the laboratory as unsaveable synthetic orders.
         if (!window.pcOrders || typeof window.pcOrders.createAsync !== 'function') {
             throw new Error('The secure order service is unavailable. Reload the page and retry.');
         }
-        const items = selectedLabTests.map(t => ({
-            code: t.code || ('LAB-' + String(t.name).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8)),
-            name: t.name,
-            qty: 1,
-            price: Number(t.price) || 0
-        }));
-        const totalCash = items.reduce((sum, item) => sum + item.price, 0);
+
         const order = await window.pcOrders.createAsync({
             patientId: currentPatient.id,
             patientName: (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || ''),
             type: 'lab',
-            priority: String(document.getElementById('labPriority').value || 'routine').toLowerCase(),
-            notes: 'Sample: ' + (document.getElementById('labSampleType').value || 'Blood') + ' · Requested by: ' + window.currentStaff.name,
+            priority: String(priority || 'routine').toLowerCase(),
+            notes: 'Sample: ' + (sampleType || 'Blood') + ' · Requested by: ' + clinicianName,
             items: items
         });
-        console.log('✅ Common-server lab order confirmed:', order.id, 'Total RWF:', totalCash);
 
-        // ─── NOTIFY PARENT THAT LAB REQUEST WAS SUBMITTED ───
-        window.parent.postMessage({ 
-            type: 'LAB_REQUEST_SUBMITTED', 
-            patientId: currentPatient.id 
-        }, window.location.origin);
+        console.log('✅ Common-server lab order confirmed:', order.id, 'Total RWF:', items.reduce((sum, item) => sum + item.price, 0));
+
+        const labRequest = {
+            id: String(order.id),
+            orderId: String(order.id),
+            patientId: currentPatient.id,
+            patientName: (currentPatient.firstName || '') + ' ' + (currentPatient.lastName || ''),
+            mrn: currentPatient.mrn || 'N/A',
+            tests: items.map(item => item.name),
+            items: items.map(item => ({ code: item.code, name: item.name, qty: item.qty, price: item.price })),
+            priority: prettyPriority(priority),
+            sampleType: sampleType,
+            clinicalDetails: 'Lab tests requested',
+            requestedBy: order.orderedBy || clinicianName,
+            requestedById: order.orderedById || clinicianId,
+            status: 'Pending',
+            timestamp: order.orderedAt || new Date().toISOString()
+        };
+
+        let savedPatient = null;
+        let patientRecordUpdated = false;
+        try {
+            if (typeof updatePatient === 'function') {
+                let requests = [];
+                try {
+                    const patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                    const found = patients.find(p => String(p.id) === String(currentPatient.id) || String(p.mrn) === String(currentPatient.mrn || currentPatient.id));
+                    if (found && Array.isArray(found.labRequests)) {
+                        requests = found.labRequests.slice();
+                    }
+                } catch (readErr) {}
+                if (!requests.length && Array.isArray(currentPatient.labRequests)) {
+                    requests = currentPatient.labRequests.slice();
+                }
+                const requestKey = String(order.id);
+                const existingIndex = requests.findIndex(request => String((request && (request.orderId || request.id)) || '') === requestKey);
+                if (existingIndex >= 0) requests[existingIndex] = Object.assign({}, requests[existingIndex], labRequest);
+                else requests.push(labRequest);
+                savedPatient = await updatePatient(currentPatient.id, { labRequests: requests });
+                if (savedPatient) {
+                    currentPatient = savedPatient;
+                    patientRecordUpdated = true;
+                }
+            }
+        } catch (patientSaveError) {
+            console.error('Patient lab request history update failed after order creation:', patientSaveError);
+        }
+
+        try {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ 
+                    type: 'LAB_REQUEST_SUBMITTED', 
+                    patientId: currentPatient.id,
+                    orderId: order.id
+                }, window.location.origin);
+            }
+        } catch (postErr) {}
         console.log('📨 Notified parent about lab request submission for patient:', currentPatient.id);
 
-        const totalPrice = selectedLabTests.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
-        showToast(`✅ Lab request saved. Opening results as Pending…`, 'success');
+        renderRecentLabRequestHints();
+        showToast(
+            patientRecordUpdated
+                ? '✅ Lab request saved. Opening results as Pending…'
+                : '⚠️ Lab order reached Laboratory, but patient request history could not be refreshed yet.',
+            patientRecordUpdated ? 'success' : 'warning'
+        );
         clearLabSelection();
         setTimeout(function () {
             var dest = 'lab-results.html?patient=' + encodeURIComponent(currentPatient.id);
@@ -1465,10 +1719,6 @@ async function submitLabRequest() {
             } catch (navErr) {}
             window.location.href = dest;
         }, 350);
-        
-
-
-
 
     } catch (e) {
         console.error('Error submitting lab request:', e);
@@ -1497,39 +1747,68 @@ function escapeHtml(str) {
 // ─── GET LATEST LAB REQUESTS FOR CURRENT PATIENT ───
 function getPatientLabRequests() {
     if (!currentPatient) return [];
-    let list = [];
+    const merged = new Map();
+    let patientRequests = [];
+
     try {
         const patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
         const found = patients.find(p => String(p.id) === String(currentPatient.id));
         if (found && Array.isArray(found.labRequests)) {
-            list = found.labRequests.slice();
+            patientRequests = found.labRequests.slice();
         } else if (Array.isArray(currentPatient.labRequests)) {
-            list = currentPatient.labRequests.slice();
+            patientRequests = currentPatient.labRequests.slice();
         }
     } catch (e) {
-        if (Array.isArray(currentPatient.labRequests)) list = currentPatient.labRequests.slice();
+        if (Array.isArray(currentPatient.labRequests)) patientRequests = currentPatient.labRequests.slice();
     }
-    try {
-        const orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
-        orders.forEach(o => {
-            if (String(o.patientId) === String(currentPatient.id) && o.type === 'lab') {
-                const exists = list.some(r => String(r.id) === String(o.id));
-                if (!exists) {
-                    list.push({
-                        id: o.id,
-                        tests: (o.items || []).map(i => i.name),
-                        status: (o.status === 'completed' || o.status === 'Completed') ? 'Completed' : ((o.status === 'cancelled' || o.status === 'Cancelled') ? 'Cancelled' : 'Pending'),
-                        timestamp: o.orderedAt || new Date().toISOString(),
-                        requestedBy: o.orderedBy || 'Dr. Unknown',
-                        priority: o.priority || 'routine',
-                        sampleType: o.notes || '--'
-                    });
-                }
-            }
-        });
-    } catch (e) {}
-    return list;
+
+    patientRequests.forEach((req, idx) => {
+        if (!req) return;
+        const tests = Array.isArray(req.tests)
+            ? req.tests.slice().filter(Boolean)
+            : [req.testName || req.item || req.test].filter(Boolean);
+        const normalized = {
+            id: req.id || '',
+            orderId: req.orderId || req.id || '',
+            tests: tests,
+            status: normaliseLabRequestStatus(req.status),
+            timestamp: req.timestamp || req.date || req.orderedAt || '',
+            requestedBy: req.requestedBy || req.orderedBy || '--',
+            priority: prettyPriority(req.priority || 'Routine'),
+            sampleType: req.sampleType || extractLabSampleType(req.notes || req.clinicalNotes || ''),
+            items: Array.isArray(req.items) ? req.items.slice() : []
+        };
+        merged.set(requestHistoryKey(normalized, 'patient-' + idx), normalized);
+    });
+
+    getConfirmedPatientLabOrders().forEach(order => {
+        const normalized = {
+            id: String(order.id || ''),
+            orderId: String(order.id || ''),
+            tests: (order.items || []).map(item => item.name).filter(Boolean),
+            status: normaliseLabRequestStatus(order.status),
+            timestamp: order.orderedAt || '',
+            requestedBy: order.orderedBy || '--',
+            priority: prettyPriority(order.priority || 'routine'),
+            sampleType: extractLabSampleType(order.sampleType || order.notes || ''),
+            items: Array.isArray(order.items) ? order.items.slice() : []
+        };
+        const key = requestHistoryKey(normalized, 'order-' + normalized.id);
+        const existing = merged.get(key);
+        if (existing) {
+            merged.set(key, Object.assign({}, existing, normalized, {
+                tests: existing.tests && existing.tests.length ? existing.tests : normalized.tests,
+                sampleType: existing.sampleType && existing.sampleType !== '--' ? existing.sampleType : normalized.sampleType,
+                requestedBy: existing.requestedBy && existing.requestedBy !== '--' ? existing.requestedBy : normalized.requestedBy
+            }));
+        } else {
+            merged.set(key, normalized);
+        }
+    });
+
+    return Array.from(merged.values());
 }
+
 
 // ─── OPEN REQUEST HISTORY ───
 function openRequestHistory() {
@@ -1574,8 +1853,8 @@ function renderRequestHistory() {
     let html = '';
     requests.forEach(function(req, idx) {
         const date = req.timestamp ? new Date(req.timestamp).toLocaleString() : 'Unknown date';
-        const statusRaw = req.status || 'Pending';
-        const statusClass = statusRaw.toLowerCase();
+        const statusRaw = normaliseLabRequestStatus(req.status || 'Pending');
+        const statusClass = historyStatusClass(statusRaw);
         const tests = Array.isArray(req.tests) ? req.tests : [];
         const testsHtml = tests.length
             ? tests.map(t => '<li>' + escapeHtml(t) + '</li>').join('')
