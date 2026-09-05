@@ -953,43 +953,120 @@
                 return;
             }
 
-            // 4. One visible column per real request / order so Pending requests are never hidden.
+            // 4. Same-day requests share one column, but repeated same tests remain separately visible inside that day column.
+            function dayKeyOf(iso) {
+                try {
+                    var d = new Date(iso);
+                    if (isNaN(d.getTime())) return 'unknown';
+                    return d.getFullYear() + '-' + String(d.getMonth() + 101).slice(1) + '-' + String(d.getDate() + 100).slice(1);
+                } catch (e) {
+                    return 'unknown';
+                }
+            }
+
             function isVerifiedSet(s) {
                 return s.status === 'completed' || s.status === 'Completed';
             }
 
-            function cellForSet(s, t, cat) {
-                var ordered = testIsOrdered(s.testsOrdered, t, cat);
-                if (isVerifiedSet(s)) {
-                    var r = findResultForTest(s.results, t);
-                    if (r) return { kind: 'result', r: r };
-                    if (ordered) return { kind: 'reported' };
-                    return { kind: 'empty' };
-                }
-                if (ordered) return { kind: 'pending' };
-                return { kind: 'empty' };
+            function shortRequestId(id) {
+                var clean = String(id || '').replace(/[^A-Za-z0-9-]/g, '');
+                return clean ? clean.slice(-8) : '—';
             }
 
-            var columns = sets.slice().sort(function (a, b) {
-                return new Date(b.date) - new Date(a.date);
-            });
+            function entryTimeLabel(iso) {
+                var d = new Date(iso);
+                if (isNaN(d.getTime())) return 'Time —';
+                return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            function groupSetsByDay(list) {
+                var groups = [];
+                (list || []).forEach(function (s) {
+                    var key = dayKeyOf(s.date);
+                    var g = groups[groups.length - 1];
+                    if (!g || g.key !== key) {
+                        g = { key: key, sets: [], verifiedCount: 0 };
+                        groups.push(g);
+                    }
+                    g.sets.push(s);
+                    if (isVerifiedSet(s)) g.verifiedCount++;
+                });
+                return groups;
+            }
+
+            function buildGroupEntries(group, orderedCheck, resultCheck) {
+                var entries = [];
+                group.sets.forEach(function (s) {
+                    var ordered = !!orderedCheck(s);
+                    var result = resultCheck ? resultCheck(s) : null;
+                    if (!ordered && !result) return;
+                    entries.push({
+                        kind: result ? 'result' : (isVerifiedSet(s) ? 'reported' : 'pending'),
+                        at: s.date || '',
+                        id: s.id || '',
+                        r: result || null
+                    });
+                });
+                entries.sort(function (a, b) {
+                    return new Date(a.at || 0) - new Date(b.at || 0);
+                });
+                return entries;
+            }
+
+            function renderEntryBadge(entry) {
+                if (!entry) return '';
+                if (entry.kind === 'result') {
+                    var val = entry.r && entry.r.value != null && entry.r.value !== '' ? entry.r.value : '—';
+                    return '<span style="font-weight:800;">' + escapeHtml(val) + '</span>' + flagBadge(entry.r && entry.r.flag);
+                }
+                if (entry.kind === 'reported') {
+                    return '<span style="color:#6e6e73;font-weight:700;">Reported</span>';
+                }
+                return '<span class="oc-pending-badge">Pending</span>';
+            }
+
+            function renderGroupCell(entries) {
+                if (!entries || !entries.length) {
+                    return '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
+                }
+                if (entries.length === 1) {
+                    return '<td class="oc-res-cell">' + renderEntryBadge(entries[0]) + '</td>';
+                }
+                return '<td class="oc-res-cell" style="white-space:normal;padding:6px 4px;">' +
+                    '<div style="display:flex;flex-direction:column;gap:4px;align-items:stretch;">' +
+                    entries.map(function (entry, idx) {
+                        return '<div style="padding:' + (idx === entries.length - 1 ? '0' : '0 0 4px 0') + ';' + (idx === entries.length - 1 ? '' : 'border-bottom:1px dashed rgba(0,0,0,0.10);') + '">' +
+                            '<div style="font-size:9px;color:#6e6e73;margin-bottom:2px;">' + escapeHtml(entryTimeLabel(entry.at) + ' • ' + shortRequestId(entry.id)) + '</div>' +
+                            '<div>' + renderEntryBadge(entry) + '</div>' +
+                        '</div>';
+                    }).join('') +
+                    '</div>' +
+                '</td>';
+            }
+
+            var groups = groupSetsByDay(sets);
+            groups.reverse();
 
             var head = document.getElementById('matrixHead');
             var headHtml = '<tr>' +
                 '<th style="width:60px;text-align:left;">Analysis</th>' +
                 '<th style="width:112px;text-align:left;">Parameter</th>';
-            columns.forEach(function (s) {
-                var d = new Date(s.date);
+            groups.forEach(function (g) {
+                var first = g.sets[0] || null;
+                var d = new Date(first && first.date || '');
                 var dateStr = isNaN(d.getTime()) ? 'Unknown date' : d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                var timeStr = isNaN(d.getTime()) ? '' : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                var isVerified = isVerifiedSet(s);
-                var statusChip = isVerified
-                    ? '<span style="display:inline-block;background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;">✓ Verified</span>'
-                    : '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;">⏳ Pending</span>';
+                var countLabel = g.sets.length + ' request' + (g.sets.length === 1 ? '' : 's');
+                var chip;
+                if (g.verifiedCount === g.sets.length) {
+                    chip = '<span style="display:inline-block;background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">✓ ' + countLabel + '</span>';
+                } else if (g.verifiedCount > 0) {
+                    chip = '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">' + g.verifiedCount + '/' + g.sets.length + ' ready</span>';
+                } else {
+                    chip = '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">⏳ ' + countLabel + '</span>';
+                }
                 headHtml += '<th class="oc-col-order-hdr">' +
-                    '<div class="oc-col-order-date">' + dateStr + (timeStr ? (' ' + timeStr) : '') + '</div>' +
-                    '<div class="oc-col-order-id">' + escapeHtml(String(s.id || '—').replace(/[^A-Za-z0-9-]/g, '').slice(-12) || '—') + '</div>' +
-                    statusChip + '</th>';
+                    '<div class="oc-col-order-date">' + dateStr + '</div>' +
+                    chip + '</th>';
             });
             headHtml += '</tr>';
             head.innerHTML = headHtml;
@@ -999,14 +1076,22 @@
             var bodyHtml = '';
             var rowCount = 0;
 
+            function entriesForMatrixTest(group, t, cat) {
+                return buildGroupEntries(
+                    group,
+                    function (s) { return testIsOrdered(s.testsOrdered, t, cat); },
+                    function (s) { return isVerifiedSet(s) ? findResultForTest(s.results, t) : null; }
+                );
+            }
+
             function testActivityScore(t, cat) {
                 var score = 0;
-                for (var ci = 0; ci < columns.length; ci++) {
-                    var cell = cellForSet(columns[ci], t, cat);
-                    var recency = columns.length - ci;
-                    if (cell.kind === 'result') score = Math.max(score, 1000 + recency * 10);
-                    else if (cell.kind === 'reported') score = Math.max(score, 700 + recency * 10);
-                    else if (cell.kind === 'pending') score = Math.max(score, 500 + recency * 10);
+                for (var gi = 0; gi < groups.length; gi++) {
+                    var entries = entriesForMatrixTest(groups[gi], t, cat);
+                    var recency = groups.length - gi;
+                    if (entries.some(function (entry) { return entry.kind === 'result'; })) score = Math.max(score, 1000 + recency * 10);
+                    else if (entries.some(function (entry) { return entry.kind === 'reported'; })) score = Math.max(score, 700 + recency * 10);
+                    else if (entries.some(function (entry) { return entry.kind === 'pending'; })) score = Math.max(score, 500 + recency * 10);
                 }
                 return score;
             }
@@ -1039,19 +1124,8 @@
                         '<span>' + t.name + unitStr + '</span>' +
                         '<span class="oc-test-range">' + rangeStr + '</span></td>';
 
-                    columns.forEach(function (s) {
-                        var cell = cellForSet(s, t, cat);
-                        if (cell.kind === 'result') {
-                            var r = cell.r;
-                            var val = r.value != null && r.value !== '' ? r.value : '—';
-                            bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(val) + '</span>' + flagBadge(r.flag) + '</td>';
-                        } else if (cell.kind === 'reported') {
-                            bodyHtml += '<td class="oc-res-cell" style="color:#6e6e73;font-size:11px;">Reported</td>';
-                        } else if (cell.kind === 'pending') {
-                            bodyHtml += '<td class="oc-res-cell"><span class="oc-pending-badge">Pending</span></td>';
-                        } else {
-                            bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
-                        }
+                    groups.forEach(function (g) {
+                        bodyHtml += renderGroupCell(entriesForMatrixTest(g, t, cat));
                     });
 
                     bodyHtml += '</tr>';
@@ -1068,10 +1142,12 @@
             }
 
             var extraOrdered = [];
-            columns.forEach(function (s) {
-                orderedSetLabels(s.testsOrdered).forEach(function (label) {
-                    if (!label || matchesKnownMatrix(label) || extraOrdered.indexOf(label) !== -1) return;
-                    extraOrdered.push(label);
+            groups.forEach(function (g) {
+                g.sets.forEach(function (s) {
+                    orderedSetLabels(s.testsOrdered).forEach(function (label) {
+                        if (!label || matchesKnownMatrix(label) || extraOrdered.indexOf(label) !== -1) return;
+                        extraOrdered.push(label);
+                    });
                 });
             });
 
@@ -1087,28 +1163,22 @@
                         '<span class="oc-test-code">EXTRA</span>' +
                         '<span>' + escapeHtml(label) + '</span>' +
                         '<span class="oc-test-range"> [Requested test]</span></td>';
-                    columns.forEach(function (s) {
-                        var labels = orderedSetLabels(s.testsOrdered);
-                        var ordered = labels.some(function (entry) {
-                            var lowA = String(entry || '').toLowerCase();
-                            var lowB = String(label || '').toLowerCase();
-                            return lowA === lowB || lowA.indexOf(lowB) !== -1 || lowB.indexOf(lowA) !== -1;
-                        });
-                        if (!ordered) {
-                            bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
-                            return;
-                        }
-                        if (isVerifiedSet(s)) {
-                            var extraResult = findResultForOrderedLabel(s.results, label);
-                            if (extraResult) {
-                                var extraVal = extraResult.value != null && extraResult.value !== '' ? extraResult.value : '—';
-                                bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(extraVal) + '</span>' + flagBadge(extraResult.flag) + '</td>';
-                            } else {
-                                bodyHtml += '<td class="oc-res-cell" style="color:#6e6e73;font-size:11px;">Reported</td>';
+
+                    groups.forEach(function (g) {
+                        var entries = buildGroupEntries(
+                            g,
+                            function (s) {
+                                return orderedSetLabels(s.testsOrdered).some(function (entry) {
+                                    var lowA = String(entry || '').toLowerCase();
+                                    var lowB = String(label || '').toLowerCase();
+                                    return lowA === lowB || lowA.indexOf(lowB) !== -1 || lowB.indexOf(lowA) !== -1;
+                                });
+                            },
+                            function (s) {
+                                return isVerifiedSet(s) ? findResultForOrderedLabel(s.results, label) : null;
                             }
-                        } else {
-                            bodyHtml += '<td class="oc-res-cell"><span class="oc-pending-badge">Pending</span></td>';
-                        }
+                        );
+                        bodyHtml += renderGroupCell(entries);
                     });
                     bodyHtml += '</tr>';
                 });
