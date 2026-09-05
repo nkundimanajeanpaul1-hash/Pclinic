@@ -1264,7 +1264,6 @@
                     </label>
                     <span class="selected-count">Selected: <strong id="selectedTestCount">0</strong> tests</span>
                 </div>
-                <div id="recentLabHints" class="lab-hint-box" hidden></div>
                 <div style="border: 0.5px solid rgba(0,0,0,0.04); border-radius: 12px; padding: 12px; background: rgba(255,255,255,0.2);">
                     <div class="lab-grid" id="labTestGrid">
                         <!-- ═══ THE SAME 4-COLUMN CATEGORY TABLE AS BEFORE ═══
@@ -1552,46 +1551,7 @@
             }
         }
         function renderRecentLabRequestHints() {
-            const box = document.getElementById('recentLabHints');
-            if (!box) return;
-            if (!currentPatient) {
-                box.hidden = true;
-                box.innerHTML = '';
-                return;
-            }
-            const now = Date.now();
-            const sevenDays = 7 * 24 * 60 * 60 * 1000;
-            const hints = getPatientLabRequests()
-                .filter(req => {
-                    const status = normaliseLabRequestStatus(req.status);
-                    if (status === 'Cancelled') return false;
-                    const at = new Date(req.timestamp || req.date || req.orderedAt || 0).getTime();
-                    const recent = at && !isNaN(at) && (now - at <= sevenDays);
-                    return status === 'Pending' || status === 'In Progress' || recent;
-                })
-                .sort((a, b) => new Date(b.timestamp || b.date || 0) - new Date(a.timestamp || a.date || 0))
-                .slice(0, 4);
-            if (!hints.length) {
-                box.hidden = true;
-                box.innerHTML = '';
-                return;
-            }
-            box.hidden = false;
-            box.innerHTML = '<div class="lab-hint-title"><i class="ti ti-history"></i> Recent / pending requests for this patient</div>' +
-                '<div class="lab-hint-sub">Shown only as history. Nothing is auto-selected.</div>' +
-                '<div class="lab-hint-list">' + hints.map(req => {
-                    const tests = Array.isArray(req.tests) ? req.tests.filter(Boolean) : [];
-                    const meta = [
-                        labRequestDateLabel(req.timestamp || req.date || req.orderedAt),
-                        prettyPriority(req.priority || 'Routine'),
-                        req.sampleType ? extractLabSampleType(req.sampleType) : '--',
-                        req.requestedBy || '--'
-                    ].filter(Boolean);
-                    return '<div class="lab-hint-item">' +
-                        '<div class="lab-hint-tests">' + escHtml(tests.join(', ') || 'No tests recorded') + '</div>' +
-                        '<div class="lab-hint-meta"><span class="history-badge ' + historyStatusClass(req.status) + '">' + escHtml(normaliseLabRequestStatus(req.status)) + '</span><span>' + escHtml(meta.join(' • ')) + '</span></div>' +
-                        '</div>';
-                }).join('') + '</div>';
+            return;
         }
         function labRequestDateLabel(value) {
             if (!value) return 'Unknown date';
