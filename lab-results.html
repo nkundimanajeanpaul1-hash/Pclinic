@@ -658,6 +658,50 @@
             catch (e) { return []; }
         }
 
+        function getConfirmedLabOrdersForPatient(pidRaw) {
+            try {
+                if (window.pcOrders && typeof window.pcOrders.listServerConfirmed === 'function') {
+                    return (window.pcOrders.listServerConfirmed({ dept: 'lab', patientId: pidRaw }) || []).filter(function (o) {
+                        return String(o.status || '').toLowerCase() !== 'cancelled';
+                    });
+                }
+            } catch (e) {}
+            try {
+                return JSON.parse(localStorage.getItem('pclinic_orders') || '[]').filter(function (o) {
+                    return stripMod(o.patientId) === pidRaw && (o.type === 'lab' || o.dept === 'lab') && !o._legacyLocalOnly && !o._syncFailed && String(o.status || '').toLowerCase() !== 'cancelled';
+                });
+            } catch (e2) {
+                return [];
+            }
+        }
+
+        function orderedLabel(entry) {
+            if (entry == null) return '';
+            if (typeof entry === 'string') return String(entry).trim();
+            return String(entry.name || entry.test || entry.orderItemName || entry.code || '').trim();
+        }
+
+        function orderedSetLabels(testsOrdered) {
+            var out = [];
+            (Array.isArray(testsOrdered) ? testsOrdered : []).forEach(function (entry) {
+                var label = orderedLabel(entry);
+                if (label && out.indexOf(label) === -1) out.push(label);
+            });
+            return out;
+        }
+
+        function findResultForOrderedLabel(results, label) {
+            if (!Array.isArray(results) || !label) return null;
+            var wanted = String(label).toLowerCase().trim();
+            for (var i = 0; i < results.length; i++) {
+                var row = results[i] || {};
+                var name = String(row.test || row.name || row.orderItemName || row.code || '').toLowerCase().trim();
+                if (!name) continue;
+                if (name === wanted || name.indexOf(wanted) !== -1 || wanted.indexOf(name) !== -1) return row;
+            }
+            return null;
+        }
+
         function patientName(p) {
             if (!p) return '';
             if (p.name) return p.name;
@@ -844,12 +888,7 @@
             var pidRaw = stripMod(currentPatient.id);
 
             // 1. Real lab orders for this patient from the Common Server
-            var orders = [];
-            try {
-                orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]').filter(function (o) {
-                    return stripMod(o.patientId) === pidRaw && (o.type === 'lab' || o.dept === 'lab') && String(o.status || '').toLowerCase() !== 'cancelled';
-                });
-            } catch (e) {}
+            var orders = getConfirmedLabOrdersForPatient(pidRaw);
 
             // 2. Build result sets: each real order = one column
             var sets = orders.map(function (o) {
@@ -914,114 +953,46 @@
                 return;
             }
 
-            // ═══ 2026-08-21 · GROUP-BY-DATE: one column per calendar day ═══
-            // Every lab request made on the SAME date now shares ONE column.
-            //
-            // ── GROUP-BY-DAY HELPERS (unit-tested) ──
-            function dayKeyOf(iso) {
-                try {
-                    var d = new Date(iso);
-                    if (isNaN(d.getTime())) return 'unknown';
-                    return d.getFullYear() + '-' + String(d.getMonth() + 101).slice(1) + '-' + String(d.getDate() + 100).slice(1);
-                } catch (e) { return 'unknown'; }
-            }
-
+            // 4. One visible column per real request / order so Pending requests are never hidden.
             function isVerifiedSet(s) {
                 return s.status === 'completed' || s.status === 'Completed';
             }
 
-            // sets are already sorted by date, so same-day sets are contiguous.
-            function groupSetsByDay(sets) {
-                var groups = [];
-                sets.forEach(function (s) {
-                    var key = dayKeyOf(s.date);
-                    var g = groups[groups.length - 1];
-                    if (!g || g.key !== key) {
-                        g = { key: key, sets: [], verifiedCount: 0 };
-                        groups.push(g);
-                    }
-                    g.sets.push(s);
-                    if (isVerifiedSet(s)) g.verifiedCount++;
-                });
-                return groups;
-            }
-
-            // What one cell shows for a day-group:
-            //   {kind:'result', r:latest verified result}
-            // | {kind:'pending'} if any order asked for the test but none has a result yet
-            // | {kind:'empty'}   if the test was never ordered that day
-            function cellForGroup(g, t, cat) {
-                var found = null, foundDate = null, orderedAny = false;
-                g.sets.forEach(function (s) {
-                    if (isVerifiedSet(s)) {
-                        var r = findResultForTest(s.results, t);
-                        if (r && (!found || new Date(s.date) >= new Date(foundDate))) {
-                            found = r;
-                            foundDate = s.date;
-                        }
-                    }
-                    if (!orderedAny && testIsOrdered(s.testsOrdered, t, cat)) orderedAny = true;
-                });
-                if (found) return { kind: 'result', r: found };
-                if (orderedAny) return { kind: 'pending' };
+            function cellForSet(s, t, cat) {
+                var ordered = testIsOrdered(s.testsOrdered, t, cat);
+                if (isVerifiedSet(s)) {
+                    var r = findResultForTest(s.results, t);
+                    if (r) return { kind: 'result', r: r };
+                    if (ordered) return { kind: 'reported' };
+                    return { kind: 'empty' };
+                }
+                if (ordered) return { kind: 'pending' };
                 return { kind: 'empty' };
             }
-            // ── END GROUP-BY-DAY HELPERS ──
 
-            var groups = groupSetsByDay(sets);
-            // Newest exam date first (left); older dates follow to the right
-            groups.reverse();
-
-            // 4. Table header — ONE column per day
-            var head = document.getElementById('matrixHead');
-            var headHtml = '<tr>' +
-                '<th style="width:60px;text-align:left;">Analysis</th>' +
-                '<th style="width:112px;text-align:left;">Parameter</th>';
-            groups.forEach(function (g) {
-                var first = g.sets[0];
-                var d = new Date(first.date);
-                var dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                var chip;
-                if (g.verifiedCount === g.sets.length) {
-                    chip = '<span style="display:inline-block;background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:8px;padding:1px 4px;border-radius:20px;margin-top:2px;">✓</span>';
-                } else if (g.verifiedCount > 0) {
-                    chip = '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 4px;border-radius:20px;margin-top:2px;">' + g.verifiedCount + '/' + g.sets.length + '</span>';
-                } else {
-                    chip = '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 4px;border-radius:20px;margin-top:2px;">…</span>';
-                }
-                headHtml += '<th class="oc-col-order-hdr">' +
-                    '<div class="oc-col-order-date">' + dateStr + '</div>' +
-                    chip + '</th>';
+            var columns = sets.slice().sort(function (a, b) {
+                return new Date(b.date) - new Date(a.date);
             });
-            headHtml += '</tr>';
-            head.innerHTML = headHtml;
 
-            /*
-            // ── PREVIOUS BEHAVIOUR (one column per order) — kept for quick revert ──
-            // 4. Table header — one real order column per set
             var head = document.getElementById('matrixHead');
             var headHtml = '<tr>' +
                 '<th style="width:60px;text-align:left;">Analysis</th>' +
                 '<th style="width:112px;text-align:left;">Parameter</th>';
-            sets.forEach(function (s) {
+            columns.forEach(function (s) {
                 var d = new Date(s.date);
-                var dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                var timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                var isVerified = s.status === 'completed' || s.status === 'Completed';
+                var dateStr = isNaN(d.getTime()) ? 'Unknown date' : d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                var timeStr = isNaN(d.getTime()) ? '' : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                var isVerified = isVerifiedSet(s);
                 var statusChip = isVerified
                     ? '<span style="display:inline-block;background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;">✓ Verified</span>'
                     : '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;">⏳ Pending</span>';
                 headHtml += '<th class="oc-col-order-hdr">' +
-                    '<div class="oc-col-order-date">' + dateStr + ' ' + timeStr + '</div>' +
-                    '<div class="oc-col-order-id">' + escapeHtml(String(s.id).replace(/[^0-9]/g, '').slice(0, 7) || '—') + '</div>' +
-                    '<div class="oc-col-links">' +
-                        '<span class="oc-col-link" onclick="showToast(&quot;📄 Lab results report #' + escapeHtml(String(s.id).replace(/[^0-9]/g, '').slice(0, 7)) + '&quot;, &quot;info&quot;)"><i class="ti ti-file-text"></i> Lab.results</span>' +
-                        '<span class="oc-col-link" onclick="showToast(&quot;📋 Order #' + escapeHtml(String(s.id).replace(/[^0-9]/g, '').slice(0, 7)) + '&quot;, &quot;info&quot;)"><i class="ti ti-clipboard-list"></i> Order</span>' +
-                    '</div>' + statusChip + '</th>';
+                    '<div class="oc-col-order-date">' + dateStr + (timeStr ? (' ' + timeStr) : '') + '</div>' +
+                    '<div class="oc-col-order-id">' + escapeHtml(String(s.id || '—').replace(/[^A-Za-z0-9-]/g, '').slice(-12) || '—') + '</div>' +
+                    statusChip + '</th>';
             });
             headHtml += '</tr>';
             head.innerHTML = headHtml;
-            */
 
             // 5. Table body — recently requested / resulted tests first
             var body = document.getElementById('matrixBody');
@@ -1030,10 +1001,11 @@
 
             function testActivityScore(t, cat) {
                 var score = 0;
-                for (var gi = 0; gi < groups.length; gi++) {
-                    var cell = cellForGroup(groups[gi], t, cat);
-                    var recency = groups.length - gi; // newer columns (left) weigh more
+                for (var ci = 0; ci < columns.length; ci++) {
+                    var cell = cellForSet(columns[ci], t, cat);
+                    var recency = columns.length - ci;
                     if (cell.kind === 'result') score = Math.max(score, 1000 + recency * 10);
+                    else if (cell.kind === 'reported') score = Math.max(score, 700 + recency * 10);
                     else if (cell.kind === 'pending') score = Math.max(score, 500 + recency * 10);
                 }
                 return score;
@@ -1067,13 +1039,14 @@
                         '<span>' + t.name + unitStr + '</span>' +
                         '<span class="oc-test-range">' + rangeStr + '</span></td>';
 
-                    groups.forEach(function (g) {
-                        var cell = cellForGroup(g, t, cat);
+                    columns.forEach(function (s) {
+                        var cell = cellForSet(s, t, cat);
                         if (cell.kind === 'result') {
                             var r = cell.r;
                             var val = r.value != null && r.value !== '' ? r.value : '—';
-                            bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(val) + '</span>' +
-                                flagBadge(r.flag) + '</td>';
+                            bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(val) + '</span>' + flagBadge(r.flag) + '</td>';
+                        } else if (cell.kind === 'reported') {
+                            bodyHtml += '<td class="oc-res-cell" style="color:#6e6e73;font-size:11px;">Reported</td>';
                         } else if (cell.kind === 'pending') {
                             bodyHtml += '<td class="oc-res-cell"><span class="oc-pending-badge">Pending</span></td>';
                         } else {
@@ -1081,35 +1054,65 @@
                         }
                     });
 
-                    /*
-                    // ── PREVIOUS BEHAVIOUR (one column per order) — kept for quick revert ──
-                    sets.forEach(function (s) {
-                        var isVerified = s.status === 'completed' || s.status === 'Completed';
-                        if (isVerified) {
-                            var r = findResultForTest(s.results, t);
-                            if (r) {
-                                var val = r.value != null && r.value !== '' ? r.value : '—';
-                                bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(val) + '</span>' +
-                                    '<span style="font-size:8px;color:#6e6e73;"> ' + escapeHtml(r.unit || '') + '</span>' +
-                                    flagBadge(r.flag) + '</td>';
-                            } else {
-                                var ordered = testIsOrdered(s.testsOrdered, t, cat);
-                                bodyHtml += ordered
-                                    ? '<td class="oc-res-cell" style="color:#6e6e73;font-size:11px;">—</td>'
-                                    : '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
-                            }
-                        } else {
-                            var isOrdered = testIsOrdered(s.testsOrdered, t, cat);
-                            bodyHtml += isOrdered
-                                ? '<td class="oc-res-cell"><span class="oc-pending-badge">…</span></td>'
-                                : '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
-                        }
-                    });
-                    */
-
                     bodyHtml += '</tr>';
                 });
             });
+
+            function matchesKnownMatrix(label) {
+                for (var c = 0; c < OC_CATEGORIES.length; c++) {
+                    for (var ti = 0; ti < OC_CATEGORIES[c].tests.length; ti++) {
+                        if (testIsOrdered([label], OC_CATEGORIES[c].tests[ti], OC_CATEGORIES[c])) return true;
+                    }
+                }
+                return false;
+            }
+
+            var extraOrdered = [];
+            columns.forEach(function (s) {
+                orderedSetLabels(s.testsOrdered).forEach(function (label) {
+                    if (!label || matchesKnownMatrix(label) || extraOrdered.indexOf(label) !== -1) return;
+                    extraOrdered.push(label);
+                });
+            });
+
+            if (extraOrdered.length) {
+                extraOrdered.forEach(function (label, idx) {
+                    var rowClass = (rowCount % 2 === 0) ? 'row-even' : 'row-odd';
+                    rowCount++;
+                    bodyHtml += '<tr class="' + rowClass + '">';
+                    if (idx === 0) {
+                        bodyHtml += '<td class="oc-cat-cell oc-cat-uri" rowspan="' + extraOrdered.length + '">ADDITIONAL REQUESTS</td>';
+                    }
+                    bodyHtml += '<td class="oc-test-cell">' +
+                        '<span class="oc-test-code">EXTRA</span>' +
+                        '<span>' + escapeHtml(label) + '</span>' +
+                        '<span class="oc-test-range"> [Requested test]</span></td>';
+                    columns.forEach(function (s) {
+                        var labels = orderedSetLabels(s.testsOrdered);
+                        var ordered = labels.some(function (entry) {
+                            var lowA = String(entry || '').toLowerCase();
+                            var lowB = String(label || '').toLowerCase();
+                            return lowA === lowB || lowA.indexOf(lowB) !== -1 || lowB.indexOf(lowA) !== -1;
+                        });
+                        if (!ordered) {
+                            bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
+                            return;
+                        }
+                        if (isVerifiedSet(s)) {
+                            var extraResult = findResultForOrderedLabel(s.results, label);
+                            if (extraResult) {
+                                var extraVal = extraResult.value != null && extraResult.value !== '' ? extraResult.value : '—';
+                                bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(extraVal) + '</span>' + flagBadge(extraResult.flag) + '</td>';
+                            } else {
+                                bodyHtml += '<td class="oc-res-cell" style="color:#6e6e73;font-size:11px;">Reported</td>';
+                            }
+                        } else {
+                            bodyHtml += '<td class="oc-res-cell"><span class="oc-pending-badge">Pending</span></td>';
+                        }
+                    });
+                    bodyHtml += '</tr>';
+                });
+            }
 
             body.innerHTML = bodyHtml;
             padEmptyResultColumns();
