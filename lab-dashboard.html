@@ -2821,9 +2821,7 @@
             font-weight: 800 !important;
             letter-spacing: -.01em !important;
         }
-        #panel-overview .panel-body > div:first-child > div:first-child > div:nth-child(2),
-        .panel-header + #resScopeNote,
-        .panel-header + #repScopeNote {
+        #panel-overview .panel-body > div:first-child > div:first-child > div:nth-child(2) {
             font-size: 11.5px !important;
             color: #7c8799 !important;
         }
@@ -3728,8 +3726,7 @@
                         <button class="btn-s" style="font-size:11px;display:flex;align-items:center;gap:4px;" onclick="pcLabEngine.repaint(); showToast('🔄 Worklist refreshed', 'info')"><i class="ti ti-refresh" style="font-size:12px;"></i> Refresh</button>
                     </div>
                 </div>
-                <div id="wlScopeNote" style="margin-bottom:10px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
-                <table class="wtbl">
+                                <table class="wtbl">
                     <thead><tr><th style="width:13%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Test</th><th style="width:11%">Dept</th><th style="width:10%">Requested</th><th style="width:10%">TAT</th><th style="width:11%">Priority</th><th style="width:11%">Status</th><th style="width:14%">Actions</th></tr></thead>
                     <tbody id="pcLabQueueTable">
                     </tbody>
@@ -3746,8 +3743,7 @@
                         <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print list</button>
                     </div>
                 </div>
-                <div id="resScopeNote" style="margin-bottom:10px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
-                <table class="wtbl">
+                                <table class="wtbl">
                     <thead><tr><th style="width:13%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Test</th><th style="width:11%">Dept</th><th style="width:11%">Status</th><th style="width:12%">Flags</th><th style="width:10%">State</th><th style="width:9%">Action</th></tr></thead>
                     <tbody id="pcLabResultsTable">
                     </tbody>
@@ -3767,7 +3763,6 @@
                 <div class="path-card">
                     <div class="path-head"><i class="ti ti-clipboard-list"></i>Case identification</div>
                     <div class="path-body">
-                        <div id="pathScopeNote" style="margin-bottom:10px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
                         <div class="fg">
                             <div class="fgl"><div class="lbl">Histology number</div><input class="fi" id="path_case_id" placeholder="Auto-generated when patient is selected" /></div>
                             <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="path_patient_name" placeholder="Selected patient…" readonly /></div>
@@ -3940,8 +3935,7 @@
                     <button class="bb-tab" onclick="switchBB(this,'bb-inv')"><i class="ti ti-box"></i> Blood inventory</button>
                 </div>
                 <div id="bb-xmatch" class="bb-panel show">
-                    <div id="bbScopeNote" style="margin-bottom:10px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
-                    <div class="fg">
+                                        <div class="fg">
                         <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="bb_xm_patient" placeholder="Selected patient…" readonly /></div>
                         <div class="fgl"><div class="lbl">Request date and time</div><input class="fi" id="bb_request_at" type="datetime-local" /></div>
                         <div class="fgl"><div class="lbl">Patient blood group</div><select class="fi" id="bb_patient_group"><option>O+</option><option>O−</option><option>A+</option><option>A−</option><option>B+</option><option>B−</option><option>AB+</option><option>AB−</option><option>Unknown — test first</option></select></div>
@@ -4073,8 +4067,7 @@
                         <span id="repAwaitingReleaseBadge" style="font-size:11px;background:var(--redb);color:var(--redd);padding:2px 8px;border-radius:10px;font-weight:600;">0 awaiting release</span>
                     </div>
                 </div>
-                <div id="repScopeNote" style="margin-bottom:12px;font-size:12px;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.25);border-radius:10px;padding:8px 14px;font-weight:600;"></div>
-                <div class="stat-row" style="margin-bottom:16px;">
+                                <div class="stat-row" style="margin-bottom:16px;">
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--acb)"><i class="ti ti-test-pipe" style="color:var(--ac)"></i></div>
                         <div class="sc-lbl">Specimens today</div>
@@ -4864,4 +4857,5 @@ window.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 </body>
+</html>>
 </html>
