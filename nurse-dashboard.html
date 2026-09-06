@@ -1147,7 +1147,7 @@
         }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
-    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260906_DOCTORSKIN_CPNFILE">
+    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260906_DOCTORSKIN_ANC">
 </head>
 <body>
 
@@ -1431,12 +1431,12 @@
                         <div id="cpnViewFile" style="display:flex;flex:1;min-height:0;flex-direction:column;gap:9px;">
                             <div class="pcf-panel cpn-file-main">
                                 <div class="cpn-file-head">
-                                    <h2><i class="ti ti-notes" style="color:#0b57d0;"></i> Clinical Progress Note</h2>
+                                    <h2><i class="ti ti-baby-carriage" style="color:#0b57d0;"></i> ANC / CPN File</h2>
                                     <span class="badge cpn-active-badge">Active Record</span>
                                 </div>
                                 <div class="pcf-cmd noprint cpn-file-cmd">
                                     <button class="pcf-btn sm" type="button" onclick="document.getElementById('cpnHistoryList')?.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-history"></i> History</button>
-                                    <b class="mode">Nurse CPN</b>
+                                    <b class="mode">ANC / CPN</b>
                                     <span class="spacer"></span>
                                     <button class="pcf-btn sm" onclick="printPatientFile()"><i class="ti ti-printer"></i> Print</button>
                                     <button class="pcf-btn sm primary" onclick="saveCPN()"><i class="ti ti-device-floppy"></i> Save</button>
@@ -1444,15 +1444,23 @@
                                 <div class="pcf-grid wide" id="cpnFileGrid">
                                     <div class="pcf-pane noprint" id="cpnWorkPane">
                                         <div class="pcf-panel">
-                                            <h2><i class="ti ti-user-heart"></i> Visit context</h2>
+                                            <h2><i class="ti ti-user-heart"></i> ANC / CPN visit context</h2>
                                             <div class="pcf-two">
                                                 <div>
                                                     <label class="pcf-lbl">Selected patient</label>
                                                     <input class="pcf-in fi" id="cpnPatient" placeholder="Select or search a patient first" />
                                                 </div>
                                                 <div>
-                                                    <label class="pcf-lbl">Date and time</label>
+                                                    <label class="pcf-lbl">Visit date and time</label>
                                                     <input class="pcf-in fi" type="datetime-local" id="cpnDateTime" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">ANC / CPN visit number</label>
+                                                    <input class="pcf-in fi" id="cpnVisitNumber" readonly placeholder="Auto" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Next RDV</label>
+                                                    <input class="pcf-in fi" type="date" id="cpnRdv" />
                                                 </div>
                                                 <div>
                                                     <label class="pcf-lbl">Nurse / Provider</label>
@@ -1460,48 +1468,71 @@
                                                 </div>
                                                 <div>
                                                     <label class="pcf-lbl">Ward / Location</label>
-                                                    <input class="pcf-in fi" id="cpnLocation" placeholder="Ward 4B, Bed 02" />
+                                                    <input class="pcf-in fi" id="cpnLocation" placeholder="ANC / Maternity" />
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div class="pcf-panel">
-                                            <h2><i class="ti ti-stethoscope"></i> Clinical Progress Note</h2>
-                                            <label class="pcf-lbl">Subjective (Patient complaint / history) *</label>
-                                            <textarea class="pcf-in ta" id="cpnSubjective" rows="4" placeholder="What the patient reports today..."></textarea>
-
-                                            <label class="pcf-lbl">Objective (Findings / saved vitals / observations) *</label>
-                                            <textarea class="pcf-in ta" id="cpnObjective" rows="4" placeholder="Clinical findings, examination, wound status, and reference to saved vitals..."></textarea>
-
-                                            <label class="pcf-lbl">Assessment (Nursing / clinical impression) *</label>
-                                            <textarea class="pcf-in ta" id="cpnAssessment" rows="4" placeholder="Clinical judgment, response, impression, problems identified..."></textarea>
-
-                                            <label class="pcf-lbl">Plan (Interventions / treatment / follow-up) *</label>
-                                            <textarea class="pcf-in ta" id="cpnPlan" rows="4" placeholder="Treatment plan, medications, escalation, referrals, review plan..."></textarea>
-
+                                            <h2><i class="ti ti-calendar-heart"></i> Pregnancy tracking</h2>
                                             <div class="pcf-two">
                                                 <div>
-                                                    <label class="pcf-lbl">Patient status</label>
-                                                    <select class="pcf-in fi" id="cpnStatus">
-                                                        <option value="stable">🟢 Stable</option>
-                                                        <option value="improving">🟡 Improving</option>
-                                                        <option value="warning">🟠 Warning - Monitor closely</option>
-                                                        <option value="critical">🔴 Critical - Urgent review</option>
-                                                        <option value="discharged">✅ Discharged</option>
-                                                        <option value="transferred">📤 Transferred</option>
+                                                    <label class="pcf-lbl">Number of pregnancy</label>
+                                                    <input class="pcf-in fi" type="number" min="1" id="cpnPregnancies" placeholder="1" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">LMP</label>
+                                                    <input class="pcf-in fi" type="date" id="cpnLmp" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Gestational age</label>
+                                                    <input class="pcf-in fi" id="cpnGestAge" readonly placeholder="Auto from LMP" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">EDD</label>
+                                                    <input class="pcf-in fi" type="date" id="cpnEdd" readonly />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Quickening</label>
+                                                    <select class="pcf-in fi" id="cpnQuickening">
+                                                        <option value="">Select</option>
+                                                        <option value="not-yet">Not yet</option>
+                                                        <option value="present">Present</option>
+                                                        <option value="reduced">Reduced</option>
                                                     </select>
                                                 </div>
                                                 <div>
-                                                    <label class="pcf-lbl">Patient education given</label>
-                                                    <input class="pcf-in fi" id="cpnEducation" placeholder="Topics covered, understanding demonstrated..." />
+                                                    <label class="pcf-lbl">Fundal height (cm)</label>
+                                                    <input class="pcf-in fi" type="number" step="0.1" min="0" id="cpnFundalHeight" placeholder="e.g. 24" />
                                                 </div>
                                             </div>
+                                        </div>
 
-                                            <label class="pcf-lbl">Additional notes / referrals</label>
-                                            <textarea class="pcf-in ta" id="cpnReferrals" rows="3" placeholder="Referrals made, follow-up plan, multidisciplinary notes..."></textarea>
-
+                                        <div class="pcf-panel">
+                                            <h2><i class="ti ti-vaccine"></i> Follow-up and vaccine</h2>
+                                            <div class="pcf-two">
+                                                <div>
+                                                    <label class="pcf-lbl">Vaccine / tetanus dose given</label>
+                                                    <select class="pcf-in fi" id="cpnTtDose">
+                                                        <option value="">Select</option>
+                                                        <option value="None">None</option>
+                                                        <option value="TT1">TT1</option>
+                                                        <option value="TT2">TT2</option>
+                                                        <option value="TT3">TT3</option>
+                                                        <option value="TT4">TT4</option>
+                                                        <option value="TT5">TT5</option>
+                                                        <option value="Booster">Booster</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">General ANC / CPN impression</label>
+                                                    <input class="pcf-in fi" id="cpnAssessment" placeholder="Normal follow-up, concern, review needed..." />
+                                                </div>
+                                            </div>
+                                            <label class="pcf-lbl">Notes / complaints / observations</label>
+                                            <textarea class="pcf-in ta" id="cpnNotes" rows="5" placeholder="Maternal complaints, ANC observations, counselling, next steps..."></textarea>
                                             <div class="fa">
-                                                <button class="pcf-btn primary" onclick="saveCPN()"><i class="ti ti-check"></i> Save CPN</button>
+                                                <button class="pcf-btn primary" onclick="saveCPN()"><i class="ti ti-check"></i> Save ANC / CPN</button>
                                                 <button class="pcf-btn" onclick="clearCPN()"><i class="ti ti-eraser"></i> Clear</button>
                                             </div>
                                         </div>
@@ -1517,11 +1548,11 @@
                         <div id="cpnViewHistory" style="display:block;">
                             <div class="pcf-panel cpn-file-history-panel">
                                 <div class="cpn-file-head">
-                                    <h2><i class="ti ti-history" style="color:#0b57d0;"></i> Previous clinical notes <span class="count" id="cpnCount">0</span></h2>
+                                    <h2><i class="ti ti-history" style="color:#0b57d0;"></i> Previous ANC / CPN visits <span class="count" id="cpnCount">0</span></h2>
                                     <button type="button" class="pcf-btn sm" onclick="clearCPN()"><i class="ti ti-plus"></i> New for Today</button>
                                 </div>
                                 <div class="pcf-hist" id="cpnHistoryList" style="max-height:600px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
-                                    <p class="pcf-empty"><i class="ti ti-notes"></i>No CPN records yet. Create one above.</p>
+                                    <p class="pcf-empty"><i class="ti ti-baby-carriage"></i>No ANC / CPN visits yet. Create one above.</p>
                                 </div>
                             </div>
                         </div>
@@ -3618,7 +3649,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260906_NURSEFIX_CPNFILE" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260906_NURSEFIX_ANC" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {
