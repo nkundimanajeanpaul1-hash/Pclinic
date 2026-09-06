@@ -1265,13 +1265,69 @@
                 padding: 6px 12px;
             }
         }
+
+        .viewer-quickbar {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 auto 18px;
+            max-width: 860px;
+        }
+        .viewer-quick-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-height: 72px;
+            padding: 16px 20px;
+            border: 1px solid rgba(58,77,143,.16);
+            border-radius: 18px;
+            background: #fff;
+            color: var(--t1);
+            box-shadow: 0 18px 36px rgba(15,23,42,.08);
+            cursor: pointer;
+            text-align: left;
+            transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+            max-width: 380px;
+            width: 100%;
+        }
+        .viewer-quick-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 22px 44px rgba(15,23,42,.12);
+            border-color: rgba(58,77,143,.28);
+        }
+        .viewer-quick-btn.primary {
+            background: linear-gradient(180deg, #5d8dff 0%, #3559c7 100%);
+            color: #fff;
+            border-color: rgba(53,89,199,.72);
+            box-shadow: 0 20px 40px rgba(53,89,199,.22);
+        }
+        .viewer-quick-btn i {
+            font-size: 28px;
+            flex: none;
+        }
+        .viewer-quick-btn span {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .viewer-quick-btn strong {
+            font-size: 15px;
+            line-height: 1.2;
+        }
+        .viewer-quick-btn small {
+            font-size: 12px;
+            line-height: 1.45;
+            opacity: .9;
+            font-weight: 600;
+        }
     </style>
     <!-- ═══ iOS 26 LIQUID GLASS THEME (loaded last so it wins the cascade) ═══ -->
     <link rel="stylesheet" href="pclinic-ios26.css?v=20260831_IOS26" />
     <!-- ═══ DICOM VIEWER (shared with doctor image-results page) ═══ -->
-    <link rel="stylesheet" href="pclinic-dicom-viewer.css?v=20260902_ANNOT" />
+    <link rel="stylesheet" href="pclinic-dicom-viewer.css?v=20260906_LOCALBIG" />
     <script src="pclinic-file.js?v=20260902_DICOMONLY" defer></script>
-    <script src="pclinic-dicom-viewer.js?v=20260902_ANNOT" defer></script>
+    <script src="pclinic-dicom-viewer.js?v=20260906_LOCALBIG" defer></script>
 </head>
 <body>
 
@@ -1431,11 +1487,27 @@
                         <span class="badge b-org" id="viewerBadge">Configuration required</span>
                     </div>
                     <div class="pb">
-                        <div style="max-width:680px;margin:40px auto;text-align:center;padding:34px 26px;border:1px solid rgba(255,149,0,.35);border-radius:18px;background:#fff7e6;color:#8a5a00;">
+                        <div class="viewer-quickbar">
+                            <button type="button" class="viewer-quick-btn primary" id="openLocalDicomPageBtn">
+                                <i class="ti ti-folder-open"></i>
+                                <span>
+                                    <strong>Open local DICOM / CD / USB</strong>
+                                    <small>Choose DICOM or image files from this computer, flashdisk or CD without uploading first.</small>
+                                </span>
+                            </button>
+                            <button type="button" class="viewer-quick-btn" id="openWorkstationPageBtn">
+                                <i class="ti ti-photo-scan"></i>
+                                <span>
+                                    <strong>Open full DICOM workstation</strong>
+                                    <small>Open the shared radiology viewer first, then use Upload or Open local inside it.</small>
+                                </span>
+                            </button>
+                        </div>
+                        <div style="max-width:680px;margin:22px auto 40px;text-align:center;padding:34px 26px;border:1px solid rgba(255,149,0,.35);border-radius:18px;background:#fff7e6;color:#8a5a00;">
                             <div style="font-size:42px;margin-bottom:10px;"><i class="ti ti-server-off"></i></div>
-                            <div style="font-size:17px;font-weight:800;">Real DICOM viewer is not configured</div>
-                            <p style="font-size:13px;line-height:1.55;margin:10px 0 0;">The previous fake image stack was removed. Connect an approved DICOMweb/Orthanc PACS endpoint before clinical images can be viewed. PClinic will never represent placeholder images as patient images.</p>
-                            <div style="margin-top:16px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.65);font-size:12px;font-weight:700;">Required: QIDO-RS, WADO-RS and secure PACS authentication.</div>
+                            <div style="font-size:17px;font-weight:800;">PACS is not integrated yet</div>
+                            <p style="font-size:13px;line-height:1.55;margin:10px 0 0;">You can still use the PClinic DICOM workstation for uploaded study files and for local files opened from this computer, flashdisk or CD. A full PACS connection still needs an approved DICOMweb/Orthanc endpoint.</p>
+                            <div style="margin-top:16px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.65);font-size:12px;font-weight:700;">Required for live PACS browsing: QIDO-RS, WADO-RS and secure PACS authentication.</div>
                         </div>
                     </div>
                 </div>

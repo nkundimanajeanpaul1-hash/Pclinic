@@ -865,6 +865,13 @@
         document.addEventListener('DOMContentLoaded', function () {
             if (localStorage.getItem('pclinic-theme') === 'dark') document.body.classList.add('dark-mode');
             syncThemeControl();
+            var localBtn = document.getElementById('openLocalDicomPageBtn');
+            if (localBtn) localBtn.onclick = function () { openLocalDicomFromPage(); };
+            var workstationBtn = document.getElementById('openWorkstationPageBtn');
+            if (workstationBtn) workstationBtn.onclick = function () {
+                if (currentPatient) handleOpenViewerRequest({ detail: { patient: currentPatient } });
+                else openLocalDicomFromPage();
+            };
             window.requireAuth(['radio']).then(async function (staff) {
                 window.currentStaff = staff;
                 setStaffChip();
@@ -1029,6 +1036,23 @@
         }
         window.openImageViewer = openImageViewer;
 
+        function openLocalDicomFromPage(order, patient) {
+            if (!window.PcDicomViewer) { notify('The DICOM viewer did not load. Refresh the page (Ctrl/Cmd+Shift+R).', 'error', 8000); return; }
+            var targetPatient = patient || currentPatient || null;
+            var targetStudies = targetPatient ? viewerStudiesFor(targetPatient) : [];
+            var targetOrder = order || currentOrder || (targetStudies.length ? targetStudies[0] : null) || { id: '', patientId: targetPatient && targetPatient.id || '', patientName: targetPatient ? nameOf(targetPatient) : '', study: 'Local files' };
+            window.PcDicomViewer.open(viewerOrderFor(targetOrder, targetPatient), { canManage: true, patient: targetPatient, studies: targetStudies });
+            setTimeout(function () {
+                try {
+                    if (window.PcDicomViewer && typeof window.PcDicomViewer.openLocal === 'function') window.PcDicomViewer.openLocal();
+                    else notify('The local DICOM picker is not available yet. Refresh the page and retry.', 'warning', 7000);
+                } catch (error) {
+                    notify((error && error.message) || 'Could not open the local file picker.', 'error', 7000);
+                }
+            }, 120);
+        }
+        window.openLocalDicomFromPage = openLocalDicomFromPage;
+
         function openMediaSheet(order, preferredPatient) {
             if (!order) { notify('Select a study first.', 'warning'); return; }
             var target = preferredPatient || patientFromOrder(order);
@@ -1068,12 +1092,18 @@
             const viewerBtn = document.createElement('button');
             viewerBtn.type = 'button';
             viewerBtn.textContent = 'Open DICOM viewer';
-            viewerBtn.style.cssText = 'font:inherit;font-size:11px;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid #d1d1d6;background:#1b1b1b;color:#fff;cursor:pointer';
+            viewerBtn.style.cssText = 'font:inherit;font-size:13px;font-weight:800;padding:10px 16px;border-radius:12px;border:1px solid #2c2c2e;background:#1b1b1b;color:#fff;cursor:pointer;box-shadow:0 10px 24px rgba(15,23,42,.12)';
             viewerBtn.onclick = function () {
                 if (window.PcDicomViewer) window.PcDicomViewer.open(viewerOrderFor(order, currentPatient), { canManage: canManage, patient: currentPatient, studies: viewerStudiesFor(currentPatient) });
                 else notify('The DICOM viewer did not load.', 'warning');
             };
             bar.appendChild(viewerBtn);
+            const localBtn = document.createElement('button');
+            localBtn.type = 'button';
+            localBtn.textContent = 'Open local DICOM / CD / USB';
+            localBtn.style.cssText = 'font:inherit;font-size:13px;font-weight:800;padding:10px 16px;border-radius:12px;border:1px solid #5d8dff;background:linear-gradient(180deg,#5d8dff 0%,#3559c7 100%);color:#fff;cursor:pointer;box-shadow:0 12px 26px rgba(53,89,199,.24)';
+            localBtn.onclick = function () { openLocalDicomFromPage(order, currentPatient); };
+            bar.appendChild(localBtn);
             if (canManage) {
                 const pick = document.createElement('input');
                 pick.type = 'file'; pick.multiple = true; pick.accept = (window.pcRadioMedia && pcRadioMedia.ACCEPT) || '';
