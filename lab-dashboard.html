@@ -2717,12 +2717,297 @@
             font-size: 11px !important;
             line-height: 1.3 !important;
         }
+
+        /* User-requested styling: make Active Specimen Worklist and other lists match the clean smart Doctor Dashboard feel */
+        .search-row {
+            background: rgba(255,255,255,.72) !important;
+            border: 1px solid rgba(191,198,212,.4) !important;
+            border-radius: 22px !important;
+            margin: 10px 24px 0 !important;
+            padding: 12px 14px !important;
+            box-shadow: 0 8px 24px rgba(15,23,42,.05), 0 1px 0 rgba(255,255,255,.88) inset !important;
+            backdrop-filter: blur(18px) !important;
+            -webkit-backdrop-filter: blur(18px) !important;
+        }
+        .search-wrap .sw {
+            min-height: 48px !important;
+            background: rgba(248,250,252,.95) !important;
+            border: 1px solid rgba(219,224,232,.95) !important;
+            border-radius: 999px !important;
+            padding: 0 16px !important;
+            box-shadow: none !important;
+        }
+        .search-wrap .sw i {
+            color: #8b90a1 !important;
+            font-size: 15px !important;
+        }
+        .search-wrap .sw input {
+            height: 46px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #1d2433 !important;
+        }
+        .search-wrap .sw input::placeholder {
+            color: #98a1b2 !important;
+            font-weight: 500 !important;
+        }
+        .search-wrap .sw:focus-within {
+            background: #ffffff !important;
+            border-color: rgba(31,103,210,.18) !important;
+            box-shadow: 0 0 0 4px rgba(31,103,210,.08) !important;
+        }
+        .suggestions {
+            margin-top: 8px !important;
+            border-radius: 18px !important;
+            border: 1px solid rgba(219,224,232,.95) !important;
+            background: rgba(255,255,255,.98) !important;
+            box-shadow: 0 16px 32px rgba(15,23,42,.08) !important;
+            overflow: hidden !important;
+        }
+        .suggestion-item {
+            padding: 12px 14px !important;
+            border-bottom: 1px solid rgba(227,231,238,.85) !important;
+            font-size: 12.5px !important;
+            font-weight: 600 !important;
+            color: #1d2433 !important;
+            background: #fff !important;
+        }
+        .suggestion-item:hover {
+            background: #f8fbff !important;
+        }
+        .kpis {
+            gap: 8px !important;
+        }
+        .kpi {
+            height: 36px !important;
+            border-radius: 999px !important;
+            padding: 0 13px !important;
+            border: 1px solid rgba(219,224,232,.95) !important;
+            box-shadow: none !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            background-image: none !important;
+        }
+        .kpi:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 16px rgba(15,23,42,.07) !important;
+        }
+
+        .main-panel {
+            border-radius: 22px !important;
+            border: 1px solid rgba(191,198,212,.48) !important;
+            background: rgba(255,255,255,.82) !important;
+            box-shadow: 0 8px 24px rgba(15,23,42,.05), 0 1px 0 rgba(255,255,255,.88) inset !important;
+        }
+        .panel-header,
+        #panel-overview .panel-body > div:first-child {
+            background: linear-gradient(180deg, rgba(248,249,253,.98), rgba(242,244,248,.95)) !important;
+            border: 1px solid rgba(219,224,232,.95) !important;
+            border-radius: 18px !important;
+            padding: 12px 14px !important;
+            margin-bottom: 12px !important;
+            box-shadow: none !important;
+        }
+        .panel-header {
+            border-left: 0 !important;
+            border-right: 0 !important;
+            border-top: 0 !important;
+            border-radius: 18px !important;
+        }
+        .panel-title,
+        #panel-overview .panel-body > div:first-child > div:first-child > div:first-child {
+            color: #1b2434 !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            letter-spacing: -.01em !important;
+        }
+        #panel-overview .panel-body > div:first-child > div:first-child > div:nth-child(2),
+        .panel-header + #resScopeNote,
+        .panel-header + #repScopeNote {
+            font-size: 11.5px !important;
+            color: #7c8799 !important;
+        }
+        .panel-actions .btn-print,
+        #panel-overview .panel-body > div:first-child .btn-s {
+            height: 34px !important;
+            border-radius: 999px !important;
+            padding: 0 14px !important;
+            border: 1px solid rgba(219,224,232,.95) !important;
+            background: #ffffff !important;
+            color: #435064 !important;
+            box-shadow: none !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+        }
+        .panel-actions .btn-print:hover,
+        #panel-overview .panel-body > div:first-child .btn-s:hover {
+            background: #1f67d2 !important;
+            border-color: #1f67d2 !important;
+            color: #fff !important;
+        }
+
+        .main-panel .wtbl {
+            width: 100% !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            border-radius: 22px !important;
+            overflow: hidden !important;
+            background: rgba(255,255,255,.92) !important;
+            border: 1px solid rgba(191, 198, 212, 0.48) !important;
+            box-shadow:
+                0 8px 24px rgba(15,23,42,.05),
+                0 1px 0 rgba(255,255,255,.88) inset !important;
+            font-size: 13px !important;
+        }
+        .main-panel .wtbl thead {
+            background: linear-gradient(180deg, rgba(248,249,253,.98), rgba(242,244,248,.95)) !important;
+        }
+        .main-panel .wtbl thead th {
+            background: transparent !important;
+            color: #8b90a1 !important;
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            letter-spacing: .08em !important;
+            text-transform: uppercase !important;
+            padding: 11px 14px !important;
+            border-top: 0 !important;
+            border-bottom: 1px solid rgba(219,224,232,.95) !important;
+            box-shadow: none !important;
+            position: static !important;
+        }
+        .main-panel .wtbl tbody tr {
+            transition: background .18s ease, box-shadow .18s ease, transform .18s ease !important;
+        }
+        .main-panel .wtbl tbody td {
+            background: rgba(255,255,255,.98) !important;
+            color: #202636 !important;
+            padding: 14px 14px !important;
+            border-top: 0 !important;
+            border-bottom: 1px solid rgba(227,231,238,.9) !important;
+            box-shadow: none !important;
+            vertical-align: middle !important;
+        }
+        .main-panel .wtbl tbody tr:last-child td {
+            border-bottom: 0 !important;
+        }
+        .main-panel .wtbl tbody tr:nth-child(even) td {
+            background: rgba(250,251,253,.96) !important;
+        }
+        .main-panel .wtbl tbody tr:hover td {
+            background: #f8fbff !important;
+            transform: none !important;
+            box-shadow: inset 3px 0 0 rgba(0,113,227,.22) !important;
+        }
+        .main-panel .wtbl tbody td:first-child {
+            border-left: 0 !important;
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+            font-weight: 800 !important;
+            color: #13182a !important;
+            letter-spacing: -.01em !important;
+        }
+        .main-panel .wtbl tbody td:last-child {
+            border-right: 0 !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+        }
+        .main-panel .wtbl tbody td div[style*="MRN"] {
+            color: #7f8798 !important;
+            font-size: 11.5px !important;
+            font-weight: 600 !important;
+        }
+        .main-panel .wtbl tbody td .badge,
+        .main-panel .wtbl tbody td .prio-badge,
+        .main-panel .wtbl tbody td .status-badge {
+            border-radius: 999px !important;
+            padding: 5px 12px !important;
+            font-size: 10.5px !important;
+            font-weight: 700 !important;
+            border: 1px solid rgba(15,23,42,.06) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.72) !important;
+        }
+        .main-panel .wtbl tbody td button,
+        .main-panel .wtbl tbody td .btn-s,
+        .main-panel .wtbl tbody td .btn-print,
+        .main-panel .wtbl tbody td .btn-select-lab,
+        .main-panel .wtbl tbody td .btn-ov-view,
+        .main-panel .wtbl tbody td .lab-release-btn {
+            height: 30px !important;
+            min-height: 30px !important;
+            padding: 0 12px !important;
+            border-radius: 999px !important;
+            border: 1px solid rgba(15,23,42,.06) !important;
+            background: #f4f6fa !important;
+            color: #445063 !important;
+            box-shadow: none !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            transition: transform .16s ease, background .16s ease, color .16s ease, border-color .16s ease !important;
+        }
+        .main-panel .wtbl tbody td .btn-select-lab {
+            background: linear-gradient(135deg, #eef6ff, #f7fbff) !important;
+            color: #0a66d1 !important;
+            border-color: rgba(10,102,209,.12) !important;
+        }
+        .main-panel .wtbl tbody td .btn-ov-view {
+            width: 30px !important;
+            min-width: 30px !important;
+            padding: 0 !important;
+            display: inline-grid !important;
+            place-items: center !important;
+            margin-left: 6px !important;
+            color: #556173 !important;
+        }
+        .main-panel .wtbl tbody td button:hover,
+        .main-panel .wtbl tbody td .btn-s:hover,
+        .main-panel .wtbl tbody td .btn-print:hover,
+        .main-panel .wtbl tbody td .btn-select-lab:hover,
+        .main-panel .wtbl tbody td .btn-ov-view:hover,
+        .main-panel .wtbl tbody td .lab-release-btn:hover {
+            background: #1f67d2 !important;
+            border-color: #1f67d2 !important;
+            color: #fff !important;
+            transform: translateY(-1px) !important;
+        }
+        .main-panel .wtbl tbody td .btn-ov-view:hover {
+            background: #eef4ff !important;
+            border-color: rgba(31,103,210,.18) !important;
+            color: #1f67d2 !important;
+        }
+        .main-panel .wtbl tbody td[style*="text-align:right"] {
+            white-space: nowrap !important;
+        }
+        .main-panel .wtbl tbody td[style*="text-align:right"] > * {
+            vertical-align: middle !important;
+        }
+        .main-panel .wtbl tbody td[style*="text-align:center"],
+        .main-panel .wtbl thead th[style*="text-align:center"] {
+            text-align: center !important;
+        }
+        .main-panel .wtbl tbody td[colspan] {
+            background: rgba(255,255,255,.98) !important;
+            color: #6b7280 !important;
+            font-weight: 600 !important;
+        }
+
         @media (max-width: 760px) {
             .lab-smart-shell {
                 padding-top: 8px !important;
             }
             .content-area {
                 padding-top: 10px !important;
+            }
+            .search-row {
+                margin: 8px 12px 0 !important;
+                padding: 10px !important;
+                border-radius: 18px !important;
+            }
+            .search-wrap .sw {
+                min-height: 44px !important;
+            }
+            .kpi {
+                height: 34px !important;
+                padding: 0 12px !important;
             }
             .lab-smart-strip {
                 gap: 8px !important;
@@ -2736,6 +3021,19 @@
             }
             .lab-stat-card .desc {
                 font-size: 10.5px !important;
+            }
+            .panel-header,
+            #panel-overview .panel-body > div:first-child {
+                padding: 10px 12px !important;
+                border-radius: 16px !important;
+            }
+            .main-panel .wtbl thead th {
+                padding: 10px 10px !important;
+                font-size: 9.5px !important;
+            }
+            .main-panel .wtbl tbody td {
+                padding: 12px 10px !important;
+                font-size: 12px !important;
             }
         }
     </style>
