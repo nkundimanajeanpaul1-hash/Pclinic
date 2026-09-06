@@ -408,6 +408,7 @@
         .b-pink { background: var(--pinkb); color: var(--pinkt); }
         .b-green { background: var(--greenb); color: var(--greend); }
         .b-orange { background: var(--orangeb); color: var(--oranged); }
+        .b-red { background: var(--redb); color: var(--redd); }
         .b-blue { background: var(--blue-bg); color: var(--blue); }
         .b-ac { background: var(--acb); color: var(--ac); }
 
@@ -1214,7 +1215,7 @@
                 <div class="kpi kpi-org" onclick="openModal('waiting')"><i class="ti ti-clock"></i> <span class="kpi-num" id="kpiWaiting">0</span> waiting</div>
                 <div class="kpi kpi-red" onclick="openModal('urgent')"><i class="ti ti-alert-triangle"></i> <span class="kpi-num" id="kpiUrgent">0</span> urgent</div>
                 <div class="kpi kpi-grn" onclick="openModal('seen')"><i class="ti ti-check"></i> <span class="kpi-num" id="kpiSeen">0</span> seen</div>
-                <div class="kpi kpi-pink" onclick="openModal('cpn-due')"><i class="ti ti-baby-carriage"></i> <span class="kpi-num">4</span> CPN due</div>
+                <div class="kpi kpi-pink" onclick="openModal('cpn-due')"><i class="ti ti-baby-carriage"></i> <span class="kpi-num" id="kpiCpnDue">0</span> CPN due</div>
             </div>
         </div>
 
@@ -1280,8 +1281,8 @@
             <div id="panel-overview" class="main-panel" style="display:block;">
                 <div class="panel-body show" id="sub-overview-default">
                     <div style="margin-bottom:10px;">
-                        <div style="font-size:16px;font-weight:600;color:var(--tp);margin-bottom:2px;">Good morning, Nurse Achieng</div>
-                        <div style="font-size:12px;color:var(--tm);"><span id="todayDate"></span> · OPD / Ward 4B</div>
+                        <div id="overviewGreeting" style="font-size:16px;font-weight:600;color:var(--tp);margin-bottom:2px;">Good morning</div>
+                        <div id="overviewContext" style="font-size:12px;color:var(--tm);"><span id="todayDate"></span> · Nursing dashboard</div>
                     </div>
 
                     <div class="qa-grid">
@@ -1325,10 +1326,10 @@
                             <div class="qa-label">Medication log</div>
                             <div class="qa-desc">Administered drugs</div>
                         </div>
-                        <div class="qa-card" onclick="showToast('📋 Task list opened', 'info')">
+                        <div class="qa-card" onclick="openModal('queue')">
                             <div class="qa-ic" style="background:var(--s3)"><i class="ti ti-list" style="color:var(--tm)"></i></div>
-                            <div class="qa-label">Task reminder</div>
-                            <div class="qa-desc">4 pending tasks</div>
+                            <div class="qa-label">Queue insights</div>
+                            <div class="qa-desc">Review waiting and urgent patients</div>
                         </div>
                     </div>
 
@@ -1587,7 +1588,7 @@
                     <div class="fp-grid" id="fpMethods">
                         <div class="fp-btn" onclick="selectFp(this,'Combined OCP')"><i class="ti ti-pill"></i>Combined OCP</div>
                         <div class="fp-btn" onclick="selectFp(this,'Progestogen-only pill')"><i class="ti ti-pill"></i>Progestogen-only pill</div>
-                        <div class="fp-btn sel" onclick="selectFp(this,'Injectable (Depo)')"><i class="ti ti-needle"></i>Injectable (Depo)</div>
+                        <div class="fp-btn" onclick="selectFp(this,'Injectable (Depo)')"><i class="ti ti-needle"></i>Injectable (Depo)</div>
                         <div class="fp-btn" onclick="selectFp(this,'Implant (Implanon)')"><i class="ti ti-needle"></i>Implant (Implanon)</div>
                         <div class="fp-btn" onclick="selectFp(this,'Copper IUD')"><i class="ti ti-device-heart-monitor"></i>Copper IUD</div>
                         <div class="fp-btn" onclick="selectFp(this,'Hormonal IUD (Mirena)')"><i class="ti ti-device-heart-monitor"></i>Hormonal IUD (Mirena)</div>
@@ -1678,32 +1679,15 @@
                     </div>
                     <table class="bill-table">
                         <thead><tr><th style="width:30%">Item description</th><th style="width:12%">Category</th><th style="width:10%">Qty</th><th style="width:14%">Unit (RWF)</th><th style="width:14%">Total (RWF)</th><th style="width:15%">Action</th></tr></thead>
-                        <tbody id="billRows">
-                            <tr>
-                                <td><input class="fi" id="billItem1" value="Amoxicillin 500 mg capsule"/></td>
-                                <td><select class="fi" id="billCat1" style="font-size:11px"><option>Medication</option><option>Consumable</option><option>Procedure</option></select></td>
-                                <td><input class="fi" type="number" value="21" style="width:50px" id="billQty1" oninput="calcBill()"/></td>
-                                <td><input class="fi" type="number" value="15" style="width:70px" id="billUnit1" oninput="calcBill()"/></td>
-                                <td class="row-total" style="font-weight:600;" id="billTotal1">315</td>
-                                <td><button onclick="this.closest('tr').remove();calcBill()" style="border:none;background:none;cursor:pointer;color:var(--red);font-size:13px;"><i class="ti ti-trash"></i></button></td>
-                            </tr>
-                            <tr>
-                                <td><input class="fi" id="billItem2" value="IV giving set"/></td>
-                                <td><select class="fi" id="billCat2" style="font-size:11px"><option>Consumable</option><option>Medication</option><option>Procedure</option></select></td>
-                                <td><input class="fi" type="number" value="2" style="width:50px" id="billQty2" oninput="calcBill()"/></td>
-                                <td><input class="fi" type="number" value="180" style="width:70px" id="billUnit2" oninput="calcBill()"/></td>
-                                <td class="row-total" style="font-weight:600;" id="billTotal2">360</td>
-                                <td><button onclick="this.closest('tr').remove();calcBill()" style="border:none;background:none;cursor:pointer;color:var(--red);font-size:13px;"><i class="ti ti-trash"></i></button></td>
-                            </tr>
-                        </tbody>
+                        <tbody id="billRows"></tbody>
                     </table>
                     <div style="padding:8px 14px;border-bottom:0.5px solid var(--bd);">
                         <button class="btn-s" style="display:flex;align-items:center;gap:5px;font-size:11px;" onclick="addBillRow()"><i class="ti ti-plus" style="font-size:12px;"></i>Add item</button>
                     </div>
                     <div class="bill-total">
-                        <span class="bt-label">Subtotal</span><span class="bt-val" id="billSub">RWF 675</span>
-                        <span class="bt-label" style="margin-left:16px;">Insurance covers</span><span class="bt-val" style="color:var(--green);" id="billInsurance">-RWF 400</span>
-                        <span class="bt-label" style="margin-left:16px;">Patient pays</span><span class="bt-val" style="color:var(--ac);font-size:18px;" id="billTotal">RWF 275</span>
+                        <span class="bt-label">Subtotal</span><span class="bt-val" id="billSub">RWF 0</span>
+                        <span class="bt-label" style="margin-left:16px;">Insurance covers</span><span class="bt-val" style="color:var(--green);" id="billInsurance">-RWF 0</span>
+                        <span class="bt-label" style="margin-left:16px;">Patient pays</span><span class="bt-val" style="color:var(--ac);font-size:18px;" id="billTotal">RWF 0</span>
                     </div>
                     <div class="fa" style="padding:0 14px 14px;">
                         <button class="btn-p" onclick="saveBill()"><i class="ti ti-check"></i> Post bill</button>
@@ -1726,28 +1710,21 @@
             <!-- ─── PANEL: LAB RESULTS ─── -->
             <div id="panel-lab" class="main-panel" style="display:none;">
                 <div class="panel-body show" id="sub-lab-view">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
                         <span style="font-size:14px;font-weight:600;">Lab results — view only</span>
                         <span style="font-size:11px;background:var(--orangeb);color:var(--oranged);padding:2px 8px;border-radius:10px;font-weight:600;">Read-only</span>
                     </div>
                     <div class="fg" style="margin-bottom:12px;">
-                        <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="labPatient" placeholder="Patient name — MRN"/></div>
-                        <div class="fgl"><div class="lbl">Date of results</div><input class="fi" type="date" id="labDate"/></div>
+                        <div class="fgl"><div class="lbl">Selected patient</div><input class="fi" id="labPatient" placeholder="Select a patient from the search or Patients tab"/></div>
+                        <div class="fgl"><div class="lbl">Verified result date (optional)</div><input class="fi" type="date" id="labDate" onchange="renderLabResults()"/></div>
                     </div>
-                    <div class="section-title">Haematology</div>
                     <div id="labResultsContainer">
-                        <div class="result-row"><div class="result-test">Haemoglobin</div><div class="result-range">13.0–17.0 g/dL</div><div class="result-val r-normal">14.2 g/dL</div></div>
-                        <div class="result-row"><div class="result-test">WBC</div><div class="result-range">4.0–11.0 ×10⁹/L</div><div class="result-val r-normal">7.4 ×10⁹/L</div></div>
-                        <div class="result-row"><div class="result-test">Platelets</div><div class="result-range">150–400 ×10⁹/L</div><div class="result-val r-normal">310 ×10⁹/L</div></div>
+                        <div class="cpn-empty">🔒 Select a patient first to see verified laboratory results from the Common Server.</div>
                     </div>
-                    <div class="section-title">Biochemistry</div>
-                    <div id="labBioResults">
-                        <div class="result-row"><div class="result-test">Fasting glucose</div><div class="result-range">3.9–6.1 mmol/L</div><div class="result-val r-normal">5.2 mmol/L</div></div>
-                        <div class="result-row"><div class="result-test">Creatinine</div><div class="result-range">53–97 µmol/L</div><div class="result-val r-normal">72 µmol/L</div></div>
-                        <div class="result-row"><div class="result-test">Potassium</div><div class="result-range">3.5–5.0 mmol/L</div><div class="result-val r-high">5.6 mmol/L ↑</div></div>
+                    <div class="fa">
+                        <button class="btn-print" onclick="printPatientFile()"><i class="ti ti-printer"></i>Print results</button>
+                        <button class="btn-s" onclick="renderLabResults()"><i class="ti ti-refresh"></i> Refresh live results</button>
                     </div>
-                    <div style="margin-top:10px;padding:8px 12px;background:var(--orangeb);border-radius:8px;font-size:11px;color:var(--oranged);display:flex;align-items:center;gap:7px;"><i class="ti ti-info-circle" style="font-size:14px;"></i>Elevated potassium flagged. Notify attending doctor.</div>
-                    <div class="fa"><button class="btn-print" onclick="printPatientFile()"><i class="ti ti-printer"></i>Print results</button></div>
                 </div>
             </div>
 
@@ -1798,29 +1775,7 @@
                         <div class="fgl"><div class="lbl">Shift</div><select class="fi" id="medsShift"><option>Morning</option><option>Evening</option><option>Night</option></select></div>
                     </div>
                     <div class="section-title">Medications administered</div>
-                    <div id="medLogList">
-                        <div class="med-log-item">
-                            <span class="med-name">Aspirin 300 mg tablet</span>
-                            <span class="med-detail">Dose: 300 mg OD · 08:00</span>
-                            <span class="badge b-green" id="medStatus1">Given</span>
-                            <button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="toggleMedStatus(1)">Toggle</button>
-                            <button class="btn-s" style="padding:2px 8px;font-size:10px;background:var(--redb);color:var(--red);" onclick="removeMed(1)"><i class="ti ti-x"></i></button>
-                        </div>
-                        <div class="med-log-item">
-                            <span class="med-name">Lisinopril 10 mg tablet</span>
-                            <span class="med-detail">Dose: 10 mg OD · 08:00</span>
-                            <span class="badge b-green" id="medStatus2">Given</span>
-                            <button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="toggleMedStatus(2)">Toggle</button>
-                            <button class="btn-s" style="padding:2px 8px;font-size:10px;background:var(--redb);color:var(--red);" onclick="removeMed(2)"><i class="ti ti-x"></i></button>
-                        </div>
-                        <div class="med-log-item">
-                            <span class="med-name">Atorvastatin 40 mg tablet</span>
-                            <span class="med-detail">Dose: 40 mg nocte · 20:00</span>
-                            <span class="badge b-orange" id="medStatus3">Pending</span>
-                            <button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="toggleMedStatus(3)">Toggle</button>
-                            <button class="btn-s" style="padding:2px 8px;font-size:10px;background:var(--redb);color:var(--red);" onclick="removeMed(3)"><i class="ti ti-x"></i></button>
-                        </div>
-                    </div>
+                    <div id="medLogList"></div>
                     <div class="fa" style="margin-top:8px;">
                         <button class="btn-p" onclick="saveMedicationLog()"><i class="ti ti-check"></i> Save log</button>
                         <button class="btn-s" onclick="addMedicationRow()"><i class="ti ti-plus"></i> Add medication</button>
@@ -1840,6 +1795,19 @@
             </div>
 
         </div><!-- /content-area -->
+
+        <!-- ═══ KPI DETAILS MODAL ═══ -->
+        <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal" style="width:760px; max-width:96vw;">
+                <div class="modal-header">
+                    <span class="modal-title" id="modalTitle">Queue details</span>
+                    <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <div class="cpn-empty">No details yet.</div>
+                </div>
+            </div>
+        </div>
 
         <!-- ═══ LOGOUT MODAL ═══ -->
         <div class="modal-overlay" id="logout-modal" onclick="if(event.target===this)closeLogoutModal()">
@@ -3657,6 +3625,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
+    <script src="nurse-dashboard-fixes.js?v=20260906_NURSEFIX" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {
