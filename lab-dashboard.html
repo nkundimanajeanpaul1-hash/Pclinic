@@ -2675,6 +2675,69 @@
                 justify-content: center;
             }
         }
+
+        /* User-requested cleanup: remove the oversized top hero area and bottom ribbon */
+        .lab-hero,
+        .lab-command-ribbon {
+            display: none !important;
+        }
+        .lab-smart-shell {
+            padding-top: 8px !important;
+            gap: 0 !important;
+        }
+        .content-area {
+            padding-top: 12px !important;
+        }
+
+        /* User-requested cleanup: make the remaining summary cards smaller */
+        .lab-smart-strip {
+            gap: 10px !important;
+            margin-top: 2px !important;
+        }
+        .lab-stat-card {
+            padding: 10px 14px !important;
+            border-radius: 16px !important;
+            min-height: 88px !important;
+            box-shadow:
+                0 12px 24px rgba(15, 23, 42, 0.07),
+                0 1px 0 rgba(255,255,255,.72) inset,
+                0 0 0 1px rgba(255,255,255,.2) inset !important;
+        }
+        .lab-stat-card .eyebrow {
+            font-size: 10px !important;
+            margin-bottom: 4px !important;
+            letter-spacing: .08em !important;
+        }
+        .lab-stat-card .big {
+            font-size: 16px !important;
+            line-height: 1 !important;
+            margin-bottom: 6px !important;
+        }
+        .lab-stat-card .desc {
+            font-size: 11px !important;
+            line-height: 1.3 !important;
+        }
+        @media (max-width: 760px) {
+            .lab-smart-shell {
+                padding-top: 8px !important;
+            }
+            .content-area {
+                padding-top: 10px !important;
+            }
+            .lab-smart-strip {
+                gap: 8px !important;
+            }
+            .lab-stat-card {
+                padding: 9px 12px !important;
+                min-height: 80px !important;
+            }
+            .lab-stat-card .big {
+                font-size: 15px !important;
+            }
+            .lab-stat-card .desc {
+                font-size: 10.5px !important;
+            }
+        }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
 </head>
