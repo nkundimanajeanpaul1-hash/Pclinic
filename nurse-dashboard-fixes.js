@@ -4,6 +4,7 @@
   var PATIENT_FIELD_IDS = ['triagePatient', 'vitalsPatient', 'cpnPatient', 'fpPatient', 'billPatient', 'labPatient', 'notesPatient', 'medsPatient'];
   var STAFF_FIELD_IDS = ['triageNurse', 'cpnNurse', 'fpNurse', 'billNurse', 'notesNurse', 'medsNurse', 'delBy'];
   var LOCATION_FIELD_IDS = ['cpnLocation', 'notesWard', 'billWard'];
+  var syncingFromSharedBar = false;
 
   function esc(v) {
     return String(v == null ? '' : v)
@@ -74,6 +75,31 @@
   }
   function getCurrentPatient() { return window.currentPatient || null; }
   function setCurrentPatient(p) { window.currentPatient = p || null; }
+
+  function masterHeader() {
+    return document.getElementById('pcMasterHeader') || document.body;
+  }
+
+  function syncSharedPatientBar(patient) {
+    if (syncingFromSharedBar) return;
+    try {
+      if (patient && patient.id && !patient._cleared) localStorage.setItem('pclinic_active_patient', String(patient.id));
+      else localStorage.removeItem('pclinic_active_patient');
+    } catch (e) {}
+    try {
+      if (window.pcFile && typeof window.pcFile.renderDemoBar === 'function') {
+        window.pcFile.renderDemoBar(masterHeader(), patient || {
+          _cleared: true,
+          id: '', mrn: '', lastName: '', firstName: '', nationalId: '',
+          department: '', dob: '', gender: '', archiveCode: '',
+          insurance: 'RSSB / RAMA', district: 'NYARUGENGE'
+        });
+      }
+    } catch (e) { console.warn(e); }
+    try {
+      window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: patient && !patient._cleared ? patient : null }));
+    } catch (e) {}
+  }
 
   function displayName(p) {
     if (!p) return '';
@@ -246,11 +272,13 @@
     setPatientFieldValues(patient || null);
     applyStaffUi();
     if (!patient) {
+      syncSharedPatientBar(null);
       if (typeof window.renderLabResults === 'function') window.renderLabResults();
       if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
       if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
       return;
     }
+    syncSharedPatientBar(patient);
     if (typeof window.displayPatientCard === 'function') window.displayPatientCard(patient);
     if (typeof window.fillForms === 'function') window.fillForms(patient);
     if (typeof window.renderCarePlanHistory === 'function') window.renderCarePlanHistory();
@@ -431,16 +459,18 @@
     if (labDate && !labDate.dataset.nursePreserve) labDate.value = '';
   }
 
-  function selectPatient(id) {
+  function selectPatient(id, opts) {
+    opts = opts || {};
     var p = getPatient(id);
     if (!p) return safeToast('❌ Patient not found', 'error');
     setCurrentPatient(p);
-    refreshPatientUi(p, false);
+    syncSharedPatientBar(p);
+    refreshPatientUi(p, !!opts.quiet);
     var suggestions = document.getElementById('suggestions');
     if (suggestions) suggestions.classList.remove('show');
     var searchInput = document.getElementById('searchInput');
     if (searchInput) searchInput.value = displayName(p) + ' — ' + displayMrn(p);
-    if (typeof window.switchTab === 'function') window.switchTab('overview', document.querySelector('[data-tab="overview"]'));
+    if (!opts.keepTab && typeof window.switchTab === 'function') window.switchTab('overview', document.querySelector('[data-tab="overview"]'));
     return p;
   }
 
@@ -1127,6 +1157,35 @@
     window.addEventListener('focus', function () { loadPatients(); });
     window.addEventListener('labResultsUpdated', function () { renderLabResults(); refreshKpisAndQueue(getAllPatients()); });
     window.addEventListener('pclinicSyncError', function () { loadPatients(); renderLabResults(); });
+    window.addEventListener('pcPatientChanged', function (event) {
+      var detail = event && event.detail ? event.detail : null;
+      syncingFromSharedBar = true;
+      try {
+        if (detail && detail.id && !detail._cleared) {
+          var fresh = getPatient(detail.id) || detail;
+          setCurrentPatient(fresh);
+          refreshPatientUi(fresh, true);
+          var searchInput = document.getElementById('searchInput');
+          if (searchInput) searchInput.value = displayName(fresh) + ' — ' + displayMrn(fresh);
+        } else {
+          setCurrentPatient(null);
+          setPatientFieldValues(null);
+          var suggestions = document.getElementById('suggestions');
+          if (suggestions) suggestions.classList.remove('show');
+          var searchInput2 = document.getElementById('searchInput');
+          if (searchInput2) searchInput2.value = '';
+          if (typeof window.displayPatientCard === 'function') {
+            var card = document.getElementById('patientCard');
+            if (card) card.classList.remove('show');
+          }
+          if (typeof window.renderLabResults === 'function') window.renderLabResults(null);
+          if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
+          if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
+        }
+      } finally {
+        syncingFromSharedBar = false;
+      }
+    });
   }
 
   function installOverrides() {
@@ -1207,9 +1266,27 @@
     var labDate = document.getElementById('labDate'); if (labDate) labDate.value = '';
     var medList = document.getElementById('medLogList'); if (medList) medList.innerHTML = '';
     ensureMedicationEditorRow();
-    loadPatients();
-    renderLabResults();
     wireRefreshEvents();
+    loadPatients();
+    var initialPatient = getCurrentPatient();
+    if (!initialPatient && window.pcFile && typeof window.pcFile.patient === 'function') {
+      try { initialPatient = window.pcFile.patient() || null; } catch (e) {}
+    }
+    if (!initialPatient) {
+      try {
+        var activeId = localStorage.getItem('pclinic_active_patient');
+        if (activeId) initialPatient = getPatient(activeId);
+      } catch (e) {}
+    }
+    if (initialPatient) {
+      setCurrentPatient(initialPatient);
+      refreshPatientUi(initialPatient, true);
+      syncSharedPatientBar(initialPatient);
+      var searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.value = displayName(initialPatient) + ' — ' + displayMrn(initialPatient);
+    } else {
+      renderLabResults();
+    }
     setInterval(function () {
       updateClock();
       if (window.currentStaff) applyStaffUi();
