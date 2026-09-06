@@ -2065,9 +2065,10 @@
                 });
             });
             testsBox.innerHTML = orderedNames.map(function(tName) {
-                return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#e6f6f8;border-radius:10px;border:0.5px solid rgba(0,112,128,0.25);font-size:12.5px;font-weight:700;color:#004a52;">' +
-                       '<span style="color:#1a7a32;font-size:15px;">✓</span> <span>' + esc(tName) + '</span>' +
-                       '<span style="margin-left:auto;font-size:10.5px;background:#fff;padding:2px 8px;border-radius:12px;color:#007080;">Requested</span>' +
+                return '<div class="specimen-test-item">' +
+                       '<span class="specimen-test-dot"></span>' +
+                       '<span class="specimen-test-name">' + esc(tName) + '</span>' +
+                       '<span class="specimen-test-badge">Requested</span>' +
                        '</div>';
             }).join('');
         }
@@ -2082,15 +2083,15 @@
         if (parent) {
             parent.querySelectorAll('.tube-pill').forEach(function(b) {
                 b.classList.remove('active');
-                b.style.background = '#fff';
-                b.style.color = '#3a3a3c';
-                b.style.borderColor = 'rgba(0,0,0,0.12)';
+                b.style.background = '';
+                b.style.color = '';
+                b.style.borderColor = '';
             });
         }
         btn.classList.add('active');
-        btn.style.background = '#e6f6f8';
-        btn.style.color = '#007080';
-        btn.style.borderColor = '#007080';
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
     }
 
     function toggleCondPill(btn) {
@@ -2098,15 +2099,15 @@
         if (parent) {
             parent.querySelectorAll('.cond-pill').forEach(function(b) {
                 b.classList.remove('active');
-                b.style.background = '#fff';
-                b.style.color = '#3a3a3c';
-                b.style.borderColor = 'rgba(0,0,0,0.12)';
+                b.style.background = '';
+                b.style.color = '';
+                b.style.borderColor = '';
             });
         }
         btn.classList.add('active');
-        btn.style.background = '#e9f9ee';
-        btn.style.color = '#1a7a32';
-        btn.style.borderColor = '#1a7a32';
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
     }
 
     async function transitionSpecimenGroupOnServer(orders, action, details) {

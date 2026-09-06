@@ -3434,6 +3434,302 @@
             }
         }
 
+
+
+        /* ─── PROFESSIONAL SPECIMEN PANEL REDESIGN ─── */
+        #panel-specimen .specimen-topbar,
+        #panel-specimen .specimen-card,
+        #panel-specimen .specimen-footer {
+            background: #ffffff;
+            border: 1px solid #e7ecf2;
+            border-radius: 18px;
+            box-shadow: 0 1px 3px rgba(15,23,42,.03), 0 10px 24px rgba(15,23,42,.04);
+        }
+        #panel-specimen .specimen-topbar {
+            padding: 18px 22px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        #panel-specimen .specimen-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #111827;
+            letter-spacing: -.02em;
+        }
+        #panel-specimen .specimen-subtitle {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        #panel-specimen .specimen-queue-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        #panel-specimen .specimen-queue-label {
+            font-size: 11.5px;
+            font-weight: 800;
+            color: #374151;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+        #panel-specimen .specimen-queue-select {
+            min-width: 420px;
+            max-width: 100%;
+            height: 44px;
+            padding: 0 16px;
+            border-radius: 14px;
+            border: 1px solid #d6dde7;
+            background: #f8fafc;
+            color: #111827;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+        }
+        #panel-specimen .specimen-queue-select:focus {
+            outline: none;
+            border-color: #b9c7da;
+            box-shadow: 0 0 0 3px rgba(15,23,42,.05);
+            background: #ffffff;
+        }
+        #panel-specimen .specimen-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        #panel-specimen .specimen-card {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 100%;
+        }
+        #panel-specimen .specimen-card-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #edf1f6;
+            font-size: 13px;
+            font-weight: 800;
+            color: #111827;
+            letter-spacing: .02em;
+        }
+        #panel-specimen .specimen-card-kicker {
+            min-width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f3f6fa;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        #panel-specimen .specimen-meta-label {
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        #panel-specimen .specimen-patient-name {
+            font-size: 15px;
+            font-weight: 800;
+            color: #111827;
+        }
+        #panel-specimen .specimen-patient-meta,
+        #panel-specimen .specimen-doc-name,
+        #panel-specimen .specimen-accno,
+        #panel-specimen .specimen-received-by {
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            margin-top: 2px;
+        }
+        #panel-specimen #spec_barcode_box {
+            margin-top: 6px;
+            padding: 8px 10px;
+            border: 1px dashed #d7dee8;
+            border-radius: 12px;
+            background: #fbfcfe;
+            display: inline-block;
+        }
+        #panel-specimen .specimen-pill-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        #panel-specimen .tube-pill,
+        #panel-specimen .cond-pill {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid #d6dde8;
+            background: #ffffff;
+            color: #344256;
+            font-weight: 700;
+            font-size: 11.5px;
+            cursor: pointer;
+            transition: all .16s ease;
+            box-shadow: none;
+            font-family: inherit;
+        }
+        #panel-specimen .tube-pill:hover,
+        #panel-specimen .cond-pill:hover {
+            background: #f8fafc;
+            transform: translateY(-1px);
+        }
+        #panel-specimen .tube-pill.active {
+            background: #eef2f7;
+            border-color: #c8d1de;
+            color: #111827;
+        }
+        #panel-specimen .cond-pill.active {
+            background: #eef2f7;
+            border-color: #c8d1de;
+            color: #111827;
+        }
+        #panel-specimen .specimen-ordered-tests {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 190px;
+            overflow-y: auto;
+        }
+        #panel-specimen .specimen-test-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #fbfcfe;
+            border: 1px solid #e7ecf2;
+            border-radius: 12px;
+        }
+        #panel-specimen .specimen-test-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #64748b;
+            flex-shrink: 0;
+        }
+        #panel-specimen .specimen-test-name {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #17212f;
+            line-height: 1.3;
+        }
+        #panel-specimen .specimen-test-badge {
+            margin-left: auto;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #475569;
+            background: #f3f5f8;
+            border: 1px solid #e1e7ef;
+            padding: 3px 9px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+        #panel-specimen .specimen-notes-input {
+            width: 100%;
+            height: 38px;
+            background: #f8fafc;
+            border: 1px solid #d6dde7;
+            border-radius: 10px;
+            padding: 0 12px;
+            font-size: 12px;
+            color: #111827;
+            font-family: inherit;
+        }
+        #panel-specimen .specimen-notes-input:focus {
+            outline: none;
+            background: #ffffff;
+            border-color: #b9c7da;
+            box-shadow: 0 0 0 3px rgba(15,23,42,.05);
+        }
+        #panel-specimen .specimen-footer {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        #panel-specimen .specimen-footer-note {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.45;
+        }
+        #panel-specimen .specimen-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        #panel-specimen .specimen-btn {
+            height: 40px;
+            padding: 0 18px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all .16s ease;
+        }
+        #panel-specimen .specimen-btn-secondary {
+            border: 1px solid #d6dde7;
+            background: #ffffff;
+            color: #1f2937;
+        }
+        #panel-specimen .specimen-btn-secondary:hover {
+            background: #f8fafc;
+        }
+        #panel-specimen .specimen-btn-danger {
+            border: 1px solid #f0d6d4;
+            background: #fff7f7;
+            color: #8a1f1a;
+        }
+        #panel-specimen .specimen-btn-danger:hover {
+            background: #ffefef;
+        }
+        #panel-specimen .specimen-btn-primary {
+            border: 0;
+            background: #1f2937;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(15,23,42,.14);
+        }
+        #panel-specimen .specimen-btn-primary:hover {
+            background: #111827;
+            transform: translateY(-1px);
+        }
+        @media (max-width: 1180px) {
+            #panel-specimen .specimen-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 860px) {
+            #panel-specimen .specimen-topbar {
+                padding: 16px 18px;
+            }
+            #panel-specimen .specimen-queue-select {
+                min-width: 0;
+                width: 100%;
+            }
+            #panel-specimen .specimen-queue-wrap {
+                width: 100%;
+            }
+            #panel-specimen .specimen-actions {
+                width: 100%;
+            }
+        }
+
 </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
 </head>
@@ -3630,103 +3926,98 @@
             </div>
         </div>
 
-        <!-- ─── PANEL: SPECIMEN (100/100 SIMPLE & SMART APPLE PLATINUM GLASS ACCESSIONING) ─── -->
+        <!-- ─── PANEL: SPECIMEN (PROFESSIONAL MINIMAL SPECIMEN ACCESSIONING) ─── -->
         <div id="panel-specimen" class="main-panel" style="display:none;">
             <div class="panel-body show" id="sub-specimen-form">
-                <!-- Top Header & 1-Click Common Server Patient Queue Selector -->
-                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:18px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                <div class="specimen-topbar">
                     <div>
-                        <div style="font-size:17px;font-weight:800;color:#004a52;">🧪 Simple & Smart Specimen Accessioning</div>
-                        <div style="font-size:12px;font-weight:600;color:#64748b;margin-top:2px;">1-Click Patient Order Queue & Automatic Tube Verification</div>
+                        <div class="specimen-title">Specimen accessioning</div>
+                        <div class="specimen-subtitle">Select the queued request, confirm tube and condition, then accession professionally.</div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <label style="font-size:12px;font-weight:700;color:#1d1d1f;">Select Patient from Order Queue:</label>
-                        <select id="specSmartPatientSelect" class="fi" style="height:38px;padding:0 14px;border-radius:10px;font-weight:700;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.3);cursor:pointer;" onchange="pcLabEngine.selectSpecimenPatient(this.value)">
+                    <div class="specimen-queue-wrap">
+                        <label class="specimen-queue-label" for="specSmartPatientSelect">Select request from order queue</label>
+                        <select id="specSmartPatientSelect" class="fi specimen-queue-select" onchange="pcLabEngine.selectSpecimenPatient(this.value)">
                             <option value="">Awaiting orders in queue…</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- 3-Card Apple Glass Grid -->
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
-                    <!-- CARD 1: PATIENT & ORDER IDENTIFICATION -->
-                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
-                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
-                            <span>👤</span> PATIENT & ORDER IDENTIFICATION
+                <div class="specimen-grid">
+                    <div class="specimen-card">
+                        <div class="specimen-card-head">
+                            <span class="specimen-card-kicker">01</span>
+                            <span>Patient &amp; order identification</span>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;">Patient Name & MRN</div>
-                            <div id="spec_pat_name" style="font-size:15px;font-weight:800;color:#1d1d1f;margin-top:2px;">Awaiting patient selection…</div>
-                            <div id="spec_pat_mrn" style="font-size:12px;font-weight:600;color:#007080;margin-top:2px;">MRN — • No active order selected</div>
+                            <div class="specimen-meta-label">Patient name &amp; MRN</div>
+                            <div id="spec_pat_name" class="specimen-patient-name">Awaiting patient selection…</div>
+                            <div id="spec_pat_mrn" class="specimen-patient-meta">MRN — • No active order selected</div>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;">Requesting Clinician & Department</div>
-                            <div id="spec_doc_name" style="font-size:13px;font-weight:700;color:#3a3a3c;margin-top:2px;">—</div>
+                            <div class="specimen-meta-label">Requesting clinician &amp; department</div>
+                            <div id="spec_doc_name" class="specimen-doc-name">—</div>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;">Auto-Generated Accession Barcode</div>
-                            <div style="margin-top:6px;" id="spec_barcode_box"></div>
-                            <div id="spec_acc_no" style="font-size:11px;font-weight:700;color:#1d1d1f;margin-top:2px;">ACC: Pending accession</div>
+                            <div class="specimen-meta-label">Accession barcode</div>
+                            <div id="spec_barcode_box"></div>
+                            <div id="spec_acc_no" class="specimen-accno">ACC: Pending accession</div>
                         </div>
                     </div>
 
-                    <!-- CARD 2: 1-CLICK SPECIMEN TUBE & CONDITION PILLS -->
-                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
-                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
-                            <span>🧪</span> SPECIMEN TUBE & CONDITION
+                    <div class="specimen-card">
+                        <div class="specimen-card-head">
+                            <span class="specimen-card-kicker">02</span>
+                            <span>Specimen tube &amp; condition</span>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">1-Click Tube Type (Auto-matched to test)</div>
-                            <div id="spec_tube_pills" style="display:flex;flex-wrap:wrap;gap:6px;">
-                                <button type="button" class="tube-pill active" onclick="pcLabEngine.toggleTubePill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid #007080;background:#e6f6f8;color:#007080;font-weight:700;font-size:11.5px;cursor:pointer;">🟣 EDTA (Whole Blood)</button>
-                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🟡 SST (Serum Gold)</button>
-                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🔵 Citrate (Blue)</button>
-                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🟡 Urine Midstream</button>
-                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">🔴 Culture Swab</button>
+                            <div class="specimen-meta-label">Tube type</div>
+                            <div id="spec_tube_pills" class="specimen-pill-group">
+                                <button type="button" class="tube-pill active" onclick="pcLabEngine.toggleTubePill(this)">EDTA (Whole Blood)</button>
+                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)">SST (Serum)</button>
+                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)">Citrate</button>
+                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)">Urine Midstream</button>
+                                <button type="button" class="tube-pill" onclick="pcLabEngine.toggleTubePill(this)">Culture Swab</button>
                             </div>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Specimen Condition Verification</div>
-                            <div id="spec_cond_pills" style="display:flex;flex-wrap:wrap;gap:6px;">
-                                <button type="button" class="cond-pill active" onclick="pcLabEngine.toggleCondPill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid #1a7a32;background:#e9f9ee;color:#1a7a32;font-weight:700;font-size:11.5px;cursor:pointer;">✅ Acceptable (Good)</button>
-                                <button type="button" class="cond-pill" onclick="pcLabEngine.toggleCondPill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">⚠️ Haemolysed</button>
-                                <button type="button" class="cond-pill" onclick="pcLabEngine.toggleCondPill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">⚠️ Clotted</button>
-                                <button type="button" class="cond-pill" onclick="pcLabEngine.toggleCondPill(this)" style="padding:6px 12px;border-radius:20px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#3a3a3c;font-weight:600;font-size:11.5px;cursor:pointer;">❌ Unlabelled</button>
+                            <div class="specimen-meta-label">Specimen condition</div>
+                            <div id="spec_cond_pills" class="specimen-pill-group">
+                                <button type="button" class="cond-pill active" onclick="pcLabEngine.toggleCondPill(this)">Acceptable</button>
+                                <button type="button" class="cond-pill" onclick="pcLabEngine.toggleCondPill(this)">Haemolysed</button>
+                                <button type="button" class="cond-pill" onclick="pcLabEngine.toggleCondPill(this)">Clotted</button>
+                                <button type="button" class="cond-pill" onclick="pcLabEngine.toggleCondPill(this)">Unlabelled</button>
                             </div>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;">Received By</div>
-                            <div id="spec_received_by" style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-top:2px;">Awaiting authenticated laboratory user…</div>
+                            <div class="specimen-meta-label">Received by</div>
+                            <div id="spec_received_by" class="specimen-received-by">Awaiting authenticated laboratory user…</div>
                         </div>
                     </div>
 
-                    <!-- CARD 3: DOCTOR-ORDERED DIAGNOSTIC PANEL -->
-                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
-                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
-                            <span>📋</span> DOCTOR-ORDERED DIAGNOSTIC PANEL
+                    <div class="specimen-card">
+                        <div class="specimen-card-head">
+                            <span class="specimen-card-kicker">03</span>
+                            <span>Doctor-ordered diagnostic panel</span>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Auto-Loaded from Doctor Dashboard</div>
-                            <div id="spec_ordered_tests" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;">
-                                <!-- Dynamically filled with check-chips -->
-                            </div>
+                            <div class="specimen-meta-label">Auto-loaded request items</div>
+                            <div id="spec_ordered_tests" class="specimen-ordered-tests"></div>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;margin-bottom:4px;">Clinical Notes / Special Handling</div>
-                            <input type="text" id="spec_notes_in" placeholder="Fasting specimen confirmed..." style="width:100%;height:34px;background:#ebeef3;border:0.5px solid rgba(0,0,0,0.14);border-radius:8px;padding:0 12px;font-size:12px;color:#1d1d1f;" />
+                            <div class="specimen-meta-label">Clinical notes / special handling</div>
+                            <input type="text" id="spec_notes_in" class="specimen-notes-input" placeholder="Fasting specimen confirmed…" />
                         </div>
                     </div>
                 </div>
 
-                <!-- Footer Action Bar -->
-                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                    <div style="font-size:12.5px;color:#64748b;">
-                        <strong>ℹ️ Smart 1-Click Accessioning:</strong> Clicking accept logs the barcode and automatically sets order status to <strong>In-Progress</strong>.
+                <div class="specimen-footer">
+                    <div class="specimen-footer-note">
+                        <strong>Smart accessioning:</strong> confirm the selected request, verify tube and specimen condition, then save the accession to move the order into <strong>In Progress</strong>.
                     </div>
-                    <div style="display:flex;gap:12px;">
-                        <button type="button" onclick="pcLabEngine.printBarcodeLabel()" style="height:40px;padding:0 18px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.16);background:#fff;font-weight:700;font-size:12.5px;cursor:pointer;">🖨️ Print Barcode Label</button>
-                        <button type="button" onclick="pcLabEngine.rejectSpecimen()" style="height:40px;padding:0 18px;border-radius:10px;border:0.5px solid rgba(255,59,48,0.3);background:#ffebe9;color:#8a1f1a;font-weight:700;font-size:12.5px;cursor:pointer;">⚠️ Reject Specimen</button>
-                        <button type="button" onclick="pcLabEngine.acceptAndAccession()" style="height:40px;padding:0 26px;border-radius:10px;border:0;background:#007080;color:#fff;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 3px 10px rgba(0,112,128,0.3);">✅ Accept & Accession Specimen</button>
+                    <div class="specimen-actions">
+                        <button type="button" class="specimen-btn specimen-btn-secondary" onclick="pcLabEngine.printBarcodeLabel()">Print barcode label</button>
+                        <button type="button" class="specimen-btn specimen-btn-danger" onclick="pcLabEngine.rejectSpecimen()">Reject specimen</button>
+                        <button type="button" class="specimen-btn specimen-btn-primary" onclick="pcLabEngine.acceptAndAccession()">Accept &amp; accession specimen</button>
                     </div>
                 </div>
             </div>
