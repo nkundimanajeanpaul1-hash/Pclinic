@@ -1392,6 +1392,25 @@
     }).join('') + '</tbody></table>';
     modal.classList.add('show');
   }
+
+  function showVitalsRequiredPrompt() {
+    var modal = document.getElementById('modalOverlay');
+    var title = document.getElementById('modalTitle');
+    var body = document.getElementById('modalBody');
+    if (!modal || !title || !body) return safeToast('⚠️ Open Vitals and save them first.', 'warning');
+    title.textContent = 'Fill vital signs first';
+    body.innerHTML = '' +
+      '<div style="display:flex;flex-direction:column;gap:14px;">' +
+        '<div style="font-size:14px;font-weight:700;color:var(--tp);">Vital Signs page opened first</div>' +
+        '<div style="font-size:12px;color:var(--ts);line-height:1.6;">Before triage, please <strong>fill and save the patient\'s vital signs first</strong>. Once vitals are saved, you can return to Triage and the category will be interpreted from those saved vitals.</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+          '<button class="btn-p" onclick="closeModal(); var temp=document.getElementById(\'vitalsTemp\'); if(temp) temp.focus();"><i class="ti ti-heartbeat"></i> Fill vitals now</button>' +
+          '<button class="btn-s" onclick="closeModal()">OK</button>' +
+        '</div>' +
+      '</div>';
+    modal.classList.add('show');
+  }
+
   function closeModal() {
     var modal = document.getElementById('modalOverlay');
     if (modal) modal.classList.remove('show');
@@ -1490,6 +1509,7 @@
     window.renderLabResults = renderLabResults;
     window.openModal = openModal;
     window.closeModal = closeModal;
+    window.showVitalsRequiredPrompt = showVitalsRequiredPrompt;
     window.updateNursingChips = updateNursingChips;
     window.updateTriagePreview = updateTriagePreview;
     var legacySwitchTab = window.switchTab;
@@ -1503,10 +1523,10 @@
             return;
           }
           if (!patientHasSavedVitals(triagePatient)) {
-            safeToast('⚠️ Triage is locked until vital signs are filled and saved.', 'warning');
             legacySwitchTab('vitals', document.querySelector('[data-tab="vitals"]'));
             if (typeof window.switchSub === 'function') window.switchSub('vitals-form');
-            var temp = document.getElementById('vitalsTemp'); if (temp) temp.focus();
+            showVitalsRequiredPrompt();
+            var temp = document.getElementById('vitalsTemp'); if (temp) setTimeout(function(){ temp.focus(); }, 80);
             return;
           }
         }
