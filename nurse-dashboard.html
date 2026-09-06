@@ -1146,6 +1146,7 @@
         }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
+    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260906_DOCTORSKIN">
 </head>
 <body>
 
@@ -1285,62 +1286,65 @@
                         <div id="overviewContext" style="font-size:12px;color:var(--tm);"><span id="todayDate"></span> · Nursing dashboard</div>
                     </div>
 
-                    <div class="qa-grid">
-                        <div class="qa-card" onclick="switchTab('triage', document.querySelector('[data-tab=triage]')); switchSub('triage-form')">
-                            <div class="qa-ic" style="background:var(--redb)"><i class="ti ti-urgent" style="color:var(--red)"></i></div>
-                            <div class="qa-label">Triage</div>
-                            <div class="qa-desc">Assess and classify</div>
+                    <div class="nurse-doctor-overview">
+                        <div class="nurse-overview-main-card">
+                            <div class="nurse-card-head">
+                                <span class="section-title" style="border-bottom:none;padding-bottom:0;margin-bottom:0;">📋 Today's nursing queue</span>
+                                <button class="btn-s" style="font-size:11px;padding:2px 12px;" onclick="loadPatients()"><i class="ti ti-refresh"></i> Refresh</button>
+                            </div>
+                            <div class="nurse-table-shell">
+                                <table class="wtbl">
+                                    <thead><tr><th style="width:30%">Patient</th><th style="width:12%">MRN</th><th style="width:12%">Time in</th><th style="width:16%">Purpose</th><th style="width:13%">Triage</th><th style="width:17%">Status</th></tr></thead>
+                                    <tbody id="queueTableBody">
+                                        <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--tm);">No patients in queue</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="qa-card" onclick="switchTab('vitals', document.querySelector('[data-tab=vitals]')); switchSub('vitals-form')">
-                            <div class="qa-ic" style="background:var(--blue-bg)"><i class="ti ti-heartbeat" style="color:var(--blue)"></i></div>
-                            <div class="qa-label">Record vitals</div>
-                            <div class="qa-desc">BP, pulse, temp, SpO₂</div>
-                        </div>
-                        <div class="qa-card" onclick="switchTab('cpn', document.querySelector('[data-tab=cpn]')); switchSub('cpn-ante')">
-                            <div class="qa-ic" style="background:var(--tealbg)"><i class="ti ti-baby-carriage" style="color:var(--teal)"></i></div>
-                            <div class="qa-label">CPN consultation</div>
-                            <div class="qa-desc">Antenatal, delivery, postnatal</div>
-                        </div>
-                        <div class="qa-card" onclick="switchTab('fp', document.querySelector('[data-tab=fp]')); switchSub('fp-consult')">
-                            <div class="qa-ic" style="background:var(--pinkb)"><i class="ti ti-heart" style="color:var(--pink)"></i></div>
-                            <div class="qa-label">Family planning</div>
-                            <div class="qa-desc">Counselling & method provision</div>
-                        </div>
-                        <div class="qa-card" onclick="switchTab('billing', document.querySelector('[data-tab=billing]')); switchSub('bill-med')">
-                            <div class="qa-ic" style="background:var(--orangeb)"><i class="ti ti-receipt" style="color:var(--orange)"></i></div>
-                            <div class="qa-label">Bill medications</div>
-                            <div class="qa-desc">Drugs and consumables</div>
-                        </div>
-                        <div class="qa-card" onclick="switchTab('lab', document.querySelector('[data-tab=lab]')); switchSub('lab-view')">
-                            <div class="qa-ic" style="background:var(--greenb)"><i class="ti ti-test-pipe" style="color:var(--green)"></i></div>
-                            <div class="qa-label">Lab results</div>
-                            <div class="qa-desc">Read-only access</div>
-                        </div>
-                        <div class="qa-card" onclick="switchTab('notes', document.querySelector('[data-tab=notes]')); switchSub('notes-form')">
-                            <div class="qa-ic" style="background:var(--purpleb)"><i class="ti ti-notes" style="color:var(--purple)"></i></div>
-                            <div class="qa-label">Nursing notes</div>
-                            <div class="qa-desc">Progress notes</div>
-                        </div>
-                        <div class="qa-card" onclick="switchTab('meds', document.querySelector('[data-tab=meds]')); switchSub('meds-log')">
-                            <div class="qa-ic" style="background:var(--acb)"><i class="ti ti-pill" style="color:var(--ac)"></i></div>
-                            <div class="qa-label">Medication log</div>
-                            <div class="qa-desc">Administered drugs</div>
-                        </div>
-                        <div class="qa-card" onclick="openModal('queue')">
-                            <div class="qa-ic" style="background:var(--s3)"><i class="ti ti-list" style="color:var(--tm)"></i></div>
-                            <div class="qa-label">Queue insights</div>
-                            <div class="qa-desc">Review waiting and urgent patients</div>
-                        </div>
-                    </div>
 
-                    <div style="margin-top:14px;">
-                        <div class="section-title" style="border-bottom: none; padding-bottom: 0;">Today's queue</div>
-                        <table class="wtbl">
-                            <thead><tr><th style="width:30%">Patient</th><th style="width:12%">MRN</th><th style="width:12%">Time in</th><th style="width:16%">Purpose</th><th style="width:13%">Triage</th><th style="width:17%">Status</th></tr></thead>
-                            <tbody id="queueTableBody">
-                                <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--tm);">No patients in queue</td></tr>
-                            </tbody>
-                        </table>
+                        <div class="nurse-overview-side-card">
+                            <div class="nurse-card-head nurse-card-head-compact">
+                                <span class="section-title" style="border-bottom:none;padding-bottom:0;margin-bottom:0;">⚡ Quick Actions</span>
+                            </div>
+                            <div class="qa-grid nurse-qa-rail">
+                                <div class="qa-card" onclick="switchTab('triage', document.querySelector('[data-tab=triage]')); switchSub('triage-form')">
+                                    <div class="qa-ic" style="background:var(--redb)"><i class="ti ti-urgent" style="color:var(--red)"></i></div>
+                                    <div><div class="qa-label">Triage</div><div class="qa-desc">Assess and classify</div></div>
+                                </div>
+                                <div class="qa-card" onclick="switchTab('vitals', document.querySelector('[data-tab=vitals]')); switchSub('vitals-form')">
+                                    <div class="qa-ic" style="background:var(--blue-bg)"><i class="ti ti-heartbeat" style="color:var(--blue)"></i></div>
+                                    <div><div class="qa-label">Record vitals</div><div class="qa-desc">BP, pulse, temp, SpO₂</div></div>
+                                </div>
+                                <div class="qa-card" onclick="switchTab('cpn', document.querySelector('[data-tab=cpn]')); switchSub('cpn-ante')">
+                                    <div class="qa-ic" style="background:var(--tealbg)"><i class="ti ti-baby-carriage" style="color:var(--teal)"></i></div>
+                                    <div><div class="qa-label">CPN consultation</div><div class="qa-desc">Antenatal, delivery, postnatal</div></div>
+                                </div>
+                                <div class="qa-card" onclick="switchTab('fp', document.querySelector('[data-tab=fp]')); switchSub('fp-consult')">
+                                    <div class="qa-ic" style="background:var(--pinkb)"><i class="ti ti-heart" style="color:var(--pink)"></i></div>
+                                    <div><div class="qa-label">Family planning</div><div class="qa-desc">Counselling & method provision</div></div>
+                                </div>
+                                <div class="qa-card" onclick="switchTab('billing', document.querySelector('[data-tab=billing]')); switchSub('bill-med')">
+                                    <div class="qa-ic" style="background:var(--orangeb)"><i class="ti ti-receipt" style="color:var(--orange)"></i></div>
+                                    <div><div class="qa-label">Bill medications</div><div class="qa-desc">Drugs and consumables</div></div>
+                                </div>
+                                <div class="qa-card" onclick="switchTab('lab', document.querySelector('[data-tab=lab]')); switchSub('lab-view')">
+                                    <div class="qa-ic" style="background:var(--greenb)"><i class="ti ti-test-pipe" style="color:var(--green)"></i></div>
+                                    <div><div class="qa-label">Lab results</div><div class="qa-desc">Read-only access</div></div>
+                                </div>
+                                <div class="qa-card" onclick="switchTab('notes', document.querySelector('[data-tab=notes]')); switchSub('notes-form')">
+                                    <div class="qa-ic" style="background:var(--purpleb)"><i class="ti ti-notes" style="color:var(--purple)"></i></div>
+                                    <div><div class="qa-label">Nursing notes</div><div class="qa-desc">Progress notes</div></div>
+                                </div>
+                                <div class="qa-card" onclick="switchTab('meds', document.querySelector('[data-tab=meds]')); switchSub('meds-log')">
+                                    <div class="qa-ic" style="background:var(--acb)"><i class="ti ti-pill" style="color:var(--ac)"></i></div>
+                                    <div><div class="qa-label">Medication log</div><div class="qa-desc">Administered drugs</div></div>
+                                </div>
+                                <div class="qa-card" onclick="openModal('queue')">
+                                    <div class="qa-ic" style="background:var(--s3)"><i class="ti ti-list" style="color:var(--tm)"></i></div>
+                                    <div><div class="qa-label">Queue insights</div><div class="qa-desc">Review waiting and urgent patients</div></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

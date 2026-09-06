@@ -1,0 +1,692 @@
+/* Nurse Dashboard — Doctor Dashboard visual skin
+   Purpose: keep nurse workflows, but align visual language with doctor-dashboard.html
+   (glass cards, blue accent, smart lists, tighter headers, doctor-style modals/tables). */
+
+:root {
+  --bg: #c3c4ca;
+  --s0: #f5f5f7;
+  --s1: #ffffff;
+  --s2: #ffffff;
+  --s3: #f2f2f4;
+  --bd: rgba(0, 0, 0, 0.06);
+  --bds: rgba(0, 0, 0, 0.08);
+  --tp: #1c1c1e;
+  --ts: #3a3a3c;
+  --tm: #8e8e93;
+  --ac: #0071e3;
+  --ach: #0066d6;
+  --acb: #eaf2ff;
+  --acl: rgba(0,113,227,0.15);
+  --green: #34c759;
+  --greenb: #e9f9ee;
+  --greend: #1a7a32;
+  --orange: #ff9500;
+  --orangeb: #fff4e0;
+  --oranged: #7a4500;
+  --red: #ff3b30;
+  --redb: #ffebe9;
+  --redd: #8a1f1a;
+  --purple: #af52de;
+  --purpleb: #f5eaff;
+  --purpled: #5c2475;
+  --teal: #007080;
+  --tealbg: #e6f6f8;
+  --tealt: #004a52;
+  --pink: #db2777;
+  --pinkb: #fdf2f8;
+  --pinkt: #9d174d;
+  --blue: #0071e3;
+  --blue-bg: #eaf2ff;
+  --r: 12px;
+  --r2: 16px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+  --shadow2: 0 2px 12px rgba(0,0,0,.10), 0 8px 32px rgba(0,0,0,.06);
+  --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html, body {
+  font-family: var(--f);
+}
+body {
+  background: var(--bg) !important;
+  color: var(--tp);
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(0,113,227,0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(52,199,89,0.03) 0%, transparent 50%) !important;
+}
+
+.content-area {
+  padding: 0 24px 16px 24px !important;
+  gap: 16px !important;
+}
+
+/* Doctor-style main nav */
+.nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  margin: 8px 16px 0 16px;
+  background: rgba(255,255,255,0.75) !important;
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-radius: 16px;
+  border: 0.5px solid rgba(255,255,255,0.3);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.03);
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+.nav-tab {
+  padding: 8px 18px !important;
+  font-size: 13px !important;
+  font-weight: 500;
+  border-radius: 10px !important;
+  border: none;
+  background: transparent;
+  color: var(--tm) !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.3s var(--spring);
+  position: relative;
+  letter-spacing: -0.01em;
+}
+.nav-tab:hover {
+  background: rgba(0,0,0,0.04);
+  color: var(--tp) !important;
+  transform: translateY(-2px) scale(1.02);
+}
+.nav-tab:active { transform: scale(0.92); }
+.nav-tab.active {
+  background: var(--ac) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(0,113,227,0.3);
+  transform: translateY(-1px);
+}
+.nav-tab i {
+  font-size: 15px !important;
+  color: inherit !important;
+  transition: transform 0.3s var(--spring);
+}
+.nav-tab:hover i { transform: scale(1.1) rotate(-2deg); }
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 12px;
+  background: radial-gradient(circle at center, rgba(0,113,227,0.15), transparent 70%);
+  opacity: 0;
+  animation: nurseDoctorGlow 2s ease-in-out infinite;
+  z-index: -1;
+}
+@keyframes nurseDoctorGlow {
+  0%,100% { opacity: 0; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Doctor-style sub nav */
+.sub-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 0;
+  height: auto !important;
+  border: none !important;
+  background: transparent !important;
+  overflow-x: auto;
+}
+.sub-tab {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  height: auto !important;
+  padding: 8px 14px !important;
+  border: none !important;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--tm) !important;
+  box-shadow: var(--shadow);
+  transition: all 0.25s var(--spring);
+}
+.sub-tab:hover { color: var(--tp) !important; transform: translateY(-1px); }
+.sub-tab.active {
+  background: var(--acb) !important;
+  color: var(--ac) !important;
+  box-shadow: 0 4px 12px rgba(0,113,227,0.12);
+}
+
+/* Search + KPI row */
+.search-row {
+  background: transparent !important;
+  border-bottom: none !important;
+  padding: 10px 0 0 !important;
+  gap: 12px;
+}
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.6) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 0.5px solid var(--bd) !important;
+  border-radius: 20px !important;
+  padding: 6px 14px !important;
+  box-shadow: var(--shadow);
+  transition: all 0.2s;
+}
+.search-wrap:focus-within {
+  background: rgba(255,255,255,0.95) !important;
+  border-color: var(--ac) !important;
+  box-shadow: 0 0 0 3px var(--acl), var(--shadow);
+}
+.search-wrap input {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+}
+.search-suggestions {
+  background: rgba(255,255,255,0.92) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 0.5px solid var(--bd) !important;
+  border-radius: var(--r);
+  box-shadow: var(--shadow2);
+  z-index: 900 !important;
+}
+.suggestion-item:hover { background: var(--s3) !important; }
+.suggestion-item .highlight { color: var(--ac) !important; }
+
+.kpis { gap: 8px !important; }
+.kpi {
+  background: rgba(255,255,255,0.55) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 0.5px solid var(--bd) !important;
+  border-radius: 20px !important;
+  padding: 6px 14px !important;
+  box-shadow: var(--shadow);
+  transition: all 0.22s var(--spring);
+}
+.kpi:hover {
+  background: rgba(255,255,255,0.92) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow2);
+}
+.kpi-num { font-weight: 700 !important; font-size: 13px !important; }
+
+/* Overview mirrors doctor layout */
+#panel-overview.main-panel {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+#panel-overview .panel-body { padding: 0 !important; }
+.nurse-doctor-overview {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+.nurse-overview-main-card,
+.nurse-overview-side-card,
+.nurse-table-shell,
+.main-panel:not(#panel-overview),
+.patient-card,
+.apple-glass,
+.cpn-entry,
+.fp-entry,
+.note-entry,
+.bill-entry,
+.med-entry {
+  background: rgba(255,255,255,0.72) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 0.5px solid var(--bd) !important;
+  border-radius: var(--r2) !important;
+  box-shadow: var(--shadow) !important;
+}
+.nurse-overview-main-card {
+  flex: 1;
+  min-width: 0;
+  padding: 16px;
+}
+.nurse-overview-side-card {
+  width: 220px;
+  flex-shrink: 0;
+  padding: 14px;
+}
+.nurse-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.nurse-card-head-compact { justify-content: center; }
+.nurse-card-head .section-title,
+.main-panel .section-title {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--ts) !important;
+  letter-spacing: -0.01em;
+}
+.nurse-table-shell { padding: 0 !important; overflow: hidden; }
+.nurse-qa-rail {
+  display: flex !important;
+  flex-direction: column;
+  gap: 6px !important;
+  grid-template-columns: none !important;
+}
+.nurse-qa-rail .qa-card {
+  padding: 7px 10px !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  border-radius: 10px !important;
+  flex-direction: row !important;
+  align-items: center !important;
+}
+.nurse-qa-rail .qa-ic {
+  width: 24px !important;
+  height: 24px !important;
+  flex-shrink: 0;
+}
+.nurse-qa-rail .qa-ic i { font-size: 12px !important; }
+.nurse-qa-rail .qa-label { font-size: 10px !important; font-weight: 600 !important; }
+.nurse-qa-rail .qa-desc { font-size: 9px !important; }
+
+/* Remaining panels become doctor-style glass work surfaces */
+.main-panel:not(#panel-overview) {
+  overflow: hidden;
+}
+.panel-body {
+  padding: 18px !important;
+  display: none;
+}
+.panel-body.show {
+  display: block !important;
+  animation: nursePanelRise .3s var(--spring);
+}
+@keyframes nursePanelRise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Patient card closer to doctor */
+.patient-card { overflow: hidden; }
+.pc-header {
+  padding: 16px 18px !important;
+  gap: 16px !important;
+}
+.pc-photo {
+  width: 56px !important;
+  height: 56px !important;
+  font-size: 20px !important;
+}
+.pc-name { font-size: 17px !important; font-weight: 700 !important; }
+.pc-meta-item { font-size: 11px !important; }
+.pc-btn,
+.btn-p,
+.btn-s,
+.btn-print {
+  border-radius: 8px !important;
+  transition: all .2s var(--spring) !important;
+}
+.btn-p {
+  background: var(--ac) !important;
+  box-shadow: 0 2px 8px rgba(0,113,227,0.25) !important;
+}
+.btn-p:hover { box-shadow: 0 4px 12px rgba(0,113,227,0.35) !important; }
+.btn-s,
+.btn-print,
+.pc-btn {
+  background: rgba(255,255,255,0.55) !important;
+  border: 0.5px solid var(--bd) !important;
+  color: var(--ts) !important;
+}
+.btn-s:hover,
+.btn-print:hover,
+.pc-btn:hover {
+  background: rgba(255,255,255,0.92) !important;
+  transform: scale(1.02);
+}
+.badge {
+  border-radius: 20px !important;
+  padding: 3px 12px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+}
+.b-stable { background: var(--greenb) !important; color: var(--greend) !important; }
+.b-warn, .b-orange { background: var(--orangeb) !important; color: var(--oranged) !important; }
+.b-critical, .b-red { background: var(--redb) !important; color: var(--redd) !important; }
+.b-info, .b-blue { background: var(--acb) !important; color: var(--ach) !important; }
+.b-pink { background: var(--pinkb) !important; color: var(--pinkt) !important; }
+.b-teal, .b-ac { background: #edfafa !important; color: #005a60 !important; }
+
+/* Doctor-style tables */
+.wtbl,
+.bill-table {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.wtbl thead,
+.bill-table thead {
+  background: rgba(0,0,0,0.02) !important;
+}
+.wtbl th,
+.bill-table th {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: var(--tm) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+  padding: 12px 14px !important;
+  text-align: left !important;
+  border-bottom: 0.5px solid rgba(0,0,0,0.04) !important;
+  background: transparent !important;
+}
+.wtbl tbody tr,
+.bill-table tbody tr {
+  transition: all 0.25s var(--spring) !important;
+}
+.wtbl tbody tr td,
+.bill-table tbody tr td {
+  padding: 12px 14px !important;
+  border-bottom: 0.5px solid rgba(192,179,179,0.10) !important;
+  background: rgba(255,255,255,0.50) !important;
+  color: var(--tp) !important;
+  transition: all 0.25s var(--spring) !important;
+}
+.wtbl tbody tr:nth-child(even) td,
+.bill-table tbody tr:nth-child(even) td {
+  background: rgba(192,179,179,0.04) !important;
+}
+.wtbl tbody tr:hover td,
+.bill-table tbody tr:hover td {
+  background: rgba(192,179,179,0.08) !important;
+  transform: scale(1.002);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+.wtbl tbody tr td .btn-s,
+.bill-table tbody tr td .btn-s {
+  padding: 4px 12px !important;
+  font-size: 10px !important;
+}
+.bill-total {
+  background: rgba(255,255,255,0.45) !important;
+  border-top: 0.5px solid var(--bd) !important;
+}
+
+/* Forms */
+.fg, .fg3, .fg4 { gap: 12px !important; }
+.lbl {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--tm) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.fi,
+.ta,
+select.fi,
+input.fi {
+  background: rgba(255,255,255,0.55) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 0.5px solid var(--bd) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+.fi:focus,
+.ta:focus,
+select.fi:focus,
+input.fi:focus {
+  border-color: var(--ac) !important;
+  box-shadow: 0 0 0 3px rgba(0,113,227,0.08) !important;
+  background: rgba(255,255,255,0.90) !important;
+}
+.fi[readonly] {
+  background: rgba(0,0,0,0.03) !important;
+  color: var(--tm) !important;
+}
+.section-title {
+  padding-bottom: 6px !important;
+  margin-bottom: 8px !important;
+  border-bottom: 0.5px solid var(--bd) !important;
+}
+
+/* History/result cards aligned to doctor feel */
+.cpn-entry,
+.fp-entry,
+.note-entry,
+.bill-entry,
+.med-entry,
+.apple-glass {
+  padding: 12px 14px !important;
+  margin-bottom: 8px !important;
+  transition: all 0.2s !important;
+}
+.cpn-entry:hover,
+.fp-entry:hover,
+.note-entry:hover,
+.bill-entry:hover,
+.med-entry:hover,
+.apple-glass:hover {
+  background: rgba(255,255,255,0.82) !important;
+  box-shadow: var(--shadow2) !important;
+}
+.result-row {
+  padding: 9px 0 !important;
+  border-bottom: 0.5px solid var(--bd) !important;
+}
+.result-row:last-child { border-bottom: none !important; }
+.result-val { font-weight: 700 !important; }
+
+/* Modals copied closer to doctor dashboard */
+.modal-overlay {
+  background: rgba(0,0,0,0.40) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  z-index: 999999 !important;
+  padding-top: 60px !important;
+}
+.modal {
+  background: rgba(255,255,255,0.92) !important;
+  backdrop-filter: saturate(180%) blur(32px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(32px) !important;
+  border-radius: 18px !important;
+  border: 0.5px solid rgba(255,255,255,0.3) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.12) !important;
+  animation: nurseDoctorModalSpring .4s var(--spring);
+}
+@keyframes nurseDoctorModalSpring {
+  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  padding: 14px 18px !important;
+  border-bottom: 0.5px solid var(--bd) !important;
+}
+.modal-title {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--tp) !important;
+}
+.modal-close {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: rgba(0,0,0,0.04) !important;
+}
+.modal-close:hover {
+  background: rgba(0,0,0,0.08) !important;
+  transform: scale(1.1);
+}
+.modal-body {
+  padding: 18px !important;
+  overflow-y: auto;
+}
+
+/* Toasts aligned to doctor dashboard */
+.toast {
+  background: rgba(28,28,30,0.92) !important;
+  backdrop-filter: saturate(180%) blur(24px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+  border-radius: 12px !important;
+  padding: 10px 20px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+}
+
+/* Mobile parity */
+@media (max-width: 960px) {
+  .nurse-doctor-overview { flex-direction: column; }
+  .nurse-overview-side-card { width: 100%; }
+  .fg, .fg3, .fg4 { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 768px) {
+  .nav-tabs {
+    padding: 6px 12px;
+    margin: 6px 12px 0 12px;
+    border-radius: 12px;
+    gap: 2px;
+  }
+  .nav-tab {
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+    border-radius: 8px !important;
+  }
+  .sub-nav { padding-top: 6px; }
+  .sub-tab {
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+    border-radius: 8px !important;
+  }
+  .search-row { padding: 8px 0 0 !important; flex-direction: column; align-items: stretch; }
+  .search-wrap { min-width: unset; }
+  .kpis { justify-content: center; }
+  .content-area { padding: 0 12px 12px !important; }
+  .main-panel:not(#panel-overview),
+  .nurse-overview-main-card,
+  .nurse-overview-side-card,
+  .patient-card { border-radius: 14px !important; }
+  .wtbl th, .wtbl td, .bill-table th, .bill-table td { padding: 8px 10px !important; }
+}
+@media (max-width: 480px) {
+  .nav-tabs {
+    padding: 4px 8px;
+    margin: 4px 8px 0 8px;
+    border-radius: 10px;
+    gap: 1px;
+  }
+  .nav-tab {
+    padding: 4px 10px !important;
+    font-size: 10px !important;
+    border-radius: 6px !important;
+  }
+  .sub-tab {
+    padding: 5px 10px !important;
+    font-size: 10px !important;
+    border-radius: 6px !important;
+  }
+  .modal { width: 96% !important; max-height: 90vh !important; margin-top: 20px; }
+  .modal-body { padding: 12px !important; }
+  .result-row { flex-wrap: wrap; gap: 4px; }
+  .result-test, .result-range, .result-val { min-width: unset !important; text-align: left !important; }
+  .nurse-qa-rail .qa-card { padding: 8px 9px !important; }
+}
+
+/* Dark mode parity with doctor dashboard */
+[data-theme="dark"], html[data-theme="dark"], body.dark-mode {
+  --bg: #0d0d12 !important;
+  --s1: #161620 !important;
+  --s2: #1e1e2c !important;
+  --s3: #262638 !important;
+  --bd: rgba(255,255,255,0.14) !important;
+  --tp: #f3f4f6 !important;
+  --ts: #d1d5db !important;
+  --tm: #9ca3af !important;
+  --ac: #60a5fa !important;
+  --ach: #93c5fd !important;
+  --acb: rgba(96,165,250,0.15) !important;
+  color-scheme: dark;
+}
+[data-theme="dark"] body, body.dark-mode {
+  background: #0d0d12 !important;
+  color: #f3f4f6 !important;
+}
+[data-theme="dark"] .nav-tabs,
+[data-theme="dark"] .sub-tab,
+[data-theme="dark"] .main-panel:not(#panel-overview),
+[data-theme="dark"] .nurse-overview-main-card,
+[data-theme="dark"] .nurse-overview-side-card,
+[data-theme="dark"] .patient-card,
+[data-theme="dark"] .modal,
+body.dark-mode .nav-tabs,
+body.dark-mode .sub-tab,
+body.dark-mode .main-panel:not(#panel-overview),
+body.dark-mode .nurse-overview-main-card,
+body.dark-mode .nurse-overview-side-card,
+body.dark-mode .patient-card,
+body.dark-mode .modal {
+  background: rgba(22,22,32,0.88) !important;
+  border-color: rgba(255,255,255,0.10) !important;
+  color: var(--tp) !important;
+}
+[data-theme="dark"] .search-wrap,
+[data-theme="dark"] .kpi,
+[data-theme="dark"] .wtbl tbody tr td,
+[data-theme="dark"] .bill-table tbody tr td,
+[data-theme="dark"] .fi,
+[data-theme="dark"] .ta,
+[data-theme="dark"] .btn-s,
+[data-theme="dark"] .btn-print,
+[data-theme="dark"] .pc-btn,
+body.dark-mode .search-wrap,
+body.dark-mode .kpi,
+body.dark-mode .wtbl tbody tr td,
+body.dark-mode .bill-table tbody tr td,
+body.dark-mode .fi,
+body.dark-mode .ta,
+body.dark-mode .btn-s,
+body.dark-mode .btn-print,
+body.dark-mode .pc-btn {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.10) !important;
+  color: var(--tp) !important;
+}
+[data-theme="dark"] .search-wrap:focus-within,
+[data-theme="dark"] .fi:focus,
+[data-theme="dark"] .ta:focus,
+body.dark-mode .search-wrap:focus-within,
+body.dark-mode .fi:focus,
+body.dark-mode .ta:focus {
+  background: rgba(255,255,255,0.12) !important;
+}
+[data-theme="dark"] .wtbl tbody tr:nth-child(even) td,
+[data-theme="dark"] .bill-table tbody tr:nth-child(even) td,
+body.dark-mode .wtbl tbody tr:nth-child(even) td,
+body.dark-mode .bill-table tbody tr:nth-child(even) td {
+  background: rgba(255,255,255,0.02) !important;
+}
+[data-theme="dark"] .wtbl tbody tr:hover td,
+[data-theme="dark"] .bill-table tbody tr:hover td,
+body.dark-mode .wtbl tbody tr:hover td,
+body.dark-mode .bill-table tbody tr:hover td {
+  background: rgba(255,255,255,0.06) !important;
+}
+[data-theme="dark"] .modal-overlay,
+body.dark-mode .modal-overlay {
+  background: rgba(0,0,0,0.55) !important;
+}
