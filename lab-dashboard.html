@@ -1733,10 +1733,959 @@
                 font-size: 10px;
             }
         }
+
+        /* ─── 2026 APPLE + PIXEL SMART UI REFRESH ─── */
+        :root {
+            --glass-white: rgba(255,255,255,.72);
+            --glass-edge: rgba(255,255,255,.46);
+            --tonal-blue: #eaf2ff;
+            --tonal-indigo: #eef2ff;
+            --tonal-mint: #eafbf5;
+            --tonal-amber: #fff5df;
+            --tonal-rose: #ffefef;
+            --hero-shadow: 0 12px 42px rgba(15, 23, 42, 0.10), 0 2px 8px rgba(15, 23, 42, 0.05);
+        }
+        body {
+            background:
+                radial-gradient(1100px 520px at 8% 0%, rgba(0,113,227,.10), transparent 56%),
+                radial-gradient(820px 420px at 100% 8%, rgba(0,112,128,.09), transparent 54%),
+                radial-gradient(760px 420px at 50% 100%, rgba(175,82,222,.06), transparent 52%),
+                linear-gradient(180deg, #f7f9fc 0%, #f3f6fb 48%, #eff3f9 100%);
+        }
+        .breadcrumb,
+        .nav-tabs,
+        .sub-nav,
+        .search-row {
+            position: relative;
+            z-index: 2;
+        }
+        .breadcrumb,
+        .nav-tabs,
+        .sub-nav,
+        .search-row,
+        .main-panel,
+        .sc,
+        .ov-card,
+        .modal {
+            backdrop-filter: saturate(180%) blur(18px);
+            -webkit-backdrop-filter: saturate(180%) blur(18px);
+        }
+        .nav-tabs,
+        .sub-nav,
+        .search-row {
+            background: rgba(255,255,255,.68);
+            border-bottom-color: rgba(15, 23, 42, .08);
+        }
+        .nav-tab,
+        .sub-tab,
+        .kpi,
+        .btn-p,
+        .btn-s,
+        .btn-print,
+        .btn-select-lab,
+        .btn-ov-view {
+            transition: transform .24s var(--spring), box-shadow .24s var(--spring), filter .2s ease, background .2s ease;
+        }
+        .nav-tab:hover,
+        .sub-tab:hover,
+        .kpi:hover,
+        .btn-p:hover,
+        .btn-s:hover,
+        .btn-print:hover,
+        .btn-select-lab:hover,
+        .btn-ov-view:hover {
+            filter: saturate(1.03);
+        }
+        .search-row {
+            gap: 14px;
+            box-shadow: inset 0 -1px 0 rgba(255,255,255,.55);
+        }
+        .search-wrap .sw {
+            min-height: 46px;
+            padding: 9px 16px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.76));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.65), 0 10px 22px rgba(15,23,42,.05);
+        }
+        .search-wrap .sw input {
+            font-size: 13.5px;
+            font-weight: 600;
+        }
+        .kpi {
+            height: 36px;
+            border-radius: 12px;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, .06), inset 0 1px 0 rgba(255,255,255,.7);
+        }
+        .content-area {
+            position: relative;
+            z-index: 1;
+            padding-top: 18px;
+            gap: 18px;
+        }
+        .lab-smart-shell {
+            padding: 18px 24px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .lab-hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(320px, .85fr);
+            gap: 14px;
+            align-items: stretch;
+        }
+        .glass-panel {
+            background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.60));
+            border: 1px solid rgba(255,255,255,.58);
+            border-radius: 28px;
+            box-shadow: var(--hero-shadow);
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+        }
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            background: linear-gradient(135deg, rgba(255,255,255,.64) 0%, rgba(255,255,255,.18) 42%, transparent 66%);
+            z-index: -1;
+        }
+        .lab-hero-main {
+            padding: 26px 28px;
+            min-height: 212px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 14px;
+            background:
+                radial-gradient(240px 140px at 100% 0%, rgba(0,113,227,.14), transparent 62%),
+                radial-gradient(220px 160px at 0% 100%, rgba(0,112,128,.12), transparent 58%);
+        }
+        .lab-hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.66);
+            color: #0f172a;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.62);
+        }
+        .lab-hero-kicker .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(180deg, #34c759, #1a7a32);
+            box-shadow: 0 0 0 5px rgba(52,199,89,.12);
+        }
+        .lab-hero-title {
+            font-size: clamp(26px, 4vw, 40px);
+            line-height: .98;
+            letter-spacing: -0.04em;
+            font-weight: 860;
+            color: #0f172a;
+            max-width: 12ch;
+        }
+        .lab-hero-copy {
+            font-size: 13.5px;
+            line-height: 1.65;
+            color: #475569;
+            max-width: 66ch;
+            font-weight: 600;
+        }
+        .lab-hero-actions,
+        .lab-hero-chips,
+        .lab-mini-grid,
+        .lab-smart-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .lab-quick-btn,
+        .lab-chip-btn,
+        .lab-mode-btn,
+        .lab-fab-btn,
+        .lab-stat-card {
+            border: 0;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .lab-quick-btn {
+            height: 40px;
+            padding: 0 16px;
+            border-radius: 14px;
+            background: rgba(255,255,255,.82);
+            color: #0f172a;
+            border: 1px solid rgba(15,23,42,.08);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+            font-weight: 800;
+            box-shadow: 0 10px 20px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.75);
+            transition: transform .24s var(--spring), box-shadow .24s var(--spring), background .2s ease;
+        }
+        .lab-quick-btn.primary {
+            background: linear-gradient(135deg, #007080, #0071e3);
+            color: #fff;
+            box-shadow: 0 14px 28px rgba(0,112,128,.24);
+        }
+        .lab-quick-btn:hover,
+        .lab-chip-btn:hover,
+        .lab-mode-btn:hover,
+        .lab-stat-card:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 16px 30px rgba(15,23,42,.10);
+        }
+        .lab-chip-btn {
+            min-height: 34px;
+            padding: 7px 12px;
+            border-radius: 12px;
+            background: rgba(255,255,255,.58);
+            border: 1px solid rgba(15,23,42,.06);
+            color: #334155;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11.5px;
+            font-weight: 750;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+        }
+        .lab-chip-btn .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #0071e3;
+            box-shadow: 0 0 0 5px rgba(0,113,227,.10);
+        }
+        .lab-hero-side {
+            padding: 18px;
+            display: flex;
+        }
+        .lab-spotlight-card {
+            width: 100%;
+            min-height: 100%;
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.58));
+            border: 1px solid rgba(15,23,42,.06);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.68);
+        }
+        .lab-spotlight-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .lab-spotlight-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(0,113,227,.16), rgba(0,112,128,.20));
+            color: #0f172a;
+            display: grid;
+            place-items: center;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: .08em;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.72);
+        }
+        .lab-spotlight-overline {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 3px;
+        }
+        .lab-spotlight-name {
+            font-size: 18px;
+            font-weight: 860;
+            letter-spacing: -0.03em;
+            color: #0f172a;
+            line-height: 1.05;
+        }
+        .lab-spotlight-sub {
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            margin-top: 4px;
+        }
+        .lab-progress-wrap {
+            display: grid;
+            grid-template-columns: 96px 1fr;
+            gap: 14px;
+            align-items: center;
+        }
+        .lab-progress-ring {
+            --pct: 0deg;
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            background: conic-gradient(#0071e3 0deg, #007080 var(--pct), rgba(15,23,42,.08) var(--pct), rgba(15,23,42,.08) 360deg);
+            display: grid;
+            place-items: center;
+            box-shadow: inset 0 2px 10px rgba(255,255,255,.6), 0 8px 24px rgba(15,23,42,.08);
+        }
+        .lab-progress-ring::before {
+            content: '';
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.92);
+            position: absolute;
+        }
+        .lab-progress-ring > span {
+            position: relative;
+            z-index: 1;
+            font-size: 16px;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: -0.03em;
+        }
+        .lab-progress-label {
+            font-size: 12px;
+            color: #475569;
+            line-height: 1.55;
+            font-weight: 650;
+        }
+        .lab-progress-label strong {
+            color: #0f172a;
+        }
+        .lab-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .lab-mini-card {
+            padding: 12px 13px;
+            border-radius: 16px;
+            background: rgba(255,255,255,.64);
+            border: 1px solid rgba(15,23,42,.06);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.68);
+        }
+        .lab-mini-card .label {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .10em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .lab-mini-card .value {
+            font-size: 20px;
+            font-weight: 860;
+            letter-spacing: -0.04em;
+            color: #0f172a;
+        }
+        .lab-mini-card .sub {
+            font-size: 11px;
+            color: #475569;
+            font-weight: 650;
+            margin-top: 2px;
+        }
+        .lab-mode-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .lab-mode-btn {
+            min-height: 38px;
+            padding: 8px 14px;
+            border-radius: 14px;
+            background: rgba(255,255,255,.72);
+            color: #334155;
+            border: 1px solid rgba(15,23,42,.08);
+            font-size: 12px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+        }
+        .lab-mode-btn.active {
+            background: linear-gradient(135deg, #0f172a, #334155);
+            color: #fff;
+            box-shadow: 0 16px 26px rgba(15,23,42,.18);
+        }
+        .lab-smart-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .lab-stat-card {
+            text-align: left;
+            padding: 15px 16px;
+            border-radius: 20px;
+            background: linear-gradient(180deg, rgba(255,255,255,.84), rgba(255,255,255,.64));
+            border: 1px solid rgba(255,255,255,.62);
+            box-shadow: 0 10px 28px rgba(15,23,42,.08);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+        .lab-stat-card::after {
+            content: '';
+            position: absolute;
+            inset: auto -24px -38px auto;
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            opacity: .36;
+            background: currentColor;
+            filter: blur(34px);
+        }
+        .lab-stat-card .eyebrow {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            font-weight: 800;
+            opacity: .86;
+        }
+        .lab-stat-card .big {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+        }
+        .lab-stat-card .desc {
+            font-size: 12px;
+            font-weight: 650;
+            opacity: .92;
+            max-width: 24ch;
+        }
+        .lab-stat-card.blue { color: #005ed8; background: linear-gradient(180deg, rgba(234,242,255,.92), rgba(255,255,255,.78)); }
+        .lab-stat-card.teal { color: #005b66; background: linear-gradient(180deg, rgba(230,246,248,.95), rgba(255,255,255,.78)); }
+        .lab-stat-card.amber { color: #915300; background: linear-gradient(180deg, rgba(255,244,224,.96), rgba(255,255,255,.78)); }
+        .lab-stat-card.rose { color: #9b1c1c; background: linear-gradient(180deg, rgba(255,235,233,.96), rgba(255,255,255,.78)); }
+        .main-panel {
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(255,255,255,.76), rgba(255,255,255,.60));
+            border-color: rgba(255,255,255,.56);
+            box-shadow: 0 12px 40px rgba(15,23,42,.08);
+        }
+        .panel-header {
+            padding: 16px 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,.50), rgba(255,255,255,.22));
+        }
+        .panel-title {
+            font-size: 15px;
+            font-weight: 820;
+            letter-spacing: -0.02em;
+        }
+        .wtbl {
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+        .wtbl thead th {
+            border-bottom: none;
+            background: transparent;
+            color: #64748b;
+            font-size: 10px;
+            letter-spacing: .09em;
+            padding-bottom: 0;
+        }
+        .wtbl tbody td {
+            background: rgba(255,255,255,.84);
+            border-top: 1px solid rgba(255,255,255,.68);
+            border-bottom: 1px solid rgba(15,23,42,.06);
+            box-shadow: 0 10px 22px rgba(15,23,42,.04);
+        }
+        .wtbl tbody td:first-child {
+            border-left: 1px solid rgba(15,23,42,.06);
+            border-top-left-radius: 16px;
+            border-bottom-left-radius: 16px;
+        }
+        .wtbl tbody td:last-child {
+            border-right: 1px solid rgba(15,23,42,.06);
+            border-top-right-radius: 16px;
+            border-bottom-right-radius: 16px;
+        }
+        .wtbl tr:hover td {
+            background: rgba(255,255,255,.96);
+        }
+        tr.row-selected td {
+            background: linear-gradient(180deg, rgba(230,246,248,.96), rgba(255,255,255,.88)) !important;
+        }
+        .badge {
+            border: 1px solid rgba(15,23,42,.05);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+        }
+        .lab-density-compact .content-area {
+            gap: 12px;
+        }
+        .lab-density-compact .panel-body,
+        .lab-density-compact .main-panel,
+        .lab-density-compact .sc,
+        .lab-density-compact .ov-card {
+            transform-origin: top center;
+        }
+        .lab-density-compact .panel-body {
+            padding: 12px;
+        }
+        .lab-density-compact .wtbl {
+            border-spacing: 0 6px;
+        }
+        .lab-density-compact .wtbl td,
+        .lab-density-compact .wtbl th {
+            padding-top: 7px;
+            padding-bottom: 7px;
+        }
+        .lab-density-compact .sc {
+            padding: 11px 13px;
+        }
+        .lab-focus-mode .breadcrumb,
+        .lab-focus-mode .lab-smart-shell {
+            display: none;
+        }
+        .lab-focus-mode .content-area {
+            padding-top: 8px;
+        }
+        .lab-focus-mode .search-row {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+        .lab-fab-dock {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 70;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .lab-fab-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,.90), rgba(255,255,255,.74));
+            border: 1px solid rgba(255,255,255,.58);
+            color: #0f172a;
+            box-shadow: 0 12px 28px rgba(15,23,42,.16);
+            display: grid;
+            place-items: center;
+            font-size: 18px;
+            transition: transform .24s var(--spring), box-shadow .24s var(--spring);
+        }
+        .lab-fab-btn.primary {
+            color: #fff;
+            background: linear-gradient(135deg, #007080, #0071e3);
+        }
+        .lab-fab-btn:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 18px 32px rgba(15,23,42,.22);
+        }
+        .lab-fab-btn:active,
+        .lab-quick-btn:active,
+        .lab-chip-btn:active,
+        .lab-mode-btn:active,
+        .lab-stat-card:active {
+            transform: scale(.97);
+        }
+        @media (max-width: 1180px) {
+            .lab-hero {
+                grid-template-columns: 1fr;
+            }
+            .lab-smart-strip {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        @media (max-width: 760px) {
+            .lab-smart-shell {
+                padding: 14px 12px 0;
+                gap: 12px;
+            }
+            .lab-hero-main,
+            .lab-hero-side {
+                padding: 18px;
+            }
+            .lab-progress-wrap {
+                grid-template-columns: 1fr;
+            }
+            .lab-mini-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .lab-smart-strip {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .lab-fab-dock {
+                right: 12px;
+                bottom: 12px;
+            }
+            .lab-fab-btn {
+                width: 48px;
+                height: 48px;
+                border-radius: 16px;
+            }
+        }
+        @media (max-width: 560px) {
+            .lab-hero-title {
+                font-size: 26px;
+            }
+            .lab-smart-strip,
+            .lab-mini-grid {
+                grid-template-columns: 1fr;
+            }
+            .lab-quick-btn,
+            .lab-mode-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .lab-hero-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* ─────────────────────────────────────────────
+           2026 PREMIUM PASS 2 — DEEPER APPLE + PIXEL LAYER
+        ───────────────────────────────────────────── */
+        body {
+            --lab-premium-accent: #0071e3;
+            --lab-premium-glow: rgba(0, 113, 227, 0.18);
+            --lab-premium-glow-strong: rgba(0, 113, 227, 0.28);
+            --lab-premium-panel-top: rgba(255, 255, 255, 0.92);
+            --lab-premium-panel-bottom: rgba(255, 255, 255, 0.72);
+        }
+        body[data-lab-active-tab="overview"]  { --lab-premium-accent:#0071e3; --lab-premium-glow:rgba(0,113,227,.18); --lab-premium-glow-strong:rgba(0,113,227,.28); }
+        body[data-lab-active-tab="specimen"]  { --lab-premium-accent:#007080; --lab-premium-glow:rgba(0,112,128,.18); --lab-premium-glow-strong:rgba(0,112,128,.28); }
+        body[data-lab-active-tab="worklist"]  { --lab-premium-accent:#ff9500; --lab-premium-glow:rgba(255,149,0,.20); --lab-premium-glow-strong:rgba(255,149,0,.30); }
+        body[data-lab-active-tab="results"]   { --lab-premium-accent:#1a7a32; --lab-premium-glow:rgba(26,122,50,.18); --lab-premium-glow-strong:rgba(26,122,50,.28); }
+        body[data-lab-active-tab="pathology"] { --lab-premium-accent:#7a249d; --lab-premium-glow:rgba(122,36,157,.18); --lab-premium-glow-strong:rgba(122,36,157,.28); }
+        body[data-lab-active-tab="microbio"]  { --lab-premium-accent:#b5006e; --lab-premium-glow:rgba(181,0,110,.18); --lab-premium-glow-strong:rgba(181,0,110,.28); }
+        body[data-lab-active-tab="bloodbank"] { --lab-premium-accent:#d32f2f; --lab-premium-glow:rgba(211,47,47,.18); --lab-premium-glow-strong:rgba(211,47,47,.30); }
+        body[data-lab-active-tab="qc"]        { --lab-premium-accent:#4338ca; --lab-premium-glow:rgba(67,56,202,.18); --lab-premium-glow-strong:rgba(67,56,202,.30); }
+        body[data-lab-active-tab="reports"]   { --lab-premium-accent:#a16207; --lab-premium-glow:rgba(161,98,7,.18); --lab-premium-glow-strong:rgba(161,98,7,.28); }
+
+        .lab-ambient-backdrop {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .lab-ambient-backdrop .lab-orb {
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(18px);
+            opacity: .6;
+            animation: labFloat 16s ease-in-out infinite alternate;
+        }
+        .lab-ambient-backdrop .orb-a {
+            width: 380px;
+            height: 380px;
+            top: -100px;
+            left: -90px;
+            background: radial-gradient(circle at 35% 35%, rgba(0,113,227,.34), rgba(0,113,227,0));
+        }
+        .lab-ambient-backdrop .orb-b {
+            width: 340px;
+            height: 340px;
+            top: 16%;
+            right: -80px;
+            background: radial-gradient(circle at 35% 35%, rgba(0,112,128,.28), rgba(0,112,128,0));
+            animation-duration: 20s;
+        }
+        .lab-ambient-backdrop .orb-c {
+            width: 420px;
+            height: 420px;
+            bottom: -160px;
+            left: 20%;
+            background: radial-gradient(circle at 40% 40%, rgba(255,149,0,.24), rgba(255,149,0,0));
+            animation-duration: 24s;
+        }
+        .lab-ambient-backdrop .lab-mesh {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(115deg, rgba(255,255,255,.45), rgba(255,255,255,0) 40%),
+                radial-gradient(circle at 70% 12%, rgba(255,255,255,.55), rgba(255,255,255,0) 24%),
+                linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0));
+            opacity: .7;
+        }
+        .lab-ambient-backdrop .lab-noise {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(15,23,42,.055) .7px, transparent .7px);
+            background-size: 12px 12px;
+            opacity: .12;
+            mix-blend-mode: soft-light;
+        }
+        @keyframes labFloat {
+            from { transform: translate3d(0,0,0) scale(1); }
+            to { transform: translate3d(18px, -14px, 0) scale(1.08); }
+        }
+
+        .nav-tabs,
+        .sub-nav,
+        .search-row,
+        .lab-smart-shell,
+        .lab-command-ribbon,
+        .content-area,
+        .lab-fab-dock {
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-tabs,
+        .sub-nav,
+        .search-row {
+            backdrop-filter: saturate(160%) blur(22px);
+            -webkit-backdrop-filter: saturate(160%) blur(22px);
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+        }
+        .nav-tabs {
+            border-bottom: 1px solid rgba(255,255,255,.52);
+        }
+        .sub-nav {
+            border-bottom: 1px solid rgba(255,255,255,.42);
+        }
+        .search-row {
+            border-bottom: 1px solid rgba(255,255,255,.42);
+        }
+
+        .lab-hero-main,
+        .lab-hero-side,
+        .lab-command-ribbon,
+        .main-panel,
+        .ov-card,
+        .sc,
+        .lab-stat-card,
+        .lab-mini-card {
+            background: linear-gradient(180deg, var(--lab-premium-panel-top), var(--lab-premium-panel-bottom));
+            border-color: rgba(255,255,255,.64) !important;
+            box-shadow:
+                0 18px 42px rgba(15, 23, 42, 0.09),
+                0 2px 10px rgba(255,255,255,.25) inset,
+                0 1px 0 rgba(255,255,255,.6) inset;
+        }
+        .lab-hero-main,
+        .lab-hero-side,
+        .main-panel,
+        .lab-command-ribbon {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+        }
+        .lab-hero-main::before,
+        .lab-hero-side::before,
+        .main-panel::before,
+        .lab-command-ribbon::before {
+            content: '';
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            top: 0;
+            height: 2px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, transparent, var(--lab-premium-accent), transparent);
+            opacity: .9;
+            z-index: 0;
+        }
+        .lab-hero-main::after,
+        .lab-hero-side::after,
+        .lab-command-ribbon::after {
+            content: '';
+            position: absolute;
+            inset: auto -10% -55% auto;
+            width: 240px;
+            height: 240px;
+            background: radial-gradient(circle, var(--lab-premium-glow-strong), transparent 65%);
+            opacity: .75;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .lab-hero-kicker,
+        .lab-spotlight-overline,
+        .lab-stat-card .eyebrow,
+        .panel-title {
+            letter-spacing: .02em;
+        }
+        .lab-hero-title {
+            text-wrap: balance;
+        }
+        .lab-hero-copy,
+        .lab-progress-label,
+        .lab-stat-card .desc {
+            line-height: 1.55;
+        }
+
+        .lab-command-ribbon {
+            margin: 8px 24px 0;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border-radius: 22px;
+        }
+        .lab-command-meta,
+        .lab-command-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .lab-command-pill,
+        .lab-command-btn {
+            min-height: 40px;
+            padding: 0 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(15,23,42,.08);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .01em;
+            background: rgba(255,255,255,.72);
+            color: #102033;
+            box-shadow: 0 8px 18px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.7);
+        }
+        .lab-command-pill.accent {
+            color: #fff;
+            background: linear-gradient(135deg, var(--lab-premium-accent), #0f172a);
+            border-color: transparent;
+            box-shadow: 0 14px 26px var(--lab-premium-glow-strong);
+        }
+        .lab-command-pill.subtle {
+            color: #425466;
+            background: rgba(255,255,255,.62);
+        }
+        .lab-command-btn {
+            cursor: pointer;
+            transition: transform .22s var(--spring), box-shadow .22s var(--spring), background .22s var(--spring), color .22s var(--spring);
+        }
+        .lab-command-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(15,23,42,.11);
+        }
+        .lab-command-btn[data-active="1"] {
+            color: #fff;
+            background: linear-gradient(135deg, var(--lab-premium-accent), #0f172a);
+            border-color: transparent;
+            box-shadow: 0 14px 28px var(--lab-premium-glow-strong);
+        }
+
+        .main-panel {
+            border-width: 1px;
+            box-shadow:
+                0 22px 44px rgba(15, 23, 42, 0.08),
+                0 1px 0 rgba(255,255,255,.75) inset,
+                0 0 0 1px rgba(255,255,255,.28) inset;
+        }
+        .panel-header {
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(180deg, rgba(255,255,255,.68), rgba(255,255,255,.3));
+        }
+        .wtbl th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: linear-gradient(180deg, rgba(246,248,252,.96), rgba(240,244,248,.9));
+        }
+        .wtbl tr {
+            transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
+        }
+        .wtbl tbody tr:hover {
+            background: linear-gradient(90deg, rgba(255,255,255,.76), rgba(255,255,255,.94));
+            box-shadow: inset 3px 0 0 var(--lab-premium-accent);
+        }
+        .ov-card:hover,
+        .sc:hover,
+        .lab-mini-card:hover {
+            box-shadow:
+                0 18px 32px rgba(15,23,42,.12),
+                0 0 0 1px rgba(255,255,255,.3) inset,
+                0 0 0 1px var(--lab-premium-glow);
+        }
+        .search-wrap .sw {
+            box-shadow: 0 10px 26px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.75);
+        }
+        .search-wrap .sw:focus-within {
+            box-shadow: 0 0 0 4px var(--lab-premium-glow), 0 18px 28px rgba(15,23,42,.12);
+        }
+        .kpi,
+        .nav-tab,
+        .sub-tab,
+        .btn-s,
+        .btn-p,
+        .btn-apple,
+        .tb-btn,
+        .btn-print {
+            transition: transform .22s var(--spring), box-shadow .22s var(--spring), filter .22s var(--spring);
+        }
+        .kpi:hover,
+        .nav-tab:hover,
+        .sub-tab:hover,
+        .btn-s:hover,
+        .btn-p:hover,
+        .btn-apple:hover,
+        .tb-btn:hover,
+        .btn-print:hover {
+            transform: translateY(-1px);
+            filter: saturate(1.04);
+            box-shadow: 0 10px 20px rgba(15,23,42,.10);
+        }
+
+        body[data-lab-selected="1"] .lab-spotlight-avatar,
+        body[data-lab-selected="1"] .lab-command-pill.accent,
+        body[data-lab-selected="1"] .lab-fab-btn.primary {
+            box-shadow: 0 16px 34px var(--lab-premium-glow-strong);
+        }
+        body.lab-focus-mode .lab-command-ribbon {
+            margin-top: 0;
+            opacity: .94;
+        }
+
+        @media (max-width: 920px) {
+            .lab-command-ribbon {
+                margin: 8px 12px 0;
+                border-radius: 18px;
+                padding: 14px;
+                align-items: flex-start;
+                flex-direction: column;
+            }
+            .lab-command-actions {
+                width: 100%;
+            }
+        }
+        @media (max-width: 560px) {
+            .lab-command-meta,
+            .lab-command-actions {
+                width: 100%;
+            }
+            .lab-command-btn {
+                flex: 1 1 calc(33.333% - 8px);
+                justify-content: center;
+            }
+        }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
 </head>
 <body>
+    <div class="lab-ambient-backdrop" aria-hidden="true">
+        <div class="lab-orb orb-a"></div>
+        <div class="lab-orb orb-b"></div>
+        <div class="lab-orb orb-c"></div>
+        <div class="lab-mesh"></div>
+        <div class="lab-noise"></div>
+    </div>
 
     <!-- ═══ TOPBAR ═══ -->
     <div class="topbar" style="display: none !important;">
@@ -1818,6 +2767,107 @@
             <div class="kpi kpi-pur" onclick="openModal('stat')"><i class="ti ti-bolt"></i> <span class="kpi-num" id="kpi-stat-num">0</span> STAT</div>
         </div>
     </div>
+
+    <!-- ═══ SMART APPLE + PIXEL HERO ═══ -->
+    <div class="lab-smart-shell" id="labSmartShell">
+        <section class="lab-hero">
+            <div class="glass-panel lab-hero-main">
+                <div class="lab-hero-kicker"><span class="dot"></span> Liquid Glass + Material You laboratory workspace</div>
+                <div>
+                    <div class="lab-hero-title">Laboratory command center</div>
+                    <div class="lab-hero-copy" id="labHeroCopy">Select a patient from the queue or search above to unlock specimen accession, smart result entry, official reporting, QC and microbiology.</div>
+                </div>
+                <div class="lab-hero-actions">
+                    <button class="lab-quick-btn primary" type="button" id="labHeroActionPrimary"><i class="ti ti-test-pipe"></i> Open specimen workflow</button>
+                    <button class="lab-quick-btn" type="button" id="labHeroActionSecondary"><i class="ti ti-report-analytics"></i> Open results</button>
+                    <button class="lab-quick-btn" type="button" id="labHeroActionSearch"><i class="ti ti-search"></i> Focus search</button>
+                </div>
+                <div class="lab-hero-chips">
+                    <button class="lab-chip-btn" type="button" id="labLiveChip"><span class="pulse"></span> Live common server</button>
+                    <button class="lab-chip-btn" type="button" id="labSmartClockChip"><i class="ti ti-clock-hour-4"></i> --:--</button>
+                    <button class="lab-chip-btn" type="button" id="labSmartContextChip"><i class="ti ti-sparkles"></i> Smart queue context</button>
+                </div>
+            </div>
+            <div class="glass-panel lab-hero-side">
+                <div class="lab-spotlight-card">
+                    <div class="lab-spotlight-head">
+                        <div class="lab-spotlight-avatar" id="labSpotlightAvatar">LAB</div>
+                        <div>
+                            <div class="lab-spotlight-overline">Patient spotlight</div>
+                            <div class="lab-spotlight-name" id="labSpotlightName">No patient selected</div>
+                            <div class="lab-spotlight-sub" id="labSpotlightSub">Choose one patient to unlock all laboratory actions.</div>
+                        </div>
+                    </div>
+                    <div class="lab-progress-wrap">
+                        <div class="lab-progress-ring" id="labSpotlightRing"><span id="labSpotlightPct">0%</span></div>
+                        <div class="lab-progress-label" id="labSpotlightProgressText"><strong>Workflow ready.</strong> Select a patient and the dashboard will switch into a clean, focused lab workflow with quicker navigation.</div>
+                    </div>
+                    <div class="lab-mini-grid">
+                        <div class="lab-mini-card">
+                            <div class="label">Open requests</div>
+                            <div class="value" id="labMiniOpen">0</div>
+                            <div class="sub" id="labMiniOpenSub">No active queue</div>
+                        </div>
+                        <div class="lab-mini-card">
+                            <div class="label">Verified</div>
+                            <div class="value" id="labMiniVerified">0</div>
+                            <div class="sub" id="labMiniVerifiedSub">Awaiting final release</div>
+                        </div>
+                        <div class="lab-mini-card">
+                            <div class="label">STAT</div>
+                            <div class="value" id="labMiniStat">0</div>
+                            <div class="sub" id="labMiniStatSub">No urgent specimen</div>
+                        </div>
+                        <div class="lab-mini-card">
+                            <div class="label">Next step</div>
+                            <div class="value" id="labMiniNext">Queue</div>
+                            <div class="sub" id="labMiniNextSub">Open Overview</div>
+                        </div>
+                    </div>
+                    <div class="lab-mode-row">
+                        <button class="lab-mode-btn" type="button" id="labDenseToggle"><i class="ti ti-layout-grid"></i> Dense mode</button>
+                        <button class="lab-mode-btn" type="button" id="labFocusToggle"><i class="ti ti-focus-2"></i> Focus mode</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="lab-smart-strip">
+            <button class="lab-stat-card blue" type="button" id="labHeroCardPending">
+                <div class="eyebrow">Pending queue</div>
+                <div class="big" id="labHeroPendingBig">0</div>
+                <div class="desc" id="labHeroPendingDesc">Orders still waiting for specimen or result handling.</div>
+            </button>
+            <button class="lab-stat-card teal" type="button" id="labHeroCardProgress">
+                <div class="eyebrow">In progress</div>
+                <div class="big" id="labHeroProgressBig">0</div>
+                <div class="desc" id="labHeroProgressDesc">Accessioned requests actively being worked on.</div>
+            </button>
+            <button class="lab-stat-card amber" type="button" id="labHeroCardVerified">
+                <div class="eyebrow">Verified today</div>
+                <div class="big" id="labHeroVerifiedBig">0</div>
+                <div class="desc" id="labHeroVerifiedDesc">Server-confirmed reports ready to print.</div>
+            </button>
+            <button class="lab-stat-card rose" type="button" id="labHeroCardUrgent">
+                <div class="eyebrow">Critical / STAT</div>
+                <div class="big" id="labHeroUrgentBig">0</div>
+                <div class="desc" id="labHeroUrgentDesc">Urgent requests needing the fastest turnaround.</div>
+            </button>
+        </section>
+    </div>
+
+    <section class="glass-panel lab-command-ribbon" id="labCommandRibbon">
+        <div class="lab-command-meta">
+            <span class="lab-command-pill accent" id="labCommandTab">Overview</span>
+            <span class="lab-command-pill" id="labCommandPatient">No patient selected</span>
+            <span class="lab-command-pill subtle" id="labCommandStatus">Queue ready</span>
+        </div>
+        <div class="lab-command-actions">
+            <button class="lab-command-btn" type="button" id="labRibbonOverview" data-tab-link="overview"><i class="ti ti-layout-dashboard"></i> Overview</button>
+            <button class="lab-command-btn" type="button" id="labRibbonWorklist" data-tab-link="worklist"><i class="ti ti-list-check"></i> Worklist</button>
+            <button class="lab-command-btn" type="button" id="labRibbonReports" data-tab-link="reports"><i class="ti ti-printer"></i> Reports</button>
+        </div>
+    </section>
 
     <!-- ═══ CONTENT AREA ═══ -->
     <div class="content-area">
@@ -2778,6 +3828,322 @@ window.addEventListener('DOMContentLoaded', function () {
         pcWorklist.mount({ dept: 'lab', target: '#pcLabWorklist', mode: 'table', cols: 6 });
     }
 });
+</script>
+
+<div class="lab-fab-dock" aria-label="Quick laboratory actions">
+    <button class="lab-fab-btn" type="button" id="labFabTop" title="Back to top"><i class="ti ti-arrow-up"></i></button>
+    <button class="lab-fab-btn" type="button" id="labFabSearch" title="Search patient"><i class="ti ti-search"></i></button>
+    <button class="lab-fab-btn primary" type="button" id="labFabPrimary" title="Open active lab workflow"><i class="ti ti-flask"></i></button>
+</div>
+
+<script>
+(function(){
+    'use strict';
+
+    function byId(id){ return document.getElementById(id); }
+    function setText(id, text){ var el = byId(id); if (el) el.textContent = text; }
+    function selectedPatient(){
+        return window.pcLabEngine && typeof window.pcLabEngine.getSelectedLabPatient === 'function'
+            ? window.pcLabEngine.getSelectedLabPatient()
+            : null;
+    }
+    function listOrders(){
+        return window.pcLabEngine && typeof window.pcLabEngine.listVisibleLabOrders === 'function'
+            ? (window.pcLabEngine.listVisibleLabOrders() || [])
+            : [];
+    }
+    function stripMod(v){ return String(v == null ? '' : v).replace(/^MOD-/i,'').trim(); }
+    function patientName(p){ return p ? (p.name || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || ('Patient ' + stripMod(p.id))) : ''; }
+    function initials(name){
+        var bits = String(name || 'LAB').trim().split(/\s+/).filter(Boolean).slice(0,2);
+        return bits.map(function(part){ return part.charAt(0).toUpperCase(); }).join('') || 'LAB';
+    }
+    function normStatus(s){
+        s = String(s || 'pending').toLowerCase();
+        if (s === 'final' || s === 'verified') return 'completed';
+        if (s === 'processing') return 'in-progress';
+        return s;
+    }
+    function activeTab(){
+        var tab = document.querySelector('.nav-tab.active');
+        return tab ? String(tab.getAttribute('data-tab') || '') : 'overview';
+    }
+    function tabLabel(name){
+        return ({
+            overview:'Overview',
+            specimen:'Specimen',
+            worklist:'Worklist',
+            results:'Results',
+            pathology:'Pathology',
+            microbio:'Microbiology',
+            bloodbank:'Blood Bank',
+            qc:'Quality Control',
+            reports:'Reports'
+        })[name] || 'Overview';
+    }
+    function ordersForSelection(){
+        var orders = listOrders();
+        var p = selectedPatient();
+        if (!p) return { all: orders, scoped: [] };
+        var pid = stripMod(p.id).toLowerCase();
+        return {
+            all: orders,
+            scoped: orders.filter(function(o){ return stripMod(o.patientId).toLowerCase() === pid; })
+        };
+    }
+    function todayLabel(){
+        var now = new Date();
+        return now.toLocaleDateString('en-GB', { weekday:'short', day:'2-digit', month:'short' }) + ' • ' +
+               now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    }
+    function statusCount(orders, want){
+        return orders.filter(function(o){ return normStatus(o.status) === want; }).length;
+    }
+    function statCount(orders){
+        return orders.filter(function(o){ return String(o.priority || '').toLowerCase() === 'stat'; }).length;
+    }
+    function nextActionName(scoped){
+        if (!scoped.length) return { label:'Queue', sub:'Open Overview' };
+        if (scoped.some(function(o){ return normStatus(o.status) === 'pending'; })) return { label:'Specimen', sub:'Accession pending order' };
+        if (scoped.some(function(o){ return normStatus(o.status) === 'in-progress'; })) return { label:'Results', sub:'Enter and validate results' };
+        if (scoped.some(function(o){ return normStatus(o.status) === 'completed'; })) return { label:'Reports', sub:'Open official report' };
+        return { label:'Queue', sub:'Review worklist' };
+    }
+    function progressPercent(scoped){
+        if (!scoped.length) return 0;
+        var verified = statusCount(scoped, 'completed');
+        return Math.max(0, Math.min(100, Math.round((verified / scoped.length) * 100)));
+    }
+    function setButtonLabel(id, icon, label, targetTab, title){
+        var el = byId(id);
+        if (!el) return;
+        el.innerHTML = '<i class="ti ' + icon + '"></i> ' + label;
+        if (targetTab) el.setAttribute('data-target-tab', targetTab);
+        if (title) el.title = title;
+    }
+    function setFabIcon(icon, targetTab, title){
+        var el = byId('labFabPrimary');
+        if (!el) return;
+        el.innerHTML = '<i class="ti ' + icon + '"></i>';
+        if (targetTab) el.setAttribute('data-target-tab', targetTab);
+        if (title) el.title = title;
+    }
+    function updatePremiumChrome(){
+        var tab = activeTab();
+        var grouped = ordersForSelection();
+        var patient = selectedPatient();
+        document.body.setAttribute('data-lab-active-tab', tab);
+        document.body.setAttribute('data-lab-selected', patient ? '1' : '0');
+        setText('labCommandTab', tabLabel(tab));
+        setText('labCommandPatient', patient ? patientName(patient) : 'No patient selected');
+        var status = patient
+            ? (grouped.scoped.length
+                ? (grouped.scoped.length + ' request' + (grouped.scoped.length === 1 ? '' : 's') + ' linked to this patient • active tab: ' + tabLabel(tab))
+                : ('Selected patient has no visible lab request • active tab: ' + tabLabel(tab)))
+            : (grouped.all.length
+                ? (grouped.all.length + ' live request' + (grouped.all.length === 1 ? '' : 's') + ' in queue • active tab: ' + tabLabel(tab))
+                : ('Queue ready • active tab: ' + tabLabel(tab)));
+        setText('labCommandStatus', status);
+        document.querySelectorAll('.lab-command-btn[data-tab-link]').forEach(function(btn){
+            btn.setAttribute('data-active', btn.getAttribute('data-tab-link') === tab ? '1' : '0');
+        });
+    }
+    function openTab(name){
+        var btn = document.querySelector('.nav-tab[data-tab="' + name + '"]');
+        if (btn && typeof window.switchTab === 'function') window.switchTab(name, btn);
+        setTimeout(updateSmartHero, 25);
+    }
+    function runPrimaryAction(){
+        var btn = byId('labHeroActionPrimary');
+        var targetTab = btn ? btn.getAttribute('data-target-tab') : '';
+        if (targetTab) return openTab(targetTab);
+        var scoped = ordersForSelection().scoped;
+        var next = nextActionName(scoped).label.toLowerCase();
+        if (next === 'specimen') return openTab('specimen');
+        if (next === 'results') return openTab('results');
+        if (next === 'reports') return openTab('reports');
+        openTab('overview');
+    }
+    function runSecondaryAction(){
+        var btn = byId('labHeroActionSecondary');
+        var targetTab = btn ? btn.getAttribute('data-target-tab') : '';
+        openTab(targetTab || 'results');
+    }
+    function runFabPrimaryAction(){
+        var btn = byId('labFabPrimary');
+        var targetTab = btn ? btn.getAttribute('data-target-tab') : '';
+        openTab(targetTab || 'overview');
+    }
+    function runRibbonAction(evt){
+        var btn = evt.currentTarget;
+        if (!btn) return;
+        openTab(btn.getAttribute('data-tab-link') || 'overview');
+    }
+    function setRing(percent){
+        var scoped = ordersForSelection().scoped;
+        var next = nextActionName(scoped).label.toLowerCase();
+        if (next === 'specimen') return openTab('specimen');
+        if (next === 'results') return openTab('results');
+        if (next === 'reports') return openTab('reports');
+        openTab('overview');
+    }
+    function setRing(percent){
+        var ring = byId('labSpotlightRing');
+        if (ring) ring.style.setProperty('--pct', Math.round((percent / 100) * 360) + 'deg');
+        setText('labSpotlightPct', percent + '%');
+    }
+    function applyToggleState(){
+        var dense = document.body.classList.contains('lab-density-compact');
+        var focus = document.body.classList.contains('lab-focus-mode');
+        var d = byId('labDenseToggle');
+        var f = byId('labFocusToggle');
+        if (d) d.classList.toggle('active', dense);
+        if (f) f.classList.toggle('active', focus);
+    }
+    function savePref(key, value){ try { localStorage.setItem(key, value); } catch(e){} }
+    function readPref(key){ try { return localStorage.getItem(key); } catch(e){ return null; } }
+    function toggleDense(){
+        document.body.classList.toggle('lab-density-compact');
+        savePref('lab-density-compact', document.body.classList.contains('lab-density-compact') ? '1' : '0');
+        applyToggleState();
+    }
+    function toggleFocus(){
+        document.body.classList.toggle('lab-focus-mode');
+        savePref('lab-focus-mode', document.body.classList.contains('lab-focus-mode') ? '1' : '0');
+        applyToggleState();
+    }
+    function applyPrefs(){
+        if (readPref('lab-density-compact') === '1') document.body.classList.add('lab-density-compact');
+        if (readPref('lab-focus-mode') === '1') document.body.classList.add('lab-focus-mode');
+        applyToggleState();
+    }
+    function updateSmartHero(){
+        var grouped = ordersForSelection();
+        var all = grouped.all;
+        var scoped = grouped.scoped;
+        var patient = selectedPatient();
+        var pendingAll = statusCount(all, 'pending');
+        var progressAll = statusCount(all, 'in-progress');
+        var verifiedAll = statusCount(all, 'completed');
+        var urgentAll = statCount(all);
+        updatePremiumChrome();
+        setText('labHeroPendingBig', String(pendingAll));
+        setText('labHeroProgressBig', String(progressAll));
+        setText('labHeroVerifiedBig', String(verifiedAll));
+        setText('labHeroUrgentBig', String(urgentAll));
+        setText('labHeroPendingDesc', pendingAll ? (pendingAll + ' request' + (pendingAll === 1 ? '' : 's') + ' waiting in the queue.') : 'No pending orders in the live queue.');
+        setText('labHeroProgressDesc', progressAll ? (progressAll + ' accessioned request' + (progressAll === 1 ? '' : 's') + ' actively being processed.') : 'No accessioned requests in progress now.');
+        setText('labHeroVerifiedDesc', verifiedAll ? (verifiedAll + ' verified request' + (verifiedAll === 1 ? '' : 's') + ' ready for doctor review and printing.') : 'No verified reports yet in the live queue.');
+        setText('labHeroUrgentDesc', urgentAll ? (urgentAll + ' STAT request' + (urgentAll === 1 ? '' : 's') + ' needs fastest turnaround.') : 'No STAT requests right now.');
+        setText('labSmartClockChip', '🕒 ' + todayLabel());
+        if (!patient) {
+            byId('labSpotlightAvatar').textContent = 'LAB';
+            setText('labSpotlightName', 'No patient selected');
+            setText('labSpotlightSub', 'Choose one patient to unlock specimen, results, reports, microbiology and blood bank.');
+            setText('labHeroCopy', 'Select a patient from the queue or search above to unlock specimen accession, smart result entry, official reporting, QC and microbiology.');
+            setText('labSmartContextChip', '✨ Queue view • select one patient');
+            setText('labMiniOpen', '0');
+            setText('labMiniVerified', '0');
+            setText('labMiniStat', String(urgentAll));
+            setText('labMiniOpenSub', pendingAll ? (pendingAll + ' pending in all patients') : 'No active queue');
+            setText('labMiniVerifiedSub', verifiedAll ? (verifiedAll + ' verified system-wide') : 'Awaiting final release');
+            setText('labMiniStatSub', urgentAll ? (urgentAll + ' urgent system-wide') : 'No urgent specimen');
+            setText('labMiniNext', 'Queue');
+            setText('labMiniNextSub', 'Open Overview');
+            setButtonLabel('labHeroActionPrimary', 'ti-test-pipe', 'Open specimen workflow', 'specimen', 'Open specimen workflow');
+            setButtonLabel('labHeroActionSecondary', 'ti-report-analytics', 'Open results', 'results', 'Open results');
+            setFabIcon('ti-flask', 'specimen', 'Open specimen workflow');
+            var emptyProgress = byId('labSpotlightProgressText');
+            if (emptyProgress) emptyProgress.innerHTML = 'Workflow ready. Select a patient and the dashboard will switch into a cleaner, faster Apple-plus-Pixel style lab workflow.';
+            setRing(0);
+            return;
+        }
+        var pName = patientName(patient);
+        var pOpen = scoped.filter(function(o){ var s = normStatus(o.status); return s === 'pending' || s === 'in-progress'; }).length;
+        var pVerified = statusCount(scoped, 'completed');
+        var pStat = statCount(scoped);
+        var pct = progressPercent(scoped);
+        var next = nextActionName(scoped);
+        var primaryTab = next.label === 'Specimen' ? 'specimen' : (next.label === 'Results' ? 'results' : (next.label === 'Reports' ? 'reports' : 'overview'));
+        var primaryIcon = primaryTab === 'specimen' ? 'ti-test-pipe' : (primaryTab === 'results' ? 'ti-report-analytics' : (primaryTab === 'reports' ? 'ti-printer' : 'ti-layout-dashboard'));
+        var secondaryTab = pVerified ? 'reports' : (pOpen ? 'results' : 'worklist');
+        var secondaryIcon = secondaryTab === 'reports' ? 'ti-printer' : (secondaryTab === 'results' ? 'ti-report-analytics' : 'ti-list-check');
+        var secondaryLabel = secondaryTab === 'reports' ? 'Open reports' : (secondaryTab === 'results' ? 'Open results' : 'Open worklist');
+        byId('labSpotlightAvatar').textContent = initials(pName);
+        setText('labSpotlightName', pName);
+        setText('labSpotlightSub', 'MRN ' + String(patient.mrn || stripMod(patient.id) || '—') + ' • ' + scoped.length + ' lab request' + (scoped.length === 1 ? '' : 's') + ' in view');
+        setText('labHeroCopy', pOpen ? (pName + ' has ' + pOpen + ' active request' + (pOpen === 1 ? '' : 's') + '. Open the specimen or results workflow for the next action.') : (pName + ' has no open request. Verified reports remain available below.'));
+        setText('labSmartContextChip', '🧠 Focused on ' + pName);
+        setText('labMiniOpen', String(pOpen));
+        setText('labMiniVerified', String(pVerified));
+        setText('labMiniStat', String(pStat));
+        setText('labMiniOpenSub', pOpen ? 'Pending + in progress' : 'Nothing open now');
+        setText('labMiniVerifiedSub', pVerified ? 'Final results on server' : 'Awaiting final release');
+        setText('labMiniStatSub', pStat ? 'Urgent request present' : 'No STAT for this patient');
+        setText('labMiniNext', next.label);
+        setText('labMiniNextSub', next.sub);
+        setButtonLabel('labHeroActionPrimary', primaryIcon, 'Open ' + next.label.toLowerCase(), primaryTab, 'Open ' + next.label.toLowerCase());
+        setButtonLabel('labHeroActionSecondary', secondaryIcon, secondaryLabel, secondaryTab, secondaryLabel);
+        setFabIcon(primaryIcon, primaryTab, 'Open ' + next.label.toLowerCase());
+        var progressEl = byId('labSpotlightProgressText');
+        if (progressEl) progressEl.innerHTML = pVerified
+            ? ('<strong>' + pVerified + ' verified</strong> of ' + scoped.length + ' request' + (scoped.length === 1 ? '' : 's') + ' for this patient. Apple-style spotlight and Pixel-style progress stay in sync with the live queue.')
+            : ('<strong>No verified request yet.</strong> Start with specimen accession or result entry. This spotlight updates live as the patient moves through the lab workflow.');
+        setRing(pct);
+    }
+    function bindSmartUi(){
+        var once = document.body.getAttribute('data-lab-smart-ui-bound') === '1';
+        if (once) return;
+        document.body.setAttribute('data-lab-smart-ui-bound', '1');
+        var dense = byId('labDenseToggle'); if (dense) dense.addEventListener('click', toggleDense);
+        var focus = byId('labFocusToggle'); if (focus) focus.addEventListener('click', toggleFocus);
+        var search = byId('labHeroActionSearch'); if (search) search.addEventListener('click', function(){ var i = byId('searchInput'); if (i) { i.focus(); i.select(); } });
+        var primary = byId('labHeroActionPrimary'); if (primary) primary.addEventListener('click', runPrimaryAction);
+        var secondary = byId('labHeroActionSecondary'); if (secondary) secondary.addEventListener('click', runSecondaryAction);
+        var top = byId('labFabTop'); if (top) top.addEventListener('click', function(){ window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        var fabSearch = byId('labFabSearch'); if (fabSearch) fabSearch.addEventListener('click', function(){ var i = byId('searchInput'); if (i) { i.focus(); i.select(); } });
+        var fabPrimary = byId('labFabPrimary'); if (fabPrimary) fabPrimary.addEventListener('click', runFabPrimaryAction);
+        var pendingCard = byId('labHeroCardPending'); if (pendingCard) pendingCard.addEventListener('click', function(){ openTab('worklist'); });
+        var progressCard = byId('labHeroCardProgress'); if (progressCard) progressCard.addEventListener('click', function(){ openTab('results'); });
+        var verifiedCard = byId('labHeroCardVerified'); if (verifiedCard) verifiedCard.addEventListener('click', function(){ openTab('reports'); });
+        var urgentCard = byId('labHeroCardUrgent'); if (urgentCard) urgentCard.addEventListener('click', function(){ openTab('worklist'); });
+        document.querySelectorAll('.lab-command-btn[data-tab-link]').forEach(function(btn){ btn.addEventListener('click', runRibbonAction); });
+        document.querySelectorAll('.nav-tab').forEach(function(btn){ btn.addEventListener('click', function(){ setTimeout(updateSmartHero, 20); }); });
+    }
+    function hookEngine(){
+        if (!window.pcLabEngine || window.pcLabEngine.__smartUiWrapped) return;
+        window.pcLabEngine.__smartUiWrapped = true;
+        ['repaint','selectLabPatient','clearLabSelection','saveDayResults','saveAndReleaseMicrobioReport','acceptAndAccession','rejectSpecimen','selectReportPatient','selectSpecimenPatient'].forEach(function(name){
+            if (typeof window.pcLabEngine[name] !== 'function') return;
+            var original = window.pcLabEngine[name];
+            window.pcLabEngine[name] = function(){
+                var out = original.apply(this, arguments);
+                if (out && typeof out.then === 'function') {
+                    return out.finally(function(){ setTimeout(updateSmartHero, 20); });
+                }
+                setTimeout(updateSmartHero, 20);
+                return out;
+            };
+        });
+    }
+    function bootSmartUi(){
+        bindSmartUi();
+        applyPrefs();
+        hookEngine();
+        updateSmartHero();
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+        bootSmartUi();
+        var timer = window.setInterval(updateSmartHero, 30000);
+        window.__labSmartUiTimer = timer;
+    });
+    window.addEventListener('ordersUpdated', function(){ setTimeout(bootSmartUi, 40); });
+    window.addEventListener('patientsUpdated', function(){ setTimeout(bootSmartUi, 40); });
+    window.addEventListener('labResultsUpdated', function(){ setTimeout(bootSmartUi, 40); });
+    window.addEventListener('labSelectionChanged', function(){ setTimeout(bootSmartUi, 40); });
+    window.addEventListener('storage', function(){ setTimeout(bootSmartUi, 40); });
+    window.addEventListener('focus', function(){ setTimeout(bootSmartUi, 40); });
+})();
 </script>
 </body>
 </html>
