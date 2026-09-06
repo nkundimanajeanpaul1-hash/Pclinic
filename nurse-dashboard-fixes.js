@@ -77,7 +77,24 @@
   function setCurrentPatient(p) { window.currentPatient = p || null; }
 
   function masterHeader() {
-    return document.getElementById('pcMasterHeader') || document.body;
+    var el = document.getElementById('pcMasterHeader');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'pcMasterHeader';
+    var app = document.getElementById('app');
+    if (app && app.parentNode) app.parentNode.insertBefore(el, app);
+    else if (document.body) document.body.insertBefore(el, document.body.firstChild);
+    return el;
+  }
+
+  function hideLegacyPatientCard() {
+    var card = document.getElementById('patientCard');
+    if (card) {
+      card.classList.remove('show');
+      card.style.display = 'none';
+      card.setAttribute('hidden', 'hidden');
+      card.setAttribute('aria-hidden', 'true');
+    }
   }
 
   function syncSharedPatientBar(patient) {
@@ -269,6 +286,7 @@
 
   function refreshPatientUi(patient, quiet) {
     patient = patient || refreshCurrentPatientFromStore();
+    hideLegacyPatientCard();
     setPatientFieldValues(patient || null);
     applyStaffUi();
     if (!patient) {
@@ -279,7 +297,6 @@
       return;
     }
     syncSharedPatientBar(patient);
-    if (typeof window.displayPatientCard === 'function') window.displayPatientCard(patient);
     if (typeof window.fillForms === 'function') window.fillForms(patient);
     if (typeof window.renderCarePlanHistory === 'function') window.renderCarePlanHistory();
     if (typeof window.renderDeliveriesHistory === 'function') window.renderDeliveriesHistory();
@@ -1169,15 +1186,12 @@
           if (searchInput) searchInput.value = displayName(fresh) + ' — ' + displayMrn(fresh);
         } else {
           setCurrentPatient(null);
+          hideLegacyPatientCard();
           setPatientFieldValues(null);
           var suggestions = document.getElementById('suggestions');
           if (suggestions) suggestions.classList.remove('show');
           var searchInput2 = document.getElementById('searchInput');
           if (searchInput2) searchInput2.value = '';
-          if (typeof window.displayPatientCard === 'function') {
-            var card = document.getElementById('patientCard');
-            if (card) card.classList.remove('show');
-          }
           if (typeof window.renderLabResults === 'function') window.renderLabResults(null);
           if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
           if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
@@ -1191,6 +1205,14 @@
   function installOverrides() {
     window.showToast = safeToast;
     window.nurseShowToast = safeToast;
+    window.displayPatientCard = function () {
+      hideLegacyPatientCard();
+      return getCurrentPatient();
+    };
+    window.updateVitalsStrip = function () {
+      hideLegacyPatientCard();
+      return null;
+    };
     window.updateClock = updateClock;
     window.loadPatients = loadPatients;
     window.renderPatientTable = renderPatientTable;
@@ -1257,6 +1279,7 @@
     window.medCounter = 0;
     document.querySelectorAll('.fp-btn').forEach(function (b) { b.classList.remove('sel'); });
     applyStaffUi();
+    hideLegacyPatientCard();
     installSelectedPatientFields();
     setPatientFieldValues(getCurrentPatient());
     ensureBillRows();

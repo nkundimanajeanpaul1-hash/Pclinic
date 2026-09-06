@@ -1150,6 +1150,8 @@
 </head>
 <body>
 
+    <div id="pcMasterHeader"></div>
+
     <div class="app" id="app">
 
         <!-- ═══ TOPBAR ═══ -->
@@ -1223,60 +1225,7 @@
         <!-- ═══ CONTENT AREA ═══ -->
         <div class="content-area">
 
-            <!-- ─── PATIENT CARD ─── -->
-            <div id="patientCard" class="patient-card">
-                <div class="pc-header">
-                    <div class="pc-photo" id="pcPhoto">--</div>
-                    <div>
-                        <div class="pc-name" id="pcName">Select a patient</div>
-                        <div class="pc-meta">
-                            <span class="pc-meta-item"><i class="ti ti-id"></i> <span id="pcMrn">MRN ----</span></span>
-                            <span class="pc-meta-item"><i class="ti ti-calendar"></i> <span id="pcAge">DOB --</span></span>
-                            <span class="pc-meta-item"><i class="ti ti-gender-male"></i> <span id="pcSex">--</span></span>
-                            <span class="pc-meta-item"><i class="ti ti-map-pin"></i> <span id="pcLoc">Ward: --</span></span>
-                        </div>
-                        <div class="pc-badges" id="pcBadges">
-                            <span class="badge b-info">● Active</span>
-                            <span class="badge b-teal">CPN: 0</span>
-                            <span class="badge b-pink">FP: 0</span>
-                            <span class="badge b-blue">Notes: 0</span>
-                            <span class="badge b-orange">Bills: 0</span>
-                            <span class="badge b-ac">Meds: 0</span>
-                        </div>
-                    </div>
-                    <div class="pc-actions">
-                        <button class="pc-btn" onclick="printPatientFile()"><i class="ti ti-printer"></i>Print</button>
-                        <button class="pc-btn" onclick="showToast('✏️ Edit patient', 'info')"><i class="ti ti-edit"></i>Edit</button>
-                    </div>
-                </div>
-                <div class="vitals-strip" id="vitalsStrip">
-                    <div class="vital-cell">
-                        <span class="vital-lbl">Temp</span>
-                        <span class="vital-val" id="vitalTemp">--<span class="vital-unit">°C</span></span>
-                        <span class="vital-status" id="vitalTempStatus">--</span>
-                    </div>
-                    <div class="vital-cell">
-                        <span class="vital-lbl">Pulse</span>
-                        <span class="vital-val" id="vitalPulse">--<span class="vital-unit">bpm</span></span>
-                        <span class="vital-status" id="vitalPulseStatus">--</span>
-                    </div>
-                    <div class="vital-cell">
-                        <span class="vital-lbl">BP</span>
-                        <span class="vital-val" id="vitalBP">--<span class="vital-unit">/--</span></span>
-                        <span class="vital-status" id="vitalBPStatus">--</span>
-                    </div>
-                    <div class="vital-cell">
-                        <span class="vital-lbl">SpO₂</span>
-                        <span class="vital-val" id="vitalSpO2">--<span class="vital-unit">%</span></span>
-                        <span class="vital-status" id="vitalSpO2Status">--</span>
-                    </div>
-                    <div class="vital-cell">
-                        <span class="vital-lbl">Weight</span>
-                        <span class="vital-val" id="vitalWeight">--<span class="vital-unit">kg</span></span>
-                        <span class="vital-status" style="color:var(--tm)">--</span>
-                    </div>
-                </div>
-            </div>
+            <!-- Shared patient identification bar now remains the only active patient header. -->
 
             <!-- ─── PANEL: OVERVIEW ─── -->
             <div id="panel-overview" class="main-panel" style="display:block;">
