@@ -292,7 +292,6 @@
     function buildToolbar() {
         var t = el('div', 'dv-toolbar'); t.setAttribute('role', 'toolbar');
         var main = el('div', 'dv-toolbar-main');
-        var actions = el('div', 'dv-toolbar-actions');
         main.appendChild(tb('explorer', 'Explorer', 'Show / hide the DICOM explorer', toggleExplorer, { id: 'explorer', mid: true }));
         main.appendChild(tb('download', 'Export', 'Export: screenshot, original file, print', function (e, b) { openMenu(b, exportMenu()); }, { menu: true }));
         main.appendChild(sep());
@@ -326,11 +325,15 @@
         main.appendChild(tb('next', '', 'Next frame / image (→)', function () { step(1); }));
         main.appendChild(sep());
         main.appendChild(tb('full', 'Full screen', 'Full screen (F)', toggleFullscreen, { id: 'full', iconOnly: true }));
-        actions.appendChild(tb('upload', 'Open local', 'Open DICOM or images from this computer, CD or USB', openLocalFiles, { id: 'local' }));
-        if (openOpts.canManage) { actions.appendChild(tb('upload', 'Upload', 'Attach images or DICOM files to this study', doUpload, { primary: true, id: 'upload' })); }
         t.appendChild(main);
-        t.appendChild(actions);
         return t;
+    }
+
+    function statusAction(name, label, title, onClick, opts) {
+        opts = opts || {}; var b = el('button', 'dv-status-btn' + (opts.primary ? ' primary' : '')); b.type = 'button'; b.title = title || label; b.setAttribute('aria-label', title || label);
+        if (opts.id) b.setAttribute('data-statusact', opts.id);
+        b.appendChild(icon(name)); if (label) b.appendChild(el('span', 'dv-status-btn-label', label));
+        b.onclick = function (e) { onClick(e, b); }; return b;
     }
 
     function buildExplorer() {
@@ -365,7 +368,12 @@
     function buildStatusBar() {
         var s = el('div', 'dv-status-bar');
         [['patient', 'Patient'], ['study', 'Study'], ['file', 'File'], ['tool', 'Tool'], ['pix', 'Pixel']].forEach(function (k) { var sp = el('span', k[0] === 'pix' ? 'dv-opt' : ''); sp.setAttribute('data-st', k[0]); sp.appendChild(document.createTextNode(k[1] + ': ')); sp.appendChild(el('b', null, '—')); s.appendChild(sp); });
-        s.appendChild(el('div', 'dv-spacer')); var sv = el('span', 'dv-save'); sv.setAttribute('data-st', 'save'); sv.appendChild(el('b', null, '')); sv.style.cursor = 'pointer'; sv.onclick = function () { if (Object.keys(anno.dirty).length) { clearTimeout(anno.timer); flushAnnotations(); } }; s.appendChild(sv);
+        s.appendChild(el('div', 'dv-spacer'));
+        var sv = el('span', 'dv-save'); sv.setAttribute('data-st', 'save'); sv.appendChild(el('b', null, '')); sv.style.cursor = 'pointer'; sv.onclick = function () { if (Object.keys(anno.dirty).length) { clearTimeout(anno.timer); flushAnnotations(); } }; s.appendChild(sv);
+        var acts = el('div', 'dv-status-actions');
+        acts.appendChild(statusAction('upload', 'Open local', 'Open DICOM or images from this computer, CD or USB', openLocalFiles, { id: 'local', primary: true }));
+        if (openOpts.canManage) acts.appendChild(statusAction('upload', 'Upload', 'Attach images or DICOM files to this study', doUpload, { id: 'upload' }));
+        s.appendChild(acts);
         return s;
     }
     function buildCineBar(bar) {
