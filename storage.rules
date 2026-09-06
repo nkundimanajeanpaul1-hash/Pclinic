@@ -15,10 +15,19 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    function isSignedInStaff() {
+    function hasStaffProfile() {
       return request.auth != null
-        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('active') == true
-        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('role') in ['radio', 'admin'];
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid));
+    }
+
+    function staffProfile() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSignedInStaff() {
+      return hasStaffProfile()
+        && staffProfile().get('active', false) == true
+        && staffProfile().get('role', '') in ['radio', 'admin'];
     }
 
     function withinSizeLimit() {

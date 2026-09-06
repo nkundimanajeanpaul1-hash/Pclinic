@@ -75,6 +75,49 @@
         return !!(db() && fns() && window.firebaseAuth && window.pclinicCloudFunctions);
     }
 
+    function bucketLabel() {
+        return String(bucketName() || 'pclinic-20d81.firebasestorage.app');
+    }
+
+    async function checkOwnProfile() {
+        try {
+            var auth = window.firebaseAuth;
+            var user = auth && auth.currentUser;
+            if (!user || !db() || !fns() || typeof fns().getDoc !== 'function' || typeof fns().doc !== 'function') {
+                return { ok: false, reason: 'profile-check-unavailable' };
+            }
+            var snap = await fns().getDoc(fns().doc(db(), 'users', user.uid));
+            if (!snap || !snap.exists()) {
+                return { ok: false, reason: 'no-profile' };
+            }
+            var profile = snap.data() || {};
+            var role = String(profile.role || '').toLowerCase();
+            if (profile.active === false) return { ok: false, reason: 'inactive', role: role };
+            if (role !== 'radio' && role !== 'admin') return { ok: false, reason: 'wrong-role', role: role };
+            return { ok: true, role: role };
+        } catch (e) {
+            return { ok: false, reason: 'profile-check-failed', error: e };
+        }
+    }
+
+    async function explainStorageReject(status, detail) {
+        var trimmed = String(detail || '').replace(/\s+/g, ' ').trim();
+        if (status !== 403) {
+            return 'Storage rejected the file (' + status + '). ' + trimmed;
+        }
+        var profile = await checkOwnProfile();
+        if (profile.reason === 'no-profile') {
+            return 'Storage rejected this upload (403 Permission denied). Your signed-in account has no /users/{uid} staff profile, so Storage rules will always refuse the file. Ask Admin to create your active Radiology or Admin user profile, then retry.';
+        }
+        if (profile.reason === 'inactive') {
+            return 'Storage rejected this upload (403 Permission denied). Your /users/{uid} staff profile is inactive, so Storage rules blocked the file. Ask Admin to reactivate the account, then retry.';
+        }
+        if (profile.reason === 'wrong-role') {
+            return 'Storage rejected this upload (403 Permission denied). Your /users/{uid} role is ' + (profile.role || 'unknown') + ', but Storage only allows active Radiology or Admin staff to upload study files.';
+        }
+        return 'Storage rejected this upload (403 Permission denied). Your signed-in profile looks valid, so the most likely fix is to deploy the current storage.rules to bucket ' + bucketLabel() + '. If needed, also confirm this account is active with role radio or admin under /users/{uid}.' + (trimmed ? ' Server said: ' + trimmed : '');
+    }
+
     /* ── client-side gate, mirrored by storage.rules and firestore.rules ── */
     function inspect(file) {
         if (!file) return { ok: false, reason: 'No file was selected.' };
@@ -139,7 +182,7 @@
             if (response.status === 404) {
                 throw new Error('Firebase Storage is not enabled on project pclinic-20d81 yet. Open the Firebase console → Storage → Get started, then retry.');
             }
-            throw new Error('Storage rejected the file (' + response.status + '). ' + detail);
+            throw new Error(await explainStorageReject(response.status, detail));
         }
         return response.json();
     }
