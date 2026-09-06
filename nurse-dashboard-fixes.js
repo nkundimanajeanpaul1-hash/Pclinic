@@ -363,14 +363,13 @@
       var statusClass = isQueuePatient(p) ? 'b-stable' : 'b-warn';
       var sid = String(p.id).replace(/'/g, "\\'");
       return '<tr onclick="selectPatient(\'' + sid + '\')" style="cursor:pointer;">' +
-        '<td><strong>' + name + '</strong></td>' +
+        '<td><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>' + name + '</strong><button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--ac);color:#fff;border:none;" onclick="event.stopPropagation();selectPatient(\'' + sid + '\', { keepTab: true })"><i class="ti ti-check"></i> Select</button></div></td>' +
         '<td><span class="badge b-info">' + esc(displayMrn(p)) + '</span></td>' +
         '<td>' + esc(p.dob || 'N/A') + ' (' + age + ')</td>' +
         '<td>' + esc(p.gender || 'N/A') + '</td>' +
         '<td>' + esc(p.phone || 'N/A') + '</td>' +
         '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>' +
         '<td>' +
-          '<button class="btn-s" style="padding:2px 10px;font-size:10px;" onclick="event.stopPropagation();selectPatient(\'' + sid + '\')"><i class="ti ti-eye"></i> View</button>' +
           '<button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--acb);color:var(--ac);" onclick="event.stopPropagation();openVitalsForPatient(\'' + sid + '\')"><i class="ti ti-heartbeat"></i> Vitals</button>' +
         '</td></tr>';
     }).join('');
