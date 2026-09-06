@@ -836,6 +836,139 @@
         function money(n) { return 'RWF ' + (Number(n) || 0).toLocaleString('en-US'); }
         function readJSON(k, fb) { try { return JSON.parse(localStorage.getItem(k) || (fb != null ? fb : 'null')); } catch(e){ return fb != null ? fb : null; } }
         function writeJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+        function cap(s) { s = String(s || ''); return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+        var ADMIN_CLINICAL_DELETE_FN_MISSING_MSG = 'The new admin clinical delete function is not on the Common Server yet. Run once on a computer with the project folder: firebase deploy --only functions';
+        function adminFnCode(e) { return String((e && e.code) || '').replace(/^functions\//, '').toLowerCase(); }
+        function adminServerReachable() {
+            if (!window.pclinicCloudFunctions || typeof window.pclinicCloudFunctions.call !== 'function') return Promise.resolve(false);
+            return window.pclinicCloudFunctions.call('radiologyMediaDelete', {}).then(function () { return true; }, function (e) {
+                var c = adminFnCode(e); return c !== 'internal' && c !== 'unavailable' && c !== 'deadline-exceeded';
+            });
+        }
+        function adminDeleteClinicalCall(data) {
+            if (!window.pclinicCloudFunctions || typeof window.pclinicCloudFunctions.call !== 'function') {
+                return Promise.reject(Object.assign(new Error('The Common Server functions are not reachable from this page (firebase-config.js did not load). Reload and sign in again.'), { code: 'unavailable' }));
+            }
+            return window.pclinicCloudFunctions.call('adminDeleteClinicalCascade', data).catch(function (e) {
+                var code = adminFnCode(e), msg = (e && e.message) || String(e);
+                var looksMissing = (code === 'internal' && /^internal$/i.test(msg.trim())) || (/not[- ]?found/i.test(msg) && /function|adminDeleteClinicalCascade/i.test(msg));
+                if (!looksMissing) throw Object.assign(new Error(msg), { code: code || 'unknown', blocked: e && e.blocked });
+                return adminServerReachable().then(function (up) {
+                    if (up) throw Object.assign(new Error(ADMIN_CLINICAL_DELETE_FN_MISSING_MSG), { code: 'not-deployed' });
+                    throw Object.assign(new Error('The Common Server did not answer. Check the internet connection and retry.'), { code: 'unavailable' });
+                });
+            });
+        }
+        function adminDeletePatientsCascadeCall(patientIds) {
+            if (!window.pclinicCloudFunctions || typeof window.pclinicCloudFunctions.call !== 'function') {
+                return Promise.reject(Object.assign(new Error('The Common Server functions are not reachable from this page (firebase-config.js did not load). Reload and sign in again.'), { code: 'unavailable' }));
+            }
+            return window.pclinicCloudFunctions.call('adminDeletePatientsCascade', {
+                dryRun: false,
+                confirm: 'DELETE_PATIENTS_CASCADE',
+                patientIds: patientIds
+            });
+        }
+        function localLinkValues(entry) {
+            if (!entry || typeof entry !== 'object') return [];
+            var out = [];
+            ['id','orderId','_orderId','requestId','resultId','billId','_billId'].forEach(function(k){
+                if (entry[k] != null && entry[k] !== '') out.push(String(entry[k]));
+            });
+            if (entry.imagingData && typeof entry.imagingData === 'object') {
+                out = out.concat(localLinkValues(entry.imagingData));
+            }
+            return out;
+        }
+        function localEntryLinked(entry, orderId, billIdSet) {
+            var links = localLinkValues(entry);
+            if (orderId && links.indexOf(String(orderId)) !== -1) return true;
+            return links.some(function(v){ return billIdSet && billIdSet.has(String(v)); });
+        }
+        function pruneLocalCascadeResult(result) {
+            result = result || {};
+            var orderId = result.orderId ? String(result.orderId) : '';
+            var patientId = result.patientId ? String(result.patientId) : '';
+            var billIdSet = new Set((result.billIds || []).map(function(v){ return String(v); }));
+            if (orderId) {
+                writeJSON('pclinic_orders', (readJSON('pclinic_orders', []) || []).filter(function(o){ return String(o.id) !== orderId; }));
+                writeJSON('pclinic_messages', (readJSON('pclinic_messages', []) || []).filter(function(m){ return !localEntryLinked(m, orderId, billIdSet); }));
+                writeJSON('pclinic_files', (readJSON('pclinic_files', []) || []).filter(function(f){ return !localEntryLinked(f, orderId, billIdSet); }));
+            }
+            if (billIdSet.size) {
+                writeJSON('pclinic_bills', (readJSON('pclinic_bills', []) || []).filter(function(b){
+                    return !billIdSet.has(String(b.id || b.number || '')) && (!orderId || String(b.orderId || '') !== orderId);
+                }));
+            }
+            if (patientId) {
+                var patients = readJSON('pclinic_patients', []) || [];
+                var changed = false;
+                patients = patients.map(function(p){
+                    if (String(p.id) !== patientId && String(p.mrn) !== patientId) return p;
+                    changed = true;
+                    var next = Object.assign({}, p);
+                    ['labRequests','labResults','physioRequests','imagingRequests','prescriptions','clinicalNotes'].forEach(function(field){
+                        if (!Array.isArray(next[field])) return;
+                        next[field] = next[field].filter(function(entry){ return !localEntryLinked(entry, orderId, billIdSet); });
+                    });
+                    return next;
+                });
+                if (changed) writeJSON('pclinic_patients', patients);
+            }
+            try {
+                window.dispatchEvent(new CustomEvent('ordersUpdated', { detail: result }));
+                window.dispatchEvent(new CustomEvent('billsUpdated', { detail: result }));
+                window.dispatchEvent(new Event('storage'));
+            } catch(e){}
+        }
+        function pruneLocalPatientCascade(patientId) {
+            patientId = String(patientId || '');
+            if (!patientId) return;
+            writeJSON('pclinic_patients', (readJSON('pclinic_patients', []) || []).filter(function(p){ return String(p.id) !== patientId && String(p.mrn) !== patientId; }));
+            writeJSON('pclinic_orders', (readJSON('pclinic_orders', []) || []).filter(function(o){ return String(o.patientId).replace(/^MOD-/i, '') !== patientId; }));
+            writeJSON('pclinic_bills', (readJSON('pclinic_bills', []) || []).filter(function(b){ return String(b.patientId).replace(/^MOD-/i, '') !== patientId; }));
+            writeJSON('pclinic_messages', (readJSON('pclinic_messages', []) || []).filter(function(m){ return String(m.patientId).replace(/^MOD-/i, '') !== patientId; }));
+            writeJSON('pclinic_files', (readJSON('pclinic_files', []) || []).filter(function(f){ return String(f.patientId).replace(/^MOD-/i, '') !== patientId; }));
+            try {
+                window.dispatchEvent(new CustomEvent('patientsUpdated', { detail: { id: patientId, deleted: true } }));
+                window.dispatchEvent(new CustomEvent('ordersUpdated', { detail: { patientId: patientId } }));
+                window.dispatchEvent(new CustomEvent('billsUpdated', { detail: { patientId: patientId } }));
+                window.dispatchEvent(new Event('storage'));
+            } catch(e){}
+        }
+        function pruneLocalLegacyEntry(patientId, legacyKind, legacyEntry) {
+            var field = legacyKind === 'labRequest' ? 'labRequests'
+                : legacyKind === 'labResult' ? 'labResults'
+                : legacyKind === 'physioRequest' ? 'physioRequests'
+                : legacyKind === 'imagingRequest' ? 'imagingRequests'
+                : legacyKind === 'prescription' ? 'prescriptions'
+                : legacyKind === 'clinicalNote' ? 'clinicalNotes' : '';
+            if (!field) return;
+            var patients = readJSON('pclinic_patients', []) || [];
+            var changed = false;
+            patients = patients.map(function(p){
+                if (String(p.id) !== String(patientId) && String(p.mrn) !== String(patientId)) return p;
+                if (!Array.isArray(p[field])) return p;
+                changed = true;
+                var next = Object.assign({}, p);
+                var done = false;
+                next[field] = p[field].filter(function(entry){
+                    if (done) return true;
+                    if (JSON.stringify(entry) === JSON.stringify(legacyEntry)) { done = true; return false; }
+                    var a = localLinkValues(entry).join('|');
+                    var b = localLinkValues(legacyEntry).join('|');
+                    if (a && b && a === b) { done = true; return false; }
+                    return true;
+                });
+                return next;
+            });
+            if (changed) writeJSON('pclinic_patients', patients);
+            try {
+                window.dispatchEvent(new CustomEvent('patientsUpdated', { detail: { id: patientId } }));
+                window.dispatchEvent(new Event('storage'));
+            } catch(e){}
+        }
 
         function allPatients() {
             try { if (typeof getPatients === 'function') { var l = getPatients(); if (l && l.length) return l; } } catch(e){}
@@ -914,27 +1047,19 @@
             updateKPIs();
         }
 
-        function deletePatientFromAdmin(id) {
+        async function deletePatientFromAdmin(id) {
             var p = freshPatient(id);
-            var deleted = false;
+            var fullName = p ? (p.name || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || ('Patient ' + id)) : ('Patient ' + id);
+            showToast('⏳ Deleting ' + fullName + ' everywhere on the Common Server…', 'info');
             try {
-                if (typeof deletePatient === 'function') { deleted = deletePatient(id); }  // local + Firestore
-            } catch(e){}
-            if (!deleted) {
-                var patients = allPatients();
-                var before = patients.length;
-                patients = patients.filter(function(x){ return String(x.id) !== String(id); });
-                if (patients.length < before) { writeJSON('pclinic_patients', patients); deleted = true; }
-            }
-            if (deleted) {
-                // ⛔ DISAPPEAR EVERYWHERE: remove the patient's orders + bills too
-                var removedOrders = cascadeRemovePatientOrders(id, null).length;
-                var removedBills = cascadeRemovePatientBills(id);
-                showToast('🗑️ Patient deleted everywhere — ' + removedOrders + ' order(s) and ' + removedBills + ' bill(s) removed from the Common Server', 'success');
+                var result = await adminDeletePatientsCascadeCall([String(id)]);
+                pruneLocalPatientCascade(id);
+                if (String(pdPatientId || '') === String(id)) closePatientData();
+                showToast('🗑️ Patient deleted everywhere — ' + (result.deletedOrders || 0) + ' order(s), ' + (result.deletedBills || 0) + ' bill(s) and linked records removed from the Common Server', 'success');
                 loadPatients();
                 loadBills();
-            } else {
-                showToast('❌ Could not delete patient', 'error');
+            } catch (e) {
+                showToast('❌ ' + ((e && e.message) || e || 'Could not delete patient'), 'error');
             }
         }
 
@@ -2070,7 +2195,7 @@
             showToast('✏️ Lab request updated', 'success');
             pdCat('lab', document.querySelector('[data-pd="lab"]'));
         }
-        function adminDeleteLabRequest(idx) {
+        async function adminDeleteLabRequest(idx) {
             var p = freshPatient(pdPatientId); if (!p) return;
             var req = null;
             try {
@@ -2090,41 +2215,23 @@
                 req = reqsD[idx];
             } catch(e){}
             if (!req) { showToast('❌ Request not found', 'error'); return; }
-            var tests = (req.tests || []).map(function(t){ return String(t).toLowerCase(); });
-            if (!confirm('DELETE this lab request (' + (req.tests || []).join(', ') + ')?\n\nIt will disappear EVERYWHERE — Doctor, Nurse, Laboratory and all dashboards. The matching laboratory order(s) and their verified results are removed too.')) return;
-
-            var pid = pidRaw(p);
-
-            // 1) Remove the matching orders from the Common Server (pclinic_orders)
-            var removedOrders = cascadeRemovePatientOrders(pid, function(o){
-                if (o.type !== 'lab' && o.dept !== 'lab') return false;
-                var items = (o.items || []).map(function(it){ return String(it.name || '').toLowerCase(); });
-                if (!tests.length) return true; // whole-patient lab orders
-                return tests.some(function(t){ return items.some(function(it){ return it.indexOf(t) !== -1 || t.indexOf(it) !== -1; }); });
-            });
-            var removedIds = removedOrders.map(function(x){ return String(x); });
-
-            // 2) Remove linked verified results from the patient record
-            //    (by order id, or by test-name match when no order id exists)
-            var removedResults = 0;
-            persistPatientChange(pdPatientId, function(pat){
-                if (Array.isArray(pat.labRequests)) pat.labRequests.splice(idx, 1);
-                if (Array.isArray(pat.labResults)) {
-                    var before = pat.labResults.length;
-                    pat.labResults = pat.labResults.filter(function(r){
-                        if (r.orderId && removedIds.indexOf(String(r.orderId)) !== -1) return false;
-                        var rTests = (r.tests || []).map(function(t){ return String(t.test || t.name || '').toLowerCase(); }).join(' ');
-                        if (!rTests) return true;
-                        var linked = tests.some(function(t){ return rTests.indexOf(t) !== -1; });
-                        return !linked;
-                    });
-                    removedResults = before - pat.labResults.length;
-                }
-            });
-
-            showToast('🗑️ Lab request deleted everywhere — ' + removedOrders.length + ' order(s) and ' + removedResults + ' result set(s) removed from the Common Server', 'success');
-            loadPatients();
-            pdCat('lab', document.querySelector('[data-pd="lab"]'));
+            var label = (req.tests || []).join(', ') || 'this lab request';
+            var orderId = String(req._orderId || req.orderId || '');
+            if (!confirm('DELETE this lab request (' + label + ')?\n\nThis is a HARD DELETE everywhere: the request, linked lab result(s), bill(s), messages/alerts and patient embedded records will all be removed from the Common Server.')) return;
+            showToast('⏳ Deleting lab request everywhere on the Common Server…', 'info');
+            try {
+                var result = orderId
+                    ? await adminDeleteClinicalCall({ orderId: orderId, force: true })
+                    : await adminDeleteClinicalCall({ patientId: String(pdPatientId), legacyKind: 'labRequest', legacyEntry: req });
+                if (orderId) pruneLocalCascadeResult(result);
+                else pruneLocalLegacyEntry(pdPatientId, 'labRequest', req);
+                showToast('🗑️ ' + cap(result.summary || 'deleted') + ' — every dashboard sees this now', 'success');
+                loadPatients();
+                loadBills();
+                setTimeout(function(){ pdCat('lab', document.querySelector('[data-pd="lab"]')); }, 50);
+            } catch (e) {
+                showToast('❌ ' + ((e && e.message) || e || 'Delete failed'), 'error');
+            }
         }
         function adminCancelLabOrders(idx) {
             var p = freshPatient(pdPatientId); if (!p) return;
@@ -2192,6 +2299,12 @@
         }
         function adminDeleteLabResultTest(ri, ti) {
             var p = freshPatient(pdPatientId); if (!p) return;
+            var r = (p.labResults || [])[ri];
+            if (!r) return;
+            if (r.orderId || r._orderId) {
+                showToast('⚠️ This is a server-confirmed result. Use “Delete Set” so the whole linked request/result is hard-deleted everywhere.', 'warning');
+                return;
+            }
             if (!confirm('Delete this test value from the verified result set?')) return;
             persistPatientChange(pdPatientId, function(pat){
                 var rr = (pat.labResults || [])[ri];
@@ -2200,14 +2313,27 @@
             showToast('🗑️ Test value deleted', 'info');
             pdCat('lab', document.querySelector('[data-pd="lab"]'));
         }
-        function adminDeleteLabResultEntry(ri) {
+        async function adminDeleteLabResultEntry(ri) {
             var p = freshPatient(pdPatientId); if (!p) return;
-            if (!confirm('Delete this entire lab result entry from the patient record?')) return;
-            persistPatientChange(pdPatientId, function(pat){
-                if (Array.isArray(pat.labResults)) pat.labResults.splice(ri, 1);
-            });
-            showToast('🗑️ Lab result entry deleted', 'info');
-            pdCat('lab', document.querySelector('[data-pd="lab"]'));
+            var r = (p.labResults || [])[ri];
+            if (!r) { showToast('❌ Lab result not found', 'error'); return; }
+            var label = r.testName || ((r.tests || []).map(function(t){ return t.test || t.name || ''; }).filter(Boolean).join(', ')) || 'this result set';
+            var orderId = String(r.orderId || r._orderId || '');
+            if (!confirm('DELETE this lab result entry (' + label + ')?\n\nThis is a HARD DELETE everywhere: the linked request/order, bill(s), messages/alerts and patient embedded records will all be removed from the Common Server.')) return;
+            showToast('⏳ Deleting lab result everywhere on the Common Server…', 'info');
+            try {
+                var result = orderId
+                    ? await adminDeleteClinicalCall({ orderId: orderId, force: true })
+                    : await adminDeleteClinicalCall({ patientId: String(pdPatientId), legacyKind: 'labResult', legacyEntry: r });
+                if (orderId) pruneLocalCascadeResult(result);
+                else pruneLocalLegacyEntry(pdPatientId, 'labResult', r);
+                showToast('🗑️ ' + cap(result.summary || 'deleted') + ' — every dashboard sees this now', 'success');
+                loadPatients();
+                loadBills();
+                setTimeout(function(){ pdCat('lab', document.querySelector('[data-pd="lab"]')); }, 50);
+            } catch (e) {
+                showToast('❌ ' + ((e && e.message) || e || 'Delete failed'), 'error');
+            }
         }
         function adminEditMicrobio(ri) {
             var p = freshPatient(pdPatientId); if (!p) return;
@@ -2269,36 +2395,23 @@
                 pdCat('bills', document.querySelector('[data-pd="bills"]'));
             }
         }
-        function adminDeleteBill(id) {
+        async function adminDeleteBill(id) {
             var b = allBills().find(function(x){ return String(x.id) === String(id) || String(x.number) === String(id); });
             if (!b) return;
-            if (!confirm('Permanently DELETE bill ' + (b.number || b.id) + ' from the cashier ledger? This cannot be undone.')) return;
-            function dropLocal() {
-                var bills = allBills().filter(function(x){ return String(x.id) !== String(b.id); });
-                writeJSON('pclinic_bills', bills);
-                try { window.dispatchEvent(new CustomEvent('billsUpdated')); window.dispatchEvent(new Event('storage')); } catch(e){}
+            var msg = b.orderId
+                ? ('DELETE bill ' + (b.number || b.id) + '?\n\nBecause this bill is linked to a clinical request/order, this hard delete will also remove the linked request/result/report, messages/alerts and patient embedded records everywhere on the Common Server.\n\nIf you only want to stop billing without erasing the clinical record, use VOID instead.')
+                : ('Permanently DELETE bill ' + (b.number || b.id) + ' from the cashier ledger everywhere on the Common Server? This cannot be undone.');
+            if (!confirm(msg)) return;
+            showToast('⏳ Deleting on the Common Server…', 'info');
+            try {
+                var result = await adminDeleteClinicalCall({ billId: String(b.id), force: true });
+                pruneLocalCascadeResult(result);
+                showToast('🗑️ ' + cap(result.summary || 'deleted') + ' — every dashboard sees this now', 'success');
                 loadBills();
-                pdCat('bills', document.querySelector('[data-pd="bills"]'));
+                setTimeout(function(){ pdCat('bills', document.querySelector('[data-pd="bills"]')); }, 50);
+            } catch (e) {
+                showToast('❌ ' + ((e && e.message) || e || 'Delete failed'), 'error');
             }
-            if (b.orderId && window.pclinicCloudFunctions && typeof window.pclinicCloudFunctions.call === 'function') {
-                // bill raised by a request (imaging/lab) → delete it on the Common Server through the
-                // admin function; a browser-only delete would be re-added by the live sync.
-                showToast('⏳ Deleting bill on the Common Server…', 'info');
-                pdImagingCall({ orderId: String(b.orderId), scope: 'bill' }).then(function () {
-                    dropLocal(); showToast('🗑️ Bill ' + (b.number || b.id) + ' deleted from the Common Server', 'success');
-                }).catch(function (e) {
-                    var msg = (e && e.message) || String(e);
-                    if (/already has .* paid/i.test(msg) && confirm(msg + '\n\nDelete it anyway (forced)?')) {
-                        return pdImagingCall({ orderId: String(b.orderId), scope: 'bill', force: true }).then(function () {
-                            dropLocal(); showToast('🗑️ Bill ' + (b.number || b.id) + ' deleted from the Common Server (forced)', 'success');
-                        }).catch(function (e2) { showToast('❌ ' + ((e2 && e2.message) || e2), 'error'); });
-                    }
-                    showToast('❌ ' + msg, 'error');
-                });
-                return;
-            }
-            dropLocal();
-            showToast('🗑️ Bill removed from this device' + (b.orderId ? '' : ' (it was never on the Common Server)'), 'info');
         }
 
         /* ── CATEGORY 4: IMAGING — live from the Common Server ──────────────
@@ -2460,19 +2573,23 @@
             var what = { all: 'the WHOLE imaging request "' + exam + '" — order, every image, the result, drawings and the linked bill', images: 'ALL images of "' + exam + '" (and the drawings made on them)', report: 'the RESULT (report, addenda, critical alert) of "' + exam + '" — radiology will have to report it again', bill: 'the BILL linked to "' + exam + '"' }[scope];
             if (!confirm('Permanently delete ' + what + ' from the Common Server?\n\nThis cannot be undone and is recorded in the audit log.')) return;
             showToast('⏳ Deleting on the Common Server…', 'info');
-            pdImagingCall({ orderId: String(orderId), scope: scope }).catch(function (e) {
+            var run = scope === 'all'
+                ? adminDeleteClinicalCall({ orderId: String(orderId), force: true })
+                : pdImagingCall({ orderId: String(orderId), scope: scope });
+            run.catch(function (e) {
                 if (e.code !== 'not-deployed' || scope !== 'images') throw e;
                 var list = (pdImaging.media[String(orderId)] || []).slice(); if (!list.length) throw e;
                 return list.reduce(function (chain, m) { return chain.then(function (n) { return pdLegacyMediaDelete(m.id).then(function () { return n + 1; }); }); }, Promise.resolve(0))
-                    .then(function (n) { return { summary: n + ' image' + (n === 1 ? '' : 's') + ' removed (via the radiology function — deploy the Cloud Functions for full admin deletes)', removed: { media: n }, blockedBills: [] }; });
+                    .then(function (n) { return { summary: n + ' image' + (n === 1 ? '' : 's') + ' removed (via the radiology function — deploy the Cloud Functions for full admin deletes)', removed: { media: n }, blockedBills: [], orderId: String(orderId), billIds: [] }; });
             }).then(function (r) {
+                if (scope === 'all') pruneLocalCascadeResult(r);
                 showToast('🗑️ ' + (r && r.summary ? r.summary.charAt(0).toUpperCase() + r.summary.slice(1) : 'Deleted') + ' — every dashboard sees this now', 'success');
                 if (r && r.blockedBills && r.blockedBills.length) { setTimeout(function () { if (confirm('Bill ' + r.blockedBills[0].number + ' ' + r.blockedBills[0].reason + '\n\nDelete it anyway?')) { pdImagingCall({ orderId: String(orderId), scope: 'bill', force: true }).then(function () { showToast('🗑️ Bill deleted', 'success'); }).catch(function (e) { showToast('❌ ' + e.message, 'error'); }); } }, 300); }
                 try { window.dispatchEvent(new CustomEvent('ordersUpdated')); window.dispatchEvent(new CustomEvent('billsUpdated')); } catch (e) {}
                 loadBills();
             }).catch(function (e) {
                 var msg = e.message || String(e);
-                if (/already has .* paid/.test(msg)) { if (confirm(msg + '\n\nDelete it anyway?')) { pdImagingCall({ orderId: String(orderId), scope: scope, force: true }).then(function (r) { showToast('🗑️ ' + (r.summary || 'Deleted'), 'success'); loadBills(); }).catch(function (e2) { showToast('❌ ' + e2.message, 'error'); }); } return; }
+                if (/already has .* paid/.test(msg) && scope !== 'all') { if (confirm(msg + '\n\nDelete it anyway?')) { pdImagingCall({ orderId: String(orderId), scope: scope, force: true }).then(function (r) { showToast('🗑️ ' + (r.summary || 'Deleted'), 'success'); loadBills(); }).catch(function (e2) { showToast('❌ ' + e2.message, 'error'); }); } return; }
                 showToast('❌ ' + msg, 'error');
             });
         }
