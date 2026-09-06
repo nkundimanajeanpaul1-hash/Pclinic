@@ -129,13 +129,23 @@
 
   function triageInfo(level) {
     level = Number(level || 0);
-    if (level === 1) return { label: 'Red · Immediate', cls: 'b-critical' };
-    if (level === 2) return { label: 'Orange · Very urgent', cls: 'b-warn' };
-    if (level === 3) return { label: 'Yellow · Urgent', cls: 'b-orange' };
-    if (level === 4) return { label: 'Green · Routine', cls: 'b-stable' };
-    if (level === 5) return { label: 'Blue · Non-urgent', cls: 'b-info' };
-    return { label: 'Not triaged', cls: 'b-info' };
+    if (level === 1) return { label: 'Red · Immediate', cls: 'b-critical', previewCls: 'triage-preview-red', priority: 'critical', color: 'red' };
+    if (level === 2) return { label: 'Orange · Very urgent', cls: 'b-warn', previewCls: 'triage-preview-orange', priority: 'high', color: 'orange' };
+    if (level === 3) return { label: 'Yellow · Urgent', cls: 'b-orange', previewCls: 'triage-preview-yellow', priority: 'medium', color: 'yellow' };
+    if (level === 4) return { label: 'Green · Routine', cls: 'b-stable', previewCls: 'triage-preview-green', priority: 'low', color: 'green' };
+    if (level === 5) return { label: 'Blue · Non-urgent', cls: 'b-info', previewCls: 'triage-preview-blue', priority: 'low', color: 'blue' };
+    return { label: 'Not triaged', cls: 'b-info', previewCls: 'triage-preview-neutral', priority: 'low', color: 'neutral' };
   }
+
+  var TRIAGE_CONDITION_RULES = {
+    'active-bleeding': { id: 'active-bleeding', label: 'Active bleeding', level: 1 },
+    'seizure': { id: 'seizure', label: 'Seizure', level: 1 },
+    'unconscious-airway': { id: 'unconscious-airway', label: 'Unconscious / airway compromise', level: 1 },
+    'active-labor': { id: 'active-labor', label: 'In active labor', level: 2 },
+    'respiratory-distress': { id: 'respiratory-distress', label: 'Respiratory distress', level: 2 },
+    'severe-pain': { id: 'severe-pain', label: 'Severe pain', level: 2 },
+    'fever-dehydration': { id: 'fever-dehydration', label: 'Fever / dehydration / other concern', level: 3 }
+  };
 
   function lastTriage(p) { return latestEntry(p && p.triage); }
   function lastVitals(p) { return latestEntry(p && p.vitals); }
@@ -144,6 +154,201 @@
   function lastTouch(p) {
     var items = [lastTriage(p), lastVitals(p), lastCpn(p), lastNursingNote(p), latestEntry(p && p.medicationLog)];
     return latestEntry(items.filter(Boolean));
+  }
+
+  function hasMeaningfulVitals(v) {
+    if (!v) return false;
+    return ['temperature', 'temp', 'pulse', 'bpSystolic', 'bpDiastolic', 'bp', 'spo2', 'respiratoryRate', 'rr', 'weight', 'painScore'].some(function (k) {
+      return v[k] != null && String(v[k]).trim() !== '';
+    });
+  }
+
+  function patientHasSavedVitals(patient) {
+    return !!(patient && hasMeaningfulVitals(lastVitals(patient)));
+  }
+
+  function triageVitalsInterpretation(patient) {
+    var v = lastVitals(patient);
+    if (!v || !hasMeaningfulVitals(v)) {
+      return {
+        available: false,
+        level: 0,
+        info: triageInfo(0),
+        reasons: ['No saved vital signs yet.'],
+        vitals: null
+      };
+    }
+    var level = 4;
+    var reasons = [];
+    var temp = Number(v.temperature != null ? v.temperature : v.temp);
+    var pulse = Number(v.pulse);
+    var spo2 = Number(v.spo2);
+    var rr = Number(v.respiratoryRate != null ? v.respiratoryRate : v.rr);
+    var sys = Number(v.bpSystolic);
+    var dia = Number(v.bpDiastolic);
+    var pain = Number(v.painScore);
+
+    if (!isNaN(spo2)) {
+      if (spo2 < 90) { level = Math.min(level, 1); reasons.push('SpO₂ critically low (' + spo2 + '%)'); }
+      else if (spo2 < 95) { level = Math.min(level, 2); reasons.push('SpO₂ low (' + spo2 + '%)'); }
+    }
+    if (!isNaN(sys)) {
+      if (sys < 90) { level = Math.min(level, 1); reasons.push('Systolic BP very low (' + sys + ')'); }
+      else if (sys < 100 || sys >= 180) { level = Math.min(level, 2); reasons.push('Systolic BP concerning (' + sys + ')'); }
+    }
+    if (!isNaN(dia)) {
+      if (dia < 60 || dia >= 110) { level = Math.min(level, 2); reasons.push('Diastolic BP concerning (' + dia + ')'); }
+    }
+    if (!isNaN(pulse)) {
+      if (pulse > 130 || pulse < 40) { level = Math.min(level, 1); reasons.push('Pulse critical (' + pulse + ' bpm)'); }
+      else if (pulse > 110 || pulse < 50) { level = Math.min(level, 2); reasons.push('Pulse abnormal (' + pulse + ' bpm)'); }
+    }
+    if (!isNaN(rr)) {
+      if (rr >= 30 || rr <= 8) { level = Math.min(level, 1); reasons.push('Respiratory rate critical (' + rr + '/min)'); }
+      else if (rr >= 24) { level = Math.min(level, 2); reasons.push('Respiratory rate elevated (' + rr + '/min)'); }
+    }
+    if (!isNaN(temp)) {
+      if (temp >= 40 || temp < 35) { level = Math.min(level, 2); reasons.push('Temperature concerning (' + temp + '°C)'); }
+      else if (temp >= 38.5) { level = Math.min(level, 3); reasons.push('Fever (' + temp + '°C)'); }
+    }
+    if (!isNaN(pain)) {
+      if (pain >= 8) { level = Math.min(level, 2); reasons.push('Severe pain score (' + pain + '/10)'); }
+      else if (pain >= 5) { level = Math.min(level, 3); reasons.push('Moderate pain score (' + pain + '/10)'); }
+    }
+
+    if (!reasons.length) reasons.push('Saved vital signs currently suggest routine triage.');
+
+    return {
+      available: true,
+      level: level,
+      info: triageInfo(level),
+      reasons: reasons,
+      vitals: v
+    };
+  }
+
+  function syncTriageConditionUi() {
+    document.querySelectorAll('.triage-condition').forEach(function (label) {
+      var input = label.querySelector('input[data-triage-condition]');
+      if (input && input.checked) label.classList.add('active');
+      else label.classList.remove('active');
+    });
+  }
+
+  function clearTriageSelections() {
+    document.querySelectorAll('input[data-triage-condition]').forEach(function (input) {
+      input.checked = false;
+    });
+    syncTriageConditionUi();
+  }
+
+  function selectedTriageConditions() {
+    return Array.prototype.slice.call(document.querySelectorAll('input[data-triage-condition]:checked')).map(function (input) {
+      return TRIAGE_CONDITION_RULES[input.value];
+    }).filter(Boolean);
+  }
+
+  function triageAssessment(patient) {
+    var base = triageVitalsInterpretation(patient);
+    var chosen = selectedTriageConditions();
+    var level = base.available ? base.level : 0;
+    var reasons = base.reasons.slice();
+    chosen.forEach(function (cond) {
+      level = level ? Math.min(level, cond.level) : cond.level;
+      reasons.unshift(cond.label);
+    });
+    var info = triageInfo(level || 0);
+    return {
+      base: base,
+      conditions: chosen,
+      level: level || 0,
+      info: info,
+      reasons: reasons,
+      priority: info.priority,
+      color: info.color
+    };
+  }
+
+  function triagePreviewHtml(assessment, prefix) {
+    if (!assessment || !assessment.level) {
+      return 'No triage category ready yet.';
+    }
+    var head = (prefix ? prefix + ': ' : '') + assessment.info.label;
+    var conds = assessment.conditions.length ? ('Emergency conditions: ' + assessment.conditions.map(function (c) { return c.label; }).join(', ') + '. ') : '';
+    var reasons = assessment.reasons.length ? assessment.reasons.join(' • ') : 'No triage triggers.';
+    return '<strong>' + esc(head) + '</strong><small>' + esc(conds + reasons) + '</small>';
+  }
+
+  function renderTriagePanel(patient) {
+    patient = patient || getCurrentPatient();
+    var stamp = document.getElementById('triageVitalsStamp');
+    var summary = document.getElementById('triageVitalsSummary');
+    var suggested = document.getElementById('triageSuggestedCategory');
+    var finalBox = document.getElementById('triageFinalPreview');
+    var saveBtn = document.getElementById('saveTriageBtn');
+    var grid = document.getElementById('triageConditionGrid');
+    if (!summary || !suggested || !finalBox || !saveBtn) return;
+
+    if (!patient) {
+      if (stamp) stamp.value = '';
+      if (grid) delete grid.dataset.patientId;
+      clearTriageSelections();
+      summary.innerHTML = 'Select a patient and save vital signs first.';
+      suggested.className = 'triage-preview triage-preview-neutral';
+      suggested.innerHTML = 'No vital-sign interpretation yet.';
+      finalBox.className = 'triage-preview triage-preview-neutral';
+      finalBox.innerHTML = 'No triage category ready yet.';
+      saveBtn.disabled = true;
+      return;
+    }
+
+    if (grid && grid.dataset.patientId !== String(patient.id)) {
+      clearTriageSelections();
+      grid.dataset.patientId = String(patient.id);
+    }
+    syncTriageConditionUi();
+
+    var base = triageVitalsInterpretation(patient);
+    var v = base.vitals;
+    if (!base.available || !v) {
+      if (stamp) stamp.value = '';
+      summary.innerHTML = 'No saved vital signs yet for this patient. Save vital signs first in the Vitals tab.';
+      suggested.className = 'triage-preview triage-preview-neutral';
+      suggested.innerHTML = 'Vitals required before triage can open.';
+      finalBox.className = 'triage-preview triage-preview-neutral';
+      finalBox.innerHTML = 'Save vital signs first, then return to Triage.';
+      saveBtn.disabled = true;
+      return;
+    }
+
+    if (stamp) {
+      var when = v.timestamp || v.at || v.date || patient.updatedAt || '';
+      stamp.value = when ? new Date(ms(when)).toLocaleString('en-GB') : 'Saved vitals';
+    }
+
+    summary.innerHTML = [
+      ['Temp', (v.temperature != null ? v.temperature : v.temp), '°C'],
+      ['Pulse', v.pulse, 'bpm'],
+      ['Resp', (v.respiratoryRate != null ? v.respiratoryRate : v.rr), '/min'],
+      ['BP', (v.bp || ((v.bpSystolic || '--') + '/' + (v.bpDiastolic || '--'))), ''],
+      ['SpO₂', v.spo2, '%'],
+      ['Pain', (v.painScore != null ? v.painScore : ''), '/10']
+    ].map(function (item) {
+      return '<div class="triage-vital-chip"><div class="triage-vital-label">' + esc(item[0]) + '</div><div class="triage-vital-value">' + esc((item[1] == null || item[1] === '') ? '—' : item[1]) + (item[2] ? '<span style="font-size:11px;font-weight:500;color:var(--tm);margin-left:3px;">' + esc(item[2]) + '</span>' : '') + '</div></div>';
+    }).join('');
+
+    suggested.className = 'triage-preview ' + base.info.previewCls;
+    suggested.innerHTML = triagePreviewHtml({ level: base.level, info: base.info, conditions: [], reasons: base.reasons }, 'Suggested from saved vitals');
+
+    var final = triageAssessment(patient);
+    finalBox.className = 'triage-preview ' + final.info.previewCls;
+    finalBox.innerHTML = triagePreviewHtml(final, 'Final category');
+    saveBtn.disabled = !final.level;
+  }
+
+  function updateTriagePreview() {
+    syncTriageConditionUi();
+    renderTriagePanel(getCurrentPatient());
   }
 
   function isInactiveStatus(status) {
@@ -291,6 +496,7 @@
     applyStaffUi();
     if (!patient) {
       syncSharedPatientBar(null);
+      renderTriagePanel(null);
       if (typeof window.renderLabResults === 'function') window.renderLabResults();
       if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
       if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
@@ -298,6 +504,7 @@
     }
     syncSharedPatientBar(patient);
     if (typeof window.fillForms === 'function') window.fillForms(patient);
+    renderTriagePanel(patient);
     if (typeof window.renderCarePlanHistory === 'function') window.renderCarePlanHistory();
     if (typeof window.renderDeliveriesHistory === 'function') window.renderDeliveriesHistory();
     if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
@@ -631,47 +838,77 @@
   async function saveTriage() {
     var patient = refreshCurrentPatientFromStore();
     if (!patient) return safeToast('⚠️ Please select a patient first', 'warning');
-    var complaint = (document.getElementById('triageComplaint') || {}).value || '';
-    complaint = complaint.trim();
-    if (!complaint) return safeToast('⚠️ Please enter chief complaint', 'warning');
+    if (!patientHasSavedVitals(patient)) return safeToast('⚠️ Save vital signs first before opening or saving Triage.', 'warning');
+    if (typeof window.updatePatient !== 'function') return safeToast('❌ Secure triage saving is not available on this page.', 'error');
+
+    var assessment = triageAssessment(patient);
+    if (!assessment.level) return safeToast('⚠️ No triage category is ready yet.', 'warning');
+
+    var vital = assessment.base.vitals || {};
     var entry = {
       id: Date.now() + Math.floor(Math.random() * 1000),
       date: nowIso(),
       at: nowIso(),
       timestamp: nowIso(),
-      level: Number(window.triageLevel || 4),
-      chiefComplaint: complaint,
-      trauma: ((document.getElementById('triageTrauma') || {}).value || '').trim(),
-      airway: ((document.getElementById('triageAirway') || {}).value || 'Patent'),
-      breathing: ((document.getElementById('triageBreathing') || {}).value || 'Normal'),
-      circulation: ((document.getElementById('triageCirculation') || {}).value || 'Normal'),
-      gcs: ((document.getElementById('triageGCS') || {}).value || '15'),
-      painScore: parseInt((document.getElementById('triagePain') || {}).value, 10) || 0,
-      disposition: ((document.getElementById('triageDisposition') || {}).value || 'OPD queue'),
-      allocatedTo: ((document.getElementById('triageAllocated') || {}).value || 'Doctor on call'),
-      triagedBy: ((document.getElementById('triageNurse') || {}).value || currentStaffName()),
+      level: assessment.level,
+      color: assessment.color,
+      label: assessment.info.label,
+      priority: assessment.priority,
+      chiefComplaint: assessment.conditions.length ? assessment.conditions.map(function (c) { return c.label; }).join(', ') : 'Vitals-based triage',
+      basedOnVitalId: vital.id || '',
+      basedOnVitals: {
+        temperature: vital.temperature != null ? vital.temperature : vital.temp,
+        pulse: vital.pulse != null ? vital.pulse : null,
+        respiratoryRate: vital.respiratoryRate != null ? vital.respiratoryRate : vital.rr,
+        spo2: vital.spo2 != null ? vital.spo2 : null,
+        bpSystolic: vital.bpSystolic != null ? vital.bpSystolic : null,
+        bpDiastolic: vital.bpDiastolic != null ? vital.bpDiastolic : null,
+        bp: vital.bp || '',
+        painScore: vital.painScore != null ? vital.painScore : null
+      },
+      interpretedFromVitals: assessment.base.reasons.slice(),
+      emergencyConditions: assessment.conditions.map(function (c) {
+        return { id: c.id, label: c.label, level: c.level };
+      }),
+      triagedBy: currentStaffName(),
       triagedById: getStaff() ? getStaff().staffId : '',
-      notes: ((document.getElementById('triageNotes') || {}).value || '').trim()
+      notes: assessment.reasons.join(' • ')
     };
-    safeToast('⏳ Saving triage to the Common Server…', 'info');
-    var saved = await appendPatientHistory('triage', entry);
+
+    var next = Array.isArray(patient.triage) ? patient.triage.slice() : [];
+    next.push(entry);
+    var triageCategory = {
+      level: assessment.level,
+      color: assessment.color,
+      label: assessment.info.label,
+      priority: assessment.priority,
+      reasons: assessment.reasons.slice(),
+      emergencyConditions: assessment.conditions.map(function (c) { return c.label; }),
+      basedOnVitalId: vital.id || '',
+      savedAt: entry.timestamp,
+      savedBy: currentStaffName()
+    };
+
+    safeToast('⏳ Saving triage category to the Common Server…', 'info');
+    var saved = await window.updatePatient(patient.id, {
+      triage: next,
+      priority: assessment.priority,
+      triageLevel: assessment.level,
+      triageColor: assessment.color,
+      triageLabel: assessment.info.label,
+      triageCategory: triageCategory,
+      triagedAt: entry.timestamp
+    });
     if (!saved) return safeToast('❌ Triage was NOT saved. Please retry.', 'error');
     refreshAfterSave(saved, clearTriage);
-    safeToast('✅ Triage saved for ' + displayName(saved), 'success');
+    safeToast('✅ Triage category saved for ' + displayName(saved) + ' — ' + assessment.info.label, 'success');
   }
   function clearTriage() {
-    ['triageComplaint', 'triageGCS', 'triageTrauma', 'triagePain', 'triageAllocated', 'triageNotes'].forEach(function (id) {
-      var el = document.getElementById(id); if (el) el.value = '';
-    });
-    document.querySelectorAll('.tl').forEach(function (t) { t.classList.remove('sel'); });
-    var d = document.querySelector('.tl4'); if (d) d.classList.add('sel');
-    window.triageLevel = 4;
-    fillForms(getCurrentPatient());
+    clearTriageSelections();
+    renderTriagePanel(getCurrentPatient());
   }
-  function selectTriage(el, level) {
-    document.querySelectorAll('.tl').forEach(function (t) { t.classList.remove('sel'); });
-    if (el) el.classList.add('sel');
-    window.triageLevel = Number(level || 4);
+  function selectTriage() {
+    updateTriagePreview();
   }
 
   async function saveVitals() {
@@ -1192,6 +1429,7 @@
           if (suggestions) suggestions.classList.remove('show');
           var searchInput2 = document.getElementById('searchInput');
           if (searchInput2) searchInput2.value = '';
+          renderTriagePanel(null);
           if (typeof window.renderLabResults === 'function') window.renderLabResults(null);
           if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
           if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
@@ -1253,14 +1491,31 @@
     window.openModal = openModal;
     window.closeModal = closeModal;
     window.updateNursingChips = updateNursingChips;
+    window.updateTriagePreview = updateTriagePreview;
     var legacySwitchTab = window.switchTab;
     if (typeof legacySwitchTab === 'function') {
       window.switchTab = function (name, btn) {
+        if (name === 'triage') {
+          var triagePatient = refreshCurrentPatientFromStore();
+          if (!triagePatient) {
+            safeToast('⚠️ Select a patient first, then save vital signs before triage.', 'warning');
+            focusPatientSearch();
+            return;
+          }
+          if (!patientHasSavedVitals(triagePatient)) {
+            safeToast('⚠️ Triage is locked until vital signs are filled and saved.', 'warning');
+            legacySwitchTab('vitals', document.querySelector('[data-tab="vitals"]'));
+            if (typeof window.switchSub === 'function') window.switchSub('vitals-form');
+            var temp = document.getElementById('vitalsTemp'); if (temp) temp.focus();
+            return;
+          }
+        }
         legacySwitchTab(name, btn);
         if (name === 'lab') renderLabResults();
         if (name === 'patients') renderPatientTable(getAllPatients());
         if (name === 'overview') refreshKpisAndQueue(getAllPatients());
         if (name === 'vitals' && typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
+        if (name === 'triage') renderTriagePanel(getCurrentPatient());
       };
     }
     var legacySwitchSub = window.switchSub;
@@ -1308,6 +1563,7 @@
       var searchInput = document.getElementById('searchInput');
       if (searchInput) searchInput.value = displayName(initialPatient) + ' — ' + displayMrn(initialPatient);
     } else {
+      renderTriagePanel(null);
       renderLabResults();
     }
     setInterval(function () {

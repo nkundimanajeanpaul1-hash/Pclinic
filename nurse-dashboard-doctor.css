@@ -549,6 +549,105 @@ input.fi:focus {
   box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
 }
 
+/* Triage workflow */
+.triage-workflow-card {
+  background: rgba(255,255,255,0.55);
+  border: 0.5px solid var(--bd);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+.triage-vitals-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.triage-vital-chip {
+  background: rgba(255,255,255,0.7);
+  border: 0.5px solid var(--bd);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.triage-vital-chip .triage-vital-label {
+  font-size: 10px;
+  color: var(--tm);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+}
+.triage-vital-chip .triage-vital-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tp);
+}
+.triage-preview {
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 0.5px solid var(--bd);
+  line-height: 1.6;
+}
+.triage-preview small {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+.triage-preview-neutral { background: rgba(255,255,255,0.55); color: var(--ts); }
+.triage-preview-red { background: var(--redb); color: var(--redd); }
+.triage-preview-orange { background: var(--orangeb); color: var(--oranged); }
+.triage-preview-yellow { background: #fff8d8; color: #7a5f00; }
+.triage-preview-green { background: var(--greenb); color: var(--greend); }
+.triage-preview-blue { background: var(--acb); color: var(--ach); }
+.triage-condition-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+.triage-condition {
+  position: relative;
+  display: block;
+}
+.triage-condition input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.triage-condition span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.6);
+  border: 0.5px solid var(--bd);
+  color: var(--ts);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s var(--spring);
+}
+.triage-condition span:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+.triage-condition.active span,
+.triage-condition input:checked + span {
+  background: var(--acb);
+  color: var(--ac);
+  border-color: rgba(0,113,227,0.20);
+  box-shadow: 0 4px 12px rgba(0,113,227,0.12);
+}
+#saveTriageBtn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Mobile parity */
 @media (max-width: 960px) {
   .nurse-doctor-overview { flex-direction: column; }

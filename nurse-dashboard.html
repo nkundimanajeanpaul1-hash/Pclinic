@@ -1340,36 +1340,43 @@
             <!-- ─── PANEL: TRIAGE ─── -->
             <div id="panel-triage" class="main-panel" style="display:none;">
                 <div class="panel-body show" id="sub-triage-form">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-                        <span style="font-size:14px;font-weight:600;">Triage assessment</span>
-                        <button class="btn-print" onclick="printPatientFile()"><i class="ti ti-printer"></i>Print</button>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <span style="font-size:14px;font-weight:600;">Triage category</span>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="btn-s" onclick="switchTab('patients', document.querySelector('[data-tab=patients]'))"><i class="ti ti-users"></i> Select patient</button>
+                            <button class="btn-s" onclick="switchTab('vitals', document.querySelector('[data-tab=vitals]')); switchSub('vitals-form')"><i class="ti ti-heartbeat"></i> Go to Vitals</button>
+                        </div>
                     </div>
+
                     <div class="fg" style="margin-bottom:12px;">
-                        <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="triagePatient" placeholder="Search or select a patient..."/></div>
-                        <div class="fgl"><div class="lbl">Date and time</div><input class="fi" type="datetime-local" id="triageDateTime"/></div>
-                        <div class="fgl"><div class="lbl">Triaging nurse</div><input class="fi" id="triageNurse" value="Nurse Achieng"/></div>
-                        <div class="fgl"><div class="lbl">Chief complaint</div><input class="fi" id="triageComplaint" placeholder="Main presenting problem…"/></div>
+                        <div class="fgl"><div class="lbl">Selected patient</div><input class="fi" id="triagePatient" placeholder="Select a patient first"/></div>
+                        <div class="fgl"><div class="lbl">Last saved vitals</div><input class="fi" id="triageVitalsStamp" readonly placeholder="No saved vitals yet"/></div>
                     </div>
-                    <div class="section-title">Triage level — South African Triage Scale (SATS)</div>
-                    <div class="triage-grid">
-                        <div class="tl tl1" onclick="selectTriage(this,1)"><span class="tl-num">1</span><div class="tl-name">Red</div><div class="tl-desc">Immediate</div></div>
-                        <div class="tl tl2" onclick="selectTriage(this,2)"><span class="tl-num">2</span><div class="tl-name">Orange</div><div class="tl-desc">Very urgent</div></div>
-                        <div class="tl tl3" onclick="selectTriage(this,3)"><span class="tl-num">3</span><div class="tl-name">Yellow</div><div class="tl-desc">Urgent</div></div>
-                        <div class="tl tl4 sel" onclick="selectTriage(this,4)"><span class="tl-num">4</span><div class="tl-name">Green</div><div class="tl-desc">Routine</div></div>
-                        <div class="tl tl5" onclick="selectTriage(this,5)"><span class="tl-num">5</span><div class="tl-name">Blue</div><div class="tl-desc">Non-urgent</div></div>
+
+                    <div class="section-title"><i class="ti ti-heart-rate-monitor"></i> Interpreted from saved vital signs</div>
+                    <div class="triage-workflow-card">
+                        <div id="triageVitalsSummary" class="triage-vitals-summary">Select a patient and save vital signs first.</div>
+                        <div id="triageSuggestedCategory" class="triage-preview triage-preview-neutral">No vital-sign interpretation yet.</div>
                     </div>
-                    <div class="fg">
-                        <div class="fgl"><div class="lbl">GCS (if applicable)</div><input class="fi" id="triageGCS" placeholder="E__ V__ M__ = 15"/></div>
-                        <div class="fgl"><div class="lbl">Trauma / mechanism</div><input class="fi" id="triageTrauma" placeholder="e.g. RTA, fall, assault…"/></div>
-                        <div class="fgl"><div class="lbl">Airway</div><select class="fi" id="triageAirway"><option>Patent</option><option>Compromised</option><option>Obstructed</option></select></div>
-                        <div class="fgl"><div class="lbl">Breathing</div><select class="fi" id="triageBreathing"><option>Normal</option><option>Laboured</option><option>Absent</option></select></div>
-                        <div class="fgl"><div class="lbl">Circulation</div><select class="fi" id="triageCirculation"><option>Normal</option><option>Delayed cap refill</option><option>Shock</option></select></div>
-                        <div class="fgl"><div class="lbl">Pain score (0–10)</div><input class="fi" type="number" min="0" max="10" id="triagePain" placeholder="0"/></div>
-                        <div class="fgl ff"><div class="lbl">Clinical notes / observations</div><textarea class="ta" id="triageNotes" placeholder="Additional findings, history, relevant context…"></textarea></div>
-                        <div class="fgl"><div class="lbl">Disposition</div><select class="fi" id="triageDisposition"><option>OPD queue</option><option>Emergency bay</option><option>Resuscitation room</option><option>Admit to ward</option><option>Refer</option></select></div>
-                        <div class="fgl"><div class="lbl">Allocated to</div><input class="fi" id="triageAllocated" placeholder="Doctor / nurse / department…"/></div>
+
+                    <div class="section-title"><i class="ti ti-alert-octagon"></i> Emergency conditions</div>
+                    <div class="triage-condition-grid" id="triageConditionGrid">
+                        <label class="triage-condition"><input type="checkbox" data-triage-condition value="active-bleeding" onchange="updateTriagePreview()"><span>🩸 Active bleeding</span></label>
+                        <label class="triage-condition"><input type="checkbox" data-triage-condition value="seizure" onchange="updateTriagePreview()"><span>⚡ Seizure</span></label>
+                        <label class="triage-condition"><input type="checkbox" data-triage-condition value="unconscious-airway" onchange="updateTriagePreview()"><span>🫁 Unconscious / airway compromise</span></label>
+                        <label class="triage-condition"><input type="checkbox" data-triage-condition value="active-labor" onchange="updateTriagePreview()"><span>🤰 In active labor</span></label>
+                        <label class="triage-condition"><input type="checkbox" data-triage-condition value="respiratory-distress" onchange="updateTriagePreview()"><span>😮‍💨 Respiratory distress</span></label>
+                        <label class="triage-condition"><input type="checkbox" data-triage-condition value="severe-pain" onchange="updateTriagePreview()"><span>💥 Severe pain</span></label>
+                        <label class="triage-condition"><input type="checkbox" data-triage-condition value="fever-dehydration" onchange="updateTriagePreview()"><span>🌡️ Fever / dehydration / other concern</span></label>
                     </div>
-                    <div class="fa"><button class="btn-p" onclick="saveTriage()"><i class="ti ti-check"></i> Save triage</button><button class="btn-s" onclick="clearTriage()">Clear</button></div>
+
+                    <div class="section-title"><i class="ti ti-palette"></i> Final triage category</div>
+                    <div id="triageFinalPreview" class="triage-preview triage-preview-neutral">No triage category ready yet.</div>
+
+                    <div class="fa">
+                        <button class="btn-p" id="saveTriageBtn" onclick="saveTriage()"><i class="ti ti-check"></i> Save triage category</button>
+                        <button class="btn-s" onclick="clearTriage()">Clear selection</button>
+                    </div>
                 </div>
             </div>
 
@@ -3575,7 +3582,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260906_NURSEFIX_SELECTBTN" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260906_NURSEFIX_TRIAGEFLOW" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {
