@@ -719,7 +719,7 @@
         if (!el) return;
 
         var pathStr = String((window.location && (window.location.pathname || window.location.href)) || '').toLowerCase();
-        if (pathStr.indexOf('cashier-dashboard') !== -1 || pathStr.indexOf('lab-dashboard') !== -1 || pathStr.indexOf('reception-dashboard') !== -1) {
+        if (pathStr.indexOf('cashier-dashboard') !== -1 || pathStr.indexOf('lab-dashboard') !== -1 || pathStr.indexOf('reception-dashboard') !== -1 || pathStr.indexOf('imaging-results') !== -1) {
             var oldDc = document.getElementById('dcBar');
             if (oldDc && oldDc.parentNode) oldDc.parentNode.removeChild(oldDc);
             var oldCtx = document.getElementById('dcCtx');

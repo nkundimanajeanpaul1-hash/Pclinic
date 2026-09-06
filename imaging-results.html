@@ -25,20 +25,17 @@
     html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     /* the shared PClinic header (menu + patient identification bar) keeps its own light theme */
     #pcMasterHeader{position:relative;z-index:20;padding-bottom:0!important;gap:0!important}
-    #pc_common_demo_bar,#dcBar{display:none!important}
+    #pcMasterHeader > :not(#pc_chuk_top_menu),
+    #pcMasterHeader #pc_common_demo_bar,
+    #pcMasterHeader #dcBar,
+    #pcMasterHeader .dc-bar,
+    #dcCtx,
+    #pc_common_demo_bar,
+    #dcBar{display:none!important}
     button{font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:9px;background:#343640;color:var(--text);padding:7px 11px;font-weight:700}
     button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
     button.danger{background:#5a2a2a;border-color:#7a3a3a;color:#ffb4b4}
     #workstation{min-height:520px;--dv-reserve:38px}
-    .ws-quickbar{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;padding:14px 18px 0;background:#17181b}
-    .ws-quick-btn{display:flex;align-items:center;gap:14px;min-height:68px;padding:14px 18px;border-radius:16px;border:1px solid #3d3f46;background:#2b2d31;color:#e6e6e8;box-shadow:0 16px 34px rgba(0,0,0,.18);max-width:560px;text-align:left}
-    .ws-quick-btn:hover{transform:translateY(-1px);background:#343640}
-    .ws-quick-btn.primary{background:linear-gradient(180deg,#5da8ff 0%,#2f7bd8 100%);border-color:#5da8ff;color:#fff;box-shadow:0 18px 40px rgba(74,158,255,.28)}
-    .ws-quick-btn i{font-size:28px;flex:none}
-    .ws-quick-copy{display:flex;flex-direction:column;gap:3px}
-    .ws-quick-copy strong{font-size:15px;line-height:1.2}
-    .ws-quick-copy small{font-size:12px;line-height:1.45;opacity:.92;font-weight:600}
-    @media (max-width:700px){.ws-quickbar{padding:12px 12px 0}.ws-quick-btn{width:100%;max-width:none}}
     /* report drawer (final reports, print, acknowledge) under the workstation */
     #reportsDrawer{border-top:1px solid var(--line);background:#17181b}
     #reportsDrawer > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:12.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#cfd0d4}
@@ -62,15 +59,6 @@
 <!-- The shared PClinic header (top menu + PATIENT IDENTIFICATION BAR) is injected here by pclinic-file.js.
      The patient identified in the bar IS the patient in the workstation, and vice-versa (one truth). -->
 <div id="pcMasterHeader"></div>
-<div class="ws-quickbar" aria-label="Workstation quick actions">
-  <button type="button" id="openLocalPageBtn" class="ws-quick-btn primary">
-    <i class="ti ti-folder-open"></i>
-    <span class="ws-quick-copy">
-      <strong>Open local DICOM / CD / USB</strong>
-      <small>Choose DICOM or image files from this computer, flashdisk or CD without uploading first.</small>
-    </span>
-  </button>
-</div>
 
 <!-- Weasis-style DICOM workstation, mounted by pclinic-dicom-viewer.js (PcDicomViewer.mount) -->
 <div id="workstation" aria-label="DICOM workstation"></div>
@@ -114,7 +102,9 @@
   const closeBtnEl=document.getElementById('closeBtn');if(closeBtnEl)closeBtnEl.onclick=function(){if(window.parent&&window.parent!==window){window.parent.postMessage({type:'CLOSE_IMAGING_RESULTS'},window.location.origin);}else history.back();};
   window.addEventListener('message',function(event){if(event.origin!==window.location.origin)return;if(window.parent!==window&&event.source!==window.parent)return;if(event.data&&event.data.type==='LOAD_PATIENT'&&event.data.patient)setPatient(event.data.patient);});
   async function retryLoad(){initError='';render();try{await window.pcRadiology.init({staff:staff});}catch(error){initError=errorText(error);}render();}
-  function openLocalFromPage(){if(!window.PcDicomViewer){notify('The workstation did not load. Refresh the page (Ctrl/Cmd+Shift+R).','warning');return;}if(!wsMounted)mountWorkstation();setTimeout(function(){try{window.PcDicomViewer.openLocal();}catch(error){notify(error&&error.message||'Could not open the local file picker.','error');}},90);}
+  function keepOnlyChukBar(){const master=document.getElementById('pcMasterHeader');if(!master)return;Array.from(master.children).forEach(function(node){if(node&&node.id!=='pc_chuk_top_menu')node.remove();});['pc_common_demo_bar','dcBar','dcCtx'].forEach(function(id){const n=document.getElementById(id);if(n&&n.parentNode)n.parentNode.removeChild(n);});document.querySelectorAll('.dc-bar').forEach(function(n){if(n&&n.parentNode)n.parentNode.removeChild(n);});}
+  let chromeObserver=null;
+  function enforceMinimalChrome(){keepOnlyChukBar();const master=document.getElementById('pcMasterHeader');if(master&&!chromeObserver&&typeof MutationObserver==='function'){chromeObserver=new MutationObserver(function(){keepOnlyChukBar();});chromeObserver.observe(master,{childList:true,subtree:true});}}
   /* ── workstation glue ─────────────────────────────────────────
      One patient truth: identification bar ⇄ workstation ⇄ report list. */
   let wsMounted=false, applyingPatient=false;
@@ -122,7 +112,7 @@
   function writeIdentificationBar(){}
   function syncWorkstationPatient(p){writeIdentificationBar(p);if(!wsMounted||!window.PcDicomViewer)return;try{window.PcDicomViewer.setPatient(p);}catch(e){}try{if(p&&p.id)localStorage.setItem('pclinic_active_patient',String(p.id));else localStorage.removeItem('pclinic_active_patient');}catch(e){}if(!applyingPatient){applyingPatient=true;try{window.dispatchEvent(new CustomEvent('pcPatientChanged',{detail:p}));}finally{applyingPatient=false;}}}
   window.addEventListener('pcPatientChanged',function(e){if(applyingPatient)return;const d=e&&e.detail;applyingPatient=true;try{if(d&&d.id){if(!patient||String(patient.id)!==String(d.id))setPatient(findPatient(d.id)||d);}else if(patient){setPatient(null);}}finally{applyingPatient=false;}});
-  document.addEventListener('DOMContentLoaded',function(){const openLocalBtn=document.getElementById('openLocalPageBtn');if(openLocalBtn)openLocalBtn.onclick=openLocalFromPage;window.requireAuth(['doctor','radio','nurse','admin']).then(async function(s){staff=s;requestedPatientId=new URLSearchParams(location.search).get('patient')||sessionStorage.getItem('pclinic_active_patient')||localStorage.getItem('pclinic_active_patient')||'';mountWorkstation();
+  document.addEventListener('DOMContentLoaded',function(){enforceMinimalChrome();window.requireAuth(['doctor','radio','nurse','admin']).then(async function(s){staff=s;requestedPatientId=new URLSearchParams(location.search).get('patient')||sessionStorage.getItem('pclinic_active_patient')||localStorage.getItem('pclinic_active_patient')||'';mountWorkstation();
     // Subscribe first: pcRadiology.subscribe() replays the current state immediately, and
     // pclinic-radiology.js keeps one shared init promise, so attaching before init() means a
     // failed start reaches the screen instead of dying in a .catch(function(){}) that showed
