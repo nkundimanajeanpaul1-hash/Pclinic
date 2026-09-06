@@ -370,6 +370,7 @@
         '<td>' + esc(p.phone || 'N/A') + '</td>' +
         '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>' +
         '<td>' +
+          '<button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--ac);color:#fff;border:none;" onclick="event.stopPropagation();selectPatient(\'' + sid + '\', { keepTab: true })"><i class="ti ti-check"></i> Select</button>' +
           '<button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--acb);color:var(--ac);" onclick="event.stopPropagation();openVitalsForPatient(\'' + sid + '\')"><i class="ti ti-heartbeat"></i> Vitals</button>' +
         '</td></tr>';
     }).join('');

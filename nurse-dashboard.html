@@ -1878,21 +1878,18 @@
 
             tbody.innerHTML = data.map(function(p) {
                 var name = (p.firstName || '') + ' ' + (p.lastName || '');
-                var initials = (p.firstName ? p.firstName[0] : '') + (p.lastName ? p.lastName[0] : '');
                 var statusClass = (p.status || 'active') === 'active' ? 'b-stable' : 'b-warn';
                 var age = getAge(p.dob);
                 return '<tr onclick="selectPatient(' + p.id + ')" style="cursor:pointer;">' +
-                    '<td><strong>' + name + '</strong></td>' +
+                    '<td><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>' + name + '</strong><button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--ac);color:#fff;border:none;" onclick="event.stopPropagation();selectPatient(' + p.id + ', { keepTab: true })"><i class="ti ti-check"></i> Select</button></div></td>' +
                     '<td><span class="badge b-info">' + (p.mrn || 'N/A') + '</span></td>' +
                     '<td>' + (p.dob || 'N/A') + ' (' + age + ')</td>' +
                     '<td>' + (p.gender || 'N/A') + '</td>' +
                     '<td>' + (p.phone || 'N/A') + '</td>' +
                     '<td><span class="badge ' + statusClass + '">' + (p.status || 'active') + '</span></td>' +
                     '<td>' +
-                    '<button class="btn-s" style="padding:2px 10px;font-size:10px;" onclick="event.stopPropagation();selectPatient(' +
-                    p.id + ')"><i class="ti ti-eye"></i> View</button>' +
-                    '<button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--acb);color:var(--ac);" onclick="event.stopPropagation();openVitalsForPatient(' +
-                    p.id + ')"><i class="ti ti-heartbeat"></i> Vitals</button>' +
+                    '<button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--ac);color:#fff;border:none;" onclick="event.stopPropagation();selectPatient(' + p.id + ', { keepTab: true })"><i class="ti ti-check"></i> Select</button>' +
+                    '<button class="btn-s" style="padding:2px 10px;font-size:10px;background:var(--acb);color:var(--ac);" onclick="event.stopPropagation();openVitalsForPatient(' + p.id + ')"><i class="ti ti-heartbeat"></i> Vitals</button>' +
                     '</td></tr>';
             }).join('');
         }
@@ -3578,7 +3575,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260906_NURSEFIX" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260906_NURSEFIX_SELECTBTN" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {
