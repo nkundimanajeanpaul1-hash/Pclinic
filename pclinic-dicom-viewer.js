@@ -13,13 +13,14 @@
      PcDicomViewer.open(order, opts)      modal over a dashboard (radiology)
      PcDicomViewer.mount(hostEl, opts)    full page (doctor: imaging-results.html)
 
-   Data (all from the common server, nothing stored on the device):
+   Data (server-backed plus optional local viewing from this device):
      files     window.pcRadioMedia.listFor(orderId)   (Firestore radiologyMedia)
      pixels    window.pcRadioMedia.urlsFor(orderId)   (radiologyMediaSign → URL)
                window.pcRadioMedia.localUrlFor(id)    (this session's own upload)
      studies   opts.studies || window.pcRadiology.snapshot().orders for the patient
      report    window.pcRadiology.reportForOrder / addendaForReport / alertForReport
      upload    window.pcRadioMedia.upload / remove     (opts.canManage only)
+     local     toolbar → Open local DICOM            (computer / CD / USB; not uploaded)
 
    Decoding: cornerstone + cornerstoneWADOImageLoader, self-hosted in vendor/
    (uncompressed, RLE, JPEG baseline, JPEG-LS, JPEG 2000, HTJ2K, multi-frame).
@@ -133,7 +134,10 @@
     }
     function loadColorImage(imageId) {
         var url = imageId.slice('pcimg:'.length);
-        var promise = fetch(url, { mode: 'cors' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); }).then(function (blob) {
+        var promise = (/^blob:/i.test(url)
+            ? fetch(url)
+            : fetch(url, { mode: 'cors' })
+        ).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); }).then(function (blob) {
             return new Promise(function (res, rej) { var img = new Image(); var ourl = URL.createObjectURL(blob); img.onload = function () { URL.revokeObjectURL(ourl); res(img); }; img.onerror = function () { URL.revokeObjectURL(ourl); rej(new Error('Not an image the browser can decode.')); }; img.src = ourl; });
         }).then(function (img) {
             var w = img.naturalWidth, h = img.naturalHeight;
@@ -240,6 +244,7 @@
        ══════════════════════════════════════════════════════════════ */
     var root = null, host = null, mode = 'modal', openOpts = {};
     var patient = null, studies = [], currentStudy = null, mediaByStudy = {}, currentItem = null;
+    var localStudySeq = 0;
     var viewports = [], activeVp = 0, layoutSpec = [1, 1], syncOn = false, synchronizers = null;
     var leftTool = 'Wwwc', wheelMode = 'scroll', overlaysOn = true, scaleOn = true, orientOn = true, interpOff = false;
     var explorerTab = 'studies', explorerOpen = true, sidePanel = null, cine = { on: false, fps: 15 };
@@ -319,6 +324,7 @@
         t.appendChild(tb('next', '', 'Next frame / image (→)', function () { step(1); }));
         t.appendChild(sep());
         t.appendChild(tb('full', 'Full screen', 'Full screen (F)', toggleFullscreen, { id: 'full', iconOnly: true }));
+        t.appendChild(tb('upload', 'Open local', 'Open DICOM or images from this computer, CD or USB', openLocalFiles, { id: 'local' }));
         if (openOpts.canManage) { t.appendChild(tb('upload', 'Upload', 'Attach images or DICOM files to this study', doUpload, { primary: true, id: 'upload' })); }
         return t;
     }
@@ -449,8 +455,10 @@
     function resolveImageIds(item) {
         if (item.imageIds) return Promise.resolve(item.imageIds);
         if (item.kind === 'image') { item.imageIds = ['pcimg:' + item.url]; return Promise.resolve(item.imageIds); }
-        return fetch(item.url, { mode: 'cors' }).then(function (r) { if (!r.ok) throw new Error('Could not fetch the DICOM file (HTTP ' + r.status + ').'); return r.arrayBuffer(); }).then(function (buf) {
-            var base = window.cornerstoneWADOImageLoader.wadouri.fileManager.add(new Blob([buf]));
+        var bytes = item.file ? readArrayBuffer(item.file) : fetch(item.url, { mode: 'cors' }).then(function (r) { if (!r.ok) throw new Error('Could not fetch the DICOM file (HTTP ' + r.status + ').'); return r.arrayBuffer(); });
+        return bytes.then(function (buf) {
+            var blob = item.file || new Blob([buf]);
+            var base = window.cornerstoneWADOImageLoader.wadouri.fileManager.add(blob);
             var ds = null; try { ds = window.dicomParser.parseDicom(new Uint8Array(buf), { untilTag: 'x7fe00010' }); } catch (e) { try { ds = window.dicomParser.parseDicom(new Uint8Array(buf)); } catch (e2) {} }
             item.dataSet = ds; var n = (ds && parseInt(ds.string('x00280008'), 10)) || 1; if (!(n > 0)) n = 1;
             var ids = []; for (var i = 0; i < n; i++) ids.push(n > 1 ? base + '?frame=' + i : base);
@@ -624,7 +632,7 @@
         var A = annoApi(); var id = study ? String(study.id) : null;
         if (anno.orderId === id) return; if (anno.stop) { try { anno.stop(); } catch (e) {} anno.stop = null; }
         anno.orderId = id; anno.rows = []; anno.loadedFor = {}; anno.error = null; if (!Object.keys(anno.dirty).length && !anno.saving) setSaveState('', '');
-        if (!A || !id) return;
+        if (!A || !id || isLocalStudy(study)) return;
         anno.stop = A.subscribe(id, function (rows, err) {
             if (err) { anno.error = (err && err.message) || String(err); setSaveState('err', 'Server drawings unavailable'); return; }
             anno.rows = rows || [];
@@ -667,7 +675,7 @@
             if (v.enabled) { try { cs().updateImage(v.host); } catch (e) {} }
         } finally { anno.restoring = false; }
     }
-    function markDirty(item) { if (!item || !annoEnabled()) return; if (!annoCanWrite()) return; anno.dirty[item.id] = item; setSaveState('busy', 'Unsaved changes…'); clearTimeout(anno.timer); anno.timer = setTimeout(flushAnnotations, 1000); }
+    function markDirty(item) { if (!item || !annoEnabled()) return; if (item.local) { setSaveState('', 'Local files are not saved to the common server'); return; } if (!annoCanWrite()) return; anno.dirty[item.id] = item; setSaveState('busy', 'Unsaved changes…'); clearTimeout(anno.timer); anno.timer = setTimeout(flushAnnotations, 1000); }
     /** Write every dirty image (debounced 1 s after the last change). */
     function flushAnnotations() {
         var A = annoApi(); if (!A) return; var ids = Object.keys(anno.dirty); if (!ids.length || anno.saving) return;
@@ -695,7 +703,7 @@
             if (Object.keys(anno.dirty).length) { anno.timer = setTimeout(flushAnnotations, 300); }
         });
     }
-    function toggleKeyImage(item) { item = item || (vp() && vp().item); if (!item) { toast('Load an image first.'); return; } if (!annoCanWrite()) { toast(annoEnabled() ? 'Key images are saved for doctors and radiology only.' : 'The common server is not connected.'); return; } var me = mineFor(item); me.keyImage = !me.keyImage; markDirty(item); renderExplorer(); if (sidePanel === 'draw') renderPanel(); toast(me.keyImage ? '★ Marked as key image — saving to the common server.' : 'Key image mark removed.', 'ok'); updateKeyButton(); }
+    function toggleKeyImage(item) { item = item || (vp() && vp().item); if (!item) { toast('Load an image first.'); return; } if (item.local) { toast('Local files opened from this device are not saved to the common server. Upload them to a study first if you want saved key images or drawings.', 'err'); return; } if (!annoCanWrite()) { toast(annoEnabled() ? 'Key images are saved for doctors and radiology only.' : 'The common server is not connected.'); return; } var me = mineFor(item); me.keyImage = !me.keyImage; markDirty(item); renderExplorer(); if (sidePanel === 'draw') renderPanel(); toast(me.keyImage ? '★ Marked as key image — saving to the common server.' : 'Key image mark removed.', 'ok'); updateKeyButton(); }
     function updateKeyButton() { var b = $('.dv-tb[data-id="key"]'); if (!b) return; var it = vp() && vp().item; b.classList.toggle('active', !!(it && mineFor(it).keyImage)); }
     function openMenu(anchor, items) {
         closeMenu(); menuEl = el('div', 'dv-menu'); menuEl.setAttribute('role', 'menu');
@@ -734,16 +742,28 @@
     function printImage() { var v = vp(); if (!v || !v.enabled) { toast('Load an image first.'); return; } var c = compositeCanvas(v); var w = window.open('', '_blank', 'width=900,height=1000'); if (!w) { toast('Allow pop-ups to print.', 'err'); return; } w.document.write('<!DOCTYPE html><html><head><title>PClinic — ' + (nameOf(patient) || 'Study image') + '</title><style>body{margin:0;background:#fff;font:12px sans-serif;color:#111}img{max-width:100%;display:block;margin:0 auto}h1{font-size:14px;margin:10px 12px}</style></head><body><h1>' + esc(nameOf(patient)) + ' · ' + esc(studyLabel(currentStudy)) + ' · ' + esc(v.item.meta.fileName || '') + '</h1><img src="' + c.toDataURL('image/png') + '"></body></html>'); w.document.close(); setTimeout(function () { w.focus(); w.print(); }, 300); }
     function copySummary() { var rep = reportFor(currentStudy); var txt = [nameOf(patient) + (patient && patient.mrn ? ' · MRN ' + patient.mrn : ''), studyLabel(currentStudy) + (currentStudy && currentStudy.orderedAt ? ' · ' + fmtDate(currentStudy.orderedAt) : ''), rep ? ('Report (' + rep.status + '): ' + (rep.impression || rep.findings || '')) : 'No signed report yet.', 'Files: ' + studyMedia(currentStudy).map(function (m) { return m.meta.fileName; }).join(', ')].join('\n'); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () { toast('Summary copied.', 'ok'); }, function () { window.prompt('Copy:', txt); }); }
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function readArrayBuffer(blob) {
+        if (!blob) return Promise.reject(new Error('No file data.'));
+        if (typeof blob.arrayBuffer === 'function') return blob.arrayBuffer();
+        return new Promise(function (resolve, reject) {
+            var reader = new FileReader();
+            reader.onload = function () { resolve(reader.result); };
+            reader.onerror = function () { reject(reader.error || new Error('Could not read the file.')); };
+            reader.readAsArrayBuffer(blob);
+        });
+    }
 
     /* ── explorer rendering ────────────────────────────────────── */
     function studyMedia(study) { return (study && mediaByStudy[study.id]) ? mediaByStudy[study.id].set : []; }
+    function isLocalStudy(study) { return !!(study && study.localOnly); }
     function renderExplorer() {
         if (!root) return; var tree = $('.dv-tree'), tags = $('.dv-tags'); root.querySelectorAll('[data-extab]').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-extab') === explorerTab); });
         tree.style.display = explorerTab === 'studies' ? '' : 'none'; tags.style.display = explorerTab === 'tags' ? '' : 'none';
         if (explorerTab === 'tags') renderTags();
         tree.replaceChildren();
-        if (!patient) { var e0 = el('div', 'dv-empty'); e0.innerHTML = '<b>No patient selected.</b><br>Search a patient above, or select one in the identification bar.'; tree.appendChild(e0); return; }
-        var pn = el('div', 'dv-node patient'); var pr = el('div', 'dv-row'); pr.appendChild(el('span', 'dv-tw', '▾')); pr.appendChild(el('span', 'dv-lbl', nameOf(patient).toUpperCase())); pr.appendChild(el('span', 'dv-meta', (patient.mrn || patient.id || '') + ' ' + [sexOf(patient), ageOf(patient.dob)].filter(Boolean).join(' '))); pn.appendChild(pr); tree.appendChild(pn);
+        var localOnly = !patient && studies.some(isLocalStudy);
+        if (!patient && !localOnly) { var e0 = el('div', 'dv-empty'); e0.innerHTML = '<b>No patient selected.</b><br>Search a patient above, or select one in the identification bar.'; tree.appendChild(e0); return; }
+        var pn = el('div', 'dv-node patient'); var pr = el('div', 'dv-row'); pr.appendChild(el('span', 'dv-tw', '▾')); pr.appendChild(el('span', 'dv-lbl', localOnly ? 'LOCAL FILES' : nameOf(patient).toUpperCase())); pr.appendChild(el('span', 'dv-meta', localOnly ? 'This device · not uploaded' : ((patient.mrn || patient.id || '') + ' ' + [sexOf(patient), ageOf(patient.dob)].filter(Boolean).join(' ')))); pn.appendChild(pr); tree.appendChild(pn);
         if (!studies.length) { var e1 = el('div', 'dv-empty'); e1.innerHTML = '<b>No imaging study for this patient yet.</b><br>Images can be attached once a clinician has placed an imaging request.'; tree.appendChild(e1); return; }
         studies.forEach(function (s) {
             var isCur = currentStudy && currentStudy.id === s.id; var sn = el('div', 'dv-node study' + (isCur ? ' active' : '')); var sr = el('div', 'dv-row'); sr.appendChild(el('span', 'dv-tw', isCur ? '▾' : '▸'));
@@ -752,7 +772,7 @@
                 var rec = mediaByStudy[s.id];
                 if (!rec || rec.loading) sn.appendChild(el('div', 'dv-empty', 'Loading files…'));
                 else if (rec.error) { var er = el('div', 'dv-empty'); er.textContent = 'Could not load images: ' + rec.error; sn.appendChild(er); }
-                else if (!rec.set.length) { var em = el('div', 'dv-empty'); em.innerHTML = '<b>No images attached to this study yet.</b>' + (openOpts.canManage ? '<br>Use <b>Upload</b> in the tool bar to attach JPEG/PNG or DICOM files.' : ''); sn.appendChild(em); }
+                else if (!rec.set.length) { var em = el('div', 'dv-empty'); em.innerHTML = '<b>No images attached to this study yet.</b>' + (openOpts.canManage ? '<br>Use <b>Upload</b> or <b>Open local</b> in the tool bar.' : '<br>You can still use <b>Open local</b> in the tool bar to inspect files from this computer, CD or USB.'); sn.appendChild(em); }
                 else {
                     var th = el('div', 'dv-thumbs');
                     rec.set.forEach(function (item) {
@@ -784,7 +804,7 @@
         var box = $('.dv-tags'); box.replaceChildren(); var q = String(($('[data-search="tags"]') || {}).value || '').trim().toLowerCase();
         var item = vp() && vp().item; var ds = dataSetOf(item);
         if (!item) { box.appendChild(el('div', 'dv-empty', 'Load an image to browse its DICOM tags.')); return; }
-        if (!ds) { var rows = [['File', item.meta.fileName], ['Type', item.kind], ['MIME', item.meta.mime], ['Size', bytesOf(item.meta.bytes)], ['Uploaded', fmtDateTime(item.meta.at)], ['By', item.meta.byName]]; box.appendChild(el('div', 'dv-empty', 'Not a DICOM file — no DICOM tags. File record:')); rows.forEach(function (r) { var t = el('div', 'dv-tag'); t.appendChild(el('span', 'dv-tk', r[0])); t.appendChild(el('span', 'dv-tv', String(r[1] || '—'))); box.appendChild(t); }); return; }
+        if (!ds) { var rows = [['File', item.meta.fileName], ['Type', item.kind], ['MIME', item.meta.mime], ['Size', bytesOf(item.meta.bytes)], [item.local ? 'Opened' : 'Uploaded', fmtDateTime(item.meta.at)], [item.local ? 'Source' : 'By', item.local ? 'Local device' : item.meta.byName]]; box.appendChild(el('div', 'dv-empty', 'Not a DICOM file — no DICOM tags. File record:')); rows.forEach(function (r) { var t = el('div', 'dv-tag'); t.appendChild(el('span', 'dv-tk', r[0])); t.appendChild(el('span', 'dv-tv', String(r[1] || '—'))); box.appendChild(t); }); return; }
         var keys = Object.keys(ds.elements).sort(); var n = 0;
         keys.forEach(function (k) {
             var e = ds.elements[k]; var tag = '(' + k.slice(1, 5).toUpperCase() + ',' + k.slice(5, 9).toUpperCase() + ')'; var name = DICT[k] || (k.slice(1, 3) === '00' && k.slice(5, 7) === '00' ? 'Group Length' : 'Private / other'); var val;
@@ -801,6 +821,7 @@
     function renderSavingSection(sec, v, item) {
         if (!annoEnabled()) { sec.appendChild(el('div', 'dv-note', 'Saving to the common server is not available on this page (pclinic-radiology-annotations.js is not loaded).')); return; }
         if (!item) { sec.appendChild(el('div', 'dv-note', 'Load an image to save drawings, a key-image mark and a note for it.')); return; }
+        if (item.local) { sec.appendChild(el('div', 'dv-note', 'This file was opened from this computer / CD / USB for viewing only. Drawings, key images and notes are not saved to the common server until the file is uploaded to a study.')); return; }
         var me = mineFor(item); var canW = annoCanWrite(); var A = annoApi();
         if (!canW) sec.appendChild(el('div', 'dv-note', A.me().uid ? 'Your role (' + (A.me().role || '?') + ') can view saved drawings but not add its own.' : 'Sign in to save drawings.'));
         var row = el('div', 'dv-toggle'); row.appendChild(el('span', null, '★ Key image')); var sw = el('button', 'dv-sw' + (me.keyImage ? ' on' : '')); sw.setAttribute('role', 'switch'); sw.setAttribute('aria-checked', me.keyImage ? 'true' : 'false'); sw.setAttribute('data-anno', 'key'); sw.disabled = !canW; sw.onclick = function () { toggleKeyImage(item); }; row.appendChild(sw); sec.appendChild(row);
@@ -846,7 +867,7 @@
             function k(a, b) { if (b == null || b === '') return; kv.appendChild(el('span', 'k', a)); kv.appendChild(el('span', 'v', String(b))); }
             k('Patient', nameOf(patient)); k('MRN / ID', patient && (patient.mrn || patient.id)); k('Sex / age', patient && [sexOf(patient), ageOf(patient.dob)].filter(Boolean).join(' · ')); k('DOB', patient && patient.dob ? fmtDate(patient.dob) : '');
             if (currentStudy) { k('Study', studyLabel(currentStudy)); k('Requested', currentStudy.orderedAt ? fmtDateTime(currentStudy.orderedAt) : ''); k('Status', currentStudy.state); k('Priority', currentStudy.priority); k('Order id', currentStudy.id); k('Files', studyMedia(currentStudy).length); }
-            if (item) { var ds2 = dataSetOf(item); k('File', item.meta.fileName); if (annoEnabled()) { var an = anno.rows.filter(function (r) { return String(r.mediaId) === String(item.id); }); k('Key image', keyImageOf(item) ? '★ yes' : 'no'); k('Saved annotations', an.length ? an.map(function (r) { return (r.byName || r.byRole || '?') + ' (' + r.measurements.length + ')'; }).join(', ') : 'none'); } k('Type', item.kind.toUpperCase()); k('MIME', item.meta.mime); k('Size', bytesOf(item.meta.bytes)); k('Uploaded', fmtDateTime(item.meta.at)); k('By', item.meta.byName); if (ds2) { k('Modality', ds2.string('x00080060')); k('Description', ds2.string('x00081030')); k('Series', ds2.string('x0008103e')); k('Body part', ds2.string('x00180015')); k('View', ds2.string('x00185101')); k('Institution', ds2.string('x00080080')); k('Manufacturer', [ds2.string('x00080070'), ds2.string('x00081090')].filter(Boolean).join(' ')); k('Acquired', ds2.string('x00080020') ? dcmDate(ds2.string('x00080020')) + ' ' + dcmTime(ds2.string('x00080030')) : ''); k('Matrix', ds2.uint16('x00280011') + ' × ' + ds2.uint16('x00280010')); k('Frames', item.frames); k('Bits', ds2.uint16('x00280101') + '/' + ds2.uint16('x00280100')); k('Pixel spacing', ds2.string('x00280030') || ds2.string('x00181164')); k('Photometric', ds2.string('x00280004')); k('Transfer syntax', ds2.string('x00020010')); k('Accession', ds2.string('x00080050')); k('Study UID', ds2.string('x0020000d')); k('SOP UID', ds2.string('x00080018')); } if (img) k('Displayed', img.columns + ' × ' + img.rows); if (item.mode) k('Link', item.signed && item.signed.mode); }
+            if (item) { var ds2 = dataSetOf(item); k('File', item.meta.fileName); if (annoEnabled()) { var an = anno.rows.filter(function (r) { return String(r.mediaId) === String(item.id); }); k('Key image', keyImageOf(item) ? '★ yes' : 'no'); k('Saved annotations', item.local ? 'not saved for local-only files' : (an.length ? an.map(function (r) { return (r.byName || r.byRole || '?') + ' (' + r.measurements.length + ')'; }).join(', ') : 'none')); } k('Type', item.kind.toUpperCase()); k('MIME', item.meta.mime); k('Size', bytesOf(item.meta.bytes)); k(item.local ? 'Opened' : 'Uploaded', fmtDateTime(item.meta.at)); k(item.local ? 'Source' : 'By', item.local ? 'Local device' : item.meta.byName); if (ds2) { k('Modality', ds2.string('x00080060')); k('Description', ds2.string('x00081030')); k('Series', ds2.string('x0008103e')); k('Body part', ds2.string('x00180015')); k('View', ds2.string('x00185101')); k('Institution', ds2.string('x00080080')); k('Manufacturer', [ds2.string('x00080070'), ds2.string('x00081090')].filter(Boolean).join(' ')); k('Acquired', ds2.string('x00080020') ? dcmDate(ds2.string('x00080020')) + ' ' + dcmTime(ds2.string('x00080030')) : ''); k('Matrix', ds2.uint16('x00280011') + ' × ' + ds2.uint16('x00280010')); k('Frames', item.frames); k('Bits', ds2.uint16('x00280101') + '/' + ds2.uint16('x00280100')); k('Pixel spacing', ds2.string('x00280030') || ds2.string('x00181164')); k('Photometric', ds2.string('x00280004')); k('Transfer syntax', ds2.string('x00020010')); k('Accession', ds2.string('x00080050')); k('Study UID', ds2.string('x0020000d')); k('SOP UID', ds2.string('x00080018')); } if (img) k('Displayed', img.columns + ' × ' + img.rows); if (item.mode) k('Link', item.signed && item.signed.mode); }
             var b2 = el('div', 'dv-btnrow'); b2.style.marginTop = '12px'; body.appendChild(b2); var bt = el('button', 'dv-chip', 'Browse all DICOM tags'); bt.onclick = function () { explorerTab = 'tags'; if (!explorerOpen) toggleExplorer(); renderExplorer(); }; b2.appendChild(bt);
         } else if (sidePanel === 'report') {
             title.textContent = 'Report'; var rep = reportFor(currentStudy); var wrap = el('div', 'dv-report'); body.appendChild(wrap);
@@ -907,9 +928,118 @@
     function showNoImagesHint(study) {
         var v = vp(); if (!v || v.item) return;
         v.hint.style.display = ''; v.hint.innerHTML = ''; v.hint.appendChild(el('b', null, 'No images attached to this study yet.'));
-        v.hint.appendChild(document.createTextNode(openOpts.canManage ? '\nUse Upload in the tool bar to attach JPEG/PNG or DICOM files to ' + studyLabel(study) + '.' : '\nRadiology has not uploaded images for ' + studyLabel(study) + ' yet.'));
+        v.hint.appendChild(document.createTextNode(openOpts.canManage ? '\nUse Upload or Open local in the tool bar to attach or inspect JPEG/PNG or DICOM files for ' + studyLabel(study) + '.' : '\nRadiology has not uploaded images for ' + studyLabel(study) + ' yet. You can still use Open local in the tool bar to inspect files from this computer, CD or USB.'));
     }
     function compareSideBySide() { var list = studyMedia(currentStudy); if (list.length < 2) { toast('Compare needs at least two images in the study.'); return; } maximised = null; applyLayout(1, 2); displayItem(list[0], viewports[0]); displayItem(list[1], viewports[1]); }
+
+    function localAccept() {
+        return '.dcm,application/dicom,image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm';
+    }
+    function localMimeOf(file) {
+        var name = String(file && file.name || '').toLowerCase();
+        var mime = String(file && file.type || '').toLowerCase();
+        if (mime) return mime;
+        if (name.slice(-4) === '.dcm') return 'application/dicom';
+        if (name.slice(-4) === '.png') return 'image/png';
+        if (name.slice(-4) === '.gif') return 'image/gif';
+        if (name.slice(-5) === '.webp') return 'image/webp';
+        if (name.slice(-4) === '.mp4') return 'video/mp4';
+        if (name.slice(-5) === '.webm') return 'video/webm';
+        if (name.slice(-4) === '.jpg' || name.slice(-5) === '.jpeg') return 'image/jpeg';
+        return '';
+    }
+    function localKindOf(file) {
+        var mime = localMimeOf(file);
+        if (mime === 'application/dicom') return 'dicom';
+        if (/^image\//.test(mime)) return 'image';
+        if (/^video\//.test(mime)) return 'video';
+        return '';
+    }
+    function removeLocalStudies() {
+        studies.filter(isLocalStudy).forEach(function (study) {
+            var rec = mediaByStudy[study.id];
+            (rec && rec.set || []).forEach(function (item) {
+                try { if (item && item.local && item.url && /^blob:/i.test(item.url)) URL.revokeObjectURL(item.url); } catch (e) {}
+            });
+            delete mediaByStudy[study.id];
+        });
+        studies = studies.filter(function (study) { return !isLocalStudy(study); });
+        if (currentStudy && isLocalStudy(currentStudy)) currentStudy = null;
+    }
+    function openLocalFiles() {
+        var input = el('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.accept = localAccept();
+        input.style.display = 'none';
+        root.appendChild(input);
+        input.onchange = function () {
+            var files = Array.prototype.slice.call(input.files || []);
+            input.remove();
+            if (!files.length) return;
+            openLocalSelection(files);
+        };
+        input.click();
+    }
+    function openLocalSelection(files) {
+        files = (files || []).filter(Boolean);
+        if (!files.length) return;
+        removeLocalStudies();
+        var studyId = '__local__' + (++localStudySeq);
+        var study = {
+            id: studyId,
+            study: 'Local DICOM / image files',
+            patientName: patient ? nameOf(patient) : 'Local files',
+            patientId: patient ? String(patient.id || patient.mrn || '') : '',
+            orderedAt: new Date().toISOString(),
+            localOnly: true,
+            state: ''
+        };
+        var set = [], problems = [];
+        files.forEach(function (file) {
+            var kind = localKindOf(file);
+            if (!kind) {
+                problems.push((file.name || 'file') + ': only DICOM (.dcm), JPEG, PNG, WebP, GIF, MP4 or WebM can be opened here.');
+                return;
+            }
+            var mime = localMimeOf(file);
+            var ext = (String(file.name || '').split('.').pop() || '').toLowerCase();
+            set.push({
+                id: 'local-med-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8),
+                meta: {
+                    fileName: String(file.name || 'local-file'),
+                    mime: mime,
+                    kind: kind,
+                    bytes: file.size || 0,
+                    at: new Date().toISOString(),
+                    byName: 'Local device',
+                    byRole: 'local',
+                    ext: ext || (kind === 'dicom' ? 'dcm' : '')
+                },
+                signed: null,
+                url: URL.createObjectURL(file),
+                problem: '',
+                local: true,
+                file: file,
+                imageIds: null,
+                frames: 1,
+                image: null,
+                kind: kind,
+                study: study
+            });
+        });
+        if (!set.length) {
+            renderExplorer();
+            toast(problems.join(' · '), 'err');
+            return;
+        }
+        studies.unshift(study);
+        mediaByStudy[study.id] = { loading: false, set: set, error: '', waiters: [] };
+        if (!patient) setStatus('patient', 'Local files');
+        selectStudy(study);
+        toast(set.length + ' local file' + (set.length === 1 ? '' : 's') + ' opened from this device. They were not uploaded to the common server.', 'ok');
+        if (problems.length) toast('⚠️ ' + problems.join(' · '), 'err');
+    }
 
     /* ── upload / remove (radiology) ───────────────────────────── */
     function doUpload() {
@@ -993,7 +1123,7 @@
         if (headerObserver) { try { headerObserver.disconnect(); } catch (e) {} headerObserver = null; }
         if (mode === 'modal') document.body.style.overflow = ''; document.body.classList.remove('pcdv-fullpage');
     }
-    var api = { open: open, mount: mount, close: close, isOpen: function () { return !!root; }, setPatient: setPatient, refreshStudies: refreshStudies, selectStudy: function (id) { var s = studies.filter(function (x) { return String(x.id) === String(id); })[0]; if (s) selectStudy(s); }, switchStudy: switchStudy, preload: function () { return ensureLibs(); }, saveNow: flushNow, toggleKeyImage: toggleKeyImage, annotations: function () { return { rows: anno.rows.slice(), dirty: Object.keys(anno.dirty), orderId: anno.orderId }; }, current: function () { return { patient: patient, study: currentStudy, item: vp() && vp().item, tool: leftTool, layout: layoutSpec.slice() }; }, _internal: { describeMeasurement: describeMeasurement, baseOrientation: baseOrientation, rotateOrientation: rotateOrientation, niceStep: niceStep, dirLabel: dirLabel } };
+    var api = { open: open, mount: mount, close: close, isOpen: function () { return !!root; }, setPatient: setPatient, refreshStudies: refreshStudies, openLocal: openLocalSelection, selectStudy: function (id) { var s = studies.filter(function (x) { return String(x.id) === String(id); })[0]; if (s) selectStudy(s); }, switchStudy: switchStudy, preload: function () { return ensureLibs(); }, saveNow: flushNow, toggleKeyImage: toggleKeyImage, annotations: function () { return { rows: anno.rows.slice(), dirty: Object.keys(anno.dirty), orderId: anno.orderId }; }, current: function () { return { patient: patient, study: currentStudy, item: vp() && vp().item, tool: leftTool, layout: layoutSpec.slice() }; }, _internal: { describeMeasurement: describeMeasurement, baseOrientation: baseOrientation, rotateOrientation: rotateOrientation, niceStep: niceStep, dirLabel: dirLabel } };
     window.PcDicomViewer = api;
     // Warm the libraries while the user is still on the dashboard, so the first click opens instantly.
     if (!window.__pcdvNoPreload) { var warm = function () { try { if ('requestIdleCallback' in window) requestIdleCallback(function () { ensureLibs().catch(function () {}); }); else setTimeout(function () { ensureLibs().catch(function () {}); }, 1500); } catch (e) {} }; if (document.readyState === 'complete') warm(); else window.addEventListener('load', warm); }
