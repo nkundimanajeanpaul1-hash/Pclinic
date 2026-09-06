@@ -1125,7 +1125,7 @@
                 '<td>' + prioBadge(group.priority) + '</td>' +
                 '<td>' + statusBadge(group.status) + '</td>' +
                 '<td style="text-align:right;white-space:nowrap;">' +
-                    '<button class="btn-select-lab" onclick="event.stopPropagation(); pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')">📋 ' + (group.orders || []).length + ' request' + ((group.orders || []).length === 1 ? '' : 's') + '</button>' +
+                    '<button class="btn-select-lab btn-lab-result-entry" onclick="event.stopPropagation(); pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')">🧪 Lab Result Entry • ' + (group.orders || []).length + ' request' + ((group.orders || []).length === 1 ? '' : 's') + '</button>' +
                     '<button onclick="event.stopPropagation(); pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')" style="height:30px;padding:0 14px;border-radius:999px;border:1px solid rgba(0,0,0,0.12);background:#fff;color:#1c1c1e;font-weight:700;font-size:12px;cursor:pointer;margin-left:6px;">' +
                         '<span id="chev_' + esc(group.key) + '" style="display:inline-block;transition:transform 0.28s;' + chevronStyle + '">▶</span></button>' +
                 '</td>' +
