@@ -481,6 +481,144 @@
     });
   }
 
+  var cpnPreviewRecordId = null;
+
+  function fmtDateTime(value) {
+    var t = ms(value);
+    if (!t) return '—';
+    return new Date(t).toLocaleString('en-GB');
+  }
+
+  function cpnFieldValue(id) {
+    var el = document.getElementById(id);
+    return el ? String(el.value || '').trim() : '';
+  }
+
+  function cpnStatusMeta(status) {
+    status = normalize(status || 'stable');
+    var map = {
+      stable: { cls: 'b-stable', label: 'Stable' },
+      improving: { cls: 'b-info', label: 'Improving' },
+      warning: { cls: 'b-warn', label: 'Warning' },
+      critical: { cls: 'b-critical', label: 'Critical' },
+      discharged: { cls: 'b-green', label: 'Discharged' },
+      transferred: { cls: 'b-pink', label: 'Transferred' }
+    };
+    return map[status] || { cls: 'b-info', label: status || 'Stable' };
+  }
+
+  function cpnDraft(patient) {
+    return {
+      id: 'draft',
+      timestamp: cpnFieldValue('cpnDateTime') || nowIso(),
+      nurse: cpnFieldValue('cpnNurse') || currentStaffName(),
+      location: cpnFieldValue('cpnLocation') || displayLocation(patient),
+      status: cpnFieldValue('cpnStatus') || 'stable',
+      subjective: cpnFieldValue('cpnSubjective'),
+      objective: cpnFieldValue('cpnObjective'),
+      assessment: cpnFieldValue('cpnAssessment'),
+      plan: cpnFieldValue('cpnPlan'),
+      education: cpnFieldValue('cpnEducation'),
+      referrals: cpnFieldValue('cpnReferrals')
+    };
+  }
+
+  function previewCpnHistory(recordId) {
+    cpnPreviewRecordId = recordId || null;
+    renderCpnDocPreview(getCurrentPatient());
+    var rows = document.querySelectorAll('#cpnHistoryList .pcf-hrow');
+    rows.forEach(function (row) {
+      if (String(row.getAttribute('data-cpn-id') || '') === String(recordId || '')) row.classList.add('is-selected');
+      else row.classList.remove('is-selected');
+    });
+  }
+
+  function renderCpnDocPreview(patient) {
+    var box = document.getElementById('cpnDocPreview');
+    if (!box) return;
+    patient = patient || getCurrentPatient();
+    if (!patient) {
+      box.innerHTML = '<div class="pcf-empty"><i class="ti ti-notes"></i>Select a patient to start or review a Clinical Progress Note.</div>';
+      return;
+    }
+    var history = Array.isArray(patient.cpnHistory) ? patient.cpnHistory.slice() : [];
+    var record = null;
+    if (cpnPreviewRecordId) {
+      record = history.find(function (item) { return String(item && item.id) === String(cpnPreviewRecordId); }) || null;
+    }
+    if (!record) record = cpnDraft(patient);
+    var meta = cpnStatusMeta(record.status);
+    var title = cpnPreviewRecordId ? 'Saved Clinical Progress Note' : 'Clinical Progress Note Preview';
+    function sec(titleText, value) {
+      return '<div class="sec"><h4>' + esc(titleText) + '</h4><p>' + (value ? esc(value) : '<span class="none">Not recorded</span>') + '</p></div>';
+    }
+    box.innerHTML = '' +
+      '<div class="dh">' +
+        '<div><div class="org">PCLINIC / CHUK</div><div class="sub">Nursing service · Clinical documentation preview</div></div>' +
+        '<div class="meta"><b>' + esc(title) + '</b><br>' + esc(fmtDateTime(record.timestamp)) + '</div>' +
+      '</div>' +
+      '<div class="dtitle">Clinical Progress Note</div>' +
+      '<div class="pinfo">' +
+        '<div><span>Patient</span> ' + esc(displayName(patient)) + '</div>' +
+        '<div><span>MRN</span> ' + esc(displayMrn(patient)) + '</div>' +
+        '<div><span>Nurse</span> ' + esc(record.nurse || currentStaffName()) + '</div>' +
+        '<div><span>Location</span> ' + esc(record.location || displayLocation(patient)) + '</div>' +
+        '<div><span>Status</span> <span class="badge ' + meta.cls + '">' + esc(meta.label) + '</span></div>' +
+        '<div><span>Date</span> ' + esc(fmtDateTime(record.timestamp)) + '</div>' +
+      '</div>' +
+      sec('Subjective', record.subjective) +
+      sec('Objective', record.objective) +
+      sec('Assessment', record.assessment) +
+      sec('Plan', record.plan) +
+      sec('Patient education', record.education) +
+      sec('Additional notes / referrals', record.referrals);
+  }
+
+  function updateCPNCount(patient) {
+    var countEl = document.getElementById('cpnCount');
+    if (!countEl) return;
+    var total = patient && Array.isArray(patient.cpnHistory) ? patient.cpnHistory.length : 0;
+    countEl.textContent = String(total);
+  }
+
+  function renderCPNHistory(patient) {
+    var box = document.getElementById('cpnHistoryList');
+    if (!box) return;
+    patient = patient || getCurrentPatient();
+    var history = patient && Array.isArray(patient.cpnHistory) ? patient.cpnHistory.slice().sort(function (a, b) {
+      return ms(b && b.timestamp) - ms(a && a.timestamp);
+    }) : [];
+    updateCPNCount(patient);
+    if (!history.length) {
+      cpnPreviewRecordId = null;
+      box.innerHTML = '<p class="pcf-empty"><i class="ti ti-notes"></i>No CPN records yet. Create one above.</p>';
+      renderCpnDocPreview(patient);
+      return;
+    }
+    box.innerHTML = history.map(function (cpn) {
+      var dt = new Date(ms(cpn.timestamp) || Date.now());
+      var meta = cpnStatusMeta(cpn.status);
+      var summary = cpn.assessment || cpn.objective || cpn.subjective || cpn.plan || 'Clinical progress note';
+      return '<button type="button" class="pcf-hrow" data-cpn-id="' + esc(cpn.id) + '" onclick="previewCPNHistory(\'' + String(cpn.id).replace(/'/g, "\\'") + '\')" style="text-align:left;border:none;width:100%;cursor:pointer;">' +
+        '<div class="date"><div class="d">' + esc(String(dt.getDate()).padStart(2, '0')) + '</div><div class="m">' + esc(dt.toLocaleString('en-US', { month: 'short' })) + '</div></div>' +
+        '<div class="meat"><b>' + esc(meta.label) + ' · ' + esc(displayName(patient)) + '</b><span>' + esc(summary.slice(0, 180)) + (summary.length > 180 ? '…' : '') + '</span></div>' +
+        '<div class="by">' + esc(cpn.nurse || currentStaffName()) + '<br>' + esc(fmtDateTime(cpn.timestamp)) + '</div>' +
+      '</button>';
+    }).join('');
+    if (cpnPreviewRecordId) previewCpnHistory(cpnPreviewRecordId);
+    else renderCpnDocPreview(patient);
+  }
+
+  function wireCpnPreviewEvents() {
+    ['cpnDateTime', 'cpnNurse', 'cpnLocation', 'cpnStatus', 'cpnSubjective', 'cpnObjective', 'cpnAssessment', 'cpnPlan', 'cpnEducation', 'cpnReferrals'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el || el.dataset.cpnPreviewBound) return;
+      el.dataset.cpnPreviewBound = '1';
+      el.addEventListener('input', function () { cpnPreviewRecordId = null; renderCpnDocPreview(getCurrentPatient()); });
+      el.addEventListener('change', function () { cpnPreviewRecordId = null; renderCpnDocPreview(getCurrentPatient()); });
+    });
+  }
+
   function refreshCurrentPatientFromStore() {
     var p = getCurrentPatient();
     if (!p || p.id == null) return null;
@@ -497,6 +635,8 @@
     if (!patient) {
       syncSharedPatientBar(null);
       renderTriagePanel(null);
+      renderCPNHistory(null);
+      renderCpnDocPreview(null);
       if (typeof window.renderLabResults === 'function') window.renderLabResults();
       if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
       if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
@@ -505,6 +645,8 @@
     syncSharedPatientBar(patient);
     if (typeof window.fillForms === 'function') window.fillForms(patient);
     renderTriagePanel(patient);
+    renderCPNHistory(patient);
+    renderCpnDocPreview(patient);
     if (typeof window.renderCarePlanHistory === 'function') window.renderCarePlanHistory();
     if (typeof window.renderDeliveriesHistory === 'function') window.renderDeliveriesHistory();
     if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
@@ -989,11 +1131,13 @@
     safeToast('✅ CPN saved successfully for ' + displayName(saved), 'success');
   }
   function clearCPN() {
+    cpnPreviewRecordId = null;
     ['cpnSubjective', 'cpnObjective', 'cpnAssessment', 'cpnPlan', 'cpnEducation', 'cpnReferrals'].forEach(function (id) {
       var el = document.getElementById(id); if (el) el.value = '';
     });
     var status = document.getElementById('cpnStatus'); if (status) status.value = 'stable';
     fillForms(getCurrentPatient());
+    renderCpnDocPreview(getCurrentPatient());
   }
 
   function selectFp(el, method) {
@@ -1479,6 +1623,10 @@
     window.handleSmartSearch = handleSmartSearch;
     window.lookupPatient = lookupPatient;
     window.fillForms = fillForms;
+    window.renderCPNHistory = renderCPNHistory;
+    window.updateCPNCount = updateCPNCount;
+    window.renderCpnDocPreview = renderCpnDocPreview;
+    window.previewCPNHistory = previewCpnHistory;
     window.selectPatient = selectPatient;
     window.addBillRow = addBillRow;
     window.calcBill = calcBill;
@@ -1557,6 +1705,7 @@
     hideLegacyPatientCard();
     installSelectedPatientFields();
     setPatientFieldValues(getCurrentPatient());
+    wireCpnPreviewEvents();
     ensureBillRows();
     var billDate = document.getElementById('billDate'); if (billDate && !billDate.value) billDate.value = todayIso();
     var fpDate = document.getElementById('fpDate'); if (fpDate && !fpDate.value) fpDate.value = todayIso();

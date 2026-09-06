@@ -23,6 +23,7 @@
 
     <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
     <link rel="stylesheet" href="pclinic-apple.css">
+    <link rel="stylesheet" href="pclinic-file.css">
 <style>
         /* ============================================================
            NURSE DASHBOARD — Complete Apple-Style
@@ -1146,7 +1147,7 @@
         }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
-    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260906_DOCTORSKIN">
+    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260906_DOCTORSKIN_CPNFILE">
 </head>
 <body>
 
@@ -1426,68 +1427,103 @@
             <!-- ─── PANEL: CPN ─── -->
             <div id="panel-cpn" class="main-panel" style="display:none;">
                 <div class="panel-body show" id="sub-cpn-ante">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-                        <span style="font-size:14px;font-weight:600;">CPN — Clinical Progress Notes</span>
-                        <button class="btn-print" onclick="printPatientFile()"><i class="ti ti-printer"></i>Print</button>
-                    </div>
-                    
-                    <div class="fg" style="margin-bottom:12px;">
-                        <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="cpnPatient" placeholder="Search or select a patient..."/></div>
-                        <div class="fgl"><div class="lbl">Date and time</div><input class="fi" type="datetime-local" id="cpnDateTime"/></div>
-                        <div class="fgl"><div class="lbl">Nurse / Provider</div><input class="fi" id="cpnNurse" value="Nurse Achieng"/></div>
-                        <div class="fgl"><div class="lbl">Ward / Location</div><input class="fi" id="cpnLocation" placeholder="Ward 4B, Bed 02"/></div>
-                    </div>
+                    <div class="pcf-bill-layout cpn-file-shell">
+                        <div id="cpnViewFile" style="display:flex;flex:1;min-height:0;flex-direction:column;gap:9px;">
+                            <div class="pcf-panel cpn-file-main">
+                                <div class="cpn-file-head">
+                                    <h2><i class="ti ti-notes" style="color:#0b57d0;"></i> Clinical Progress Note</h2>
+                                    <span class="badge cpn-active-badge">Active Record</span>
+                                </div>
+                                <div class="pcf-cmd noprint cpn-file-cmd">
+                                    <button class="pcf-btn sm" type="button" onclick="document.getElementById('cpnHistoryList')?.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-history"></i> History</button>
+                                    <b class="mode">Nurse CPN</b>
+                                    <span class="spacer"></span>
+                                    <button class="pcf-btn sm" onclick="printPatientFile()"><i class="ti ti-printer"></i> Print</button>
+                                    <button class="pcf-btn sm primary" onclick="saveCPN()"><i class="ti ti-device-floppy"></i> Save</button>
+                                </div>
+                                <div class="pcf-grid wide" id="cpnFileGrid">
+                                    <div class="pcf-pane noprint" id="cpnWorkPane">
+                                        <div class="pcf-panel">
+                                            <h2><i class="ti ti-user-heart"></i> Visit context</h2>
+                                            <div class="pcf-two">
+                                                <div>
+                                                    <label class="pcf-lbl">Selected patient</label>
+                                                    <input class="pcf-in fi" id="cpnPatient" placeholder="Select or search a patient first" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Date and time</label>
+                                                    <input class="pcf-in fi" type="datetime-local" id="cpnDateTime" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Nurse / Provider</label>
+                                                    <input class="pcf-in fi" id="cpnNurse" value="Nurse Achieng" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Ward / Location</label>
+                                                    <input class="pcf-in fi" id="cpnLocation" placeholder="Ward 4B, Bed 02" />
+                                                </div>
+                                            </div>
+                                        </div>
 
-                    <div class="section-title"><i class="ti ti-notes"></i> Clinical Progress Notes (SOAP)</div>
-                    <div class="fg">
-                        <div class="fgl ff">
-                            <div class="lbl">Subjective (Patient's complaints / history) *</div>
-                            <textarea class="ta" id="cpnSubjective" rows="3" placeholder="What the patient reports today..."></textarea>
-                        </div>
-                        <div class="fgl ff">
-                            <div class="lbl">Objective (Clinical findings, observations, vitals) *</div>
-                            <textarea class="ta" id="cpnObjective" rows="3" placeholder="Vitals, physical exam findings, wound status..."></textarea>
-                        </div>
-                        <div class="fgl ff">
-                            <div class="lbl">Assessment (Nursing/Clinical diagnosis, impression) *</div>
-                            <textarea class="ta" id="cpnAssessment" rows="3" placeholder="Clinical judgment, differentials, progress..."></textarea>
-                        </div>
-                        <div class="fgl ff">
-                            <div class="lbl">Plan (Interventions, treatments, next steps) *</div>
-                            <textarea class="ta" id="cpnPlan" rows="3" placeholder="Treatment plan, medications, referrals, follow-up..."></textarea>
-                        </div>
-                        <div class="fgl">
-                            <div class="lbl">Patient Status</div>
-                            <select class="fi" id="cpnStatus">
-                                <option value="stable">🟢 Stable</option>
-                                <option value="improving">🟡 Improving</option>
-                                <option value="warning">🟠 Warning - Monitor closely</option>
-                                <option value="critical">🔴 Critical - Urgent review</option>
-                                <option value="discharged">✅ Discharged</option>
-                                <option value="transferred">📤 Transferred</option>
-                            </select>
-                        </div>
-                        <div class="fgl">
-                            <div class="lbl">Patient Education Given</div>
-                            <input class="fi" id="cpnEducation" placeholder="Topics covered, understanding demonstrated..."/>
-                        </div>
-                        <div class="fgl ff">
-                            <div class="lbl">Additional Notes / Referrals</div>
-                            <textarea class="ta" id="cpnReferrals" rows="2" placeholder="Referrals made, follow-up plan, multidisciplinary notes..."></textarea>
-                        </div>
-                    </div>
-                    <div class="fa">
-                        <button class="btn-p" onclick="saveCPN()"><i class="ti ti-check"></i> Save CPN</button>
-                        <button class="btn-s" onclick="clearCPN()"><i class="ti ti-x"></i> Clear</button>
-                    </div>
+                                        <div class="pcf-panel">
+                                            <h2><i class="ti ti-stethoscope"></i> Clinical Progress Note</h2>
+                                            <label class="pcf-lbl">Subjective (Patient complaint / history) *</label>
+                                            <textarea class="pcf-in ta" id="cpnSubjective" rows="4" placeholder="What the patient reports today..."></textarea>
 
-                    <div style="margin-top:20px; border-top:0.5px solid var(--bd); padding-top:14px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <span style="font-size:13px; font-weight:600;"><i class="ti ti-history"></i> CPN History</span>
-                            <span class="badge b-info" id="cpnCount">0 notes</span>
+                                            <label class="pcf-lbl">Objective (Findings / saved vitals / observations) *</label>
+                                            <textarea class="pcf-in ta" id="cpnObjective" rows="4" placeholder="Clinical findings, examination, wound status, and reference to saved vitals..."></textarea>
+
+                                            <label class="pcf-lbl">Assessment (Nursing / clinical impression) *</label>
+                                            <textarea class="pcf-in ta" id="cpnAssessment" rows="4" placeholder="Clinical judgment, response, impression, problems identified..."></textarea>
+
+                                            <label class="pcf-lbl">Plan (Interventions / treatment / follow-up) *</label>
+                                            <textarea class="pcf-in ta" id="cpnPlan" rows="4" placeholder="Treatment plan, medications, escalation, referrals, review plan..."></textarea>
+
+                                            <div class="pcf-two">
+                                                <div>
+                                                    <label class="pcf-lbl">Patient status</label>
+                                                    <select class="pcf-in fi" id="cpnStatus">
+                                                        <option value="stable">🟢 Stable</option>
+                                                        <option value="improving">🟡 Improving</option>
+                                                        <option value="warning">🟠 Warning - Monitor closely</option>
+                                                        <option value="critical">🔴 Critical - Urgent review</option>
+                                                        <option value="discharged">✅ Discharged</option>
+                                                        <option value="transferred">📤 Transferred</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Patient education given</label>
+                                                    <input class="pcf-in fi" id="cpnEducation" placeholder="Topics covered, understanding demonstrated..." />
+                                                </div>
+                                            </div>
+
+                                            <label class="pcf-lbl">Additional notes / referrals</label>
+                                            <textarea class="pcf-in ta" id="cpnReferrals" rows="3" placeholder="Referrals made, follow-up plan, multidisciplinary notes..."></textarea>
+
+                                            <div class="fa">
+                                                <button class="pcf-btn primary" onclick="saveCPN()"><i class="ti ti-check"></i> Save CPN</button>
+                                                <button class="pcf-btn" onclick="clearCPN()"><i class="ti ti-eraser"></i> Clear</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="pcf-pane">
+                                        <div class="pcf-doc" id="cpnDocPreview"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div id="cpnHistoryList">
-                            <p class="cpn-empty">📋 No CPN records yet. Create one above.</p>
+
+                        <div id="cpnViewHistory" style="display:block;">
+                            <div class="pcf-panel cpn-file-history-panel">
+                                <div class="cpn-file-head">
+                                    <h2><i class="ti ti-history" style="color:#0b57d0;"></i> Previous clinical notes <span class="count" id="cpnCount">0</span></h2>
+                                    <button type="button" class="pcf-btn sm" onclick="clearCPN()"><i class="ti ti-plus"></i> New for Today</button>
+                                </div>
+                                <div class="pcf-hist" id="cpnHistoryList" style="max-height:600px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+                                    <p class="pcf-empty"><i class="ti ti-notes"></i>No CPN records yet. Create one above.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3582,7 +3618,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260906_NURSEFIX_TRIAGEPROMPT" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260906_NURSEFIX_CPNFILE" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {

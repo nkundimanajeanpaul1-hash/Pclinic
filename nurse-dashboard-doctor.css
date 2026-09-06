@@ -549,6 +549,86 @@ input.fi:focus {
   box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
 }
 
+/* CPN file-style layout */
+.cpn-file-shell {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+.cpn-file-main,
+.cpn-file-history-panel {
+  background: var(--glass-bg, rgba(255, 255, 255, 0.82)) !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  padding: 20px 24px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important;
+}
+.cpn-file-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+  padding-bottom:10px;
+  border-bottom:1px solid #e5e7eb;
+  flex-wrap:wrap;
+}
+.cpn-file-head h2 {
+  font-size:15px !important;
+  font-weight:800 !important;
+  color:#1d1d1f !important;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  letter-spacing:-0.01em;
+}
+.cpn-active-badge {
+  background:#e8f0fe !important;
+  color:#0b57d0 !important;
+  font-size:11px !important;
+  font-weight:700 !important;
+  padding:4px 10px !important;
+  border-radius:20px !important;
+}
+.cpn-file-cmd {
+  margin-bottom: 10px;
+}
+#cpnWorkPane .pcf-panel {
+  margin-bottom: 10px;
+}
+#cpnDocPreview .pinfo {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px 18px;
+}
+#cpnDocPreview .pinfo span {
+  color:#666;
+  display:inline-block;
+  min-width:82px;
+}
+#cpnDocPreview .sec .none {
+  color:#9ca3af;
+  font-style:italic;
+}
+#cpnHistoryList .pcf-hrow.is-selected {
+  background: rgba(0,113,227,0.08) !important;
+  border-color: rgba(0,113,227,0.20) !important;
+  box-shadow: 0 4px 12px rgba(0,113,227,0.10) !important;
+}
+[data-theme="dark"] .cpn-file-head {
+  border-bottom-color: rgba(255,255,255,0.10);
+}
+[data-theme="dark"] .cpn-file-head h2 {
+  color: var(--tp) !important;
+}
+[data-theme="dark"] .cpn-active-badge {
+  background: rgba(96,165,250,0.18) !important;
+  color: #93c5fd !important;
+}
+
 /* Triage workflow */
 .triage-workflow-card {
   background: rgba(255,255,255,0.55);
