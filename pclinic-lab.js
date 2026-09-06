@@ -682,12 +682,20 @@
             'rep_doc_name': '—',
             'rep_acc_no': 'ACC: —',
             'rep_barcode_box': '',
-            'rep_matrix_chips': ''
+            'rep_matrix_chips': '',
+            'rep_tat_text': 'TAT will appear after a verified report is selected.'
         };
         Object.keys(map).forEach(function(id) {
             var el = document.getElementById(id);
             if (el) el.innerHTML = map[id];
         });
+        var badge = document.getElementById('rep_status_badge');
+        if (badge) {
+            badge.textContent = 'Awaiting verified report';
+            badge.style.background = '#f8fafc';
+            badge.style.color = '#475569';
+            badge.style.border = '1px solid #d9e1ea';
+        }
     }
 
     function resetMicrobioPanel() {
@@ -2358,6 +2366,29 @@
         if (accEl)  accEl.textContent  = 'ACC: ' + accNo;
         if (barBox) barBox.innerHTML   = generateSVGBarcode(accNo);
 
+        var completedOrders = g.orders.filter(function(order) { return String(order.status || '').toLowerCase() === 'completed'; });
+        var latestCompleted = completedOrders.sort(function(a, b) {
+            return new Date(b.completedAt || b.updatedAt || b.orderedAt || 0) - new Date(a.completedAt || a.updatedAt || a.orderedAt || 0);
+        })[0] || null;
+        var tatEl = document.getElementById('rep_tat_text');
+        var badgeEl = document.getElementById('rep_status_badge');
+        if (tatEl) {
+            var completedAt = latestCompleted && (latestCompleted.completedAt || latestCompleted.updatedAt || latestCompleted.orderedAt);
+            var startedAt = latestCompleted && (latestCompleted.accessionedAt || latestCompleted.orderedAt || latestCompleted.createdAt);
+            var tatText = 'Verified on the common server';
+            if (completedAt && startedAt) {
+                var mins = Math.max(1, Math.round((new Date(completedAt) - new Date(startedAt)) / 60000));
+                tatText = 'TAT: ' + mins + ' min • Server-confirmed result release';
+            }
+            tatEl.textContent = tatText;
+        }
+        if (badgeEl) {
+            badgeEl.textContent = latestCompleted ? 'Verified on common server' : 'Awaiting verified report';
+            badgeEl.style.background = latestCompleted ? '#eef2f7' : '#f8fafc';
+            badgeEl.style.color = latestCompleted ? '#111827' : '#475569';
+            badgeEl.style.border = '1px solid ' + (latestCompleted ? '#d8e0ea' : '#d9e1ea');
+        }
+
         if (chipsBox) {
             var allResults = [];
             g.orders.forEach(function(o) {
@@ -2370,13 +2401,19 @@
                 }
             });
             chipsBox.innerHTML = allResults.map(function(r) {
-                var isAbnormal = r.flag !== 'Normal';
-                var chipBg = isAbnormal ? '#ffebe9' : '#e9f9ee';
-                var chipColor = isAbnormal ? '#8a1f1a' : '#1a7a32';
-                var icon = isAbnormal ? '⚠️' : '✓';
-                return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:' + chipBg + ';border-radius:10px;border:0.5px solid rgba(0,0,0,0.1);font-size:12.5px;font-weight:700;color:#1c1c1e;">' +
-                       '<span style="color:' + chipColor + ';font-size:14px;">' + icon + '</span> <span>' + esc(r.test) + '</span>' +
-                       '<span style="margin-left:auto;font-size:11px;font-weight:800;color:' + chipColor + ';">' + esc(r.value || 'Normal') + ' (' + esc(r.flag || 'Normal') + ')</span>' +
+                var flag = String(r.flag || 'Pending');
+                var tone = 'normal';
+                if (/critical/i.test(flag)) tone = 'critical';
+                else if (/high/i.test(flag)) tone = 'high';
+                else if (/low/i.test(flag)) tone = 'low';
+                else if (/pending/i.test(flag)) tone = 'pending';
+                return '<div class="report-summary-item">' +
+                       '<span class="report-summary-dot ' + tone + '"></span>' +
+                       '<div class="report-summary-main">' +
+                           '<div class="report-summary-test">' + esc(r.test || 'Laboratory result') + '</div>' +
+                           '<div class="report-summary-meta">' + esc(flag || 'Pending') + '</div>' +
+                       '</div>' +
+                       '<div class="report-summary-value ' + tone + '">' + esc(r.value || 'Pending') + '</div>' +
                        '</div>';
             }).join('');
         }
@@ -2446,17 +2483,16 @@
             var itemsStr = groupTestNames(g).join(', ');
             var accNo = displayAccessionNo(g);
             return '<tr>' +
-                   '<td style="font-weight:700;color:var(--ac,#007080)">' + esc(accNo) + '</td>' +
+                   '<td style="font-weight:700;color:#334155">' + esc(accNo) + '</td>' +
                    '<td><div style="font-weight:700;color:#1d1d1f;font-size:13.5px;">' + esc(g.patientName) + '</div>' +
                        '<div style="font-size:11px;color:#8e8e93;">MRN MOD-' + esc(g.patientId) + ' • ' + esc(formatLabDate(g.dateStr)) + '</div></td>' +
                    '<td style="font-weight:600;">' + esc(itemsStr || 'Lab Panel') + '</td>' +
                    '<td><span style="font-size:11.5px;color:#3a3a3c;font-weight:600;">Multidisciplinary</span></td>' +
-                   '<td style="font-size:11.5px;color:#1a7a32;font-weight:700;">' + ago(g.orderedAt) + '</td>' +
-                   '<td><span class="badge" style="background:#e9f9ee;color:#1a7a32;">✓ Normal / Validated</span></td>' +
+                   '<td style="font-size:11.5px;color:#475569;font-weight:700;">' + ago(g.orderedAt) + '</td>' +
+                   '<td><span class="report-archive-state">Validated</span></td>' +
                    '<td>' + statusBadge(g.status) + '</td>' +
                    '<td style="text-align:right;">' +
-                       '<button style="height:30px;padding:0 14px;border-radius:9px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#1c1c1e;font-weight:700;cursor:pointer;" ' +
-                       'onclick="pcLabEngine.printReportModal(\'' + esc(g.orders[0].id) + '\')">🖨️ Official MOD Report</button>' +
+                       '<button class="report-archive-btn" onclick="pcLabEngine.printReportModal(\'' + esc(g.orders[0].id) + '\')">Open report</button>' +
                    '</td>' +
                    '</tr>';
         }).join('');

@@ -3730,6 +3730,368 @@
             }
         }
 
+
+
+        /* ─── PROFESSIONAL REPORTS PANEL REDESIGN ─── */
+        #panel-reports .reports-topbar,
+        #panel-reports .reports-stat-card,
+        #panel-reports .reports-card,
+        #panel-reports .reports-footer,
+        #panel-reports .reports-archive {
+            background: #ffffff;
+            border: 1px solid #e7ecf2;
+            border-radius: 18px;
+            box-shadow: 0 1px 3px rgba(15,23,42,.03), 0 10px 24px rgba(15,23,42,.04);
+        }
+        #panel-reports .reports-topbar {
+            padding: 18px 22px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        #panel-reports .reports-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #111827;
+            letter-spacing: -.02em;
+        }
+        #panel-reports .reports-subtitle {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        #panel-reports .reports-queue-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        #panel-reports .reports-queue-label {
+            font-size: 11.5px;
+            font-weight: 800;
+            color: #374151;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+        #panel-reports .reports-queue-select {
+            min-width: 420px;
+            max-width: 100%;
+            height: 44px;
+            padding: 0 16px;
+            border-radius: 14px;
+            border: 1px solid #d6dde7;
+            background: #f8fafc;
+            color: #111827;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+        }
+        #panel-reports .reports-queue-select:focus {
+            outline: none;
+            border-color: #b9c7da;
+            box-shadow: 0 0 0 3px rgba(15,23,42,.05);
+            background: #ffffff;
+        }
+        #panel-reports #repAwaitingReleaseBadge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #f8fafc;
+            color: #475569;
+            border: 1px solid #d9e1ea;
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        #panel-reports .reports-stats {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        #panel-reports .reports-stat-card {
+            padding: 14px 16px;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            justify-content: center;
+        }
+        #panel-reports .reports-stat-label {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            color: #6b7280;
+        }
+        #panel-reports .reports-stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #111827;
+            letter-spacing: -.03em;
+            line-height: 1;
+        }
+        #panel-reports .reports-stat-sub {
+            font-size: 11.5px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        #panel-reports .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        #panel-reports .reports-card {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 100%;
+        }
+        #panel-reports .reports-card-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #edf1f6;
+            font-size: 13px;
+            font-weight: 800;
+            color: #111827;
+            letter-spacing: .02em;
+        }
+        #panel-reports .reports-card-kicker {
+            min-width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f3f6fa;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        #panel-reports .reports-meta-label {
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        #panel-reports .reports-patient-name {
+            font-size: 15px;
+            font-weight: 800;
+            color: #111827;
+        }
+        #panel-reports .reports-patient-meta,
+        #panel-reports .reports-doc-name,
+        #panel-reports .reports-accno,
+        #panel-reports .reports-verified-by,
+        #panel-reports .reports-tat {
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            margin-top: 2px;
+        }
+        #panel-reports #rep_barcode_box {
+            margin-top: 6px;
+            padding: 8px 10px;
+            border: 1px dashed #d7dee8;
+            border-radius: 12px;
+            background: #fbfcfe;
+            display: inline-block;
+        }
+        #panel-reports #rep_status_badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: #f8fafc;
+            color: #475569;
+            border: 1px solid #d9e1ea;
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        #panel-reports .reports-summary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        #panel-reports .report-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #fbfcfe;
+            border: 1px solid #e7ecf2;
+            border-radius: 12px;
+        }
+        #panel-reports .report-summary-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #94a3b8;
+            flex-shrink: 0;
+        }
+        #panel-reports .report-summary-dot.normal { background: #94a3b8; }
+        #panel-reports .report-summary-dot.high,
+        #panel-reports .report-summary-dot.critical { background: #b45309; }
+        #panel-reports .report-summary-dot.low { background: #475569; }
+        #panel-reports .report-summary-dot.pending { background: #cbd5e1; }
+        #panel-reports .report-summary-main {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        #panel-reports .report-summary-test {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #17212f;
+            line-height: 1.3;
+        }
+        #panel-reports .report-summary-meta {
+            font-size: 10.5px;
+            color: #64748b;
+            font-weight: 600;
+        }
+        #panel-reports .report-summary-value {
+            margin-left: auto;
+            font-size: 11px;
+            font-weight: 800;
+            color: #111827;
+            text-align: right;
+            white-space: nowrap;
+        }
+        #panel-reports .report-summary-value.normal { color: #111827; }
+        #panel-reports .report-summary-value.high,
+        #panel-reports .report-summary-value.critical { color: #92400e; }
+        #panel-reports .report-summary-value.low { color: #334155; }
+        #panel-reports .report-summary-value.pending { color: #94a3b8; }
+        #panel-reports .reports-footer {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        #panel-reports .reports-footer-note {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.45;
+        }
+        #panel-reports .reports-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        #panel-reports .reports-btn {
+            height: 40px;
+            padding: 0 18px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all .16s ease;
+        }
+        #panel-reports .reports-btn-primary {
+            border: 0;
+            background: #1f2937;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(15,23,42,.14);
+        }
+        #panel-reports .reports-btn-primary:hover {
+            background: #111827;
+            transform: translateY(-1px);
+        }
+        #panel-reports .reports-btn-secondary {
+            border: 1px solid #d6dde7;
+            background: #ffffff;
+            color: #1f2937;
+        }
+        #panel-reports .reports-btn-secondary:hover {
+            background: #f8fafc;
+        }
+        #panel-reports .reports-archive {
+            padding: 16px 18px 10px;
+        }
+        #panel-reports .reports-archive-head {
+            font-size: 13px;
+            font-weight: 800;
+            color: #111827;
+            letter-spacing: .02em;
+            margin-bottom: 12px;
+        }
+        #panel-reports .report-archive-btn {
+            height: 32px;
+            padding: 0 14px;
+            border-radius: 9px;
+            border: 1px solid #d6dde7;
+            background: #ffffff;
+            color: #1f2937;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        #panel-reports .report-archive-btn:hover {
+            background: #f8fafc;
+        }
+        #panel-reports .report-archive-state {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #f3f5f8;
+            color: #475569;
+            border: 1px solid #e1e7ef;
+            font-size: 10.5px;
+            font-weight: 800;
+        }
+        @media (max-width: 1180px) {
+            #panel-reports .reports-grid,
+            #panel-reports .reports-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        @media (max-width: 860px) {
+            #panel-reports .reports-topbar {
+                padding: 16px 18px;
+            }
+            #panel-reports .reports-queue-wrap {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            #panel-reports .reports-queue-select {
+                min-width: 0;
+                width: 100%;
+            }
+            #panel-reports .reports-grid,
+            #panel-reports .reports-stats {
+                grid-template-columns: 1fr;
+            }
+            #panel-reports .reports-actions {
+                width: 100%;
+            }
+        }
+
 </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
 </head>
@@ -4374,144 +4736,128 @@
             </div>
         </div>
 
-        <!-- ─── PANEL: REPORTS ─── -->
+        <!-- ─── PANEL: REPORTS (PROFESSIONAL MINIMAL REPORTING) ─── -->
         <div id="panel-reports" class="main-panel" style="display:none;">
             <div class="panel-body show" id="sub-reports-queue">
-                <div class="panel-header">
-                    <span class="panel-title">Laboratory reports — release and print</span>
-                    <div class="panel-actions">
-                        <span id="repAwaitingReleaseBadge" style="font-size:11px;background:var(--redb);color:var(--redd);padding:2px 8px;border-radius:10px;font-weight:600;">0 awaiting release</span>
-                    </div>
-                </div>
-                                <div class="stat-row" style="margin-bottom:16px;">
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--acb)"><i class="ti ti-test-pipe" style="color:var(--ac)"></i></div>
-                        <div class="sc-lbl">Specimens today</div>
-                        <div class="sc-val" id="sc-specimens-today">0</div>
-                        <div class="sc-sub" id="sc-specimens-sub">Live queue summary</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--orangeb)"><i class="ti ti-hourglass" style="color:var(--orange)"></i></div>
-                        <div class="sc-lbl">Pending results</div>
-                        <div class="sc-val" id="sc-pending-val">0</div>
-                        <div class="sc-sub" id="sc-pending-sub">Waiting for live order data</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--greenb)"><i class="ti ti-circle-check" style="color:var(--green)"></i></div>
-                        <div class="sc-lbl">Verified today</div>
-                        <div class="sc-val" id="sc-verified-val">0</div>
-                        <div class="sc-sub" id="sc-verified-sub">Waiting for verified-result data</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--redb)"><i class="ti ti-alert-triangle" style="color:var(--red)"></i></div>
-                        <div class="sc-lbl">Critical values</div>
-                        <div class="sc-val" id="sc-critical-val">0</div>
-                        <div class="sc-sub" id="sc-critical-sub">Critical alerts are derived from live orders</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--purpleb)"><i class="ti ti-bolt" style="color:var(--purple)"></i></div>
-                        <div class="sc-lbl">STAT requests</div>
-                        <div class="sc-val" id="sc-stat-val">0</div>
-                        <div class="sc-sub" id="sc-stat-sub">Live STAT queue summary</div>
-                    </div>
-                </div>
-
-                <!-- Top Header & 1-Click Verified Report Selector -->
-                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:18px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                <div class="reports-topbar">
                     <div>
-                        <div style="font-size:17px;font-weight:800;color:#004a52;">📜 Simple & Smart Laboratory Reporting (MOD)</div>
-                        <div style="font-size:12px;font-weight:600;color:#64748b;margin-top:2px;">1-Click Verified Report Preview & Official Barcode Certification</div>
+                        <div class="reports-title">Laboratory reports</div>
+                        <div class="reports-subtitle">Select a verified request date, review the final report summary, then print or re-send it professionally.</div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <label style="font-size:12px;font-weight:700;color:#1d1d1f;">Select Verified Patient Report:</label>
-                        <select id="repSmartPatientSelect" class="fi" style="height:38px;padding:0 14px;border-radius:10px;font-weight:700;color:#007080;background:#e6f6f8;border:0.5px solid rgba(0,112,128,0.3);cursor:pointer;" onchange="pcLabEngine.selectReportPatient(this.value)">
+                    <div class="reports-queue-wrap">
+                        <span id="repAwaitingReleaseBadge">0 verified reports</span>
+                        <label class="reports-queue-label" for="repSmartPatientSelect">Select verified request</label>
+                        <select id="repSmartPatientSelect" class="fi reports-queue-select" onchange="pcLabEngine.selectReportPatient(this.value)">
                             <option value="">Verified reports ready to print…</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- 3-Card Apple Glass Reporting Grid -->
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
-                    <!-- CARD 1: VERIFIED PATIENT & BARCODE CERTIFICATION -->
-                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
-                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
-                            <span>👤</span> PATIENT & ACCESSION BARCODE
+                <div class="reports-stats">
+                    <div class="reports-stat-card">
+                        <div class="reports-stat-label">Specimens today</div>
+                        <div class="reports-stat-value" id="sc-specimens-today">0</div>
+                        <div class="reports-stat-sub" id="sc-specimens-sub">Live queue summary</div>
+                    </div>
+                    <div class="reports-stat-card">
+                        <div class="reports-stat-label">Pending results</div>
+                        <div class="reports-stat-value" id="sc-pending-val">0</div>
+                        <div class="reports-stat-sub" id="sc-pending-sub">Waiting for live order data</div>
+                    </div>
+                    <div class="reports-stat-card">
+                        <div class="reports-stat-label">Verified today</div>
+                        <div class="reports-stat-value" id="sc-verified-val">0</div>
+                        <div class="reports-stat-sub" id="sc-verified-sub">Waiting for verified-result data</div>
+                    </div>
+                    <div class="reports-stat-card">
+                        <div class="reports-stat-label">Critical values</div>
+                        <div class="reports-stat-value" id="sc-critical-val">0</div>
+                        <div class="reports-stat-sub" id="sc-critical-sub">Critical alerts are derived from live orders</div>
+                    </div>
+                    <div class="reports-stat-card">
+                        <div class="reports-stat-label">STAT requests</div>
+                        <div class="reports-stat-value" id="sc-stat-val">0</div>
+                        <div class="reports-stat-sub" id="sc-stat-sub">Live STAT queue summary</div>
+                    </div>
+                </div>
+
+                <div class="reports-grid">
+                    <div class="reports-card">
+                        <div class="reports-card-head">
+                            <span class="reports-card-kicker">01</span>
+                            <span>Patient &amp; accession barcode</span>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;">Patient Name & MRN</div>
-                            <div id="rep_pat_name" style="font-size:15px;font-weight:800;color:#1d1d1f;margin-top:2px;">Awaiting patient selection…</div>
-                            <div id="rep_pat_mrn" style="font-size:12px;font-weight:600;color:#007080;margin-top:2px;">MRN — • No verified report selected</div>
+                            <div class="reports-meta-label">Patient name &amp; MRN</div>
+                            <div id="rep_pat_name" class="reports-patient-name">Awaiting patient selection…</div>
+                            <div id="rep_pat_mrn" class="reports-patient-meta">MRN — • No verified report selected</div>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;">Ordering Clinician & Department</div>
-                            <div id="rep_doc_name" style="font-size:13px;font-weight:700;color:#3a3a3c;margin-top:2px;">—</div>
+                            <div class="reports-meta-label">Ordering clinician &amp; department</div>
+                            <div id="rep_doc_name" class="reports-doc-name">—</div>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;">Official System Barcode</div>
-                            <div style="margin-top:6px;" id="rep_barcode_box"></div>
-                            <div id="rep_acc_no" style="font-size:11px;font-weight:700;color:#1d1d1f;margin-top:2px;">ACC: Awaiting verified report</div>
+                            <div class="reports-meta-label">Official system barcode</div>
+                            <div id="rep_barcode_box"></div>
+                            <div id="rep_acc_no" class="reports-accno">ACC: Awaiting verified report</div>
                         </div>
                     </div>
 
-                    <!-- CARD 2: REPORT QUALITY ASSURANCE & STATUS -->
-                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
-                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
-                            <span>🛡️</span> REPORT VERIFICATION & QUALITY
+                    <div class="reports-card">
+                        <div class="reports-card-head">
+                            <span class="reports-card-kicker">02</span>
+                            <span>Report verification</span>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;">Official Report Status</div>
-                            <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-                                <span id="rep_status_badge" style="background:#f5f5f7;color:#3a3a3c;font-weight:800;font-size:12px;padding:5px 12px;border-radius:20px;">Awaiting verified report</span>
-                            </div>
+                            <div class="reports-meta-label">Official report status</div>
+                            <span id="rep_status_badge">Awaiting verified report</span>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;">Turnaround Time (TAT) Metric</div>
-                            <div id="rep_tat_text" style="font-size:13px;font-weight:700;color:#1d1d1f;margin-top:2px;">TAT will appear after a verified report is selected.</div>
+                            <div class="reports-meta-label">Turnaround time (TAT)</div>
+                            <div id="rep_tat_text" class="reports-tat">TAT will appear after a verified report is selected.</div>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;">Verifying Senior MLT</div>
-                            <div id="rep_verified_by" style="font-size:12.5px;font-weight:700;color:#1d1d1f;margin-top:2px;">Awaiting authenticated laboratory user…</div>
+                            <div class="reports-meta-label">Verifying laboratory user</div>
+                            <div id="rep_verified_by" class="reports-verified-by">Awaiting authenticated laboratory user…</div>
                         </div>
                     </div>
 
-                    <!-- CARD 3: VERIFIED TEST MATRIX PREVIEW -->
-                    <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.1);padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;">
-                        <div style="font-size:13px;font-weight:800;color:#004a52;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,0.08);padding-bottom:8px;">
-                            <span>📊</span> VERIFIED TEST MATRIX PREVIEW
+                    <div class="reports-card">
+                        <div class="reports-card-head">
+                            <span class="reports-card-kicker">03</span>
+                            <span>Verified result summary</span>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Result Summary & Diagnostic Flags</div>
-                            <div id="rep_matrix_chips" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;">
-                                <!-- Dynamically filled with verified chips -->
-                            </div>
+                            <div class="reports-meta-label">Final result overview</div>
+                            <div id="rep_matrix_chips" class="reports-summary-list"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Footer Report Action Bar -->
-                <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px 24px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                    <div style="font-size:12.5px;color:#64748b;">
-                        <strong>ℹ️ Smart 1-Click Reporting:</strong> Verified reports feature an official SVG verification barcode and are signed for legal hospital use.
+                <div class="reports-footer">
+                    <div class="reports-footer-note">
+                        <strong>Official reporting:</strong> use the print action to open the final MOD laboratory report, or re-send the verified report back to the Doctor Dashboard when needed.
                     </div>
-                    <div style="display:flex;gap:12px;">
-                        <button type="button" onclick="pcLabEngine.printSelectedReportModal()" style="height:40px;padding:0 24px;border-radius:10px;border:0;background:#007080;color:#fff;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 3px 10px rgba(0,112,128,0.3);">🖨️ Open & Print Official MOD Report</button>
-                        <button type="button" onclick="pcLabEngine.broadcastReportToDoctor()" style="height:40px;padding:0 18px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.16);background:#fff;font-weight:700;font-size:12.5px;cursor:pointer;">📤 Re-send Report to Doctor Dashboard</button>
+                    <div class="reports-actions">
+                        <button type="button" class="reports-btn reports-btn-primary" onclick="pcLabEngine.printSelectedReportModal()">Open &amp; print official MOD report</button>
+                        <button type="button" class="reports-btn reports-btn-secondary" onclick="pcLabEngine.broadcastReportToDoctor()">Re-send report to Doctor Dashboard</button>
                     </div>
                 </div>
 
-                <!-- Verified Laboratory Reports Table -->
-                <div class="section-title" style="margin-top:8px;">All Verified Laboratory Reports (Common Server Archive)</div>
-                <table class="wtbl">
-                    <thead><tr><th style="width:13%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:18%">Panel</th><th style="width:12%">Dept</th><th style="width:12%">Verified</th><th style="width:11%">Status</th><th style="width:12%">Action</th></tr></thead>
-                    <tbody id="pcLabReportsTable">
-                        <tr>
-                            <td colspan="8" style="text-align:center;padding:36px;color:#8e8e93;">
-                                <div style="font-size:28px;margin-bottom:6px;">🖨️</div>
-                                No pending reports awaiting manual release. All verified results are available in patient records.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="reports-archive">
+                    <div class="reports-archive-head">Verified laboratory report archive</div>
+                    <table class="wtbl">
+                        <thead><tr><th style="width:13%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:18%">Panel</th><th style="width:12%">Dept</th><th style="width:12%">Verified</th><th style="width:11%">Status</th><th style="width:12%">Action</th></tr></thead>
+                        <tbody id="pcLabReportsTable">
+                            <tr>
+                                <td colspan="8" style="text-align:center;padding:36px;color:#8e8e93;">
+                                    <div style="font-size:28px;margin-bottom:6px;">🖨️</div>
+                                    No pending reports awaiting manual release. All verified results are available in patient records.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 

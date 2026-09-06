@@ -304,6 +304,12 @@
             setText('rep_pat_mrn', 'MRN — • No verified report selected');
             setText('rep_tat_text', 'TAT will appear after a verified report is selected.');
             setText('rep_status_badge', 'Awaiting verified report');
+            var emptyBadge = document.getElementById('rep_status_badge');
+            if (emptyBadge) {
+                emptyBadge.style.background = '#f8fafc';
+                emptyBadge.style.color = '#475569';
+                emptyBadge.style.border = '1px solid #d9e1ea';
+            }
             return;
         }
         var group = resolveGroup(selector.value);
@@ -322,8 +328,9 @@
         var badge = document.getElementById('rep_status_badge');
         if (badge) {
             badge.textContent = firstCompleted ? 'Verified on common server' : 'Awaiting verified report';
-            badge.style.background = firstCompleted ? '#e9f9ee' : '#f5f5f7';
-            badge.style.color = firstCompleted ? '#1a7a32' : '#3a3a3c';
+            badge.style.background = firstCompleted ? '#eef2f7' : '#f8fafc';
+            badge.style.color = firstCompleted ? '#111827' : '#475569';
+            badge.style.border = '1px solid ' + (firstCompleted ? '#d8e0ea' : '#d9e1ea');
         }
     }
 
