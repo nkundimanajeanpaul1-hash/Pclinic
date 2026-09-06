@@ -1239,7 +1239,7 @@
                             '<td class="row-number">' + rowNumber + '</td>',
                             '<td>',
                                 '<div class="test-name">',
-                                    '<span class="test-icon" style="background:var(--acb);color:var(--ac);">🧪</span>',
+                                    '<span class="test-icon" style="background:#eaf2ff;color:#0071e3;">🧪</span>',
                                     '<div class="test-name-stack">',
                                         '<div>' + esc(parameter.test || parameter.name || item.name || 'Laboratory test') + '</div>',
                                         '<div class="test-subline">' + subMeta + '</div>',
@@ -1290,8 +1290,8 @@
         });
 
         var footer = allCompleted
-            ? '<button onclick="pcLabEngine.printReportModal(\'' + esc(ordersSorted[ordersSorted.length - 1].id) + '\')" style="height:34px;padding:0 16px;border-radius:8px;border:1px solid #d5dde8;background:#ffffff;color:#243041;font-weight:700;cursor:pointer;">View final report</button>'
-            : '<button class="lab-release-btn" onclick="pcLabEngine.saveDayResults(\'' + esc(group.key) + '\',this)" style="height:36px;padding:0 18px;border-radius:8px;border:1px solid #0f5ea8;background:#1668c7;color:#ffffff;font-weight:800;font-size:12px;cursor:pointer;">Validate &amp; release</button>';
+            ? '<button class="doctor-table-btn-secondary" onclick="pcLabEngine.printReportModal(\'' + esc(ordersSorted[ordersSorted.length - 1].id) + '\')"><i class="ti ti-file-text"></i> View final report</button>'
+            : '<button class="lab-release-btn doctor-table-btn-primary" onclick="pcLabEngine.saveDayResults(\'' + esc(group.key) + '\',this)"><i class="ti ti-check"></i> Validate &amp; release</button>';
 
         var html = '<div style="display:flex;flex-direction:column;gap:14px;">' +
             '<section class="lab-order-result-section lab-day-result-section" data-lab-day-key="' + esc(group.key) + '" style="background:#ffffff;border-radius:16px;border:1px solid #dbe2ea;box-shadow:0 4px 14px rgba(15,23,42,.035);overflow:hidden;">' +
@@ -1516,7 +1516,7 @@
                 input.style.background = '#fff5f5';
                 return;
             }
-            input.style.borderColor = '#007080';
+            input.style.borderColor = '#0071e3';
             input.style.background = '#fff';
             var flag = document.getElementById(input.getAttribute('data-flag-id'));
             results.push({
@@ -1547,7 +1547,7 @@
         if (!window.confirm(promptText)) return false;
 
         var commentsEl = section.querySelector('.lab-order-comments');
-        var originalText = button ? button.textContent : '';
+        var originalHtml = button ? button.innerHTML : '';
         if (button) {
             button.disabled = true;
             button.style.opacity = '.65';
@@ -1583,7 +1583,7 @@
             if (button && document.body.contains(button)) {
                 button.disabled = false;
                 button.style.opacity = '1';
-                button.textContent = originalText || '💾 Validate & Release to Requesting Doctor';
+                button.innerHTML = originalHtml || '<i class="ti ti-check"></i> Validate &amp; release';
             }
         }
     }
@@ -1621,7 +1621,7 @@
                 input.style.background = '#fff5f5';
                 return;
             }
-            input.style.borderColor = '#007080';
+            input.style.borderColor = '#0071e3';
             input.style.background = '#fff';
             var flag = document.getElementById(input.getAttribute('data-flag-id'));
             var orderId = input.getAttribute('data-order-id') || '';
@@ -1664,11 +1664,11 @@
 
         var commentsEl = section.querySelector('.lab-order-comments');
         var comments = commentsEl ? String(commentsEl.value || '').trim() : '';
-        var originalText = button ? button.textContent : '';
+        var originalHtml = button ? button.innerHTML : '';
         if (button) {
             button.disabled = true;
             button.style.opacity = '.65';
-            button.textContent = 'Saving ' + nonFinal.length + ' request(s) to common server…';
+            button.innerHTML = 'Saving ' + nonFinal.length + ' request(s) to common server…';
         }
         try {
             for (var i = 0; i < nonFinal.length; i++) {
@@ -1703,7 +1703,7 @@
             if (button && document.body.contains(button)) {
                 button.disabled = false;
                 button.style.opacity = '1';
-                button.textContent = originalText || '💾 Validate & Release Request';
+                button.innerHTML = originalHtml || '<i class="ti ti-check"></i> Validate &amp; release';
             }
         }
     }
