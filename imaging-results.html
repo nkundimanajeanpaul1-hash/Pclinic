@@ -24,7 +24,8 @@
     *{box-sizing:border-box}
     html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     /* the shared PClinic header (menu + patient identification bar) keeps its own light theme */
-    #pcMasterHeader{position:relative;z-index:20}
+    #pcMasterHeader{position:relative;z-index:20;padding-bottom:0!important;gap:0!important}
+    #pc_common_demo_bar,#dcBar{display:none!important}
     button{font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:9px;background:#343640;color:var(--text);padding:7px 11px;font-weight:700}
     button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
     button.danger{background:#5a2a2a;border-color:#7a3a3a;color:#ffb4b4}
@@ -118,7 +119,7 @@
      One patient truth: identification bar ⇄ workstation ⇄ report list. */
   let wsMounted=false, applyingPatient=false;
   function mountWorkstation(){if(wsMounted)return;const host=document.getElementById('workstation');if(!host||!window.PcDicomViewer||typeof window.PcDicomViewer.mount!=='function')return;try{window.PcDicomViewer.mount(host,{canManage:staff&&(staff.role==='radio'||staff.role==='admin'),patient:patient,orderId:new URLSearchParams(location.search).get('order')||'',onPrintReport:printReport,onPatientChange:function(p){if(applyingPatient)return;applyingPatient=true;try{setPatient(p);}finally{applyingPatient=false;}}});wsMounted=true;}catch(e){console.warn('[imaging-results] workstation mount failed:',e);}}
-  function writeIdentificationBar(p){try{if(window.pcFile&&typeof window.pcFile.renderDemoBar==='function'){const master=document.getElementById('pcMasterHeader')||document.body;window.pcFile.renderDemoBar(master,p||{_cleared:true,id:'',mrn:'',lastName:'',firstName:'',nationalId:'',department:'',dob:'',gender:'',archiveCode:''});}}catch(e){}}
+  function writeIdentificationBar(){}
   function syncWorkstationPatient(p){writeIdentificationBar(p);if(!wsMounted||!window.PcDicomViewer)return;try{window.PcDicomViewer.setPatient(p);}catch(e){}try{if(p&&p.id)localStorage.setItem('pclinic_active_patient',String(p.id));else localStorage.removeItem('pclinic_active_patient');}catch(e){}if(!applyingPatient){applyingPatient=true;try{window.dispatchEvent(new CustomEvent('pcPatientChanged',{detail:p}));}finally{applyingPatient=false;}}}
   window.addEventListener('pcPatientChanged',function(e){if(applyingPatient)return;const d=e&&e.detail;applyingPatient=true;try{if(d&&d.id){if(!patient||String(patient.id)!==String(d.id))setPatient(findPatient(d.id)||d);}else if(patient){setPatient(null);}}finally{applyingPatient=false;}});
   document.addEventListener('DOMContentLoaded',function(){const openLocalBtn=document.getElementById('openLocalPageBtn');if(openLocalBtn)openLocalBtn.onclick=openLocalFromPage;window.requireAuth(['doctor','radio','nurse','admin']).then(async function(s){staff=s;requestedPatientId=new URLSearchParams(location.search).get('patient')||sessionStorage.getItem('pclinic_active_patient')||localStorage.getItem('pclinic_active_patient')||'';mountWorkstation();

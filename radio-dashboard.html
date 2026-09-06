@@ -1321,6 +1321,19 @@
             opacity: .9;
             font-weight: 600;
         }
+        body.viewer-min-chrome #pc_common_demo_bar,
+        body.viewer-min-chrome #dcBar,
+        body.viewer-min-chrome #tb2,
+        body.viewer-min-chrome .srow {
+            display: none !important;
+        }
+        body.viewer-min-chrome #pcMasterHeader {
+            gap: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        body.viewer-min-chrome .body {
+            padding-top: 12px;
+        }
     </style>
     <!-- ═══ iOS 26 LIQUID GLASS THEME (loaded last so it wins the cascade) ═══ -->
     <link rel="stylesheet" href="pclinic-ios26.css?v=20260831_IOS26" />
@@ -1500,6 +1513,13 @@
                                 <span>
                                     <strong>Open full DICOM workstation</strong>
                                     <small>Open the shared radiology viewer first, then use Upload or Open local inside it.</small>
+                                </span>
+                            </button>
+                            <button type="button" class="viewer-quick-btn" id="viewerBackToWorklistBtn">
+                                <i class="ti ti-layout-list"></i>
+                                <span>
+                                    <strong>Back to worklist</strong>
+                                    <small>Return to the Radiology queue and report workflow.</small>
                                 </span>
                             </button>
                         </div>

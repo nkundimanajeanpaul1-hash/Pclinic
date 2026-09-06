@@ -155,6 +155,11 @@
             }
         }
 
+        function setViewerChromeMinimal(on) {
+            document.body.classList.toggle('viewer-min-chrome', !!on);
+            setTimeout(function () { showGateLock(!currentPatient); }, 20);
+        }
+
         function switchView(element, name) {
             if (!views.includes(name)) name = 'overview';
             // "request" is the read-only policy page (it even offers "Select patient"), so it stays open.
@@ -174,6 +179,7 @@
                 const view = document.getElementById('v-' + viewName);
                 if (view) view.style.display = viewName === name ? 'block' : 'none';
             });
+            setViewerChromeMinimal(name === 'viewer');
             if (name === 'overview') renderAll();
             if (name === 'worklist') renderWorklist();
             if (name === 'viewer') updateViewerContext();
@@ -871,6 +877,10 @@
             if (workstationBtn) workstationBtn.onclick = function () {
                 if (currentPatient) handleOpenViewerRequest({ detail: { patient: currentPatient } });
                 else openLocalDicomFromPage();
+            };
+            var backBtn = document.getElementById('viewerBackToWorklistBtn');
+            if (backBtn) backBtn.onclick = function () {
+                switchView(document.querySelector('#dcBar [data-rad-view="worklist"]'), 'worklist');
             };
             window.requireAuth(['radio']).then(async function (staff) {
                 window.currentStaff = staff;
