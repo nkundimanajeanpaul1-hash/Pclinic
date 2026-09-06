@@ -1194,7 +1194,9 @@
                 ? '<span class="status-badge status-critical"><span class="dot"></span>Sync issue</span>'
                 : '<span class="status-badge status-low"><span class="dot"></span>Open result entry</span>';
 
-        var bodyHtml = '';
+        var rowsHtml = '';
+        var rowNumber = 0;
+
         ordersSorted.forEach(function (order) {
             var orderId = String(order.id || '');
             var orderDomId = safeDomId(orderId);
@@ -1203,13 +1205,30 @@
             var readonlyAttr = completed ? ' readonly' : '';
             var disabledAttr = completed ? ' disabled' : '';
             var items = Array.isArray(order.items) ? order.items : [];
-            var rowsHtml = '';
-            var rowNumber = 0;
+            var orderRowsAdded = 0;
+
+            var requestState = completed
+                ? '<span class="status-badge status-normal"><span class="dot"></span>Verified</span>'
+                : failed
+                    ? '<span class="status-badge status-critical"><span class="dot"></span>Sync issue</span>'
+                    : '<span class="status-badge status-low"><span class="dot"></span>Pending entry</span>';
+
+            rowsHtml += '<tr class="lab-request-break-row">' +
+                '<td colspan="5" style="padding:0;background:rgba(0,0,0,0.018);border-bottom:0.5px solid var(--bd);">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;">' +
+                        '<div style="font-size:11px;font-weight:800;color:#1c1c1e;line-height:1.2;">Request ' + esc(orderId) +
+                        ' <span style="color:#8e8e93;font-weight:600;font-size:10.5px;">• ' + esc(order.orderedBy || 'Unknown') + ' • ' +
+                        esc(order.orderedAt ? new Date(order.orderedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—') + '</span></div>' +
+                        requestState +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
 
             items.forEach(function (item) {
                 var parameters = parametersForOrderItem(item);
                 parameters.forEach(function (parameter, parameterIndex) {
                     rowNumber++;
+                    orderRowsAdded++;
                     var existing = existingOrderResult(order, parameter) || {};
                     var rowId = orderDomId + '_' + safeDomId(parameter.orderItemCode) + '_' + safeDomId(parameter.code) + '_' + parameterIndex;
                     var value = existing.value == null ? '' : existing.value;
@@ -1254,40 +1273,27 @@
                 });
             });
 
-            if (!rowsHtml) {
-                rowsHtml = '<tr><td colspan="5" style="padding:14px;color:#9b2c2c;background:#fff7f7;font-weight:700;">Request ' + esc(orderId) + ' has no valid test items. Ask the requesting clinician to correct it.</td></tr>';
+            if (!orderRowsAdded) {
+                rowsHtml += '<tr><td colspan="5" style="padding:14px;color:#9b2c2c;background:#fff7f7;font-weight:700;">Request ' + esc(orderId) + ' has no valid test items. Ask the requesting clinician to correct it.</td></tr>';
             }
-
-            var requestState = completed
-                ? '<span class="status-badge status-normal"><span class="dot"></span>Verified</span>'
-                : failed
-                    ? '<span class="status-badge status-critical"><span class="dot"></span>Sync issue</span>'
-                    : '<span class="status-badge status-low"><span class="dot"></span>Pending entry</span>';
-
-            bodyHtml += [
-                '<section class="request-table-shell">',
-                    '<div class="request-table-head">',
-                        '<div class="request-table-meta">Request ' + esc(orderId) + ' <span>• ' + esc(order.orderedBy || 'Unknown') + ' • ' +
-                        esc(order.orderedAt ? new Date(order.orderedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—') + '</span></div>',
-                        requestState,
-                    '</div>',
-                    '<div class="lab-result-table-wrap">',
-                        '<table class="lab-result-table">',
-                            '<thead>',
-                                '<tr>',
-                                    '<th style="width:58px;text-align:center;">#</th>',
-                                    '<th>Test name</th>',
-                                    '<th>Result</th>',
-                                    '<th>Reference range</th>',
-                                    '<th>Status</th>',
-                                '</tr>',
-                            '</thead>',
-                            '<tbody>' + rowsHtml + '</tbody>',
-                        '</table>',
-                    '</div>',
-                '</section>'
-            ].join('');
         });
+
+        var tableHtml = '<section class="request-table-shell">' +
+            '<div class="lab-result-table-wrap">' +
+                '<table class="lab-result-table">' +
+                    '<thead>' +
+                        '<tr>' +
+                            '<th style="width:58px;text-align:center;">#</th>' +
+                            '<th>Test name</th>' +
+                            '<th>Result</th>' +
+                            '<th>Reference range</th>' +
+                            '<th>Status</th>' +
+                        '</tr>' +
+                    '</thead>' +
+                    '<tbody>' + rowsHtml + '</tbody>' +
+                '</table>' +
+            '</div>' +
+        '</section>';
 
         var footer = allCompleted
             ? '<button class="doctor-table-btn-secondary" onclick="pcLabEngine.printReportModal(\'' + esc(ordersSorted[ordersSorted.length - 1].id) + '\')"><i class="ti ti-file-text"></i> View final report</button>'
@@ -1303,8 +1309,8 @@
               '</div>' +
               '<div style="padding:12px 16px 14px;">' +
                 '<div style="font-size:11px;font-weight:800;color:#6b7280;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Selected request date</div>' +
-                '<div style="font-size:11.5px;color:#5b6677;margin-bottom:8px;">Doctor Dashboard table style applied here for laboratory result entry.</div>' +
-                bodyHtml +
+                '<div style="font-size:11.5px;color:#5b6677;margin-bottom:8px;">One continuous Doctor-style table for all requests on this selected date.</div>' +
+                tableHtml +
                 '<label style="display:block;font-size:10.5px;font-weight:800;color:#6b7280;letter-spacing:.06em;text-transform:uppercase;margin:12px 0 6px;">Laboratory comments</label>' +
                 '<textarea class="lab-order-comments"' + (allCompleted ? ' readonly' : '') + ' placeholder="Optional professional interpretation for the requesting clinician" style="width:100%;min-height:60px;resize:vertical;border:1px solid #d7dee8;border-radius:10px;padding:9px 10px;font:12px inherit;background:' + (allCompleted ? '#f6f7f9' : '#ffffff') + ';color:#17212f;">' + esc(ordersSorted[0].labComments || '') + '</textarea>' +
               '</div>' +
