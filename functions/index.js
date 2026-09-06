@@ -26,6 +26,12 @@ const {
 } = require('./lab-domain.cjs');
 const { viewUrlFor } = require('./radiology-media.cjs');
 const { deleteImagingStudy } = require('./admin-imaging.cjs');
+const {
+  deleteClinicalOrderCascade,
+  deleteBillOnly,
+  deleteLegacyPatientEntry,
+  resolveOrderIdFromBill,
+} = require('./admin-clinical.cjs');
 
 initializeApp();
 setGlobalOptions({ region: 'africa-south1', maxInstances: 20 });
@@ -1306,6 +1312,50 @@ exports.adminImagingDelete = onCall(async (request) => {
       { db, bucket: getStorage().bucket(), FieldValue, Timestamp, staff, log: (m) => console.warn(m) },
       { orderId, scope, force, mediaId }
     );
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    fail(error && error.code && /^[a-z-]+$/.test(error.code) ? error.code : 'internal', (error && error.message) || 'The delete failed.');
+  }
+});
+
+/**
+ * adminDeleteClinicalCascade — admin-only hard delete for clinical orders/services.
+ *
+ * Supported payloads:
+ *   { orderId, force?: boolean }
+ *   { billId, force?: boolean }                         // resolves the linked order; if none, deletes only the bill
+ *   { patientId, legacyKind, legacyEntry }             // remove a patient-only legacy embedded entry
+ */
+exports.adminDeleteClinicalCascade = onCall({ cors: true }, async (request) => {
+  const staff = await requireStaff(request, ['admin']);
+  if (staff.role !== 'admin') fail('permission-denied', 'Only an administrator may delete clinical records.');
+  const data = request.data || {};
+  const force = data.force === true;
+  try {
+    const deps = { db, bucket: getStorage().bucket(), FieldValue, Timestamp, staff, log: (m) => console.warn(m) };
+    if (data.orderId) {
+      return await deleteClinicalOrderCascade(deps, { orderId: data.orderId, force });
+    }
+    if (data.billId) {
+      const resolved = await resolveOrderIdFromBill(db, data.billId);
+      if (resolved.orderId) {
+        try {
+          return await deleteClinicalOrderCascade(deps, { orderId: resolved.orderId, force });
+        } catch (error) {
+          if (!error || error.code !== 'not-found') throw error;
+          return await deleteBillOnly(deps, { billId: data.billId, force });
+        }
+      }
+      return await deleteBillOnly(deps, { billId: data.billId, force });
+    }
+    if (data.patientId && data.legacyKind && data.legacyEntry) {
+      return await deleteLegacyPatientEntry(deps, {
+        patientId: data.patientId,
+        legacyKind: data.legacyKind,
+        legacyEntry: data.legacyEntry,
+      });
+    }
+    fail('invalid-argument', 'Provide orderId, billId, or patientId + legacyKind + legacyEntry.');
   } catch (error) {
     if (error instanceof HttpsError) throw error;
     fail(error && error.code && /^[a-z-]+$/.test(error.code) ? error.code : 'internal', (error && error.message) || 'The delete failed.');
