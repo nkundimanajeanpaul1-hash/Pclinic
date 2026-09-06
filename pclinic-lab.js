@@ -364,6 +364,7 @@
           (only Overview stays open — it is the patient list itself).
        ══════════════════════════════════════════════════════════════════ */
     var LAB_SELECT_KEY = 'pclinic_lab_selected_patient';
+    var LAB_DATE_KEY = 'pclinic_lab_selected_date';
     var applyingLabSelection = false;
 
     function stripMod(v) {
@@ -461,8 +462,127 @@
         });
     }
 
+    function getSelectedLabDate() {
+        try { return String(localStorage.getItem(LAB_DATE_KEY) || ''); } catch (e) {}
+        return '';
+    }
+
+    function rememberSelectedLabDate(dateStr) {
+        try {
+            if (dateStr) localStorage.setItem(LAB_DATE_KEY, String(dateStr));
+            else localStorage.removeItem(LAB_DATE_KEY);
+        } catch (e) {}
+    }
+
+    function clearSelectedLabDate() {
+        try { localStorage.removeItem(LAB_DATE_KEY); } catch (e) {}
+    }
+
+    function formatLabDate(dateStr) {
+        if (!dateStr) return '—';
+        var parts = String(dateStr).split('-');
+        if (parts.length === 3) {
+            var d = new Date(dateStr + 'T00:00:00');
+            if (!isNaN(d.getTime())) {
+                return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+        }
+        return String(dateStr);
+    }
+
+    function dateSelectorLabel(group, mode) {
+        if (!group) return '—';
+        var requestCount = (group.orders || []).length;
+        var testCount = groupTestCount(group);
+        var base = formatLabDate(group.dateStr) + ' • ' + requestCount + ' request' + (requestCount === 1 ? '' : 's') + ' • ' + testCount + ' test' + (testCount === 1 ? '' : 's');
+        if (mode === 'verified') return base + ' • VERIFIED';
+        if (mode === 'micro') return base + ' • MICROBIOLOGY';
+        return base + ' • ' + String(group.priority || 'routine').toUpperCase();
+    }
+
+    function patientDateGroups(patient, sourceOrders) {
+        if (!patient) return [];
+        var groups = groupOrdersByPatientAndDate(Array.isArray(sourceOrders) ? sourceOrders : getLabOrders());
+        var selId = stripMod(patient.id).toLowerCase();
+        return groups.filter(function(group) {
+            return stripMod(group.patientId).toLowerCase() === selId;
+        }).sort(function(a, b) {
+            return new Date(b.orderedAt || 0) - new Date(a.orderedAt || 0);
+        });
+    }
+
+    function ensureSelectedLabDateForPatient(patient, groups, preferredDate) {
+        groups = Array.isArray(groups) ? groups : patientDateGroups(patient);
+        if (!patient || !groups.length) {
+            clearSelectedLabDate();
+            return '';
+        }
+        var saved = preferredDate || getSelectedLabDate();
+        var match = saved && groups.some(function(group) {
+            return String(group.dateStr) === String(saved);
+        });
+        var resolved = match ? String(saved) : String(groups[0].dateStr || '');
+        rememberSelectedLabDate(resolved);
+        var filter = document.getElementById('labDateFilter');
+        if (filter) filter.value = resolved;
+        return resolved;
+    }
+
+    function activeDateGroupForPatient(patient, groups, preferredDate) {
+        groups = Array.isArray(groups) ? groups : patientDateGroups(patient);
+        var activeDate = ensureSelectedLabDateForPatient(patient, groups, preferredDate);
+        return groups.filter(function(group) {
+            return String(group.dateStr) === String(activeDate);
+        })[0] || groups[0] || null;
+    }
+
+    function paintLabDateSelector(groups, patient) {
+        var selector = document.getElementById('labDateFilter');
+        if (!selector) return;
+        groups = Array.isArray(groups) ? groups : [];
+        if (!patient) {
+            selector.innerHTML = '<option value="">Select patient first…</option>';
+            selector.value = '';
+            selector.disabled = true;
+            return;
+        }
+        if (!groups.length) {
+            selector.innerHTML = '<option value="">No request dates for ' + esc(patientDisplayName(patient)) + '</option>';
+            selector.value = '';
+            selector.disabled = true;
+            return;
+        }
+        selector.disabled = false;
+        selector.innerHTML = groups.map(function(group) {
+            return '<option value="' + esc(group.dateStr) + '">' + esc(dateSelectorLabel(group)) + '</option>';
+        }).join('');
+        selector.value = ensureSelectedLabDateForPatient(patient, groups);
+    }
+
+    function selectLabDate(dateStr, quiet) {
+        var patient = getSelectedLabPatient();
+        if (!patient) {
+            if (!quiet && window.showToast) showToast('⚠️ Select a patient first before choosing a request date.', 'warning');
+            return false;
+        }
+        var groups = patientDateGroups(patient);
+        if (!groups.length) {
+            if (!quiet && window.showToast) showToast('⚠️ No laboratory request dates exist for the selected patient.', 'warning');
+            clearSelectedLabDate();
+            repaintAll();
+            return false;
+        }
+        var target = groups.filter(function(group) { return String(group.dateStr) === String(dateStr); })[0] || groups[0];
+        rememberSelectedLabDate(target.dateStr);
+        repaintAll();
+        if (!quiet && window.showToast) {
+            showToast('📅 Selected request date: ' + formatLabDate(target.dateStr) + ' for ' + patientDisplayName(patient), 'info');
+        }
+        return true;
+    }
+
     /* ── SELECT patient into identification bar + unlock every button ── */
-    function selectLabPatient(pid) {
+    function selectLabPatient(pid, quiet) {
         var p = findPatientById(pid);
         if (!p) {
             if (window.showToast) showToast('❌ Patient record is not available yet. Refresh the page and try again.', 'error');
@@ -472,6 +592,9 @@
             localStorage.setItem(LAB_SELECT_KEY, String(p.id));
             localStorage.setItem('pclinic_active_patient', String(p.id));
         } catch(e){}
+        var patientGroups = patientDateGroups(p);
+        if (patientGroups.length) rememberSelectedLabDate(patientGroups[0].dateStr);
+        else clearSelectedLabDate();
         try {
             if (window.pcFile && typeof pcFile.renderDemoBar === 'function') {
                 var master = document.getElementById('pcMasterHeader') || document.body;
@@ -484,14 +607,31 @@
         try { window.dispatchEvent(new CustomEvent('labSelectionChanged', { detail: p })); } catch(e){}
         updateSelectionUI();
         repaintAll();
+        if (!quiet && window.showToast) {
+            var dateText = patientGroups.length ? (' • latest request date ' + formatLabDate(patientGroups[0].dateStr)) : '';
+            showToast('👤 Selected patient: ' + patientDisplayName(p) + dateText + (p.__labFallback ? ' (loaded from live order queue)' : ''), 'success');
+        }
+    }
+
+    function openPatientDateView(pid) {
+        selectLabPatient(pid, true);
+        var sel = getSelectedLabPatient();
+        if (!sel) return;
+        var groups = patientDateGroups(sel);
+        if (groups.length) rememberSelectedLabDate(groups[0].dateStr);
+        var worklistButton = document.querySelector('[data-tab="worklist"]');
+        if (worklistButton && typeof switchTab === 'function') switchTab('worklist', worklistButton);
+        repaintAll();
         if (window.showToast) {
-            showToast('👤 Selected patient: ' + patientDisplayName(p) + (p.__labFallback ? ' (loaded from live order queue)' : ''), 'success');
+            var chosen = getSelectedLabDate();
+            showToast('📂 ' + patientDisplayName(sel) + ' opened once. Choose the request date and see every requested lab for that date.' + (chosen ? ' Selected date: ' + formatLabDate(chosen) : ''), 'success');
         }
     }
 
     /* ── CLEAR selection → bar empties + buttons lock again ── */
     function clearLabSelection(silent) {
         try { localStorage.removeItem(LAB_SELECT_KEY); } catch(e){}
+        clearSelectedLabDate();
         if (!silent) {
             try { if (window.pcFile && typeof pcFile.clearPatientBar === 'function') pcFile.clearPatientBar(); } catch(e){}
         }
@@ -564,11 +704,13 @@
     /* ── Scope notes under every patient-bound panel header ── */
     function updateScopeNotes(sel) {
         var noteText;
+        var selectedDate = getSelectedLabDate();
+        var datePart = sel && selectedDate ? ' • request date <strong>' + esc(formatLabDate(selectedDate)) + '</strong>' : '';
         if (sel) {
             noteText = '👤 Working on selected patient: <strong>' + esc(patientDisplayName(sel)) +
-                       '</strong> — MRN MOD-' + esc(stripMod(sel.id)) + ' (all buttons act on this patient only)';
+                       '</strong> — MRN MOD-' + esc(stripMod(sel.id)) + datePart + ' (all buttons act on this patient/date only)';
         } else {
-            noteText = '🔒 No patient selected — choose one from the Overview list (✓ Select) or search in the identification bar above';
+            noteText = '🔒 No patient selected — choose one patient once from the Overview list, then choose a request date';
         }
         ['wlScopeNote', 'resScopeNote', 'repScopeNote', 'pathScopeNote', 'bbScopeNote'].forEach(function(id) {
             var el = document.getElementById(id);
@@ -629,8 +771,7 @@
         if (!exists) {
             var option = document.createElement('option');
             option.value = group.key;
-            option.textContent = group.patientName + ' — MRN MOD-' + group.patientId +
-                ' (' + groupTestCount(group) + ' test' + (groupTestCount(group) === 1 ? '' : 's') + ' • ' + String(group.priority).toUpperCase() + ')';
+            option.textContent = dateSelectorLabel(group);
             selector.appendChild(option);
         }
         selector.value = group.key;
@@ -651,23 +792,15 @@
 
     /* ── Sync Specimen / Reports / Microbiology selectors to selected patient ── */
     function syncPanelSelectors(sel) {
-        var selId = sel ? stripMod(sel.id).toLowerCase() : '';
-        var orders = getLabOrders();
-        var groups = groupOrdersByPatientAndDate(orders);
-        var patientGroups = selId ? groups.filter(function(group) {
-            return stripMod(group.patientId).toLowerCase() === selId;
-        }) : [];
-        var firstPatientGroup = patientGroups[0] || null;
-        var firstCompletedGroup = patientGroups.filter(function(group) {
-            return group.status === 'completed';
-        })[0] || null;
-        var firstMicroGroup = patientGroups.filter(function(group) {
-            return isMicrobiologyOrder(primaryOrder(group));
-        })[0] || null;
+        var allPatientGroups = patientDateGroups(sel, getLabOrders());
+        var selectedDate = ensureSelectedLabDateForPatient(sel, allPatientGroups);
 
         var specSel = document.getElementById('specSmartPatientSelect');
         if (specSel) {
-            var specimenGroup = resolveSpecimenGroup(specSel.value);
+            var specimenGroups = specimenGroupsForPatient(sel);
+            var specimenGroup = specimenGroups.filter(function(group) {
+                return String(group.dateStr) === String(selectedDate);
+            })[0] || specimenGroups[0] || null;
             if (specimenGroup) {
                 ensureSpecimenSelectorOption(specSel, specimenGroup);
                 selectSpecimenPatient(specimenGroup.key, true);
@@ -679,9 +812,13 @@
 
         var repSel = document.getElementById('repSmartPatientSelect');
         if (repSel) {
-            if (firstCompletedGroup) {
-                repSel.value = firstCompletedGroup.key;
-                selectReportPatient(firstCompletedGroup.key, true);
+            var reportGroups = allPatientGroups.filter(function(group) { return group.status === 'completed'; });
+            var reportGroup = reportGroups.filter(function(group) {
+                return String(group.dateStr) === String(selectedDate);
+            })[0] || reportGroups[0] || null;
+            if (reportGroup) {
+                repSel.value = reportGroup.key;
+                selectReportPatient(reportGroup.key, true);
             } else {
                 repSel.value = '';
                 resetReportsPanel();
@@ -690,12 +827,13 @@
 
         var micSel = document.getElementById('micSmartPatientSelect');
         if (micSel) {
-            if (firstMicroGroup) {
-                micSel.value = firstMicroGroup.key;
-                selectMicrobioPatient(firstMicroGroup.key, true);
-            } else if (firstPatientGroup) {
-                micSel.value = '';
-                resetMicrobioPanel();
+            var microGroups = patientDateGroups(sel, getLabOrders().filter(isMicrobiologyOrder));
+            var microGroup = microGroups.filter(function(group) {
+                return String(group.dateStr) === String(selectedDate);
+            })[0] || microGroups[0] || null;
+            if (microGroup) {
+                micSel.value = microGroup.key;
+                selectMicrobioPatient(microGroup.key, true);
             } else {
                 micSel.value = '';
                 resetMicrobioPanel();
@@ -767,22 +905,104 @@
     }
 
     /* ── ONE SERVER-CONFIRMED LAB REQUEST PER VISIBLE ROW (NO SAME-DAY MERGE) ── */
+    function groupStatusFromOrders(orders) {
+        orders = Array.isArray(orders) ? orders : [];
+        var statuses = orders.map(function(order) { return normaliseOrderStatus(order && order.status); });
+        if (statuses.some(function(status) { return status === 'pending'; })) return 'pending';
+        if (statuses.some(function(status) { return status === 'in-progress'; })) return 'in-progress';
+        if (statuses.some(function(status) { return status === 'completed'; })) return 'completed';
+        if (statuses.some(function(status) { return status === 'cancelled'; })) return 'cancelled';
+        return 'pending';
+    }
+
+    function priorityWeight(priority) {
+        var p = String(priority || 'routine').toLowerCase();
+        if (p === 'stat') return 3;
+        if (p === 'urgent') return 2;
+        return 1;
+    }
+
+    function groupPriorityFromOrders(orders) {
+        orders = Array.isArray(orders) ? orders : [];
+        var best = 'routine';
+        orders.forEach(function(order) {
+            var current = String(order && order.priority || 'routine').toLowerCase();
+            if (priorityWeight(current) > priorityWeight(best)) best = current;
+        });
+        return best;
+    }
+
     function groupOrdersByPatientAndDate(orders) {
-        return (Array.isArray(orders) ? orders.slice() : []).sort(function(a, b) {
+        var sorted = (Array.isArray(orders) ? orders.slice() : []).sort(function(a, b) {
             return new Date(b.orderedAt || 0) - new Date(a.orderedAt || 0);
-        }).map(function(o) {
+        });
+        var bucket = {};
+        sorted.forEach(function(o) {
             var pIdStr = String(o.patientId || '').replace(/^MOD-/i, '').trim() || 'UNKNOWN';
             var dateStr = String(o.orderedAt || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
-            return {
-                key: String(o.id || (pIdStr + '___' + dateStr)),
-                patientId: pIdStr,
-                patientName: o.patientName || ('Patient ' + pIdStr),
-                orderedAt: o.orderedAt || new Date().toISOString(),
-                dateStr: dateStr,
-                orders: [o],
-                status: normaliseOrderStatus(o.status),
-                priority: String(o.priority || 'routine').toLowerCase()
-            };
+            var key = pIdStr + '___' + dateStr;
+            if (!bucket[key]) {
+                bucket[key] = {
+                    key: key,
+                    patientId: pIdStr,
+                    patientName: o.patientName || ('Patient ' + pIdStr),
+                    orderedAt: o.orderedAt || new Date().toISOString(),
+                    dateStr: dateStr,
+                    orders: []
+                };
+            }
+            bucket[key].orders.push(o);
+            if (o.patientName && !bucket[key].patientName) bucket[key].patientName = o.patientName;
+            if (new Date(o.orderedAt || 0) > new Date(bucket[key].orderedAt || 0)) {
+                bucket[key].orderedAt = o.orderedAt;
+            }
+        });
+        return Object.keys(bucket).map(function(key) {
+            var group = bucket[key];
+            group.orders = group.orders.sort(function(a, b) {
+                return new Date(a.orderedAt || 0) - new Date(b.orderedAt || 0);
+            });
+            group.status = groupStatusFromOrders(group.orders);
+            group.priority = groupPriorityFromOrders(group.orders);
+            return group;
+        }).sort(function(a, b) {
+            return new Date(b.orderedAt || 0) - new Date(a.orderedAt || 0);
+        });
+    }
+
+    function groupOrdersByPatient(orders) {
+        var dateGroups = groupOrdersByPatientAndDate(orders);
+        var bucket = {};
+        dateGroups.forEach(function(group) {
+            var key = stripMod(group.patientId) || 'UNKNOWN';
+            if (!bucket[key]) {
+                bucket[key] = {
+                    key: key,
+                    patientId: group.patientId,
+                    patientName: group.patientName,
+                    orderedAt: group.orderedAt,
+                    latestGroup: group,
+                    dateGroups: [],
+                    orders: []
+                };
+            }
+            bucket[key].dateGroups.push(group);
+            bucket[key].orders = bucket[key].orders.concat(group.orders || []);
+            if (new Date(group.orderedAt || 0) > new Date(bucket[key].orderedAt || 0)) {
+                bucket[key].orderedAt = group.orderedAt;
+                bucket[key].latestGroup = group;
+            }
+            if (group.patientName && !bucket[key].patientName) bucket[key].patientName = group.patientName;
+        });
+        return Object.keys(bucket).map(function(key) {
+            var summary = bucket[key];
+            summary.status = groupStatusFromOrders(summary.orders);
+            summary.priority = groupPriorityFromOrders(summary.orders);
+            summary.dateCount = summary.dateGroups.length;
+            summary.testCount = groupTestCount(summary);
+            return summary;
+        }).sort(function(a, b) {
+            return new Date(b.orderedAt || 0) - new Date(a.orderedAt || 0);
         });
     }
 
@@ -791,9 +1011,9 @@
         var el = document.getElementById('pcLabWorklist');
         if (!el) return;
         var orders = getLabOrders();
-        var groups = groupOrdersByPatientAndDate(orders);
+        var patientGroups = groupOrdersByPatient(orders);
 
-        if (!groups.length) {
+        if (!patientGroups.length) {
             el.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:#8e8e93;">' +
                            '<div style="font-size:28px;margin-bottom:6px;">🧪</div>' +
                            'No recent specimen requests.<br><span style="font-size:11px;">Doctor orders from OPD & Wards appear here automatically.</span>' +
@@ -801,24 +1021,29 @@
             return;
         }
 
-        var topGroups = groups.slice(0, 8);
+        var topGroups = patientGroups.slice(0, 8);
         el.innerHTML = topGroups.map(function(g) {
-            var itemsStr = groupTestNames(g).join(', ');
-            var accNo = displayAccessionNo(g);
+            var latestGroup = g.latestGroup || g.dateGroups[0] || g;
+            var uniqueTests = groupTestNames(g);
+            var previewTests = uniqueTests.slice(0, 3).join(', ');
+            if (uniqueTests.length > 3) previewTests += ' +' + (uniqueTests.length - 3) + ' more';
+            var accNo = displayAccessionNo(latestGroup);
             var rowSelClass = isSelectedRow(g) ? 'row-selected' : '';
+            var dateSummary = g.dateCount + ' request date' + (g.dateCount === 1 ? '' : 's');
+            var latestDate = formatLabDate(latestGroup.dateStr);
 
-            return '<tr data-lab-row="' + esc(g.patientId) + '" class="' + rowSelClass + '" style="cursor:pointer;transition:background .15s;" onclick="pcLabEngine.selectLabPatient(\'' + esc(g.patientId) + '\')">' +
+            return '<tr data-lab-row="' + esc(g.patientId) + '" class="' + rowSelClass + '" style="cursor:pointer;transition:background .15s;" onclick="pcLabEngine.openPatientDateView(\'' + esc(g.patientId) + '\')">' +
                    '<td style="font-weight:700;color:var(--ac,#007080)">' + esc(accNo) + '</td>' +
                    '<td><div style="font-weight:700;color:#1d1d1f;font-size:13px;">' + esc(g.patientName) + '</div>' +
                        '<div style="font-size:11px;color:#8e8e93;">MRN MOD-' + esc(g.patientId) + '</div></td>' +
-                   '<td style="font-weight:600;color:#1d1d1f;">' + esc(itemsStr || 'Laboratory Panel') + '</td>' +
-                   '<td><span style="font-size:11.5px;color:#3a3a3c;font-weight:600;">Multidisciplinary</span></td>' +
+                   '<td style="font-weight:600;color:#1d1d1f;">' + esc(previewTests || 'Laboratory Panel') + '</td>' +
+                   '<td><span style="font-size:11.5px;color:#3a3a3c;font-weight:700;">' + esc(dateSummary) + '</span><div style="font-size:10.5px;color:#8e8e93;margin-top:2px;">Latest: ' + esc(latestDate) + '</div></td>' +
                    '<td style="color:#8e8e93;font-size:11.5px;">' + ago(g.orderedAt) + '</td>' +
                    '<td>' + prioBadge(g.priority) + '</td>' +
                    '<td>' + statusBadge(g.status) + '</td>' +
                    '<td style="text-align:right;white-space:nowrap;">' +
-                       '<button class="btn-select-lab" onclick="event.stopPropagation(); pcLabEngine.selectLabPatient(\'' + esc(g.patientId) + '\')">✓ Select</button>' +
-                       '<button class="btn-ov-view" title="Open result entry" onclick="event.stopPropagation(); pcLabEngine.openResultModal(\'' + esc(g.orders[0].id) + '\')">📄</button>' +
+                       '<button class="btn-select-lab" onclick="event.stopPropagation(); pcLabEngine.openPatientDateView(\'' + esc(g.patientId) + '\')">📅 Open dates</button>' +
+                       '<button class="btn-ov-view" title="Open this patient once, then choose date" onclick="event.stopPropagation(); pcLabEngine.openPatientDateView(\'' + esc(g.patientId) + '\')">›</button>' +
                    '</td>' +
                    '</tr>';
         }).join('');
@@ -833,21 +1058,22 @@
         var sel = getSelectedLabPatient();
 
         if (!sel) {
+            paintLabDateSelector([], null);
             tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#8e8e93;">' +
                               '<div style="font-size:32px;margin-bottom:8px;">🔒</div>' +
-                              'No patient selected. Choose a patient from the Overview list (✓ Select) or search by name/ID in the identification bar above.</td></tr>';
+                              'No patient selected. Choose one patient once from the Overview list, then choose a request date.</td></tr>';
             return;
         }
 
-        var groups = scopeToSelectedPatient(groupOrdersByPatientAndDate(orders));
+        var patientGroups = patientDateGroups(sel, orders);
+        paintLabDateSelector(patientGroups, sel);
 
-        // Check search and priority filter
         var searchInput = document.getElementById('searchInput');
         var query = searchInput ? String(searchInput.value).toLowerCase().trim() : '';
         var prioSelect = document.getElementById('labPrioFilter');
         var prioFilter = prioSelect ? String(prioSelect.value).toLowerCase() : 'all';
 
-        var filteredGroups = groups.filter(function(g) {
+        var filteredGroups = patientGroups.filter(function(g) {
             if (prioFilter && prioFilter !== 'all priorities' && prioFilter !== 'all') {
                 if (String(g.priority).toLowerCase() !== prioFilter) return false;
             }
@@ -857,7 +1083,7 @@
                 var tStr  = g.orders.map(function(o){
                     return (o.items || []).map(function(it){ return it.name; }).join(' ');
                 }).join(' ').toLowerCase();
-                if (pName.indexOf(query) === -1 && pId.indexOf(query) === -1 && tStr.indexOf(query) === -1) {
+                if (pName.indexOf(query) === -1 && pId.indexOf(query) === -1 && tStr.indexOf(query) === -1 && String(g.dateStr || '').indexOf(query) === -1) {
                     return false;
                 }
             }
@@ -867,51 +1093,50 @@
         if (!filteredGroups.length) {
             tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#8e8e93;">' +
                               '<div style="font-size:32px;margin-bottom:8px;">📭</div>' +
-                              'No laboratory orders for the selected patient (' + esc(sel ? patientDisplayName(sel) : '') + ').<br>' +
-                              '<span style="font-size:11px;">New doctor orders for this patient appear here automatically.</span></td></tr>';
+                              'No laboratory requests matched this patient/date selection for ' + esc(patientDisplayName(sel)) + '.</td></tr>';
             return;
         }
 
+        var selectedDate = ensureSelectedLabDateForPatient(sel, filteredGroups);
+        var group = filteredGroups.filter(function(g) { return String(g.dateStr) === String(selectedDate); })[0] || filteredGroups[0];
+        if (!group) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#8e8e93;">No visible request dates found.</td></tr>';
+            return;
+        }
+        rememberSelectedLabDate(group.dateStr);
+        openGroups[group.key] = true;
+
+        var itemsStr = groupTestNames(group).join(', ');
+        var accNo = displayAccessionNo(group);
+        var chevronStyle = openGroups[group.key] ? 'transform:rotate(90deg);' : 'transform:rotate(0deg);';
+        var childDisplay = openGroups[group.key] ? 'table-row' : 'none';
+        var requestedText = formatLabDate(group.dateStr) + ' • ' + ago(group.orderedAt);
+        var tatText = group.status === 'completed' ? 'Completed' : (group.status === 'in-progress' ? 'In progress' : 'Awaiting action');
+
         var html = '';
-        filteredGroups.forEach(function(g) {
-            var itemsStr = groupTestNames(g).join(', ');
-            var accNo = displayAccessionNo(g);
-
-            var isUnfolded = openGroups[g.key] === true;
-            var chevronStyle = isUnfolded ? 'transform:rotate(90deg);' : 'transform:rotate(0deg);';
-            var childDisplay = isUnfolded ? 'table-row' : 'none';
-            var rowSelClass = isSelectedRow(g) ? 'row-selected' : '';
-
-            html += '<tr data-lab-row="' + esc(g.patientId) + '" class="lab-master-row ' + rowSelClass + '" style="cursor:pointer;transition:background .15s;" onclick="pcLabEngine.togglePatientGroup(\'' + esc(g.key) + '\')">' +
-                    '<td style="font-weight:700;color:var(--ac,#007080)">' + esc(accNo) + '</td>' +
-                    '<td><div style="font-weight:700;color:#1d1d1f;font-size:13.5px;">' + esc(g.patientName) + '</div>' +
-                        '<div style="font-size:11px;color:#8e8e93;">MRN MOD-' + esc(g.patientId) + '</div></td>' +
-                    '<td style="font-weight:600;color:#1d1d1f;">' + esc(itemsStr || 'Laboratory Panel') + '</td>' +
-                    '<td><span style="font-size:11.5px;color:#3a3a3c;font-weight:600;">Multidisciplinary</span></td>' +
-                    '<td style="color:#8e8e93;font-size:11.5px;">' + ago(g.orderedAt) + '</td>' +
-                    '<td style="font-weight:600;color:' + (g.priority === 'stat' ? 'var(--redd,#8a1f1a)' : '#3a3a3c') + ';">' +
-                        (g.status === 'completed' ? 'Completed' : '20-45 min') + '</td>' +
-                    '<td>' + prioBadge(g.priority) + '</td>' +
-                    '<td>' + statusBadge(g.status) + '</td>' +
-                    '<td style="text-align:right;white-space:nowrap;">' +
-                        '<button class="btn-select-lab" onclick="event.stopPropagation(); pcLabEngine.selectLabPatient(\'' + esc(g.patientId) + '\')">✓ Select</button>' +
-                        '<button onclick="event.stopPropagation(); pcLabEngine.togglePatientGroup(\'' + esc(g.key) + '\')" ' +
-                                'style="height:30px;padding:0 14px;border-radius:9px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#1c1c1e;font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.05);margin-left:6px;">' +
-                            '📂 <span style="color:#007080;">' + groupTestCount(g) + ' Test' + (groupTestCount(g) === 1 ? '' : 's') + '</span> — Open Request <span id="chev_' + esc(g.key) + '" style="display:inline-block;transition:transform 0.28s;' + chevronStyle + '">▶</span>' +
-                        '</button>' +
-                    '</td>' +
-                    '</tr>';
-
-            // Accordion nested child row displaying the 100/100 Look-Alike Editable PClinic Matrix Table
-            html += '<tr id="child_row_' + esc(g.key) + '" class="patient-lab-child-row" style="display:' + childDisplay + ';">' +
-                    '<td colspan="9" style="padding:0;background:#f8f9fa;border-bottom:3px solid #007080;">' +
-                      '<div id="child_wrap_' + esc(g.key) + '" style="padding:22px 28px;">' +
-                        buildEditableMatrixTableHTML(g) +
-                      '</div>' +
-                    '</td>' +
-                    '</tr>';
-        });
-
+        html += '<tr data-lab-row="' + esc(group.patientId) + '" class="lab-master-row row-selected" style="cursor:pointer;transition:background .15s;" onclick="pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')">' +
+                '<td style="font-weight:700;color:var(--ac,#007080)">' + esc(accNo) + '</td>' +
+                '<td><div style="font-weight:700;color:#1d1d1f;font-size:13.5px;">' + esc(group.patientName) + '</div>' +
+                    '<div style="font-size:11px;color:#8e8e93;">MRN MOD-' + esc(group.patientId) + '</div></td>' +
+                '<td style="font-weight:600;color:#1d1d1f;">' + esc(itemsStr || 'Laboratory Panel') + '</td>' +
+                '<td><span style="font-size:11.5px;color:#3a3a3c;font-weight:700;">Selected date</span><div style="font-size:10.5px;color:#8e8e93;margin-top:2px;">' + esc(formatLabDate(group.dateStr)) + '</div></td>' +
+                '<td style="color:#8e8e93;font-size:11.5px;">' + esc(requestedText) + '</td>' +
+                '<td style="font-weight:700;color:#3a3a3c;">' + esc(tatText) + '</td>' +
+                '<td>' + prioBadge(group.priority) + '</td>' +
+                '<td>' + statusBadge(group.status) + '</td>' +
+                '<td style="text-align:right;white-space:nowrap;">' +
+                    '<button class="btn-select-lab" onclick="event.stopPropagation(); pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')">📋 ' + (group.orders || []).length + ' request' + ((group.orders || []).length === 1 ? '' : 's') + '</button>' +
+                    '<button onclick="event.stopPropagation(); pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')" style="height:30px;padding:0 14px;border-radius:999px;border:1px solid rgba(0,0,0,0.12);background:#fff;color:#1c1c1e;font-weight:700;font-size:12px;cursor:pointer;margin-left:6px;">' +
+                        '<span id="chev_' + esc(group.key) + '" style="display:inline-block;transition:transform 0.28s;' + chevronStyle + '">▶</span></button>' +
+                '</td>' +
+                '</tr>';
+        html += '<tr id="child_row_' + esc(group.key) + '" class="patient-lab-child-row" style="display:' + childDisplay + ';">' +
+                '<td colspan="9" style="padding:0;background:#f8f9fa;border-bottom:3px solid #007080;">' +
+                  '<div id="child_wrap_' + esc(group.key) + '" style="padding:22px 28px;">' +
+                    buildEditableMatrixTableHTML(group) +
+                  '</div>' +
+                '</td>' +
+                '</tr>';
         tbody.innerHTML = html;
     }
 
@@ -1422,27 +1647,29 @@
         if (!sel) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#8e8e93;">' +
                               '<div style="font-size:32px;margin-bottom:8px;">🔒</div>' +
-                              'No patient selected. Results are shown for the selected patient only.</td></tr>';
+                              'No patient selected. Results are shown for the selected patient/date only.</td></tr>';
             return;
         }
 
         var orders = getLabOrders().filter(function(o) { return o.status === 'completed'; });
-        var groups = scopeToSelectedPatient(groupOrdersByPatientAndDate(orders));
+        var groups = patientDateGroups(sel, orders);
+        var activeDate = ensureSelectedLabDateForPatient(sel, patientDateGroups(sel));
+        var visibleGroups = activeDate ? groups.filter(function(group) { return String(group.dateStr) === String(activeDate); }) : groups;
 
-        if (!groups.length) {
+        if (!visibleGroups.length) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#8e8e93;">' +
                               '<div style="font-size:32px;margin-bottom:8px;">✅</div>' +
-                              'No completed laboratory results for the selected patient (' + esc(patientDisplayName(sel)) + ').</td></tr>';
+                              'No completed laboratory results for ' + esc(patientDisplayName(sel)) + (activeDate ? (' on ' + esc(formatLabDate(activeDate))) : '') + '.</td></tr>';
             return;
         }
 
-        tbody.innerHTML = groups.map(function(g) {
+        tbody.innerHTML = visibleGroups.map(function(g) {
             var itemsStr = groupTestNames(g).join(', ');
             var accNo = displayAccessionNo(g);
             return '<tr>' +
                    '<td style="font-weight:700;color:var(--ac,#007080)">' + esc(accNo) + '</td>' +
                    '<td><div style="font-weight:700;color:#1d1d1f;font-size:13.5px;">' + esc(g.patientName) + '</div>' +
-                       '<div style="font-size:11px;color:#8e8e93;">MRN MOD-' + esc(g.patientId) + '</div></td>' +
+                       '<div style="font-size:11px;color:#8e8e93;">MRN MOD-' + esc(g.patientId) + ' • ' + esc(formatLabDate(g.dateStr)) + '</div></td>' +
                    '<td style="font-weight:600;">' + esc(itemsStr || 'Lab Panel') + '</td>' +
                    '<td><span style="font-size:11.5px;color:#3a3a3c;font-weight:600;">Multidisciplinary</span></td>' +
                    '<td style="font-size:11.5px;color:#1a7a32;font-weight:700;">Verified</td>' +
@@ -1535,9 +1762,12 @@
             if (window.showToast) showToast('Order not found in queue', 'warning');
             return;
         }
-        // Doctor Dashboard style: work happens on the SELECTED patient only
-        selectLabPatient(g.patientId);
-        togglePatientGroup(g.key);
+        selectLabPatient(g.patientId, true);
+        rememberSelectedLabDate(g.dateStr);
+        var worklistButton = document.querySelector('[data-tab="worklist"]');
+        if (worklistButton && typeof switchTab === 'function') switchTab('worklist', worklistButton);
+        openGroups[g.key] = true;
+        repaintAll();
         var childRow = document.getElementById('child_row_' + g.key);
         if (childRow) {
             childRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1701,7 +1931,8 @@
         if (!sel) return;
         var selPat = getSelectedLabPatient();
         var groups = specimenGroupsForPatient(selPat);
-
+        var selectedDate = ensureSelectedLabDateForPatient(selPat, patientDateGroups(selPat));
+        var preferredGroup = groups.filter(function(group) { return String(group.dateStr) === String(selectedDate); })[0] || groups[0] || null;
         var currentVal = sel.value;
         var optionsHtml;
         if (!selPat) {
@@ -1709,21 +1940,20 @@
         } else if (!groups.length) {
             optionsHtml = '<option value="">No pending orders for ' + esc(patientDisplayName(selPat)) + '…</option>';
         } else {
-            optionsHtml = '<option value="">' + esc(patientDisplayName(selPat)) + ' — pending orders (' + groups.length + ')…</option>';
+            optionsHtml = '<option value="">Choose request date for ' + esc(patientDisplayName(selPat)) + '…</option>';
         }
 
         groups.forEach(function(g) {
-            var label = g.patientName + ' — MRN MOD-' + g.patientId + ' (' + groupTestCount(g) + ' test' + (groupTestCount(g) === 1 ? '' : 's') + ' • ' + String(g.priority).toUpperCase() + ')';
-            optionsHtml += '<option value="' + esc(g.key) + '">' + esc(label) + '</option>';
+            optionsHtml += '<option value="' + esc(g.key) + '">' + esc(dateSelectorLabel(g)) + '</option>';
         });
 
         sel.innerHTML = optionsHtml;
         if (currentVal && groups.some(function(g){ return g.key === currentVal; })) {
             sel.value = currentVal;
             selectSpecimenPatient(currentVal, true);
-        } else if (groups.length > 0) {
-            sel.value = groups[0].key;
-            selectSpecimenPatient(groups[0].key, true);
+        } else if (preferredGroup) {
+            sel.value = preferredGroup.key;
+            selectSpecimenPatient(preferredGroup.key, true);
         } else {
             resetSpecimenPanel();
         }
@@ -1734,6 +1964,7 @@
         if (!g) return;
         var selector = document.getElementById('specSmartPatientSelect');
         ensureSpecimenSelectorOption(selector, g);
+        rememberSelectedLabDate(g.dateStr);
 
         var nameEl = document.getElementById('spec_pat_name');
         var mrnEl  = document.getElementById('spec_pat_mrn');
@@ -1745,7 +1976,7 @@
         var accNo = displayAccessionNo(g);
 
         if (nameEl) nameEl.textContent = g.patientName;
-        if (mrnEl)  mrnEl.textContent  = 'MRN MOD-' + g.patientId + ' • ' + String(g.priority).toUpperCase() + ' Order';
+        if (mrnEl)  mrnEl.textContent  = 'MRN MOD-' + g.patientId + ' • ' + formatLabDate(g.dateStr) + ' • ' + String(g.priority).toUpperCase() + ' Order';
         if (docEl)  docEl.textContent  = g.orders[0].orderedBy || 'PClinic Staff';
         if (accEl)  accEl.textContent  = 'ACC: ' + accNo;
         if (barBox) barBox.innerHTML   = generateSVGBarcode(accNo);
@@ -1766,7 +1997,7 @@
         }
 
         if (!quiet && window.showToast) {
-            showToast('👤 Auto-loaded specimen order: ' + g.patientName, 'info');
+            showToast('👤 Auto-loaded specimen request date: ' + formatLabDate(g.dateStr) + ' for ' + g.patientName, 'info');
         }
     }
 
@@ -1996,10 +2227,11 @@
         if (!sel) return;
         var selPat = getSelectedLabPatient();
         var orders = getLabOrders();
-        var groups = scopeToSelectedPatient(groupOrdersByPatientAndDate(orders)).filter(function(g) {
+        var groups = patientDateGroups(selPat, orders).filter(function(g) {
             return g.status === 'completed';
         });
-
+        var selectedDate = ensureSelectedLabDateForPatient(selPat, patientDateGroups(selPat, orders));
+        var preferredGroup = groups.filter(function(group) { return String(group.dateStr) === String(selectedDate); })[0] || groups[0] || null;
         var currentVal = sel.value;
         var optionsHtml;
         if (!selPat) {
@@ -2007,21 +2239,20 @@
         } else if (!groups.length) {
             optionsHtml = '<option value="">No verified reports for ' + esc(patientDisplayName(selPat)) + '…</option>';
         } else {
-            optionsHtml = '<option value="">' + esc(patientDisplayName(selPat)) + ' — verified report (' + groups.length + ')…</option>';
+            optionsHtml = '<option value="">Choose verified request date for ' + esc(patientDisplayName(selPat)) + '…</option>';
         }
 
         groups.forEach(function(g) {
-            var label = g.patientName + ' — MRN MOD-' + g.patientId + ' (' + groupTestCount(g) + ' test' + (groupTestCount(g) === 1 ? '' : 's') + ' • VERIFIED)';
-            optionsHtml += '<option value="' + esc(g.key) + '">' + esc(label) + '</option>';
+            optionsHtml += '<option value="' + esc(g.key) + '">' + esc(dateSelectorLabel(g, 'verified')) + '</option>';
         });
 
         sel.innerHTML = optionsHtml;
         if (currentVal && groups.some(function(g){ return g.key === currentVal; })) {
             sel.value = currentVal;
             selectReportPatient(currentVal, true);
-        } else if (groups.length > 0) {
-            sel.value = groups[0].key;
-            selectReportPatient(groups[0].key, true);
+        } else if (preferredGroup) {
+            sel.value = preferredGroup.key;
+            selectReportPatient(preferredGroup.key, true);
         } else {
             resetReportsPanel();
         }
@@ -2033,6 +2264,7 @@
         var groups = groupOrdersByPatientAndDate(orders);
         var g = groups.find(function(x){ return x.key === groupKey; });
         if (!g) return;
+        rememberSelectedLabDate(g.dateStr);
 
         var nameEl = document.getElementById('rep_pat_name');
         var mrnEl  = document.getElementById('rep_pat_mrn');
@@ -2044,7 +2276,7 @@
         var accNo = displayAccessionNo(g);
 
         if (nameEl) nameEl.textContent = g.patientName;
-        if (mrnEl)  mrnEl.textContent  = 'MRN MOD-' + g.patientId + ' • Verified Report';
+        if (mrnEl)  mrnEl.textContent  = 'MRN MOD-' + g.patientId + ' • ' + formatLabDate(g.dateStr) + ' • Verified Report';
         if (docEl)  docEl.textContent  = g.orders[0].orderedBy || 'PClinic Staff';
         if (accEl)  accEl.textContent  = 'ACC: ' + accNo;
         if (barBox) barBox.innerHTML   = generateSVGBarcode(accNo);
@@ -2073,7 +2305,7 @@
         }
 
         if (!quiet && window.showToast) {
-            showToast('📜 Auto-loaded verified report: ' + g.patientName, 'info');
+            showToast('📜 Auto-loaded verified report date: ' + formatLabDate(g.dateStr) + ' for ' + g.patientName, 'info');
         }
     }
 
@@ -2117,27 +2349,29 @@
         if (!selPat) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:#8e8e93;">' +
                               '<div style="font-size:28px;margin-bottom:6px;">🔒</div>' +
-                              'No patient selected. Reports are shown for the selected patient only.</td></tr>';
+                              'No patient selected. Reports are shown for the selected patient/date only.</td></tr>';
             return;
         }
 
         var orders = getLabOrders().filter(function(o) { return o.status === 'completed'; });
-        var groups = scopeToSelectedPatient(groupOrdersByPatientAndDate(orders));
+        var groups = patientDateGroups(selPat, orders);
+        var activeDate = ensureSelectedLabDateForPatient(selPat, patientDateGroups(selPat));
+        var visibleGroups = activeDate ? groups.filter(function(group) { return String(group.dateStr) === String(activeDate); }) : groups;
 
-        if (!groups.length) {
+        if (!visibleGroups.length) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:#8e8e93;">' +
                               '<div style="font-size:28px;margin-bottom:6px;">🖨️</div>' +
-                              'No verified laboratory reports for the selected patient (' + esc(patientDisplayName(selPat)) + ').</td></tr>';
+                              'No verified laboratory reports for ' + esc(patientDisplayName(selPat)) + (activeDate ? (' on ' + esc(formatLabDate(activeDate))) : '') + '.</td></tr>';
             return;
         }
 
-        tbody.innerHTML = groups.map(function(g) {
+        tbody.innerHTML = visibleGroups.map(function(g) {
             var itemsStr = groupTestNames(g).join(', ');
             var accNo = displayAccessionNo(g);
             return '<tr>' +
                    '<td style="font-weight:700;color:var(--ac,#007080)">' + esc(accNo) + '</td>' +
                    '<td><div style="font-weight:700;color:#1d1d1f;font-size:13.5px;">' + esc(g.patientName) + '</div>' +
-                       '<div style="font-size:11px;color:#8e8e93;">MRN MOD-' + esc(g.patientId) + '</div></td>' +
+                       '<div style="font-size:11px;color:#8e8e93;">MRN MOD-' + esc(g.patientId) + ' • ' + esc(formatLabDate(g.dateStr)) + '</div></td>' +
                    '<td style="font-weight:600;">' + esc(itemsStr || 'Lab Panel') + '</td>' +
                    '<td><span style="font-size:11.5px;color:#3a3a3c;font-weight:600;">Multidisciplinary</span></td>' +
                    '<td style="font-size:11.5px;color:#1a7a32;font-weight:700;">' + ago(g.orderedAt) + '</td>' +
@@ -2338,7 +2572,9 @@
         if (!sel) return;
         var selPat = getSelectedLabPatient();
         var orders = getLabOrders().filter(isMicrobiologyOrder);
-        var groups = scopeToSelectedPatient(groupOrdersByPatientAndDate(orders));
+        var groups = patientDateGroups(selPat, orders);
+        var selectedDate = ensureSelectedLabDateForPatient(selPat, patientDateGroups(selPat));
+        var preferredGroup = groups.filter(function(group) { return String(group.dateStr) === String(selectedDate); })[0] || groups[0] || null;
 
         var currentVal = sel.value;
         var optionsHtml;
@@ -2347,21 +2583,20 @@
         } else if (!groups.length) {
             optionsHtml = '<option value="">No culture orders for ' + esc(patientDisplayName(selPat)) + '…</option>';
         } else {
-            optionsHtml = '<option value="">' + esc(patientDisplayName(selPat)) + ' — culture order (' + groups.length + ')…</option>';
+            optionsHtml = '<option value="">Choose microbiology request date for ' + esc(patientDisplayName(selPat)) + '…</option>';
         }
 
         groups.forEach(function(g) {
-            var label = g.patientName + ' — MRN MOD-' + g.patientId + ' (' + groupTestCount(g) + ' microbiology test' + (groupTestCount(g) === 1 ? '' : 's') + ')';
-            optionsHtml += '<option value="' + esc(g.key) + '">' + esc(label) + '</option>';
+            optionsHtml += '<option value="' + esc(g.key) + '">' + esc(dateSelectorLabel(g, 'micro')) + '</option>';
         });
 
         sel.innerHTML = optionsHtml;
         if (currentVal && groups.some(function(g){ return g.key === currentVal; })) {
             sel.value = currentVal;
             selectMicrobioPatient(currentVal, true);
-        } else if (groups.length > 0) {
-            sel.value = groups[0].key;
-            selectMicrobioPatient(groups[0].key, true);
+        } else if (preferredGroup) {
+            sel.value = preferredGroup.key;
+            selectMicrobioPatient(preferredGroup.key, true);
         } else {
             resetMicrobioPanel();
         }
@@ -2374,6 +2609,7 @@
         var g = groups.find(function(x){ return x.key === groupKey; });
         if (!g) return;
 
+        rememberSelectedLabDate(g.dateStr);
         var barBox = document.getElementById('mic_barcode_box');
         var accNo = displayAccessionNo(g);
 
@@ -2381,7 +2617,7 @@
 
         paintMicrobioTable();
         if (!quiet && window.showToast) {
-            showToast('🧫 Auto-loaded microbiology culture order: ' + g.patientName, 'info');
+            showToast('🧫 Auto-loaded microbiology request date: ' + formatLabDate(g.dateStr) + ' for ' + g.patientName, 'info');
         }
     }
 
@@ -2641,8 +2877,11 @@
         saveOrderResults: saveOrderResults,
         autoFlagResult: autoFlagResult,
         selectLabPatient: selectLabPatient,
+        openPatientDateView: openPatientDateView,
+        selectLabDate: selectLabDate,
         clearLabSelection: clearLabSelection,
         getSelectedLabPatient: getSelectedLabPatient,
+        getSelectedLabDate: getSelectedLabDate,
         listVisibleLabOrders: getLabOrders,
         updateSelectionUI: updateSelectionUI,
         openResultModal: openResultModal,

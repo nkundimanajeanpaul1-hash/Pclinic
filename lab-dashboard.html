@@ -2827,6 +2827,7 @@
             font-size: 11.5px !important;
             color: #7c8799 !important;
         }
+        .panel-actions .fi,
         .panel-actions .btn-print,
         #panel-overview .panel-body > div:first-child .btn-s {
             height: 34px !important;
@@ -2838,6 +2839,58 @@
             box-shadow: none !important;
             font-size: 11px !important;
             font-weight: 800 !important;
+        }
+        .panel-actions .fi {
+            width: auto !important;
+            min-width: 150px;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image:
+                linear-gradient(180deg, rgba(255,255,255,.98), rgba(246,248,252,.96)),
+                linear-gradient(45deg, transparent 50%, #8a94a6 50%),
+                linear-gradient(135deg, #8a94a6 50%, transparent 50%);
+            background-position:
+                0 0,
+                calc(100% - 18px) calc(50% - 2px),
+                calc(100% - 12px) calc(50% - 2px);
+            background-size:
+                100% 100%,
+                6px 6px,
+                6px 6px;
+            background-repeat: no-repeat;
+            padding-right: 30px !important;
+            cursor: pointer;
+        }
+        #labDateFilter {
+            min-width: 250px !important;
+            color: #0d4d9b !important;
+            border-color: rgba(31,103,210,.18) !important;
+            background-image:
+                linear-gradient(180deg, #f7fbff, #edf5ff),
+                linear-gradient(45deg, transparent 50%, #1f67d2 50%),
+                linear-gradient(135deg, #1f67d2 50%, transparent 50%) !important;
+            box-shadow: inset 0 0 0 1px rgba(31,103,210,.04) !important;
+        }
+        #labDateFilter:disabled {
+            color: #99a3b4 !important;
+            border-color: rgba(219,224,232,.95) !important;
+            background-image:
+                linear-gradient(180deg, #ffffff, #f4f6fa),
+                linear-gradient(45deg, transparent 50%, #b9c0cd 50%),
+                linear-gradient(135deg, #b9c0cd 50%, transparent 50%) !important;
+            cursor: not-allowed;
+            opacity: .85;
+        }
+        .panel-actions .fi:hover,
+        .panel-actions .btn-print:hover,
+        #panel-overview .panel-body > div:first-child .btn-s:hover {
+            background-color: #f8fbff !important;
+            border-color: rgba(31,103,210,.18) !important;
+        }
+        .panel-actions .fi:focus {
+            border-color: rgba(31,103,210,.28) !important;
+            box-shadow: 0 0 0 4px rgba(31,103,210,.08) !important;
+            background-color: #ffffff !important;
         }
         .panel-actions .btn-print:hover,
         #panel-overview .panel-body > div:first-child .btn-s:hover {
@@ -3239,7 +3292,7 @@
                 <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
                     <div>
                         <div style="font-size:16px;font-weight:700;color:var(--tp);margin-bottom:2px;">Laboratory dashboard • Active Specimen Worklist</div>
-                        <div style="font-size:12px;color:var(--tm);">Live Patient Master Row Queue • Click ✓ Select (or search above) — all buttons unlock once a patient is selected</div>
+                        <div style="font-size:12px;color:var(--tm);">One patient appears once only • click the patient, choose a request date, then see all requested labs for that date</div>
                     </div>
                     <button class="btn-s" style="font-size:11.5px;display:flex;align-items:center;gap:5px;" onclick="pcLabEngine.repaint(); showToast('🔄 Worklist refreshed', 'info')"><i class="ti ti-refresh" style="font-size:13px;"></i> Refresh Queue</button>
                 </div>
@@ -3367,6 +3420,9 @@
                         </select>
                         <select class="fi" id="labPrioFilter" style="width:auto;font-size:11px;" onchange="pcLabEngine.repaint()">
                             <option>All priorities</option><option>STAT</option><option>Urgent</option><option>Routine</option>
+                        </select>
+                        <select class="fi" id="labDateFilter" style="width:auto;min-width:230px;font-size:11px;" onchange="pcLabEngine.selectLabDate(this.value, true)">
+                            <option value="">Select patient first…</option>
                         </select>
                         <button class="btn-s" style="font-size:11px;display:flex;align-items:center;gap:4px;" onclick="pcLabEngine.repaint(); showToast('🔄 Worklist refreshed', 'info')"><i class="ti ti-refresh" style="font-size:12px;"></i> Refresh</button>
                     </div>
