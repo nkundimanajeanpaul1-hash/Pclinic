@@ -1131,8 +1131,8 @@
                 '</td>' +
                 '</tr>';
         html += '<tr id="child_row_' + esc(group.key) + '" class="patient-lab-child-row" style="display:' + childDisplay + ';">' +
-                '<td colspan="9" style="padding:0;background:#f8f9fa;border-bottom:3px solid #007080;">' +
-                  '<div id="child_wrap_' + esc(group.key) + '" style="padding:22px 28px;">' +
+                '<td colspan="9" style="padding:0;background:#ffffff;border-bottom:1px solid #dbe2ea;">' +
+                  '<div id="child_wrap_' + esc(group.key) + '" style="padding:18px 22px;background:#ffffff;">' +
                     buildEditableMatrixTableHTML(group) +
                   '</div>' +
                 '</td>' +
@@ -1147,8 +1147,7 @@
     function buildEditableMatrixTableHTML(group) {
         var pName = group.patientName;
         var mrn = group.patientId;
-        var dayParts = String(group.dateStr || '').split('-');
-        var dayDateStr = dayParts.length === 3 ? dayParts[2] + '/' + dayParts[1] + '/' + dayParts[0] : (group.dateStr || '—');
+        var dayDateStr = formatLabDate(group.dateStr || '');
 
         var ordersSorted = group.orders.slice().sort(function (a, b) {
             return new Date(a.orderedAt || 0) - new Date(b.orderedAt || 0);
@@ -1159,17 +1158,13 @@
         var allCompleted = ordersSorted.length > 0 && nonFinalCount === 0;
         var someFailed = ordersSorted.some(function (o) { return o._syncFailed === true; });
 
-        var orderIdsStr = ordersSorted.map(function (o) { return esc(String(o.id || '—')); }).join(' · ');
-
         var stateChip = allCompleted
-            ? '<span style="background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:11px;padding:4px 10px;border-radius:20px;">✓ FINAL — IMMUTABLE</span>'
+            ? '<span style="background:#f3f7f3;color:#25643a;font-weight:700;font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid #d7e7d8;">Verified</span>'
             : someFailed
-                ? '<span style="background:#ffebe9;color:#8a1f1a;font-weight:800;font-size:11px;padding:4px 10px;border-radius:20px;">⚠ Server sync failed — release will repair</span>'
-                : '<span style="background:#fff4e0;color:#7a4500;font-weight:800;font-size:11px;padding:4px 10px;border-radius:20px;">Result entry — ' + ordersSorted.length + ' request(s)</span>';
+                ? '<span style="background:#fff7f7;color:#9b2c2c;font-weight:700;font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid #f0d3d3;">Sync issue</span>'
+                : '<span style="background:#f6f7f9;color:#4b5565;font-weight:700;font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid #e3e8ef;">Open result entry</span>';
 
-        // One card body: every request of the day, in one place.
         var bodyHtml = '';
-        var parameterCount = 0;
         ordersSorted.forEach(function (order) {
             var orderId = String(order.id || '');
             var orderDomId = safeDomId(orderId);
@@ -1178,69 +1173,96 @@
             var readonlyAttr = completed ? ' readonly' : '';
             var disabledAttr = completed ? ' disabled' : '';
             var items = Array.isArray(order.items) ? order.items : [];
-            var parameterRows = '';
+            var rowsHtml = '';
+            var localRowCount = 0;
 
             items.forEach(function (item) {
                 var parameters = parametersForOrderItem(item);
-                parameterRows += '<div style="font-size:11.5px;font-weight:800;color:#004a52;margin:12px 0 6px;padding-bottom:5px;border-bottom:1px solid rgba(0,112,128,.18);">' +
-                    esc(item.name || 'Laboratory test') + ' <span style="font-weight:600;color:#64748b;">(' + esc(item.code || 'No code') + ')</span></div>';
                 parameters.forEach(function (parameter, parameterIndex) {
-                    parameterCount++;
+                    localRowCount++;
                     var existing = existingOrderResult(order, parameter) || {};
                     var rowId = orderDomId + '_' + safeDomId(parameter.orderItemCode) + '_' + safeDomId(parameter.code) + '_' + parameterIndex;
                     var value = existing.value == null ? '' : existing.value;
                     var flag = existing.flag || 'Normal';
-                    parameterRows +=
-                        '<div class="lab-result-entry-row" style="display:grid;grid-template-columns:minmax(210px,1.4fr) minmax(115px,.65fr) minmax(150px,.8fr) minmax(125px,.65fr);gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:' + (parameterCount % 2 ? '#f8fafc' : '#fff') + ';border:1px solid rgba(0,0,0,.06);margin-bottom:6px;">' +
-                          '<div><div style="font-size:12.5px;font-weight:800;color:#1d1d1f;">' + esc(parameter.test || parameter.name) + '</div>' +
-                            '<div style="font-size:10.5px;color:#64748b;margin-top:2px;">Code ' + esc(parameter.code || '—') + (parameter.unit ? ' • ' + esc(parameter.unit) : '') + '</div></div>' +
-                          '<div style="font-size:11.5px;color:#475569;font-weight:600;">' + (parameter.range ? esc(parameter.range) : 'No fixed range') + '</div>' +
-                          '<input id="lab_value_' + rowId + '" class="lab-order-result-input" type="text" value="' + esc(value) + '" placeholder="Enter measured value"' + readonlyAttr +
-                            ' data-code="' + esc(parameter.code) + '" data-name="' + esc(parameter.name) + '" data-unit="' + esc(parameter.unit) + '" data-range="' + esc(parameter.range) + '"' +
-                            ' data-order-item-code="' + esc(parameter.orderItemCode) + '" data-order-item-name="' + esc(parameter.orderItemName) + '"' +
-                            ' data-order-id="' + esc(orderId) + '"' +
-                            ' data-flag-id="lab_flag_' + rowId + '" oninput="pcLabEngine.autoFlagResult(this)"' +
-                            ' style="width:100%;height:36px;background:' + (completed ? '#f1f5f9' : '#fff') + ';border:1px solid ' + (completed ? '#cbd5e1' : '#007080') + ';border-radius:8px;padding:0 11px;font-weight:750;font-size:13px;color:#1d1d1f;" />' +
-                          '<select id="lab_flag_' + rowId + '" class="lab-order-result-flag"' + disabledAttr +
-                            ' style="width:100%;height:36px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:8px;padding:0 8px;font-size:11.5px;font-weight:750;">' +
-                            '<option value="Normal"' + (flag === 'Normal' ? ' selected' : '') + '>✓ Normal</option>' +
-                            '<option value="↑ High"' + (String(flag).indexOf('High') !== -1 ? ' selected' : '') + '>↑ High</option>' +
-                            '<option value="↓ Low"' + (String(flag).indexOf('Low') !== -1 ? ' selected' : '') + '>↓ Low</option>' +
-                            '<option value="⚠️ Critical"' + (String(flag).indexOf('Critical') !== -1 ? ' selected' : '') + '>⚠️ Critical</option>' +
-                          '</select>' +
-                        '</div>';
+                    rowsHtml +=
+                        '<tr>' +
+                          '<td style="padding:8px 10px;border-bottom:1px solid #e8edf3;vertical-align:top;">' +
+                            '<div style="font-size:12px;font-weight:800;color:#17212f;line-height:1.25;">' + esc(parameter.test || parameter.name || item.name || 'Laboratory test') + '</div>' +
+                            '<div style="font-size:10px;color:#7c8798;margin-top:2px;">Request ' + esc(orderId) + ' • ' + esc(item.code || parameter.orderItemCode || 'No code') + '</div>' +
+                          '</td>' +
+                          '<td style="padding:8px 10px;border-bottom:1px solid #e8edf3;color:#526071;font-size:11px;font-weight:600;">' + esc(parameter.code || '—') + '</td>' +
+                          '<td style="padding:8px 10px;border-bottom:1px solid #e8edf3;color:#526071;font-size:11px;font-weight:600;">' + (parameter.range ? esc(parameter.range) : 'No fixed range') + '</td>' +
+                          '<td style="padding:6px 8px;border-bottom:1px solid #e8edf3;">' +
+                            '<input id="lab_value_' + rowId + '" class="lab-order-result-input" type="text" value="' + esc(value) + '" placeholder="Enter result"' + readonlyAttr +
+                              ' data-code="' + esc(parameter.code) + '" data-name="' + esc(parameter.name) + '" data-unit="' + esc(parameter.unit) + '" data-range="' + esc(parameter.range) + '"' +
+                              ' data-order-item-code="' + esc(parameter.orderItemCode) + '" data-order-item-name="' + esc(parameter.orderItemName) + '"' +
+                              ' data-order-id="' + esc(orderId) + '"' +
+                              ' data-flag-id="lab_flag_' + rowId + '" oninput="pcLabEngine.autoFlagResult(this)"' +
+                              ' style="width:100%;height:34px;background:' + (completed ? '#f6f7f9' : '#ffffff') + ';border:1px solid #d7dee8;border-radius:8px;padding:0 10px;font-weight:700;font-size:12px;color:#17212f;outline:none;" />' +
+                          '</td>' +
+                          '<td style="padding:6px 8px;border-bottom:1px solid #e8edf3;">' +
+                            '<select id="lab_flag_' + rowId + '" class="lab-order-result-flag"' + disabledAttr +
+                              ' style="width:100%;height:34px;background:#ffffff;border:1px solid #d7dee8;border-radius:10px;padding:0 10px;font-size:11.5px;font-weight:700;color:#334155;">' +
+                              '<option value="Normal"' + (flag === 'Normal' ? ' selected' : '') + '>Normal</option>' +
+                              '<option value="↑ High"' + (String(flag).indexOf('High') !== -1 ? ' selected' : '') + '>High</option>' +
+                              '<option value="↓ Low"' + (String(flag).indexOf('Low') !== -1 ? ' selected' : '') + '>Low</option>' +
+                              '<option value="⚠️ Critical"' + (String(flag).indexOf('Critical') !== -1 ? ' selected' : '') + '>Critical</option>' +
+                            '</select>' +
+                          '</td>' +
+                        '</tr>';
                 });
             });
 
-            if (!parameterRows) {
-                parameterRows = '<div style="padding:14px;color:#8a1f1a;background:#ffebe9;border-radius:10px;">Request ' + esc(orderId) + ' has no valid test items. Ask the requesting clinician to correct it.</div>';
+            if (!rowsHtml) {
+                rowsHtml = '<tr><td colspan="5" style="padding:14px;color:#9b2c2c;background:#fff7f7;font-weight:700;">Request ' + esc(orderId) + ' has no valid test items. Ask the requesting clinician to correct it.</td></tr>';
             }
 
-            bodyHtml += '<div class="lab-day-order-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 4px;padding:8px 12px;border-radius:10px;background:#f1f5f9;border:1px solid rgba(0,0,0,.06);">' +
-                '<div style="font-size:12px;font-weight:800;color:#334155;">Request ' + esc(orderId) +
-                ' <span style="font-weight:600;color:#64748b;">· ' + esc(order.orderedBy || 'Unknown') + ' · ' +
-                esc(order.orderedAt ? new Date(order.orderedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—') + '</span></div>' +
-                (completed ? '<span style="font-size:10px;font-weight:800;color:#1a7a32;">✓ FINAL</span>' : (failed ? '<span style="font-size:10px;font-weight:800;color:#8a1f1a;">⚠ SYNC FAILED</span>' : '')) +
-                '</div>' + parameterRows;
+            bodyHtml +=
+                '<section style="border:1px solid #e1e7ef;border-radius:14px;overflow:hidden;background:#fff;margin-top:12px;">' +
+                  '<div class="lab-day-order-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;background:#f8fafc;border-bottom:1px solid #e6ebf2;position:sticky;top:0;z-index:3;">' +
+                    '<div style="font-size:12px;font-weight:800;color:#243041;">Request ' + esc(orderId) +
+                    ' <span style="font-weight:600;color:#6b7280;">• ' + esc(order.orderedBy || 'Unknown') + ' • ' +
+                    esc(order.orderedAt ? new Date(order.orderedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—') + '</span></div>' +
+                    (completed ? '<span style="font-size:10.5px;font-weight:800;color:#25643a;">Verified</span>' : (failed ? '<span style="font-size:10.5px;font-weight:800;color:#9b2c2c;">Sync issue</span>' : '<span style="font-size:10.5px;font-weight:800;color:#667085;">Pending entry</span>')) +
+                  '</div>' +
+                  '<div style="overflow:auto;max-height:420px;border-top:0;">' +
+                    '<table style="width:100%;border-collapse:collapse;background:#fff;font-size:12px;">' +
+                      '<thead>' +
+                        '<tr style="background:#fbfcfe;">' +
+                          '<th style="position:sticky;top:0;z-index:2;text-align:left;padding:8px 10px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a94a6;border-bottom:1px solid #e8edf3;background:#fbfcfe;">Requested lab</th>' +
+                          '<th style="position:sticky;top:0;z-index:2;text-align:left;padding:8px 10px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a94a6;border-bottom:1px solid #e8edf3;background:#fbfcfe;">Code</th>' +
+                          '<th style="position:sticky;top:0;z-index:2;text-align:left;padding:8px 10px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a94a6;border-bottom:1px solid #e8edf3;background:#fbfcfe;">Reference</th>' +
+                          '<th style="position:sticky;top:0;z-index:2;text-align:left;padding:8px 10px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a94a6;border-bottom:1px solid #e8edf3;background:#fbfcfe;">Result</th>' +
+                          '<th style="position:sticky;top:0;z-index:2;text-align:left;padding:8px 10px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a94a6;border-bottom:1px solid #e8edf3;background:#fbfcfe;">Flag</th>' +
+                        '</tr>' +
+                      '</thead>' +
+                      '<tbody>' + rowsHtml + '</tbody>' +
+                    '</table>' +
+                  '</div>' +
+                '</section>';
         });
 
         var footer = allCompleted
-            ? '<button onclick="pcLabEngine.printReportModal(\'' + esc(ordersSorted[ordersSorted.length - 1].id) + '\')" style="height:38px;padding:0 18px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;font-weight:750;cursor:pointer;">🖨️ View final report</button>'
-            : '<button class="lab-release-btn" onclick="pcLabEngine.saveDayResults(\'' + esc(group.key) + '\',this)" style="height:40px;padding:0 24px;border-radius:10px;border:0;background:#007080;color:#fff;font-weight:850;font-size:12.5px;cursor:pointer;box-shadow:0 3px 10px rgba(0,112,128,.28);">💾 Validate &amp; Release Request</button>';
+            ? '<button onclick="pcLabEngine.printReportModal(\'' + esc(ordersSorted[ordersSorted.length - 1].id) + '\')" style="height:34px;padding:0 16px;border-radius:8px;border:1px solid #d5dde8;background:#ffffff;color:#243041;font-weight:700;cursor:pointer;">View final report</button>'
+            : '<button class="lab-release-btn" onclick="pcLabEngine.saveDayResults(\'' + esc(group.key) + '\',this)" style="height:36px;padding:0 18px;border-radius:8px;border:1px solid #0f5ea8;background:#1668c7;color:#ffffff;font-weight:800;font-size:12px;cursor:pointer;">Validate &amp; release</button>';
 
-        var html = '<div style="display:flex;flex-direction:column;gap:16px;">' +
-            '<section class="lab-order-result-section lab-day-result-section" data-lab-day-key="' + esc(group.key) + '" style="background:#fff;border-radius:16px;border:1px solid rgba(0,0,0,.12);box-shadow:0 6px 22px rgba(0,0,0,.06);overflow:hidden;">' +
-              '<div style="padding:15px 20px;background:#e6f6f8;border-bottom:2px solid #007080;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">' +
-                '<div><div style="font-size:15px;font-weight:850;color:#004a52;">📅 ' + dayDateStr + ' — ' + ordersSorted.length + ' request(s)</div>' +
-                '<div style="font-size:11.5px;color:#334155;margin-top:3px;">Patient: <strong>' + esc(pName) + '</strong> • MRN ' + esc(mrn) + ' • Request(s): <strong>' + orderIdsStr + '</strong></div></div>' + stateChip +
+        var html = '<div style="display:flex;flex-direction:column;gap:14px;">' +
+            '<section class="lab-order-result-section lab-day-result-section" data-lab-day-key="' + esc(group.key) + '" style="background:#ffffff;border-radius:16px;border:1px solid #dbe2ea;box-shadow:0 4px 14px rgba(15,23,42,.035);overflow:hidden;">' +
+              '<div style="padding:12px 16px;background:#fbfcfe;border-bottom:1px solid #e7edf4;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">' +
+                '<div>' +
+                    '<div style="font-size:15px;font-weight:800;color:#1b2434;">' + esc(dayDateStr) + ' — ' + ordersSorted.length + ' request(s)</div>' +
+                    '<div style="font-size:11.5px;color:#5b6677;margin-top:4px;">Patient: <strong>' + esc(pName) + '</strong> • MRN ' + esc(mrn) + '</div>' +
+                '</div>' + stateChip +
               '</div>' +
-              '<div style="padding:16px 20px;">' +
-                '<div style="font-size:12px;font-weight:800;color:#004a52;margin-bottom:8px;">REQUESTED TESTS — ENTER EVERY REQUIRED RESULT FOR THIS REQUEST</div>' + bodyHtml +
-                '<label style="display:block;font-size:11px;font-weight:800;color:#475569;margin:12px 0 5px;">Laboratory comments / interpretation (for this request)</label>' +
-                '<textarea class="lab-order-comments"' + (allCompleted ? ' readonly' : '') + ' placeholder="Optional validated comment for the requesting clinician" style="width:100%;min-height:64px;resize:vertical;border:1px solid #cbd5e1;border-radius:9px;padding:9px 11px;font:12px inherit;background:' + (allCompleted ? '#f1f5f9' : '#fff') + ';">' + esc(ordersSorted[0].labComments || '') + '</textarea>' +
+              '<div style="padding:12px 16px 14px;">' +
+                '<div style="font-size:11px;font-weight:800;color:#6b7280;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Selected request date</div>' +
+                '<div style="font-size:11.5px;color:#5b6677;margin-bottom:8px;">Enter results directly in the table. Each request remains separate for safe server saving.</div>' +
+                bodyHtml +
+                '<label style="display:block;font-size:10.5px;font-weight:800;color:#6b7280;letter-spacing:.06em;text-transform:uppercase;margin:12px 0 6px;">Laboratory comments</label>' +
+                '<textarea class="lab-order-comments"' + (allCompleted ? ' readonly' : '') + ' placeholder="Optional professional interpretation for the requesting clinician" style="width:100%;min-height:60px;resize:vertical;border:1px solid #d7dee8;border-radius:10px;padding:9px 10px;font:12px inherit;background:' + (allCompleted ? '#f6f7f9' : '#ffffff') + ';color:#17212f;">' + esc(ordersSorted[0].labComments || '') + '</textarea>' +
               '</div>' +
-              '<div style="padding:13px 20px;background:#f8f9fa;border-top:1px solid rgba(0,0,0,.09);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
-                '<div style="font-size:11.5px;color:#64748b;max-width:650px;">Final release is committed on the common server, written to the patient record, audited, and sent to the requesting doctor. Critical flags create an urgent alert.</div>' +
+              '<div style="padding:10px 16px;background:#fbfcfe;border-top:1px solid #e7edf4;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
+                '<div style="font-size:11.5px;color:#6b7280;max-width:650px;">Only important states use color. Final release saves to the common server and sends the verified report to the requesting clinician.</div>' +
                 footer +
               '</div>' +
             '</section>' +

@@ -33,6 +33,12 @@
             : null;
     }
 
+    function selectedDate() {
+        return window.pcLabEngine && typeof window.pcLabEngine.getSelectedLabDate === 'function'
+            ? String(window.pcLabEngine.getSelectedLabDate() || '')
+            : '';
+    }
+
     function stripMod(v) {
         return String(v == null ? '' : v).replace(/^MOD-/i, '').trim();
     }
@@ -122,25 +128,70 @@
         return d.toISOString().slice(0, 10);
     }
 
+    function groupStatusFromOrders(orders) {
+        orders = Array.isArray(orders) ? orders : [];
+        var statuses = orders.map(function (order) { return String(order && order.status || 'pending').toLowerCase(); });
+        if (statuses.some(function (status) { return status === 'pending'; })) return 'pending';
+        if (statuses.some(function (status) { return status === 'in-progress' || status === 'processing'; })) return 'in-progress';
+        if (statuses.some(function (status) { return status === 'completed' || status === 'verified' || status === 'final'; })) return 'completed';
+        if (statuses.some(function (status) { return status === 'cancelled' || status === 'rejected'; })) return 'cancelled';
+        return 'pending';
+    }
+
+    function priorityWeight(priority) {
+        var p = String(priority || 'routine').toLowerCase();
+        if (p === 'stat') return 3;
+        if (p === 'urgent') return 2;
+        return 1;
+    }
+
+    function groupPriorityFromOrders(orders) {
+        var best = 'routine';
+        (orders || []).forEach(function (order) {
+            var current = String(order && order.priority || 'routine').toLowerCase();
+            if (priorityWeight(current) > priorityWeight(best)) best = current;
+        });
+        return best;
+    }
+
     function groupLabOrders(orders, filterFn) {
-        return (orders || []).filter(function (order) {
+        var bucket = Object.create(null);
+        (orders || []).filter(function (order) {
             if (!order || !order.patientId) return false;
             if (typeof filterFn === 'function' && !filterFn(order)) return false;
             return true;
         }).sort(function (a, b) {
             return new Date(orderTimestamp(b) || 0).getTime() - new Date(orderTimestamp(a) || 0).getTime();
-        }).map(function (order) {
+        }).forEach(function (order) {
             var patientId = stripMod(order.patientId);
-            return {
-                key: String(order.id || (patientId + '__' + orderDateKey(order))),
-                patientId: patientId,
-                patientName: order.patientName || ('Patient ' + patientId),
-                orderedAt: orderTimestamp(order),
-                dateStr: orderDateKey(order),
-                priority: String(order.priority || 'routine').toLowerCase(),
-                status: String(order.status || 'pending').toLowerCase(),
-                orders: [order]
-            };
+            var dateStr = orderDateKey(order);
+            var key = patientId + '___' + dateStr;
+            if (!bucket[key]) {
+                bucket[key] = {
+                    key: key,
+                    patientId: patientId,
+                    patientName: order.patientName || ('Patient ' + patientId),
+                    orderedAt: orderTimestamp(order),
+                    dateStr: dateStr,
+                    orders: []
+                };
+            }
+            bucket[key].orders.push(order);
+            if (new Date(orderTimestamp(order) || 0).getTime() > new Date(bucket[key].orderedAt || 0).getTime()) {
+                bucket[key].orderedAt = orderTimestamp(order);
+            }
+            if (order.patientName && !bucket[key].patientName) bucket[key].patientName = order.patientName;
+        });
+        return Object.keys(bucket).map(function (key) {
+            var group = bucket[key];
+            group.orders.sort(function (a, b) {
+                return new Date(orderTimestamp(a) || 0).getTime() - new Date(orderTimestamp(b) || 0).getTime();
+            });
+            group.priority = groupPriorityFromOrders(group.orders);
+            group.status = groupStatusFromOrders(group.orders);
+            return group;
+        }).sort(function (a, b) {
+            return new Date(b.orderedAt || 0).getTime() - new Date(a.orderedAt || 0).getTime();
         });
     }
 
@@ -205,9 +256,10 @@
 
     function updateScopeNotes() {
         var patient = selectedPatient();
+        var dateStr = selectedDate();
         var note = patient
-            ? '👤 Working on selected patient: <strong>' + escapeHtml(patientName(patient)) + '</strong> — ' + escapeHtml(patientMrn(patient)) + ' (all actions are limited to this patient)'
-            : '🔒 No patient selected — choose one from the Overview list (✓ Select) or search in the identification bar above';
+            ? '👤 Working on selected patient: <strong>' + escapeHtml(patientName(patient)) + '</strong> — ' + escapeHtml(patientMrn(patient)) + (dateStr ? ' • request date <strong>' + escapeHtml(dateStr) + '</strong>' : '') + ' (all actions are limited to this patient/date)'
+            : '🔒 No patient selected — choose one patient once, then choose a request date';
         ['wlScopeNote', 'resScopeNote', 'repScopeNote', 'pathScopeNote', 'bbScopeNote'].forEach(function (id) {
             setHtml(id, note);
         });
@@ -242,7 +294,7 @@
         var group = resolveGroup(selector.value);
         if (!group) return;
         setText('spec_pat_name', group.patientName || patientName(patient));
-        setText('spec_pat_mrn', patientMrn(patient) + ' • ' + String(group.priority || 'routine').toUpperCase() + ' order');
+        setText('spec_pat_mrn', patientMrn(patient) + ' • ' + group.dateStr + ' • ' + String(group.priority || 'routine').toUpperCase() + ' order');
     }
 
     function updateReportPreview() {
@@ -265,7 +317,7 @@
             tat = mins + ' min';
         }
         setText('rep_pat_name', group.patientName || patientName(patient));
-        setText('rep_pat_mrn', patientMrn(patient) + ' • Verified report');
+        setText('rep_pat_mrn', patientMrn(patient) + ' • ' + group.dateStr + ' • Verified report');
         setText('rep_tat_text', tat ? ('TAT: ' + tat + ' • Server-confirmed result release') : 'Verified on the common server');
         var badge = document.getElementById('rep_status_badge');
         if (badge) {
