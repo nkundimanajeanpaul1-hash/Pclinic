@@ -1140,6 +1140,36 @@
         tbody.innerHTML = html;
     }
 
+    function flagToneClass(flag) {
+        var txt = String(flag || 'Normal').toLowerCase();
+        if (txt.indexOf('critical') !== -1) return 'status-critical';
+        if (txt.indexOf('high') !== -1) return 'status-high';
+        if (txt.indexOf('low') !== -1) return 'status-low';
+        return 'status-normal';
+    }
+
+    function flagResultClass(flag) {
+        var txt = String(flag || 'Normal').toLowerCase();
+        if (txt.indexOf('critical') !== -1) return 'result-critical';
+        if (txt.indexOf('high') !== -1) return 'result-high';
+        if (txt.indexOf('low') !== -1) return 'result-low';
+        return 'result-normal';
+    }
+
+    function flagShortLabel(flag) {
+        var txt = String(flag || 'Normal');
+        if (/critical/i.test(txt)) return 'Critical';
+        if (/high/i.test(txt)) return 'High';
+        if (/low/i.test(txt)) return 'Low';
+        return 'Normal';
+    }
+
+    function syncFlagSelectTone(selectEl) {
+        if (!selectEl || !selectEl.classList) return;
+        selectEl.classList.remove('status-normal', 'status-high', 'status-low', 'status-critical');
+        selectEl.classList.add(flagToneClass(selectEl.value || 'Normal'));
+    }
+
     /* ── DAY-GROUPED RESULT ENTRY: ONE CARD PER REQUEST DATE ──
            All requests of the same day are entered and released in ONE card.
            Each request keeps its own sub-heading and inputs (data-order-id)
@@ -1159,10 +1189,10 @@
         var someFailed = ordersSorted.some(function (o) { return o._syncFailed === true; });
 
         var stateChip = allCompleted
-            ? '<span style="background:#f3f7f3;color:#25643a;font-weight:700;font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid #d7e7d8;">Verified</span>'
+            ? '<span class="status-badge status-normal"><span class="dot"></span>Verified</span>'
             : someFailed
-                ? '<span style="background:#fff7f7;color:#9b2c2c;font-weight:700;font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid #f0d3d3;">Sync issue</span>'
-                : '<span style="background:#f6f7f9;color:#4b5565;font-weight:700;font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid #e3e8ef;">Open result entry</span>';
+                ? '<span class="status-badge status-critical"><span class="dot"></span>Sync issue</span>'
+                : '<span class="status-badge status-low"><span class="dot"></span>Open result entry</span>';
 
         var bodyHtml = '';
         ordersSorted.forEach(function (order) {
@@ -1174,42 +1204,53 @@
             var disabledAttr = completed ? ' disabled' : '';
             var items = Array.isArray(order.items) ? order.items : [];
             var rowsHtml = '';
-            var localRowCount = 0;
+            var rowNumber = 0;
 
             items.forEach(function (item) {
                 var parameters = parametersForOrderItem(item);
                 parameters.forEach(function (parameter, parameterIndex) {
-                    localRowCount++;
+                    rowNumber++;
                     var existing = existingOrderResult(order, parameter) || {};
                     var rowId = orderDomId + '_' + safeDomId(parameter.orderItemCode) + '_' + safeDomId(parameter.code) + '_' + parameterIndex;
                     var value = existing.value == null ? '' : existing.value;
                     var flag = existing.flag || 'Normal';
-                    rowsHtml +=
-                        '<tr>' +
-                          '<td style="padding:8px 10px;border-bottom:1px solid #e8edf3;vertical-align:top;">' +
-                            '<div style="font-size:12px;font-weight:800;color:#17212f;line-height:1.25;">' + esc(parameter.test || parameter.name || item.name || 'Laboratory test') + '</div>' +
-                            '<div style="font-size:10px;color:#7c8798;margin-top:2px;">Request ' + esc(orderId) + ' • ' + esc(item.code || parameter.orderItemCode || 'No code') + '</div>' +
-                          '</td>' +
-                          '<td style="padding:8px 10px;border-bottom:1px solid #e8edf3;color:#526071;font-size:11px;font-weight:600;">' + esc(parameter.code || '—') + '</td>' +
-                          '<td style="padding:8px 10px;border-bottom:1px solid #e8edf3;color:#526071;font-size:11px;font-weight:600;">' + (parameter.range ? esc(parameter.range) : 'No fixed range') + '</td>' +
-                          '<td style="padding:6px 8px;border-bottom:1px solid #e8edf3;">' +
-                            '<input id="lab_value_' + rowId + '" class="lab-order-result-input" type="text" value="' + esc(value) + '" placeholder="Enter result"' + readonlyAttr +
-                              ' data-code="' + esc(parameter.code) + '" data-name="' + esc(parameter.name) + '" data-unit="' + esc(parameter.unit) + '" data-range="' + esc(parameter.range) + '"' +
-                              ' data-order-item-code="' + esc(parameter.orderItemCode) + '" data-order-item-name="' + esc(parameter.orderItemName) + '"' +
-                              ' data-order-id="' + esc(orderId) + '"' +
-                              ' data-flag-id="lab_flag_' + rowId + '" oninput="pcLabEngine.autoFlagResult(this)"' +
-                              ' style="width:100%;height:34px;background:' + (completed ? '#f6f7f9' : '#ffffff') + ';border:1px solid #d7dee8;border-radius:8px;padding:0 10px;font-weight:700;font-size:12px;color:#17212f;outline:none;" />' +
-                          '</td>' +
-                          '<td style="padding:6px 8px;border-bottom:1px solid #e8edf3;">' +
-                            '<select id="lab_flag_' + rowId + '" class="lab-order-result-flag"' + disabledAttr +
-                              ' style="width:100%;height:34px;background:#ffffff;border:1px solid #d7dee8;border-radius:10px;padding:0 10px;font-size:11.5px;font-weight:700;color:#334155;">' +
-                              '<option value="Normal"' + (flag === 'Normal' ? ' selected' : '') + '>Normal</option>' +
-                              '<option value="↑ High"' + (String(flag).indexOf('High') !== -1 ? ' selected' : '') + '>High</option>' +
-                              '<option value="↓ Low"' + (String(flag).indexOf('Low') !== -1 ? ' selected' : '') + '>Low</option>' +
-                              '<option value="⚠️ Critical"' + (String(flag).indexOf('Critical') !== -1 ? ' selected' : '') + '>Critical</option>' +
-                            '</select>' +
-                          '</td>' +
-                        '</tr>';
+                    var toneClass = flagToneClass(flag);
+                    var resultClass = flagResultClass(flag);
+                    var shortFlag = flagShortLabel(flag);
+                    var codeText = item.code || parameter.orderItemCode || parameter.code || 'No code';
+                    var subMeta = 'Request ' + esc(orderId) + ' • Code ' + esc(codeText) + (parameter.unit ? ' • ' + esc(parameter.unit) : '');
+                    var resultCell = completed
+                        ? '<div class="test-result ' + resultClass + '">' + esc(value || '—') + (parameter.unit ? '<span class="result-unit">' + esc(parameter.unit) + '</span>' : '') + '</div>'
+                        : '<div class="test-result entry-mode"><input id="lab_value_' + rowId + '" class="lab-order-result-input result-entry-input" type="text" value="' + esc(value) + '" placeholder="Enter result"' + readonlyAttr +
+                            ' data-code="' + esc(parameter.code) + '" data-name="' + esc(parameter.name) + '" data-unit="' + esc(parameter.unit) + '" data-range="' + esc(parameter.range) + '"' +
+                            ' data-order-item-code="' + esc(parameter.orderItemCode) + '" data-order-item-name="' + esc(parameter.orderItemName) + '"' +
+                            ' data-order-id="' + esc(orderId) + '" data-flag-id="lab_flag_' + rowId + '" oninput="pcLabEngine.autoFlagResult(this)" /></div>';
+                    var statusCell = completed
+                        ? '<span class="status-badge ' + toneClass + '"><span class="dot"></span>' + esc(shortFlag) + '</span>'
+                        : '<select id="lab_flag_' + rowId + '" class="lab-order-result-flag result-flag-select ' + toneClass + '"' + disabledAttr + ' onchange="pcLabEngine.syncFlagSelectTone(this)">' +
+                            '<option value="Normal"' + (flag === 'Normal' ? ' selected' : '') + '>Normal</option>' +
+                            '<option value="↑ High"' + (String(flag).indexOf('High') !== -1 ? ' selected' : '') + '>High</option>' +
+                            '<option value="↓ Low"' + (String(flag).indexOf('Low') !== -1 ? ' selected' : '') + '>Low</option>' +
+                            '<option value="⚠️ Critical"' + (String(flag).indexOf('Critical') !== -1 ? ' selected' : '') + '>Critical</option>' +
+                          '</select>';
+
+                    rowsHtml += [
+                        '<tr>',
+                            '<td class="row-number">' + rowNumber + '</td>',
+                            '<td>',
+                                '<div class="test-name">',
+                                    '<span class="test-icon" style="background:var(--acb);color:var(--ac);">🧪</span>',
+                                    '<div class="test-name-stack">',
+                                        '<div>' + esc(parameter.test || parameter.name || item.name || 'Laboratory test') + '</div>',
+                                        '<div class="test-subline">' + subMeta + '</div>',
+                                    '</div>',
+                                '</div>',
+                            '</td>',
+                            '<td>' + resultCell + '</td>',
+                            '<td><div class="reference-range">' + (parameter.range ? esc(parameter.range) : 'No fixed range') + '</div></td>',
+                            '<td>' + statusCell + '</td>',
+                        '</tr>'
+                    ].join('');
                 });
             });
 
@@ -1217,29 +1258,35 @@
                 rowsHtml = '<tr><td colspan="5" style="padding:14px;color:#9b2c2c;background:#fff7f7;font-weight:700;">Request ' + esc(orderId) + ' has no valid test items. Ask the requesting clinician to correct it.</td></tr>';
             }
 
-            bodyHtml +=
-                '<section style="border:1px solid #e1e7ef;border-radius:14px;overflow:hidden;background:#fff;margin-top:12px;">' +
-                  '<div class="lab-day-order-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;background:#f8fafc;border-bottom:1px solid #e6ebf2;position:sticky;top:0;z-index:3;">' +
-                    '<div style="font-size:12px;font-weight:800;color:#243041;">Request ' + esc(orderId) +
-                    ' <span style="font-weight:600;color:#6b7280;">• ' + esc(order.orderedBy || 'Unknown') + ' • ' +
-                    esc(order.orderedAt ? new Date(order.orderedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—') + '</span></div>' +
-                    (completed ? '<span style="font-size:10.5px;font-weight:800;color:#25643a;">Verified</span>' : (failed ? '<span style="font-size:10.5px;font-weight:800;color:#9b2c2c;">Sync issue</span>' : '<span style="font-size:10.5px;font-weight:800;color:#667085;">Pending entry</span>')) +
-                  '</div>' +
-                  '<div style="overflow:auto;max-height:420px;border-top:0;">' +
-                    '<table style="width:100%;border-collapse:collapse;background:#fff;font-size:12px;">' +
-                      '<thead>' +
-                        '<tr style="background:#fbfcfe;">' +
-                          '<th style="position:sticky;top:0;z-index:2;text-align:left;padding:8px 10px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a94a6;border-bottom:1px solid #e8edf3;background:#fbfcfe;">Requested lab</th>' +
-                          '<th style="position:sticky;top:0;z-index:2;text-align:left;padding:8px 10px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a94a6;border-bottom:1px solid #e8edf3;background:#fbfcfe;">Code</th>' +
-                          '<th style="position:sticky;top:0;z-index:2;text-align:left;padding:8px 10px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a94a6;border-bottom:1px solid #e8edf3;background:#fbfcfe;">Reference</th>' +
-                          '<th style="position:sticky;top:0;z-index:2;text-align:left;padding:8px 10px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a94a6;border-bottom:1px solid #e8edf3;background:#fbfcfe;">Result</th>' +
-                          '<th style="position:sticky;top:0;z-index:2;text-align:left;padding:8px 10px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a94a6;border-bottom:1px solid #e8edf3;background:#fbfcfe;">Flag</th>' +
-                        '</tr>' +
-                      '</thead>' +
-                      '<tbody>' + rowsHtml + '</tbody>' +
-                    '</table>' +
-                  '</div>' +
-                '</section>';
+            var requestState = completed
+                ? '<span class="status-badge status-normal"><span class="dot"></span>Verified</span>'
+                : failed
+                    ? '<span class="status-badge status-critical"><span class="dot"></span>Sync issue</span>'
+                    : '<span class="status-badge status-low"><span class="dot"></span>Pending entry</span>';
+
+            bodyHtml += [
+                '<section class="request-table-shell">',
+                    '<div class="request-table-head">',
+                        '<div class="request-table-meta">Request ' + esc(orderId) + ' <span>• ' + esc(order.orderedBy || 'Unknown') + ' • ' +
+                        esc(order.orderedAt ? new Date(order.orderedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—') + '</span></div>',
+                        requestState,
+                    '</div>',
+                    '<div class="lab-result-table-wrap">',
+                        '<table class="lab-result-table">',
+                            '<thead>',
+                                '<tr>',
+                                    '<th style="width:58px;text-align:center;">#</th>',
+                                    '<th>Test name</th>',
+                                    '<th>Result</th>',
+                                    '<th>Reference range</th>',
+                                    '<th>Status</th>',
+                                '</tr>',
+                            '</thead>',
+                            '<tbody>' + rowsHtml + '</tbody>',
+                        '</table>',
+                    '</div>',
+                '</section>'
+            ].join('');
         });
 
         var footer = allCompleted
@@ -1256,7 +1303,7 @@
               '</div>' +
               '<div style="padding:12px 16px 14px;">' +
                 '<div style="font-size:11px;font-weight:800;color:#6b7280;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Selected request date</div>' +
-                '<div style="font-size:11.5px;color:#5b6677;margin-bottom:8px;">Enter results directly in the table. Each request remains separate for safe server saving.</div>' +
+                '<div style="font-size:11.5px;color:#5b6677;margin-bottom:8px;">Doctor Dashboard table style applied here for laboratory result entry.</div>' +
                 bodyHtml +
                 '<label style="display:block;font-size:10.5px;font-weight:800;color:#6b7280;letter-spacing:.06em;text-transform:uppercase;margin:12px 0 6px;">Laboratory comments</label>' +
                 '<textarea class="lab-order-comments"' + (allCompleted ? ' readonly' : '') + ' placeholder="Optional professional interpretation for the requesting clinician" style="width:100%;min-height:60px;resize:vertical;border:1px solid #d7dee8;border-radius:10px;padding:9px 10px;font:12px inherit;background:' + (allCompleted ? '#f6f7f9' : '#ffffff') + ';color:#17212f;">' + esc(ordersSorted[0].labComments || '') + '</textarea>' +
@@ -1310,6 +1357,7 @@
         var low = Number(match[1]);
         var high = Number(match[2]);
         flagEl.value = value < low ? '↓ Low' : value > high ? '↑ High' : 'Normal';
+        syncFlagSelectTone(flagEl);
     }
 
     function labReleaseErrorMessage(error) {
@@ -2898,6 +2946,7 @@
         saveDayResults: saveDayResults,
         saveOrderResults: saveOrderResults,
         autoFlagResult: autoFlagResult,
+        syncFlagSelectTone: syncFlagSelectTone,
         selectLabPatient: selectLabPatient,
         openPatientDateView: openPatientDateView,
         selectLabDate: selectLabDate,
