@@ -32,8 +32,10 @@
 .dv-title .dv-close:hover { background: #4a4d57; }
 
 /* ── tool bar ──────────────────────────────────────────────────── */
-.dv-toolbar { display: flex; align-items: center; gap: 2px; height: 44px; padding: 0 6px; background: var(--dv-bg2); border-bottom: 1px solid var(--dv-line); flex: none; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
-.dv-toolbar::-webkit-scrollbar { height: 4px; }
+.dv-toolbar { display: flex; align-items: stretch; min-height: 44px; background: var(--dv-bg2); border-bottom: 1px solid var(--dv-line); flex: none; overflow: hidden; }
+.dv-toolbar-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 2px; padding: 0 6px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.dv-toolbar-main::-webkit-scrollbar { height: 4px; }
+.dv-toolbar-actions { flex: none; display: flex; align-items: center; gap: 8px; padding: 0 10px 0 8px; border-left: 1px solid var(--dv-line); background: linear-gradient(180deg, rgba(43,45,49,.98) 0%, rgba(33,35,40,.98) 100%); box-shadow: -10px 0 22px rgba(0,0,0,.28); position: relative; z-index: 1; }
 .dv-toolbar .dv-sep { width: 1px; height: 26px; background: var(--dv-line); margin: 0 3px; flex: none; }
 .dv-tb { position: relative; display: flex; align-items: center; justify-content: center; gap: 4px; height: 34px; min-width: 32px; padding: 0 5px; border-radius: 7px; color: #d5d6db; flex: none; }
 .dv-tb:hover { background: #3b3e47; color: #fff; }
@@ -52,6 +54,10 @@
 .dv-tb[data-id="local"]:hover { background: linear-gradient(180deg, #79b8ff 0%, #448ce5 100%); }
 .dv-tb[data-id="local"] svg { width: 19px; height: 19px; }
 .dv-tb[data-id="local"] .dv-tb-label { font-size: 12.5px; font-weight: 800; letter-spacing: .01em; }
+.dv-toolbar-actions .dv-tb { height: 38px; padding: 0 14px; border-radius: 10px; }
+.dv-toolbar-actions .dv-tb .dv-tb-label { display: inline !important; font-size: 12.5px; font-weight: 800; letter-spacing: .01em; }
+.dv-toolbar-actions .dv-tb.dv-primary { min-width: 124px; box-shadow: 0 10px 24px rgba(74,158,255,.20), inset 0 0 0 1px rgba(255,255,255,.16); }
+.dv-toolbar-actions .dv-tb.dv-primary:hover { background: #5faaff; }
 .dv-tb[disabled], .dv-tb.dv-off { opacity: .38; cursor: not-allowed; }
 .dv-tb .dv-tb-label { font-size: 11.5px; font-weight: 600; white-space: nowrap; }
 .dv-tb.dv-iconly .dv-tb-label { display: none; }
@@ -61,7 +67,13 @@
 .dv-tb .dv-caret { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor; margin-left: 1px; opacity: .8; }
 .dv-tb .dv-badge { position: absolute; top: 2px; right: 2px; min-width: 14px; height: 14px; border-radius: 7px; background: var(--dv-danger); color: #fff; font-size: 9px; font-weight: 800; display: grid; place-items: center; padding: 0 3px; }
 @media (max-width: 900px) { .dv-tb .dv-tb-label { display: none; } .dv-tb.dv-primary .dv-tb-label { display: inline; } }
-/* below ~1300px the bar becomes icon-only (Weasis style); it still scrolls horizontally if a window is narrower than the icons */
+@media (max-width: 760px) {
+  .dv-toolbar { flex-direction: column; }
+  .dv-toolbar-main { min-height: 44px; }
+  .dv-toolbar-actions { justify-content: stretch; padding: 8px 6px; border-left: 0; border-top: 1px solid var(--dv-line); box-shadow: none; }
+  .dv-toolbar-actions .dv-tb { flex: 1 1 0; min-width: 0; }
+}
+/* below ~1300px the main tool strip becomes icon-only (Weasis style); the right action buttons stay visible */
 
 /* drop-down menus hanging from tool-bar buttons */
 .dv-menu { position: fixed; z-index: 9600; min-width: 200px; max-height: 70vh; overflow: auto; padding: 5px; border-radius: 9px; background: #2d2f36; border: 1px solid #4a4d57; box-shadow: 0 14px 40px rgba(0,0,0,.55); }
