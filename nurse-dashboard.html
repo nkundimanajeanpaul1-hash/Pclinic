@@ -1783,10 +1783,23 @@
             <div id="panel-notes" class="main-panel" style="display:none;">
                 <div class="panel-body show" id="sub-notes-form">
                     <div class="notes-simple-shell">
-                        <div class="notes-simple-card">
+                        <div class="notes-simple-history-card">
+                            <div class="notes-simple-history-head">
+                                <span>Recent Nursing Notes</span>
+                                <div class="notes-simple-history-actions">
+                                    <span class="notes-simple-count" id="nursingNoteCount">0 notes</span>
+                                    <button class="btn-p notes-simple-add-btn" id="notesAddNewBtn" type="button" onclick="openNewNursingNote()"><i class="ti ti-plus"></i> Add New Note</button>
+                                </div>
+                            </div>
+                            <div id="nursingNotesList">
+                                <p class="cpn-empty">📋 No nursing notes yet.</p>
+                            </div>
+                        </div>
+
+                        <div class="notes-simple-card" id="notesComposerCard" hidden>
                             <div class="notes-simple-head">
                                 <div>
-                                    <div class="notes-simple-title">📝 Nursing Notes</div>
+                                    <div class="notes-simple-title">📝 New Nursing Note</div>
                                     <div class="notes-simple-sub">Simple Apple-style note page • saved live to the Common Server</div>
                                 </div>
                                 <span class="notes-simple-sync">● Common Server connected</span>
@@ -1813,17 +1826,7 @@
                                     <textarea class="ta notes-simple-textarea" id="notesBody" placeholder="Write a simple nursing note, handover, observation, intervention, or follow-up here…"></textarea>
                                 </label>
                             </div>
-                            <div class="fa notes-simple-actions"><button class="btn-p" onclick="saveNursingNote()"><i class="ti ti-check"></i> Save Note</button><button class="btn-s" onclick="clearNursingNote()">Clear</button></div>
-                        </div>
-
-                        <div class="notes-simple-history-card">
-                            <div class="notes-simple-history-head">
-                                <span>Recent Nursing Notes</span>
-                                <span class="notes-simple-count" id="nursingNoteCount">0 notes</span>
-                            </div>
-                            <div id="nursingNotesList">
-                                <p class="cpn-empty">📋 No nursing notes yet.</p>
-                            </div>
+                            <div class="fa notes-simple-actions"><button class="btn-p" onclick="saveNursingNote()"><i class="ti ti-check"></i> Save Note</button><button class="btn-s" onclick="clearNursingNote()">Clear</button><button class="btn-s" type="button" id="notesCancelBtn" onclick="closeNewNursingNote()">Cancel</button></div>
                         </div>
                     </div>
                 </div>

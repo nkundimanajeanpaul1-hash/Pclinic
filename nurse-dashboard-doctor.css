@@ -1810,9 +1810,9 @@ body.dark-mode .modal-overlay {
 }
 
 .notes-simple-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
-  gap: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 .notes-simple-card,
 .notes-simple-history-card {
@@ -1897,6 +1897,7 @@ body.dark-mode .modal-overlay {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 12px;
   padding-bottom: 10px;
   border-bottom: 0.5px solid var(--bd);
@@ -1905,6 +1906,18 @@ body.dark-mode .modal-overlay {
   font-size: 13px;
   font-weight: 800;
   color: var(--tp);
+}
+.notes-simple-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.notes-simple-add-btn {
+  border-radius: 999px;
+  padding: 0 14px;
+  height: 34px;
+  box-shadow: 0 4px 14px rgba(0,113,227,0.18);
 }
 .notes-simple-entry {
   background: rgba(255,255,255,0.74);
@@ -1964,12 +1977,21 @@ body.dark-mode .modal-overlay {
   color: #0071e3;
 }
 @media (max-width: 980px) {
-  .notes-simple-shell {
-    grid-template-columns: 1fr;
+  .notes-simple-history-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 @media (max-width: 640px) {
   .notes-simple-grid {
     grid-template-columns: 1fr;
+  }
+  .notes-simple-history-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .notes-simple-add-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

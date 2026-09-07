@@ -1800,12 +1800,36 @@
     return 'stable';
   }
 
+  function notesComposerCard() {
+    return document.getElementById('notesComposerCard');
+  }
+
+  function openNewNursingNote() {
+    var patient = refreshCurrentPatientFromStore();
+    if (!patient) {
+      safeToast('⚠️ Please select a patient first', 'warning');
+      focusPatientSearch();
+      return;
+    }
+    var card = notesComposerCard();
+    if (card) card.hidden = false;
+    clearNursingNote();
+    var body = document.getElementById('notesBody');
+    if (body) setTimeout(function () { body.focus(); }, 40);
+  }
+
+  function closeNewNursingNote() {
+    var card = notesComposerCard();
+    if (card) card.hidden = true;
+    clearNursingNote();
+  }
+
   function renderNursingNotes(patient) {
     var container = document.getElementById('nursingNotesList');
     if (!container) return;
     var notes = Array.isArray(patient && patient.nursingNotes) ? patient.nursingNotes.slice() : [];
     if (!notes.length) {
-      container.innerHTML = '<p class="cpn-empty">📋 No nursing notes yet on the Common Server.</p>';
+      container.innerHTML = '<div class="nurse-lab-empty" style="padding:26px;">📋 No nursing notes yet on the Common Server.<div style="margin-top:12px;"><button class="btn-p notes-simple-add-btn" type="button" onclick="openNewNursingNote()"><i class="ti ti-plus"></i> Add New Note</button></div></div>';
       return;
     }
     notes.sort(function (a, b) { return ms(b && (b.timestamp || b.date)) - ms(a && (a.timestamp || a.date)); });
@@ -1854,16 +1878,23 @@
     safeToast('⏳ Saving nursing note to the Common Server…', 'info');
     var saved = await appendPatientHistory('nursingNotes', entry);
     if (!saved) return safeToast('❌ Nursing note was NOT saved. Please retry.', 'error');
-    refreshAfterSave(saved, clearNursingNote);
+    clearNursingNote();
+    var card = notesComposerCard();
+    if (card) card.hidden = true;
+    refreshPatientUi(saved, true);
     renderNursingNotes(saved);
     updateNursingNoteCount(saved);
+    var history = document.getElementById('nursingNotesList');
+    if (history && typeof history.scrollIntoView === 'function') {
+      try { history.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { history.scrollIntoView(); }
+    }
     safeToast('✅ Nursing note saved for ' + displayName(saved), 'success');
   }
   function clearNursingNote() {
     var body = document.getElementById('notesBody'); if (body) body.value = '';
     var status = document.getElementById('notesStatus'); if (status) status.value = 'Stable';
     var dateTime = document.getElementById('notesDateTime'); if (dateTime) dateTime.value = nowLocalValue();
-    fillForms(getCurrentPatient());
+    if (typeof window.fillForms === 'function') fillForms(getCurrentPatient());
   }
 
   function collectBillRows() {
@@ -3045,6 +3076,8 @@
     window.clearFP = clearFP;
     window.renderNursingNotes = renderNursingNotes;
     window.updateNursingNoteCount = updateNursingNoteCount;
+    window.openNewNursingNote = openNewNursingNote;
+    window.closeNewNursingNote = closeNewNursingNote;
     window.saveNursingNote = saveNursingNote;
     window.clearNursingNote = clearNursingNote;
     window.saveBill = saveBill;
@@ -3087,7 +3120,11 @@
         if (name === 'overview') refreshKpisAndQueue(getAllPatients());
         if (name === 'vitals' && typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
         if (name === 'triage') renderTriagePanel(getCurrentPatient());
-        if (name === 'notes') { renderNursingNotes(getCurrentPatient()); updateNursingNoteCount(getCurrentPatient()); }
+        if (name === 'notes') {
+          renderNursingNotes(getCurrentPatient());
+          updateNursingNoteCount(getCurrentPatient());
+          closeNewNursingNote();
+        }
         if (name === 'billing') { renderBillCatalog(); ensureBillRows(); }
       };
     }
