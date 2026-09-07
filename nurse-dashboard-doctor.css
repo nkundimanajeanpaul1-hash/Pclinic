@@ -487,6 +487,156 @@ input.fi:focus {
   background: rgba(255,255,255,0.82) !important;
   box-shadow: var(--shadow2) !important;
 }
+
+/* Nurse medication administration chart */
+.med-admin-source {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0,113,227,0.08);
+  color: #0b57d0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.med-admin-card {
+  background: rgba(255,255,255,0.74);
+  border: 0.5px solid rgba(0,0,0,0.06);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.med-admin-card:last-child { margin-bottom: 0; }
+.med-admin-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.med-admin-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--tp);
+}
+.med-admin-sub {
+  font-size: 11px;
+  color: var(--tm);
+  margin-top: 3px;
+}
+.med-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.med-admin-kv {
+  background: rgba(255,255,255,0.75);
+  border: 0.5px solid var(--bd);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.med-admin-kv span {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--tm);
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+.med-admin-kv strong {
+  display: block;
+  font-size: 12px;
+  color: var(--tp);
+  line-height: 1.45;
+}
+.med-admin-days-wrap {
+  margin-top: 12px;
+}
+.med-admin-days-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tm);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.med-admin-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+.med-admin-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: 0.5px solid var(--bd);
+  background: rgba(255,255,255,0.72);
+  font-size: 11px;
+  color: var(--tp);
+  text-align: center;
+}
+.med-admin-day-top {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--tm);
+}
+.med-admin-day-date {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tp);
+}
+.med-admin-day input {
+  width: 18px;
+  height: 18px;
+  accent-color: #0b57d0;
+}
+.med-admin-problem-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  gap: 10px;
+}
+.med-admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.med-admin-field span {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--tm);
+  font-weight: 700;
+}
+.med-admin-field-wide { min-width: 0; }
+.med-history-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--bd);
+}
+.med-history-line:last-child { border-bottom: none; }
+.med-history-sub {
+  font-size: 11px;
+  color: var(--tm);
+  margin-top: 3px;
+}
+.med-history-comment {
+  font-size: 11px;
+  color: var(--tm);
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,244,224,0.65);
+}
 .result-row {
   padding: 9px 0 !important;
   border-bottom: 0.5px solid var(--bd) !important;

@@ -695,6 +695,9 @@
       if (typeof window.updateNursingNoteCount === 'function') window.updateNursingNoteCount(null);
       if (typeof window.renderNursingNoteDocPreview === 'function') window.renderNursingNoteDocPreview(null);
       if (typeof window.renderCarePlanDocPreview === 'function') window.renderCarePlanDocPreview(null);
+      if (typeof window.renderMedicationLog === 'function') window.renderMedicationLog(null);
+      if (typeof window.renderMedicationHistory === 'function') window.renderMedicationHistory(null);
+      if (typeof window.updateMedCount === 'function') window.updateMedCount(null);
       if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
       return;
     }
@@ -711,6 +714,9 @@
     if (typeof window.renderNursingNotes === 'function') window.renderNursingNotes(patient);
     if (typeof window.updateNursingNoteCount === 'function') window.updateNursingNoteCount(patient);
     if (typeof window.renderNursingNoteDocPreview === 'function') window.renderNursingNoteDocPreview(patient);
+    if (typeof window.renderMedicationLog === 'function') window.renderMedicationLog(patient);
+    if (typeof window.renderMedicationHistory === 'function') window.renderMedicationHistory(patient);
+    if (typeof window.updateMedCount === 'function') window.updateMedCount(patient);
     if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
     if (!quiet) safeToast('👤 Loaded patient: ' + displayName(patient), 'success');
   }
@@ -1487,44 +1493,219 @@
   }
 
   function medStatusClass(status) {
-    status = String(status || 'Pending');
-    return status === 'Given' ? 'b-green' : status === 'Held' ? 'b-red' : 'b-orange';
+    status = String(status || 'Pending').toLowerCase();
+    if (status === 'administered' || status === 'given') return 'b-green';
+    if (status === 'issue' || status === 'held' || status === 'problem') return 'b-red';
+    return 'b-orange';
   }
-  function buildMedicationRowHtml(id, item) {
-    item = item || {};
-    var status = item.status || 'Pending';
-    return '<div class="med-log-item" data-med-row="' + id + '">' +
-      '<input class="fi" data-med="name" style="flex:1;font-size:11px;padding:4px 8px;min-width:160px;" placeholder="Medication name" value="' + esc(item.medication || item.name || '') + '"/>' +
-      '<input class="fi" data-med="dose" style="width:110px;font-size:11px;padding:4px 8px;" placeholder="Dose" value="' + esc(item.dose || '') + '"/>' +
-      '<input class="fi" data-med="time" type="time" style="width:100px;font-size:11px;padding:4px 8px;" value="' + esc(item.time || '') + '"/>' +
-      '<span class="badge ' + medStatusClass(status) + '" id="medStatus' + id + '">' + esc(status) + '</span>' +
-      '<button class="btn-s" style="padding:2px 8px;font-size:10px;" onclick="toggleMedStatus(' + id + ')">Toggle</button>' +
-      '<button class="btn-s" style="padding:2px 8px;font-size:10px;background:var(--redb);color:var(--red);" onclick="removeMed(' + id + ')"><i class="ti ti-x"></i></button>' +
+
+  function prescriptionRoute(rx) {
+    var direct = rx && (rx.route || rx.administrationRoute || rx.adminRoute || rx.method || '');
+    if (String(direct || '').trim()) return String(direct).trim();
+    var hay = String((rx && (rx.instructions || rx.notes || rx.direction || rx.directions)) || '').toLowerCase();
+    if (/\b(po|oral|by mouth)\b/.test(hay)) return 'Oral';
+    if (/\b(iv|intravenous)\b/.test(hay)) return 'IV';
+    if (/\b(im|intramuscular)\b/.test(hay)) return 'IM';
+    if (/\b(sc|subcutaneous|sub-cut)\b/.test(hay)) return 'Subcutaneous';
+    if (/\b(topical|apply)\b/.test(hay)) return 'Topical';
+    if (/\b(inhal(ed|ation)?|nebul)\b/.test(hay)) return 'Inhaled';
+    if (/\b(rectal|pr)\b/.test(hay)) return 'Rectal';
+    if (/\b(sublingual|sl)\b/.test(hay)) return 'Sublingual';
+    return 'Not specified';
+  }
+
+  function activeDoctorPrescriptions(patient) {
+    var list = Array.isArray(patient && patient.prescriptions) ? patient.prescriptions.slice() : [];
+    return list.filter(function (rx) {
+      var status = String((rx && rx.status) || 'Pending').toLowerCase();
+      return status !== 'cancelled' && status !== 'voided' && status !== 'void';
+    }).sort(function (a, b) {
+      return ms(b && b.timestamp) - ms(a && a.timestamp);
+    });
+  }
+
+  function medicationLogSelectedDate() {
+    var el = document.getElementById('medsDate');
+    return ((el && el.value) || todayIso()).slice(0, 10);
+  }
+
+  function medicationDaySlots(baseDate) {
+    var start = parseDateOnly(baseDate || todayIso()) || parseDateOnly(todayIso()) || new Date();
+    var out = [];
+    for (var i = 0; i < 7; i += 1) {
+      var d = new Date(start.getTime());
+      d.setDate(start.getDate() + i);
+      out.push({
+        date: toDateInputValue(d),
+        short: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+        dow: d.toLocaleDateString('en-GB', { weekday: 'short' })
+      });
+    }
+    return out;
+  }
+
+  function medLogEntryKey(item) {
+    return String(item && (item.prescriptionId || item.id || ((item.medication || item.name || '') + '|' + (item.dosage || item.dose || '')) ) || '');
+  }
+
+  function latestMedicationStateMap(patient, dateStr) {
+    var history = Array.isArray(patient && patient.medicationLog) ? patient.medicationLog.slice() : [];
+    var target = String(dateStr || todayIso()).slice(0, 10);
+    var map = {};
+    history.sort(function (a, b) { return ms(b && (b.timestamp || b.date)) - ms(a && (a.timestamp || a.date)); });
+    history.forEach(function (entry) {
+      var medications = Array.isArray(entry && entry.medications) ? entry.medications : [];
+      medications.forEach(function (med) {
+        var medDate = String((med && (med.logDate || med.date)) || (entry && entry.date) || '').slice(0, 10);
+        var matchesDay = !medDate || medDate === target;
+        if (!matchesDay) return;
+        var key = medLogEntryKey(med);
+        if (!key || map[key]) return;
+        map[key] = med;
+      });
+    });
+    return map;
+  }
+
+  function medicationProblemBadge(problem) {
+    var val = String(problem || 'None');
+    if (val === 'None') return '<span class="badge b-green">No problem</span>';
+    if (val === 'Other') return '<span class="badge b-orange">Other problem</span>';
+    return '<span class="badge b-red">' + esc(val) + '</span>';
+  }
+
+  function medicationAdministrationSummary(med) {
+    var checks = Array.isArray(med && med.dailyChecks) ? med.dailyChecks : [];
+    var given = checks.filter(function (slot) { return !!slot.given; }).length;
+    var issue = String((med && med.problemType) || 'None');
+    if (issue && issue !== 'None') return 'Issue: ' + issue;
+    if (given) return given + ' day' + (given === 1 ? '' : 's') + ' ticked';
+    return 'No administration ticked';
+  }
+
+  function buildMedicationRowHtml(id, rx, savedState, slots) {
+    rx = rx || {};
+    savedState = savedState || {};
+    slots = Array.isArray(slots) ? slots : medicationDaySlots(medicationLogSelectedDate());
+    var route = prescriptionRoute(rx);
+    var checksMap = {};
+    (Array.isArray(savedState.dailyChecks) ? savedState.dailyChecks : []).forEach(function (slot) {
+      checksMap[String(slot && slot.date || '')] = !!(slot && slot.given);
+    });
+    var daysHtml = slots.map(function (slot, index) {
+      return '<label class="med-admin-day">' +
+        '<span class="med-admin-day-top">' + esc(slot.dow) + '</span>' +
+        '<span class="med-admin-day-date">' + esc(slot.short) + '</span>' +
+        '<input type="checkbox" data-med="tick" data-day-index="' + index + '" data-day-date="' + esc(slot.date) + '" ' + (checksMap[slot.date] ? 'checked' : '') + '>' +
+      '</label>';
+    }).join('');
+    return '<div class="med-admin-card med-log-item" data-med-row="' + id + '" data-prescription-id="' + esc(rx.id || '') + '">' +
+      '<div class="med-admin-head">' +
+        '<div><div class="med-admin-name">' + esc(rx.medication || rx.name || 'Medication') + '</div>' +
+        '<div class="med-admin-sub">Doctor: ' + esc(rx.prescribedBy || 'Unknown') + ' • ' + esc(fmtDateTime(rx.timestamp)) + '</div></div>' +
+        '<span class="badge ' + medStatusClass(savedState.problemType && savedState.problemType !== 'None' ? 'Issue' : ((Array.isArray(savedState.dailyChecks) && savedState.dailyChecks.some(function (slot) { return slot.given; })) ? 'Administered' : 'Pending')) + '">' +
+          esc(savedState.problemType && savedState.problemType !== 'None' ? 'Issue noted' : ((Array.isArray(savedState.dailyChecks) && savedState.dailyChecks.some(function (slot) { return slot.given; })) ? 'Administered' : 'Pending')) +
+        '</span>' +
+      '</div>' +
+      '<div class="med-admin-grid">' +
+        '<div class="med-admin-kv"><span>Name</span><strong data-med="name">' + esc(rx.medication || rx.name || '') + '</strong></div>' +
+        '<div class="med-admin-kv"><span>Dose</span><strong data-med="dose">' + esc(rx.dosage || rx.dose || '') + '</strong></div>' +
+        '<div class="med-admin-kv"><span>Route</span><strong data-med="route">' + esc(route) + '</strong></div>' +
+        '<div class="med-admin-kv"><span>Frequency</span><strong data-med="frequency">' + esc(rx.frequency || '—') + '</strong></div>' +
+        '<div class="med-admin-kv"><span>Duration</span><strong data-med="duration">' + esc(rx.duration || '—') + '</strong></div>' +
+        '<div class="med-admin-kv"><span>Pharmacy / Rx status</span><strong data-med="rxstatus">' + esc(rx.status || 'Pending') + '</strong></div>' +
+      '</div>' +
+      '<div class="med-admin-days-wrap"><div class="med-admin-days-label">Daily administration ticks</div><div class="med-admin-days">' + daysHtml + '</div></div>' +
+      '<div class="med-admin-problem-grid">' +
+        '<label class="med-admin-field"><span>Problem</span><select class="fi" data-med="problem"><option' + (String(savedState.problemType || 'None') === 'None' ? ' selected' : '') + '>None</option><option' + (String(savedState.problemType || '') === 'Out of stock' ? ' selected' : '') + '>Out of stock</option><option' + (String(savedState.problemType || '') === 'Allergy' ? ' selected' : '') + '>Allergy</option><option' + (String(savedState.problemType || '') === 'Patient refused' ? ' selected' : '') + '>Patient refused</option><option' + (String(savedState.problemType || '') === 'Held by clinician' ? ' selected' : '') + '>Held by clinician</option><option' + (String(savedState.problemType || '') === 'Other' ? ' selected' : '') + '>Other</option></select></label>' +
+        '<label class="med-admin-field med-admin-field-wide"><span>Comment</span><textarea class="ta" data-med="comment" rows="2" placeholder="Explain any medication problem here, for example out of stock, allergy, dose held, adverse reaction...">' + esc(savedState.comment || savedState.notes || '') + '</textarea></label>' +
+      '</div>' +
     '</div>';
   }
+
+  function renderMedicationLog(patient) {
+    patient = patient || refreshCurrentPatientFromStore();
+    var list = document.getElementById('medLogList');
+    var note = document.getElementById('medRxSourceNote');
+    if (!list) return;
+    if (!patient) {
+      list.innerHTML = '<div class="pcf-empty"><i class="ti ti-pill"></i>Select a patient to load doctor prescriptions.</div>';
+      if (note) note.textContent = 'Doctor prescriptions from the Common Server appear below. Tick each day when medication is administered, and comment any problem.';
+      return;
+    }
+    var prescriptions = activeDoctorPrescriptions(patient);
+    var selectedDate = medicationLogSelectedDate();
+    var stateMap = latestMedicationStateMap(patient, selectedDate);
+    var slots = medicationDaySlots(selectedDate);
+    if (note) note.textContent = prescriptions.length
+      ? ('Showing ' + prescriptions.length + ' doctor prescription' + (prescriptions.length === 1 ? '' : 's') + ' from the Common Server for ' + displayName(patient) + '.')
+      : ('No active doctor prescriptions found for ' + displayName(patient) + '.');
+    if (!prescriptions.length) {
+      list.innerHTML = '<div class="pcf-empty"><i class="ti ti-pill-off"></i>No doctor prescriptions found for this patient.</div>';
+      return;
+    }
+    list.innerHTML = prescriptions.map(function (rx, index) {
+      return buildMedicationRowHtml(index + 1, rx, stateMap[medLogEntryKey(rx)] || {}, slots);
+    }).join('');
+  }
+
   function ensureMedicationEditorRow() {
-    var list = document.getElementById('medLogList');
-    if (!list) return;
-    if (!list.querySelector('.med-log-item')) addMedicationRow();
+    renderMedicationLog(refreshCurrentPatientFromStore());
   }
+
   function addMedicationRow(prefill) {
-    window.medCounter = Number(window.medCounter || 0) + 1;
-    var id = window.medCounter;
-    var list = document.getElementById('medLogList');
-    if (!list) return;
-    list.insertAdjacentHTML('beforeend', buildMedicationRowHtml(id, prefill || {}));
+    renderMedicationLog(refreshCurrentPatientFromStore());
   }
+
   function removeMed(id) {
     var row = document.querySelector('.med-log-item[data-med-row="' + String(id) + '"]');
     if (row) row.remove();
-    ensureMedicationEditorRow();
   }
+
   function toggleMedStatus(id) {
-    var statusEl = document.getElementById('medStatus' + id);
-    if (!statusEl) return;
-    var next = statusEl.textContent === 'Given' ? 'Pending' : statusEl.textContent === 'Pending' ? 'Held' : 'Given';
-    statusEl.textContent = next;
-    statusEl.className = 'badge ' + medStatusClass(next);
+    var row = document.querySelector('.med-log-item[data-med-row="' + String(id) + '"]');
+    if (!row) return;
+    var first = row.querySelector('input[data-med="tick"]');
+    if (!first) return;
+    first.checked = !first.checked;
+  }
+
+  function renderMedicationHistory(patient) {
+    patient = patient || refreshCurrentPatientFromStore();
+    var container = document.getElementById('medHistoryList');
+    if (!container) return;
+    var history = Array.isArray(patient && patient.medicationLog) ? patient.medicationLog.slice() : [];
+    updateMedCount(patient);
+    if (!history.length) {
+      container.innerHTML = '<p class="pcf-empty"><i class="ti ti-pill"></i>No medication administration records yet.</p>';
+      return;
+    }
+    history.sort(function (a, b) { return ms(b && (b.timestamp || b.date)) - ms(a && (a.timestamp || a.date)); });
+    container.innerHTML = history.map(function (entry) {
+      var meds = Array.isArray(entry.medications) ? entry.medications : [];
+      var lines = meds.map(function (med) {
+        return '<div class="med-history-line">' +
+          '<div><strong>' + esc(med.medication || med.name || 'Medication') + '</strong><div class="med-history-sub">' + esc((med.dosage || med.dose || '—') + ' • ' + (med.route || 'Not specified')) + '</div></div>' +
+          '<div style="text-align:right;">' + medicationProblemBadge(med.problemType || 'None') + '<div class="med-history-sub">' + esc(medicationAdministrationSummary(med)) + '</div></div>' +
+        '</div>' +
+        ((med.comment || med.notes) ? '<div class="med-history-comment">💬 ' + esc(med.comment || med.notes) + '</div>' : '');
+      }).join('');
+      return '<div class="med-entry">' +
+        '<div class="med-header">' +
+          '<span class="med-time">🕐 ' + esc(fmtDateTime(entry.timestamp || entry.date)) + '</span>' +
+          '<span class="med-nurse">👩‍⚕️ ' + esc(entry.nurse || currentStaffName()) + '</span>' +
+          '<span class="med-status-badge given">' + esc((entry.shift || 'Morning') + ' Shift') + '</span>' +
+        '</div>' +
+        '<div class="med-content">' + lines + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function updateMedCount(patient) {
+    var countEl = document.getElementById('medHistoryCount');
+    if (!countEl) return;
+    var total = Array.isArray(patient && patient.medicationLog) ? patient.medicationLog.length : 0;
+    countEl.textContent = String(total);
   }
 
   function refreshAfterSave(savedPatient, clearFn) {
@@ -2265,31 +2446,65 @@
     if (!patient) return safeToast('⚠️ Please select a patient first', 'warning');
     var rows = document.querySelectorAll('#medLogList .med-log-item');
     var meds = [];
+    var selectedDate = medicationLogSelectedDate();
     rows.forEach(function (row) {
-      var name = ((row.querySelector('[data-med="name"]') || {}).value || '').trim();
-      var dose = ((row.querySelector('[data-med="dose"]') || {}).value || '').trim();
-      var time = ((row.querySelector('[data-med="time"]') || {}).value || '').trim();
-      var status = ((row.querySelector('.badge') || {}).textContent || 'Pending').trim();
-      if (name) meds.push({ medication: name, dose: dose + (time ? ' · ' + time : ''), time: time, status: status });
+      var prescriptionId = String(row.getAttribute('data-prescription-id') || '');
+      var nameEl = row.querySelector('[data-med="name"]');
+      var doseEl = row.querySelector('[data-med="dose"]');
+      var routeEl = row.querySelector('[data-med="route"]');
+      var freqEl = row.querySelector('[data-med="frequency"]');
+      var durationEl = row.querySelector('[data-med="duration"]');
+      var rxStatusEl = row.querySelector('[data-med="rxstatus"]');
+      var problemEl = row.querySelector('[data-med="problem"]');
+      var commentEl = row.querySelector('[data-med="comment"]');
+      var checks = [];
+      row.querySelectorAll('input[data-med="tick"]').forEach(function (tick) {
+        checks.push({
+          index: Number(tick.getAttribute('data-day-index') || 0),
+          date: String(tick.getAttribute('data-day-date') || ''),
+          given: !!tick.checked
+        });
+      });
+      var medication = String((nameEl && nameEl.textContent) || '').trim();
+      var problemType = String((problemEl && problemEl.value) || 'None').trim();
+      var comment = String((commentEl && commentEl.value) || '').trim();
+      if (medication) {
+        meds.push({
+          prescriptionId: prescriptionId,
+          medication: medication,
+          dosage: String((doseEl && doseEl.textContent) || '').trim(),
+          dose: String((doseEl && doseEl.textContent) || '').trim(),
+          route: String((routeEl && routeEl.textContent) || '').trim(),
+          frequency: String((freqEl && freqEl.textContent) || '').trim(),
+          duration: String((durationEl && durationEl.textContent) || '').trim(),
+          prescriptionStatus: String((rxStatusEl && rxStatusEl.textContent) || '').trim(),
+          dailyChecks: checks,
+          problemType: problemType,
+          comment: comment,
+          notes: comment,
+          logDate: selectedDate,
+          status: problemType !== 'None' ? 'Issue' : (checks.some(function (slot) { return slot.given; }) ? 'Administered' : 'Pending')
+        });
+      }
     });
-    if (!meds.length) return safeToast('⚠️ No medications to log', 'warning');
+    if (!meds.length) return safeToast('⚠️ No doctor prescriptions to log', 'warning');
     var entry = {
       id: Date.now(),
       timestamp: nowIso(),
       medications: meds,
       nurse: ((document.getElementById('medsNurse') || {}).value || currentStaffName()),
       shift: ((document.getElementById('medsShift') || {}).value || 'Morning'),
-      date: ((document.getElementById('medsDate') || {}).value || todayIso()),
-      status: 'Completed'
+      date: selectedDate,
+      status: meds.some(function (med) { return med.problemType && med.problemType !== 'None'; }) ? 'Issues noted' : (meds.some(function (med) { return (med.dailyChecks || []).some(function (slot) { return slot.given; }); }) ? 'Administered' : 'Pending'),
+      source: 'nurse-medication-admin'
     };
     safeToast('⏳ Saving medication log to the Common Server…', 'info');
     var saved = await appendPatientHistory('medicationLog', entry);
     if (!saved) return safeToast('❌ Medication log was NOT saved. Please retry.', 'error');
-    refreshAfterSave(saved, function () {
-      var list = document.getElementById('medLogList');
-      if (list) list.innerHTML = '';
-      ensureMedicationEditorRow();
-    });
+    refreshAfterSave(saved);
+    renderMedicationLog(saved);
+    renderMedicationHistory(saved);
+    updateMedCount(saved);
     safeToast('✅ Medication log saved for ' + displayName(saved), 'success');
   }
 
@@ -3365,6 +3580,10 @@
     window.addMedicationRow = addMedicationRow;
     window.removeMed = removeMed;
     window.toggleMedStatus = toggleMedStatus;
+    window.renderMedicationLog = renderMedicationLog;
+    window.renderMedicationHistory = renderMedicationHistory;
+    window.renderMedHistory = renderMedicationHistory;
+    window.updateMedCount = updateMedCount;
     window.selectFp = selectFp;
     window.saveTriage = saveTriage;
     window.clearTriage = clearTriage;
@@ -3444,6 +3663,11 @@
           updateNursingNoteCount(getCurrentPatient());
           renderNursingNoteDocPreview(getCurrentPatient());
         }
+        if (name === 'meds') {
+          renderMedicationLog(getCurrentPatient());
+          renderMedicationHistory(getCurrentPatient());
+          updateMedCount(getCurrentPatient());
+        }
         if (name === 'billing') { renderBillCatalog(); ensureBillRows(); }
       };
     }
@@ -3487,6 +3711,12 @@
     var cpnDose = document.getElementById('cpnTtDose'); if (cpnDose) cpnDose.value = '';
     var medList = document.getElementById('medLogList'); if (medList) medList.innerHTML = '';
     ensureMedicationEditorRow();
+    var medsDateInput = document.getElementById('medsDate');
+    if (medsDateInput && !medsDateInput.dataset.medDateBound) {
+      medsDateInput.dataset.medDateBound = '1';
+      medsDateInput.addEventListener('input', function () { renderMedicationLog(getCurrentPatient()); });
+      medsDateInput.addEventListener('change', function () { renderMedicationLog(getCurrentPatient()); });
+    }
     wireRefreshEvents();
     loadPatients();
     var initialPatient = getCurrentPatient();

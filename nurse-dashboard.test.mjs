@@ -10,8 +10,8 @@ const FIX = readFileSync(resolve(ROOT, 'nurse-dashboard-fixes.js'), 'utf8');
 const CSS = readFileSync(resolve(ROOT, 'nurse-dashboard-doctor.css'), 'utf8');
 
 test('nurse dashboard loads the dedicated fix layer and the doctor-style skin while keeping nurse auth', () => {
-  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260907_NURSEFIX_OPDFILEMATCH/);
-  assert.match(HTML, /nurse-dashboard-doctor\.css\?v=20260907_DOCTORSKIN_OPDFILEMATCH/);
+  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260907_NURSEFIX_MEDLOGRX/);
+  assert.match(HTML, /nurse-dashboard-doctor\.css\?v=20260907_DOCTORSKIN_MEDLOGRX/);
   assert.match(HTML, /requireAuth\(\['nurse'\]\)/);
   assert.match(HTML, /pclinic-orders\.js/);
   assert.match(HTML, /pclinic-catalog\.js/);
@@ -156,6 +156,38 @@ test('nursing notes now use the doctor OPD file-style layout with live preview a
   assert.match(FIX, /window\.previewNursingNoteHistory = previewNursingNoteHistory/);
   assert.match(FIX, /window\.printNursingNotePreview = printNursingNotePreview/);
   assert.match(CSS, /#nursingNotesList \.pcf-hrow\.is-selected/);
+});
+
+test('medication log now loads doctor prescriptions and records daily administration ticks plus problem comments', () => {
+  for (const id of ['medsViewFile', 'medsViewHistory', 'medsPatient', 'medsDate', 'medsNurse', 'medsShift', 'medLogList', 'medRxSourceNote', 'medHistoryList', 'medHistoryCount']) {
+    assert.match(HTML, new RegExp(`id=["']${id}["']`), id + ' missing');
+  }
+  for (const token of ['Medication Administration Log', 'Doctor prescriptions', 'Refresh prescriptions', 'Medication round context', 'Doctor prescriptions from the Common Server appear below', 'Doctor prescriptions to administer', 'Save Medication Log', 'Reload Doctor Prescriptions', 'Medication administration history']) {
+    assert.ok(HTML.includes(token), 'Missing med log token: ' + token);
+  }
+  assert.match(FIX, /function prescriptionRoute\(rx\)/);
+  assert.match(FIX, /function activeDoctorPrescriptions\(patient\)/);
+  assert.match(FIX, /function medicationDaySlots\(baseDate\)/);
+  assert.match(FIX, /function latestMedicationStateMap\(patient, dateStr\)/);
+  assert.match(FIX, /function buildMedicationRowHtml\(id, rx, savedState, slots\)/);
+  assert.match(FIX, /function renderMedicationLog\(patient\)/);
+  assert.match(FIX, /function renderMedicationHistory\(patient\)/);
+  assert.match(FIX, /function medicationAdministrationSummary\(med\)/);
+  assert.match(FIX, /data-med="route"/);
+  assert.match(FIX, /data-med="problem"/);
+  assert.match(FIX, /data-med="comment"/);
+  assert.match(FIX, /data-med="tick"/);
+  assert.match(FIX, /patient && patient\.prescriptions/);
+  assert.match(FIX, /appendPatientHistory\('medicationLog', entry\)/);
+  assert.match(FIX, /source: 'nurse-medication-admin'/);
+  assert.match(FIX, /window\.renderMedicationLog = renderMedicationLog/);
+  assert.match(FIX, /window\.renderMedicationHistory = renderMedicationHistory/);
+  assert.match(FIX, /window\.renderMedHistory = renderMedicationHistory/);
+  assert.match(FIX, /window\.updateMedCount = updateMedCount/);
+  assert.match(CSS, /\.med-admin-card/);
+  assert.match(CSS, /\.med-admin-days/);
+  assert.match(CSS, /\.med-admin-problem-grid/);
+  assert.match(CSS, /\.med-history-comment/);
 });
 
 test('the nurse search and patient-table filtering support name, MRN and patient ID', () => {

@@ -1150,7 +1150,7 @@
         }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
-    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_OPDFILEMATCH">
+    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_MEDLOGRX">
 </head>
 <body>
 
@@ -1916,31 +1916,60 @@
             <!-- ─── PANEL: MEDICATION LOG ─── -->
             <div id="panel-meds" class="main-panel" style="display:none;">
                 <div class="panel-body show" id="sub-meds-log">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-                        <span style="font-size:14px;font-weight:600;">Medication administration log</span>
-                        <button class="btn-print" onclick="printPatientFile()"><i class="ti ti-printer"></i>Print</button>
-                    </div>
-                    <div class="fg" style="margin-bottom:12px;">
-                        <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="medsPatient" placeholder="Patient name — MRN"/></div>
-                        <div class="fgl"><div class="lbl">Date</div><input class="fi" type="date" id="medsDate"/></div>
-                        <div class="fgl"><div class="lbl">Nurse</div><input class="fi" id="medsNurse" value="Nurse Achieng"/></div>
-                        <div class="fgl"><div class="lbl">Shift</div><select class="fi" id="medsShift"><option>Morning</option><option>Evening</option><option>Night</option></select></div>
-                    </div>
-                    <div class="section-title">Medications administered</div>
-                    <div id="medLogList"></div>
-                    <div class="fa" style="margin-top:8px;">
-                        <button class="btn-p" onclick="saveMedicationLog()"><i class="ti ti-check"></i> Save log</button>
-                        <button class="btn-s" onclick="addMedicationRow()"><i class="ti ti-plus"></i> Add medication</button>
-                    </div>
-                    
-                    <!-- ─── MEDICATION HISTORY ─── -->
-                    <div style="margin-top:20px; border-top:0.5px solid var(--bd); padding-top:14px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <span style="font-size:13px; font-weight:600;"><i class="ti ti-history"></i> Medication History</span>
-                            <span class="badge b-ac" id="medHistoryCount">0 records</span>
+                    <div class="pcf-bill-layout cpn-file-shell">
+                        <div id="medsViewFile" style="display:flex;flex:1;min-height:0;flex-direction:column;gap:9px;">
+                            <div class="pcf-panel cpn-file-main">
+                                <div class="cpn-file-head">
+                                    <h2><i class="ti ti-pill" style="color:#0b57d0;"></i> Medication Administration Log</h2>
+                                    <span class="badge cpn-active-badge">Doctor prescriptions</span>
+                                </div>
+                                <div class="pcf-cmd noprint cpn-file-cmd">
+                                    <button class="pcf-btn sm" type="button" onclick="document.getElementById('medHistoryList')?.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-history"></i> History</button>
+                                    <b class="mode">Medication Log</b>
+                                    <span class="spacer"></span>
+                                    <button class="pcf-btn sm" type="button" onclick="renderMedicationLog(getCurrentPatient())"><i class="ti ti-refresh"></i> Refresh prescriptions</button>
+                                    <button class="pcf-btn sm primary" type="button" onclick="saveMedicationLog()"><i class="ti ti-device-floppy"></i> Save</button>
+                                </div>
+                                <div class="pcf-panel" style="margin-bottom:12px;">
+                                    <h2><i class="ti ti-user-heart"></i> Medication round context</h2>
+                                    <div class="pcf-two">
+                                        <div>
+                                            <label class="pcf-lbl">Selected patient</label>
+                                            <input class="pcf-in fi" id="medsPatient" placeholder="Select or search a patient first"/>
+                                        </div>
+                                        <div>
+                                            <label class="pcf-lbl">Medication round date</label>
+                                            <input class="pcf-in fi" type="date" id="medsDate"/>
+                                        </div>
+                                        <div>
+                                            <label class="pcf-lbl">Nurse</label>
+                                            <input class="pcf-in fi" id="medsNurse" value="Nurse Achieng"/>
+                                        </div>
+                                        <div>
+                                            <label class="pcf-lbl">Shift</label>
+                                            <select class="pcf-in fi" id="medsShift"><option>Morning</option><option>Evening</option><option>Night</option></select>
+                                        </div>
+                                    </div>
+                                    <div class="med-admin-source" id="medRxSourceNote">Doctor prescriptions from the Common Server appear below. Tick each day when medication is administered, and comment any problem.</div>
+                                </div>
+                                <div class="section-title">Doctor prescriptions to administer</div>
+                                <div id="medLogList"></div>
+                                <div class="fa" style="margin-top:8px;">
+                                    <button class="pcf-btn primary" type="button" onclick="saveMedicationLog()"><i class="ti ti-check"></i> Save Medication Log</button>
+                                    <button class="pcf-btn" type="button" onclick="renderMedicationLog(getCurrentPatient())"><i class="ti ti-refresh"></i> Reload Doctor Prescriptions</button>
+                                </div>
+                            </div>
                         </div>
-                        <div id="medHistoryList">
-                            <p class="cpn-empty">📋 No medication records yet.</p>
+
+                        <div id="medsViewHistory" style="display:block;">
+                            <div class="pcf-panel cpn-file-history-panel">
+                                <div class="cpn-file-head">
+                                    <h2><i class="ti ti-history" style="color:#0b57d0;"></i> Medication administration history <span class="count" id="medHistoryCount">0</span></h2>
+                                </div>
+                                <div id="medHistoryList">
+                                    <p class="pcf-empty"><i class="ti ti-pill"></i>No medication administration records yet.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3774,7 +3803,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_OPDFILEMATCH" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_MEDLOGRX" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {
