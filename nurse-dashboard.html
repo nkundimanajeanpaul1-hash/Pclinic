@@ -1148,7 +1148,7 @@
         }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
-    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_BILLMATCH">
+    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_LABMATCH">
 </head>
 <body>
 
@@ -1376,7 +1376,7 @@
                     <div id="triageFinalPreview" class="triage-preview triage-preview-neutral">No triage category ready yet.</div>
 
                     <div class="fa">
-                        <button class="btn-p" id="saveTriageBtn" onclick="saveTriage()"><i class="ti ti-check"></i> Save triage category</button>
+                        <button class="btn-p" id="saveTriageBtn" onclick="saveTriage()"><i class="ti ti-check"></i> Save triage ategory</button>
                         <button class="btn-s" onclick="clearTriage()">Clear selection</button>
                     </div>
                 </div>
@@ -1768,23 +1768,49 @@
                 </div>
             </div>
 
-            <!-- ─── PANEL: LAB RESULTS ─── -->
+            <!-- ─── PANEL: LAB RESULTS (DOCTOR-STYLE) ─── -->
             <div id="panel-lab" class="main-panel" style="display:none;">
                 <div class="panel-body show" id="sub-lab-view">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-                        <span style="font-size:14px;font-weight:600;">Lab results — view only</span>
-                        <span style="font-size:11px;background:var(--orangeb);color:var(--oranged);padding:2px 8px;border-radius:10px;font-weight:600;">Read-only</span>
-                    </div>
-                    <div class="fg" style="margin-bottom:12px;">
-                        <div class="fgl"><div class="lbl">Selected patient</div><input class="fi" id="labPatient" placeholder="Select a patient from the search or Patients tab"/></div>
-                        <div class="fgl"><div class="lbl">Verified result date (optional)</div><input class="fi" type="date" id="labDate" onchange="renderLabResults()"/></div>
-                    </div>
-                    <div id="labResultsContainer">
-                        <div class="cpn-empty">🔒 Select a patient first to see verified laboratory results from the Common Server.</div>
-                    </div>
-                    <div class="fa">
-                        <button class="btn-print" onclick="printPatientFile()"><i class="ti ti-printer"></i>Print results</button>
-                        <button class="btn-s" onclick="renderLabResults()"><i class="ti ti-refresh"></i> Refresh live results</button>
+                    <div class="nurse-lab-shell">
+                        <div class="nurse-lab-head">
+                            <div>
+                                <div class="nurse-lab-title">🧪 Laboratory — Requests &amp; Verified Results</div>
+                                <div class="nurse-lab-sub">Read-only for the nurse • Results are released by the Laboratory and appear here live.</div>
+                            </div>
+                            <button class="pc-btn pc-btn-primary" type="button" onclick="openLabResultsFlowSheet()"><i class="ti ti-chart-bar"></i> Open Cumulative Flow Sheet</button>
+                        </div>
+
+                        <div class="fg" style="margin-bottom:14px;">
+                            <div class="fgl"><div class="lbl">Selected patient</div><input class="fi" id="labPatient" placeholder="Select a patient from the search or Patients tab"/></div>
+                            <div class="fgl"><div class="lbl">Verified result date (optional)</div><input class="fi" type="date" id="labDate" onchange="renderLabResults()"/></div>
+                        </div>
+
+                        <div class="nurse-lab-section-head">
+                            <span>📋 Lab Requests</span>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <select id="labRequestStatusFilter" class="fi" onchange="renderLabResults()" style="height:32px;min-width:150px;">
+                                    <option value="all">All statuses</option>
+                                    <option value="pending">⏳ Pending at Lab</option>
+                                    <option value="completed">✅ Verified</option>
+                                    <option value="cancelled">❌ Cancelled</option>
+                                </select>
+                                <span class="badge b-info" id="labRequestCount">0 requests</span>
+                            </div>
+                        </div>
+                        <div id="labRequestsList" class="nurse-lab-stack">
+                            <div class="nurse-lab-empty">🔒 Select a patient first to see laboratory requests from the Common Server.</div>
+                        </div>
+
+                        <div class="nurse-lab-section-head" style="margin-top:18px;">
+                            <span>📊 Verified Lab Results</span>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <span class="badge b-grn">✓ Laboratory released</span>
+                                <button class="pc-btn" type="button" onclick="renderLabResults()"><i class="ti ti-refresh"></i> Refresh live results</button>
+                            </div>
+                        </div>
+                        <div id="labResultsList" class="nurse-lab-stack">
+                            <div class="nurse-lab-empty">🔒 Select a patient first to see verified laboratory results from the Common Server.</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3683,7 +3709,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_BILLMATCH" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_LABMATCH" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {

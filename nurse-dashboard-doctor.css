@@ -1428,3 +1428,172 @@ body.dark-mode .modal-overlay {
   .bill-doctor-layout .bill-type-row { grid-template-columns: 1fr; }
   .bill-doctor-layout .bill-page-row > * { flex: 1 1 100%; }
 }
+
+/* Nurse lab panel aligned to doctor lab-results layout */
+.nurse-lab-shell {
+  display: block;
+}
+.nurse-lab-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.nurse-lab-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1d1d1f;
+}
+.nurse-lab-sub {
+  font-size: 11.5px;
+  color: #6e6e73;
+  margin-top: 2px;
+}
+.nurse-lab-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.nurse-lab-section-head > span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1d1d1f;
+}
+.nurse-lab-stack {
+  display: grid;
+  gap: 8px;
+}
+.nurse-lab-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  background: #fff;
+  border: 0.5px solid rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  flex-wrap: wrap;
+}
+.nurse-lab-card.big {
+  display: block;
+  margin-bottom: 10px;
+}
+.nurse-lab-card-main {
+  flex: 1;
+  min-width: 180px;
+}
+.nurse-lab-card-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.nurse-lab-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.nurse-lab-card-title {
+  font-weight: 800;
+  color: #1d1d1f;
+  font-size: 12.5px;
+}
+.nurse-lab-card-sub {
+  font-size: 11px;
+  color: #6e6e73;
+  margin-top: 2px;
+}
+.nurse-lab-card-date,
+.nurse-lab-foot {
+  font-size: 10.5px;
+  color: #6e6e73;
+}
+.nurse-lab-state {
+  font-weight: 700;
+  font-size: 10.5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.nurse-lab-state.ok { background: #e9f9ee; color: #1a7a32; }
+.nurse-lab-state.warn { background: #fff4e0; color: #7a4500; }
+.nurse-lab-state.bad { background: #ffebe9; color: #8a1f1a; }
+.nurse-lab-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.nurse-lab-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f5f5f7;
+  border: 0.5px solid rgba(0,0,0,0.06);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1d1d1f;
+}
+.nurse-lab-mini-btn {
+  background: #eaf2ff;
+  color: #0071e3;
+  border: 0.5px solid rgba(0,113,227,0.3);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+}
+.nurse-lab-mini-note {
+  font-size: 11px;
+  color: #6e6e73;
+  font-weight: 700;
+}
+.nurse-lab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  margin-bottom: 8px;
+  margin-top: 10px;
+}
+.nurse-lab-table thead tr {
+  background: #f5f5f7;
+}
+.nurse-lab-table th,
+.nurse-lab-table td {
+  padding: 6px 12px;
+  border: 0.5px solid #d8d8dc;
+  text-align: left;
+}
+.nurse-lab-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--tm);
+  font-size: 12px;
+  background: rgba(255,255,255,0.55);
+  border: 0.5px dashed var(--bd);
+  border-radius: 12px;
+}
+@media (max-width: 768px) {
+  .nurse-lab-card-side {
+    align-items: flex-start;
+    width: 100%;
+  }
+  .nurse-lab-head .pc-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
