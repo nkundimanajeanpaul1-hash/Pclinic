@@ -689,6 +689,8 @@
       if (typeof window.updateBillCount === 'function') window.updateBillCount(null);
       if (typeof window.renderLabResults === 'function') window.renderLabResults();
       if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
+      if (typeof window.renderNursingNotes === 'function') window.renderNursingNotes(null);
+      if (typeof window.updateNursingNoteCount === 'function') window.updateNursingNoteCount(null);
       if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
       return;
     }
@@ -701,6 +703,8 @@
     if (typeof window.renderDeliveriesHistory === 'function') window.renderDeliveriesHistory();
     if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
     if (typeof window.renderLabResults === 'function') window.renderLabResults(patient);
+    if (typeof window.renderNursingNotes === 'function') window.renderNursingNotes(patient);
+    if (typeof window.updateNursingNoteCount === 'function') window.updateNursingNoteCount(patient);
     if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
     if (!quiet) safeToast('👤 Loaded patient: ' + displayName(patient), 'success');
   }
@@ -1775,36 +1779,90 @@
     fillForms(getCurrentPatient());
   }
 
+  function nursingNoteSummary(note) {
+    if (!note) return '';
+    var body = String(note.note || note.body || '').trim();
+    if (body) return body;
+    var parts = [];
+    if (note.subjective) parts.push(note.subjective);
+    if (note.objective) parts.push(note.objective);
+    if (note.plan) parts.push(note.plan);
+    if (note.education) parts.push(note.education);
+    return parts.join('\n\n').trim();
+  }
+
+  function nursingNoteStatusClass(status) {
+    var s = String(status || 'Stable').toLowerCase();
+    if (s === 'improved') return 'improved';
+    if (s === 'deteriorated') return 'deteriorated';
+    if (s === 'transferred') return 'transferred';
+    if (s === 'discharged') return 'discharged';
+    return 'stable';
+  }
+
+  function renderNursingNotes(patient) {
+    var container = document.getElementById('nursingNotesList');
+    if (!container) return;
+    var notes = Array.isArray(patient && patient.nursingNotes) ? patient.nursingNotes.slice() : [];
+    if (!notes.length) {
+      container.innerHTML = '<p class="cpn-empty">📋 No nursing notes yet on the Common Server.</p>';
+      return;
+    }
+    notes.sort(function (a, b) { return ms(b && (b.timestamp || b.date)) - ms(a && (a.timestamp || a.date)); });
+    container.innerHTML = notes.map(function (note) {
+      var status = String(note.status || 'Stable');
+      var summary = nursingNoteSummary(note) || '—';
+      return '<div class="notes-simple-entry">' +
+        '<div class="notes-simple-entry-head">' +
+          '<div class="notes-simple-entry-meta"><b>' + esc(note.nurse || currentStaffName()) + '</b><br>' + esc(fmtDateTime(note.timestamp || note.date)) + '</div>' +
+          '<span class="notes-simple-status ' + nursingNoteStatusClass(status) + '">' + esc(status) + '</span>' +
+        '</div>' +
+        '<div class="notes-simple-entry-note">' + esc(summary) + '</div>' +
+        '<div class="notes-simple-entry-foot">📍 ' + esc(note.ward || displayLocation(patient) || 'General') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function updateNursingNoteCount(patient) {
+    var countEl = document.getElementById('nursingNoteCount');
+    if (!countEl) return;
+    var total = Array.isArray(patient && patient.nursingNotes) ? patient.nursingNotes.length : 0;
+    countEl.textContent = total + ' note' + (total !== 1 ? 's' : '');
+  }
+
   async function saveNursingNote() {
     var patient = refreshCurrentPatientFromStore();
     if (!patient) return safeToast('⚠️ Please select a patient first', 'warning');
-    var subjective = ((document.getElementById('notesSubjective') || {}).value || '').trim();
-    var objective = ((document.getElementById('notesObjective') || {}).value || '').trim();
-    var plan = ((document.getElementById('notesPlan') || {}).value || '').trim();
-    if (!subjective && !objective && !plan) return safeToast('⚠️ Please fill in at least one section', 'warning');
+    var body = ((document.getElementById('notesBody') || {}).value || '').trim();
+    if (!body) return safeToast('⚠️ Please write the nursing note first', 'warning');
+    var stamp = ((document.getElementById('notesDateTime') || {}).value || '').trim();
     var entry = {
       id: Date.now(),
-      timestamp: nowIso(),
-      subjective: subjective,
-      objective: objective,
-      plan: plan,
-      education: ((document.getElementById('notesEducation') || {}).value || '').trim(),
+      timestamp: stamp || nowIso(),
+      date: stamp || nowIso(),
+      note: body,
+      body: body,
+      subjective: body,
+      objective: '',
+      plan: '',
+      education: '',
       status: ((document.getElementById('notesStatus') || {}).value || 'Stable'),
       nurse: ((document.getElementById('notesNurse') || {}).value || currentStaffName()),
-      ward: ((document.getElementById('notesWard') || {}).value || displayLocation(patient)),
-      reviewDate: ((document.getElementById('notesReview') || {}).value || '')
+      ward: displayLocation(patient),
+      source: 'nurse-notes-simple'
     };
     safeToast('⏳ Saving nursing note to the Common Server…', 'info');
     var saved = await appendPatientHistory('nursingNotes', entry);
     if (!saved) return safeToast('❌ Nursing note was NOT saved. Please retry.', 'error');
     refreshAfterSave(saved, clearNursingNote);
+    renderNursingNotes(saved);
+    updateNursingNoteCount(saved);
     safeToast('✅ Nursing note saved for ' + displayName(saved), 'success');
   }
   function clearNursingNote() {
-    ['notesSubjective', 'notesObjective', 'notesPlan', 'notesEducation', 'notesReview'].forEach(function (id) {
-      var el = document.getElementById(id); if (el) el.value = '';
-    });
+    var body = document.getElementById('notesBody'); if (body) body.value = '';
     var status = document.getElementById('notesStatus'); if (status) status.value = 'Stable';
+    var dateTime = document.getElementById('notesDateTime'); if (dateTime) dateTime.value = nowLocalValue();
     fillForms(getCurrentPatient());
   }
 
@@ -2985,6 +3043,8 @@
     window.clearCPN = clearCPN;
     window.saveFP = saveFP;
     window.clearFP = clearFP;
+    window.renderNursingNotes = renderNursingNotes;
+    window.updateNursingNoteCount = updateNursingNoteCount;
     window.saveNursingNote = saveNursingNote;
     window.clearNursingNote = clearNursingNote;
     window.saveBill = saveBill;
@@ -3027,6 +3087,7 @@
         if (name === 'overview') refreshKpisAndQueue(getAllPatients());
         if (name === 'vitals' && typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
         if (name === 'triage') renderTriagePanel(getCurrentPatient());
+        if (name === 'notes') { renderNursingNotes(getCurrentPatient()); updateNursingNoteCount(getCurrentPatient()); }
         if (name === 'billing') { renderBillCatalog(); ensureBillRows(); }
       };
     }
@@ -3057,6 +3118,7 @@
     var billDate = document.getElementById('billDate'); if (billDate && !billDate.value) billDate.value = todayIso();
     var fpDate = document.getElementById('fpDate'); if (fpDate && !fpDate.value) fpDate.value = todayIso();
     var medsDate = document.getElementById('medsDate'); if (medsDate && !medsDate.value) medsDate.value = todayIso();
+    var notesDate = document.getElementById('notesDateTime'); if (notesDate && !notesDate.value) notesDate.value = nowLocalValue();
     var labDate = document.getElementById('labDate'); if (labDate) labDate.value = '';
     ['cpnLmp', 'cpnEdd', 'cpnRdv', 'cpnGestAge', 'cpnPregnancies', 'cpnFundalHeight', 'cpnAssessment', 'cpnNotes'].forEach(function (id) {
       var el = document.getElementById(id);

@@ -1150,7 +1150,7 @@
         }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
-    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_LABDIRECT">
+    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_NOTESSIMPLE">
 </head>
 <body>
 
@@ -1782,31 +1782,48 @@
             <!-- ─── PANEL: NURSING NOTES ─── -->
             <div id="panel-notes" class="main-panel" style="display:none;">
                 <div class="panel-body show" id="sub-notes-form">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-                        <span style="font-size:14px;font-weight:600;">Nursing progress notes</span>
-                        <button class="btn-print" onclick="printPatientFile()"><i class="ti ti-printer"></i>Print</button>
-                    </div>
-                    <div class="fg">
-                        <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="notesPatient" placeholder="Patient name — MRN"/></div>
-                        <div class="fgl"><div class="lbl">Date and time</div><input class="fi" type="datetime-local" id="notesDateTime"/></div>
-                        <div class="fgl"><div class="lbl">Nurse</div><input class="fi" id="notesNurse" value="Nurse Achieng"/></div>
-                        <div class="fgl"><div class="lbl">Ward / location</div><input class="fi" id="notesWard" placeholder="Ward 4B · Bed 02"/></div>
-                        <div class="fgl ff"><div class="lbl">Subjective (patient report)</div><textarea class="ta" id="notesSubjective" placeholder="What the patient reports today…"></textarea></div>
-                        <div class="fgl ff"><div class="lbl">Objective (observations, vitals)</div><textarea class="ta" id="notesObjective" placeholder="Vitals, physical assessment, wound status…"></textarea></div>
-                        <div class="fgl ff"><div class="lbl">Assessment and plan</div><textarea class="ta" id="notesPlan" placeholder="Nursing diagnosis, interventions, changes in care plan…"></textarea></div>
-                        <div class="fgl ff"><div class="lbl">Patient education given</div><textarea class="ta" id="notesEducation" placeholder="Education topics covered, understanding, adherence…"></textarea></div>
-                        <div class="fgl"><div class="lbl">Review date / time</div><input class="fi" type="datetime-local" id="notesReview"/></div>
-                        <div class="fgl"><div class="lbl">Status</div><select class="fi" id="notesStatus"><option>Stable</option><option>Improved</option><option>Deteriorated</option><option>Transferred</option><option>Discharged</option></select></div>
-                    </div>
-                    <div class="fa"><button class="btn-p" onclick="saveNursingNote()"><i class="ti ti-check"></i> Save note</button><button class="btn-s" onclick="clearNursingNote()">Clear</button></div>
-                    
-                    <div style="margin-top:20px; border-top:0.5px solid var(--bd); padding-top:14px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <span style="font-size:13px; font-weight:600;"><i class="ti ti-history"></i> Nursing Notes History</span>
-                            <span class="badge b-blue" id="nursingNoteCount">0 notes</span>
+                    <div class="notes-simple-shell">
+                        <div class="notes-simple-card">
+                            <div class="notes-simple-head">
+                                <div>
+                                    <div class="notes-simple-title">📝 Nursing Notes</div>
+                                    <div class="notes-simple-sub">Simple Apple-style note page • saved live to the Common Server</div>
+                                </div>
+                                <span class="notes-simple-sync">● Common Server connected</span>
+                            </div>
+                            <div class="notes-simple-grid">
+                                <label class="notes-simple-field">
+                                    <span>Selected patient</span>
+                                    <input class="fi" id="notesPatient" placeholder="Select a patient first"/>
+                                </label>
+                                <label class="notes-simple-field">
+                                    <span>Date and time</span>
+                                    <input class="fi" type="datetime-local" id="notesDateTime"/>
+                                </label>
+                                <label class="notes-simple-field">
+                                    <span>Nurse</span>
+                                    <input class="fi" id="notesNurse" value="Nurse Achieng"/>
+                                </label>
+                                <label class="notes-simple-field">
+                                    <span>Patient status</span>
+                                    <select class="fi" id="notesStatus"><option>Stable</option><option>Improved</option><option>Deteriorated</option><option>Transferred</option><option>Discharged</option></select>
+                                </label>
+                                <label class="notes-simple-field notes-simple-field-wide">
+                                    <span>Note</span>
+                                    <textarea class="ta notes-simple-textarea" id="notesBody" placeholder="Write a simple nursing note, handover, observation, intervention, or follow-up here…"></textarea>
+                                </label>
+                            </div>
+                            <div class="fa notes-simple-actions"><button class="btn-p" onclick="saveNursingNote()"><i class="ti ti-check"></i> Save Note</button><button class="btn-s" onclick="clearNursingNote()">Clear</button></div>
                         </div>
-                        <div id="nursingNotesList">
-                            <p class="cpn-empty">📋 No nursing notes yet.</p>
+
+                        <div class="notes-simple-history-card">
+                            <div class="notes-simple-history-head">
+                                <span>Recent Nursing Notes</span>
+                                <span class="notes-simple-count" id="nursingNoteCount">0 notes</span>
+                            </div>
+                            <div id="nursingNotesList">
+                                <p class="cpn-empty">📋 No nursing notes yet.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3673,7 +3690,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_LABONLY" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_NOTESSIMPLE" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {
