@@ -1147,7 +1147,7 @@
         }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
-    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260906_DOCTORSKIN_ANC">
+    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_BILLADV">
 </head>
 <body>
 
@@ -1679,15 +1679,15 @@
                 </div>
             </div>
 
-            <!-- ─── PANEL: BILLING (FIXED) ─── -->
+            <!-- ─── PANEL: BILLING (SMART CATALOGUE) ─── -->
             <div id="panel-billing" class="main-panel" style="display:none;">
                 <div class="panel-body show" id="sub-bill-med">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
                         <span style="font-size:14px;font-weight:600;">Billing — medications and consumables</span>
                         <button class="btn-print" onclick="printPatientFile()"><i class="ti ti-printer"></i>Print receipt</button>
                     </div>
                     <div class="fg" style="margin-bottom:12px;">
-                        <div class="fgl"><div class="lbl">Patient name or MRN</div><input class="fi" id="billPatient" placeholder="Patient name — MRN"/></div>
+                        <div class="fgl"><div class="lbl">Selected patient</div><input class="fi" id="billPatient" placeholder="Select a patient first"/></div>
                         <div class="fgl"><div class="lbl">Bill date</div><input class="fi" type="date" id="billDate"/></div>
                         <div class="fgl"><div class="lbl">Ward / department</div><input class="fi" id="billWard" placeholder="Ward 4B · Cardiology"/></div>
                         <div class="fgl"><div class="lbl">Payment mode</div>
@@ -1704,21 +1704,62 @@
                             <input class="fi" id="billCoverPercent" value="70%" readonly style="background:var(--acb);color:var(--ac);font-weight:600;"/>
                         </div>
                     </div>
-                    <table class="bill-table">
-                        <thead><tr><th style="width:30%">Item description</th><th style="width:12%">Category</th><th style="width:10%">Qty</th><th style="width:14%">Unit (RWF)</th><th style="width:14%">Total (RWF)</th><th style="width:15%">Action</th></tr></thead>
-                        <tbody id="billRows"></tbody>
-                    </table>
-                    <div style="padding:8px 14px;border-bottom:0.5px solid var(--bd);">
-                        <button class="btn-s" style="display:flex;align-items:center;gap:5px;font-size:11px;" onclick="addBillRow()"><i class="ti ti-plus" style="font-size:12px;"></i>Add item</button>
-                    </div>
-                    <div class="bill-total">
-                        <span class="bt-label">Subtotal</span><span class="bt-val" id="billSub">RWF 0</span>
-                        <span class="bt-label" style="margin-left:16px;">Insurance covers</span><span class="bt-val" style="color:var(--green);" id="billInsurance">-RWF 0</span>
-                        <span class="bt-label" style="margin-left:16px;">Patient pays</span><span class="bt-val" style="color:var(--ac);font-size:18px;" id="billTotal">RWF 0</span>
-                    </div>
-                    <div class="fa" style="padding:0 14px 14px;">
-                        <button class="btn-p" onclick="saveBill()"><i class="ti ti-check"></i> Post bill</button>
-                        <button class="btn-s" onclick="clearBill()">Clear</button>
+
+                    <div class="bill-smart-shell">
+                        <div class="bill-catalog-card">
+                            <div class="bill-smart-head">
+                                <div>
+                                    <div class="bill-smart-title"><i class="ti ti-package"></i> Common-server item catalogue</div>
+                                    <div class="bill-smart-sub">Consumables and medications are pulled from saved priced items on the common server.</div>
+                                </div>
+                                <div class="bill-kind-switch" id="billKindSwitch">
+                                    <button class="bill-kind-btn active" type="button" data-bill-kind="all" onclick="setBillKindFilter('all', this)">All</button>
+                                    <button class="bill-kind-btn" type="button" data-bill-kind="medication" onclick="setBillKindFilter('medication', this)">Medications</button>
+                                    <button class="bill-kind-btn" type="button" data-bill-kind="consumable" onclick="setBillKindFilter('consumable', this)">Consumables</button>
+                                </div>
+                            </div>
+                            <div class="bill-catalog-toolbar">
+                                <div class="search-wrap bill-catalog-search">
+                                    <i class="ti ti-search"></i>
+                                    <input id="billCatalogSearch" placeholder="Search saved item, code, unit or category…" oninput="renderBillCatalog()" />
+                                </div>
+                                <div class="bill-catalog-meta" id="billCatalogMeta">Loading catalogue…</div>
+                                <div class="bill-live-ribbon" id="billStockLive">Live stock status will appear here.</div>
+                            </div>
+                            <div class="bill-catalog-preview" id="billCatalogPreview">Click an item to open its details before adding it to the bill.</div>
+                            <div class="bill-catalog-list" id="billCatalogList"></div>
+                        </div>
+
+                        <div class="bill-cart-card">
+                            <div class="bill-smart-head">
+                                <div>
+                                    <div class="bill-smart-title"><i class="ti ti-receipt"></i> Selected bill items</div>
+                                    <div class="bill-smart-sub">Add from the catalogue after reviewing details. Unit price comes from the common server.</div>
+                                </div>
+                                <button class="btn-s" type="button" onclick="clearBill()"><i class="ti ti-eraser"></i> Clear all</button>
+                            </div>
+                            <div class="bill-undo-bar" id="billUndoBar" hidden></div>
+                            <div class="bill-cart-warnings" id="billCartWarnings"></div>
+                            <div class="bill-cart-table-wrap">
+                                <table class="bill-table">
+                                    <thead><tr><th style="width:38%">Selected item</th><th style="width:18%">Type</th><th style="width:12%">Qty</th><th style="width:15%">Unit</th><th style="width:15%">Total</th><th style="width:12%">Action</th></tr></thead>
+                                    <tbody id="billRows"></tbody>
+                                </table>
+                            </div>
+                            <div class="bill-subtotals" id="billTypeSubtotals">
+                                <div class="bill-subtotal-chip meds"><span>Medications</span><strong id="billMedicationSub">RWF 0</strong></div>
+                                <div class="bill-subtotal-chip cons"><span>Consumables</span><strong id="billConsumableSub">RWF 0</strong></div>
+                            </div>
+                            <div class="bill-total">
+                                <span class="bt-label">Subtotal</span><span class="bt-val" id="billSub">RWF 0</span>
+                                <span class="bt-label" style="margin-left:16px;">Insurance covers</span><span class="bt-val" style="color:var(--green);" id="billInsurance">-RWF 0</span>
+                                <span class="bt-label" style="margin-left:16px;">Patient pays</span><span class="bt-val" style="color:var(--ac);font-size:18px;" id="billTotal">RWF 0</span>
+                            </div>
+                            <div class="fa" style="padding:0 14px 14px;">
+                                <button class="btn-p" onclick="saveBill()"><i class="ti ti-check"></i> Post bill</button>
+                                <button class="btn-s" onclick="renderBillCatalog()"><i class="ti ti-refresh"></i> Refresh items</button>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- ─── BILLING HISTORY ─── -->
@@ -3649,7 +3690,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260906_NURSEFIX_ANC" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_BILLADV" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {

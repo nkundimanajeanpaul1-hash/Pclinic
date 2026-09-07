@@ -685,6 +685,8 @@
       renderTriagePanel(null);
       renderCPNHistory(null);
       renderCpnDocPreview(null);
+      if (typeof window.renderBillHistory === 'function') window.renderBillHistory(null);
+      if (typeof window.updateBillCount === 'function') window.updateBillCount(null);
       if (typeof window.renderLabResults === 'function') window.renderLabResults();
       if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
       if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
@@ -889,41 +891,422 @@
     return p;
   }
 
-  function buildBillRowHtml(desc, category, qty, unit) {
-    return '<tr>' +
-      '<td><input class="fi" type="text" data-bill="desc" placeholder="Item name…" value="' + esc(desc || '') + '" style="width:100%;"/></td>' +
-      '<td><select class="fi" data-bill="category" style="font-size:11px;width:100%;">' +
-        '<option' + ((category || 'Medication') === 'Medication' ? ' selected' : '') + '>Medication</option>' +
-        '<option' + (category === 'Consumable' ? ' selected' : '') + '>Consumable</option>' +
-        '<option' + (category === 'Procedure' ? ' selected' : '') + '>Procedure</option>' +
-      '</select></td>' +
-      '<td><input class="fi" type="number" data-bill="qty" min="1" value="' + (qty == null ? 1 : qty) + '" style="width:60px;" oninput="calcBill()"/></td>' +
-      '<td><input class="fi" type="number" data-bill="unit" min="0" value="' + (unit == null ? 0 : unit) + '" style="width:80px;" oninput="calcBill()"/></td>' +
-      '<td class="row-total" style="font-weight:600;text-align:center;">0</td>' +
-      '<td style="text-align:center;"><button onclick="this.closest(\'tr\').remove(); if(!document.querySelector(\'#billRows tr\')) addBillRow(); calcBill();" style="border:none;background:none;cursor:pointer;color:var(--red);font-size:16px;padding:4px 8px;"><i class="ti ti-trash"></i></button></td>' +
+  var billKindFilter = 'all';
+  var activeBillPreviewKey = '';
+  var lastRemovedBillItem = null;
+
+  function moneyRwf(n) {
+    return 'RWF ' + (Number(n) || 0).toLocaleString('en-US');
+  }
+
+  function billItemKey(item) {
+    var raw = (item && (item.key || item.code)) || [normalize(item && item.name), normalize(item && item.category), normalize(item && item.kind)].join('-');
+    var clean = String(raw || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return clean || ('bill-item-' + Math.random().toString(36).slice(2, 8));
+  }
+
+  function billCatalogKind(item) {
+    var category = normalize(item && (item.category || item.type || item.kind));
+    return category === 'consumable' ? 'consumable' : 'medication';
+  }
+
+  function inventoryNumber(value) {
+    if (value == null || value === '') return null;
+    var n = Number(value);
+    return isNaN(n) ? null : n;
+  }
+
+  function pharmacyInventoryItems() {
+    try {
+      var raw = JSON.parse(localStorage.getItem('pclinic_pharmacy_inventory') || '[]');
+      return Array.isArray(raw) ? raw : [];
+    } catch (e) { return []; }
+  }
+
+  function normalizeBillingItem(source, invItem) {
+    source = source || {};
+    invItem = invItem || {};
+    var item = {
+      code: source.code || invItem.code || '',
+      name: source.name || invItem.name || '',
+      price: Number(source.price != null ? source.price : invItem.price) || 0,
+      category: source.category || invItem.category || 'Other',
+      unit: invItem.unit || source.unit || source.description || '',
+      stockQty: inventoryNumber(invItem.qty != null ? invItem.qty : source.qty),
+      hasStockCount: inventoryNumber(invItem.qty != null ? invItem.qty : source.qty) != null
+    };
+    item.kind = billCatalogKind(item);
+    item.key = billItemKey(item);
+    return item;
+  }
+
+  function pharmacyBillingCatalog() {
+    var tariff = [];
+    try {
+      if (window.pcTariff && typeof window.pcTariff.byDept === 'function') tariff = window.pcTariff.byDept('pharmacy') || [];
+    } catch (e) {}
+    var inv = pharmacyInventoryItems();
+    var byCode = {};
+    var byName = {};
+    inv.forEach(function (it) {
+      if (!it) return;
+      if (it.code) byCode[String(it.code)] = it;
+      if (it.name) byName[normalize(it.name)] = it;
+    });
+    var merged = [];
+    var seen = {};
+    (Array.isArray(tariff) ? tariff : []).forEach(function (t) {
+      var invItem = byCode[String((t && t.code) || '')] || byName[normalize(t && t.name)] || {};
+      var item = normalizeBillingItem(t, invItem);
+      if (!item.name || seen[item.key]) return;
+      seen[item.key] = true;
+      merged.push(item);
+    });
+    inv.forEach(function (it) {
+      var item = normalizeBillingItem(it, it);
+      if (!item.name || seen[item.key]) return;
+      seen[item.key] = true;
+      merged.push(item);
+    });
+    return merged.sort(function (a, b) {
+      if (a.kind !== b.kind) return a.kind.localeCompare(b.kind);
+      return String(a.name).localeCompare(String(b.name));
+    });
+  }
+
+  function billCatalogMatches(item, query) {
+    var q = normalize(query);
+    if (!q) return true;
+    return [item.name, item.code, item.category, item.unit, item.kind].map(normalize).join(' ').indexOf(q) !== -1;
+  }
+
+  function findCatalogItem(key) {
+    return pharmacyBillingCatalog().find(function (it) { return String(it.key || '') === String(key || ''); }) || null;
+  }
+
+  function selectedBillQtyForItem(key) {
+    var row = document.querySelector('#billRows tr[data-bill-key="' + esc(String(key || '')) + '"]');
+    if (!row) return 0;
+    return parseFloat((row.querySelector('[data-bill="qty"]') || {}).value) || 0;
+  }
+
+  function billStockState(item, requestedQty) {
+    item = item || {};
+    var qty = Number(requestedQty) || 0;
+    if (!item.hasStockCount) {
+      return {
+        severity: 'unknown',
+        badgeClass: 'is-unknown',
+        label: 'Stock not set',
+        detail: 'Live stock count is not saved yet on the common server.'
+      };
+    }
+    var stock = Number(item.stockQty) || 0;
+    if (stock <= 0) {
+      return {
+        severity: 'out',
+        badgeClass: 'is-out',
+        label: 'Out of stock',
+        detail: 'Current saved stock is 0 on the common server.'
+      };
+    }
+    if (qty > 0 && qty > stock) {
+      return {
+        severity: 'warning',
+        badgeClass: 'is-warning',
+        label: 'Qty exceeds stock',
+        detail: String(qty) + ' requested but only ' + String(stock) + ' saved in stock.'
+      };
+    }
+    if (stock <= 5) {
+      return {
+        severity: 'low',
+        badgeClass: 'is-low',
+        label: 'Low stock · ' + String(stock),
+        detail: 'Only ' + String(stock) + ' item' + (stock === 1 ? '' : 's') + ' left in saved stock.'
+      };
+    }
+    return {
+      severity: 'available',
+      badgeClass: 'is-available',
+      label: 'In stock · ' + String(stock),
+      detail: String(stock) + ' item' + (stock === 1 ? '' : 's') + ' available on the common server.'
+    };
+  }
+
+  function billStockBadge(item, requestedQty) {
+    var state = billStockState(item, requestedQty);
+    return '<span class="bill-stock-badge ' + state.badgeClass + '">' + esc(state.label) + '</span>';
+  }
+
+  function setBillKindFilter(kind, btn) {
+    billKindFilter = kind || 'all';
+    var switcher = document.getElementById('billKindSwitch');
+    if (switcher) switcher.querySelectorAll('.bill-kind-btn').forEach(function (node) { node.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderBillCatalog();
+  }
+
+  function renderBillCatalogPreview(key) {
+    if (key != null) activeBillPreviewKey = String(key || '');
+    var host = document.getElementById('billCatalogPreview');
+    if (!host) return null;
+    var item = activeBillPreviewKey ? findCatalogItem(activeBillPreviewKey) : null;
+    if (!item) {
+      host.innerHTML = 'Click an item to open its details before adding it to the bill.';
+      return null;
+    }
+    var inBillQty = selectedBillQtyForItem(item.key);
+    var state = billStockState(item, inBillQty || 1);
+    host.innerHTML = '<div class="bill-preview-card">' +
+      '<div class="bill-preview-head">' +
+        '<div>' +
+          '<div class="bill-preview-name">' + esc(item.name) + '</div>' +
+          '<div class="bill-preview-sub">Review this saved common-server item before adding it to the bill.</div>' +
+        '</div>' +
+        '<span class="bill-kind-badge ' + (item.kind === 'consumable' ? 'is-consumable' : 'is-medication') + '">' + esc(item.kind === 'consumable' ? 'Consumable' : 'Medication') + '</span>' +
+      '</div>' +
+      '<div class="bill-preview-grid">' +
+        '<div class="bill-preview-kv"><span>Price</span><strong>' + esc(moneyRwf(item.price)) + '</strong></div>' +
+        '<div class="bill-preview-kv"><span>Code</span><strong>' + esc(item.code || '—') + '</strong></div>' +
+        '<div class="bill-preview-kv"><span>Category</span><strong>' + esc(item.category || '—') + '</strong></div>' +
+        '<div class="bill-preview-kv"><span>Unit</span><strong>' + esc(item.unit || '—') + '</strong></div>' +
+        '<div class="bill-preview-kv"><span>Stock</span><strong>' + esc(state.label) + '</strong></div>' +
+        '<div class="bill-preview-kv"><span>Already in bill</span><strong>' + esc(String(inBillQty || 0)) + '</strong></div>' +
+      '</div>' +
+      '<div class="bill-preview-warning ' + state.badgeClass + '" id="billPreviewWarning">' + esc(state.detail) + '</div>' +
+      '<div class="bill-preview-actions">' +
+        '<div class="fgl bill-preview-qty-wrap"><div class="lbl">Quantity to add</div><input class="fi" id="billPreviewQty" type="number" min="1" value="1" oninput="updateBillPreviewWarning()"></div>' +
+        '<button class="btn-p" type="button" onclick="confirmBillPreviewAdd()"><i class="ti ti-plus"></i> Add to bill</button>' +
+      '</div>' +
+    '</div>';
+    updateBillPreviewWarning();
+    return item;
+  }
+
+  function updateBillPreviewWarning() {
+    var item = activeBillPreviewKey ? findCatalogItem(activeBillPreviewKey) : null;
+    var warning = document.getElementById('billPreviewWarning');
+    if (!item || !warning) return null;
+    var qty = parseInt(((document.getElementById('billPreviewQty') || {}).value || '1'), 10) || 1;
+    var inBillQty = selectedBillQtyForItem(item.key);
+    var state = billStockState(item, qty + inBillQty);
+    warning.className = 'bill-preview-warning ' + state.badgeClass;
+    warning.textContent = state.detail + (inBillQty ? ' Already in bill: ' + inBillQty + '.' : '');
+    return state;
+  }
+
+  function openBillItemDetails(key) {
+    renderBillCatalogPreview(key);
+  }
+
+  function syncBillRowsFromCatalog() {
+    var catalog = pharmacyBillingCatalog();
+    var map = {};
+    catalog.forEach(function (item) { map[item.key] = item; });
+    document.querySelectorAll('#billRows tr[data-bill-key]').forEach(function (row) {
+      var key = String(row.getAttribute('data-bill-key') || '');
+      var item = map[key];
+      if (!item) return;
+      row.setAttribute('data-bill-code', item.code || '');
+      row.setAttribute('data-bill-kind', item.kind || '');
+      row.setAttribute('data-bill-category', item.category || '');
+      row.setAttribute('data-bill-unit-label', item.unit || '');
+      row.setAttribute('data-bill-stock-known', item.hasStockCount ? '1' : '0');
+      row.setAttribute('data-bill-stock-qty', item.hasStockCount ? String(item.stockQty) : '');
+      row.setAttribute('data-bill-name', item.name || '');
+      var nameField = row.querySelector('[data-bill="name"]'); if (nameField) nameField.value = item.name || '';
+      var unitField = row.querySelector('[data-bill="price"]'); if (unitField) unitField.value = String(item.price || 0);
+      var label = row.querySelector('[data-bill="unit"]'); if (label) label.textContent = moneyRwf(item.price);
+      var nameBox = row.querySelector('.bill-item-name'); if (nameBox) nameBox.textContent = item.name || '';
+      var metaBox = row.querySelector('.bill-item-meta'); if (metaBox) metaBox.textContent = (item.code || '—') + (item.unit ? ' · ' + item.unit : '');
+      var kindBadge = row.querySelector('.bill-kind-badge');
+      if (kindBadge) {
+        kindBadge.className = 'bill-kind-badge ' + (item.kind === 'consumable' ? 'is-consumable' : 'is-medication');
+        kindBadge.textContent = item.kind === 'consumable' ? 'Consumable' : 'Medication';
+      }
+    });
+  }
+
+  function renderBillStockLive() {
+    var ribbon = document.getElementById('billStockLive');
+    var cartWarnings = document.getElementById('billCartWarnings');
+    var catalog = pharmacyBillingCatalog();
+    var low = catalog.filter(function (item) { return billStockState(item).severity === 'low'; }).length;
+    var out = catalog.filter(function (item) { return billStockState(item).severity === 'out'; }).length;
+    var unknown = catalog.filter(function (item) { return billStockState(item).severity === 'unknown'; }).length;
+    var cartNotes = [];
+    document.querySelectorAll('#billRows tr[data-bill-key]').forEach(function (row) {
+      var item = {
+        key: row.getAttribute('data-bill-key') || '',
+        name: row.getAttribute('data-bill-name') || ((row.querySelector('[data-bill="name"]') || {}).value || ''),
+        hasStockCount: row.getAttribute('data-bill-stock-known') === '1',
+        stockQty: inventoryNumber(row.getAttribute('data-bill-stock-qty'))
+      };
+      var qty = parseFloat((row.querySelector('[data-bill="qty"]') || {}).value) || 0;
+      var state = billStockState(item, qty);
+      if (state.severity === 'warning' || state.severity === 'out' || state.severity === 'low') {
+        cartNotes.push('<div class="bill-cart-warning ' + state.badgeClass + '"><strong>' + esc(item.name || 'Item') + ':</strong> ' + esc(state.detail) + '</div>');
+      }
+    });
+    if (ribbon) ribbon.textContent = 'Live stock: ' + low + ' low-stock · ' + out + ' out-of-stock · ' + unknown + ' without saved stock count';
+    if (cartWarnings) {
+      if (!cartNotes.length) {
+        cartWarnings.innerHTML = '';
+        cartWarnings.hidden = true;
+      } else {
+        cartWarnings.hidden = false;
+        cartWarnings.innerHTML = cartNotes.join('');
+      }
+    }
+  }
+
+  function renderBillUndoBar() {
+    var bar = document.getElementById('billUndoBar');
+    if (!bar) return;
+    if (!lastRemovedBillItem || !lastRemovedBillItem.item) {
+      bar.hidden = true;
+      bar.innerHTML = '';
+      return;
+    }
+    bar.hidden = false;
+    bar.innerHTML = '<span><strong>Removed:</strong> ' + esc(lastRemovedBillItem.item.name || 'Item') + ' × ' + esc(String(lastRemovedBillItem.qty || 1)) + '</span><button class="btn-s" type="button" onclick="undoRemoveBillRow()"><i class="ti ti-arrow-back-up"></i> Undo</button>';
+  }
+
+  function buildBillRowHtml(item, qty) {
+    item = item || {};
+    qty = qty == null ? 1 : qty;
+    var kindLabel = item.kind === 'consumable' ? 'Consumable' : 'Medication';
+    var kindClass = item.kind === 'consumable' ? 'is-consumable' : 'is-medication';
+    return '<tr data-bill-key="' + esc(item.key || '') + '" data-bill-code="' + esc(item.code || '') + '" data-bill-kind="' + esc(item.kind || '') + '" data-bill-category="' + esc(item.category || '') + '" data-bill-unit-label="' + esc(item.unit || '') + '" data-bill-stock-known="' + (item.hasStockCount ? '1' : '0') + '" data-bill-stock-qty="' + esc(item.hasStockCount ? item.stockQty : '') + '" data-bill-name="' + esc(item.name || '') + '">' +
+      '<td>' +
+        '<button class="bill-row-link" type="button" onclick="openBillItemDetails(\'' + String(item.key || '').replace(/'/g, "\\'") + '\')">' +
+          '<div class="bill-item-name">' + esc(item.name || '') + '</div>' +
+          '<div class="bill-item-meta">' + esc(item.code || '—') + (item.unit ? ' · ' + esc(item.unit) : '') + '</div>' +
+        '</button>' +
+        '<div class="bill-row-warning" data-bill="warning"></div>' +
+      '</td>' +
+      '<td><span class="bill-kind-badge ' + kindClass + '">' + esc(kindLabel) + '</span></td>' +
+      '<td><input class="fi bill-qty-input" type="number" data-bill="qty" min="1" value="' + esc(qty) + '" oninput="calcBill()"></td>' +
+      '<td><span class="bill-unit-price" data-bill="unit">' + esc(moneyRwf(item.price)) + '</span><input type="hidden" data-bill="price" value="' + esc(item.price) + '"><input type="hidden" data-bill="name" value="' + esc(item.name || '') + '"></td>' +
+      '<td class="row-total" style="font-weight:700;text-align:right;">0</td>' +
+      '<td style="text-align:center;"><button class="bill-remove-btn" type="button" onclick="removeBillRow(this)"><i class="ti ti-trash"></i></button></td>' +
     '</tr>';
   }
+
   function ensureBillRows() {
     var tb = document.getElementById('billRows');
     if (!tb) return;
-    if (!tb.querySelector('tr')) tb.innerHTML = buildBillRowHtml('', 'Medication', 1, 0);
+    if (!tb.querySelector('tr[data-bill-key]')) tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--tm);">No bill items yet. Open a medication or consumable, review details, then add it from the common-server catalogue.</td></tr>';
     calcBill();
   }
-  function addBillRow() {
+
+  function insertBillItem(item, qty, quiet) {
     var tb = document.getElementById('billRows');
-    if (!tb) return;
-    tb.insertAdjacentHTML('beforeend', buildBillRowHtml('', 'Medication', 1, 0));
+    if (!tb) return null;
+    if (!item) return null;
+    qty = Math.max(1, parseInt(qty, 10) || 1);
+    var empty = tb.querySelector('td[colspan="6"]');
+    if (empty) tb.innerHTML = '';
+    var existing = tb.querySelector('tr[data-bill-key="' + esc(item.key) + '"]');
+    if (existing) {
+      var qtyInput = existing.querySelector('[data-bill="qty"]');
+      qtyInput.value = String(Math.max(1, (parseInt(qtyInput.value, 10) || 1) + qty));
+    } else {
+      tb.insertAdjacentHTML('beforeend', buildBillRowHtml(item, qty));
+    }
+    syncBillRowsFromCatalog();
     calcBill();
+    renderBillCatalogPreview(item.key);
+    if (!quiet) safeToast((item.kind === 'consumable' ? '🧰 ' : '💊 ') + item.name + ' added', 'success');
+    return item;
   }
+
+  function addBillItemFromCatalog(code, qty) {
+    var item = findCatalogItem(code);
+    if (!item) return safeToast('❌ This common-server item was not found.', 'error');
+    if (!(Number(item.price) > 0)) return safeToast('⚠️ This item has no valid price on the common server yet.', 'warning');
+    return insertBillItem(item, qty || 1, false);
+  }
+
+  function confirmBillPreviewAdd() {
+    var item = activeBillPreviewKey ? findCatalogItem(activeBillPreviewKey) : null;
+    if (!item) return safeToast('⚠️ Open an item detail first.', 'warning');
+    var qty = parseInt(((document.getElementById('billPreviewQty') || {}).value || '1'), 10) || 1;
+    addBillItemFromCatalog(item.key, qty);
+  }
+
+  function addBillRow() {
+    renderBillCatalog();
+    safeToast('ℹ️ Choose a priced item from the common-server catalogue, open its details, then add it to the bill.', 'info');
+  }
+
+  function rowToBillSnapshot(row) {
+    if (!row) return null;
+    return {
+      qty: parseInt(((row.querySelector('[data-bill="qty"]') || {}).value || '1'), 10) || 1,
+      item: {
+        key: row.getAttribute('data-bill-key') || '',
+        code: row.getAttribute('data-bill-code') || '',
+        kind: row.getAttribute('data-bill-kind') || 'medication',
+        category: row.getAttribute('data-bill-category') || 'Other',
+        unit: row.getAttribute('data-bill-unit-label') || '',
+        hasStockCount: row.getAttribute('data-bill-stock-known') === '1',
+        stockQty: inventoryNumber(row.getAttribute('data-bill-stock-qty')),
+        name: ((row.querySelector('[data-bill="name"]') || {}).value || '').trim(),
+        price: parseFloat((row.querySelector('[data-bill="price"]') || {}).value) || 0
+      }
+    };
+  }
+
+  function removeBillRow(btn) {
+    var row = btn && typeof btn.closest === 'function' ? btn.closest('tr') : null;
+    if (!row) return;
+    lastRemovedBillItem = rowToBillSnapshot(row);
+    row.remove();
+    renderBillUndoBar();
+    ensureBillRows();
+    calcBill();
+    if (lastRemovedBillItem && lastRemovedBillItem.item) safeToast('🗑 Removed ' + lastRemovedBillItem.item.name + '. Undo is available.', 'info');
+  }
+
+  function undoRemoveBillRow() {
+    if (!lastRemovedBillItem || !lastRemovedBillItem.item) return;
+    insertBillItem(lastRemovedBillItem.item, lastRemovedBillItem.qty || 1, true);
+    safeToast('↩️ Restored ' + lastRemovedBillItem.item.name, 'success');
+    lastRemovedBillItem = null;
+    renderBillUndoBar();
+  }
+
   function calcBill() {
-    var rows = document.querySelectorAll('#billRows tr');
+    syncBillRowsFromCatalog();
+    var rows = document.querySelectorAll('#billRows tr[data-bill-key]');
     var sub = 0;
+    var medicationSub = 0;
+    var consumableSub = 0;
     rows.forEach(function (r) {
       var qty = parseFloat((r.querySelector('[data-bill="qty"]') || {}).value) || 0;
-      var unit = parseFloat((r.querySelector('[data-bill="unit"]') || {}).value) || 0;
+      var unit = parseFloat((r.querySelector('[data-bill="price"]') || {}).value) || 0;
       var tot = Math.round(qty * unit);
       var td = r.querySelector('.row-total');
-      if (td) td.textContent = String(tot);
+      if (td) td.textContent = moneyRwf(tot);
+      var kind = String(r.getAttribute('data-bill-kind') || 'medication');
+      if (kind === 'consumable') consumableSub += tot;
+      else medicationSub += tot;
+      var rowItem = {
+        hasStockCount: r.getAttribute('data-bill-stock-known') === '1',
+        stockQty: inventoryNumber(r.getAttribute('data-bill-stock-qty'))
+      };
+      var state = billStockState(rowItem, qty);
+      var warn = r.querySelector('[data-bill="warning"]');
+      if (warn) {
+        warn.className = 'bill-row-warning ' + state.badgeClass;
+        warn.textContent = state.detail;
+      }
+      r.classList.remove('bill-row-low', 'bill-row-out', 'bill-row-warning');
+      if (state.severity === 'low') r.classList.add('bill-row-low');
+      if (state.severity === 'out') r.classList.add('bill-row-out');
+      if (state.severity === 'warning') r.classList.add('bill-row-warning');
       sub += tot;
     });
     var paymentMode = ((document.getElementById('billPayment') || {}).value || 'Cash');
@@ -933,17 +1316,117 @@
     var patientPays = sub - insuranceCover;
     var coverField = document.getElementById('billCoverPercent');
     if (coverField) coverField.value = coverPercentDisplay + '%';
-    var subEl = document.getElementById('billSub'); if (subEl) subEl.textContent = 'RWF ' + sub.toLocaleString();
-    var insEl = document.getElementById('billInsurance'); if (insEl) insEl.textContent = '-RWF ' + insuranceCover.toLocaleString();
-    var totalEl = document.getElementById('billTotal'); if (totalEl) totalEl.textContent = 'RWF ' + patientPays.toLocaleString();
+    var medEl = document.getElementById('billMedicationSub'); if (medEl) medEl.textContent = moneyRwf(medicationSub);
+    var consEl = document.getElementById('billConsumableSub'); if (consEl) consEl.textContent = moneyRwf(consumableSub);
+    var subEl = document.getElementById('billSub'); if (subEl) subEl.textContent = moneyRwf(sub);
+    var insEl = document.getElementById('billInsurance'); if (insEl) insEl.textContent = '-' + moneyRwf(insuranceCover);
+    var totalEl = document.getElementById('billTotal'); if (totalEl) totalEl.textContent = moneyRwf(patientPays);
+    renderBillStockLive();
+    renderBillUndoBar();
+    if (activeBillPreviewKey) updateBillPreviewWarning();
   }
+
   function clearBill() {
     var tb = document.getElementById('billRows');
-    if (!tb) return;
-    tb.innerHTML = '';
-    ensureBillRows();
+    if (tb) tb.innerHTML = '';
     var ward = document.getElementById('billWard');
     if (ward) ward.value = getCurrentPatient() ? displayLocation(getCurrentPatient()) : '';
+    lastRemovedBillItem = null;
+    renderBillUndoBar();
+    ensureBillRows();
+    renderBillCatalog();
+    renderBillCatalogPreview(activeBillPreviewKey || '');
+  }
+
+  function renderBillCatalog() {
+    syncBillRowsFromCatalog();
+    var host = document.getElementById('billCatalogList');
+    var meta = document.getElementById('billCatalogMeta');
+    if (!host) return [];
+    var q = ((document.getElementById('billCatalogSearch') || {}).value || '');
+    var allItems = pharmacyBillingCatalog();
+    var items = allItems.filter(function (item) {
+      var kindOk = billKindFilter === 'all' || item.kind === billKindFilter;
+      return kindOk && billCatalogMatches(item, q);
+    });
+    var low = items.filter(function (item) { return billStockState(item).severity === 'low'; }).length;
+    var out = items.filter(function (item) { return billStockState(item).severity === 'out'; }).length;
+    if (meta) meta.textContent = items.length + ' saved priced item' + (items.length === 1 ? '' : 's') + ' from the common server · ' + low + ' low stock · ' + out + ' out of stock';
+    if (!items.length) {
+      host.innerHTML = '<div class="bill-catalog-empty">No saved priced items match this filter.<br><span style="font-size:11px;">Admin → Pharmacy can add medications or consumables with prices.</span></div>';
+      renderBillStockLive();
+      return items;
+    }
+    host.innerHTML = items.map(function (item) {
+      var kindClass = item.kind === 'consumable' ? 'is-consumable' : 'is-medication';
+      var kindLabel = item.kind === 'consumable' ? 'Consumable' : 'Medication';
+      var selected = selectedBillQtyForItem(item.key);
+      return '<div class="bill-catalog-item' + (activeBillPreviewKey === item.key ? ' is-active' : '') + (selected ? ' is-in-bill' : '') + '" onclick="openBillItemDetails(\'' + String(item.key).replace(/'/g, "\\'") + '\')">' +
+        '<div style="min-width:0;flex:1;">' +
+          '<div class="bill-catalog-name">' + esc(item.name) + '</div>' +
+          '<div class="bill-catalog-line">' +
+            '<span class="bill-kind-badge ' + kindClass + '">' + esc(kindLabel) + '</span>' +
+            '<span>' + esc(item.category || '—') + '</span>' +
+            '<span>' + esc(item.code || '—') + '</span>' +
+            '<span>' + esc(item.unit || '') + '</span>' +
+            billStockBadge(item, selected) +
+            (selected ? '<span class="bill-in-cart-badge">In bill ' + esc(String(selected)) + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">' +
+          '<div class="bill-catalog-price">' + esc(moneyRwf(item.price)) + '</div>' +
+          '<button class="bill-catalog-add bill-catalog-view" type="button" onclick="event.stopPropagation();openBillItemDetails(\'' + String(item.key).replace(/'/g, "\\'") + '\')"><i class="ti ti-eye"></i> View details</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    renderBillStockLive();
+    if (activeBillPreviewKey && !findCatalogItem(activeBillPreviewKey)) activeBillPreviewKey = '';
+    if (activeBillPreviewKey) renderBillCatalogPreview(activeBillPreviewKey);
+    return items;
+  }
+
+  function renderBillHistory(patient) {
+    var container = document.getElementById('billHistoryList');
+    if (!container) return;
+    patient = patient || getCurrentPatient();
+    var history = patient && Array.isArray(patient.billingHistory) ? patient.billingHistory.slice().sort(function (a, b) { return ms(b && b.timestamp) - ms(a && a.timestamp); }) : [];
+    if (!history.length) {
+      container.innerHTML = '<p class="cpn-empty">📋 No bills posted yet.</p>';
+      return;
+    }
+    container.innerHTML = history.map(function (bill) {
+      var medSub = Number(bill.medicationSubtotal != null ? bill.medicationSubtotal : (bill.items || []).filter(function (item) { return String(item.type || '').toLowerCase() !== 'consumable'; }).reduce(function (sum, item) { return sum + (Number(item.total) || 0); }, 0));
+      var consSub = Number(bill.consumableSubtotal != null ? bill.consumableSubtotal : (bill.items || []).filter(function (item) { return String(item.type || '').toLowerCase() === 'consumable'; }).reduce(function (sum, item) { return sum + (Number(item.total) || 0); }, 0));
+      var itemsHTML = (bill.items || []).map(function (item) {
+        var type = String(item.type || item.category || 'medication').toLowerCase() === 'consumable' ? 'Consumable' : 'Medication';
+        return '<div class="bill-item">' +
+          '<span class="bill-item-name">' + esc(item.description || item.name || 'Item') + ' <span class="bill-history-type">' + esc(type) + '</span></span>' +
+          '<span class="bill-item-price">' + esc(String(item.quantity || item.qty || 0)) + ' × ' + esc(moneyRwf(item.unitPrice || item.price || 0)) + ' = <strong>' + esc(moneyRwf(item.total || 0)) + '</strong></span>' +
+        '</div>';
+      }).join('');
+      return '<div class="bill-entry">' +
+        '<div class="bill-header">' +
+          '<span class="bill-time">🕐 ' + esc(fmtDateTime(bill.timestamp)) + '</span>' +
+          '<span class="bill-nurse">👩‍⚕️ ' + esc(bill.nurse || currentStaffName()) + '</span>' +
+          '<span class="bill-total-badge">💰 Total: ' + esc(moneyRwf(bill.total || 0)) + '</span>' +
+        '</div>' +
+        '<div class="bill-content">' +
+          '<strong>Payment:</strong> ' + esc(bill.paymentMode || 'Cash') + (bill.ward ? ' · 📍 ' + esc(bill.ward) : '') +
+          '<br><strong>Medications:</strong> ' + esc(moneyRwf(medSub)) + ' · <strong>Consumables:</strong> ' + esc(moneyRwf(consSub)) +
+          '<br><strong>Insurance Cover:</strong> ' + esc(String(Math.round(Number(bill.coverPercent || 0) * 100))) + '% - ' + esc(moneyRwf(bill.insuranceCover || 0)) +
+          '<br><strong>Patient Pays:</strong> ' + esc(moneyRwf(bill.patientPays || 0)) +
+          '<div style="margin-top:4px;">' + itemsHTML + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function updateBillCount(patient) {
+    var countEl = document.getElementById('billHistoryCount');
+    if (!countEl) return;
+    patient = patient || getCurrentPatient();
+    var total = patient && Array.isArray(patient.billingHistory) ? patient.billingHistory.length : 0;
+    countEl.textContent = total + ' bill' + (total === 1 ? '' : 's');
   }
 
   function medStatusClass(status) {
@@ -1279,15 +1762,38 @@
   }
 
   function collectBillRows() {
-    var rows = document.querySelectorAll('#billRows tr');
+    var rows = document.querySelectorAll('#billRows tr[data-bill-key]');
     var items = [];
     rows.forEach(function (row) {
-      var desc = ((row.querySelector('[data-bill="desc"]') || {}).value || '').trim();
-      var category = ((row.querySelector('[data-bill="category"]') || {}).value || 'Medication');
+      var key = String(row.getAttribute('data-bill-key') || '');
+      var code = String(row.getAttribute('data-bill-code') || '');
+      var kind = String(row.getAttribute('data-bill-kind') || 'medication');
+      var category = String(row.getAttribute('data-bill-category') || 'Other');
+      var unitLabel = String(row.getAttribute('data-bill-unit-label') || '');
+      var stockKnown = row.getAttribute('data-bill-stock-known') === '1';
+      var stockQty = inventoryNumber(row.getAttribute('data-bill-stock-qty'));
+      var name = String(((row.querySelector('[data-bill="name"]') || {}).value || '')).trim();
       var qty = parseFloat((row.querySelector('[data-bill="qty"]') || {}).value) || 0;
-      var unit = parseFloat((row.querySelector('[data-bill="unit"]') || {}).value) || 0;
-      if (desc && qty > 0 && unit >= 0) {
-        items.push({ description: desc, category: category, quantity: qty, unitPrice: unit, total: Math.round(qty * unit) });
+      var unit = parseFloat((row.querySelector('[data-bill="price"]') || {}).value) || 0;
+      if (name && qty > 0 && unit > 0) {
+        items.push({
+          key: key,
+          code: code,
+          name: name,
+          description: name,
+          type: kind,
+          category: category,
+          unitLabel: unitLabel,
+          quantity: qty,
+          qty: qty,
+          unitPrice: unit,
+          price: unit,
+          total: Math.round(qty * unit),
+          stockKnown: stockKnown,
+          stockQty: stockQty,
+          stockState: billStockState({ hasStockCount: stockKnown, stockQty: stockQty }, qty).severity,
+          source: 'pharmacy-catalog'
+        });
       }
     });
     return items;
@@ -1298,6 +1804,8 @@
     var items = collectBillRows();
     if (!items.length) return safeToast('⚠️ No items to bill. Please add at least one item with quantity and price.', 'warning');
     var totalBill = items.reduce(function (sum, item) { return sum + (item.total || 0); }, 0);
+    var medicationSubtotal = items.filter(function (item) { return String(item.type || '').toLowerCase() !== 'consumable'; }).reduce(function (sum, item) { return sum + (item.total || 0); }, 0);
+    var consumableSubtotal = items.filter(function (item) { return String(item.type || '').toLowerCase() === 'consumable'; }).reduce(function (sum, item) { return sum + (item.total || 0); }, 0);
     var paymentMode = ((document.getElementById('billPayment') || {}).value || 'Cash');
     var coverPercent = typeof window.getCoverPercent === 'function' ? window.getCoverPercent(paymentMode) : 0;
     var insuranceCover = Math.round(totalBill * coverPercent);
@@ -1307,6 +1815,8 @@
       timestamp: nowIso(),
       items: items,
       total: totalBill,
+      medicationSubtotal: medicationSubtotal,
+      consumableSubtotal: consumableSubtotal,
       paymentMode: paymentMode,
       coverPercent: coverPercent,
       insuranceCover: insuranceCover,
@@ -1633,10 +2143,11 @@
   }
 
   function wireRefreshEvents() {
-    window.addEventListener('storage', function () { loadPatients(); });
-    window.addEventListener('focus', function () { loadPatients(); });
+    window.addEventListener('storage', function () { loadPatients(); renderBillCatalog(); });
+    window.addEventListener('focus', function () { loadPatients(); renderBillCatalog(); });
+    window.addEventListener('tariffUpdated', function () { renderBillCatalog(); calcBill(); });
     window.addEventListener('labResultsUpdated', function () { renderLabResults(); refreshKpisAndQueue(getAllPatients()); });
-    window.addEventListener('pclinicSyncError', function () { loadPatients(); renderLabResults(); });
+    window.addEventListener('pclinicSyncError', function () { loadPatients(); renderLabResults(); renderBillCatalog(); });
     window.addEventListener('pcPatientChanged', function (event) {
       var detail = event && event.detail ? event.detail : null;
       syncingFromSharedBar = true;
@@ -1692,6 +2203,10 @@
     window.previewCPNHistory = previewCpnHistory;
     window.selectPatient = selectPatient;
     window.addBillRow = addBillRow;
+    window.addBillItemFromCatalog = addBillItemFromCatalog;
+    window.removeBillRow = removeBillRow;
+    window.renderBillCatalog = renderBillCatalog;
+    window.setBillKindFilter = setBillKindFilter;
     window.calcBill = calcBill;
     window.clearBill = clearBill;
     window.addMedicationRow = addMedicationRow;
@@ -1747,6 +2262,7 @@
         if (name === 'overview') refreshKpisAndQueue(getAllPatients());
         if (name === 'vitals' && typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
         if (name === 'triage') renderTriagePanel(getCurrentPatient());
+        if (name === 'billing') { renderBillCatalog(); ensureBillRows(); }
       };
     }
     var legacySwitchSub = window.switchSub;
@@ -1770,6 +2286,7 @@
     setPatientFieldValues(getCurrentPatient());
     wireCpnPreviewEvents();
     ensureBillRows();
+    renderBillCatalog();
     var billDate = document.getElementById('billDate'); if (billDate && !billDate.value) billDate.value = todayIso();
     var fpDate = document.getElementById('fpDate'); if (fpDate && !fpDate.value) fpDate.value = todayIso();
     var medsDate = document.getElementById('medsDate'); if (medsDate && !medsDate.value) medsDate.value = todayIso();
