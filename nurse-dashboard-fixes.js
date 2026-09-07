@@ -1818,6 +1818,20 @@
     if (body) setTimeout(function () { body.focus(); }, 40);
   }
 
+  function openNursingNoteFromCarePlan() {
+    var patient = refreshCurrentPatientFromStore();
+    if (!patient) {
+      safeToast('⚠️ Please select a patient first', 'warning');
+      focusPatientSearch();
+      return;
+    }
+    var notesBtn = document.querySelector('[data-tab="notes"]');
+    if (typeof window.switchTab === 'function') window.switchTab('notes', notesBtn);
+    if (typeof window.switchSub === 'function') window.switchSub('notes-form');
+    openNewNursingNote();
+    safeToast('📝 Nursing Notes opened from Care Plan for ' + displayName(patient), 'info');
+  }
+
   function closeNewNursingNote() {
     var card = notesComposerCard();
     if (card) card.hidden = true;
@@ -3077,6 +3091,7 @@
     window.renderNursingNotes = renderNursingNotes;
     window.updateNursingNoteCount = updateNursingNoteCount;
     window.openNewNursingNote = openNewNursingNote;
+    window.openNursingNoteFromCarePlan = openNursingNoteFromCarePlan;
     window.closeNewNursingNote = closeNewNursingNote;
     window.saveNursingNote = saveNursingNote;
     window.clearNursingNote = clearNursingNote;

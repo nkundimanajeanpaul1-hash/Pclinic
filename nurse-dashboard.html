@@ -1670,7 +1670,7 @@
                                 <option>Active</option><option>Achieved</option><option>Discontinued</option>
                             </select></div>
                     </div>
-                    <div class="fa"><button class="btn-p apple-btn primary" onclick="saveCarePlan()"><i class="ti ti-check"></i> Save care plan</button><button class="btn-s apple-btn" onclick="clearCarePlan()">Clear</button></div>
+                    <div class="fa"><button class="btn-p apple-btn primary" onclick="saveCarePlan()"><i class="ti ti-check"></i> Save care plan</button><button class="btn-s apple-btn" onclick="clearCarePlan()">Clear</button><button class="btn-s apple-btn" type="button" id="careplanOpenNoteBtn" onclick="openNursingNoteFromCarePlan()"><i class="ti ti-notes"></i> Nursing Note</button></div>
 
                     <div style="margin-top:20px; border-top:0.5px solid var(--bd); padding-top:14px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -3693,7 +3693,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_NOTESSIMPLE" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_CARENOTE" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {
@@ -3705,6 +3705,14 @@ function addBillRow() {
     </script>
 </body>
 </html>        console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+</body>
+</html>l>        console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+</body>
+</html>rr.message);
         });
     </script>
 </body>
