@@ -2107,11 +2107,12 @@
         labResults: Array.isArray(selectedPatient.labResults) ? selectedPatient.labResults : []
       }));
     } catch (e) {}
-    var url = 'lab-results.html?patient=' + encodeURIComponent(String(selectedPatient.id || selectedPatient.mrn || ''));
-    var win = null;
-    try { win = window.open(url, '_blank', 'noopener'); } catch (e) {}
-    if (!win) window.location.href = url;
-    safeToast('📊 Opening lab cumulative flow sheet for ' + displayName(selectedPatient), 'info');
+    openLabResultsTab(document.querySelector('[data-tab="lab"]'));
+    var resultsBox = document.getElementById('labResultsList');
+    if (resultsBox && typeof resultsBox.scrollIntoView === 'function') {
+      try { resultsBox.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { resultsBox.scrollIntoView(); }
+    }
+    safeToast('📊 Lab results are shown inside the Nurse dashboard for ' + displayName(selectedPatient), 'info');
   }
 
   function renderLabRequests(patient) {
