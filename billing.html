@@ -313,6 +313,8 @@ function renderBills(){
 
 window.addEventListener('billsUpdated',renderBills);
 window.addEventListener('patientsUpdated',loadPatients);
+window.addEventListener('tariffUpdated',loadCategories);
+window.addEventListener('pharmacyInventoryUpdated',loadCategories);
 
 requireAuth(['cashier','finance']).then(function(staff){
     window.currentStaff=staff;

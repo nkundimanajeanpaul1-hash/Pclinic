@@ -1095,7 +1095,15 @@
 
         /* ══════════════ PHARMACY INVENTORY (persistent) ══════════════ */
         var pharmEditingId = null;
-        function pharmacyItems() { return readJSON(PHARM_KEY, []) || []; }
+        function pharmacyItems() {
+            try { if (window.pcPharmacy && typeof pcPharmacy.list === 'function') return pcPharmacy.list() || []; } catch(e){}
+            return readJSON(PHARM_KEY, []) || [];
+        }
+        function savePharmacyItemsList(items) {
+            try { if (window.pcPharmacy && typeof pcPharmacy.save === 'function') { pcPharmacy.save(items); return; } } catch(e){}
+            writeJSON(PHARM_KEY, items);
+            try { window.dispatchEvent(new Event('storage')); } catch(e){}
+        }
         function pharmStatus(qty) {
             qty = Number(qty) || 0;
             if (qty <= 0) return '<span class="badge gray">Not stocked</span>';
@@ -1162,7 +1170,7 @@
                 syncPharmacyTariff(code, name, price, category);
                 showToast('✅ Pharmacy item added — it appears in the Pharmacy list AND the Billing catalogue with its cost', 'success');
             }
-            writeJSON(PHARM_KEY, items);
+            savePharmacyItemsList(items);
             cancelPharmacyEdit();
             loadPharmacy();
         }
@@ -1190,7 +1198,7 @@
             var it = pharmacyItems().find(function(x){ return String(x.id) === String(id); });
             if (!it || !confirm('Delete "' + it.name + '" from the pharmacy list? It will also disappear from the Billing catalogue.')) return;
             var items = pharmacyItems().filter(function(x){ return String(x.id) !== String(id); });
-            writeJSON(PHARM_KEY, items);
+            savePharmacyItemsList(items);
             if (it.code) {
                 saveTariffList(tariffAll().filter(function(t){ return String(t.code) !== String(it.code); }));
             }
@@ -2728,6 +2736,8 @@
 
         // Live refresh when other dashboards change the Common Server
         window.addEventListener('storage', function(){ loadPatients(); loadPharmacy(); loadBills(); loadLabExams(); });
+        window.addEventListener('pharmacyInventoryUpdated', function(){ loadPharmacy(); updateKPIs(); });
+        window.addEventListener('tariffUpdated', function(){ loadPharmacy(); loadLabExams(); updateKPIs(); });
         window.addEventListener('focus', function(){ loadPatients(); loadBills(); loadLabExams(); });
         window.addEventListener('billsUpdated', function(){ loadBills(); });
         window.addEventListener('tariffUpdated', function(){ loadLabExams(); });

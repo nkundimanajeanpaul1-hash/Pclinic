@@ -22,6 +22,7 @@
     var BILLS_KEY   = 'pclinic_bills';
     var MSGS_KEY    = 'pclinic_messages';
     var TARIFF_KEY  = 'pclinic_tariff';
+    var PHARM_KEY   = 'pclinic_pharmacy_inventory';
 
     /* ══════════════════════════════════════════
        LOCAL STORE (mirrors Firestore, works offline)
@@ -173,6 +174,7 @@
        and bills so every device converges on the same data.
     */
     var _ordersUnsub = null, _billsUnsub = null, _messagesUnsubs = [];
+    var _tariffUnsub = null, _pharmacyInventoryUnsub = null;
 
     function firebaseValueToLocal(value) {
         if (value && typeof value.toDate === 'function') {
@@ -230,6 +232,27 @@
                 window.dispatchEvent(new Event('storage'));
             }, function (err) {
                 console.warn('[pclinic] ' + coll + ' live sync error:', err.message);
+            });
+        } catch (e) { return null; }
+    }
+
+    function startConfigDocSync(docId, key, eventName) {
+        if (!window.firebaseDB || !window.firebaseFunctions) return null;
+        var f = window.firebaseFunctions;
+        try {
+            var ref = f.doc(window.firebaseDB, 'config', docId);
+            return f.onSnapshot(ref, function (docSnap) {
+                if (!docSnap.exists()) {
+                    emit(eventName, { count: (read(key, []) || []).length, missing: true });
+                    return;
+                }
+                var data = firebaseValueToLocal(docSnap.data()) || {};
+                var items = Array.isArray(data.items) ? data.items : [];
+                write(key, items);
+                emit(eventName, { count: items.length, serverConfirmed: true });
+                window.dispatchEvent(new Event('storage'));
+            }, function (err) {
+                console.warn('[pclinic] config/' + docId + ' live sync error:', err && err.message);
             });
         } catch (e) { return null; }
     }
@@ -292,6 +315,12 @@
         if (billRoles.indexOf(role) !== -1 && !_billsUnsub) {
             _billsUnsub = startLiveSync('bills', BILLS_KEY, 'billsUpdated');
         }
+        if (role && !_tariffUnsub) {
+            _tariffUnsub = startConfigDocSync('tariff', TARIFF_KEY, 'tariffUpdated');
+        }
+        if (role && !_pharmacyInventoryUnsub) {
+            _pharmacyInventoryUnsub = startConfigDocSync('pharmacyInventory', PHARM_KEY, 'pharmacyInventoryUpdated');
+        }
         if (role) startMessageLiveSync();
     }
 
@@ -300,6 +329,7 @@
     // before the Auth guard had resolved the role.
     if (window.currentStaff) startAuthorizedLiveSync();
     window.addEventListener('pclinicStaffReady', startAuthorizedLiveSync);
+    window.addEventListener('firebaseReady', startAuthorizedLiveSync);
 
 
     /* ══════════════════════════════════════════
@@ -363,9 +393,25 @@
         return t;
     }
     function saveTariff(list) {
+        list = Array.isArray(list) ? list : [];
         write(TARIFF_KEY, list);
         sync('config', 'tariff', { items: list, updatedAt: new Date().toISOString() });
         emit('tariffUpdated', { count: list.length });
+        try { window.dispatchEvent(new Event('storage')); } catch (e) {}
+        return list;
+    }
+
+    function getPharmacyInventory() {
+        var inv = read(PHARM_KEY, []);
+        return Array.isArray(inv) ? inv : [];
+    }
+
+    function savePharmacyInventory(list) {
+        list = Array.isArray(list) ? list : [];
+        write(PHARM_KEY, list);
+        sync('config', 'pharmacyInventory', { items: list, updatedAt: new Date().toISOString() });
+        emit('pharmacyInventoryUpdated', { count: list.length });
+        try { window.dispatchEvent(new Event('storage')); } catch (e) {}
         return list;
     }
     function getPrice(code) {
@@ -1190,10 +1236,8 @@
             });
 
             if (changed) {
-                write('pclinic_pharmacy_inventory', inv);
-                write(TARIFF_KEY, tariff);
-                try { emit('tariffUpdated', { count: tariff.length }); } catch(e){}
-                try { window.dispatchEvent(new Event('storage')); } catch(e){}
+                savePharmacyInventory(inv);
+                saveTariff(tariff);
             }
         } catch(e) { console.warn('ensurePharmacySeeded:', e); }
     }
@@ -1779,6 +1823,11 @@
     window.pcTariff = {
         all: getTariff, save: saveTariff, price: getPrice,
         byDept: tariffByDept, defaults: DEFAULT_TARIFF
+    };
+    window.pcPharmacy = {
+        list: getPharmacyInventory, save: savePharmacyInventory,
+        ensureSeeded: ensurePharmacySeeded, seed: ensurePharmacySeeded,
+        key: PHARM_KEY
     };
     window.pcMessages = {
         send: sendMessage, list: getMessages, markRead: markRead,

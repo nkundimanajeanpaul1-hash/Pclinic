@@ -1086,12 +1086,34 @@
             return;
         }
         var amtNum = parseInt(a, 10) || 0;
+        var typedDept = String(dept || '').toLowerCase();
+        var typedSvc = String(svc || '').trim().toLowerCase();
+        var looksPharmacy = /pharmacy|medication|medicine|drug|consumable/.test(typedDept) || /consumable|tablet|capsule|syrup|vial|ampoule|injection/.test(typedSvc);
+        var sharedItem = null;
+        try {
+            if (window.pcTariff && typeof pcTariff.byDept === 'function') {
+                sharedItem = (pcTariff.byDept('pharmacy') || []).find(function(it) {
+                    return String(it.name || '').trim().toLowerCase() === typedSvc || String(it.code || '').trim().toLowerCase() === typedSvc;
+                }) || null;
+            }
+        } catch(e) {}
+        if (looksPharmacy && !sharedItem) {
+            if (typeof showToast === 'function') showToast('⚠️ Pharmacy medication/consumable bills must use an Admin-saved common-server item name or code.', 'error');
+            return;
+        }
+        if (sharedItem) {
+            svc = sharedItem.name || svc;
+            amtNum = Number(sharedItem.price) || amtNum;
+            dept = 'Pharmacy';
+        }
+        var lineItem = { name: svc, qty: 1, price: amtNum };
+        if (sharedItem && sharedItem.code) lineItem.code = sharedItem.code;
         var newBill = {
             id: 'INV-' + new Date().getFullYear() + '-' + String(Math.floor(1000 + Math.random() * 9000)),
             number: 'INV-' + new Date().getFullYear() + '-' + String(Math.floor(1000 + Math.random() * 9000)),
             patientId: document.getElementById('m_pid').value.replace(/^MOD-/i,'').trim() || String(Math.floor(100000 + Math.random() * 900000)),
             patientName: p,
-            items: [{ name: svc, qty: 1, price: amtNum }],
+            items: [lineItem],
             total: amtNum,
             paid: 0,
             balance: amtNum,

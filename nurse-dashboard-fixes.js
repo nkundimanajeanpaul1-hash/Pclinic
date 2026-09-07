@@ -919,6 +919,10 @@
 
   function pharmacyInventoryItems() {
     try {
+      if (window.pcPharmacy && typeof window.pcPharmacy.list === 'function') {
+        var shared = window.pcPharmacy.list() || [];
+        return Array.isArray(shared) ? shared : [];
+      }
       var raw = JSON.parse(localStorage.getItem('pclinic_pharmacy_inventory') || '[]');
       return Array.isArray(raw) ? raw : [];
     } catch (e) { return []; }
@@ -2213,6 +2217,7 @@
     window.addEventListener('storage', function () { loadPatients(); renderBillCatalog(); renderBillHistory(); });
     window.addEventListener('focus', function () { loadPatients(); renderBillCatalog(); renderBillHistory(); });
     window.addEventListener('tariffUpdated', function () { renderBillCatalog(); calcBill(); renderBillHistory(); });
+    window.addEventListener('pharmacyInventoryUpdated', function () { renderBillCatalog(); calcBill(); });
     window.addEventListener('billsUpdated', function () { renderBillHistory(); updateBillCount(); });
     window.addEventListener('labResultsUpdated', function () { renderLabResults(); refreshKpisAndQueue(getAllPatients()); });
     window.addEventListener('pclinicSyncError', function () { loadPatients(); renderLabResults(); renderBillCatalog(); renderBillHistory(); });
