@@ -2109,11 +2109,18 @@
     var count = document.getElementById('labRequestCount');
     var filterEl = document.getElementById('labRequestStatusFilter');
     if (!container) return;
+
     if (!patient) {
-      container.innerHTML = '<div class="nurse-lab-empty">🔒 Select a patient first to see laboratory requests from the Common Server.</div>';
+      container.innerHTML = '<p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">🔒 No patient selected.</p>';
       if (count) count.textContent = '0 requests';
       return;
     }
+    try {
+      var pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+      var fresh = pts.find(function (x) { return String(x.id) === String(patient.id); });
+      if (fresh) patient = fresh;
+    } catch (e) {}
+
     var requests = Array.isArray(patient.labRequests) ? patient.labRequests : [];
     var filter = filterEl ? filterEl.value : 'all';
     var pid = String(patient.id || '').replace(/^MOD-/i, '');
@@ -2123,8 +2130,8 @@
         return String(o.patientId || '').replace(/^MOD-/i, '') === pid && (o.type === 'lab' || o.dept === 'lab');
       });
     } catch (e) {}
+
     function liveStatus(req) {
-      if (!req) return 'pending';
       if (req.status === 'Cancelled' || req.status === 'cancelled') return 'cancelled';
       var reqTests = (Array.isArray(req.tests) ? req.tests : []).map(function (t) { return String(t).toLowerCase(); });
       for (var i = 0; i < realOrders.length; i++) {
@@ -2138,36 +2145,48 @@
       }
       return 'pending';
     }
-    var withStatus = requests.map(function (req) { return { req: req, live: liveStatus(req) }; });
+
+    var withStatus = requests.map(function (req) {
+      return { req: req, live: liveStatus(req) };
+    });
     var filtered = filter === 'all' ? withStatus : withStatus.filter(function (x) { return x.live === filter; });
-    if (count) count.textContent = filtered.length + ' request' + (filtered.length === 1 ? '' : 's');
+    if (count) count.textContent = filtered.length + ' request' + (filtered.length !== 1 ? 's' : '');
+
     if (!filtered.length) {
-      container.innerHTML = '<div class="nurse-lab-empty">No lab requests found.</div>';
+      container.innerHTML = '<p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">No lab requests found.</p>';
       return;
     }
+
     container.innerHTML = filtered.slice().reverse().map(function (x) {
       var req = x.req || {};
-      var live = x.live || 'pending';
+      var live = x.live;
       var date = req.timestamp ? new Date(req.timestamp).toLocaleString() : 'No date';
-      var tests = Array.isArray(req.tests) && req.tests.length ? req.tests.join(', ') : 'No tests selected';
-      var badge = live === 'completed'
-        ? '<span class="nurse-lab-state ok">✅ Verified by Lab</span>'
-        : live === 'cancelled'
-          ? '<span class="nurse-lab-state bad">❌ Cancelled</span>'
-          : '<span class="nurse-lab-state warn">⏳ Pending at Lab</span>';
-      var action = live === 'completed'
-        ? '<button type="button" class="nurse-lab-mini-btn" onclick="openLabResultsFlowSheet()">📊 View Results</button>'
-        : '<span class="nurse-lab-mini-note">Read-only</span>';
-      return '<div class="nurse-lab-card">' +
-        '<div class="nurse-lab-card-main">' +
-          '<div class="nurse-lab-card-title">' + esc(tests) + '</div>' +
-          '<div class="nurse-lab-card-sub">' + esc(req.priority || 'Routine') + ' • ' + esc(req.sampleType || 'N/A') + ' • ' + esc(req.requestedBy || 'Unknown') + '</div>' +
+      var tests = req.tests ? req.tests.join(', ') : 'No tests selected';
+
+      var badge = '';
+      if (live === 'completed') {
+        badge = '<span style="background:#e9f9ee;color:#1a7a32;font-weight:700;font-size:10.5px;padding:3px 10px;border-radius:20px;">✅ Verified by Lab</span>';
+      } else if (live === 'cancelled') {
+        badge = '<span style="background:#ffebe9;color:#8a1f1a;font-weight:700;font-size:10.5px;padding:3px 10px;border-radius:20px;">❌ Cancelled</span>';
+      } else {
+        badge = '<span style="background:#fff4e0;color:#7a4500;font-weight:700;font-size:10.5px;padding:3px 10px;border-radius:20px;">⏳ Pending at Lab</span>';
+      }
+
+      var actions = '';
+      if (live === 'completed') {
+        actions = '<button onclick="openLabResultsFlowSheet()" style="background:#eaf2ff;color:#0071e3;border:0.5px solid rgba(0,113,227,0.3);padding:4px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">📊 View Results</button>';
+      } else {
+        actions = '<span style="font-size:11px;color:#6e6e73;font-weight:700;">Read-only</span>';
+      }
+
+      return '<div style="display:flex;align-items:center;gap:12px;background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:12px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);flex-wrap:wrap;">' +
+        '<div style="flex:1;min-width:180px;">' +
+          '<div style="font-weight:800;color:#1d1d1f;font-size:12.5px;">' + esc(tests) + '</div>' +
+          '<div style="font-size:11px;color:#6e6e73;margin-top:2px;">' + esc(req.priority || 'Routine') + ' • ' + esc(req.sampleType || 'N/A') + ' • ' + esc(req.requestedBy || 'Unknown') + '</div>' +
         '</div>' +
-        '<div class="nurse-lab-card-side">' +
-          '<div class="nurse-lab-card-date">' + esc(date) + '</div>' +
-          badge +
-          '<div>' + action + '</div>' +
-        '</div>' +
+        '<div style="font-size:11px;color:#6e6e73;white-space:nowrap;">' + esc(date) + '</div>' +
+        badge +
+        '<div style="white-space:nowrap;">' + actions + '</div>' +
       '</div>';
     }).join('');
   }
@@ -2182,67 +2201,41 @@
       box.innerHTML = '<div class="nurse-lab-empty">🔒 Select a patient first to see verified laboratory results from the Common Server.</div>';
       return;
     }
-    var filterDate = (labDate && labDate.value) || '';
-    if (labDate && filterDate) labDate.dataset.nursePreserve = '1';
+    if (labDate && labDate.value) labDate.dataset.nursePreserve = '1';
     else if (labDate) delete labDate.dataset.nursePreserve;
-    var records = verifiedLabRecords(patient).filter(function (r) {
-      if (!filterDate) return true;
-      var d = ms(r.date);
-      if (!d) return false;
-      return new Date(d).toISOString().slice(0, 10) === filterDate;
-    });
-    if (!records.length) {
-      box.innerHTML = '<div class="nurse-lab-empty">No verified results yet for this patient' + (filterDate ? ' on ' + esc(filterDate) : '') + '.<br><span style="font-size:11px;">Results appear here automatically once the laboratory verifies and releases them.</span></div>';
-      return;
+    try {
+      localStorage.setItem('pclinic_lab_patient_data', JSON.stringify({
+        id: patient.id,
+        firstName: patient.firstName || '',
+        lastName: patient.lastName || '',
+        mrn: patient.mrn || '',
+        labRequests: Array.isArray(patient.labRequests) ? patient.labRequests : [],
+        labResults: Array.isArray(patient.labResults) ? patient.labResults : []
+      }));
+    } catch (e) {}
+    var patientRef = encodeURIComponent(String(patient.id || patient.mrn || ''));
+    var iframeId = 'nurseLabResultsIframe';
+    box.innerHTML = '<div class="nurse-lab-frame-shell">' +
+      '<iframe id="' + iframeId + '" src="lab-results.html?patient=' + patientRef + '&t=' + Date.now() + '" class="nurse-lab-frame" title="Cumulative Laboratory Flow Sheet"></iframe>' +
+    '</div>';
+    var iframe = document.getElementById(iframeId);
+    if (iframe) {
+      iframe.onload = function () {
+        try {
+          iframe.contentWindow.postMessage({
+            type: 'LOAD_PATIENT',
+            patient: {
+              id: patient.id,
+              firstName: patient.firstName || '',
+              lastName: patient.lastName || '',
+              mrn: patient.mrn || '',
+              labRequests: Array.isArray(patient.labRequests) ? patient.labRequests : [],
+              labResults: Array.isArray(patient.labResults) ? patient.labResults : []
+            }
+          }, window.location.origin);
+        } catch (e) {}
+      };
     }
-    box.innerHTML = records.map(function (r) {
-      if (r.antibiotics && r.antibiotics.length) {
-        var atbRows = r.antibiotics.map(function (a, i) {
-          var atbName = Array.isArray(a) ? (a[1] || 'Antibiotic') : (a.name || a.antibiotic || 'Antibiotic');
-          var sens = Array.isArray(a) ? (a[2] || 'Sensitive') : (a.sensitivity || 'Sensitive');
-          var sensFg = String(sens).toLowerCase() === 'resistant' ? '#8a1f1a' : '#0071e3';
-          return '<tr><td style="padding:6px 12px;border:0.5px solid #d8d8dc;font-weight:700;">' + (i + 1) + '</td>' +
-                 '<td style="padding:6px 12px;border:0.5px solid #d8d8dc;">' + esc(atbName) + '</td>' +
-                 '<td style="padding:6px 12px;border:0.5px solid #d8d8dc;text-align:center;"><strong style="color:' + sensFg + ';">' + esc(sens) + '</strong></td></tr>';
-        }).join('');
-        return '<div class="nurse-lab-card big">' +
-          '<div class="nurse-lab-card-top">' +
-            '<div><div class="nurse-lab-card-title">🧫 MICROBIOLOGY — Culture and Sensitivity</div><div class="nurse-lab-card-sub">' + esc(r.incubationNote || r.comments || '') + '</div></div>' +
-            '<span class="nurse-lab-state ok">✓ VERIFIED</span>' +
-          '</div>' +
-          '<div class="nurse-lab-chip-row">' +
-            '<span class="nurse-lab-chip"><strong>Sample Type:</strong> ' + esc(r.sampleType || '—') + '</span>' +
-            '<span class="nurse-lab-chip"><strong>Organism Isolated:</strong> ' + esc(r.organism || '—') + '</span>' +
-            '<span class="nurse-lab-chip"><strong>Colony Count:</strong> ' + esc(r.colonyCount || '—') + '</span>' +
-            '<span class="nurse-lab-chip"><strong>Reported:</strong> ' + esc(r.date ? new Date(ms(r.date)).toLocaleDateString('en-GB') : '—') + '</span>' +
-          '</div>' +
-          '<table class="nurse-lab-table"><thead><tr><th style="width:10%;">S. No.</th><th>Antibiotic</th><th style="width:24%;">Sensitivity</th></tr></thead><tbody>' + atbRows + '</tbody></table>' +
-          '<div class="nurse-lab-foot">Verified by: ' + esc(r.verifiedBy || 'PClinic Laboratory') + '</div>' +
-          '<div style="margin-top:8px;"><button type="button" class="nurse-lab-mini-btn" onclick="openLabResultsFlowSheet()">📊 Open Cumulative Flow Sheet</button></div>' +
-        '</div>';
-      }
-      var chips = (Array.isArray(r.tests) ? r.tests : []).map(function (t) {
-        var flag = String(t.flag || 'Normal');
-        var bg = '#e9f9ee', fg = '#1a7a32';
-        if (flag.indexOf('High') !== -1 || flag.indexOf('Low') !== -1) { bg = '#fff4e0'; fg = '#7a4500'; }
-        if (flag.indexOf('Critical') !== -1) { bg = '#ffebe9'; fg = '#8a1f1a'; }
-        return '<span class="nurse-lab-chip" style="background:' + bg + ';border-color:rgba(0,0,0,0.08);">' +
-          esc(t.test || t.name || 'Test') + ': <strong style="color:' + fg + ';">' + esc(t.value || '--') + (t.unit ? ' ' + esc(t.unit) : '') + '</strong> <span style="color:#6e6e73;font-weight:600;">' + esc(flag) + '</span>' +
-        '</span>';
-      }).join('');
-      if (!chips) {
-        chips = '<span style="font-size:11px;color:#6e6e73;">' + esc(r.title || 'Laboratory panel') + ' — awaiting report detail</span>';
-      }
-      return '<div class="nurse-lab-card">' +
-        '<div class="nurse-lab-card-top">' +
-          '<div><span class="nurse-lab-card-title">🧪 ' + esc(r.title || (r.tests || []).map(function (it) { return it.test || it.name; }).join(', ') || 'Laboratory results') + '</span><div class="nurse-lab-card-sub">' + esc(r.date ? new Date(ms(r.date)).toLocaleString() : 'Verified') + '</div></div>' +
-          '<span class="nurse-lab-state ' + (r.critical ? 'bad' : 'ok') + '">' + (r.critical ? '⚠ CRITICAL — ACTION REQUIRED' : '✓ VERIFIED') + '</span>' +
-        '</div>' +
-        '<div class="nurse-lab-chip-row">' + chips + '</div>' +
-        '<div class="nurse-lab-foot">Verified by: ' + esc(r.verifiedBy || 'PClinic Laboratory') + '</div>' +
-        '<div style="margin-top:8px;"><button type="button" class="nurse-lab-mini-btn" onclick="openLabResultsFlowSheet()">📊 Open Cumulative Flow Sheet</button></div>' +
-      '</div>';
-    }).join('');
   }
 
   function buildModalRows(type) {

@@ -1597,3 +1597,26 @@ body.dark-mode .modal-overlay {
     justify-content: center;
   }
 }
+
+.nurse-lab-frame-shell {
+  margin-top: 2px;
+  background: var(--s1);
+  border: 0.5px solid var(--bd);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.nurse-lab-frame {
+  width: 100%;
+  min-height: 980px;
+  height: 980px;
+  border: 0;
+  background: transparent;
+  display: block;
+}
+@media (max-width: 900px) {
+  .nurse-lab-frame {
+    min-height: 820px;
+    height: 820px;
+  }
+}
