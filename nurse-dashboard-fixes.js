@@ -892,6 +892,7 @@
   }
 
   var billKindFilter = 'all';
+  var billHistoryFilter = 'all';
   var activeBillPreviewKey = '';
   var lastRemovedBillItem = null;
 
@@ -1039,12 +1040,68 @@
     return '<span class="bill-stock-badge ' + state.badgeClass + '">' + esc(state.label) + '</span>';
   }
 
+  function billCatalogHost() {
+    return document.getElementById('svcList') || document.getElementById('billCatalogList');
+  }
+
+  function normalizeBillStatus(status) {
+    status = normalize(status);
+    if (status === 'posted') return 'pending';
+    if (status !== 'pending' && status !== 'partial' && status !== 'paid' && status !== 'cancelled') return 'pending';
+    return status;
+  }
+
+  function recentBillRecords() {
+    if (window.pcBilling && typeof window.pcBilling.list === 'function') {
+      return (window.pcBilling.list() || []).slice().sort(function (a, b) {
+        return ms((b && (b.createdAt || b.timestamp)) || 0) - ms((a && (a.createdAt || a.timestamp)) || 0);
+      });
+    }
+    var rows = [];
+    getAllPatients().forEach(function (patient) {
+      var history = Array.isArray(patient && patient.billingHistory) ? patient.billingHistory : [];
+      history.forEach(function (bill) {
+        rows.push({
+          id: bill.sharedBillId || bill.id || uid('nurse-bill'),
+          number: bill.sharedBillNumber || ('NUR-' + String(bill.id || '').slice(-8)),
+          patientId: patient.id,
+          patientName: displayName(patient),
+          items: bill.items || [],
+          total: Number(bill.patientPays != null ? bill.patientPays : bill.total) || 0,
+          subtotal: Number(bill.total) || 0,
+          createdAt: bill.sharedBillCreatedAt || bill.timestamp || bill.date || nowIso(),
+          status: normalizeBillStatus(bill.sharedBillStatus || bill.status || 'pending'),
+          _localOnly: !bill.sharedBillId,
+          _patientBill: bill
+        });
+      });
+    });
+    return rows.sort(function (a, b) { return ms(b.createdAt) - ms(a.createdAt); });
+  }
+
   function setBillKindFilter(kind, btn) {
     billKindFilter = kind || 'all';
     var switcher = document.getElementById('billKindSwitch');
-    if (switcher) switcher.querySelectorAll('.bill-kind-btn').forEach(function (node) { node.classList.remove('active'); });
-    if (btn) btn.classList.add('active');
+    if (switcher) switcher.querySelectorAll('button').forEach(function (node) { node.classList.remove('on', 'active'); });
+    if (btn) btn.classList.add('on');
     renderBillCatalog();
+  }
+
+  function setBillHistoryFilter(filter, btn) {
+    billHistoryFilter = filter || 'all';
+    var bar = document.getElementById('billHistoryFilterBar');
+    if (bar) bar.querySelectorAll('button').forEach(function (node) { node.classList.remove('on', 'active'); });
+    if (btn) btn.classList.add('on');
+    renderBillHistory();
+  }
+
+  function openRecentBill(id) {
+    if (!id) return;
+    if (window.pcBilling && typeof window.pcBilling.list === 'function') {
+      window.location.href = 'receipt.html?bill=' + encodeURIComponent(String(id));
+      return;
+    }
+    safeToast('ℹ️ Detailed receipt opens when the shared billing engine is available.', 'info');
   }
 
   function renderBillCatalogPreview(key) {
@@ -1177,90 +1234,85 @@
     item = item || {};
     qty = qty == null ? 1 : qty;
     var kindLabel = item.kind === 'consumable' ? 'Consumable' : 'Medication';
-    var kindClass = item.kind === 'consumable' ? 'is-consumable' : 'is-medication';
     return '<tr data-bill-key="' + esc(item.key || '') + '" data-bill-code="' + esc(item.code || '') + '" data-bill-kind="' + esc(item.kind || '') + '" data-bill-category="' + esc(item.category || '') + '" data-bill-unit-label="' + esc(item.unit || '') + '" data-bill-stock-known="' + (item.hasStockCount ? '1' : '0') + '" data-bill-stock-qty="' + esc(item.hasStockCount ? item.stockQty : '') + '" data-bill-name="' + esc(item.name || '') + '">' +
       '<td>' +
-        '<button class="bill-row-link" type="button" onclick="openBillItemDetails(\'' + String(item.key || '').replace(/'/g, "\\'") + '\')">' +
+        '<button class="bill-row-link" type="button" onclick="openBillItemDetails(\'' + String(item.key || '').replace(/'/g, "\'") + '\')">' +
           '<div class="bill-item-name">' + esc(item.name || '') + '</div>' +
-          '<div class="bill-item-meta">' + esc(item.code || '—') + (item.unit ? ' · ' + esc(item.unit) : '') + '</div>' +
+          '<div class="bill-item-meta"><span class="bill-history-type">' + esc(kindLabel) + '</span> ' + esc(item.code || '—') + (item.unit ? ' · ' + esc(item.unit) : '') + ' · ' + esc(moneyRwf(item.price)) + '</div>' +
         '</button>' +
         '<div class="bill-row-warning" data-bill="warning"></div>' +
+        '<input type="hidden" data-bill="price" value="' + esc(item.price) + '"><input type="hidden" data-bill="name" value="' + esc(item.name || '') + '">' +
       '</td>' +
-      '<td><span class="bill-kind-badge ' + kindClass + '">' + esc(kindLabel) + '</span></td>' +
-      '<td><input class="fi bill-qty-input" type="number" data-bill="qty" min="1" value="' + esc(qty) + '" oninput="calcBill()"></td>' +
-      '<td><span class="bill-unit-price" data-bill="unit">' + esc(moneyRwf(item.price)) + '</span><input type="hidden" data-bill="price" value="' + esc(item.price) + '"><input type="hidden" data-bill="name" value="' + esc(item.name || '') + '"></td>' +
-      '<td class="row-total" style="font-weight:700;text-align:right;">0</td>' +
-      '<td style="text-align:center;"><button class="bill-remove-btn" type="button" onclick="removeBillRow(this)"><i class="ti ti-trash"></i></button></td>' +
+      '<td><input class="fi bill-qty-input qty" type="number" data-bill="qty" min="1" value="' + esc(qty) + '" oninput="calcBill()"></td>' +
+      '<td class="row-total" style="font-weight:700;text-align:right;">' + esc(moneyRwf(item.price * qty)) + '</td>' +
+      '<td style="text-align:center;"><button class="del bill-remove-btn" type="button" onclick="removeBillRow(this)"><i class="ti ti-trash"></i></button></td>' +
     '</tr>';
   }
 
   function ensureBillRows() {
     var tb = document.getElementById('billRows');
     if (!tb) return;
-    if (!tb.querySelector('tr[data-bill-key]')) tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--tm);">No bill items yet. Open a medication or consumable, review details, then add it from the common-server catalogue.</td></tr>';
+    if (!tb.querySelector('tr[data-bill-key]')) tb.innerHTML = '<tr><td colspan="4" class="empty" style="text-align:center;padding:26px 14px;color:var(--tm);">No items yet — pick a medication or consumable above</td></tr>';
     calcBill();
   }
 
-  function insertBillItem(item, qty, quiet) {
+  function insertBillItem(item, qty, silent) {
+    if (!item) return;
     var tb = document.getElementById('billRows');
-    if (!tb) return null;
-    if (!item) return null;
-    qty = Math.max(1, parseInt(qty, 10) || 1);
-    var empty = tb.querySelector('td[colspan="6"]');
-    if (empty) tb.innerHTML = '';
+    if (!tb) return;
     var existing = tb.querySelector('tr[data-bill-key="' + esc(item.key) + '"]');
     if (existing) {
-      var qtyInput = existing.querySelector('[data-bill="qty"]');
-      qtyInput.value = String(Math.max(1, (parseInt(qtyInput.value, 10) || 1) + qty));
+      var qtyField = existing.querySelector('[data-bill="qty"]');
+      var current = parseFloat((qtyField || {}).value) || 0;
+      if (qtyField) qtyField.value = current + (Number(qty) || 1);
     } else {
-      tb.insertAdjacentHTML('beforeend', buildBillRowHtml(item, qty));
+      var empty = tb.querySelector('td[colspan="4"]');
+      if (empty && empty.parentNode) empty.parentNode.remove();
+      tb.insertAdjacentHTML('beforeend', buildBillRowHtml(item, qty || 1));
     }
-    syncBillRowsFromCatalog();
     calcBill();
     renderBillCatalogPreview(item.key);
-    if (!quiet) safeToast((item.kind === 'consumable' ? '🧰 ' : '💊 ') + item.name + ' added', 'success');
-    return item;
+    if (!silent) safeToast('➕ Added ' + item.name + ' to bill.', 'success');
   }
 
-  function addBillItemFromCatalog(code, qty) {
-    var item = findCatalogItem(code);
-    if (!item) return safeToast('❌ This common-server item was not found.', 'error');
-    if (!(Number(item.price) > 0)) return safeToast('⚠️ This item has no valid price on the common server yet.', 'warning');
-    return insertBillItem(item, qty || 1, false);
+  function addBillItemFromCatalog(itemKey, qty) {
+    var item = findCatalogItem(itemKey);
+    if (!item) return safeToast('⚠️ Selected item was not found in the common-server catalogue.', 'warning');
+    insertBillItem(item, qty || 1);
   }
 
   function confirmBillPreviewAdd() {
     var item = activeBillPreviewKey ? findCatalogItem(activeBillPreviewKey) : null;
-    if (!item) return safeToast('⚠️ Open an item detail first.', 'warning');
+    if (!item) return safeToast('⚠️ Choose an item first.', 'warning');
     var qty = parseInt(((document.getElementById('billPreviewQty') || {}).value || '1'), 10) || 1;
     addBillItemFromCatalog(item.key, qty);
   }
 
   function addBillRow() {
+    safeToast('ℹ️ Use the service list above to add saved medications or consumables.', 'info');
     renderBillCatalog();
-    safeToast('ℹ️ Choose a priced item from the common-server catalogue, open its details, then add it to the bill.', 'info');
   }
 
   function rowToBillSnapshot(row) {
     if (!row) return null;
     return {
-      qty: parseInt(((row.querySelector('[data-bill="qty"]') || {}).value || '1'), 10) || 1,
       item: {
         key: row.getAttribute('data-bill-key') || '',
         code: row.getAttribute('data-bill-code') || '',
-        kind: row.getAttribute('data-bill-kind') || 'medication',
-        category: row.getAttribute('data-bill-category') || 'Other',
+        name: row.getAttribute('data-bill-name') || ((row.querySelector('[data-bill="name"]') || {}).value || ''),
+        category: row.getAttribute('data-bill-category') || '',
         unit: row.getAttribute('data-bill-unit-label') || '',
+        kind: row.getAttribute('data-bill-kind') || 'medication',
+        price: parseFloat((row.querySelector('[data-bill="price"]') || {}).value) || 0,
         hasStockCount: row.getAttribute('data-bill-stock-known') === '1',
-        stockQty: inventoryNumber(row.getAttribute('data-bill-stock-qty')),
-        name: ((row.querySelector('[data-bill="name"]') || {}).value || '').trim(),
-        price: parseFloat((row.querySelector('[data-bill="price"]') || {}).value) || 0
-      }
+        stockQty: inventoryNumber(row.getAttribute('data-bill-stock-qty'))
+      },
+      qty: parseFloat((row.querySelector('[data-bill="qty"]') || {}).value) || 1
     };
   }
 
   function removeBillRow(btn) {
-    var row = btn && typeof btn.closest === 'function' ? btn.closest('tr') : null;
+    var row = btn && btn.closest ? btn.closest('tr') : null;
     if (!row) return;
     lastRemovedBillItem = rowToBillSnapshot(row);
     row.remove();
@@ -1340,7 +1392,7 @@
 
   function renderBillCatalog() {
     syncBillRowsFromCatalog();
-    var host = document.getElementById('billCatalogList');
+    var host = billCatalogHost();
     var meta = document.getElementById('billCatalogMeta');
     if (!host) return [];
     var q = ((document.getElementById('billCatalogSearch') || {}).value || '');
@@ -1353,30 +1405,18 @@
     var out = items.filter(function (item) { return billStockState(item).severity === 'out'; }).length;
     if (meta) meta.textContent = items.length + ' saved priced item' + (items.length === 1 ? '' : 's') + ' from the common server · ' + low + ' low stock · ' + out + ' out of stock';
     if (!items.length) {
-      host.innerHTML = '<div class="bill-catalog-empty">No saved priced items match this filter.<br><span style="font-size:11px;">Admin → Pharmacy can add medications or consumables with prices.</span></div>';
+      host.innerHTML = '<div class="empty">No saved priced items match this filter.<br><span style="font-size:11px;">Admin → Pharmacy can add medications or consumables with prices.</span></div>';
       renderBillStockLive();
       return items;
     }
     host.innerHTML = items.map(function (item) {
-      var kindClass = item.kind === 'consumable' ? 'is-consumable' : 'is-medication';
-      var kindLabel = item.kind === 'consumable' ? 'Consumable' : 'Medication';
       var selected = selectedBillQtyForItem(item.key);
-      return '<div class="bill-catalog-item' + (activeBillPreviewKey === item.key ? ' is-active' : '') + (selected ? ' is-in-bill' : '') + '" onclick="openBillItemDetails(\'' + String(item.key).replace(/'/g, "\\'") + '\')">' +
-        '<div style="min-width:0;flex:1;">' +
-          '<div class="bill-catalog-name">' + esc(item.name) + '</div>' +
-          '<div class="bill-catalog-line">' +
-            '<span class="bill-kind-badge ' + kindClass + '">' + esc(kindLabel) + '</span>' +
-            '<span>' + esc(item.category || '—') + '</span>' +
-            '<span>' + esc(item.code || '—') + '</span>' +
-            '<span>' + esc(item.unit || '') + '</span>' +
-            billStockBadge(item, selected) +
-            (selected ? '<span class="bill-in-cart-badge">In bill ' + esc(String(selected)) + '</span>' : '') +
-          '</div>' +
-        '</div>' +
-        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">' +
-          '<div class="bill-catalog-price">' + esc(moneyRwf(item.price)) + '</div>' +
-          '<button class="bill-catalog-add bill-catalog-view" type="button" onclick="event.stopPropagation();openBillItemDetails(\'' + String(item.key).replace(/'/g, "\\'") + '\')"><i class="ti ti-eye"></i> View details</button>' +
-        '</div>' +
+      return '<div class="svc-item' + (activeBillPreviewKey === item.key ? ' active' : '') + '" onclick="openBillItemDetails(\'' + String(item.key).replace(/'/g, "\'") + '\')">' +
+        '<span>' +
+          '<span class="n">' + esc(item.name) + '</span><br>' +
+          '<span class="c">' + esc(item.code || '—') + ' · ' + esc(item.unit || '—') + ' · ' + esc(item.kind === 'consumable' ? 'Consumable' : 'Medication') + ' · ' + billStockBadge(item, selected) + (selected ? ' <span class="bill-in-cart-badge">In bill ' + esc(String(selected)) + '</span>' : '') + '</span>' +
+        '</span>' +
+        '<span class="p">' + esc(moneyRwf(item.price)) + '</span>' +
       '</div>';
     }).join('');
     renderBillStockLive();
@@ -1385,47 +1425,50 @@
     return items;
   }
 
-  function renderBillHistory(patient) {
-    var container = document.getElementById('billHistoryList');
+  function renderBillHistory() {
+    var container = document.getElementById('billList') || document.getElementById('billHistoryList');
+    var meta = document.getElementById('billRecentMeta');
     if (!container) return;
-    patient = patient || getCurrentPatient();
-    var history = patient && Array.isArray(patient.billingHistory) ? patient.billingHistory.slice().sort(function (a, b) { return ms(b && b.timestamp) - ms(a && a.timestamp); }) : [];
-    if (!history.length) {
-      container.innerHTML = '<p class="cpn-empty">📋 No bills posted yet.</p>';
+    var list = recentBillRecords().filter(function (bill) {
+      return billHistoryFilter === 'all' || normalizeBillStatus(bill.status) === billHistoryFilter;
+    }).slice(0, 25);
+    if (meta) meta.textContent = list.length ? 'Latest common-server bills' : 'No bills for this filter yet';
+    if (!list.length) {
+      container.innerHTML = '<div class="empty">No bills yet</div>';
+      updateBillCount();
       return;
     }
-    container.innerHTML = history.map(function (bill) {
-      var medSub = Number(bill.medicationSubtotal != null ? bill.medicationSubtotal : (bill.items || []).filter(function (item) { return String(item.type || '').toLowerCase() !== 'consumable'; }).reduce(function (sum, item) { return sum + (Number(item.total) || 0); }, 0));
-      var consSub = Number(bill.consumableSubtotal != null ? bill.consumableSubtotal : (bill.items || []).filter(function (item) { return String(item.type || '').toLowerCase() === 'consumable'; }).reduce(function (sum, item) { return sum + (Number(item.total) || 0); }, 0));
-      var itemsHTML = (bill.items || []).map(function (item) {
-        var type = String(item.type || item.category || 'medication').toLowerCase() === 'consumable' ? 'Consumable' : 'Medication';
-        return '<div class="bill-item">' +
-          '<span class="bill-item-name">' + esc(item.description || item.name || 'Item') + ' <span class="bill-history-type">' + esc(type) + '</span></span>' +
-          '<span class="bill-item-price">' + esc(String(item.quantity || item.qty || 0)) + ' × ' + esc(moneyRwf(item.unitPrice || item.price || 0)) + ' = <strong>' + esc(moneyRwf(item.total || 0)) + '</strong></span>' +
-        '</div>';
-      }).join('');
-      return '<div class="bill-entry">' +
-        '<div class="bill-header">' +
-          '<span class="bill-time">🕐 ' + esc(fmtDateTime(bill.timestamp)) + '</span>' +
-          '<span class="bill-nurse">👩‍⚕️ ' + esc(bill.nurse || currentStaffName()) + '</span>' +
-          '<span class="bill-total-badge">💰 Total: ' + esc(moneyRwf(bill.total || 0)) + '</span>' +
-        '</div>' +
-        '<div class="bill-content">' +
-          '<strong>Payment:</strong> ' + esc(bill.paymentMode || 'Cash') + (bill.ward ? ' · 📍 ' + esc(bill.ward) : '') +
-          '<br><strong>Medications:</strong> ' + esc(moneyRwf(medSub)) + ' · <strong>Consumables:</strong> ' + esc(moneyRwf(consSub)) +
-          '<br><strong>Insurance Cover:</strong> ' + esc(String(Math.round(Number(bill.coverPercent || 0) * 100))) + '% - ' + esc(moneyRwf(bill.insuranceCover || 0)) +
-          '<br><strong>Patient Pays:</strong> ' + esc(moneyRwf(bill.patientPays || 0)) +
-          '<div style="margin-top:4px;">' + itemsHTML + '</div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
+    container.innerHTML = '';
+    list.forEach(function (bill) {
+      var d = document.createElement('div');
+      d.className = 'bill-row';
+      var left = document.createElement('div');
+      left.innerHTML = '<div style="font-weight:600;font-size:12.5px"></div><div style="font-size:10.5px;color:var(--tm);margin-top:2px"></div>';
+      left.children[0].textContent = String(bill.number || 'INV') + ' · ' + String(bill.patientName || '—');
+      left.children[1].textContent = new Date(ms(bill.createdAt) || Date.now()).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) + ' · ' + ((bill.items || []).length) + ' item' + (((bill.items || []).length) === 1 ? '' : 's');
+      var right = document.createElement('div');
+      right.style.cssText = 'text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end';
+      var amt = document.createElement('div');
+      amt.style.cssText = 'font-weight:700;font-size:13px';
+      amt.textContent = moneyRwf(bill.total || 0);
+      var bg = document.createElement('span');
+      bg.className = 'badge b-' + normalizeBillStatus(bill.status);
+      bg.textContent = normalizeBillStatus(bill.status);
+      right.append(amt, bg);
+      d.append(left, right);
+      d.style.cursor = 'pointer';
+      d.onclick = function () { openRecentBill(bill.id); };
+      container.appendChild(d);
+    });
+    updateBillCount();
   }
 
-  function updateBillCount(patient) {
+  function updateBillCount() {
     var countEl = document.getElementById('billHistoryCount');
     if (!countEl) return;
-    patient = patient || getCurrentPatient();
-    var total = patient && Array.isArray(patient.billingHistory) ? patient.billingHistory.length : 0;
+    var total = recentBillRecords().filter(function (bill) {
+      return billHistoryFilter === 'all' || normalizeBillStatus(bill.status) === billHistoryFilter;
+    }).length;
     countEl.textContent = total + ' bill' + (total === 1 ? '' : 's');
   }
 
@@ -1810,6 +1853,23 @@
     var coverPercent = typeof window.getCoverPercent === 'function' ? window.getCoverPercent(paymentMode) : 0;
     var insuranceCover = Math.round(totalBill * coverPercent);
     var patientPays = totalBill - insuranceCover;
+    var sharedBill = null;
+    try {
+      if (window.pcBilling && typeof window.pcBilling.create === 'function') {
+        sharedBill = window.pcBilling.create({
+          patientId: patient.id,
+          patientName: displayName(patient),
+          items: items.map(function (item) {
+            return { code: item.code || '', name: item.description || item.name || 'Item', qty: item.quantity || item.qty || 1, price: item.unitPrice || item.price || 0 };
+          }),
+          patientPayPercent: Math.max(0, Math.min(100, Math.round((1 - coverPercent) * 100))),
+          insurance: { provider: paymentMode, patientPayPercent: Math.max(0, Math.min(100, Math.round((1 - coverPercent) * 100))) },
+          source: 'nurse-billing'
+        });
+      }
+    } catch (e) {
+      console.warn('pcBilling.create failed', e);
+    }
     var entry = {
       id: Date.now(),
       timestamp: nowIso(),
@@ -1824,13 +1884,20 @@
       ward: ((document.getElementById('billWard') || {}).value || displayLocation(patient)),
       nurse: ((document.getElementById('billNurse') || {}).value || currentStaffName()),
       date: ((document.getElementById('billDate') || {}).value || todayIso()),
-      status: 'Posted'
+      status: sharedBill ? sharedBill.status : 'Posted',
+      sharedBillId: sharedBill ? sharedBill.id : null,
+      sharedBillNumber: sharedBill ? sharedBill.number : null,
+      sharedBillStatus: sharedBill ? sharedBill.status : null,
+      sharedBillCreatedAt: sharedBill ? sharedBill.createdAt : null,
+      sharedBillTotal: sharedBill ? sharedBill.total : null,
+      sharedBillGrossTotal: sharedBill ? sharedBill.grossTotal : null
     };
-    safeToast('⏳ Posting bill to the Common Server…', 'info');
+    safeToast(sharedBill ? '⏳ Creating bill and sending it to cashier…' : '⏳ Posting bill to the Common Server…', 'info');
     var saved = await appendPatientHistory('billingHistory', entry);
     if (!saved) return safeToast('❌ Bill was NOT posted. Please retry.', 'error');
     refreshAfterSave(saved, clearBill);
-    safeToast('✅ Bill posted for ' + displayName(saved) + ' - Total: RWF ' + totalBill.toLocaleString() + ' | Patient pays: RWF ' + patientPays.toLocaleString(), 'success');
+    renderBillHistory();
+    safeToast('✅ Bill created for ' + displayName(saved) + ' - Total: RWF ' + totalBill.toLocaleString() + ' | Patient pays: RWF ' + patientPays.toLocaleString(), 'success');
   }
 
   async function saveMedicationLog() {
@@ -2143,11 +2210,12 @@
   }
 
   function wireRefreshEvents() {
-    window.addEventListener('storage', function () { loadPatients(); renderBillCatalog(); });
-    window.addEventListener('focus', function () { loadPatients(); renderBillCatalog(); });
-    window.addEventListener('tariffUpdated', function () { renderBillCatalog(); calcBill(); });
+    window.addEventListener('storage', function () { loadPatients(); renderBillCatalog(); renderBillHistory(); });
+    window.addEventListener('focus', function () { loadPatients(); renderBillCatalog(); renderBillHistory(); });
+    window.addEventListener('tariffUpdated', function () { renderBillCatalog(); calcBill(); renderBillHistory(); });
+    window.addEventListener('billsUpdated', function () { renderBillHistory(); updateBillCount(); });
     window.addEventListener('labResultsUpdated', function () { renderLabResults(); refreshKpisAndQueue(getAllPatients()); });
-    window.addEventListener('pclinicSyncError', function () { loadPatients(); renderLabResults(); renderBillCatalog(); });
+    window.addEventListener('pclinicSyncError', function () { loadPatients(); renderLabResults(); renderBillCatalog(); renderBillHistory(); });
     window.addEventListener('pcPatientChanged', function (event) {
       var detail = event && event.detail ? event.detail : null;
       syncingFromSharedBar = true;
@@ -2206,7 +2274,10 @@
     window.addBillItemFromCatalog = addBillItemFromCatalog;
     window.removeBillRow = removeBillRow;
     window.renderBillCatalog = renderBillCatalog;
+    window.renderBillHistory = renderBillHistory;
+    window.updateBillCount = updateBillCount;
     window.setBillKindFilter = setBillKindFilter;
+    window.setBillHistoryFilter = setBillHistoryFilter;
     window.calcBill = calcBill;
     window.clearBill = clearBill;
     window.addMedicationRow = addMedicationRow;
@@ -2287,6 +2358,8 @@
     wireCpnPreviewEvents();
     ensureBillRows();
     renderBillCatalog();
+    renderBillHistory();
+    updateBillCount();
     var billDate = document.getElementById('billDate'); if (billDate && !billDate.value) billDate.value = todayIso();
     var fpDate = document.getElementById('fpDate'); if (fpDate && !fpDate.value) fpDate.value = todayIso();
     var medsDate = document.getElementById('medsDate'); if (medsDate && !medsDate.value) medsDate.value = todayIso();
