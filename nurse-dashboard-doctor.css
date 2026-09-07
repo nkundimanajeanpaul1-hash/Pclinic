@@ -999,7 +999,9 @@ input.fi:focus {
   color:#9ca3af;
   font-style:italic;
 }
-#cpnHistoryList .pcf-hrow.is-selected {
+#cpnHistoryList .pcf-hrow.is-selected,
+#nursingNotesList .pcf-hrow.is-selected,
+#cpHistoryList .pcf-hrow.is-selected {
   background: rgba(0,113,227,0.08) !important;
   border-color: rgba(0,113,227,0.20) !important;
   box-shadow: 0 4px 12px rgba(0,113,227,0.10) !important;

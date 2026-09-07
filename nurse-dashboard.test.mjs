@@ -10,8 +10,8 @@ const FIX = readFileSync(resolve(ROOT, 'nurse-dashboard-fixes.js'), 'utf8');
 const CSS = readFileSync(resolve(ROOT, 'nurse-dashboard-doctor.css'), 'utf8');
 
 test('nurse dashboard loads the dedicated fix layer and the doctor-style skin while keeping nurse auth', () => {
-  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260907_NURSEFIX_CAREMATCH/);
-  assert.match(HTML, /nurse-dashboard-doctor\.css\?v=20260907_DOCTORSKIN_CAREMATCH/);
+  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260907_NURSEFIX_OPDFILEMATCH/);
+  assert.match(HTML, /nurse-dashboard-doctor\.css\?v=20260907_DOCTORSKIN_OPDFILEMATCH/);
   assert.match(HTML, /requireAuth\(\['nurse'\]\)/);
   assert.match(HTML, /pclinic-orders\.js/);
   assert.match(HTML, /pclinic-catalog\.js/);
@@ -82,73 +82,80 @@ test('CPN panel is now ANC / CPN with maternity fields, file-style layout, histo
   assert.match(FIX, /window\.previewCPNHistory = previewCpnHistory/);
 });
 
-test('care plan now matches the nursing notes layout 100/100 in visible structure and still opens Nursing Note from inside Care Plan', () => {
-  for (const id of ['careplanAddNewBtn', 'careplanComposerCard', 'careplanCancelBtn', 'careplanOpenNoteBtn', 'cpPatient', 'cpDateTime', 'cpNurse', 'cpStatus', 'cpBody', 'cpHistoryList', 'cpCount']) {
+test('care plan now uses the doctor OPD file-style layout with live preview, history, and Nursing Note opener', () => {
+  for (const id of ['careplanViewFile', 'careplanViewHistory', 'careplanFileGrid', 'careplanWorkPane', 'careplanComposerCard', 'careplanDocPreview', 'careplanAddNewBtn', 'careplanCancelBtn', 'careplanOpenNoteBtn', 'cpPatient', 'cpDateTime', 'cpNurse', 'cpStatus', 'cpBody', 'cpHistoryList', 'cpCount']) {
     assert.match(HTML, new RegExp(`id=["']${id}["']`), id + ' missing');
   }
   for (const legacyId of ['cpProblem', 'cpGoals', 'cpInterventions', 'cpEvalDate']) {
     assert.match(HTML, new RegExp(`id=["']${legacyId}["']`), legacyId + ' compatibility field missing');
   }
-  assert.match(HTML, /id="careplanComposerCard"[^>]*hidden/);
-  for (const token of ['Recent Nursing Care Plans', 'Add New Care Plan', 'New Nursing Care Plan', 'Simple Apple-style note page', 'Common Server connected', 'Selected patient', 'Date and time', 'Patient status', 'Care plan']) {
+  for (const token of ['Nursing Care Plan', 'Active Record', 'History', 'Print', 'Save', 'Care plan context', 'Visit date and time', 'Nurse / Provider', 'Status', 'Nursing care plan', 'New for Today', 'Nursing Care Plan history']) {
     assert.ok(HTML.includes(token), 'Missing care plan token: ' + token);
   }
-  assert.match(HTML, /<textarea class="ta notes-simple-textarea" id="cpBody"/);
-  assert.doesNotMatch(HTML, /Nursing problem \/ diagnosis/);
-  assert.doesNotMatch(HTML, /Goals \/ expected outcomes/);
-  assert.doesNotMatch(HTML, /Nursing interventions/);
+  assert.match(HTML, /class="pcf-bill-layout cpn-file-shell"/);
+  assert.match(HTML, /id="careplanDocPreview"/);
   assert.match(FIX, /function carePlanComposerCard\(\)/);
+  assert.match(FIX, /function carePlanDraft\(patient\)/);
+  assert.match(FIX, /function renderCarePlanDocPreview\(patient\)/);
+  assert.match(FIX, /function previewCarePlanHistory\(recordId\)/);
   assert.match(FIX, /function openNewCarePlan\(\)/);
   assert.match(FIX, /function closeNewCarePlan\(\)/);
   assert.match(FIX, /function carePlanStatusClass\(status\)/);
   assert.match(FIX, /function carePlanSummary\(plan\)/);
   assert.match(FIX, /function updateCarePlanCount\(patient\)/);
   assert.match(FIX, /function renderCarePlanHistory\(patient\)/);
+  assert.match(FIX, /function printCarePlanPreview\(\)/);
   assert.match(FIX, /document\.getElementById\('cpBody'\)/);
   assert.match(FIX, /document\.getElementById\('cpDateTime'\)/);
   assert.match(FIX, /appendPatientHistory\('carePlans', entry\)/);
   assert.match(FIX, /source: 'nurse-careplan-simple'/);
   assert.match(FIX, /window\.renderCarePlanHistory = renderCarePlanHistory/);
+  assert.match(FIX, /window\.renderCarePlanDocPreview = renderCarePlanDocPreview/);
+  assert.match(FIX, /window\.previewCarePlanHistory = previewCarePlanHistory/);
   assert.match(FIX, /window\.openNewCarePlan = openNewCarePlan/);
   assert.match(FIX, /window\.closeNewCarePlan = closeNewCarePlan/);
+  assert.match(FIX, /window\.printCarePlanPreview = printCarePlanPreview/);
   assert.match(FIX, /window\.clearCarePlan = clearCarePlan/);
   assert.match(FIX, /function openNursingNoteFromCarePlan\(\)/);
   assert.match(FIX, /window\.openNursingNoteFromCarePlan = openNursingNoteFromCarePlan/);
   assert.match(FIX, /window\.switchTab\('notes', notesBtn\)/);
   assert.match(FIX, /openNewNursingNote\(\)/);
-  assert.match(CSS, /\.notes-simple-history-actions/);
-  assert.match(CSS, /\.notes-simple-add-btn/);
-  assert.match(CSS, /\.notes-simple-entry/);
+  assert.match(CSS, /#cpHistoryList \.pcf-hrow\.is-selected/);
   assert.match(CSS, /\.notes-simple-status\.active/);
   assert.match(CSS, /\.notes-simple-status\.achieved/);
   assert.match(CSS, /\.notes-simple-status\.discontinued/);
 });
 
-test('nursing notes page opens on history first like doctor flow, with Add New Note buttons and common-server saving', () => {
-  for (const id of ['notesAddNewBtn', 'notesComposerCard', 'notesCancelBtn', 'notesPatient', 'notesDateTime', 'notesNurse', 'notesStatus', 'notesBody', 'nursingNotesList', 'nursingNoteCount']) {
+test('nursing notes now use the doctor OPD file-style layout with live preview and common-server saving', () => {
+  for (const id of ['notesViewFile', 'notesViewHistory', 'notesFileGrid', 'notesWorkPane', 'notesComposerCard', 'notesDocPreview', 'notesAddNewBtn', 'notesCancelBtn', 'notesPatient', 'notesDateTime', 'notesNurse', 'notesStatus', 'notesBody', 'nursingNotesList', 'nursingNoteCount']) {
     assert.match(HTML, new RegExp(`id=["']${id}["']`), id + ' missing');
   }
-  assert.match(HTML, /id="notesComposerCard"[^>]*hidden/);
   for (const oldId of ['notesSubjective', 'notesObjective', 'notesPlan', 'notesEducation', 'notesReview', 'notesWard']) {
-    assert.doesNotMatch(HTML, new RegExp(`id=["']${oldId}["']`), oldId + ' should be removed from the simple notes page');
+    assert.doesNotMatch(HTML, new RegExp(`id=["']${oldId}["']`), oldId + ' should be removed from the notes file page');
   }
-  for (const token of ['Simple Apple-style note page', 'Common Server connected', 'Recent Nursing Notes', 'Add New Note', 'New Nursing Note']) {
+  for (const token of ['Nursing Note', 'Active Record', 'History', 'Print', 'Save', 'Nursing note context', 'Visit date and time', 'Nurse / Provider', 'Patient status', 'New for Today', 'Nursing note history']) {
     assert.ok(HTML.includes(token), 'Missing notes token: ' + token);
   }
+  assert.match(HTML, /class="pcf-bill-layout cpn-file-shell"/);
+  assert.match(HTML, /id="notesDocPreview"/);
+  assert.match(FIX, /function notesDraft\(patient\)/);
+  assert.match(FIX, /function renderNursingNoteDocPreview\(patient\)/);
+  assert.match(FIX, /function previewNursingNoteHistory\(recordId\)/);
   assert.match(FIX, /function openNewNursingNote\(\)/);
   assert.match(FIX, /function closeNewNursingNote\(\)/);
+  assert.match(FIX, /function wireNursingNotePreviewEvents\(\)/);
   assert.match(FIX, /function nursingNoteSummary\(note\)/);
   assert.match(FIX, /function renderNursingNotes\(patient\)/);
   assert.match(FIX, /function updateNursingNoteCount\(patient\)/);
+  assert.match(FIX, /function printNursingNotePreview\(\)/);
   assert.match(FIX, /document\.getElementById\('notesBody'\)/);
   assert.match(FIX, /appendPatientHistory\('nursingNotes', entry\)/);
   assert.match(FIX, /source: 'nurse-notes-simple'/);
   assert.match(FIX, /Saving nursing note to the Common Server/);
-  assert.match(FIX, /closeNewNursingNote\(\)/);
-  assert.match(CSS, /\.notes-simple-shell/);
-  assert.match(CSS, /\.notes-simple-history-actions/);
-  assert.match(CSS, /\.notes-simple-add-btn/);
-  assert.match(CSS, /\.notes-simple-entry/);
+  assert.match(FIX, /window\.renderNursingNoteDocPreview = renderNursingNoteDocPreview/);
+  assert.match(FIX, /window\.previewNursingNoteHistory = previewNursingNoteHistory/);
+  assert.match(FIX, /window\.printNursingNotePreview = printNursingNotePreview/);
+  assert.match(CSS, /#nursingNotesList \.pcf-hrow\.is-selected/);
 });
 
 test('the nurse search and patient-table filtering support name, MRN and patient ID', () => {

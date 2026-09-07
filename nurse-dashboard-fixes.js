@@ -482,6 +482,8 @@
   }
 
   var cpnPreviewRecordId = null;
+  var nursingNotePreviewId = null;
+  var carePlanPreviewId = null;
 
   function fmtDateTime(value) {
     var t = ms(value);
@@ -691,6 +693,8 @@
       if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
       if (typeof window.renderNursingNotes === 'function') window.renderNursingNotes(null);
       if (typeof window.updateNursingNoteCount === 'function') window.updateNursingNoteCount(null);
+      if (typeof window.renderNursingNoteDocPreview === 'function') window.renderNursingNoteDocPreview(null);
+      if (typeof window.renderCarePlanDocPreview === 'function') window.renderCarePlanDocPreview(null);
       if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
       return;
     }
@@ -699,12 +703,14 @@
     renderTriagePanel(patient);
     renderCPNHistory(patient);
     renderCpnDocPreview(patient);
-    if (typeof window.renderCarePlanHistory === 'function') window.renderCarePlanHistory();
+    if (typeof window.renderCarePlanHistory === 'function') window.renderCarePlanHistory(patient);
+    if (typeof window.renderCarePlanDocPreview === 'function') window.renderCarePlanDocPreview(patient);
     if (typeof window.renderDeliveriesHistory === 'function') window.renderDeliveriesHistory();
     if (typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
     if (typeof window.renderLabResults === 'function') window.renderLabResults(patient);
     if (typeof window.renderNursingNotes === 'function') window.renderNursingNotes(patient);
     if (typeof window.updateNursingNoteCount === 'function') window.updateNursingNoteCount(patient);
+    if (typeof window.renderNursingNoteDocPreview === 'function') window.renderNursingNoteDocPreview(patient);
     if (typeof window.updateNursingChips === 'function') window.updateNursingChips();
     if (!quiet) safeToast('👤 Loaded patient: ' + displayName(patient), 'success');
   }
@@ -1804,6 +1810,101 @@
     return document.getElementById('notesComposerCard');
   }
 
+  function carePlanComposerCard() {
+    return document.getElementById('careplanComposerCard');
+  }
+
+  function oneLineExcerpt(text, limit) {
+    var flat = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!flat) return '';
+    var stop = flat.search(/[.!?](\s|$)/);
+    var shortText = stop > 0 ? flat.slice(0, stop + 1) : flat;
+    var max = Number(limit) || 96;
+    if (shortText.length <= max) return shortText;
+    return shortText.slice(0, max - 1).trim() + '…';
+  }
+
+  function previewHistorySelection(containerSelector, attrName, value) {
+    document.querySelectorAll(containerSelector + ' .pcf-hrow').forEach(function (row) {
+      if (String(row.getAttribute(attrName) || '') === String(value || '')) row.classList.add('is-selected');
+      else row.classList.remove('is-selected');
+    });
+  }
+
+  function filePreviewSection(titleText, value) {
+    return '<div class="sec"><h4>' + esc(titleText) + '</h4><p>' + (value ? esc(value) : '<span class="none">Not recorded</span>') + '</p></div>';
+  }
+
+  function notesDraft(patient) {
+    return {
+      id: 'draft',
+      timestamp: ((document.getElementById('notesDateTime') || {}).value || nowIso()),
+      date: ((document.getElementById('notesDateTime') || {}).value || nowIso()),
+      note: ((document.getElementById('notesBody') || {}).value || '').trim(),
+      body: ((document.getElementById('notesBody') || {}).value || '').trim(),
+      status: ((document.getElementById('notesStatus') || {}).value || 'Stable'),
+      nurse: ((document.getElementById('notesNurse') || {}).value || currentStaffName()),
+      ward: displayLocation(patient)
+    };
+  }
+
+  function carePlanDraft(patient) {
+    var stamp = ((document.getElementById('cpDateTime') || {}).value || nowIso());
+    var body = ((document.getElementById('cpBody') || {}).value || '').trim();
+    return {
+      id: 'draft',
+      timestamp: stamp,
+      date: stamp,
+      at: stamp,
+      body: body,
+      problem: oneLineExcerpt(body, 120) || '',
+      goals: '',
+      interventions: body,
+      evalDate: stamp ? String(stamp).slice(0, 10) : '',
+      status: ((document.getElementById('cpStatus') || {}).value || 'Active'),
+      by: ((document.getElementById('cpNurse') || {}).value || currentStaffName()),
+      location: displayLocation(patient)
+    };
+  }
+
+  function renderNursingNoteDocPreview(patient) {
+    var box = document.getElementById('notesDocPreview');
+    if (!box) return;
+    patient = patient || getCurrentPatient();
+    if (!patient) {
+      box.innerHTML = '<div class="pcf-empty"><i class="ti ti-notes"></i>Select a patient to start or review a nursing note.</div>';
+      return;
+    }
+    var notes = Array.isArray(patient.nursingNotes) ? patient.nursingNotes.slice() : [];
+    var record = null;
+    if (nursingNotePreviewId) record = notes.find(function (item) { return String(item && item.id) === String(nursingNotePreviewId); }) || null;
+    if (!record) record = notesDraft(patient);
+    var summary = nursingNoteSummary(record) || record.note || record.body || '';
+    box.innerHTML = '' +
+      '<div class="dh">' +
+        '<div><div class="org">PCLINIC / CHUK</div><div class="sub">Nursing service · progress documentation preview</div></div>' +
+        '<div class="meta"><b>' + esc(nursingNotePreviewId ? 'Saved Nursing Note' : 'Nursing Note Preview') + '</b><br>' + esc(fmtDateTime(record.timestamp || record.date)) + '</div>' +
+      '</div>' +
+      '<div class="dtitle">Nursing Note</div>' +
+      '<div class="pinfo">' +
+        '<div><span>Patient</span> ' + esc(displayName(patient)) + '</div>' +
+        '<div><span>MRN</span> ' + esc(displayMrn(patient)) + '</div>' +
+        '<div><span>Date</span> ' + esc(fmtDateTime(record.timestamp || record.date)) + '</div>' +
+        '<div><span>Nurse</span> ' + esc(record.nurse || currentStaffName()) + '</div>' +
+        '<div><span>Status</span> ' + esc(record.status || 'Stable') + '</div>' +
+        '<div><span>Ward / Location</span> ' + esc(record.ward || displayLocation(patient) || 'General') + '</div>' +
+      '</div>' +
+      filePreviewSection('Nursing note', summary) +
+      '<div class="sig"><div>Nurse signature</div><div>Patient file</div></div>' +
+      '<div class="stamp">Live preview from the Common Server nursing workflow</div>';
+  }
+
+  function previewNursingNoteHistory(recordId) {
+    nursingNotePreviewId = recordId || null;
+    renderNursingNoteDocPreview(getCurrentPatient());
+    previewHistorySelection('#nursingNotesList', 'data-note-id', recordId);
+  }
+
   function openNewNursingNote() {
     var patient = refreshCurrentPatientFromStore();
     if (!patient) {
@@ -1811,29 +1912,54 @@
       focusPatientSearch();
       return;
     }
-    var card = notesComposerCard();
-    if (card) card.hidden = false;
+    nursingNotePreviewId = null;
     clearNursingNote();
+    renderNursingNoteDocPreview(patient);
     var body = document.getElementById('notesBody');
     if (body) setTimeout(function () { body.focus(); }, 40);
   }
 
-  function carePlanComposerCard() {
-    return document.getElementById('careplanComposerCard');
+  function updateNursingNoteCount(patient) {
+    var countEl = document.getElementById('nursingNoteCount');
+    if (!countEl) return;
+    var total = Array.isArray(patient && patient.nursingNotes) ? patient.nursingNotes.length : 0;
+    countEl.textContent = String(total);
   }
 
-  function openNewCarePlan() {
-    var patient = refreshCurrentPatientFromStore();
-    if (!patient) {
-      safeToast('⚠️ Please select a patient first', 'warning');
-      focusPatientSearch();
+  function renderNursingNotes(patient) {
+    patient = patient || refreshCurrentPatientFromStore();
+    var container = document.getElementById('nursingNotesList');
+    if (!container) return;
+    var notes = Array.isArray(patient && patient.nursingNotes) ? patient.nursingNotes.slice() : [];
+    updateNursingNoteCount(patient);
+    if (!notes.length) {
+      nursingNotePreviewId = null;
+      container.innerHTML = '<p class="pcf-empty"><i class="ti ti-notes"></i>No nursing notes yet. Create one above.</p>';
+      renderNursingNoteDocPreview(patient);
       return;
     }
-    var card = carePlanComposerCard();
-    if (card) card.hidden = false;
-    clearCarePlan();
-    var body = document.getElementById('cpBody');
-    if (body) setTimeout(function () { body.focus(); }, 40);
+    notes.sort(function (a, b) { return ms(b && (b.timestamp || b.date || b.at)) - ms(a && (a.timestamp || a.date || a.at)); });
+    container.innerHTML = notes.map(function (note) {
+      var dt = new Date(ms(note.timestamp || note.date || note.at) || Date.now());
+      var summary = nursingNoteSummary(note) || note.note || note.body || 'Nursing note';
+      var sid = String(note.id || '').replace(/'/g, "\\'");
+      return '<button type="button" class="pcf-hrow" data-note-id="' + esc(note.id) + '" onclick="previewNursingNoteHistory(\'' + sid + '\')" style="text-align:left;border:none;width:100%;cursor:pointer;">' +
+        '<div class="date"><div class="d">' + esc(String(dt.getDate()).padStart(2, '0')) + '</div><div class="m">' + esc(dt.toLocaleString('en-US', { month: 'short' })) + '</div></div>' +
+        '<div class="meat"><b>' + esc(oneLineExcerpt(summary, 82) || 'Nursing note') + '</b><span>' + esc((note.status || 'Stable') + ' • ' + (note.ward || displayLocation(patient) || 'General')) + '</span></div>' +
+        '<div class="by">' + esc(note.nurse || currentStaffName()) + '<br>' + esc(dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })) + '</div>' +
+      '</button>';
+    }).join('');
+    if (nursingNotePreviewId) previewNursingNoteHistory(nursingNotePreviewId);
+    else renderNursingNoteDocPreview(patient);
+  }
+
+  function printNursingNotePreview() {
+    var patient = refreshCurrentPatientFromStore();
+    if (window.pcFile && typeof window.pcFile.print === 'function') {
+      return window.pcFile.print('#notesDocPreview', 'Nursing Note — ' + (patient ? displayName(patient) : 'PClinic'));
+    }
+    if (typeof window.printPatientFile === 'function') return window.printPatientFile();
+    window.print();
   }
 
   function carePlanStatusClass(status) {
@@ -1847,7 +1973,7 @@
     var countEl = document.getElementById('cpCount');
     if (!countEl) return;
     var total = Array.isArray(patient && patient.carePlans) ? patient.carePlans.length : 0;
-    countEl.textContent = total + ' plan' + (total !== 1 ? 's' : '');
+    countEl.textContent = String(total);
   }
 
   function carePlanSummary(plan) {
@@ -1860,6 +1986,59 @@
     return parts.join('\n\n').trim();
   }
 
+  function renderCarePlanDocPreview(patient) {
+    var box = document.getElementById('careplanDocPreview');
+    if (!box) return;
+    patient = patient || getCurrentPatient();
+    if (!patient) {
+      box.innerHTML = '<div class="pcf-empty"><i class="ti ti-clipboard-check"></i>Select a patient to start or review a nursing care plan.</div>';
+      return;
+    }
+    var plans = Array.isArray(patient.carePlans) ? patient.carePlans.slice() : [];
+    var record = null;
+    if (carePlanPreviewId) record = plans.find(function (item) { return String(item && item.id) === String(carePlanPreviewId); }) || null;
+    if (!record) record = carePlanDraft(patient);
+    var summary = carePlanSummary(record) || '';
+    box.innerHTML = '' +
+      '<div class="dh">' +
+        '<div><div class="org">PCLINIC / CHUK</div><div class="sub">Nursing service · care plan documentation preview</div></div>' +
+        '<div class="meta"><b>' + esc(carePlanPreviewId ? 'Saved Nursing Care Plan' : 'Nursing Care Plan Preview') + '</b><br>' + esc(fmtDateTime(record.timestamp || record.at || record.date)) + '</div>' +
+      '</div>' +
+      '<div class="dtitle">Nursing Care Plan</div>' +
+      '<div class="pinfo">' +
+        '<div><span>Patient</span> ' + esc(displayName(patient)) + '</div>' +
+        '<div><span>MRN</span> ' + esc(displayMrn(patient)) + '</div>' +
+        '<div><span>Date</span> ' + esc(fmtDateTime(record.timestamp || record.at || record.date)) + '</div>' +
+        '<div><span>Nurse</span> ' + esc(record.by || currentStaffName()) + '</div>' +
+        '<div><span>Status</span> ' + esc(record.status || 'Active') + '</div>' +
+        '<div><span>Location</span> ' + esc(record.location || displayLocation(patient) || 'General') + '</div>' +
+      '</div>' +
+      filePreviewSection('Nursing care plan', summary) +
+      filePreviewSection('Evaluation date', record.evalDate || ((record.timestamp || record.at || record.date) ? String(record.timestamp || record.at || record.date).slice(0, 10) : '')) +
+      '<div class="sig"><div>Nurse signature</div><div>Patient file</div></div>' +
+      '<div class="stamp">Live preview from the Common Server nursing workflow</div>';
+  }
+
+  function previewCarePlanHistory(recordId) {
+    carePlanPreviewId = recordId || null;
+    renderCarePlanDocPreview(getCurrentPatient());
+    previewHistorySelection('#cpHistoryList', 'data-careplan-id', recordId);
+  }
+
+  function openNewCarePlan() {
+    var patient = refreshCurrentPatientFromStore();
+    if (!patient) {
+      safeToast('⚠️ Please select a patient first', 'warning');
+      focusPatientSearch();
+      return;
+    }
+    carePlanPreviewId = null;
+    clearCarePlan();
+    renderCarePlanDocPreview(patient);
+    var body = document.getElementById('cpBody');
+    if (body) setTimeout(function () { body.focus(); }, 40);
+  }
+
   function renderCarePlanHistory(patient) {
     patient = patient || refreshCurrentPatientFromStore();
     var container = document.getElementById('cpHistoryList');
@@ -1867,22 +2046,33 @@
     var plans = Array.isArray(patient && patient.carePlans) ? patient.carePlans.slice() : [];
     updateCarePlanCount(patient);
     if (!plans.length) {
-      container.innerHTML = '<div class="nurse-lab-empty" style="padding:26px;">📋 No nursing care plans yet on the Common Server.<div style="margin-top:12px;"><button class="btn-p notes-simple-add-btn" type="button" onclick="openNewCarePlan()"><i class="ti ti-plus"></i> Add New Care Plan</button></div></div>';
+      carePlanPreviewId = null;
+      container.innerHTML = '<p class="pcf-empty"><i class="ti ti-clipboard-check"></i>No nursing care plans yet. Create one above.</p>';
+      renderCarePlanDocPreview(patient);
       return;
     }
     plans.sort(function (a, b) { return ms(b && (b.timestamp || b.at || b.date || b.evalDate)) - ms(a && (a.timestamp || a.at || a.date || a.evalDate)); });
     container.innerHTML = plans.map(function (cp) {
-      var status = String(cp.status || 'Active');
-      var summary = carePlanSummary(cp) || '—';
-      return '<div class="notes-simple-entry">' +
-        '<div class="notes-simple-entry-head">' +
-          '<div class="notes-simple-entry-meta"><b>' + esc(cp.by || currentStaffName()) + '</b><br>' + esc(fmtDateTime(cp.timestamp || cp.at || cp.date || cp.evalDate)) + '</div>' +
-          '<span class="notes-simple-status ' + carePlanStatusClass(status) + '">' + esc(status) + '</span>' +
-        '</div>' +
-        '<div class="notes-simple-entry-note">' + esc(summary) + '</div>' +
-        '<div class="notes-simple-entry-foot">📅 Evaluation: ' + esc(cp.evalDate || '—') + '</div>' +
-      '</div>';
+      var dt = new Date(ms(cp.timestamp || cp.at || cp.date || cp.evalDate) || Date.now());
+      var summary = carePlanSummary(cp) || 'Nursing care plan';
+      var sid = String(cp.id || '').replace(/'/g, "\\'");
+      return '<button type="button" class="pcf-hrow" data-careplan-id="' + esc(cp.id) + '" onclick="previewCarePlanHistory(\'' + sid + '\')" style="text-align:left;border:none;width:100%;cursor:pointer;">' +
+        '<div class="date"><div class="d">' + esc(String(dt.getDate()).padStart(2, '0')) + '</div><div class="m">' + esc(dt.toLocaleString('en-US', { month: 'short' })) + '</div></div>' +
+        '<div class="meat"><b>' + esc(oneLineExcerpt(summary, 82) || 'Nursing care plan') + '</b><span>' + esc((cp.status || 'Active') + ' • Evaluation ' + (cp.evalDate || 'pending')) + '</span></div>' +
+        '<div class="by">' + esc(cp.by || currentStaffName()) + '<br>' + esc(dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })) + '</div>' +
+      '</button>';
     }).join('');
+    if (carePlanPreviewId) previewCarePlanHistory(carePlanPreviewId);
+    else renderCarePlanDocPreview(patient);
+  }
+
+  function printCarePlanPreview() {
+    var patient = refreshCurrentPatientFromStore();
+    if (window.pcFile && typeof window.pcFile.print === 'function') {
+      return window.pcFile.print('#careplanDocPreview', 'Nursing Care Plan — ' + (patient ? displayName(patient) : 'PClinic'));
+    }
+    if (typeof window.printPatientFile === 'function') return window.printPatientFile();
+    window.print();
   }
 
   function openNursingNoteFromCarePlan() {
@@ -1900,45 +2090,35 @@
   }
 
   function closeNewNursingNote() {
-    var card = notesComposerCard();
-    if (card) card.hidden = true;
+    nursingNotePreviewId = null;
     clearNursingNote();
+    renderNursingNoteDocPreview(getCurrentPatient());
   }
 
   function closeNewCarePlan() {
-    var card = carePlanComposerCard();
-    if (card) card.hidden = true;
+    carePlanPreviewId = null;
     clearCarePlan();
+    renderCarePlanDocPreview(getCurrentPatient());
   }
 
-  function renderNursingNotes(patient) {
-    var container = document.getElementById('nursingNotesList');
-    if (!container) return;
-    var notes = Array.isArray(patient && patient.nursingNotes) ? patient.nursingNotes.slice() : [];
-    if (!notes.length) {
-      container.innerHTML = '<div class="nurse-lab-empty" style="padding:26px;">📋 No nursing notes yet on the Common Server.<div style="margin-top:12px;"><button class="btn-p notes-simple-add-btn" type="button" onclick="openNewNursingNote()"><i class="ti ti-plus"></i> Add New Note</button></div></div>';
-      return;
-    }
-    notes.sort(function (a, b) { return ms(b && (b.timestamp || b.date)) - ms(a && (a.timestamp || a.date)); });
-    container.innerHTML = notes.map(function (note) {
-      var status = String(note.status || 'Stable');
-      var summary = nursingNoteSummary(note) || '—';
-      return '<div class="notes-simple-entry">' +
-        '<div class="notes-simple-entry-head">' +
-          '<div class="notes-simple-entry-meta"><b>' + esc(note.nurse || currentStaffName()) + '</b><br>' + esc(fmtDateTime(note.timestamp || note.date)) + '</div>' +
-          '<span class="notes-simple-status ' + nursingNoteStatusClass(status) + '">' + esc(status) + '</span>' +
-        '</div>' +
-        '<div class="notes-simple-entry-note">' + esc(summary) + '</div>' +
-        '<div class="notes-simple-entry-foot">📍 ' + esc(note.ward || displayLocation(patient) || 'General') + '</div>' +
-      '</div>';
-    }).join('');
+  function wireNursingNotePreviewEvents() {
+    ['notesDateTime', 'notesNurse', 'notesStatus', 'notesBody'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el || el.dataset.notesPreviewBound) return;
+      el.dataset.notesPreviewBound = '1';
+      el.addEventListener('input', function () { nursingNotePreviewId = null; renderNursingNoteDocPreview(getCurrentPatient()); });
+      el.addEventListener('change', function () { nursingNotePreviewId = null; renderNursingNoteDocPreview(getCurrentPatient()); });
+    });
   }
 
-  function updateNursingNoteCount(patient) {
-    var countEl = document.getElementById('nursingNoteCount');
-    if (!countEl) return;
-    var total = Array.isArray(patient && patient.nursingNotes) ? patient.nursingNotes.length : 0;
-    countEl.textContent = total + ' note' + (total !== 1 ? 's' : '');
+  function wireCarePlanPreviewEvents() {
+    ['cpDateTime', 'cpNurse', 'cpStatus', 'cpBody'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el || el.dataset.careplanPreviewBound) return;
+      el.dataset.careplanPreviewBound = '1';
+      el.addEventListener('input', function () { carePlanPreviewId = null; renderCarePlanDocPreview(getCurrentPatient()); });
+      el.addEventListener('change', function () { carePlanPreviewId = null; renderCarePlanDocPreview(getCurrentPatient()); });
+    });
   }
 
   async function saveNursingNote() {
@@ -1948,7 +2128,7 @@
     if (!body) return safeToast('⚠️ Please write the nursing note first', 'warning');
     var stamp = ((document.getElementById('notesDateTime') || {}).value || '').trim();
     var entry = {
-      id: Date.now(),
+      id: 'NN-' + Date.now(),
       timestamp: stamp || nowIso(),
       date: stamp || nowIso(),
       note: body,
@@ -1965,18 +2145,18 @@
     safeToast('⏳ Saving nursing note to the Common Server…', 'info');
     var saved = await appendPatientHistory('nursingNotes', entry);
     if (!saved) return safeToast('❌ Nursing note was NOT saved. Please retry.', 'error');
-    clearNursingNote();
-    var card = notesComposerCard();
-    if (card) card.hidden = true;
+    nursingNotePreviewId = entry.id;
     refreshPatientUi(saved, true);
     renderNursingNotes(saved);
-    updateNursingNoteCount(saved);
+    previewNursingNoteHistory(entry.id);
+    clearNursingNote();
     var history = document.getElementById('nursingNotesList');
     if (history && typeof history.scrollIntoView === 'function') {
       try { history.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { history.scrollIntoView(); }
     }
     safeToast('✅ Nursing note saved for ' + displayName(saved), 'success');
   }
+
   function clearNursingNote() {
     var body = document.getElementById('notesBody'); if (body) body.value = '';
     var status = document.getElementById('notesStatus'); if (status) status.value = 'Stable';
@@ -2147,17 +2327,17 @@
       evalDate: evalDate,
       status: ((document.getElementById('cpStatus') || {}).value || 'Active'),
       by: ((document.getElementById('cpNurse') || {}).value || currentStaffName()),
+      location: displayLocation(patient),
       source: 'nurse-careplan-simple'
     };
     safeToast('⏳ Saving care plan to the Common Server…', 'info');
     var saved = await appendPatientHistory('carePlans', entry);
     if (!saved) return safeToast('❌ Care plan was NOT saved. Please retry.', 'error');
-    clearCarePlan();
-    var card = carePlanComposerCard();
-    if (card) card.hidden = true;
+    carePlanPreviewId = entry.id;
     refreshPatientUi(saved, true);
     renderCarePlanHistory(saved);
-    updateCarePlanCount(saved);
+    previewCarePlanHistory(entry.id);
+    clearCarePlan();
     var history = document.getElementById('cpHistoryList');
     if (history && typeof history.scrollIntoView === 'function') {
       try { history.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { history.scrollIntoView(); }
@@ -2168,21 +2348,26 @@
     var patient = refreshCurrentPatientFromStore();
     if (!patient || !Array.isArray(patient.carePlans) || !patient.carePlans[i]) return;
     var next = patient.carePlans.slice();
+    var recordId = next[i] && next[i].id;
     next[i] = Object.assign({}, next[i], { status: status });
     safeToast('⏳ Updating care plan on the Common Server…', 'info');
     var saved = await replacePatientHistory('carePlans', next);
     if (!saved) return safeToast('❌ Care plan update failed. Please retry.', 'error');
+    carePlanPreviewId = recordId || null;
     refreshAfterSave(saved);
+    if (recordId) previewCarePlanHistory(recordId);
     safeToast(status === 'Achieved' ? '✅ Care plan goal achieved' : 'Care plan updated', 'success');
   }
   async function deleteCarePlan(i) {
     var patient = refreshCurrentPatientFromStore();
     if (!patient || !Array.isArray(patient.carePlans) || !patient.carePlans[i]) return;
     if (!window.confirm('Delete this care plan?')) return;
+    var removedId = patient.carePlans[i] && patient.carePlans[i].id;
     var next = patient.carePlans.slice(); next.splice(i, 1);
     safeToast('⏳ Removing care plan from the Common Server…', 'info');
     var saved = await replacePatientHistory('carePlans', next);
     if (!saved) return safeToast('❌ Care plan deletion failed. Please retry.', 'error');
+    if (String(carePlanPreviewId || '') === String(removedId || '')) carePlanPreviewId = null;
     refreshAfterSave(saved);
     safeToast('🗑 Care plan removed from the Common Server', 'info');
   }
@@ -3192,18 +3377,24 @@
     window.saveFP = saveFP;
     window.clearFP = clearFP;
     window.renderNursingNotes = renderNursingNotes;
+    window.renderNursingNoteDocPreview = renderNursingNoteDocPreview;
+    window.previewNursingNoteHistory = previewNursingNoteHistory;
     window.updateNursingNoteCount = updateNursingNoteCount;
     window.openNewNursingNote = openNewNursingNote;
     window.openNursingNoteFromCarePlan = openNursingNoteFromCarePlan;
     window.closeNewNursingNote = closeNewNursingNote;
+    window.printNursingNotePreview = printNursingNotePreview;
     window.saveNursingNote = saveNursingNote;
     window.clearNursingNote = clearNursingNote;
     window.saveBill = saveBill;
     window.saveMedicationLog = saveMedicationLog;
     window.renderCarePlanHistory = renderCarePlanHistory;
+    window.renderCarePlanDocPreview = renderCarePlanDocPreview;
+    window.previewCarePlanHistory = previewCarePlanHistory;
     window.updateCarePlanCount = updateCarePlanCount;
     window.openNewCarePlan = openNewCarePlan;
     window.closeNewCarePlan = closeNewCarePlan;
+    window.printCarePlanPreview = printCarePlanPreview;
     window.saveCarePlan = saveCarePlan;
     window.clearCarePlan = clearCarePlan;
     window.setCarePlanStatus = setCarePlanStatus;
@@ -3246,12 +3437,12 @@
         if (name === 'careplan') {
           renderCarePlanHistory(getCurrentPatient());
           updateCarePlanCount(getCurrentPatient());
-          closeNewCarePlan();
+          renderCarePlanDocPreview(getCurrentPatient());
         }
         if (name === 'notes') {
           renderNursingNotes(getCurrentPatient());
           updateNursingNoteCount(getCurrentPatient());
-          closeNewNursingNote();
+          renderNursingNoteDocPreview(getCurrentPatient());
         }
         if (name === 'billing') { renderBillCatalog(); ensureBillRows(); }
       };
@@ -3276,6 +3467,8 @@
     installSelectedPatientFields();
     setPatientFieldValues(getCurrentPatient());
     wireCpnPreviewEvents();
+    wireNursingNotePreviewEvents();
+    wireCarePlanPreviewEvents();
     ensureBillRows();
     renderBillCatalog();
     renderBillHistory();
@@ -3284,6 +3477,7 @@
     var fpDate = document.getElementById('fpDate'); if (fpDate && !fpDate.value) fpDate.value = todayIso();
     var medsDate = document.getElementById('medsDate'); if (medsDate && !medsDate.value) medsDate.value = todayIso();
     var notesDate = document.getElementById('notesDateTime'); if (notesDate && !notesDate.value) notesDate.value = nowLocalValue();
+    var carePlanDate = document.getElementById('cpDateTime'); if (carePlanDate && !carePlanDate.value) carePlanDate.value = nowLocalValue();
     var labDate = document.getElementById('labDate'); if (labDate) labDate.value = '';
     ['cpnLmp', 'cpnEdd', 'cpnRdv', 'cpnGestAge', 'cpnPregnancies', 'cpnFundalHeight', 'cpnAssessment', 'cpnNotes'].forEach(function (id) {
       var el = document.getElementById(id);

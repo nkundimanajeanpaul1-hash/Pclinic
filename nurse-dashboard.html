@@ -1150,7 +1150,7 @@
         }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
-    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_CAREMATCH">
+    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_OPDFILEMATCH">
 </head>
 <body>
 
@@ -1653,63 +1653,87 @@
                 </div>
             </div>
 
-            <!-- ─── PANEL: CARE PLAN (Common Server / same layout as Nursing Notes) ─── -->
+            <!-- ─── PANEL: CARE PLAN (OPD-style file layout) ─── -->
             <div id="panel-careplan" class="main-panel" style="display:none;">
                 <div class="panel-body show" id="sub-careplan-form">
-                    <div class="notes-simple-shell">
-                        <div class="notes-simple-history-card">
-                            <div class="notes-simple-history-head">
-                                <span>Recent Nursing Care Plans</span>
-                                <div class="notes-simple-history-actions">
-                                    <span class="notes-simple-count" id="cpCount">0 plans</span>
-                                    <button class="btn-p notes-simple-add-btn" id="careplanAddNewBtn" type="button" onclick="openNewCarePlan()"><i class="ti ti-plus"></i> Add New Care Plan</button>
+                    <div class="pcf-bill-layout cpn-file-shell">
+                        <div id="careplanViewFile" style="display:flex;flex:1;min-height:0;flex-direction:column;gap:9px;">
+                            <div class="pcf-panel cpn-file-main">
+                                <div class="cpn-file-head">
+                                    <h2><i class="ti ti-clipboard-check" style="color:#0b57d0;"></i> Nursing Care Plan</h2>
+                                    <span class="badge cpn-active-badge">Active Record</span>
                                 </div>
-                            </div>
-                            <div id="cpHistoryList">
-                                <p class="cpn-empty">📋 No nursing care plans yet.</p>
+                                <div class="pcf-cmd noprint cpn-file-cmd">
+                                    <button class="pcf-btn sm" type="button" onclick="document.getElementById('cpHistoryList')?.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-history"></i> History</button>
+                                    <b class="mode">Nursing Care Plan</b>
+                                    <span class="spacer"></span>
+                                    <button class="pcf-btn sm" type="button" onclick="printCarePlanPreview()"><i class="ti ti-printer"></i> Print</button>
+                                    <button class="pcf-btn sm primary" type="button" onclick="saveCarePlan()"><i class="ti ti-device-floppy"></i> Save</button>
+                                </div>
+                                <div class="pcf-grid wide" id="careplanFileGrid">
+                                    <div class="pcf-pane noprint" id="careplanWorkPane">
+                                        <div class="pcf-panel">
+                                            <h2><i class="ti ti-user-heart"></i> Care plan context</h2>
+                                            <div class="pcf-two">
+                                                <div>
+                                                    <label class="pcf-lbl">Selected patient</label>
+                                                    <input class="pcf-in fi" id="cpPatient" placeholder="Select or search a patient first" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Visit date and time</label>
+                                                    <input class="pcf-in fi" type="datetime-local" id="cpDateTime" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Nurse / Provider</label>
+                                                    <input class="pcf-in fi" id="cpNurse" placeholder="Assigned nurse" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Status</label>
+                                                    <select class="pcf-in fi" id="cpStatus">
+                                                        <option>Active</option>
+                                                        <option>Achieved</option>
+                                                        <option>Discontinued</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="pcf-panel" id="careplanComposerCard">
+                                            <h2><i class="ti ti-notes"></i> Nursing care plan</h2>
+                                            <label class="pcf-lbl">Care plan</label>
+                                            <textarea class="pcf-in ta" id="cpBody" rows="8" placeholder="Write nursing diagnosis, goals, interventions, follow-up, and evaluation here..."></textarea>
+                                            <div class="fa">
+                                                <button class="pcf-btn primary" type="button" onclick="saveCarePlan()"><i class="ti ti-check"></i> Save Care Plan</button>
+                                                <button class="pcf-btn" type="button" id="careplanAddNewBtn" onclick="openNewCarePlan()"><i class="ti ti-plus"></i> New for Today</button>
+                                                <button class="pcf-btn" type="button" onclick="clearCarePlan()"><i class="ti ti-eraser"></i> Clear</button>
+                                                <button class="pcf-btn" type="button" id="careplanOpenNoteBtn" onclick="openNursingNoteFromCarePlan()"><i class="ti ti-notes"></i> Nursing Note</button>
+                                            </div>
+                                            <button hidden type="button" id="careplanCancelBtn" onclick="closeNewCarePlan()">Cancel</button>
+                                            <div hidden>
+                                                <input id="cpProblem" />
+                                                <textarea id="cpGoals"></textarea>
+                                                <textarea id="cpInterventions"></textarea>
+                                                <input type="date" id="cpEvalDate" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="pcf-pane">
+                                        <div class="pcf-doc" id="careplanDocPreview"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="notes-simple-card" id="careplanComposerCard" hidden>
-                            <div class="notes-simple-head">
-                                <div>
-                                    <div class="notes-simple-title">🗒️ New Nursing Care Plan</div>
-                                    <div class="notes-simple-sub">Simple Apple-style note page • saved live to the Common Server</div>
+                        <div id="careplanViewHistory" style="display:block;">
+                            <div class="pcf-panel cpn-file-history-panel">
+                                <div class="cpn-file-head">
+                                    <h2><i class="ti ti-history" style="color:#0b57d0;"></i> Nursing Care Plan history <span class="count" id="cpCount">0</span></h2>
+                                    <button type="button" class="pcf-btn sm" onclick="openNewCarePlan()"><i class="ti ti-plus"></i> New for Today</button>
                                 </div>
-                                <span class="notes-simple-sync">● Common Server connected</span>
-                            </div>
-                            <div class="notes-simple-grid">
-                                <label class="notes-simple-field">
-                                    <span>Selected patient</span>
-                                    <input class="fi" id="cpPatient" placeholder="Select a patient first" />
-                                </label>
-                                <label class="notes-simple-field">
-                                    <span>Date and time</span>
-                                    <input class="fi" type="datetime-local" id="cpDateTime" />
-                                </label>
-                                <label class="notes-simple-field">
-                                    <span>Nurse</span>
-                                    <input class="fi" id="cpNurse" placeholder="Assigned nurse" />
-                                </label>
-                                <label class="notes-simple-field">
-                                    <span>Patient status</span>
-                                    <select class="fi" id="cpStatus">
-                                        <option>Active</option>
-                                        <option>Achieved</option>
-                                        <option>Discontinued</option>
-                                    </select>
-                                </label>
-                                <label class="notes-simple-field notes-simple-field-wide">
-                                    <span>Care plan</span>
-                                    <textarea class="ta notes-simple-textarea" id="cpBody" placeholder="Write a simple nursing care plan, problem, goals, interventions, or evaluation here…"></textarea>
-                                </label>
-                            </div>
-                            <div class="fa notes-simple-actions"><button class="btn-p" onclick="saveCarePlan()"><i class="ti ti-check"></i> Save Care Plan</button><button class="btn-s" onclick="clearCarePlan()">Clear</button><button class="btn-s" type="button" id="careplanCancelBtn" onclick="closeNewCarePlan()">Cancel</button><button class="btn-s" type="button" id="careplanOpenNoteBtn" onclick="openNursingNoteFromCarePlan()"><i class="ti ti-notes"></i> Nursing Note</button></div>
-                            <div hidden>
-                                <input id="cpProblem" />
-                                <textarea id="cpGoals"></textarea>
-                                <textarea id="cpInterventions"></textarea>
-                                <input type="date" id="cpEvalDate" />
+                                <div class="pcf-hist" id="cpHistoryList" style="max-height:600px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+                                    <p class="pcf-empty"><i class="ti ti-clipboard-check"></i>No nursing care plans yet. Create one above.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1813,54 +1837,77 @@
                 </div>
             </div>
 
-            <!-- ─── PANEL: NURSING NOTES ─── -->
+            <!-- ─── PANEL: NURSING NOTES (OPD-style file layout) ─── -->
             <div id="panel-notes" class="main-panel" style="display:none;">
                 <div class="panel-body show" id="sub-notes-form">
-                    <div class="notes-simple-shell">
-                        <div class="notes-simple-history-card">
-                            <div class="notes-simple-history-head">
-                                <span>Recent Nursing Notes</span>
-                                <div class="notes-simple-history-actions">
-                                    <span class="notes-simple-count" id="nursingNoteCount">0 notes</span>
-                                    <button class="btn-p notes-simple-add-btn" id="notesAddNewBtn" type="button" onclick="openNewNursingNote()"><i class="ti ti-plus"></i> Add New Note</button>
+                    <div class="pcf-bill-layout cpn-file-shell">
+                        <div id="notesViewFile" style="display:flex;flex:1;min-height:0;flex-direction:column;gap:9px;">
+                            <div class="pcf-panel cpn-file-main">
+                                <div class="cpn-file-head">
+                                    <h2><i class="ti ti-notes" style="color:#0b57d0;"></i> Nursing Note</h2>
+                                    <span class="badge cpn-active-badge">Active Record</span>
                                 </div>
-                            </div>
-                            <div id="nursingNotesList">
-                                <p class="cpn-empty">📋 No nursing notes yet.</p>
+                                <div class="pcf-cmd noprint cpn-file-cmd">
+                                    <button class="pcf-btn sm" type="button" onclick="document.getElementById('nursingNotesList')?.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-history"></i> History</button>
+                                    <b class="mode">Nursing Notes</b>
+                                    <span class="spacer"></span>
+                                    <button class="pcf-btn sm" type="button" onclick="printNursingNotePreview()"><i class="ti ti-printer"></i> Print</button>
+                                    <button class="pcf-btn sm primary" type="button" onclick="saveNursingNote()"><i class="ti ti-device-floppy"></i> Save</button>
+                                </div>
+                                <div class="pcf-grid wide" id="notesFileGrid">
+                                    <div class="pcf-pane noprint" id="notesWorkPane">
+                                        <div class="pcf-panel">
+                                            <h2><i class="ti ti-user-heart"></i> Nursing note context</h2>
+                                            <div class="pcf-two">
+                                                <div>
+                                                    <label class="pcf-lbl">Selected patient</label>
+                                                    <input class="pcf-in fi" id="notesPatient" placeholder="Select or search a patient first" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Visit date and time</label>
+                                                    <input class="pcf-in fi" type="datetime-local" id="notesDateTime" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Nurse / Provider</label>
+                                                    <input class="pcf-in fi" id="notesNurse" value="Nurse Achieng" />
+                                                </div>
+                                                <div>
+                                                    <label class="pcf-lbl">Patient status</label>
+                                                    <select class="pcf-in fi" id="notesStatus"><option>Stable</option><option>Improved</option><option>Deteriorated</option><option>Transferred</option><option>Discharged</option></select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="pcf-panel" id="notesComposerCard">
+                                            <h2><i class="ti ti-edit"></i> Nursing note</h2>
+                                            <label class="pcf-lbl">Note</label>
+                                            <textarea class="pcf-in ta" id="notesBody" rows="8" placeholder="Write nursing observations, interventions, handover, follow-up, or progress notes here..."></textarea>
+                                            <div class="fa">
+                                                <button class="pcf-btn primary" type="button" onclick="saveNursingNote()"><i class="ti ti-check"></i> Save Note</button>
+                                                <button class="pcf-btn" type="button" id="notesAddNewBtn" onclick="openNewNursingNote()"><i class="ti ti-plus"></i> New for Today</button>
+                                                <button class="pcf-btn" type="button" onclick="clearNursingNote()"><i class="ti ti-eraser"></i> Clear</button>
+                                            </div>
+                                            <button hidden type="button" id="notesCancelBtn" onclick="closeNewNursingNote()">Cancel</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="pcf-pane">
+                                        <div class="pcf-doc" id="notesDocPreview"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="notes-simple-card" id="notesComposerCard" hidden>
-                            <div class="notes-simple-head">
-                                <div>
-                                    <div class="notes-simple-title">📝 New Nursing Note</div>
-                                    <div class="notes-simple-sub">Simple Apple-style note page • saved live to the Common Server</div>
+                        <div id="notesViewHistory" style="display:block;">
+                            <div class="pcf-panel cpn-file-history-panel">
+                                <div class="cpn-file-head">
+                                    <h2><i class="ti ti-history" style="color:#0b57d0;"></i> Nursing note history <span class="count" id="nursingNoteCount">0</span></h2>
+                                    <button type="button" class="pcf-btn sm" onclick="openNewNursingNote()"><i class="ti ti-plus"></i> New for Today</button>
                                 </div>
-                                <span class="notes-simple-sync">● Common Server connected</span>
+                                <div class="pcf-hist" id="nursingNotesList" style="max-height:600px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+                                    <p class="pcf-empty"><i class="ti ti-notes"></i>No nursing notes yet. Create one above.</p>
+                                </div>
                             </div>
-                            <div class="notes-simple-grid">
-                                <label class="notes-simple-field">
-                                    <span>Selected patient</span>
-                                    <input class="fi" id="notesPatient" placeholder="Select a patient first"/>
-                                </label>
-                                <label class="notes-simple-field">
-                                    <span>Date and time</span>
-                                    <input class="fi" type="datetime-local" id="notesDateTime"/>
-                                </label>
-                                <label class="notes-simple-field">
-                                    <span>Nurse</span>
-                                    <input class="fi" id="notesNurse" value="Nurse Achieng"/>
-                                </label>
-                                <label class="notes-simple-field">
-                                    <span>Patient status</span>
-                                    <select class="fi" id="notesStatus"><option>Stable</option><option>Improved</option><option>Deteriorated</option><option>Transferred</option><option>Discharged</option></select>
-                                </label>
-                                <label class="notes-simple-field notes-simple-field-wide">
-                                    <span>Note</span>
-                                    <textarea class="ta notes-simple-textarea" id="notesBody" placeholder="Write a simple nursing note, handover, observation, intervention, or follow-up here…"></textarea>
-                                </label>
-                            </div>
-                            <div class="fa notes-simple-actions"><button class="btn-p" onclick="saveNursingNote()"><i class="ti ti-check"></i> Save Note</button><button class="btn-s" onclick="clearNursingNote()">Clear</button><button class="btn-s" type="button" id="notesCancelBtn" onclick="closeNewNursingNote()">Cancel</button></div>
                         </div>
                     </div>
                 </div>
@@ -3727,7 +3774,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_CAREMATCH" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_OPDFILEMATCH" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {
@@ -3735,22 +3782,6 @@ function addBillRow() {
             console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
         }).catch(function(err) {
             console.warn('Auth guard redirect:', err && err.message);
-        });
-    </script>
-</body>
-</html>        console.warn('Auth guard redirect:', err && err.message);
-        });
-    </script>
-</body>
-</html>l>        console.warn('Auth guard redirect:', err && err.message);
-        });
-    </script>
-</body>
-</html>rr.message);
-        });
-    </script>
-</body>
-</html>l>        console.warn('Auth guard redirect:', err && err.message);
         });
     </script>
 </body>
