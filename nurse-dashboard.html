@@ -1197,7 +1197,7 @@
             <button class="nav-tab" data-tab="cpn" onclick="switchTab('cpn',this)"><i class="ti ti-baby-carriage"></i> CPN</button>
             <button class="nav-tab" data-tab="fp" onclick="switchTab('fp',this)"><i class="ti ti-heart"></i> Family Planning</button>
             <button class="nav-tab" data-tab="billing" onclick="switchTab('billing',this)"><i class="ti ti-receipt"></i> Billing</button>
-            <button class="nav-tab" data-tab="lab" onclick="switchTab('lab',this)"><i class="ti ti-test-pipe"></i> Lab Results</button>
+            <button class="nav-tab" data-tab="lab" onclick="openLabResultsTab(this)"><i class="ti ti-test-pipe"></i> Lab Results</button>
             <button class="nav-tab" data-tab="notes" onclick="switchTab('notes',this)"><i class="ti ti-notes"></i> Nursing Notes</button>
             <button class="nav-tab" data-tab="careplan" onclick="switchTab('careplan',this)"><i class="ti ti-clipboard-check"></i> Care Plan</button>
             <button class="nav-tab" data-tab="meds" onclick="switchTab('meds',this)"><i class="ti ti-pill"></i> Medication Log</button>
@@ -3707,7 +3707,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_LABEXACT" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_LABBTN" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {

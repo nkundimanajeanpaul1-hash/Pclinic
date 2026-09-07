@@ -2075,6 +2075,17 @@
     return records.sort(function (a, b) { return ms(b.date) - ms(a.date); });
   }
 
+  function openLabResultsTab(btn) {
+    var tabBtn = btn && btn.nodeType === 1 ? btn : document.querySelector('[data-tab="lab"]');
+    if (typeof window.switchTab === 'function') window.switchTab('lab', tabBtn);
+    if (typeof window.switchSub === 'function') window.switchSub('lab-view');
+    renderLabResults();
+    var panel = document.getElementById('panel-lab');
+    if (panel && typeof panel.scrollIntoView === 'function') {
+      try { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { panel.scrollIntoView(); }
+    }
+  }
+
   function openLabResultsFlowSheet(patient) {
     var selectedPatient = patient || refreshCurrentPatientFromStore();
     if (!selectedPatient) return safeToast('⚠️ Please select a patient first', 'warning');
@@ -2408,6 +2419,7 @@
     window.deleteDelivery = deleteDelivery;
     window.renderLabRequests = renderLabRequests;
     window.renderLabResults = renderLabResults;
+    window.openLabResultsTab = openLabResultsTab;
     window.openLabResultsFlowSheet = openLabResultsFlowSheet;
     window.openModal = openModal;
     window.closeModal = closeModal;
