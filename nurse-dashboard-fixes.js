@@ -2202,6 +2202,598 @@
     }).join('');
   }
 
+
+  function nurseLabBaseCategories() {
+    return [
+      {
+        id: 'chem',
+        title: '20000 USUAL CHEMISTRY',
+        className: 'oc-cat-chem',
+        tests: [
+          { code: '20001', name: 'UREA/BLOOD', unit: 'mmol/l', range: '3-9.2' },
+          { code: '20002', name: 'CREATININE/BLOOD', unit: 'µmol/l', range: '63.6-110.5' },
+          { code: '20003', name: 'NA + (SODIUM)/BLOOD', unit: 'mmol/l', range: '135-145' },
+          { code: '20004', name: 'K + (POTASSIUM)/BLOOD', unit: 'mmol/l', range: '3.5-5.0' },
+          { code: '20005', name: 'MAGNESIUM/BLOOD', unit: 'mmol/l', range: '0.66-1.07' },
+          { code: '20006', name: 'CL -(CHLORURE)/BLOOD', unit: 'mmol/l', range: '98-107' },
+          { code: '20007', name: 'FASTING GLUCOSE/BLOOD', unit: 'mmol/l', range: '3.9-5.6' },
+          { code: '20008', name: 'LIVER FUNCTION (SGPT/ALT)', unit: 'U/l', range: '7-56' },
+          { code: '20009', name: 'LIVER FUNCTION (SGOT/AST)', unit: 'U/l', range: '10-40' }
+        ]
+      },
+      {
+        id: 'fbc',
+        title: '31000 FULL BLOOD COUNT',
+        className: 'oc-cat-fbc',
+        tests: [
+          { code: '31001', name: 'WBC', unit: '10^3/µl', range: '4-10' },
+          { code: '31002', name: 'RBC', unit: '10^6/µl', range: '4.5-6.2' },
+          { code: '31003', name: 'hemoglobin', unit: 'g/dl', range: '13-17' },
+          { code: '31004', name: 'Hct', unit: '%', range: '40-54' },
+          { code: '31005', name: 'MCV', unit: 'fL', range: '82-98' },
+          { code: '31006', name: 'MCH', unit: 'pg', range: '27-31' },
+          { code: '31007', name: 'MCHC', unit: 'g/dl', range: '32-36' },
+          { code: '31008', name: 'platelets', unit: '10^3/µl', range: '150-450' },
+          { code: '31009', name: 'RDW', unit: '%', range: '11.5-14.5' },
+          { code: '31010', name: 'MPV', unit: 'fL', range: '6.9-10.6' },
+          { code: '32001', name: 'neutrophiles', unit: '%', range: '40-75' },
+          { code: '32002', name: 'lymphocytes', unit: '%', range: '20-40' },
+          { code: '32003', name: 'monocytes', unit: '%', range: '2-8' },
+          { code: '32004', name: 'eosinophiles', unit: '%', range: '1-4' }
+        ]
+      },
+      {
+        id: 'sero',
+        title: '40000 SEROLOGY & IMMUNOLOGY',
+        className: 'oc-cat-sero',
+        tests: [
+          { code: '40001', name: 'HIV 1/2 ANTIBODY/AG', unit: '', range: 'Negative' },
+          { code: '40002', name: 'HBsAg (HEPATITIS B)', unit: '', range: 'Negative' },
+          { code: '40003', name: 'HCV ANTIBODY', unit: '', range: 'Negative' },
+          { code: '40004', name: 'SYPHILIS RPR/VDRL', unit: '', range: 'Negative' },
+          { code: '40005', name: 'CRP (C-REACTIVE PROTEIN)', unit: 'mg/l', range: '0-5' },
+          { code: '40006', name: 'WIDAL TEST (SALMONELLA)', unit: '', range: 'Negative' },
+          { code: '40007', name: 'H. PYLORI AG/AB', unit: '', range: 'Negative' }
+        ]
+      },
+      {
+        id: 'micro',
+        title: '50000 MICROBIOLOGY & CULTURES',
+        className: 'oc-cat-mic',
+        tests: [
+          { code: '50001', name: 'MALARIA PARASITE (MP)', unit: '', range: 'Negative' },
+          { code: '50002', name: 'BLOOD CULTURE & SENSITIVITY', unit: '', range: 'No growth' },
+          { code: '50003', name: 'URINE CULTURE & SENSITIVITY', unit: '', range: 'No growth' },
+          { code: '50004', name: 'STOOL OVA & CYSTS', unit: '', range: 'Negative' }
+        ]
+      },
+      {
+        id: 'uri',
+        title: '60000 URINALYSIS',
+        className: 'oc-cat-uri',
+        tests: [
+          { code: '60001', name: 'URINE PROTEIN/ALBUMIN', unit: '', range: 'Negative' },
+          { code: '60002', name: 'URINE GLUCOSE', unit: '', range: 'Negative' },
+          { code: '60003', name: 'URINE KETONES', unit: '', range: 'Negative' },
+          { code: '60004', name: 'URINE WBC / LEUKOCYTES', unit: '/HPF', range: '0-5' }
+        ]
+      }
+    ];
+  }
+
+  function nurseLabCategories() {
+    var categories = JSON.parse(JSON.stringify(nurseLabBaseCategories()));
+    try {
+      if (!window.pcLabCatalog || typeof window.pcLabCatalog.list !== 'function') return categories;
+      var known = {};
+      var byId = {};
+      categories.forEach(function (c) {
+        byId[c.id] = c;
+        (c.tests || []).forEach(function (t) { known[String(t.code).toUpperCase()] = true; });
+      });
+      window.pcLabCatalog.list().forEach(function (ex) {
+        var catId = ex.category || 'other';
+        var cat = byId[catId];
+        if (!cat) {
+          cat = {
+            id: catId,
+            title: String(window.pcLabCatalog.categoryLabel(catId) || catId).toUpperCase(),
+            className: 'oc-cat-' + catId,
+            color: '#334155',
+            tests: []
+          };
+          byId[catId] = cat;
+          categories.push(cat);
+        }
+        (ex.parameters || []).forEach(function (p) {
+          var code = String(p.code || '').toUpperCase();
+          if (!code || known[code]) return;
+          known[code] = true;
+          cat.tests.push({ code: p.code, name: p.name, unit: p.unit || '', range: p.range || '' });
+        });
+      });
+    } catch (e) {}
+    return categories;
+  }
+
+  function nurseLabStripMod(v) {
+    return String(v == null ? '' : v).replace(/^MOD-/i, '').trim();
+  }
+
+  function nurseLabOrderedLabel(entry) {
+    if (entry == null) return '';
+    if (typeof entry === 'string') return String(entry).trim();
+    return String(entry.name || entry.test || entry.orderItemName || entry.code || '').trim();
+  }
+
+  function nurseLabOrderedSetLabels(testsOrdered) {
+    var out = [];
+    (Array.isArray(testsOrdered) ? testsOrdered : []).forEach(function (entry) {
+      var label = nurseLabOrderedLabel(entry);
+      if (label && out.indexOf(label) === -1) out.push(label);
+    });
+    return out;
+  }
+
+  function nurseLabFindResultForOrderedLabel(results, label) {
+    if (!Array.isArray(results) || !label) return null;
+    var wanted = String(label).toLowerCase().trim();
+    for (var i = 0; i < results.length; i++) {
+      var row = results[i] || {};
+      var name = String(row.test || row.name || row.orderItemName || row.code || '').toLowerCase().trim();
+      if (!name) continue;
+      if (name === wanted || name.indexOf(wanted) !== -1 || wanted.indexOf(name) !== -1) return row;
+    }
+    return null;
+  }
+
+  function nurseLabFindResultForTest(results, t) {
+    if (!Array.isArray(results)) return null;
+    for (var i = 0; i < results.length; i++) {
+      var r = results[i];
+      if (r && r.code && String(r.code) === String(t.code)) return r;
+    }
+    var tn = String(t.name || '').toLowerCase();
+    for (var j = 0; j < results.length; j++) {
+      var r2 = results[j];
+      if (!r2) continue;
+      var rn = String(r2.test || r2.name || '').toLowerCase();
+      if (rn && (rn.indexOf(tn) !== -1 || tn.indexOf(rn) !== -1)) return r2;
+    }
+    return null;
+  }
+
+  function nurseLabTestIsOrdered(testsOrdered, t, cat) {
+    if (!Array.isArray(testsOrdered) || !testsOrdered.length) return false;
+    try {
+      if (window.pcLabCatalog && typeof window.pcLabCatalog.matchesParameter === 'function') {
+        if (window.pcLabCatalog.matchesParameter(testsOrdered, t)) return true;
+      }
+    } catch (e) {}
+    var tn = String(t.name || '').toLowerCase();
+    var tc = String(t.code || '').toLowerCase();
+    var catId = cat ? cat.id : '';
+    return testsOrdered.some(function (nm) {
+      var n = String(nm || '').toLowerCase();
+      if (!n) return false;
+      if (tc && n === tc) return true;
+      if (tn && (n === tn || n.indexOf(tn) !== -1 || tn.indexOf(n) !== -1)) return true;
+      if ((catId === 'uri' || catId === 'urinalysis') && n.indexOf('urinalysis') !== -1) return true;
+      if ((catId === 'fbc' || catId === 'hematology') && (n.indexOf('full blood') !== -1 || n === '13100')) return true;
+      return false;
+    });
+  }
+
+  function nurseLabFlagBadge(flag) {
+    var f = String(flag || 'Normal');
+    var bg = '#e9f9ee', fg = '#1a7a32';
+    if (f.indexOf('High') !== -1 || f.indexOf('Low') !== -1) { bg = '#fff4e0'; fg = '#7a4500'; }
+    if (f.indexOf('Critical') !== -1) { bg = '#ffebe9'; fg = '#8a1f1a'; }
+    if (f === 'Normal' || f === 'N' || !flag) return '';
+    var short = 'H';
+    if (f.indexOf('Critical') !== -1) short = 'C';
+    else if (f.indexOf('Low') !== -1) short = 'L';
+    return '<span class="oc-flag" style="background:' + bg + ';color:' + fg + ';">' + short + '</span>';
+  }
+
+  function nurseLabDateKey(iso) {
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return 'unknown';
+      return d.getFullYear() + '-' + String(d.getMonth() + 101).slice(1) + '-' + String(d.getDate() + 100).slice(1);
+    } catch (e) {
+      return 'unknown';
+    }
+  }
+
+  function nurseLabReadOrdersForPatient(pidRaw) {
+    try {
+      if (window.pcOrders && typeof window.pcOrders.listServerConfirmed === 'function') {
+        return (window.pcOrders.listServerConfirmed({ dept: 'lab', patientId: pidRaw }) || []).filter(function (o) {
+          return String(o.status || '').toLowerCase() !== 'cancelled';
+        });
+      }
+    } catch (e) {}
+    try {
+      return JSON.parse(localStorage.getItem('pclinic_orders') || '[]').filter(function (o) {
+        return nurseLabStripMod(o.patientId) === pidRaw && (o.type === 'lab' || o.dept === 'lab') && !o._legacyLocalOnly && !o._syncFailed && String(o.status || '').toLowerCase() !== 'cancelled';
+      });
+    } catch (e2) {
+      return [];
+    }
+  }
+
+  function nurseLabShortRequestId(id) {
+    var clean = String(id || '').replace(/[^A-Za-z0-9-]/g, '');
+    return clean ? clean.slice(-8) : '—';
+  }
+
+  function nurseLabEntryTimeLabel(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return 'Time —';
+    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function nurseLabRenderEmptyState(msg) {
+    var head = document.getElementById('nurseMatrixHead');
+    var body = document.getElementById('nurseMatrixBody');
+    if (head) head.innerHTML = '';
+    if (body) {
+      body.innerHTML = '<tr><td style="text-align:center;padding:56px 20px;color:#6e6e73;font-size:13px;">' +
+        '<div style="font-size:34px;margin-bottom:10px;">🧪</div>' + msg + '</td></tr>';
+    }
+  }
+
+  function nurseLabPadEmptyResultColumns() {
+    var wrap = document.querySelector('#labResultsList .oc-matrix-wrapper');
+    var table = document.getElementById('nurseOcMatrixTable');
+    var headRow = table && table.tHead && table.tHead.rows[0];
+    if (!wrap || !table || !headRow) return;
+    var COL = 150;
+    var LEFT = 150 + 250;
+    var used = 0;
+    for (var i = 2; i < headRow.cells.length; i++) used++;
+    var room = Math.max(0, wrap.clientWidth - LEFT);
+    var need = Math.floor(room / COL);
+    var extra = need - used;
+    if (extra <= 0) return;
+    for (var n = 0; n < extra; n++) {
+      var th = document.createElement('th');
+      th.className = 'oc-col-order-hdr oc-empty-col';
+      th.innerHTML = '<div class="oc-col-order-date" style="opacity:.28">—</div>';
+      headRow.appendChild(th);
+    }
+    var rows = table.tBodies[0] ? table.tBodies[0].rows : [];
+    for (var r = 0; r < rows.length; r++) {
+      for (var n2 = 0; n2 < extra; n2++) {
+        var td = document.createElement('td');
+        td.className = 'oc-res-cell oc-empty-col';
+        td.style.color = '#9ca3af';
+        td.style.opacity = '0.28';
+        td.textContent = '--';
+        rows[r].appendChild(td);
+      }
+    }
+  }
+
+  function nurseLabBuildMatrix(patient, dateFilter) {
+    if (!patient || !patient.id) {
+      nurseLabRenderEmptyState('🔒 No patient selected.<br><span style="font-size:11.5px;">This flow sheet shows only the selected patient.</span>');
+      return;
+    }
+
+    var pidRaw = nurseLabStripMod(patient.id);
+    var orders = nurseLabReadOrdersForPatient(pidRaw);
+    var sets = orders.map(function (o) {
+      return {
+        kind: 'order',
+        id: String(o.id || ''),
+        date: o.completedAt || o.orderedAt || new Date().toISOString(),
+        status: o.status || 'pending',
+        results: Array.isArray(o.results) ? o.results : [],
+        testsOrdered: (window.pcLabCatalog && window.pcLabCatalog.expandOrderItems)
+          ? window.pcLabCatalog.expandOrderItems(o.items || [])
+          : (Array.isArray(o.items) ? o.items.map(function (it) { return it.name; }) : []),
+        verifiedBy: o.completedBy || ''
+      };
+    });
+
+    var knownIds = orders.map(function (o) { return String(o.id); });
+    var labReqs = Array.isArray(patient.labRequests) ? patient.labRequests : [];
+    labReqs.forEach(function (req) {
+      if (!req) return;
+      var rid = String(req.id || '');
+      if (rid && knownIds.indexOf(rid) !== -1) return;
+      var st = String(req.status || 'Pending').toLowerCase();
+      if (st === 'cancelled') return;
+      var items = Array.isArray(req.testItems) && req.testItems.length ? req.testItems : (Array.isArray(req.tests) ? req.tests : []);
+      knownIds.push(rid);
+      sets.push({
+        kind: 'request',
+        id: rid || ('req-' + (req.timestamp || '')),
+        date: req.timestamp || new Date().toISOString(),
+        status: st === 'completed' ? 'completed' : 'pending',
+        results: Array.isArray(req.results) ? req.results : [],
+        testsOrdered: (window.pcLabCatalog && window.pcLabCatalog.expandOrderItems)
+          ? window.pcLabCatalog.expandOrderItems(items)
+          : items.map(function (it) { return typeof it === 'string' ? it : (it.name || ''); }),
+        verifiedBy: req.verifiedBy || ''
+      });
+    });
+
+    var storedResults = Array.isArray(patient.labResults) ? patient.labResults : [];
+    storedResults.forEach(function (r) {
+      if (!r || !Array.isArray(r.tests) || !r.tests.length) return;
+      if (r.orderId && knownIds.indexOf(String(r.orderId)) !== -1) return;
+      sets.push({
+        kind: 'stored',
+        id: String(r.id || r.orderId || ''),
+        date: r.date || new Date().toISOString(),
+        status: 'completed',
+        results: r.tests,
+        testsOrdered: r.tests.map(function (t) { return t.test || t.name || ''; }),
+        verifiedBy: r.verifiedBy || ''
+      });
+    });
+
+    sets.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+    if (dateFilter) {
+      sets = sets.filter(function (s) { return nurseLabDateKey(s.date) === dateFilter; });
+    }
+
+    if (!sets.length) {
+      nurseLabRenderEmptyState(dateFilter
+        ? ('No laboratory entries found for <strong>' + esc(displayName(patient)) + '</strong> on <strong>' + esc(dateFilter) + '</strong>.')
+        : ('No laboratory orders yet for <strong>' + esc(displayName(patient)) + '</strong>.<br><span style="font-size:11.5px;">Create a Lab Request and the laboratory will publish verified results here.</span>'));
+      return;
+    }
+
+    function isVerifiedSet(s) {
+      return s.status === 'completed' || s.status === 'Completed';
+    }
+
+    function groupSetsByDay(list) {
+      var groups = [];
+      (list || []).forEach(function (s) {
+        var key = nurseLabDateKey(s.date);
+        var g = groups[groups.length - 1];
+        if (!g || g.key !== key) {
+          g = { key: key, sets: [], verifiedCount: 0 };
+          groups.push(g);
+        }
+        g.sets.push(s);
+        if (isVerifiedSet(s)) g.verifiedCount++;
+      });
+      return groups;
+    }
+
+    function buildGroupEntries(group, orderedCheck, resultCheck) {
+      var entries = [];
+      group.sets.forEach(function (s) {
+        var ordered = !!orderedCheck(s);
+        var result = resultCheck ? resultCheck(s) : null;
+        if (!ordered && !result) return;
+        entries.push({
+          kind: result ? 'result' : (isVerifiedSet(s) ? 'reported' : 'pending'),
+          at: s.date || '',
+          id: s.id || '',
+          r: result || null
+        });
+      });
+      entries.sort(function (a, b) { return new Date(a.at || 0) - new Date(b.at || 0); });
+      return entries;
+    }
+
+    function renderEntryBadge(entry) {
+      if (!entry) return '';
+      if (entry.kind === 'result') {
+        var val = entry.r && entry.r.value != null && entry.r.value !== '' ? entry.r.value : '—';
+        return '<span style="font-weight:800;">' + esc(val) + '</span>' + nurseLabFlagBadge(entry.r && entry.r.flag);
+      }
+      if (entry.kind === 'reported') return '<span style="color:#6e6e73;font-weight:700;">Reported</span>';
+      return '<span class="oc-pending-badge">Pending</span>';
+    }
+
+    function renderGroupCell(entries) {
+      if (!entries || !entries.length) return '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
+      if (entries.length === 1) return '<td class="oc-res-cell">' + renderEntryBadge(entries[0]) + '</td>';
+      return '<td class="oc-res-cell" style="white-space:normal;padding:6px 4px;">' +
+        '<div style="display:flex;flex-direction:column;gap:4px;align-items:stretch;">' +
+        entries.map(function (entry, idx) {
+          return '<div style="padding:' + (idx === entries.length - 1 ? '0' : '0 0 4px 0') + ';' + (idx === entries.length - 1 ? '' : 'border-bottom:1px dashed rgba(0,0,0,0.10);') + '">' +
+            '<div style="font-size:9px;color:#6e6e73;margin-bottom:2px;">' + esc(nurseLabEntryTimeLabel(entry.at) + ' • ' + nurseLabShortRequestId(entry.id)) + '</div>' +
+            '<div>' + renderEntryBadge(entry) + '</div>' +
+          '</div>';
+        }).join('') +
+        '</div>' +
+      '</td>';
+    }
+
+    var groups = groupSetsByDay(sets);
+    groups.reverse();
+    var head = document.getElementById('nurseMatrixHead');
+    var body = document.getElementById('nurseMatrixBody');
+    var headHtml = '<tr>' +
+      '<th style="width:60px;text-align:left;">Analysis</th>' +
+      '<th style="width:112px;text-align:left;">Parameter</th>';
+    groups.forEach(function (g) {
+      var first = g.sets[0] || null;
+      var d = new Date(first && first.date || '');
+      var dateStr = isNaN(d.getTime()) ? 'Unknown date' : d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      var countLabel = g.sets.length + ' request' + (g.sets.length === 1 ? '' : 's');
+      var chip = '';
+      if (g.verifiedCount === g.sets.length) {
+        chip = '<span style="display:inline-block;background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">✓ ' + countLabel + '</span>';
+      } else if (g.verifiedCount > 0) {
+        chip = '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">' + g.verifiedCount + '/' + g.sets.length + ' ready</span>';
+      } else {
+        chip = '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">⏳ ' + countLabel + '</span>';
+      }
+      headHtml += '<th class="oc-col-order-hdr"><div class="oc-col-order-date">' + dateStr + '</div>' + chip + '</th>';
+    });
+    headHtml += '</tr>';
+    if (head) head.innerHTML = headHtml;
+
+    function entriesForMatrixTest(group, t, cat) {
+      return buildGroupEntries(
+        group,
+        function (s) { return nurseLabTestIsOrdered(s.testsOrdered, t, cat); },
+        function (s) { return isVerifiedSet(s) ? nurseLabFindResultForTest(s.results, t) : null; }
+      );
+    }
+
+    function testActivityScore(t, cat) {
+      var score = 0;
+      for (var gi = 0; gi < groups.length; gi++) {
+        var entries = entriesForMatrixTest(groups[gi], t, cat);
+        var recency = groups.length - gi;
+        if (entries.some(function (entry) { return entry.kind === 'result'; })) score = Math.max(score, 1000 + recency * 10);
+        else if (entries.some(function (entry) { return entry.kind === 'reported'; })) score = Math.max(score, 700 + recency * 10);
+        else if (entries.some(function (entry) { return entry.kind === 'pending'; })) score = Math.max(score, 500 + recency * 10);
+      }
+      return score;
+    }
+
+    var categories = nurseLabCategories();
+    var catsOrdered = categories.map(function (cat) {
+      var tests = (cat.tests || []).slice().sort(function (a, b) { return testActivityScore(b, cat) - testActivityScore(a, cat); });
+      var catScore = 0;
+      tests.forEach(function (t) { catScore = Math.max(catScore, testActivityScore(t, cat)); });
+      return { cat: cat, tests: tests, score: catScore };
+    }).sort(function (a, b) { return b.score - a.score; });
+
+    var bodyHtml = '';
+    var rowCount = 0;
+    catsOrdered.forEach(function (pack) {
+      var cat = pack.cat;
+      var totalTests = pack.tests.length;
+      pack.tests.forEach(function (t, idx) {
+        var rowClass = (rowCount % 2 === 0) ? 'row-even' : 'row-odd';
+        rowCount++;
+        bodyHtml += '<tr class="' + rowClass + '">';
+        if (idx === 0) bodyHtml += '<td class="oc-cat-cell ' + cat.className + '" rowspan="' + totalTests + '">' + cat.title + '</td>';
+        var unitStr = t.unit ? ' (' + t.unit + ')' : '';
+        var rangeStr = t.range ? ' [' + t.range + ']' : '';
+        bodyHtml += '<td class="oc-test-cell"><span class="oc-test-code">' + t.code + '</span><span>' + t.name + unitStr + '</span><span class="oc-test-range">' + rangeStr + '</span></td>';
+        groups.forEach(function (g) { bodyHtml += renderGroupCell(entriesForMatrixTest(g, t, cat)); });
+        bodyHtml += '</tr>';
+      });
+    });
+
+    function matchesKnownMatrix(label) {
+      for (var c = 0; c < categories.length; c++) {
+        for (var ti = 0; ti < categories[c].tests.length; ti++) {
+          if (nurseLabTestIsOrdered([label], categories[c].tests[ti], categories[c])) return true;
+        }
+      }
+      return false;
+    }
+
+    var extraOrdered = [];
+    groups.forEach(function (g) {
+      g.sets.forEach(function (s) {
+        nurseLabOrderedSetLabels(s.testsOrdered).forEach(function (label) {
+          if (!label || matchesKnownMatrix(label) || extraOrdered.indexOf(label) !== -1) return;
+          extraOrdered.push(label);
+        });
+      });
+    });
+
+    if (extraOrdered.length) {
+      extraOrdered.forEach(function (label, idx) {
+        var rowClass = (rowCount % 2 === 0) ? 'row-even' : 'row-odd';
+        rowCount++;
+        bodyHtml += '<tr class="' + rowClass + '">';
+        if (idx === 0) bodyHtml += '<td class="oc-cat-cell oc-cat-uri" rowspan="' + extraOrdered.length + '">ADDITIONAL REQUESTS</td>';
+        bodyHtml += '<td class="oc-test-cell"><span class="oc-test-code">EXTRA</span><span>' + esc(label) + '</span><span class="oc-test-range"> [Requested test]</span></td>';
+        groups.forEach(function (g) {
+          var entries = buildGroupEntries(
+            g,
+            function (s) {
+              return nurseLabOrderedSetLabels(s.testsOrdered).some(function (entry) {
+                var lowA = String(entry || '').toLowerCase();
+                var lowB = String(label || '').toLowerCase();
+                return lowA === lowB || lowA.indexOf(lowB) !== -1 || lowB.indexOf(lowA) !== -1;
+              });
+            },
+            function (s) { return isVerifiedSet(s) ? nurseLabFindResultForOrderedLabel(s.results, label) : null; }
+          );
+          bodyHtml += renderGroupCell(entries);
+        });
+        bodyHtml += '</tr>';
+      });
+    }
+
+    if (body) body.innerHTML = bodyHtml;
+    nurseLabPadEmptyResultColumns();
+  }
+
+  function nurseLabBuildCandSCard(r, patient) {
+    var atbRows = (Array.isArray(r.antibiotics) ? r.antibiotics : []).map(function (a, i) {
+      var atbName = Array.isArray(a) ? (a[1] || a[0] || 'Antibiotic') : (a.name || a.antibiotic || 'Antibiotic');
+      var sens = Array.isArray(a) ? (a[2] || 'Sensitive') : (a.sensitivity || 'Sensitive');
+      var sLow = String(sens).toLowerCase();
+      var fg = sLow === 'resistant' ? '#8a1f1a' : (sLow === 'intermediate' ? '#7a4500' : '#1a7a32');
+      return '<tr>' +
+        '<td style="padding:7px 12px;border:0.5px solid #d8d8dc;font-weight:700;">' + (i + 1) + '</td>' +
+        '<td style="padding:7px 12px;border:0.5px solid #d8d8dc;">' + esc(atbName) + '</td>' +
+        '<td style="padding:7px 12px;border:0.5px solid #d8d8dc;text-align:center;font-weight:800;color:' + fg + ';">' + esc(sens) + '</td>' +
+      '</tr>';
+    }).join('');
+    var repDate = r.date ? new Date(r.date).toLocaleDateString('en-GB') : '—';
+    var collDate = r.collectedAt ? new Date(r.collectedAt).toLocaleDateString('en-GB') : repDate;
+    return '<div style="background:#fff;border:1px solid var(--bd);border-radius:16px;padding:22px;margin-bottom:16px;box-shadow:var(--shadow);">' +
+      '<div style="text-align:center;border-bottom:2px solid #1d1d1f;padding-bottom:12px;margin-bottom:16px;">' +
+        '<div style="font-size:18px;font-weight:800;letter-spacing:0.5px;color:#1d1d1f;">MICROBIOLOGY</div>' +
+        '<div style="font-size:13.5px;font-weight:800;margin-top:3px;color:#1d1d1f;">Culture and Sensitivity</div>' +
+        '<div style="font-size:11.5px;color:#6e6e73;margin-top:6px;">' + esc(r.incubationNote || '') + '</div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:12.5px;color:#3a3a3c;margin-bottom:16px;">' +
+        '<div><strong>Date of Sample Collection:</strong> ' + esc(collDate) + '</div>' +
+        '<div><strong>Date of Reporting:</strong> ' + esc(repDate) + '</div>' +
+        '<div><strong>Sample Type:</strong> ' + esc(r.sampleType || '—') + '</div>' +
+        '<div><strong>Organism Isolated:</strong> ' + esc(r.organism || '—') + '</div>' +
+        '<div><strong>Colony Count:</strong> ' + esc(r.colonyCount || '—') + '</div>' +
+        '<div><strong>Patient:</strong> ' + esc(displayName(patient)) + ' • MRN ' + esc(displayMrn(patient)) + '</div>' +
+      '</div>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+        '<thead><tr style="background:#f5f5f7;">' +
+          '<th style="padding:8px 12px;border:0.5px solid #d8d8dc;text-align:left;width:10%;">S. No.</th>' +
+          '<th style="padding:8px 12px;border:0.5px solid #d8d8dc;text-align:left;">Antibiotic</th>' +
+          '<th style="padding:8px 12px;border:0.5px solid #d8d8dc;width:24%;">Sensitivity</th>' +
+        '</tr></thead><tbody>' + atbRows + '</tbody></table>' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:16px;border-top:1px solid #d8d8dc;padding-top:12px;font-size:11.5px;color:#3a3a3c;">' +
+        '<div><strong>Verifying Senior MLT:</strong> ' + esc(r.verifiedBy || 'PClinic MOD Laboratory') + '</div>' +
+        '<div style="border:1.5px solid #1d1d1f;padding:6px 14px;border-radius:6px;font-weight:800;font-size:10.5px;letter-spacing:0.5px;">MOD / PCLINIC VERIFIED</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function nurseLabBuildMicrobiologyReports(patient, dateFilter) {
+    var box = document.getElementById('nurseMicroReports');
+    if (!box) return;
+    if (!patient) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    var entries = [];
+    (Array.isArray(patient.labResults) ? patient.labResults : []).forEach(function (r) {
+      if (!r || !Array.isArray(r.antibiotics) || !r.antibiotics.length) return;
+      if (dateFilter && nurseLabDateKey(r.date || r.collectedAt) !== dateFilter) return;
+      entries.push(r);
+    });
+    try {
+      var orders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
+      orders.forEach(function (o) {
+        var micro = o && o.microbiology;
+        if (!o || nurseLabStripMod(o.patientId) !== nurseLabStripMod(patient.id) || !micro || !Array.isArray(micro.antibiotics) || !micro.antibiotics.length) return;
+        if (dateFilter && nurseLabDateKey(micro.date || micro.collectedAt || o.completedAt || o.orderedAt) !== dateFilter) return;
+        entries.push(micro);
+      });
+    } catch (e) {}
+    if (!entries.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    box.style.display = 'block';
+    box.innerHTML = '<div style="font-size:14px;font-weight:800;color:#1d1d1f;margin:20px 0 12px;">🧫 Microbiology — Culture &amp; Sensitivity Reports</div>' +
+      entries.map(function (entry) { return nurseLabBuildCandSCard(entry, patient); }).join('');
+  }
+
   function renderLabResults(patient) {
     patient = patient || refreshCurrentPatientFromStore();
     var box = document.getElementById('labResultsList');
@@ -2212,8 +2804,6 @@
       box.innerHTML = '<div class="nurse-lab-empty">🔒 Select a patient first to see verified laboratory results from the Common Server.</div>';
       return;
     }
-    if (labDate && labDate.value) labDate.dataset.nursePreserve = '1';
-    else if (labDate) delete labDate.dataset.nursePreserve;
     try {
       localStorage.setItem('pclinic_lab_patient_data', JSON.stringify({
         id: patient.id,
@@ -2224,29 +2814,18 @@
         labResults: Array.isArray(patient.labResults) ? patient.labResults : []
       }));
     } catch (e) {}
-    var patientRef = encodeURIComponent(String(patient.id || patient.mrn || ''));
-    var iframeId = 'nurseLabResultsIframe';
-    box.innerHTML = '<div class="nurse-lab-frame-shell">' +
-      '<iframe id="' + iframeId + '" src="lab-results.html?patient=' + patientRef + '&t=' + Date.now() + '" class="nurse-lab-frame" title="Cumulative Laboratory Flow Sheet"></iframe>' +
+    box.innerHTML = '<div class="nurse-lab-results-host">' +
+      '<div class="oc-matrix-wrapper">' +
+        '<table class="oc-matrix-table" id="nurseOcMatrixTable">' +
+          '<thead id="nurseMatrixHead"></thead>' +
+          '<tbody id="nurseMatrixBody"></tbody>' +
+        '</table>' +
+      '</div>' +
+      '<div id="nurseMicroReports" style="display:none;"></div>' +
     '</div>';
-    var iframe = document.getElementById(iframeId);
-    if (iframe) {
-      iframe.onload = function () {
-        try {
-          iframe.contentWindow.postMessage({
-            type: 'LOAD_PATIENT',
-            patient: {
-              id: patient.id,
-              firstName: patient.firstName || '',
-              lastName: patient.lastName || '',
-              mrn: patient.mrn || '',
-              labRequests: Array.isArray(patient.labRequests) ? patient.labRequests : [],
-              labResults: Array.isArray(patient.labResults) ? patient.labResults : []
-            }
-          }, window.location.origin);
-        } catch (e) {}
-      };
-    }
+    var dateFilter = labDate && labDate.value ? labDate.value : '';
+    nurseLabBuildMatrix(patient, dateFilter);
+    nurseLabBuildMicrobiologyReports(patient, dateFilter);
   }
 
   function buildModalRows(type) {

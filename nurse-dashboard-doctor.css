@@ -1620,3 +1620,191 @@ body.dark-mode .modal-overlay {
     height: 820px;
   }
 }
+
+.nurse-lab-results-host {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.nurse-lab-results-host .oc-matrix-wrapper {
+  background:
+    radial-gradient(700px 280px at 0% 0%, rgba(232, 197, 107, 0.28), transparent 55%),
+    linear-gradient(180deg, rgba(255, 252, 244, 0.72), rgba(255, 244, 220, 0.48));
+  -webkit-backdrop-filter: saturate(190%) blur(32px);
+  backdrop-filter: saturate(190%) blur(32px);
+  border: 0.5px solid rgba(255,255,255,0.72);
+  border-radius: 20px;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.9);
+  overflow: auto;
+  max-height: calc(100vh - 260px);
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+.nurse-lab-results-host .oc-matrix-wrapper::-webkit-scrollbar { height: 8px; width: 8px; }
+.nurse-lab-results-host .oc-matrix-wrapper::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #8ec5ff, #0071e3);
+  border-radius: 99px;
+}
+.nurse-lab-results-host .oc-matrix-wrapper::-webkit-scrollbar-track { background: transparent; }
+.nurse-lab-results-host table.oc-matrix-table {
+  width: max-content !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 11px;
+  text-align: left;
+  table-layout: fixed;
+}
+.nurse-lab-results-host table.oc-matrix-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: rgba(255, 246, 226, 0.92);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  color: var(--tp);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 3px;
+  border-bottom: 0.5px solid var(--bd);
+  border-right: 0.5px solid var(--bd);
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+.nurse-lab-results-host table.oc-matrix-table thead th:nth-child(1),
+.nurse-lab-results-host table.oc-matrix-table tbody td.oc-cat-cell {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  min-width: 150px;
+  max-width: 150px;
+  width: 150px;
+}
+.nurse-lab-results-host table.oc-matrix-table thead th:nth-child(2),
+.nurse-lab-results-host table.oc-matrix-table tbody td.oc-test-cell {
+  position: sticky;
+  left: 150px;
+  z-index: 5;
+  min-width: 250px;
+  max-width: 250px;
+  width: 250px;
+}
+.nurse-lab-results-host table.oc-matrix-table thead th:nth-child(1),
+.nurse-lab-results-host table.oc-matrix-table thead th:nth-child(2) { z-index: 8; }
+.nurse-lab-results-host table.oc-matrix-table thead th:last-child,
+.nurse-lab-results-host table.oc-matrix-table td:last-child { border-right: none; }
+.nurse-lab-results-host .oc-col-order-hdr {
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.15;
+  min-width: 150px !important;
+  max-width: 150px !important;
+  width: 150px !important;
+}
+.nurse-lab-results-host .oc-col-order-date {
+  font-weight: 800;
+  color: var(--tp);
+  font-size: 11px;
+  letter-spacing: -0.02em;
+}
+.nurse-lab-results-host table.oc-matrix-table tbody tr {
+  border-bottom: 0.5px solid var(--bd);
+  transition: background 0.28s ease, transform 0.28s ease;
+}
+.nurse-lab-results-host table.oc-matrix-table tbody tr.row-even {
+  background: rgba(255, 244, 226, 0.42);
+}
+.nurse-lab-results-host table.oc-matrix-table tbody tr.row-odd {
+  background: rgba(255, 255, 255, 0.28);
+}
+.nurse-lab-results-host table.oc-matrix-table tbody tr:hover {
+  background: rgba(232, 197, 107, 0.22) !important;
+}
+.nurse-lab-results-host table.oc-matrix-table td {
+  padding: 4px 3px;
+  border-right: 0.5px solid var(--bd);
+  vertical-align: middle;
+}
+.nurse-lab-results-host .oc-cat-cell {
+  font-weight: 800;
+  font-size: 11px;
+  vertical-align: top !important;
+  padding: 5px !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-right: 1px solid var(--bd) !important;
+  letter-spacing: 0.2px;
+  line-height: 1.25;
+  white-space: normal;
+}
+.nurse-lab-results-host .oc-cat-chem { color: #059669; }
+.nurse-lab-results-host .oc-cat-fbc  { color: #800040; }
+.nurse-lab-results-host .oc-cat-sero { color: #c81e51; }
+.nurse-lab-results-host .oc-cat-mic  { color: #005bb5; }
+.nurse-lab-results-host .oc-cat-uri  { color: #006666; }
+.nurse-lab-results-host .oc-test-cell {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--tp);
+  white-space: normal;
+  background: rgba(255, 248, 232, 0.45) !important;
+  overflow: hidden;
+  line-height: 1.2;
+  word-break: break-word;
+}
+.nurse-lab-results-host .oc-test-code {
+  font-weight: 700;
+  color: #b8860b;
+  margin-right: 4px;
+  font-size: 11px;
+}
+.nurse-lab-results-host .oc-test-range {
+  color: var(--tm);
+  font-size: 11px;
+  margin-left: 4px;
+}
+.nurse-lab-results-host .oc-res-cell {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--tp);
+  white-space: nowrap;
+  min-width: 150px !important;
+  max-width: 150px !important;
+  width: 150px !important;
+}
+.nurse-lab-results-host .oc-pending-badge {
+  color: #f59e0b;
+  font-weight: 700;
+  font-style: italic;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.nurse-lab-results-host .oc-flag {
+  display: inline-block;
+  font-weight: 800;
+  font-size: 8px;
+  padding: 0 3px;
+  border-radius: 8px;
+  margin-left: 2px;
+  vertical-align: middle;
+}
+@media (max-width: 900px) {
+  .nurse-lab-results-host .oc-matrix-wrapper {
+    max-height: calc(100vh - 320px);
+  }
+  .nurse-lab-results-host table.oc-matrix-table thead th:nth-child(1),
+  .nurse-lab-results-host table.oc-matrix-table tbody td.oc-cat-cell {
+    min-width: 120px;
+    max-width: 120px;
+    width: 120px;
+  }
+  .nurse-lab-results-host table.oc-matrix-table thead th:nth-child(2),
+  .nurse-lab-results-host table.oc-matrix-table tbody td.oc-test-cell {
+    left: 120px;
+    min-width: 220px;
+    max-width: 220px;
+    width: 220px;
+  }
+}

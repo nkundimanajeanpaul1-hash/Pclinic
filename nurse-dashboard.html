@@ -18,6 +18,8 @@
 
     <!-- ─── PATIENT DATA SYSTEM ─── -->          
     <script src="patient-data.js" defer></script>
+    <script src="pclinic-catalog.js" defer></script>
+    <script src="pclinic-lab-catalog.js" defer></script>
     <script src="pclinic-orders.js" defer></script>  
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
@@ -1148,7 +1150,7 @@
         }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
-    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_LABEXACT">
+    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_LABDIRECT">
 </head>
 <body>
 
@@ -3707,7 +3709,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_LABBTN" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_LABDIRECT" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {
@@ -3715,6 +3717,14 @@ function addBillRow() {
             console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
         }).catch(function(err) {
             console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+</body>
+</html>        console.warn('Auth guard redirect:', err && err.message);
+        });
+    </script>
+</body>
+</html>l>        console.warn('Auth guard redirect:', err && err.message);
         });
     </script>
 </body>
