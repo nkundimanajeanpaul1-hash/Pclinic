@@ -10,8 +10,8 @@ const FIX = readFileSync(resolve(ROOT, 'nurse-dashboard-fixes.js'), 'utf8');
 const CSS = readFileSync(resolve(ROOT, 'nurse-dashboard-doctor.css'), 'utf8');
 
 test('nurse dashboard loads the dedicated fix layer and the doctor-style skin while keeping nurse auth', () => {
-  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260907_NURSEFIX_CARELAYOUT/);
-  assert.match(HTML, /nurse-dashboard-doctor\.css\?v=20260907_DOCTORSKIN_CARELAYOUT/);
+  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260907_NURSEFIX_CAREMATCH/);
+  assert.match(HTML, /nurse-dashboard-doctor\.css\?v=20260907_DOCTORSKIN_CAREMATCH/);
   assert.match(HTML, /requireAuth\(\['nurse'\]\)/);
   assert.match(HTML, /pclinic-orders\.js/);
   assert.match(HTML, /pclinic-catalog\.js/);
@@ -82,20 +82,30 @@ test('CPN panel is now ANC / CPN with maternity fields, file-style layout, histo
   assert.match(FIX, /window\.previewCPNHistory = previewCpnHistory/);
 });
 
-test('care plan now uses the same simple history-first layout as nursing notes and still opens Nursing Note from inside Care Plan', () => {
-  for (const id of ['careplanAddNewBtn', 'careplanComposerCard', 'careplanCancelBtn', 'careplanOpenNoteBtn', 'cpPatient', 'cpEvalDate', 'cpNurse', 'cpStatus', 'cpProblem', 'cpGoals', 'cpInterventions', 'cpHistoryList', 'cpCount']) {
+test('care plan now matches the nursing notes layout 100/100 in visible structure and still opens Nursing Note from inside Care Plan', () => {
+  for (const id of ['careplanAddNewBtn', 'careplanComposerCard', 'careplanCancelBtn', 'careplanOpenNoteBtn', 'cpPatient', 'cpDateTime', 'cpNurse', 'cpStatus', 'cpBody', 'cpHistoryList', 'cpCount']) {
     assert.match(HTML, new RegExp(`id=["']${id}["']`), id + ' missing');
   }
+  for (const legacyId of ['cpProblem', 'cpGoals', 'cpInterventions', 'cpEvalDate']) {
+    assert.match(HTML, new RegExp(`id=["']${legacyId}["']`), legacyId + ' compatibility field missing');
+  }
   assert.match(HTML, /id="careplanComposerCard"[^>]*hidden/);
-  for (const token of ['Recent Care Plans', 'Add New Care Plan', 'New Nursing Care Plan', 'Simple Apple-style care plan page', 'Common Server connected', 'Nursing problem \/ diagnosis']) {
+  for (const token of ['Recent Nursing Care Plans', 'Add New Care Plan', 'New Nursing Care Plan', 'Simple Apple-style note page', 'Common Server connected', 'Selected patient', 'Date and time', 'Patient status', 'Care plan']) {
     assert.ok(HTML.includes(token), 'Missing care plan token: ' + token);
   }
+  assert.match(HTML, /<textarea class="ta notes-simple-textarea" id="cpBody"/);
+  assert.doesNotMatch(HTML, /Nursing problem \/ diagnosis/);
+  assert.doesNotMatch(HTML, /Goals \/ expected outcomes/);
+  assert.doesNotMatch(HTML, /Nursing interventions/);
   assert.match(FIX, /function carePlanComposerCard\(\)/);
   assert.match(FIX, /function openNewCarePlan\(\)/);
   assert.match(FIX, /function closeNewCarePlan\(\)/);
   assert.match(FIX, /function carePlanStatusClass\(status\)/);
+  assert.match(FIX, /function carePlanSummary\(plan\)/);
   assert.match(FIX, /function updateCarePlanCount\(patient\)/);
   assert.match(FIX, /function renderCarePlanHistory\(patient\)/);
+  assert.match(FIX, /document\.getElementById\('cpBody'\)/);
+  assert.match(FIX, /document\.getElementById\('cpDateTime'\)/);
   assert.match(FIX, /appendPatientHistory\('carePlans', entry\)/);
   assert.match(FIX, /source: 'nurse-careplan-simple'/);
   assert.match(FIX, /window\.renderCarePlanHistory = renderCarePlanHistory/);

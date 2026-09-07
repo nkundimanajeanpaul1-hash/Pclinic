@@ -1150,7 +1150,7 @@
         }
     </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
-    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_CARELAYOUT">
+    <link rel="stylesheet" href="nurse-dashboard-doctor.css?v=20260907_DOCTORSKIN_CAREMATCH">
 </head>
 <body>
 
@@ -1659,58 +1659,58 @@
                     <div class="notes-simple-shell">
                         <div class="notes-simple-history-card">
                             <div class="notes-simple-history-head">
-                                <span><i class="ti ti-history"></i> Recent Care Plans</span>
+                                <span>Recent Nursing Care Plans</span>
                                 <div class="notes-simple-history-actions">
                                     <span class="notes-simple-count" id="cpCount">0 plans</span>
                                     <button class="btn-p notes-simple-add-btn" id="careplanAddNewBtn" type="button" onclick="openNewCarePlan()"><i class="ti ti-plus"></i> Add New Care Plan</button>
                                 </div>
                             </div>
-                            <div id="cpHistoryList"><div class="cpn-empty">📋 No care plans yet on the Common Server.<div style="margin-top:12px;"><button class="btn-p notes-simple-add-btn" type="button" onclick="openNewCarePlan()"><i class="ti ti-plus"></i> Add New Care Plan</button></div></div></div>
+                            <div id="cpHistoryList">
+                                <p class="cpn-empty">📋 No nursing care plans yet.</p>
+                            </div>
                         </div>
 
                         <div class="notes-simple-card" id="careplanComposerCard" hidden>
                             <div class="notes-simple-head">
                                 <div>
                                     <div class="notes-simple-title">🗒️ New Nursing Care Plan</div>
-                                    <div class="notes-simple-sub">Simple Apple-style care plan page • saved live to the Common Server</div>
+                                    <div class="notes-simple-sub">Simple Apple-style note page • saved live to the Common Server</div>
                                 </div>
                                 <span class="notes-simple-sync">● Common Server connected</span>
                             </div>
                             <div class="notes-simple-grid">
                                 <label class="notes-simple-field">
-                                    <span>Patient</span>
-                                    <input class="fi apple-input" id="cpPatient" placeholder="Selected patient" />
+                                    <span>Selected patient</span>
+                                    <input class="fi" id="cpPatient" placeholder="Select a patient first" />
                                 </label>
                                 <label class="notes-simple-field">
-                                    <span>Evaluation date</span>
-                                    <input class="fi apple-input" type="date" id="cpEvalDate" />
+                                    <span>Date and time</span>
+                                    <input class="fi" type="datetime-local" id="cpDateTime" />
                                 </label>
                                 <label class="notes-simple-field">
                                     <span>Nurse</span>
-                                    <input class="fi apple-input" id="cpNurse" placeholder="Assigned nurse" />
+                                    <input class="fi" id="cpNurse" placeholder="Assigned nurse" />
                                 </label>
                                 <label class="notes-simple-field">
-                                    <span>Status</span>
-                                    <select class="fi apple-input" id="cpStatus">
+                                    <span>Patient status</span>
+                                    <select class="fi" id="cpStatus">
                                         <option>Active</option>
                                         <option>Achieved</option>
                                         <option>Discontinued</option>
                                     </select>
                                 </label>
                                 <label class="notes-simple-field notes-simple-field-wide">
-                                    <span>Nursing problem / diagnosis</span>
-                                    <input class="fi apple-input" id="cpProblem" placeholder="e.g. Risk of infection — post-op wound" />
-                                </label>
-                                <label class="notes-simple-field notes-simple-field-wide">
-                                    <span>Goals / expected outcomes</span>
-                                    <textarea class="ta" id="cpGoals" rows="3" placeholder="e.g. Wound clean and dry, afebrile within 48h…"></textarea>
-                                </label>
-                                <label class="notes-simple-field notes-simple-field-wide">
-                                    <span>Nursing interventions</span>
-                                    <textarea class="ta" id="cpInterventions" rows="4" placeholder="e.g. Daily dressing, monitor temp 4-hourly, encourage hydration…"></textarea>
+                                    <span>Care plan</span>
+                                    <textarea class="ta notes-simple-textarea" id="cpBody" placeholder="Write a simple nursing care plan, problem, goals, interventions, or evaluation here…"></textarea>
                                 </label>
                             </div>
                             <div class="fa notes-simple-actions"><button class="btn-p" onclick="saveCarePlan()"><i class="ti ti-check"></i> Save Care Plan</button><button class="btn-s" onclick="clearCarePlan()">Clear</button><button class="btn-s" type="button" id="careplanCancelBtn" onclick="closeNewCarePlan()">Cancel</button><button class="btn-s" type="button" id="careplanOpenNoteBtn" onclick="openNursingNoteFromCarePlan()"><i class="ti ti-notes"></i> Nursing Note</button></div>
+                            <div hidden>
+                                <input id="cpProblem" />
+                                <textarea id="cpGoals"></textarea>
+                                <textarea id="cpInterventions"></textarea>
+                                <input type="date" id="cpEvalDate" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3727,7 +3727,7 @@ function addBillRow() {
         window.formatTime = formatTime;
     </script>
 
-    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_CARELAYOUT" defer></script>
+    <script src="nurse-dashboard-fixes.js?v=20260907_NURSEFIX_CAREMATCH" defer></script>
 
     <script>
         requireAuth(['nurse']).then(function(staff) {

@@ -867,7 +867,7 @@
     setPatientFieldValues(patient || null);
     var dt = nowLocalValue();
     var d = todayIso();
-    ['triageDateTime', 'vitalsDateTime', 'cpnDateTime', 'notesDateTime', 'delDateTime'].forEach(function (id) {
+    ['triageDateTime', 'vitalsDateTime', 'cpnDateTime', 'notesDateTime', 'delDateTime', 'cpDateTime'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el && !el.value) el.value = dt;
     });
@@ -1832,8 +1832,8 @@
     var card = carePlanComposerCard();
     if (card) card.hidden = false;
     clearCarePlan();
-    var problem = document.getElementById('cpProblem');
-    if (problem) setTimeout(function () { problem.focus(); }, 40);
+    var body = document.getElementById('cpBody');
+    if (body) setTimeout(function () { body.focus(); }, 40);
   }
 
   function carePlanStatusClass(status) {
@@ -1850,37 +1850,37 @@
     countEl.textContent = total + ' plan' + (total !== 1 ? 's' : '');
   }
 
+  function carePlanSummary(plan) {
+    if (!plan) return '';
+    if (String(plan.body || '').trim()) return String(plan.body || '').trim();
+    var parts = [];
+    if (plan.problem) parts.push(plan.problem);
+    if (plan.goals) parts.push('Goals: ' + plan.goals);
+    if (plan.interventions) parts.push('Interventions: ' + plan.interventions);
+    return parts.join('\n\n').trim();
+  }
+
   function renderCarePlanHistory(patient) {
     patient = patient || refreshCurrentPatientFromStore();
     var container = document.getElementById('cpHistoryList');
     if (!container) return;
-    var plans = Array.isArray(patient && patient.carePlans)
-      ? patient.carePlans.map(function (cp, i) { return { entry: cp, index: i }; })
-      : [];
+    var plans = Array.isArray(patient && patient.carePlans) ? patient.carePlans.slice() : [];
     updateCarePlanCount(patient);
     if (!plans.length) {
-      container.innerHTML = '<div class="nurse-lab-empty" style="padding:26px;">📋 No care plans yet on the Common Server.<div style="margin-top:12px;"><button class="btn-p notes-simple-add-btn" type="button" onclick="openNewCarePlan()"><i class="ti ti-plus"></i> Add New Care Plan</button></div></div>';
+      container.innerHTML = '<div class="nurse-lab-empty" style="padding:26px;">📋 No nursing care plans yet on the Common Server.<div style="margin-top:12px;"><button class="btn-p notes-simple-add-btn" type="button" onclick="openNewCarePlan()"><i class="ti ti-plus"></i> Add New Care Plan</button></div></div>';
       return;
     }
-    plans.sort(function (a, b) { return ms(b && (b.entry.at || b.entry.evalDate)) - ms(a && (a.entry.at || a.entry.evalDate)) || ms(b && b.entry.evalDate) - ms(a && a.entry.evalDate); });
-    container.innerHTML = plans.map(function (item) {
-      var cp = item.entry || {};
-      var i = item.index;
+    plans.sort(function (a, b) { return ms(b && (b.timestamp || b.at || b.date || b.evalDate)) - ms(a && (a.timestamp || a.at || a.date || a.evalDate)); });
+    container.innerHTML = plans.map(function (cp) {
       var status = String(cp.status || 'Active');
-      var goals = String(cp.goals || '').trim();
-      var interventions = String(cp.interventions || '').trim();
+      var summary = carePlanSummary(cp) || '—';
       return '<div class="notes-simple-entry">' +
         '<div class="notes-simple-entry-head">' +
-          '<div class="notes-simple-entry-meta"><b>' + esc(cp.by || currentStaffName()) + '</b><br>' + esc(fmtDateTime(cp.at || cp.evalDate)) + '</div>' +
+          '<div class="notes-simple-entry-meta"><b>' + esc(cp.by || currentStaffName()) + '</b><br>' + esc(fmtDateTime(cp.timestamp || cp.at || cp.date || cp.evalDate)) + '</div>' +
           '<span class="notes-simple-status ' + carePlanStatusClass(status) + '">' + esc(status) + '</span>' +
         '</div>' +
-        '<div class="notes-simple-entry-note">' + esc(cp.problem || '—') + '</div>' +
-        '<div class="notes-simple-entry-foot">' +
-          (goals ? '🎯 ' + esc(goals) + '<br>' : '') +
-          (interventions ? '🩺 ' + esc(interventions) + '<br>' : '') +
-          (cp.evalDate ? '📅 Evaluate: ' + esc(cp.evalDate) : '📅 Evaluate: —') +
-        '</div>' +
-        '<div class="fa notes-simple-actions" style="margin-top:10px;"><button class="btn-s" type="button" onclick="setCarePlanStatus(' + i + ',\'Achieved\')">✓ Achieved</button><button class="btn-s" type="button" onclick="deleteCarePlan(' + i + ')" style="color:var(--red);">🗑 Delete</button></div>' +
+        '<div class="notes-simple-entry-note">' + esc(summary) + '</div>' +
+        '<div class="notes-simple-entry-foot">📅 Evaluation: ' + esc(cp.evalDate || '—') + '</div>' +
       '</div>';
     }).join('');
   }
@@ -2114,7 +2114,7 @@
   }
 
   function clearCarePlan() {
-    ['cpProblem', 'cpGoals', 'cpInterventions', 'cpEvalDate'].forEach(function (id) {
+    ['cpBody', 'cpProblem', 'cpGoals', 'cpInterventions', 'cpEvalDate', 'cpDateTime'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -2126,17 +2126,27 @@
   async function saveCarePlan() {
     var patient = refreshCurrentPatientFromStore();
     if (!patient) return safeToast('⚠️ Please select a patient first', 'warning');
-    var problem = ((document.getElementById('cpProblem') || {}).value || '').trim();
-    if (!problem) return safeToast('⚠️ Enter the nursing problem / diagnosis', 'warning');
+    var body = ((document.getElementById('cpBody') || {}).value || '').trim();
+    if (!body) return safeToast('⚠️ Please write the care plan first', 'warning');
+    var stamp = ((document.getElementById('cpDateTime') || {}).value || '').trim();
+    var evalDate = stamp ? String(stamp).slice(0, 10) : '';
+    var firstLine = body.split(/\n+/).map(function (line) { return String(line || '').trim(); }).filter(Boolean)[0] || body;
+    var problemEl = document.getElementById('cpProblem'); if (problemEl) problemEl.value = firstLine;
+    var goalsEl = document.getElementById('cpGoals'); if (goalsEl) goalsEl.value = '';
+    var interventionsEl = document.getElementById('cpInterventions'); if (interventionsEl) interventionsEl.value = body;
+    var evalDateEl = document.getElementById('cpEvalDate'); if (evalDateEl) evalDateEl.value = evalDate;
     var entry = {
       id: 'CP-' + Date.now(),
-      problem: problem,
-      goals: ((document.getElementById('cpGoals') || {}).value || '').trim(),
-      interventions: ((document.getElementById('cpInterventions') || {}).value || '').trim(),
-      evalDate: ((document.getElementById('cpEvalDate') || {}).value || ''),
+      timestamp: stamp || nowIso(),
+      date: stamp || nowIso(),
+      at: stamp || nowIso(),
+      problem: firstLine,
+      goals: '',
+      interventions: body,
+      body: body,
+      evalDate: evalDate,
       status: ((document.getElementById('cpStatus') || {}).value || 'Active'),
       by: ((document.getElementById('cpNurse') || {}).value || currentStaffName()),
-      at: nowIso(),
       source: 'nurse-careplan-simple'
     };
     safeToast('⏳ Saving care plan to the Common Server…', 'info');
