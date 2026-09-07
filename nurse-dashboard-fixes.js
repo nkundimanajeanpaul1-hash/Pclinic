@@ -1,8 +1,8 @@
 (function () {
   'use strict';
 
-  var PATIENT_FIELD_IDS = ['triagePatient', 'vitalsPatient', 'cpnPatient', 'fpPatient', 'billPatient', 'labPatient', 'notesPatient', 'medsPatient'];
-  var STAFF_FIELD_IDS = ['triageNurse', 'cpnNurse', 'fpNurse', 'billNurse', 'notesNurse', 'medsNurse', 'delBy'];
+  var PATIENT_FIELD_IDS = ['triagePatient', 'vitalsPatient', 'cpnPatient', 'fpPatient', 'billPatient', 'labPatient', 'notesPatient', 'medsPatient', 'cpPatient'];
+  var STAFF_FIELD_IDS = ['triageNurse', 'cpnNurse', 'fpNurse', 'billNurse', 'notesNurse', 'medsNurse', 'delBy', 'cpNurse'];
   var LOCATION_FIELD_IDS = ['cpnLocation', 'notesWard', 'billWard'];
   var syncingFromSharedBar = false;
 
@@ -1818,6 +1818,73 @@
     if (body) setTimeout(function () { body.focus(); }, 40);
   }
 
+  function carePlanComposerCard() {
+    return document.getElementById('careplanComposerCard');
+  }
+
+  function openNewCarePlan() {
+    var patient = refreshCurrentPatientFromStore();
+    if (!patient) {
+      safeToast('⚠️ Please select a patient first', 'warning');
+      focusPatientSearch();
+      return;
+    }
+    var card = carePlanComposerCard();
+    if (card) card.hidden = false;
+    clearCarePlan();
+    var problem = document.getElementById('cpProblem');
+    if (problem) setTimeout(function () { problem.focus(); }, 40);
+  }
+
+  function carePlanStatusClass(status) {
+    var s = String(status || 'Active').toLowerCase();
+    if (s === 'achieved') return 'achieved';
+    if (s === 'discontinued') return 'discontinued';
+    return 'active';
+  }
+
+  function updateCarePlanCount(patient) {
+    var countEl = document.getElementById('cpCount');
+    if (!countEl) return;
+    var total = Array.isArray(patient && patient.carePlans) ? patient.carePlans.length : 0;
+    countEl.textContent = total + ' plan' + (total !== 1 ? 's' : '');
+  }
+
+  function renderCarePlanHistory(patient) {
+    patient = patient || refreshCurrentPatientFromStore();
+    var container = document.getElementById('cpHistoryList');
+    if (!container) return;
+    var plans = Array.isArray(patient && patient.carePlans)
+      ? patient.carePlans.map(function (cp, i) { return { entry: cp, index: i }; })
+      : [];
+    updateCarePlanCount(patient);
+    if (!plans.length) {
+      container.innerHTML = '<div class="nurse-lab-empty" style="padding:26px;">📋 No care plans yet on the Common Server.<div style="margin-top:12px;"><button class="btn-p notes-simple-add-btn" type="button" onclick="openNewCarePlan()"><i class="ti ti-plus"></i> Add New Care Plan</button></div></div>';
+      return;
+    }
+    plans.sort(function (a, b) { return ms(b && (b.entry.at || b.entry.evalDate)) - ms(a && (a.entry.at || a.entry.evalDate)) || ms(b && b.entry.evalDate) - ms(a && a.entry.evalDate); });
+    container.innerHTML = plans.map(function (item) {
+      var cp = item.entry || {};
+      var i = item.index;
+      var status = String(cp.status || 'Active');
+      var goals = String(cp.goals || '').trim();
+      var interventions = String(cp.interventions || '').trim();
+      return '<div class="notes-simple-entry">' +
+        '<div class="notes-simple-entry-head">' +
+          '<div class="notes-simple-entry-meta"><b>' + esc(cp.by || currentStaffName()) + '</b><br>' + esc(fmtDateTime(cp.at || cp.evalDate)) + '</div>' +
+          '<span class="notes-simple-status ' + carePlanStatusClass(status) + '">' + esc(status) + '</span>' +
+        '</div>' +
+        '<div class="notes-simple-entry-note">' + esc(cp.problem || '—') + '</div>' +
+        '<div class="notes-simple-entry-foot">' +
+          (goals ? '🎯 ' + esc(goals) + '<br>' : '') +
+          (interventions ? '🩺 ' + esc(interventions) + '<br>' : '') +
+          (cp.evalDate ? '📅 Evaluate: ' + esc(cp.evalDate) : '📅 Evaluate: —') +
+        '</div>' +
+        '<div class="fa notes-simple-actions" style="margin-top:10px;"><button class="btn-s" type="button" onclick="setCarePlanStatus(' + i + ',\'Achieved\')">✓ Achieved</button><button class="btn-s" type="button" onclick="deleteCarePlan(' + i + ')" style="color:var(--red);">🗑 Delete</button></div>' +
+      '</div>';
+    }).join('');
+  }
+
   function openNursingNoteFromCarePlan() {
     var patient = refreshCurrentPatientFromStore();
     if (!patient) {
@@ -1836,6 +1903,12 @@
     var card = notesComposerCard();
     if (card) card.hidden = true;
     clearNursingNote();
+  }
+
+  function closeNewCarePlan() {
+    var card = carePlanComposerCard();
+    if (card) card.hidden = true;
+    clearCarePlan();
   }
 
   function renderNursingNotes(patient) {
@@ -2040,6 +2113,16 @@
     safeToast('✅ Medication log saved for ' + displayName(saved), 'success');
   }
 
+  function clearCarePlan() {
+    ['cpProblem', 'cpGoals', 'cpInterventions', 'cpEvalDate'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    var status = document.getElementById('cpStatus');
+    if (status) status.value = 'Active';
+    if (typeof window.fillForms === 'function') fillForms(getCurrentPatient());
+  }
+
   async function saveCarePlan() {
     var patient = refreshCurrentPatientFromStore();
     if (!patient) return safeToast('⚠️ Please select a patient first', 'warning');
@@ -2052,14 +2135,24 @@
       interventions: ((document.getElementById('cpInterventions') || {}).value || '').trim(),
       evalDate: ((document.getElementById('cpEvalDate') || {}).value || ''),
       status: ((document.getElementById('cpStatus') || {}).value || 'Active'),
-      by: currentStaffName(),
-      at: nowIso()
+      by: ((document.getElementById('cpNurse') || {}).value || currentStaffName()),
+      at: nowIso(),
+      source: 'nurse-careplan-simple'
     };
     safeToast('⏳ Saving care plan to the Common Server…', 'info');
     var saved = await appendPatientHistory('carePlans', entry);
     if (!saved) return safeToast('❌ Care plan was NOT saved. Please retry.', 'error');
-    refreshAfterSave(saved, window.clearCarePlan);
-    safeToast('🗒️ Care plan saved to the Common Server', 'success');
+    clearCarePlan();
+    var card = carePlanComposerCard();
+    if (card) card.hidden = true;
+    refreshPatientUi(saved, true);
+    renderCarePlanHistory(saved);
+    updateCarePlanCount(saved);
+    var history = document.getElementById('cpHistoryList');
+    if (history && typeof history.scrollIntoView === 'function') {
+      try { history.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { history.scrollIntoView(); }
+    }
+    safeToast('✅ Care plan saved for ' + displayName(saved), 'success');
   }
   async function setCarePlanStatus(i, status) {
     var patient = refreshCurrentPatientFromStore();
@@ -3097,7 +3190,12 @@
     window.clearNursingNote = clearNursingNote;
     window.saveBill = saveBill;
     window.saveMedicationLog = saveMedicationLog;
+    window.renderCarePlanHistory = renderCarePlanHistory;
+    window.updateCarePlanCount = updateCarePlanCount;
+    window.openNewCarePlan = openNewCarePlan;
+    window.closeNewCarePlan = closeNewCarePlan;
     window.saveCarePlan = saveCarePlan;
+    window.clearCarePlan = clearCarePlan;
     window.setCarePlanStatus = setCarePlanStatus;
     window.deleteCarePlan = deleteCarePlan;
     window.saveDelivery = saveDelivery;
@@ -3135,6 +3233,11 @@
         if (name === 'overview') refreshKpisAndQueue(getAllPatients());
         if (name === 'vitals' && typeof window.renderVitalsGraph === 'function') window.renderVitalsGraph();
         if (name === 'triage') renderTriagePanel(getCurrentPatient());
+        if (name === 'careplan') {
+          renderCarePlanHistory(getCurrentPatient());
+          updateCarePlanCount(getCurrentPatient());
+          closeNewCarePlan();
+        }
         if (name === 'notes') {
           renderNursingNotes(getCurrentPatient());
           updateNursingNoteCount(getCurrentPatient());

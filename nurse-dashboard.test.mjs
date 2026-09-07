@@ -10,8 +10,8 @@ const FIX = readFileSync(resolve(ROOT, 'nurse-dashboard-fixes.js'), 'utf8');
 const CSS = readFileSync(resolve(ROOT, 'nurse-dashboard-doctor.css'), 'utf8');
 
 test('nurse dashboard loads the dedicated fix layer and the doctor-style skin while keeping nurse auth', () => {
-  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260907_NURSEFIX_CARENOTE/);
-  assert.match(HTML, /nurse-dashboard-doctor\.css\?v=20260907_DOCTORSKIN_NOTESSIMPLE/);
+  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260907_NURSEFIX_CARELAYOUT/);
+  assert.match(HTML, /nurse-dashboard-doctor\.css\?v=20260907_DOCTORSKIN_CARELAYOUT/);
   assert.match(HTML, /requireAuth\(\['nurse'\]\)/);
   assert.match(HTML, /pclinic-orders\.js/);
   assert.match(HTML, /pclinic-catalog\.js/);
@@ -82,13 +82,36 @@ test('CPN panel is now ANC / CPN with maternity fields, file-style layout, histo
   assert.match(FIX, /window\.previewCPNHistory = previewCpnHistory/);
 });
 
-test('care plan provides a Nursing Note button that opens the nurse note composer for the selected patient', () => {
-  assert.match(HTML, /id="careplanOpenNoteBtn"/);
-  assert.match(HTML, /Nursing Note/);
+test('care plan now uses the same simple history-first layout as nursing notes and still opens Nursing Note from inside Care Plan', () => {
+  for (const id of ['careplanAddNewBtn', 'careplanComposerCard', 'careplanCancelBtn', 'careplanOpenNoteBtn', 'cpPatient', 'cpEvalDate', 'cpNurse', 'cpStatus', 'cpProblem', 'cpGoals', 'cpInterventions', 'cpHistoryList', 'cpCount']) {
+    assert.match(HTML, new RegExp(`id=["']${id}["']`), id + ' missing');
+  }
+  assert.match(HTML, /id="careplanComposerCard"[^>]*hidden/);
+  for (const token of ['Recent Care Plans', 'Add New Care Plan', 'New Nursing Care Plan', 'Simple Apple-style care plan page', 'Common Server connected', 'Nursing problem \/ diagnosis']) {
+    assert.ok(HTML.includes(token), 'Missing care plan token: ' + token);
+  }
+  assert.match(FIX, /function carePlanComposerCard\(\)/);
+  assert.match(FIX, /function openNewCarePlan\(\)/);
+  assert.match(FIX, /function closeNewCarePlan\(\)/);
+  assert.match(FIX, /function carePlanStatusClass\(status\)/);
+  assert.match(FIX, /function updateCarePlanCount\(patient\)/);
+  assert.match(FIX, /function renderCarePlanHistory\(patient\)/);
+  assert.match(FIX, /appendPatientHistory\('carePlans', entry\)/);
+  assert.match(FIX, /source: 'nurse-careplan-simple'/);
+  assert.match(FIX, /window\.renderCarePlanHistory = renderCarePlanHistory/);
+  assert.match(FIX, /window\.openNewCarePlan = openNewCarePlan/);
+  assert.match(FIX, /window\.closeNewCarePlan = closeNewCarePlan/);
+  assert.match(FIX, /window\.clearCarePlan = clearCarePlan/);
   assert.match(FIX, /function openNursingNoteFromCarePlan\(\)/);
   assert.match(FIX, /window\.openNursingNoteFromCarePlan = openNursingNoteFromCarePlan/);
   assert.match(FIX, /window\.switchTab\('notes', notesBtn\)/);
   assert.match(FIX, /openNewNursingNote\(\)/);
+  assert.match(CSS, /\.notes-simple-history-actions/);
+  assert.match(CSS, /\.notes-simple-add-btn/);
+  assert.match(CSS, /\.notes-simple-entry/);
+  assert.match(CSS, /\.notes-simple-status\.active/);
+  assert.match(CSS, /\.notes-simple-status\.achieved/);
+  assert.match(CSS, /\.notes-simple-status\.discontinued/);
 });
 
 test('nursing notes page opens on history first like doctor flow, with Add New Note buttons and common-server saving', () => {
@@ -127,7 +150,7 @@ test('the nurse search and patient-table filtering support name, MRN and patient
 });
 
 test('selected-patient inputs are clearly synced fields, not fake free-text search boxes', () => {
-  assert.match(FIX, /PATIENT_FIELD_IDS = \['triagePatient', 'vitalsPatient', 'cpnPatient', 'fpPatient', 'billPatient', 'labPatient', 'notesPatient', 'medsPatient'\]/);
+  assert.match(FIX, /PATIENT_FIELD_IDS = \['triagePatient', 'vitalsPatient', 'cpnPatient', 'fpPatient', 'billPatient', 'labPatient', 'notesPatient', 'medsPatient', 'cpPatient'\]/);
   assert.match(FIX, /el\.readOnly = true/);
   assert.match(FIX, /focusPatientSearch\(\)/);
 });

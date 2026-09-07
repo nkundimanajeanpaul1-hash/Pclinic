@@ -1963,16 +1963,19 @@ body.dark-mode .modal-overlay {
   font-weight: 800;
 }
 .notes-simple-status.stable,
-.notes-simple-status.improved {
+.notes-simple-status.improved,
+.notes-simple-status.achieved {
   background: #e9f9ee;
   color: #1a7a32;
 }
 .notes-simple-status.deteriorated,
-.notes-simple-status.transferred {
+.notes-simple-status.transferred,
+.notes-simple-status.discontinued {
   background: #fff4e0;
   color: #7a4500;
 }
-.notes-simple-status.discharged {
+.notes-simple-status.discharged,
+.notes-simple-status.active {
   background: #eaf2ff;
   color: #0071e3;
 }
