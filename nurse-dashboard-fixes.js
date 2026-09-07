@@ -2798,11 +2798,9 @@
   function renderLabResults(patient) {
     patient = patient || refreshCurrentPatientFromStore();
     var box = document.getElementById('labResultsList');
-    var labDate = document.getElementById('labDate');
     if (!box) return;
-    renderLabRequests(patient);
     if (!patient) {
-      box.innerHTML = '<div class="nurse-lab-empty">🔒 Select a patient first to see verified laboratory results from the Common Server.</div>';
+      box.innerHTML = '<div class="nurse-lab-empty">🔒 Select a patient first to see laboratory results from the Common Server.</div>';
       return;
     }
     try {
@@ -2824,9 +2822,8 @@
       '</div>' +
       '<div id="nurseMicroReports" style="display:none;"></div>' +
     '</div>';
-    var dateFilter = labDate && labDate.value ? labDate.value : '';
-    nurseLabBuildMatrix(patient, dateFilter);
-    nurseLabBuildMicrobiologyReports(patient, dateFilter);
+    nurseLabBuildMatrix(patient, '');
+    nurseLabBuildMicrobiologyReports(patient, '');
   }
 
   function buildModalRows(type) {
