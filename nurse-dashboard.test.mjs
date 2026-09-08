@@ -10,7 +10,7 @@ const FIX = readFileSync(resolve(ROOT, 'nurse-dashboard-fixes.js'), 'utf8');
 const CSS = readFileSync(resolve(ROOT, 'nurse-dashboard-doctor.css'), 'utf8');
 
 test('nurse dashboard loads the dedicated fix layer and the doctor-style skin while keeping nurse auth', () => {
-  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260907_NURSEFIX_MEDLOGRX/);
+  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260908_NURSEFIX_NURSEONLYBUTTONS/);
   assert.match(HTML, /nurse-dashboard-doctor\.css\?v=20260907_DOCTORSKIN_MEDLOGRX/);
   assert.match(HTML, /requireAuth\(\['nurse'\]\)/);
   assert.match(HTML, /pclinic-orders\.js/);
@@ -166,6 +166,10 @@ test('medication log now loads doctor prescriptions and records daily administra
     assert.ok(HTML.includes(token), 'Missing med log token: ' + token);
   }
   assert.match(FIX, /function prescriptionRoute\(rx\)/);
+  assert.match(FIX, /function prescriptionFrequency\(rx\)/);
+  assert.match(FIX, /function normalizeDoctorPrescription\(rx, fallback\)/);
+  assert.match(FIX, /function prescriptionFilesForPatient\(patient\)/);
+  assert.match(FIX, /function prescriptionsFromFiles\(patient\)/);
   assert.match(FIX, /function activeDoctorPrescriptions\(patient\)/);
   assert.match(FIX, /function medicationDaySlots\(baseDate\)/);
   assert.match(FIX, /function latestMedicationStateMap\(patient, dateStr\)/);
@@ -178,6 +182,9 @@ test('medication log now loads doctor prescriptions and records daily administra
   assert.match(FIX, /data-med="comment"/);
   assert.match(FIX, /data-med="tick"/);
   assert.match(FIX, /patient && patient\.prescriptions/);
+  assert.match(FIX, /window\.pcFile && typeof window\.pcFile\.list === 'function'/);
+  assert.match(FIX, /window\.pcFile\.list\(patient\.id, 'prescription'\)/);
+  assert.match(FIX, /source: 'prescription-file'/);
   assert.match(FIX, /appendPatientHistory\('medicationLog', entry\)/);
   assert.match(FIX, /source: 'nurse-medication-admin'/);
   assert.match(FIX, /window\.renderMedicationLog = renderMedicationLog/);
@@ -188,6 +195,19 @@ test('medication log now loads doctor prescriptions and records daily administra
   assert.match(CSS, /\.med-admin-days/);
   assert.match(CSS, /\.med-admin-problem-grid/);
   assert.match(CSS, /\.med-history-comment/);
+});
+
+test('nurse dashboard strips shared non-nurse header and action-bar buttons so nothing there opens doctor or cross-role pages', () => {
+  assert.match(FIX, /function isNurseDashboardPage\(\)/);
+  assert.match(FIX, /function pruneNurseOnlyControls\(\)/);
+  assert.match(FIX, /function observeNurseChrome\(\)/);
+  assert.match(FIX, /\['dcBar', 'dcCtx'\]/);
+  assert.match(FIX, /\.ab-menu, \.pc-apps-menu, \.pc-patient-menu/);
+  assert.match(FIX, /\.btn-summary, \.btn-applications, \.btn-documents, \.btn-system, \.btn-patient, \.btn-nursing, \.btn-alerts, \.btn-info/);
+  assert.match(FIX, /left\.innerHTML = '<span class="chk-btn btn-nursing" style="pointer-events:none;cursor:default;opacity:1;">🏥 Nurse Dashboard<\/span>'/);
+  assert.match(FIX, /#pc_common_demo_bar \.oc-ward-btn/);
+  assert.match(FIX, /pruneNurseOnlyControls\(\);/);
+  assert.match(FIX, /observeNurseChrome\(\);/);
 });
 
 test('the nurse search and patient-table filtering support name, MRN and patient ID', () => {

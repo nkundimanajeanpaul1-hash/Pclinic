@@ -97,6 +97,45 @@
     }
   }
 
+  function isNurseDashboardPage() {
+    var path = String((window.location && (window.location.pathname || window.location.href)) || '').toLowerCase();
+    return path.indexOf('nurse-dashboard') !== -1;
+  }
+
+  function pruneNurseOnlyControls() {
+    if (!isNurseDashboardPage()) return;
+    try {
+      ['dcBar', 'dcCtx'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      });
+      document.querySelectorAll('.ab-menu, .pc-apps-menu, .pc-patient-menu').forEach(function (el) {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      });
+      var top = document.getElementById('pc_chuk_top_menu');
+      if (top) {
+        top.querySelectorAll('.btn-summary, .btn-applications, .btn-documents, .btn-system, .btn-patient, .btn-nursing, .btn-alerts, .btn-info').forEach(function (btn) {
+          if (btn && btn.parentNode) btn.parentNode.removeChild(btn);
+        });
+        var left = top.querySelector('.chuk-menu-left');
+        if (left) {
+          left.innerHTML = '<span class="chk-btn btn-nursing" style="pointer-events:none;cursor:default;opacity:1;">🏥 Nurse Dashboard</span>';
+        }
+      }
+      var wardBtn = document.querySelector('#pc_common_demo_bar .oc-ward-btn');
+      if (wardBtn && wardBtn.parentNode) wardBtn.parentNode.removeChild(wardBtn);
+    } catch (e) { console.warn('pruneNurseOnlyControls', e); }
+  }
+
+  function observeNurseChrome() {
+    if (!isNurseDashboardPage() || window.__nurseChromeObserver) return;
+    var root = masterHeader();
+    if (!root || typeof MutationObserver === 'undefined') return;
+    var obs = new MutationObserver(function () { pruneNurseOnlyControls(); });
+    obs.observe(root, { childList: true, subtree: true });
+    window.__nurseChromeObserver = obs;
+  }
+
   function syncSharedPatientBar(patient) {
     if (syncingFromSharedBar) return;
     try {
@@ -113,6 +152,7 @@
         });
       }
     } catch (e) { console.warn(e); }
+    pruneNurseOnlyControls();
     try {
       window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: patient && !patient._cleared ? patient : null }));
     } catch (e) {}
@@ -1514,11 +1554,91 @@
     return 'Not specified';
   }
 
+  function prescriptionFrequency(rx) {
+    var direct = rx && (rx.frequency || rx.freq || '');
+    if (String(direct || '').trim()) return String(direct).trim();
+    var doseText = String((rx && (rx.dose || rx.dosage)) || '').trim();
+    var match = doseText.match(/\(([^)]+)\)/);
+    return match ? String(match[1] || '').trim() : '—';
+  }
+
+  function normalizeDoctorPrescription(rx, fallback) {
+    rx = rx || {};
+    fallback = fallback || {};
+    return {
+      id: rx.id != null ? rx.id : (fallback.id != null ? fallback.id : ('rx-' + Math.random().toString(36).slice(2, 8))),
+      medication: rx.medication || rx.drug || rx.name || fallback.medication || 'Medication',
+      dosage: rx.dosage || rx.dose || fallback.dosage || '',
+      dose: rx.dose || rx.dosage || fallback.dose || fallback.dosage || '',
+      route: rx.route || rx.administrationRoute || rx.adminRoute || fallback.route || '',
+      frequency: prescriptionFrequency(rx) || fallback.frequency || '—',
+      duration: rx.duration || fallback.duration || '',
+      instructions: rx.instructions || rx.note || rx.notes || fallback.instructions || '',
+      prescribedBy: rx.prescribedBy || rx.doctor || rx.by || fallback.prescribedBy || '',
+      department: rx.department || fallback.department || '',
+      status: rx.status || fallback.status || 'Pending',
+      timestamp: rx.timestamp || rx.at || rx.date || fallback.timestamp || nowIso(),
+      source: rx.source || fallback.source || 'patient-prescriptions'
+    };
+  }
+
+  function prescriptionFilesForPatient(patient) {
+    if (!patient || patient.id == null) return [];
+    try {
+      if (window.pcFile && typeof window.pcFile.list === 'function') {
+        var files = window.pcFile.list(patient.id, 'prescription') || [];
+        return Array.isArray(files) ? files : [];
+      }
+    } catch (e) {}
+    return [];
+  }
+
+  function prescriptionsFromFiles(patient) {
+    return prescriptionFilesForPatient(patient).reduce(function (out, rec) {
+      var meds = Array.isArray(rec && rec.medications) ? rec.medications : [];
+      meds.forEach(function (med, index) {
+        out.push(normalizeDoctorPrescription({
+          id: String((rec && rec.id) || 'file-rx') + '::' + index,
+          medication: med && (med.medication || med.name || med.drug || ''),
+          dosage: med && (med.dose || med.dosage || ''),
+          dose: med && (med.dose || med.dosage || ''),
+          frequency: med && med.frequency,
+          duration: med && med.duration,
+          instructions: med && (med.note || med.instructions || ''),
+          prescribedBy: rec && rec.by,
+          department: rec && rec.title,
+          status: (rec && rec.status) || 'Pending',
+          timestamp: rec && (rec.at || rec.timestamp || rec.date),
+          source: 'prescription-file'
+        }));
+      });
+      return out;
+    }, []);
+  }
+
   function activeDoctorPrescriptions(patient) {
-    var list = Array.isArray(patient && patient.prescriptions) ? patient.prescriptions.slice() : [];
+    var list = [];
+    if (Array.isArray(patient && patient.prescriptions)) {
+      list = list.concat(patient.prescriptions.map(function (rx) {
+        return normalizeDoctorPrescription(rx, { source: 'patient-prescriptions' });
+      }));
+    }
+    list = list.concat(prescriptionsFromFiles(patient));
+    var seen = {};
     return list.filter(function (rx) {
       var status = String((rx && rx.status) || 'Pending').toLowerCase();
-      return status !== 'cancelled' && status !== 'voided' && status !== 'void';
+      if (status === 'cancelled' || status === 'voided' || status === 'void') return false;
+      var sig = [
+        String(rx.medication || '').toLowerCase(),
+        String(rx.dosage || rx.dose || '').toLowerCase(),
+        String(rx.frequency || '').toLowerCase(),
+        String(rx.duration || '').toLowerCase(),
+        String(rx.prescribedBy || '').toLowerCase(),
+        String((rx.timestamp || '')).slice(0, 16)
+      ].join('|');
+      if (seen[sig]) return false;
+      seen[sig] = true;
+      return true;
     }).sort(function (a, b) {
       return ms(b && b.timestamp) - ms(a && a.timestamp);
     });
@@ -3688,6 +3808,8 @@
     document.querySelectorAll('.fp-btn').forEach(function (b) { b.classList.remove('sel'); });
     applyStaffUi();
     hideLegacyPatientCard();
+    pruneNurseOnlyControls();
+    observeNurseChrome();
     installSelectedPatientFields();
     setPatientFieldValues(getCurrentPatient());
     wireCpnPreviewEvents();
