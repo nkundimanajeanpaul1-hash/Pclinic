@@ -102,51 +102,77 @@
     return path.indexOf('nurse-dashboard') !== -1;
   }
 
-  function pruneNurseOnlyControls() {
-    if (!isNurseDashboardPage() || window.__pruningNurseChrome) return;
-    window.__pruningNurseChrome = true;
-    try {
-      ['dcBar', 'dcCtx'].forEach(function (id) {
-        var el = document.getElementById(id);
-        if (el && el.parentNode) el.parentNode.removeChild(el);
-      });
-      document.querySelectorAll('.ab-menu, .pc-apps-menu, .pc-patient-menu').forEach(function (el) {
-        if (el && el.parentNode) el.parentNode.removeChild(el);
-      });
-      var top = document.getElementById('pc_chuk_top_menu');
-      if (top) {
-        top.querySelectorAll('.btn-summary, .btn-applications, .btn-documents, .btn-system, .btn-patient, .btn-nursing, .btn-alerts, .btn-info').forEach(function (btn) {
-          if (btn && btn.parentNode) btn.parentNode.removeChild(btn);
-        });
-        var left = top.querySelector('.chuk-menu-left');
-        if (left) {
-          var currentChip = left.querySelector('.nurse-dashboard-chip');
-          var onlyChip = currentChip && left.children.length === 1 && String(left.textContent || '').trim() === '🏥 Nurse Dashboard';
-          if (!onlyChip) {
-            left.textContent = '';
-            var chip = document.createElement('span');
-            chip.className = 'chk-btn nurse-dashboard-chip';
-            chip.style.pointerEvents = 'none';
-            chip.style.cursor = 'default';
-            chip.style.opacity = '1';
-            chip.textContent = '🏥 Nurse Dashboard';
-            left.appendChild(chip);
-          }
-        }
-      }
-      var wardBtn = document.querySelector('#pc_common_demo_bar .oc-ward-btn');
-      if (wardBtn && wardBtn.parentNode) wardBtn.parentNode.removeChild(wardBtn);
-    } catch (e) { console.warn('pruneNurseOnlyControls', e); }
-    finally { window.__pruningNurseChrome = false; }
+  function currentStaffId() {
+    var s = getStaff();
+    return String((s && (s.staffId || s.id || s.uid)) || '');
   }
 
-  function observeNurseChrome() {
-    if (!isNurseDashboardPage() || window.__nurseChromeObserver) return;
-    var root = masterHeader();
-    if (!root || typeof MutationObserver === 'undefined') return;
-    var obs = new MutationObserver(function () { pruneNurseOnlyControls(); });
-    obs.observe(root, { childList: true, subtree: true });
-    window.__nurseChromeObserver = obs;
+  function nurseServerConfirmedOrders() {
+    var all = [];
+    try {
+      if (window.pcOrders && typeof window.pcOrders.listServerConfirmed === 'function') {
+        all = window.pcOrders.listServerConfirmed({}) || [];
+      } else if (window.pcOrders && typeof window.pcOrders.list === 'function') {
+        all = (window.pcOrders.list({}) || []).filter(function (o) {
+          return o && o.id && !o._legacyLocalOnly && !o._syncFailed;
+        });
+      }
+    } catch (e) {
+      console.warn('nurseServerConfirmedOrders', e);
+    }
+    var meId = currentStaffId();
+    var meName = currentStaffName().toLowerCase();
+    return all.filter(function (o) {
+      if (!o) return false;
+      if (meId && String(o.orderedById || '') === meId) return true;
+      return !meId && String(o.orderedBy || '').toLowerCase() === meName;
+    }).sort(function (a, b) {
+      return ms(b && (b.orderedAt || b.createdAt || b.at || b.updatedAt)) - ms(a && (a.orderedAt || a.createdAt || a.at || a.updatedAt));
+    });
+  }
+
+  function nurseOpenMyOrders() {
+    var modal = document.getElementById('modalOverlay');
+    var title = document.getElementById('modalTitle');
+    var body = document.getElementById('modalBody');
+    if (!modal || !title || !body) return safeToast('❌ Dashboard modal is missing from the page.', 'error');
+    var patient = getCurrentPatient();
+    var activeId = patient && patient.id ? String(patient.id) : '';
+    var orders = nurseServerConfirmedOrders();
+    var selectedCount = activeId ? orders.filter(function (o) { return String(o.patientId || '') === activeId; }).length : 0;
+    title.textContent = 'My Orders — Common Server';
+    modal.dataset.mode = 'nurse-my-orders';
+    if (!orders.length) {
+      body.innerHTML = '<div class="cpn-empty"><i class="ti ti-clipboard-list"></i>No server-confirmed orders created by ' + esc(currentStaffName()) + ' yet.</div>';
+      modal.classList.add('show');
+      return;
+    }
+    body.innerHTML = '' +
+      '<div style="display:flex;flex-direction:column;gap:12px;">' +
+        '<div style="padding:12px 14px;border:1px solid rgba(14,165,233,.18);border-radius:14px;background:rgba(14,165,233,.08);font-size:12px;color:var(--ts);line-height:1.6;">' +
+          '<strong style="color:var(--tp);">Live Common Server orders</strong><br>' +
+          'Showing real server-confirmed orders created by <strong>' + esc(currentStaffName()) + '</strong>.' +
+          (activeId ? ' The selected patient currently has <strong>' + selectedCount + '</strong> of these order(s).' : ' Select a patient to highlight their orders here.') +
+        '</div>' +
+        '<table class="wtbl"><thead><tr><th>Patient</th><th>Department</th><th>Items</th><th>Status</th><th>When</th><th></th></tr></thead><tbody>' +
+          orders.slice(0, 60).map(function (o) {
+            var isActivePatient = activeId && String(o.patientId || '') === activeId;
+            var status = String(o.status || 'pending').toLowerCase();
+            var statusColor = status === 'completed' ? '#1a7a32' : status === 'in-progress' ? '#0071e3' : status === 'cancelled' ? '#8a1f1a' : '#7a4500';
+            var items = (o.items || []).map(function (it) { return it && (it.name || it.code || 'Item'); }).filter(Boolean).join(', ');
+            var sid = String(o.patientId || '').replace(/'/g, "\\'");
+            return '<tr' + (isActivePatient ? ' style="background:rgba(14,165,233,.08);"' : '') + '>' +
+              '<td><strong>' + esc(o.patientName || 'Unknown patient') + '</strong><div style="font-size:11px;color:var(--ts);">' + esc(o.patientId || '') + '</div></td>' +
+              '<td>' + esc(o.dept || o.type || 'General') + '</td>' +
+              '<td>' + esc(items || '—') + '</td>' +
+              '<td><span style="display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800;background:rgba(255,255,255,.92);color:' + statusColor + ';border:1px solid rgba(0,0,0,.08);">' + esc(status.toUpperCase()) + '</span></td>' +
+              '<td>' + esc(fmtDateTime(o.orderedAt || o.createdAt || o.at || o.updatedAt)) + '</td>' +
+              '<td>' + (sid ? '<button class="btn-s" onclick="closeModal(); selectPatient(\'' + sid + '\', { keepTab: true, quiet: true });">Open patient</button>' : '') + '</td>' +
+            '</tr>';
+          }).join('') +
+        '</tbody></table>' +
+      '</div>';
+    modal.classList.add('show');
   }
 
   function syncSharedPatientBar(patient) {
@@ -165,7 +191,6 @@
         });
       }
     } catch (e) { console.warn(e); }
-    pruneNurseOnlyControls();
     try {
       window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: patient && !patient._cleared ? patient : null }));
     } catch (e) {}
@@ -3626,7 +3651,10 @@
 
   function closeModal() {
     var modal = document.getElementById('modalOverlay');
-    if (modal) modal.classList.remove('show');
+    if (modal) {
+      modal.classList.remove('show');
+      try { delete modal.dataset.mode; } catch (e) {}
+    }
   }
 
   function updateNursingChips() {
@@ -3644,6 +3672,11 @@
     window.addEventListener('tariffUpdated', function () { renderBillCatalog(); calcBill(); renderBillHistory(); });
     window.addEventListener('pharmacyInventoryUpdated', function () { renderBillCatalog(); calcBill(); });
     window.addEventListener('billsUpdated', function () { renderBillHistory(); updateBillCount(); });
+    window.addEventListener('ordersUpdated', function () {
+      var modal = document.getElementById('modalOverlay');
+      if (modal && modal.classList.contains('show') && modal.dataset && modal.dataset.mode === 'nurse-my-orders') nurseOpenMyOrders();
+      renderLabResults();
+    });
     window.addEventListener('labResultsUpdated', function () { renderLabResults(); refreshKpisAndQueue(getAllPatients()); });
     window.addEventListener('pclinicSyncError', function () { loadPatients(); renderLabResults(); renderBillCatalog(); renderBillHistory(); });
     window.addEventListener('pcPatientChanged', function (event) {
@@ -3757,6 +3790,7 @@
     window.renderLabResults = renderLabResults;
     window.openLabResultsTab = openLabResultsTab;
     window.openLabResultsFlowSheet = openLabResultsFlowSheet;
+    window.nurseOpenMyOrders = nurseOpenMyOrders;
     window.openModal = openModal;
     window.closeModal = closeModal;
     window.showVitalsRequiredPrompt = showVitalsRequiredPrompt;
@@ -3821,8 +3855,6 @@
     document.querySelectorAll('.fp-btn').forEach(function (b) { b.classList.remove('sel'); });
     applyStaffUi();
     hideLegacyPatientCard();
-    pruneNurseOnlyControls();
-    observeNurseChrome();
     installSelectedPatientFields();
     setPatientFieldValues(getCurrentPatient());
     wireCpnPreviewEvents();

@@ -8,9 +8,12 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const HTML = readFileSync(resolve(ROOT, 'nurse-dashboard.html'), 'utf8');
 const FIX = readFileSync(resolve(ROOT, 'nurse-dashboard-fixes.js'), 'utf8');
 const CSS = readFileSync(resolve(ROOT, 'nurse-dashboard-doctor.css'), 'utf8');
+const SHARED = readFileSync(resolve(ROOT, 'pclinic-file.js'), 'utf8');
+const ORDERS = readFileSync(resolve(ROOT, 'pclinic-orders.js'), 'utf8');
 
 test('nurse dashboard loads the dedicated fix layer and the doctor-style skin while keeping nurse auth', () => {
-  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260908_NURSEFIX_NURSEONLYBUTTONS_HOTFIX1/);
+  assert.match(HTML, /pclinic-file\.js\?v=20260908_FILES_NURSEACTIONBAR/);
+  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260908_NURSEFIX_SHAREDHEADER_NURSEBAR/);
   assert.match(HTML, /nurse-dashboard-doctor\.css\?v=20260907_DOCTORSKIN_MEDLOGRX/);
   assert.match(HTML, /requireAuth\(\['nurse'\]\)/);
   assert.match(HTML, /pclinic-orders\.js/);
@@ -197,22 +200,36 @@ test('medication log now loads doctor prescriptions and records daily administra
   assert.match(CSS, /\.med-history-comment/);
 });
 
-test('nurse dashboard strips shared non-nurse header and action-bar buttons so nothing there opens doctor or cross-role pages', () => {
-  assert.match(FIX, /function isNurseDashboardPage\(\)/);
-  assert.match(FIX, /function pruneNurseOnlyControls\(\)/);
-  assert.match(FIX, /function observeNurseChrome\(\)/);
-  assert.match(FIX, /window\.__pruningNurseChrome/);
-  assert.match(FIX, /\['dcBar', 'dcCtx'\]/);
-  assert.match(FIX, /\.ab-menu, \.pc-apps-menu, \.pc-patient-menu/);
-  assert.match(FIX, /\.btn-summary, \.btn-applications, \.btn-documents, \.btn-system, \.btn-patient, \.btn-nursing, \.btn-alerts, \.btn-info/);
-  assert.match(FIX, /currentChip = left\.querySelector\('\.nurse-dashboard-chip'\)/);
-  assert.match(FIX, /left\.textContent = ''/);
-  assert.match(FIX, /chip\.className = 'chk-btn nurse-dashboard-chip'/);
-  assert.match(FIX, /chip\.textContent = '🏥 Nurse Dashboard'/);
-  assert.match(FIX, /finally \{ window\.__pruningNurseChrome = false; \}/);
-  assert.match(FIX, /#pc_common_demo_bar \.oc-ward-btn/);
-  assert.match(FIX, /pruneNurseOnlyControls\(\);/);
-  assert.match(FIX, /observeNurseChrome\(\);/);
+test('nurse dashboard keeps the shared top header and restores a nurse-only shared action bar backed by common-server features', () => {
+  assert.match(SHARED, /var isNurseDashboard = pathStr\.indexOf\('nurse-dashboard'\) !== -1/);
+  assert.match(SHARED, /function goNurseTab\(tabName, subId\)/);
+  assert.match(SHARED, /var NURSE_ACTIONS = \[/);
+  assert.match(SHARED, /goNurseTab\('patients', 'patients-list'\)/);
+  assert.match(SHARED, /goNurseTab\('triage', 'triage-form'\)/);
+  assert.match(SHARED, /goNurseTab\('vitals', 'vitals-form'\)/);
+  assert.match(SHARED, /goNurseTab\('cpn', 'cpn-ante'\)/);
+  assert.match(SHARED, /goNurseTab\('fp', 'fp-consult'\)/);
+  assert.match(SHARED, /goNurseTab\('lab', 'lab-view'\)/);
+  assert.match(SHARED, /goNurseTab\('notes', 'notes-form'\)/);
+  assert.match(SHARED, /goNurseTab\('careplan', 'careplan-form'\)/);
+  assert.match(SHARED, /goNurseTab\('meds', 'meds-log'\)/);
+  assert.match(SHARED, /goNurseTab\('billing', 'bill-med'\)/);
+  assert.match(SHARED, /typeof window\.nurseOpenMyOrders === 'function'/);
+  assert.match(SHARED, /window\.location\.href = 'messages\.html'/);
+  assert.match(SHARED, /var ACTIONS = isNurseDashboard \? NURSE_ACTIONS : DEFAULT_ACTIONS/);
+  assert.doesNotMatch(SHARED, /Nurse dashboard: append a Theater button/);
+  assert.doesNotMatch(FIX, /function pruneNurseOnlyControls\(\)/);
+  assert.doesNotMatch(FIX, /function observeNurseChrome\(\)/);
+  assert.match(FIX, /function nurseServerConfirmedOrders\(\)/);
+  assert.match(FIX, /function nurseOpenMyOrders\(\)/);
+  assert.match(FIX, /window\.pcOrders && typeof window\.pcOrders\.listServerConfirmed === 'function'/);
+  assert.match(FIX, /modal\.dataset\.mode = 'nurse-my-orders'/);
+  assert.match(FIX, /window\.nurseOpenMyOrders = nurseOpenMyOrders/);
+  assert.match(FIX, /window\.addEventListener\('ordersUpdated', function \(\)/);
+  assert.match(ORDERS, /var ROLES = \['doctor','nurse','lab','pharmacy','radio','reception','cashier',/);
+  assert.match(ORDERS, /function sendMessage\(msg\)/);
+  assert.match(ORDERS, /sync\('messages', m\.id, m\)/);
+  assert.match(ORDERS, /function getServerConfirmedOrders\(filter\)/);
 });
 
 test('the nurse search and patient-table filtering support name, MRN and patient ID', () => {

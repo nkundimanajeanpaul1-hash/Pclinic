@@ -808,7 +808,24 @@
             util:  { c: '#1c1c1e', b: '#f3f4f6' }
         };
 
-        var ACTIONS = [
+        var isNurseDashboard = pathStr.indexOf('nurse-dashboard') !== -1;
+
+        function goNurseTab(tabName, subId) {
+            var btn = document.querySelector('[data-tab="' + tabName + '"]');
+            if (tabName === 'lab' && typeof window.openLabResultsTab === 'function') {
+                window.openLabResultsTab(btn);
+                return;
+            }
+            if (typeof window.switchTab === 'function') window.switchTab(tabName, btn);
+            if (subId && typeof window.switchSub === 'function') window.switchSub(subId);
+            var panel = document.getElementById('panel-' + tabName);
+            if (panel && typeof panel.scrollIntoView === 'function') {
+                try { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+                catch (e) { try { panel.scrollIntoView(); } catch (x) {} }
+            }
+        }
+
+        var DEFAULT_ACTIONS = [
             { id:'patient', label:'Patient', icon:'ti-user-search', grp:'util', always:true, run: function(){
                 if (window.pcFile && window.pcFile && window.pcFile.openPatientProfileModal) window.pcFile && window.pcFile.openPatientProfileModal();
                 else if (window.openPatientSearch) openPatientSearch();
@@ -862,6 +879,24 @@
             { id:'print',    label:'Print',     icon:'ti-printer',        grp:'util',  always:true, run: function(){ window.print(); } }
         ];
 
+        var NURSE_ACTIONS = [
+            { id:'patients', label:'Patients', icon:'ti-users', grp:'util', always:true, run: function(){ goNurseTab('patients', 'patients-list'); } },
+            { id:'triage', label:'Triage', icon:'ti-urgent', grp:'clin', run: function(){ goNurseTab('triage', 'triage-form'); } },
+            { id:'vitals', label:'Vitals', icon:'ti-heartbeat', grp:'clin', run: function(){ goNurseTab('vitals', 'vitals-form'); } },
+            { id:'cpn', label:'CPN', icon:'ti-baby-carriage', grp:'clin', run: function(){ goNurseTab('cpn', 'cpn-ante'); } },
+            { id:'fp', label:'Family Planning', icon:'ti-heart', grp:'clin', run: function(){ goNurseTab('fp', 'fp-consult'); } },
+            { id:'labres', label:'Lab Results', icon:'ti-test-pipe', grp:'order', run: function(){ goNurseTab('lab', 'lab-view'); } },
+            { id:'notes', label:'Nursing Notes', icon:'ti-notes', grp:'file', run: function(){ goNurseTab('notes', 'notes-form'); } },
+            { id:'careplan', label:'Care Plan', icon:'ti-clipboard-check', grp:'file', run: function(){ goNurseTab('careplan', 'careplan-form'); } },
+            { id:'meds', label:'Medication Log', icon:'ti-pill', grp:'file', run: function(){ goNurseTab('meds', 'meds-log'); } },
+            { id:'bill', label:'Bill', icon:'ti-receipt', grp:'money', run: function(){ goNurseTab('billing', 'bill-med'); } },
+            { id:'orders', label:'My Orders', icon:'ti-clipboard-list', grp:'money', always:true, run: function(){ if (typeof window.nurseOpenMyOrders === 'function') window.nurseOpenMyOrders(); else if (window.pcToast) pcToast('My Orders is still loading…', 'info'); } },
+            { id:'messages', label:'Messages', icon:'ti-mail', grp:'money', always:true, run: function(){ window.location.href = 'messages.html'; } },
+            { id:'print', label:'Print', icon:'ti-printer', grp:'util', always:true, run: function(){ window.print(); } }
+        ];
+
+        var ACTIONS = isNurseDashboard ? NURSE_ACTIONS : DEFAULT_ACTIONS;
+
         var lastGrp = null;
         ACTIONS.forEach(function (a) {
             if (lastGrp && lastGrp !== a.grp) {
@@ -885,28 +920,6 @@
                 : a.run;
             bar.appendChild(b);
         });
-
-        // Nurse dashboard: append a Theater button that opens the Operating
-        // Theater board, carrying the selected patient (if any).
-        if (pathStr.indexOf('nurse-dashboard') !== -1) {
-            var thSep = document.createElement('span');
-            thSep.className = 'ab-sep';
-            bar.appendChild(thSep);
-            var thBtn = document.createElement('button');
-            thBtn.className = 'ab-btn ab-always';
-            thBtn.innerHTML = '<i class="ti ti-scissors"></i><span>Theater</span>';
-            thBtn.style.setProperty('--c', '#5c2475');
-            thBtn.style.setProperty('--b', '#f5eaff');
-            thBtn.onclick = function () {
-                var pid = '';
-                try {
-                    var pp = (window.pcFile && window.pcFile.patient && window.pcFile.patient()) || null;
-                    pid = (pp && pp.id) || localStorage.getItem('pclinic_active_patient') || '';
-                } catch (e) {}
-                location.href = 'theater-dashboard.html' + (pid ? '?patient=' + encodeURIComponent(pid) : '');
-            };
-            bar.appendChild(thBtn);
-        }
 
         syncActionBarState(currP);
     }
