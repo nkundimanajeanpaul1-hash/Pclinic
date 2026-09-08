@@ -1127,10 +1127,10 @@
                 '<span class="ab-sep"></span>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-view="overview" style="--c:#0b57d0;--b:#e8f0fe;--a:#0b57d0;"><i class="ti ti-chart-bar"></i>Overview</button>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-view="request" style="--c:#8a5a00;--b:#fff7e6;--a:#d97706;"><i class="ti ti-shield-lock"></i>Request policy</button>' +
-                '<button type="button" class="ab-btn ab-always" data-rad-view="worklist" style="--c:#006b73;--b:#e6f8fa;--a:#008c99;"><i class="ti ti-list"></i>Worklist<span class="ab-badge" id="radBarWorkCnt" style="display:inline-flex;background:#0071e3;">0</span></button>' +
+                '<button type="button" class="ab-btn ab-always" data-rad-view="worklist" style="--c:#006b73;--b:#e6f8fa;--a:#008c99;"><i class="ti ti-list"></i>Today\'s worklist<span class="ab-badge" id="radBarWorkCnt" style="display:inline-flex;background:#0071e3;">0</span></button>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-view="viewer" style="--c:#6b21a8;--b:#f3e8ff;--a:#7e22ce;"><i class="ti ti-photo"></i>Image viewer</button>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-view="report" style="--c:#6d28d9;--b:#f5eaff;--a:#7c3aed;"><i class="ti ti-pencil"></i>Report writer</button>' +
-                '<button type="button" class="ab-btn ab-always" data-rad-view="signed" style="--c:#1a7a32;--b:#e9f9ee;--a:#198754;"><i class="ti ti-check"></i>Signed reports<span class="ab-badge" id="radBarSignedCnt" style="display:inline-flex;">0</span></button>' +
+                '<button type="button" class="ab-btn ab-always" data-rad-view="signed" style="--c:#1a7a32;--b:#e9f9ee;--a:#198754;"><i class="ti ti-check"></i>Radiology reports<span class="ab-badge" id="radBarSignedCnt" style="display:inline-flex;">0</span></button>' +
                 '<span class="ab-sep"></span>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-notifications="1" title="Radiology alerts" style="--c:#a32d2d;--b:#ffebe9;--a:#d92d20;"><i class="ti ti-bell"></i>Alerts<span class="ab-badge" id="radBarAlertCnt">0</span></button>' +
                 '<button type="button" class="ab-btn ab-always" data-rad-print="1" style="--c:#374151;--b:#f3f4f6;--a:#4b5563;"><i class="ti ti-printer"></i>Print</button>' +

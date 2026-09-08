@@ -1339,8 +1339,8 @@
     <link rel="stylesheet" href="pclinic-ios26.css?v=20260831_IOS26" />
     <!-- ═══ DICOM VIEWER (shared with doctor image-results page) ═══ -->
     <link rel="stylesheet" href="pclinic-dicom-viewer.css?v=20260906_STATUSROW" />
-    <link rel="stylesheet" href="radio-dashboard-doctor.css?v=20260908_RADIODOCTORPARITY1" />
-    <script src="pclinic-file.js?v=20260908_FILES_NURSEACTIONBAR" defer></script>
+    <link rel="stylesheet" href="radio-dashboard-doctor.css?v=20260908_RADIODOCTORPARITY3" />
+    <script src="pclinic-file.js?v=20260908_FILES_RADIODOCTORPARITY3" defer></script>
     <script src="pclinic-dicom-viewer.js?v=20260906_STATUSROW" defer></script>
 </head>
 <body class="radio-doctor-shell">
@@ -1357,44 +1357,144 @@
 
         <!-- ─── SECONDARY NAV ─── -->
         <div class="tb2" id="tb2" style="display:none">
-            <div class="t2tab active"><i class="ti ti-home"></i>Dashboard</div>
+            <div class="t2tab active"><i class="ti ti-home"></i>Today's imaging queue</div>
         </div>
 
         <!-- ─── SEARCH ROW ─── -->
         <div class="srow">
             <div class="sw">
                 <i class="ti ti-search"></i>
-                <input id="globalSearch" placeholder="Search patient name, MRN, or accession — press Enter to select" oninput="filterTable(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();window.selectSearchPatient&&window.selectSearchPatient();}">
+                <input id="globalSearch" placeholder="Search patient by name, MRN, or accession — press Enter to select" oninput="filterTable(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();window.selectSearchPatient&&window.selectSearchPatient();}">
             </div>
             <div class="kpis">
-                <div class="kpi kpi-blue" onclick="openModal('pending')"><i class="ti ti-hourglass"></i><span id="kpiPendingN">0 pending</span></div>
-                <div class="kpi kpi-org" onclick="openModal('stat')"><i class="ti ti-zap"></i><span id="kpiStatN">0 STAT</span></div>
-                <div class="kpi kpi-red" onclick="openModal('unsigned')"><i class="ti ti-pencil"></i><span id="kpiUnsignedN">0 unsigned</span></div>
-                <div class="kpi kpi-grn" onclick="openModal('done')"><i class="ti ti-check"></i><span id="kpiDoneN">0 reported today</span></div>
+                <div class="kpi kpi-blue" onclick="openModal('pending')"><i class="ti ti-hourglass"></i><span class="kpi-num" id="kpiPendingN">0 pending</span></div>
+                <div class="kpi kpi-org" onclick="openModal('stat')"><i class="ti ti-zap"></i><span class="kpi-num" id="kpiStatN">0 STAT</span></div>
+                <div class="kpi kpi-red" onclick="openModal('unsigned')"><i class="ti ti-pencil"></i><span class="kpi-num" id="kpiUnsignedN">0 unsigned</span></div>
+                <div class="kpi kpi-grn" onclick="openModal('done')"><i class="ti ti-check"></i><span class="kpi-num" id="kpiDoneN">0 reported today</span></div>
             </div>
         </div>
 
         <!-- ─── BODY ─── -->
-        <div class="body">
+        <div class="body content-area radio-content-area">
 
             <!-- ===== VIEW: OVERVIEW ===== -->
             <div id="v-overview">
+                <div class="radio-doctor-overview">
+                    <div class="radio-overview-main">
+                        <div class="panel radio-overview-queue-panel">
+                            <div class="ph">
+                                <span class="ph-l">📅 Today's imaging queue</span>
+                                <button class="btn-s" style="font-size:11px;padding:2px 12px;" onclick="radioRefreshWorkspace()"><i class="ti ti-refresh"></i> Refresh</button>
+                            </div>
+                            <div class="pb radio-overview-table-wrap">
+                                <table class="tbl radio-overview-table">
+                                    <thead><tr><th style="width:12%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Modality</th><th style="width:16%">Study</th><th style="width:10%">Time</th><th style="width:10%">Priority</th><th style="width:18%">Status</th></tr></thead>
+                                    <tbody id="recentBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="radio-queue-note">
+                                <span><i class="ti ti-lock-open"></i> Select patient / study from Today's worklist to unlock viewer and reporting.</span>
+                                <span><i class="ti ti-cloud-check"></i> Common Server sync: orders, reports and alerts update live.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="radio-overview-side">
+                        <div class="panel radio-overview-quick-panel">
+                            <div class="ph">
+                                <span class="ph-l">⚡ Quick Actions</span>
+                            </div>
+                            <div class="pb radio-quick-actions">
+                                <div class="qa-card" onclick="radioQuickAction('select')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                    <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--acb, #eaf2ff); color:var(--blue, #0055cc);"><i class="ti ti-user-search"></i></div>
+                                    <div>
+                                        <div class="qa-label" style="font-size: 10px;">Select patient</div>
+                                        <div class="qa-desc">Use identification bar</div>
+                                    </div>
+                                </div>
+                                <div class="qa-card" onclick="radioQuickAction('worklist')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                    <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--blue-bg); color:var(--blue);"><i class="ti ti-list"></i></div>
+                                    <div>
+                                        <div class="qa-label" style="font-size: 10px;">Today's worklist</div>
+                                        <div class="qa-desc">Open active studies</div>
+                                    </div>
+                                </div>
+                                <div class="qa-card" onclick="radioQuickAction('viewer')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                    <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--purple-bg); color:var(--purple);"><i class="ti ti-photo-scan"></i></div>
+                                    <div>
+                                        <div class="qa-label" style="font-size: 10px;">Image viewer</div>
+                                        <div class="qa-desc">Open DICOM workspace</div>
+                                    </div>
+                                </div>
+                                <div class="qa-card" onclick="radioQuickAction('report')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                    <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--green-bg); color:var(--green);"><i class="ti ti-pencil"></i></div>
+                                    <div>
+                                        <div class="qa-label" style="font-size: 10px;">Report writer</div>
+                                        <div class="qa-desc">Continue selected study</div>
+                                    </div>
+                                </div>
+                                <div class="qa-card" onclick="radioQuickAction('reports')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                    <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--green-bg); color:var(--green-t);"><i class="ti ti-check"></i></div>
+                                    <div>
+                                        <div class="qa-label" style="font-size: 10px;">Radiology reports</div>
+                                        <div class="qa-desc">Signed and draft reports</div>
+                                    </div>
+                                </div>
+                                <div class="qa-card" onclick="radioQuickAction('alerts')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                    <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--red-bg); color:var(--red);"><i class="ti ti-bell"></i></div>
+                                    <div>
+                                        <div class="qa-label" style="font-size: 10px;">Alerts</div>
+                                        <div class="qa-desc">Critical and draft items</div>
+                                    </div>
+                                </div>
+                                <div class="qa-card" onclick="radioQuickAction('print')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                    <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:#f1f5f9; color:#475569;"><i class="ti ti-printer"></i></div>
+                                    <div>
+                                        <div class="qa-label" style="font-size: 10px;">Print report</div>
+                                        <div class="qa-desc">Open final report PDF</div>
+                                    </div>
+                                </div>
+                                <div class="qa-card" onclick="radioQuickAction('request')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                    <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--orange-bg); color:var(--orange);"><i class="ti ti-shield-lock"></i></div>
+                                    <div>
+                                        <div class="qa-label" style="font-size: 10px;">Request workflow</div>
+                                        <div class="qa-desc">How studies reach radiology</div>
+                                    </div>
+                                </div>
+                                <div class="qa-card" onclick="radioQuickAction('help')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                    <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--acb, #eaf2ff); color:#0284c7;"><i class="ti ti-help"></i></div>
+                                    <div>
+                                        <div class="qa-label" style="font-size: 10px;">Help</div>
+                                        <div class="qa-desc">Shortcuts and tips</div>
+                                    </div>
+                                </div>
+                                <div class="qa-card" onclick="radioQuickAction('settings')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 0; flex-direction: row; align-items: center;">
+                                    <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:#f1f5f9; color:#64748b;"><i class="ti ti-settings"></i></div>
+                                    <div>
+                                        <div class="qa-label" style="font-size: 10px;">Settings</div>
+                                        <div class="qa-desc">Theme and workspace</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="stat-row">
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--rad-bg)"><i class="ti ti-radio" style="color:var(--rad)"></i></div>
-                        <div class="sc-lbl">Studies today</div>
+                        <div class="sc-lbl">Today's studies</div>
                         <div class="sc-val" id="stStudies">0</div>
                         <div class="sc-sub" id="stStudiesSub">Common Server live</div>
                     </div>
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--orange-bg)"><i class="ti ti-hourglass" style="color:var(--orange)"></i></div>
-                        <div class="sc-lbl">Pending review</div>
+                        <div class="sc-lbl">Awaiting review</div>
                         <div class="sc-val" id="stPending">0</div>
                         <div class="sc-sub" id="stPendingSub">Common Server live</div>
                     </div>
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--green-bg)"><i class="ti ti-check" style="color:var(--green)"></i></div>
-                        <div class="sc-lbl">Reported today</div>
+                        <div class="sc-lbl">Reports released</div>
                         <div class="sc-val" id="stReported">0</div>
                         <div class="sc-sub" id="stReportedSub">Common Server live</div>
                     </div>
@@ -1406,44 +1506,43 @@
                     </div>
                     <div class="sc">
                         <div class="sc-ic" style="background:var(--purple-bg)"><i class="ti ti-zap" style="color:var(--purple)"></i></div>
-                        <div class="sc-lbl">STAT requests</div>
+                        <div class="sc-lbl">STAT queue</div>
                         <div class="sc-val" id="stStat">0</div>
                         <div class="sc-sub" id="stStatSub">Common Server live</div>
                     </div>
                 </div>
 
                 <div class="ov-grid">
-                    <div class="ov-c" onclick="switchView(document.querySelector('[onclick*=\\'request\\']'),'request')">
+                    <div class="ov-c" onclick="radioQuickAction('request')">
                         <div class="ov-ic" style="background:var(--rad-bg)"><i class="ti ti-file-plus" style="color:var(--rad)"></i></div>
                         <div class="ov-lbl">Request policy</div>
                         <div class="ov-d">How imaging orders reach radiology</div>
                     </div>
-                    <div class="ov-c" onclick="switchView(document.querySelector('[onclick*=\\'worklist\\']'),'worklist')">
+                    <div class="ov-c" onclick="radioQuickAction('worklist')">
                         <div class="ov-ic" style="background:var(--blue-bg)"><i class="ti ti-list" style="color:var(--blue)"></i></div>
                         <div class="ov-lbl">Today's worklist</div>
                         <div class="ov-d">Open and review active studies</div>
                     </div>
-                    <div class="ov-c" onclick="switchView(document.querySelector('[onclick*=\\'viewer\\']'),'viewer')">
+                    <div class="ov-c" onclick="radioQuickAction('viewer')">
                         <div class="ov-ic" style="background:var(--purple-bg)"><i class="ti ti-photo" style="color:var(--purple)"></i></div>
                         <div class="ov-lbl">Image viewer</div>
                         <div class="ov-d">Open local files and study images</div>
                     </div>
-                    <div class="ov-c" onclick="switchView(document.querySelector('[onclick*=\\'report\\']'),'report')">
+                    <div class="ov-c" onclick="radioQuickAction('report')">
                         <div class="ov-ic" style="background:var(--green-bg)"><i class="ti ti-pencil" style="color:var(--green)"></i></div>
                         <div class="ov-lbl">Report writer</div>
                         <div class="ov-d">Document findings and impression</div>
                     </div>
-                </div>
-
-                <div class="panel">
-                    <div class="ph">
-                        <span class="ph-l">Today's imaging queue</span>
-                        <span style="font-size:11px;color:var(--t4)">Latest activity</span>
+                    <div class="ov-c" onclick="radioQuickAction('reports')">
+                        <div class="ov-ic" style="background:var(--green-bg)"><i class="ti ti-check" style="color:var(--green-t)"></i></div>
+                        <div class="ov-lbl">Radiology reports</div>
+                        <div class="ov-d">Review signed and draft reports</div>
                     </div>
-                    <table class="tbl">
-                        <thead><tr><th style="width:12%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Modality</th><th style="width:16%">Study</th><th style="width:10%">Time</th><th style="width:10%">Priority</th><th style="width:18%">Status</th></tr></thead>
-                        <tbody id="recentBody"></tbody>
-                    </table>
+                    <div class="ov-c" onclick="radioQuickAction('alerts')">
+                        <div class="ov-ic" style="background:var(--red-bg)"><i class="ti ti-bell" style="color:var(--red)"></i></div>
+                        <div class="ov-lbl">Alerts</div>
+                        <div class="ov-d">Critical findings and pending follow-up</div>
+                    </div>
                 </div>
             </div>
 
@@ -1455,7 +1554,7 @@
                         <div style="max-width:760px;margin:16px auto;padding:22px;border:1px solid #f0ad4e;border-radius:16px;background:#fff7e6;color:#8a5a00;">
                             <div style="font-size:17px;font-weight:800;margin-bottom:8px;">Radiology receives approved imaging orders</div>
                             <p style="font-size:13px;line-height:1.55;margin:0;">Imaging requests are created in the shared clinical workflow, then radiology staff acquire the study, review images, write the report and finalise it through the secure worklist.</p>
-                            <div style="margin-top:14px;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,.72);font-size:12px;"><b>Selected patient:</b> <span id="reqPolicyPatient">No patient selected</span></div>
+                            <div style="margin-top:14px;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,.72);font-size:12px;"><b>Selected patient:</b> <span id="reqPolicyPatient">Select patient from the identification bar</span></div>
                             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px;">
                                 <button type="button" class="btn-p" onclick="radioNav('worklist')"><i class="ti ti-list"></i> Open Today's Worklist</button>
                                 <button type="button" class="btn-s" onclick="radioSelectPatient()"><i class="ti ti-user-search"></i> Select patient</button>
@@ -1652,8 +1751,8 @@
     <!-- ═══ SHARED JAVASCRIPT ═══ -->
     <script src="shared.js" defer></script>
 
-    <script src="radio-dashboard.js?v=20260902_WORKSTATION" defer></script>
-    <script src="radio-dashboard-fixes.js?v=20260908_RADIODOCTORPARITY1" defer></script>
+    <script src="radio-dashboard.js?v=20260908_WORKSTATION_PARITY3" defer></script>
+    <script src="radio-dashboard-fixes.js?v=20260908_RADIODOCTORPARITY3" defer></script>
 
     <!-- ═══ PATIENT GATE LOCK (radiology views) ═══ -->
     <div id="gateLock" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(245,245,247,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);align-items:center;justify-content:center;padding:20px;">

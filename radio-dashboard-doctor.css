@@ -9,8 +9,60 @@ body.radio-doctor-shell {
 
 body.radio-doctor-shell #pcMasterHeader,
 body.radio-doctor-shell #pcMasterHeader.pc-master-header {
-  position: relative;
-  z-index: 50;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  position: relative !important;
+  z-index: 40 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 8px 16px 4px !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+body.radio-doctor-shell #pc_chuk_top_menu.chuk-top-menu {
+  position: relative !important;
+  top: auto !important;
+  z-index: 3 !important;
+}
+
+body.radio-doctor-shell #pc_common_demo_bar.oc-demo-bar,
+body.radio-doctor-shell .oc-demo-bar {
+  position: relative !important;
+  top: auto !important;
+  z-index: 2 !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+body.radio-doctor-shell #dcBar.dc-bar,
+body.radio-doctor-shell #dcBar {
+  position: relative !important;
+  top: auto !important;
+  z-index: 1 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  clear: both !important;
+  flex-shrink: 0 !important;
+  padding: 8px 14px !important;
+  background: rgba(255, 255, 255, 0.64) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04), 0 10px 28px rgba(0, 0, 0, 0.03) !important;
+  backdrop-filter: saturate(180%) blur(18px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(18px) !important;
+}
+
+body.radio-doctor-shell #dcBar .ab-btn {
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+}
+
+body.radio-doctor-shell #dcBar .ab-btn.ab-active {
+  box-shadow: 0 4px 12px rgba(0, 85, 204, 0.22) !important;
 }
 
 body.radio-doctor-shell .app {
@@ -156,9 +208,23 @@ body.radio-doctor-shell .kpi:hover {
   box-shadow: var(--shadow) !important;
 }
 
-body.radio-doctor-shell .body {
+body.radio-doctor-shell .kpi i {
+  font-size: 14px;
+}
+
+body.radio-doctor-shell .kpi-num {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+body.radio-doctor-shell .body,
+body.radio-doctor-shell .content-area,
+body.radio-doctor-shell .radio-content-area {
   flex: 1;
-  padding: 16px;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   background: transparent;
 }
 
@@ -169,6 +235,113 @@ body.radio-doctor-shell #v-viewer,
 body.radio-doctor-shell #v-report,
 body.radio-doctor-shell #v-signed {
   width: 100%;
+}
+
+body.radio-doctor-shell .radio-doctor-overview {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+body.radio-doctor-shell .radio-overview-main {
+  flex: 1;
+  min-width: 0;
+}
+
+body.radio-doctor-shell .radio-overview-side {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+body.radio-doctor-shell .radio-overview-queue-panel,
+body.radio-doctor-shell .radio-overview-quick-panel {
+  height: 100%;
+}
+
+body.radio-doctor-shell .radio-overview-table-wrap {
+  padding-bottom: 10px;
+}
+
+body.radio-doctor-shell .radio-overview-table {
+  overflow: hidden;
+}
+
+body.radio-doctor-shell .radio-queue-note {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 0 18px 18px;
+  color: var(--t3);
+  font-size: 11px;
+}
+
+body.radio-doctor-shell .radio-queue-note span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.radio-doctor-shell .radio-queue-note i {
+  color: var(--blue);
+}
+
+body.radio-doctor-shell .radio-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+body.radio-doctor-shell .qa-card {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 0.5px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+body.radio-doctor-shell .qa-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+body.radio-doctor-shell .qa-card:active {
+  transform: scale(0.95);
+}
+
+body.radio-doctor-shell .qa-ic {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+body.radio-doctor-shell .qa-ic i {
+  font-size: 16px;
+}
+
+body.radio-doctor-shell .qa-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t1);
+  line-height: 1.3;
+}
+
+body.radio-doctor-shell .qa-desc {
+  font-size: 10px;
+  color: var(--t3);
 }
 
 body.radio-doctor-shell .stat-row,
@@ -401,6 +574,7 @@ body.radio-doctor-shell.dark-mode .panel,
 body.radio-doctor-shell.dark-mode .viewer-quick-btn,
 body.radio-doctor-shell.dark-mode .modal,
 body.radio-doctor-shell.dark-mode .shortcuts-card,
+body.radio-doctor-shell.dark-mode #dcBar,
 body.radio-doctor-shell.dark-mode #gateLock > div {
   background: rgba(18, 24, 34, 0.8) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
@@ -423,7 +597,8 @@ body.radio-doctor-shell.dark-mode .fi,
 body.radio-doctor-shell.dark-mode .ta,
 body.radio-doctor-shell.dark-mode .btn-s,
 body.radio-doctor-shell.dark-mode .prt,
-body.radio-doctor-shell.dark-mode .kpi {
+body.radio-doctor-shell.dark-mode .kpi,
+body.radio-doctor-shell.dark-mode .qa-card {
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
@@ -435,6 +610,20 @@ body.radio-doctor-shell.dark-mode .t2tab.active {
 }
 
 @media (max-width: 1024px) {
+  body.radio-doctor-shell .radio-doctor-overview {
+    flex-direction: column;
+  }
+
+  body.radio-doctor-shell .radio-overview-side {
+    width: 100%;
+  }
+
+  body.radio-doctor-shell .radio-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
   body.radio-doctor-shell .srow {
     flex-direction: column;
     align-items: stretch;
@@ -459,10 +648,23 @@ body.radio-doctor-shell.dark-mode .t2tab.active {
     padding: 12px;
   }
 
+  body.radio-doctor-shell .radio-quick-actions,
   body.radio-doctor-shell .viewer-quickbar,
   body.radio-doctor-shell .fg,
   body.radio-doctor-shell .fg3,
   body.radio-doctor-shell .fg4 {
     grid-template-columns: 1fr !important;
+  }
+
+  body.radio-doctor-shell .radio-queue-note {
+    flex-direction: column;
+  }
+
+  body.radio-doctor-shell .qa-card {
+    padding: 8px 10px !important;
+  }
+
+  body.radio-doctor-shell .qa-label {
+    font-size: 10px !important;
   }
 }

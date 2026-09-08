@@ -190,16 +190,20 @@
 
         function renderSecondaryNavigation(name) {
             const labels = {
-                overview: ['Dashboard'], request: ['Request policy'], worklist: ['Live queue'],
-                viewer: ['PACS configuration'], report: ['Report writer'], signed: ['Reports and drafts']
+                overview: [{ icon: 'ti-home', label: "Today's imaging queue" }],
+                request: [{ icon: 'ti-shield-lock', label: 'Imaging request workflow' }],
+                worklist: [{ icon: 'ti-list', label: "Today's worklist" }],
+                viewer: [{ icon: 'ti-photo', label: 'Image viewer' }],
+                report: [{ icon: 'ti-pencil', label: 'Report writer' }],
+                signed: [{ icon: 'ti-check', label: 'Radiology reports' }]
             };
             const host = document.getElementById('tb2');
             if (!host) return;
             host.replaceChildren();
-            (labels[name] || []).forEach(function (label) {
+            (labels[name] || []).forEach(function (tab) {
                 const item = document.createElement('div');
                 item.className = 't2tab active';
-                item.textContent = label;
+                item.innerHTML = '<i class="ti ' + tab.icon + '"></i>' + tab.label;
                 host.appendChild(item);
             });
         }
@@ -278,7 +282,7 @@
                 const cell = document.createElement('td');
                 cell.colSpan = 6;
                 cell.style.cssText = 'text-align:center;padding:28px;color:var(--t3)';
-                cell.textContent = radiologyState.error ? 'Radiology queue unavailable. Check Firebase permissions and connection.' : 'No active imaging requests.';
+                cell.textContent = radiologyState.error ? 'Radiology queue is unavailable. Check Common Server permissions and connection.' : 'No imaging requests are waiting right now.';
                 row.appendChild(cell); body.appendChild(row); return;
             }
             announceStudyCount();
@@ -295,11 +299,11 @@
                 ];
                 cells.forEach(function (content) { const cell = document.createElement('td'); cell.textContent = content; row.appendChild(cell); });
                 const actions = document.createElement('td'); actions.style.whiteSpace = 'nowrap';
-                if (state === 'pending') actions.appendChild(button('Start study', 'btn-s', function () { transitionOrder(order.id, 'start'); }));
-                if (state === 'in-progress') actions.appendChild(button('Mark acquired', 'btn-p', function () { transitionOrder(order.id, 'acquire'); }));
-                if (state === 'acquired' || state === 'reporting') actions.appendChild(button(state === 'reporting' ? 'Continue report' : 'Write report', 'btn-p', function () { openReportFor(order); }));
-                actions.appendChild(button('Images', 'btn-s', function () { openMediaSheet(order); }));
-                actions.appendChild(button('Cancel', 'btn-s', function () { transitionOrder(order.id, 'cancel'); }));
+                if (state === 'pending') actions.appendChild(button('Start Study', 'btn-s', function () { transitionOrder(order.id, 'start'); }));
+                if (state === 'in-progress') actions.appendChild(button('Complete Acquisition', 'btn-p', function () { transitionOrder(order.id, 'acquire'); }));
+                if (state === 'acquired' || state === 'reporting') actions.appendChild(button(state === 'reporting' ? 'Continue Report' : 'Open Report Writer', 'btn-p', function () { openReportFor(order); }));
+                actions.appendChild(button('Study Images', 'btn-s', function () { openMediaSheet(order); }));
+                actions.appendChild(button('Cancel Study', 'btn-s', function () { transitionOrder(order.id, 'cancel'); }));
                 row.appendChild(actions);
                 // Selecting a study IS selecting its patient: the bar used to update
                 // only from the picker, so it could sit on "No patient selected" while
@@ -358,7 +362,7 @@
             }
             const state = stateOf(order);
             if (!['acquired', 'reporting', 'reported'].includes(state)) {
-                notify('Complete image acquisition before writing the report.', 'warning'); return;
+                notify('Complete image acquisition before opening the report writer.', 'warning'); return;
             }
             setActivePatient(patient);   // identification bar first …
             currentOrder = order;         // … then the study that belongs to it
@@ -509,7 +513,7 @@
             const orders = radiologyState.orders.slice(0, 8);
             if (!orders.length) {
                 const row = document.createElement('tr'); const cell = document.createElement('td'); cell.colSpan = 7;
-                cell.style.cssText = 'text-align:center;padding:20px;color:var(--t3)'; cell.textContent = 'No imaging requests yet.';
+                cell.style.cssText = 'text-align:center;padding:20px;color:var(--t3)'; cell.textContent = 'No imaging activity has been recorded yet today.';
                 row.appendChild(cell); body.appendChild(row); return;
             }
             orders.forEach(function (order) {
@@ -521,7 +525,7 @@
                 row.addEventListener('click', function () {
                     const state = stateOf(order);
                     if (state === 'acquired' || state === 'reporting' || state === 'reported') openReportFor(order);
-                    else notify('Use the worklist actions to progress this study.', 'info');
+                    else notify("Open this study from Today's worklist to continue the workflow.", 'info');
                 });
                 body.appendChild(row);
             });
@@ -533,7 +537,7 @@
             body.replaceChildren();
             if (!radiologyState.reports.length) {
                 const row = document.createElement('tr'); const cell = document.createElement('td'); cell.colSpan = 8;
-                cell.style.cssText = 'text-align:center;padding:20px;color:var(--t3)'; cell.textContent = 'No radiology reports have been saved.';
+                cell.style.cssText = 'text-align:center;padding:20px;color:var(--t3)'; cell.textContent = 'No radiology reports are ready yet. Signed reports remain available in the patient record.';
                 row.appendChild(cell); body.appendChild(row); return;
             }
             radiologyState.reports.forEach(function (report) {
@@ -564,11 +568,11 @@
             const draftCount = radiologyState.reports.filter(function (report) { return report.status === 'draft'; }).length;
             const unacknowledgedCritical = radiologyState.alerts.filter(function (alert) { return alert.acknowledged !== true; });
             const studiesToday = radiologyState.orders.filter(function (order) { return isToday(order.acquisitionStartedAt || order.orderedAt); }).length;
-            text('stStudies', studiesToday); text('stStudiesSub', 'Server-confirmed studies');
-            text('stPending', pending.length); text('stPendingSub', pending.length ? ('Oldest: ' + timeAgo(pending[pending.length - 1].orderedAt)) : 'Queue clear');
-            text('stReported', reportedToday.length); text('stReportedSub', 'Final reports today');
-            text('stCritical', unacknowledgedCritical.length); text('stCriticalSub', unacknowledgedCritical.length ? 'Awaiting clinician acknowledgment' : 'None outstanding');
-            text('stStat', stat.length); text('stStatSub', stat.length ? 'Active STAT queue' : 'None');
+            text('stStudies', studiesToday); text('stStudiesSub', 'Common Server synced');
+            text('stPending', pending.length); text('stPendingSub', pending.length ? ('Oldest request: ' + timeAgo(pending[pending.length - 1].orderedAt)) : 'No studies waiting');
+            text('stReported', reportedToday.length); text('stReportedSub', 'Reports released today');
+            text('stCritical', unacknowledgedCritical.length); text('stCriticalSub', unacknowledgedCritical.length ? 'Direct clinician follow-up pending' : 'No critical follow-up pending');
+            text('stStat', stat.length); text('stStatSub', stat.length ? 'STAT queue active' : 'No STAT studies waiting');
             text('kpiPendingN', pending.length + ' pending'); text('kpiStatN', stat.length + ' STAT');
             text('kpiUnsignedN', draftCount + ' drafts'); text('kpiDoneN', reportedToday.length + ' reported today');
             text('radBarWorkCnt', active.length); text('radBarSignedCnt', draftCount);
@@ -577,7 +581,7 @@
             const workBadge = document.getElementById('radBarWorkCnt'); if (workBadge) workBadge.style.display = 'inline-flex';
             const signedBadge = document.getElementById('radBarSignedCnt'); if (signedBadge) signedBadge.style.display = 'inline-flex';
             const alertBadge = document.getElementById('radBarAlertCnt'); if (alertBadge) alertBadge.style.display = alertCount ? 'inline-flex' : 'none';
-            text('signedAwait', draftCount + ' drafts awaiting signature');
+            text('signedAwait', draftCount + ' drafts awaiting release');
         }
 
         function syncActionBarContext() {
@@ -602,7 +606,7 @@
         }
 
         function fillRequestDefaults() {
-            text('reqPolicyPatient', currentPatient ? nameOf(currentPatient) + ' — MRN ' + String(currentPatient.mrn || currentPatient.id) : 'No patient selected');
+            text('reqPolicyPatient', currentPatient ? nameOf(currentPatient) + ' — MRN ' + String(currentPatient.mrn || currentPatient.id) : 'Select patient from the identification bar');
         }
 
         function setStaffChip() {
@@ -636,6 +640,84 @@
                 return;
             }
             printReportFile(currentReport.id);
+        };
+
+        window.radioRefreshWorkspace = function () {
+            renderAll();
+            syncActionBarContext();
+            notify('Radiology workspace refreshed.', 'success');
+        };
+
+        function newestActionableOrderFor(patient) {
+            return openOrdersForPatient(patient).find(function (order) {
+                return ['acquired', 'reporting', 'reported', 'in-progress', 'pending'].includes(stateOf(order));
+            }) || null;
+        }
+
+        function newestReportReadyOrderFor(patient) {
+            return openOrdersForPatient(patient).find(function (order) {
+                return ['acquired', 'reporting', 'reported'].includes(stateOf(order));
+            }) || null;
+        }
+
+        window.radioQuickAction = function (action) {
+            if (action === 'select') {
+                window.radioSelectPatient();
+                return;
+            }
+            if (action === 'request') {
+                window.radioNav('request');
+                return;
+            }
+            if (action === 'worklist') {
+                window.radioNav('worklist');
+                return;
+            }
+            if (action === 'reports') {
+                window.radioNav('signed');
+                return;
+            }
+            if (action === 'alerts') {
+                window.openModal('alerts');
+                return;
+            }
+            if (action === 'print') {
+                window.radioPrint();
+                return;
+            }
+            if (action === 'help') {
+                window.openShortcuts();
+                return;
+            }
+            if (action === 'settings') {
+                window.radioOpenSettings();
+                return;
+            }
+            if (!currentPatient) {
+                notify('Select patient first from the identification bar.', 'warning');
+                window.radioSelectPatient();
+                return;
+            }
+            if (action === 'viewer') {
+                var viewerOrder = currentOrder || newestActionableOrderFor(currentPatient);
+                if (viewerOrder) {
+                    selectStudy(viewerOrder);
+                    openMediaSheet(viewerOrder, currentPatient);
+                    return;
+                }
+                window.dispatchEvent(new CustomEvent('pcRadioOpenViewer', { detail: { patient: currentPatient } }));
+                return;
+            }
+            if (action === 'report') {
+                var reportOrder = currentOrder || newestReportReadyOrderFor(currentPatient);
+                if (!reportOrder) {
+                    notify("Open an acquired study from Today's worklist first.", 'warning');
+                    window.radioNav('worklist');
+                    return;
+                }
+                selectStudy(reportOrder);
+                openReportFor(reportOrder);
+            }
         };
 
         window.radioSelectPatient = function () {
@@ -898,7 +980,7 @@
                     renderAll();
                 });
                 switchView(document.querySelector('#dcBar [data-rad-view="overview"]'), 'overview');
-                notify('Radiology dashboard connected to the secure Common Server.', 'success');
+                notify('Radiology workspace connected to the secure Common Server.', 'success');
             }).catch(function (error) {
                 console.warn('Radiology authentication failed:', error && error.message);
             });
