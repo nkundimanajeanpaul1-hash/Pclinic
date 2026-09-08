@@ -4093,9 +4093,11 @@
         }
 
 </style>
-    <script src="pclinic-file.js?v=20260827_FILES" defer></script>
+    <link rel="stylesheet" href="lab-dashboard-doctor.css?v=20260908_LABDOCTORPARITY2FULL">
+    <script src="pclinic-file.js?v=20260908_FILES_NURSEACTIONBAR" defer></script>
+    <script src="lab-dashboard-fixes.js?v=20260908_LABDOCTORPARITY2FULL" defer></script>
 </head>
-<body>
+<body class="lab-doctor-shell">
     <div class="lab-ambient-backdrop" aria-hidden="true">
         <div class="lab-orb orb-a"></div>
         <div class="lab-orb orb-b"></div>
@@ -4103,6 +4105,8 @@
         <div class="lab-mesh"></div>
         <div class="lab-noise"></div>
     </div>
+
+    <div id="pcMasterHeader" class="pc-master-header"></div>
 
     <!-- ═══ TOPBAR ═══ -->
     <div class="topbar" style="display: none !important;">
@@ -4136,7 +4140,7 @@
     </div>
 
     <!-- ─── POLISH: BREADCRUMB ─── -->
-    <div class="breadcrumb" id="breadcrumb" style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="breadcrumb" id="breadcrumb" style="display:none !important;justify-content:space-between;align-items:center;">
         <div>
             <a href="hub">🏥 Hub</a>
             <span class="separator">›</span>
