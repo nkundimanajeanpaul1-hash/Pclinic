@@ -90,6 +90,71 @@
     if (search) search.setAttribute('placeholder', 'Search patient by name or MRN…');
   }
 
+  function notify(message, tone) {
+    if (typeof window.showToast === 'function') {
+      window.showToast(message, tone || 'info');
+      return;
+    }
+    try { window.alert(message); } catch (e) {}
+  }
+
+  function openLabTab(name) {
+    var btn = document.querySelector('.nav-tab[data-tab="' + name + '"]');
+    if (btn && typeof window.switchTab === 'function') {
+      window.switchTab(name, btn);
+      return true;
+    }
+    return false;
+  }
+
+  function focusLabSearch() {
+    var search = byId('searchInput');
+    if (!search) return false;
+    try {
+      search.focus();
+      if (typeof search.select === 'function') search.select();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function refreshLabQueue() {
+    if (window.pcLabEngine && typeof window.pcLabEngine.repaint === 'function') {
+      window.pcLabEngine.repaint();
+    }
+    queueDoctorParityClasses();
+    queueSharedLabHeaderSync();
+  }
+
+  function labQuickAction(action) {
+    if (action === 'select') {
+      if (focusLabSearch()) notify('Search patient by name or MRN, or use the patient identification bar above.', 'info');
+      else notify('Use the patient identification bar above to select a patient first.', 'info');
+      return;
+    }
+    if (action === 'refresh') {
+      refreshLabQueue();
+      notify('🔄 Laboratory queue refreshed', 'info');
+      return;
+    }
+    var map = {
+      overview: 'overview',
+      specimen: 'specimen',
+      worklist: 'worklist',
+      results: 'results',
+      pathology: 'pathology',
+      microbio: 'microbio',
+      bloodbank: 'bloodbank',
+      qc: 'qc',
+      reports: 'reports'
+    };
+    if (map[action]) {
+      if (!openLabTab(map[action])) notify('The laboratory workspace is still loading.', 'warning');
+      return;
+    }
+  }
+
   function tag(el, className) {
     if (!el || !className) return;
     String(className).split(/\s+/).filter(Boolean).forEach(function (name) { el.classList.add(name); });
@@ -215,4 +280,9 @@
 
   window.applyDoctorParityClasses = applyDoctorParityClasses;
   window.ensureSharedLabHeader = ensureSharedLabHeader;
+  window.labQuickAction = labQuickAction;
+  window.labRefreshOverviewQueue = function () {
+    refreshLabQueue();
+    notify('🔄 Laboratory queue refreshed', 'info');
+  };
 })();

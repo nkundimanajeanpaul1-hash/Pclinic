@@ -226,6 +226,50 @@ body.lab-doctor-shell #searchInput::placeholder {
   opacity: 0.65;
 }
 
+body.lab-doctor-shell .lab-top-quick-actions {
+  display: block !important;
+  margin: 8px 16px 0 16px;
+  padding: 14px 16px 16px;
+  background: rgba(255,255,255,0.72) !important;
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  border: 0.5px solid rgba(255,255,255,0.30) !important;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03);
+}
+
+body.lab-doctor-shell .lab-top-quick-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+body.lab-doctor-shell .lab-top-quick-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--tp);
+  letter-spacing: -0.01em;
+}
+
+body.lab-doctor-shell .lab-top-quick-subtitle {
+  font-size: 11px;
+  color: var(--tm);
+}
+
+body.lab-doctor-shell .lab-top-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+body.lab-doctor-shell .lab-top-quick-grid .qa-card {
+  min-height: 92px;
+  justify-content: center;
+  padding: 10px 12px !important;
+}
+
 body.lab-doctor-shell .kpis {
   display: flex;
   align-items: center;
@@ -282,6 +326,139 @@ body.lab-doctor-shell .main-panel {
 body.lab-doctor-shell .panel-body,
 body.lab-doctor-shell .mp-body {
   padding: 0 !important;
+}
+
+body.lab-doctor-shell .lab-doctor-overview {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+body.lab-doctor-shell .lab-overview-main {
+  flex: 1;
+  min-width: 0;
+}
+
+body.lab-doctor-shell .lab-overview-side {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+body.lab-doctor-shell .lab-overview-queue-card,
+body.lab-doctor-shell .lab-overview-quick-card {
+  background: rgba(255,255,255,0.74) !important;
+  backdrop-filter: saturate(180%) blur(18px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(18px) !important;
+  border: 0.5px solid rgba(255,255,255,0.30) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03) !important;
+  height: 100%;
+}
+
+body.lab-doctor-shell .lab-overview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 12px;
+}
+
+body.lab-doctor-shell .lab-overview-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tp);
+  margin-bottom: 2px;
+  letter-spacing: -0.02em;
+}
+
+body.lab-doctor-shell .lab-overview-subtitle {
+  font-size: 12px;
+  color: var(--tm);
+}
+
+body.lab-doctor-shell .lab-overview-table-wrap {
+  padding: 0 0 8px;
+  overflow-x: auto;
+}
+
+body.lab-doctor-shell .lab-overview-note {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 0 18px 18px;
+  color: var(--tm);
+  font-size: 11px;
+}
+
+body.lab-doctor-shell .lab-overview-note span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.lab-doctor-shell .lab-overview-note i {
+  color: var(--ac);
+}
+
+body.lab-doctor-shell .lab-overview-quick-head {
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--tp);
+  padding: 16px 16px 10px;
+}
+
+body.lab-doctor-shell .lab-overview-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 14px 14px;
+}
+
+body.lab-doctor-shell .qa-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+body.lab-doctor-shell .qa-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08) !important;
+  background: rgba(255,255,255,0.9) !important;
+}
+
+body.lab-doctor-shell .qa-card:active {
+  transform: scale(0.95);
+}
+
+body.lab-doctor-shell .qa-ic {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+body.lab-doctor-shell .qa-ic i {
+  font-size: 16px;
+}
+
+body.lab-doctor-shell .qa-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tp);
+  line-height: 1.3;
+}
+
+body.lab-doctor-shell .qa-desc {
+  font-size: 10px;
+  color: var(--tm);
 }
 
 body.lab-doctor-shell #panel-overview .panel-body > div:first-child,
@@ -976,6 +1153,28 @@ body.lab-doctor-shell .specimen-ordered-tests > * {
 }
 
 @media (max-width: 900px) {
+  body.lab-doctor-shell .lab-top-quick-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body.lab-doctor-shell .lab-doctor-overview {
+    flex-direction: column;
+  }
+
+  body.lab-doctor-shell .lab-overview-side {
+    width: 100%;
+  }
+
+  body.lab-doctor-shell .lab-overview-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  body.lab-doctor-shell .lab-overview-note {
+    flex-direction: column;
+  }
+
   body.lab-doctor-shell .lab-doctor-form-grid,
   body.lab-doctor-shell .fg,
   body.lab-doctor-shell .reports-stats {
@@ -989,5 +1188,33 @@ body.lab-doctor-shell .specimen-ordered-tests > * {
   body.lab-doctor-shell .lab-doctor-panel-actions,
   body.lab-doctor-shell .panel-actions {
     justify-content: stretch;
+  }
+}
+
+@media (max-width: 640px) {
+  body.lab-doctor-shell .lab-top-quick-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  body.lab-doctor-shell .lab-top-quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.lab-doctor-shell .lab-overview-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.lab-doctor-shell .lab-overview-quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  body.lab-doctor-shell .qa-card {
+    padding: 8px 10px !important;
+  }
+
+  body.lab-doctor-shell .qa-label {
+    font-size: 10px !important;
   }
 }
