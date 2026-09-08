@@ -226,50 +226,6 @@ body.lab-doctor-shell #searchInput::placeholder {
   opacity: 0.65;
 }
 
-body.lab-doctor-shell .lab-top-quick-actions {
-  display: block !important;
-  margin: 8px 16px 0 16px;
-  padding: 14px 16px 16px;
-  background: rgba(255,255,255,0.72) !important;
-  backdrop-filter: saturate(180%) blur(18px);
-  -webkit-backdrop-filter: saturate(180%) blur(18px);
-  border: 0.5px solid rgba(255,255,255,0.30) !important;
-  border-radius: 16px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03);
-}
-
-body.lab-doctor-shell .lab-top-quick-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-body.lab-doctor-shell .lab-top-quick-title {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--tp);
-  letter-spacing: -0.01em;
-}
-
-body.lab-doctor-shell .lab-top-quick-subtitle {
-  font-size: 11px;
-  color: var(--tm);
-}
-
-body.lab-doctor-shell .lab-top-quick-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-}
-
-body.lab-doctor-shell .lab-top-quick-grid .qa-card {
-  min-height: 92px;
-  justify-content: center;
-  padding: 10px 12px !important;
-}
-
 body.lab-doctor-shell .kpis {
   display: flex;
   align-items: center;
@@ -1153,10 +1109,6 @@ body.lab-doctor-shell .specimen-ordered-tests > * {
 }
 
 @media (max-width: 900px) {
-  body.lab-doctor-shell .lab-top-quick-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   body.lab-doctor-shell .lab-doctor-overview {
     flex-direction: column;
   }
@@ -1192,15 +1144,6 @@ body.lab-doctor-shell .specimen-ordered-tests > * {
 }
 
 @media (max-width: 640px) {
-  body.lab-doctor-shell .lab-top-quick-head {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  body.lab-doctor-shell .lab-top-quick-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   body.lab-doctor-shell .lab-overview-head {
     flex-direction: column;
     align-items: stretch;

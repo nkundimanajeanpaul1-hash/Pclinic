@@ -10,7 +10,7 @@ const CSS = readFileSync(resolve(ROOT, 'lab-dashboard-doctor.css'), 'utf8');
 const FIX = readFileSync(resolve(ROOT, 'lab-dashboard-fixes.js'), 'utf8');
 
 test('lab dashboard now loads the doctor-style skin and lab parity fix layer while keeping lab auth', () => {
-  assert.match(HTML, /lab-dashboard-doctor\.css\?v=20260908_LABDOCTORPARITY4VISIBLEQA/);
+  assert.match(HTML, /lab-dashboard-doctor\.css\?v=20260908_LABDOCTORPARITY5SMALLQAONLY/);
   assert.match(HTML, /pclinic-file\.js\?v=20260908_FILES_NURSEACTIONBAR/);
   assert.match(HTML, /lab-dashboard-fixes\.js\?v=20260908_LABDOCTORPARITY4VISIBLEQA/);
   assert.match(HTML, /<body class="lab-doctor-shell">/);
@@ -20,8 +20,6 @@ test('lab dashboard now loads the doctor-style skin and lab parity fix layer whi
   assert.match(HTML, /pclinic-worklist\.js/);
   assert.match(HTML, /pclinic-lab\.js/);
   assert.match(HTML, /pclinic-lab-live\.js/);
-  assert.match(HTML, /lab-top-quick-actions/);
-  assert.match(HTML, /lab-top-quick-grid/);
   assert.match(HTML, /lab-doctor-overview/);
   assert.match(HTML, /lab-overview-quick-actions/);
   assert.match(HTML, /onclick="labQuickAction\('specimen'\)"/);
@@ -38,8 +36,6 @@ test('lab dashboard hides its legacy hero chrome and adopts the doctor dashboard
   assert.match(CSS, /body\.lab-doctor-shell \.nav-tab \{/);
   assert.match(CSS, /body\.lab-doctor-shell \.sub-nav \{/);
   assert.match(CSS, /body\.lab-doctor-shell \.search-row \{/);
-  assert.match(CSS, /body\.lab-doctor-shell \.lab-top-quick-actions \{/);
-  assert.match(CSS, /body\.lab-doctor-shell \.lab-top-quick-grid \{/);
   assert.match(CSS, /body\.lab-doctor-shell \.kpi \{/);
   assert.match(CSS, /body\.lab-doctor-shell \.main-panel \{/);
   assert.match(CSS, /body\.lab-doctor-shell \.glass-panel,/);
@@ -78,8 +74,6 @@ test('lab dashboard wording now follows the cleaner doctor-dashboard tone and in
     'Send Report Update',
     'No reports waiting right now. Verified results remain available in the patient record.',
     '⚡ Quick Actions',
-    'Open the same laboratory workflows faster',
-    'Use search or shared bar',
     'Focus search and shared bar',
     'Receive and accession',
     'Enter and validate results',
