@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radiology • PClinic Teaching Hospital</title>
+    <title>Radiology Dashboard • PClinic</title>
     
     <!-- ═══ SHARED STYLES ═══ -->
     <link rel="stylesheet" href="styles.css" />
@@ -1339,16 +1339,19 @@
     <link rel="stylesheet" href="pclinic-ios26.css?v=20260831_IOS26" />
     <!-- ═══ DICOM VIEWER (shared with doctor image-results page) ═══ -->
     <link rel="stylesheet" href="pclinic-dicom-viewer.css?v=20260906_STATUSROW" />
-    <script src="pclinic-file.js?v=20260902_DICOMONLY" defer></script>
+    <link rel="stylesheet" href="radio-dashboard-doctor.css?v=20260908_RADIODOCTORPARITY1" />
+    <script src="pclinic-file.js?v=20260908_FILES_NURSEACTIONBAR" defer></script>
     <script src="pclinic-dicom-viewer.js?v=20260906_STATUSROW" defer></script>
 </head>
-<body>
+<body class="radio-doctor-shell">
 
     <!-- ═══ LOADING OVERLAY ═══ -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
         <div class="loading-text">Loading radiology data…</div>
     </div>
+
+    <div id="pcMasterHeader" class="pc-master-header"></div>
 
     <div class="app" id="app">
 
@@ -1412,30 +1415,30 @@
                 <div class="ov-grid">
                     <div class="ov-c" onclick="switchView(document.querySelector('[onclick*=\\'request\\']'),'request')">
                         <div class="ov-ic" style="background:var(--rad-bg)"><i class="ti ti-file-plus" style="color:var(--rad)"></i></div>
-                        <div class="ov-lbl">New imaging request</div>
-                        <div class="ov-d">Choose modality and study</div>
+                        <div class="ov-lbl">Request policy</div>
+                        <div class="ov-d">How imaging orders reach radiology</div>
                     </div>
                     <div class="ov-c" onclick="switchView(document.querySelector('[onclick*=\\'worklist\\']'),'worklist')">
                         <div class="ov-ic" style="background:var(--blue-bg)"><i class="ti ti-list" style="color:var(--blue)"></i></div>
-                        <div class="ov-lbl">View worklist</div>
-                        <div class="ov-d">All pending studies</div>
+                        <div class="ov-lbl">Today's worklist</div>
+                        <div class="ov-d">Open and review active studies</div>
                     </div>
                     <div class="ov-c" onclick="switchView(document.querySelector('[onclick*=\\'viewer\\']'),'viewer')">
                         <div class="ov-ic" style="background:var(--purple-bg)"><i class="ti ti-photo" style="color:var(--purple)"></i></div>
-                        <div class="ov-lbl">Open image viewer</div>
-                        <div class="ov-d">Scroll MRI/CT, play cine US</div>
+                        <div class="ov-lbl">Image viewer</div>
+                        <div class="ov-d">Open local files and study images</div>
                     </div>
                     <div class="ov-c" onclick="switchView(document.querySelector('[onclick*=\\'report\\']'),'report')">
                         <div class="ov-ic" style="background:var(--green-bg)"><i class="ti ti-pencil" style="color:var(--green)"></i></div>
-                        <div class="ov-lbl">Write report</div>
-                        <div class="ov-d">Findings and impression</div>
+                        <div class="ov-lbl">Report writer</div>
+                        <div class="ov-d">Document findings and impression</div>
                     </div>
                 </div>
 
                 <div class="panel">
                     <div class="ph">
-                        <span class="ph-l">Recent studies</span>
-                        <span style="font-size:11px;color:var(--t4)">Last 2 hours</span>
+                        <span class="ph-l">Today's imaging queue</span>
+                        <span style="font-size:11px;color:var(--t4)">Latest activity</span>
                     </div>
                     <table class="tbl">
                         <thead><tr><th style="width:12%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Modality</th><th style="width:16%">Study</th><th style="width:10%">Time</th><th style="width:10%">Priority</th><th style="width:18%">Status</th></tr></thead>
@@ -1447,14 +1450,14 @@
             <!-- ===== VIEW: REQUEST POLICY ===== -->
             <div id="v-request" style="display:none">
                 <div class="panel">
-                    <div class="ph"><span class="ph-l"><i class="ti ti-shield-lock"></i> Imaging request policy</span><span class="badge b-org">Restricted workflow</span></div>
+                    <div class="ph"><span class="ph-l"><i class="ti ti-shield-lock"></i> Imaging request workflow</span><span class="badge b-org">Shared clinical workflow</span></div>
                     <div class="pb">
                         <div style="max-width:760px;margin:16px auto;padding:22px;border:1px solid #f0ad4e;border-radius:16px;background:#fff7e6;color:#8a5a00;">
-                            <div style="font-size:17px;font-weight:800;margin-bottom:8px;">Radiology receives and processes approved imaging orders</div>
-                            <p style="font-size:13px;line-height:1.55;margin:0;">Imaging requests must be created by an authorized doctor, nurse or reception workflow. Radiology staff start acquisition, complete the study, write the report and finalise it through the secure worklist.</p>
+                            <div style="font-size:17px;font-weight:800;margin-bottom:8px;">Radiology receives approved imaging orders</div>
+                            <p style="font-size:13px;line-height:1.55;margin:0;">Imaging requests are created in the shared clinical workflow, then radiology staff acquire the study, review images, write the report and finalise it through the secure worklist.</p>
                             <div style="margin-top:14px;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,.72);font-size:12px;"><b>Selected patient:</b> <span id="reqPolicyPatient">No patient selected</span></div>
                             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px;">
-                                <button type="button" class="btn-p" onclick="radioNav('worklist')"><i class="ti ti-list"></i> Open worklist</button>
+                                <button type="button" class="btn-p" onclick="radioNav('worklist')"><i class="ti ti-list"></i> Open Today's Worklist</button>
                                 <button type="button" class="btn-s" onclick="radioSelectPatient()"><i class="ti ti-user-search"></i> Select patient</button>
                             </div>
                         </div>
@@ -1466,7 +1469,7 @@
             <div id="v-worklist" style="display:none">
                 <div class="panel">
                     <div class="ph">
-                        <span class="ph-l"><i class="ti ti-list"></i> Radiology worklist</span>
+                        <span class="ph-l"><i class="ti ti-list"></i> Today's worklist</span>
                         <div class="ph-r">
                             <select class="fi" style="width:auto" id="worklistModality" onchange="filterWorklist()">
                                 <option value="all">All modalities</option>
@@ -1518,8 +1521,8 @@
                             <button type="button" class="viewer-quick-btn" id="viewerBackToWorklistBtn">
                                 <i class="ti ti-layout-list"></i>
                                 <span>
-                                    <strong>Back to worklist</strong>
-                                    <small>Return to the Radiology queue and report workflow.</small>
+                                    <strong>Back to Today's worklist</strong>
+                                    <small>Return to the radiology queue and reporting workflow.</small>
                                 </span>
                             </button>
                         </div>
@@ -1537,7 +1540,7 @@
             <div id="v-report" style="display:none">
                 <div class="panel">
                     <div class="ph">
-                        <span class="ph-l"><i class="ti ti-pencil"></i> Report writer — <span id="rptHead">select a study</span></span>
+                        <span class="ph-l"><i class="ti ti-pencil"></i> Report writer — <span id="rptHead">Select study</span></span>
                         <div class="ph-r">
                             <span class="badge b-red">STAT</span>
                             <button class="prt" onclick="generatePDF()"><i class="ti ti-file-pdf"></i>Generate PDF</button>
@@ -1579,12 +1582,12 @@
                             </div>
                         </div>
                         <div class="fa">
-                            <button class="btn-p" onclick="signReport()"><i class="ti ti-pen"></i> Sign and finalise report</button>
+                            <button class="btn-p" onclick="signReport()"><i class="ti ti-pen"></i> Sign &amp; Release Report</button>
                             <button class="btn-s" onclick="saveReport(true)"><i class="ti ti-device-floppy"></i> Save draft</button>
                             <button class="prt" onclick="generatePDF()"><i class="ti ti-file-pdf"></i>Generate PDF</button>
                         </div>
                         <div style="margin-top:8px;font-size:11px;color:var(--t4);display:flex;align-items:center;gap:5px">
-                            <i class="ti ti-upload"></i>Once signed, the report is saved to the Common Server and the referring clinician is notified on the doctor dashboard.
+                            <i class="ti ti-upload"></i>Once signed, the report is saved to the Common Server and the referring clinician is notified in the shared clinical workflow.
                         </div>
                     </div>
                 </div>
@@ -1594,7 +1597,7 @@
             <div id="v-signed" style="display:none">
                 <div class="panel">
                     <div class="ph">
-                        <span class="ph-l"><i class="ti ti-check"></i> Signed reports — release and print</span>
+                        <span class="ph-l"><i class="ti ti-check"></i> Radiology reports</span>
                         <span style="font-size:11px;background:var(--red-bg);color:var(--red-t);padding:2px 8px;border-radius:10px;font-weight:600" id="signedAwait">0 awaiting signature</span>
                     </div>
                     <table class="tbl">
@@ -1650,7 +1653,7 @@
     <script src="shared.js" defer></script>
 
     <script src="radio-dashboard.js?v=20260902_WORKSTATION" defer></script>
-
+    <script src="radio-dashboard-fixes.js?v=20260908_RADIODOCTORPARITY1" defer></script>
 
     <!-- ═══ PATIENT GATE LOCK (radiology views) ═══ -->
     <div id="gateLock" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(245,245,247,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);align-items:center;justify-content:center;padding:20px;">

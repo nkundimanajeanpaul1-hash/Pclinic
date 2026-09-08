@@ -1,0 +1,468 @@
+body.radio-doctor-shell {
+  background: var(--g0);
+  color: var(--t1);
+  background-image:
+    radial-gradient(circle at 18% 24%, rgba(0, 85, 204, 0.05) 0%, transparent 42%),
+    radial-gradient(circle at 82% 18%, rgba(58, 77, 143, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 72% 78%, rgba(26, 127, 55, 0.04) 0%, transparent 36%);
+}
+
+body.radio-doctor-shell #pcMasterHeader,
+body.radio-doctor-shell #pcMasterHeader.pc-master-header {
+  position: relative;
+  z-index: 50;
+}
+
+body.radio-doctor-shell .app {
+  background: transparent;
+}
+
+body.radio-doctor-shell .breadcrumb {
+  display: none !important;
+}
+
+body.radio-doctor-shell #tb2 {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  margin: 8px 16px 0;
+  min-height: 52px;
+  height: auto;
+  background: rgba(255, 255, 255, 0.7) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.32) !important;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04), 0 10px 28px rgba(0, 0, 0, 0.03);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  overflow-x: auto;
+}
+
+body.radio-doctor-shell .t2tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--t3);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  border: none;
+  box-shadow: none;
+  transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body.radio-doctor-shell .t2tab i {
+  font-size: 15px;
+  color: inherit;
+}
+
+body.radio-doctor-shell .t2tab:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--t1);
+  transform: translateY(-1px);
+}
+
+body.radio-doctor-shell .t2tab.active {
+  background: rgba(0, 85, 204, 0.1);
+  color: var(--blue);
+  box-shadow: inset 0 0 0 1px rgba(0, 85, 204, 0.12);
+}
+
+body.radio-doctor-shell .srow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  margin: 8px 16px 0;
+  background: rgba(255, 255, 255, 0.68) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.025);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+}
+
+body.radio-doctor-shell .sw {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.54) !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.24s ease;
+}
+
+body.radio-doctor-shell .sw:focus-within {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(0, 85, 204, 0.28) !important;
+  box-shadow: 0 0 0 3px rgba(0, 85, 204, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.radio-doctor-shell .sw i {
+  color: var(--t3);
+}
+
+body.radio-doctor-shell #globalSearch {
+  width: 100%;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  color: var(--t1) !important;
+  font-size: 13px !important;
+  box-shadow: none !important;
+}
+
+body.radio-doctor-shell #globalSearch::placeholder {
+  color: var(--t3) !important;
+  opacity: 0.7;
+}
+
+body.radio-doctor-shell .kpis {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+body.radio-doctor-shell .kpi {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76) !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t1) !important;
+  transition: all 0.2s ease;
+}
+
+body.radio-doctor-shell .kpi:hover {
+  background: rgba(255, 255, 255, 0.92) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow) !important;
+}
+
+body.radio-doctor-shell .body {
+  flex: 1;
+  padding: 16px;
+  background: transparent;
+}
+
+body.radio-doctor-shell #v-overview,
+body.radio-doctor-shell #v-request,
+body.radio-doctor-shell #v-worklist,
+body.radio-doctor-shell #v-viewer,
+body.radio-doctor-shell #v-report,
+body.radio-doctor-shell #v-signed {
+  width: 100%;
+}
+
+body.radio-doctor-shell .stat-row,
+body.radio-doctor-shell .ov-grid {
+  gap: 16px;
+}
+
+body.radio-doctor-shell .sc,
+body.radio-doctor-shell .ov-c,
+body.radio-doctor-shell .panel,
+body.radio-doctor-shell .viewer-quick-btn,
+body.radio-doctor-shell .modal,
+body.radio-doctor-shell .shortcuts-card {
+  background: rgba(255, 255, 255, 0.78) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.34) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 14px 36px rgba(0, 0, 0, 0.04) !important;
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+}
+
+body.radio-doctor-shell .sc,
+body.radio-doctor-shell .ov-c,
+body.radio-doctor-shell .panel,
+body.radio-doctor-shell .viewer-quick-btn {
+  border-radius: 18px !important;
+}
+
+body.radio-doctor-shell .sc {
+  padding: 18px 18px 16px !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.radio-doctor-shell .sc:hover,
+body.radio-doctor-shell .ov-c:hover,
+body.radio-doctor-shell .panel:hover,
+body.radio-doctor-shell .viewer-quick-btn:hover {
+  transform: translateY(-2px);
+}
+
+body.radio-doctor-shell .sc-ic,
+body.radio-doctor-shell .ov-ic {
+  border-radius: 14px !important;
+}
+
+body.radio-doctor-shell .sc-lbl,
+body.radio-doctor-shell .ov-lbl {
+  color: var(--t2) !important;
+  font-weight: 700 !important;
+}
+
+body.radio-doctor-shell .sc-val {
+  font-size: 28px !important;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+body.radio-doctor-shell .sc-sub,
+body.radio-doctor-shell .ov-d {
+  color: var(--t3) !important;
+}
+
+body.radio-doctor-shell .ph {
+  padding: 14px 18px;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.06) !important;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+body.radio-doctor-shell .ph-l {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+body.radio-doctor-shell .ph-r {
+  gap: 10px;
+}
+
+body.radio-doctor-shell .pb {
+  padding: 18px;
+}
+
+body.radio-doctor-shell .badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: 999px;
+}
+
+body.radio-doctor-shell .tbl {
+  background: transparent;
+}
+
+body.radio-doctor-shell .tbl th {
+  padding: 10px 12px;
+  color: var(--t4);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+body.radio-doctor-shell .tbl td {
+  padding: 12px;
+  color: var(--t1);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+body.radio-doctor-shell .tbl tbody tr:hover {
+  background: rgba(0, 85, 204, 0.03);
+}
+
+body.radio-doctor-shell .lbl,
+body.radio-doctor-shell .sec {
+  letter-spacing: 0.05em;
+}
+
+body.radio-doctor-shell .sec {
+  color: var(--t2);
+  padding-bottom: 7px;
+  margin-bottom: 10px;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+body.radio-doctor-shell .fi,
+body.radio-doctor-shell .ta {
+  background: rgba(255, 255, 255, 0.74) !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 12px !important;
+  min-height: 42px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+body.radio-doctor-shell .ta {
+  min-height: 74px;
+}
+
+body.radio-doctor-shell .fi:focus,
+body.radio-doctor-shell .ta:focus {
+  border-color: rgba(0, 85, 204, 0.28) !important;
+  box-shadow: 0 0 0 3px rgba(0, 85, 204, 0.08) !important;
+}
+
+body.radio-doctor-shell .btn-p,
+body.radio-doctor-shell .btn-s,
+body.radio-doctor-shell .prt {
+  min-height: 40px;
+  border-radius: 12px !important;
+  font-weight: 700;
+}
+
+body.radio-doctor-shell .btn-p {
+  background: linear-gradient(180deg, #1462d8 0%, #0055cc 100%) !important;
+  box-shadow: 0 8px 18px rgba(0, 85, 204, 0.2);
+}
+
+body.radio-doctor-shell .btn-s,
+body.radio-doctor-shell .prt {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+body.radio-doctor-shell .viewer-quickbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+body.radio-doctor-shell .viewer-quick-btn {
+  min-height: 108px;
+  align-items: flex-start;
+}
+
+body.radio-doctor-shell .viewer-quick-btn.primary {
+  background: linear-gradient(180deg, rgba(20, 98, 216, 0.12) 0%, rgba(0, 85, 204, 0.08) 100%) !important;
+  border-color: rgba(0, 85, 204, 0.14) !important;
+}
+
+body.radio-doctor-shell .viewer-quick-btn strong {
+  color: var(--t1);
+}
+
+body.radio-doctor-shell .viewer-quick-btn small {
+  color: var(--t3);
+}
+
+body.radio-doctor-shell .signoff-box {
+  border-radius: 14px !important;
+  border: 1px solid rgba(192, 57, 43, 0.16) !important;
+  box-shadow: 0 8px 18px rgba(192, 57, 43, 0.08);
+}
+
+body.radio-doctor-shell .modal-bg {
+  background: rgba(244, 246, 251, 0.6) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+body.radio-doctor-shell .modal,
+body.radio-doctor-shell .shortcuts-card {
+  border-radius: 22px !important;
+}
+
+body.radio-doctor-shell #gateLock > div {
+  background: rgba(255, 255, 255, 0.84) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.34) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 18px 44px rgba(0, 0, 0, 0.05) !important;
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+}
+
+body.radio-doctor-shell .loading-screen {
+  background: rgba(245, 245, 247, 0.8) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+body.radio-doctor-shell.dark-mode {
+  background-image:
+    radial-gradient(circle at 16% 22%, rgba(82, 140, 255, 0.14) 0%, transparent 40%),
+    radial-gradient(circle at 78% 18%, rgba(115, 132, 255, 0.12) 0%, transparent 38%),
+    linear-gradient(180deg, #0c111a 0%, #0b0f16 100%);
+}
+
+body.radio-doctor-shell.dark-mode #tb2,
+body.radio-doctor-shell.dark-mode .srow,
+body.radio-doctor-shell.dark-mode .sc,
+body.radio-doctor-shell.dark-mode .ov-c,
+body.radio-doctor-shell.dark-mode .panel,
+body.radio-doctor-shell.dark-mode .viewer-quick-btn,
+body.radio-doctor-shell.dark-mode .modal,
+body.radio-doctor-shell.dark-mode .shortcuts-card,
+body.radio-doctor-shell.dark-mode #gateLock > div {
+  background: rgba(18, 24, 34, 0.8) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32) !important;
+}
+
+body.radio-doctor-shell.dark-mode .ph {
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.radio-doctor-shell.dark-mode .tbl th,
+body.radio-doctor-shell.dark-mode .tbl td,
+body.radio-doctor-shell.dark-mode .sec {
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.radio-doctor-shell.dark-mode .sw,
+body.radio-doctor-shell.dark-mode .fi,
+body.radio-doctor-shell.dark-mode .ta,
+body.radio-doctor-shell.dark-mode .btn-s,
+body.radio-doctor-shell.dark-mode .prt,
+body.radio-doctor-shell.dark-mode .kpi {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.radio-doctor-shell.dark-mode .t2tab.active {
+  background: rgba(82, 140, 255, 0.16);
+  color: #9dbbff;
+  box-shadow: inset 0 0 0 1px rgba(130, 170, 255, 0.18);
+}
+
+@media (max-width: 1024px) {
+  body.radio-doctor-shell .srow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.radio-doctor-shell .kpis {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  body.radio-doctor-shell #tb2,
+  body.radio-doctor-shell .srow,
+  body.radio-doctor-shell .body {
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  body.radio-doctor-shell .body {
+    padding: 12px;
+  }
+
+  body.radio-doctor-shell .viewer-quickbar,
+  body.radio-doctor-shell .fg,
+  body.radio-doctor-shell .fg3,
+  body.radio-doctor-shell .fg4 {
+    grid-template-columns: 1fr !important;
+  }
+}
