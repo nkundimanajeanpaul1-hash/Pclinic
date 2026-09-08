@@ -4277,8 +4277,8 @@
             <div class="panel-body show" id="sub-overview-default">
                 <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
                     <div>
-                        <div style="font-size:16px;font-weight:700;color:var(--tp);margin-bottom:2px;">Laboratory dashboard • Active Specimen Worklist</div>
-                        <div style="font-size:12px;color:var(--tm);">One patient appears once only • click the patient, choose a request date, then see all requested labs for that date</div>
+                        <div style="font-size:16px;font-weight:700;color:var(--tp);margin-bottom:2px;">Today's laboratory queue</div>
+                        <div style="font-size:12px;color:var(--tm);">Select one patient, choose the request date, then review all requested tests for that visit.</div>
                     </div>
                     <button class="btn-s" style="font-size:11.5px;display:flex;align-items:center;gap:5px;" onclick="pcLabEngine.repaint(); showToast('🔄 Worklist refreshed', 'info')"><i class="ti ti-refresh" style="font-size:13px;"></i> Refresh Queue</button>
                 </div>
@@ -4297,13 +4297,13 @@
             <div class="panel-body show" id="sub-specimen-form">
                 <div class="specimen-topbar">
                     <div>
-                        <div class="specimen-title">Specimen accessioning</div>
-                        <div class="specimen-subtitle">Select the queued request, confirm tube and condition, then accession professionally.</div>
+                        <div class="specimen-title">Specimen workflow</div>
+                        <div class="specimen-subtitle">Select the patient order, confirm specimen details, then continue the laboratory workflow.</div>
                     </div>
                     <div class="specimen-queue-wrap">
-                        <label class="specimen-queue-label" for="specSmartPatientSelect">Select request from order queue</label>
+                        <label class="specimen-queue-label" for="specSmartPatientSelect">Select patient / order</label>
                         <select id="specSmartPatientSelect" class="fi specimen-queue-select" onchange="pcLabEngine.selectSpecimenPatient(this.value)">
-                            <option value="">Awaiting orders in queue…</option>
+                            <option value="">Choose from the live queue…</option>
                         </select>
                     </div>
                 </div>
@@ -4356,7 +4356,7 @@
                         </div>
                         <div>
                             <div class="specimen-meta-label">Received by</div>
-                            <div id="spec_received_by" class="specimen-received-by">Awaiting authenticated laboratory user…</div>
+                            <div id="spec_received_by" class="specimen-received-by">Awaiting signed-in staff…</div>
                         </div>
                     </div>
 
@@ -4393,7 +4393,7 @@
         <div id="panel-worklist" class="main-panel" style="display:none;">
             <div class="panel-body show" id="sub-worklist-view">
                 <div class="panel-header">
-                    <span class="panel-title">Lab worklist</span>
+                    <span class="panel-title">Today's worklist</span>
                     <div class="panel-actions">
                         <select class="fi" style="width:auto;font-size:11px;">
                             <option>All departments</option><option>Haematology</option><option>Chemistry</option>
@@ -4420,7 +4420,7 @@
         <div id="panel-results" class="main-panel" style="display:none;">
             <div class="panel-body show" id="sub-results-entry">
                 <div class="panel-header">
-                    <span class="panel-title">Completed and verified laboratory results</span>
+                    <span class="panel-title">Lab Results</span>
                     <div class="panel-actions">
                         <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print list</button>
                     </div>
@@ -4437,7 +4437,7 @@
         <div id="panel-pathology" class="main-panel" style="display:none;">
             <div class="panel-body show" id="sub-pathology-form">
                 <div class="panel-header">
-                    <span class="panel-title">Histopathology and cytology</span>
+                    <span class="panel-title">Pathology</span>
                     <div class="panel-actions">
                         <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print report</button>
                     </div>
@@ -4510,12 +4510,12 @@
                 <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:18px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                     <div>
                         <div style="font-size:17px;font-weight:800;color:#0071e3;">🧫 Microbiology • Culture and Sensitivity</div>
-                        <div style="font-size:12px;font-weight:600;color:#64748b;margin-top:2px;">100/100 Look-Alike Editable Repertoire • Live Doctor Dashboard Sync</div>
+                        <div style="font-size:12px;font-weight:600;color:#64748b;margin-top:2px;">Culture workflow • Common Server synced</div>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;">
                         <label style="font-size:12px;font-weight:700;color:#1d1d1f;">Select Culture Order:</label>
                         <select id="micSmartPatientSelect" class="fi" style="height:38px;padding:0 14px;border-radius:10px;font-weight:700;color:#0071e3;background:#eaf2ff;border:0.5px solid rgba(0,113,227,0.3);cursor:pointer;" onchange="pcLabEngine.selectMicrobioPatient(this.value)">
-                            <option value="">Awaiting microbiology cultures…</option>
+                            <option value="">Choose a culture request…</option>
                         </select>
                     </div>
                 </div>
@@ -4569,7 +4569,7 @@
                 <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.04);overflow:hidden;margin-bottom:18px;">
                     <div style="padding:14px 20px;background:#eaf2ff;border-bottom:1.5px solid #0071e3;display:flex;justify-content:space-between;align-items:center;">
                         <span style="font-size:13.5px;font-weight:800;color:#0071e3;">ANTIBIOTIC SUSCEPTIBILITY PROFILE (100/100 EDITABLE REPERTOIRE)</span>
-                        <span id="mic_verified_by" style="font-size:11.5px;font-weight:700;color:#3a3a3c;">Awaiting authenticated laboratory user…</span>
+                        <span id="mic_verified_by" style="font-size:11.5px;font-weight:700;color:#3a3a3c;">Awaiting signed-in staff…</span>
                     </div>
                     <table class="wtbl" style="width:100%;border-collapse:collapse;font-size:13px;">
                         <thead>
@@ -4592,11 +4592,11 @@
                 <!-- Footer Action Bar -->
                 <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                     <div style="font-size:12.5px;color:#64748b;">
-                        <strong>ℹ️ Live Doctor Dashboard Sync:</strong> Saving immediately updates the patient's record and Doctor Dashboard flow sheet.
+                        <strong>ℹ️ Common Server sync:</strong> Saving updates the patient record and shared laboratory result flow immediately.
                     </div>
                     <div style="display:flex;gap:12px;">
-                        <button type="button" onclick="pcLabEngine.printMicrobioReportModal()" style="height:40px;padding:0 20px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.16);background:#f5f5f7;color:#1d1d1f;font-weight:700;font-size:12.5px;cursor:pointer;">🖨️ Print Official MOD C&S Certificate</button>
-                        <button type="button" onclick="pcLabEngine.saveAndReleaseMicrobioReport()" style="height:40px;padding:0 26px;border-radius:10px;border:0;background:#0071e3;color:#fff;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 3px 12px rgba(0,113,227,0.35);">💾 Save & Officially Release C&S Report to Doctor Dashboard</button>
+                        <button type="button" onclick="pcLabEngine.printMicrobioReportModal()" style="height:40px;padding:0 20px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.16);background:#f5f5f7;color:#1d1d1f;font-weight:700;font-size:12.5px;cursor:pointer;">🖨️ Print Culture Report</button>
+                        <button type="button" onclick="pcLabEngine.saveAndReleaseMicrobioReport()" style="height:40px;padding:0 26px;border-radius:10px;border:0;background:#0071e3;color:#fff;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 3px 12px rgba(0,113,227,0.35);">💾 Save & Release Culture Report</button>
                     </div>
                 </div>
             </div>
@@ -4606,7 +4606,7 @@
         <div id="panel-bloodbank" class="main-panel" style="display:none;">
             <div class="panel-body show" id="sub-bloodbank-xmatch">
                 <div class="panel-header">
-                    <span class="panel-title">Blood bank — crossmatch and inventory</span>
+                    <span class="panel-title">Blood Bank</span>
                     <div class="panel-actions">
                         <button class="btn-print" onclick="window.print()"><i class="ti ti-printer"></i>Print</button>
                     </div>
@@ -4669,7 +4669,7 @@
                 <!-- Top Header & 1-Click Analyzer Pill Selector -->
                 <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px 24px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                     <div>
-                        <div style="font-size:17px;font-weight:800;color:#0071e3;">🔬 Daily Quality Control & Instrument Calibration</div>
+                        <div style="font-size:17px;font-weight:800;color:#0071e3;">🔬 Daily quality control</div>
                         <div style="font-size:12px;font-weight:600;color:#64748b;margin-top:2px;">1-Click Analyzer Selection • Westgard Multi-Rule Compliance</div>
                     </div>
                     <div>
@@ -4708,7 +4708,7 @@
                 <div style="background:#fff;border-radius:16px;border:0.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.04);overflow:hidden;margin-bottom:20px;">
                     <div style="padding:14px 20px;background:#eaf2ff;border-bottom:1.5px solid #0071e3;display:flex;justify-content:space-between;align-items:center;">
                         <span style="font-size:13.5px;font-weight:800;color:#0071e3;">DAILY QUALITY CONTROL PARAMETER REGISTER (EDITABLE TECHNOLOGIST ENTRY)</span>
-                        <span id="qc_verified_by" style="font-size:11.5px;font-weight:700;color:#3a3a3c;">Awaiting authenticated laboratory user…</span>
+                        <span id="qc_verified_by" style="font-size:11.5px;font-weight:700;color:#3a3a3c;">Awaiting signed-in staff…</span>
                     </div>
                     <table class="wtbl" style="width:100%;border-collapse:collapse;font-size:13px;">
                         <thead>
@@ -4734,7 +4734,7 @@
                     <div style="display:flex;gap:12px;">
                         <button type="button" onclick="pcLabEngine.printQcCertificateModal()" style="height:40px;padding:0 20px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.16);background:#f5f5f7;color:#1d1d1f;font-weight:700;font-size:12.5px;cursor:pointer;">🖨️ Print QC Compliance Certificate</button>
                         <button type="button" onclick="pcLabEngine.reportQcDeviation()" style="height:40px;padding:0 18px;border-radius:10px;border:0.5px solid rgba(255,149,0,0.4);background:#fff4e0;color:#b85d00;font-weight:700;font-size:12.5px;cursor:pointer;">⚠️ Log Analyzer Maintenance</button>
-                        <button type="button" onclick="pcLabEngine.verifyAndAuthorizeQc()" style="height:40px;padding:0 26px;border-radius:10px;border:0;background:#0071e3;color:#fff;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 3px 12px rgba(0,113,227,0.35);">⚡ Authorize Daily Quality Control</button>
+                        <button type="button" onclick="pcLabEngine.verifyAndAuthorizeQc()" style="height:40px;padding:0 26px;border-radius:10px;border:0;background:#0071e3;color:#fff;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 3px 12px rgba(0,113,227,0.35);">⚡ Authorize QC</button>
                     </div>
                 </div>
             </div>
@@ -4745,14 +4745,14 @@
             <div class="panel-body show" id="sub-reports-queue">
                 <div class="reports-topbar">
                     <div>
-                        <div class="reports-title">Laboratory reports</div>
-                        <div class="reports-subtitle">Select a verified request date, review the final report summary, then print or re-send it professionally.</div>
+                        <div class="reports-title">Lab Reports</div>
+                        <div class="reports-subtitle">Select a verified request date, review the report summary, then print or share the final report.</div>
                     </div>
                     <div class="reports-queue-wrap">
                         <span id="repAwaitingReleaseBadge">0 verified reports</span>
-                        <label class="reports-queue-label" for="repSmartPatientSelect">Select verified request</label>
+                        <label class="reports-queue-label" for="repSmartPatientSelect">Select report</label>
                         <select id="repSmartPatientSelect" class="fi reports-queue-select" onchange="pcLabEngine.selectReportPatient(this.value)">
-                            <option value="">Verified reports ready to print…</option>
+                            <option value="">Reports ready to open…</option>
                         </select>
                     </div>
                 </div>
@@ -4822,7 +4822,7 @@
                         </div>
                         <div>
                             <div class="reports-meta-label">Verifying laboratory user</div>
-                            <div id="rep_verified_by" class="reports-verified-by">Awaiting authenticated laboratory user…</div>
+                            <div id="rep_verified_by" class="reports-verified-by">Awaiting signed-in staff…</div>
                         </div>
                     </div>
 
@@ -4840,11 +4840,11 @@
 
                 <div class="reports-footer">
                     <div class="reports-footer-note">
-                        <strong>Official reporting:</strong> use the print action to open the final MOD laboratory report, or re-send the verified report back to the Doctor Dashboard when needed.
+                        <strong>Official reporting:</strong> open the final laboratory report, print it, or share the verified update back through the clinical workflow when needed.
                     </div>
                     <div class="reports-actions">
-                        <button type="button" class="reports-btn reports-btn-primary" onclick="pcLabEngine.printSelectedReportModal()">Open &amp; print official MOD report</button>
-                        <button type="button" class="reports-btn reports-btn-secondary" onclick="pcLabEngine.broadcastReportToDoctor()">Re-send report to Doctor Dashboard</button>
+                        <button type="button" class="reports-btn reports-btn-primary" onclick="pcLabEngine.printSelectedReportModal()">Open &amp; Print Report</button>
+                        <button type="button" class="reports-btn reports-btn-secondary" onclick="pcLabEngine.broadcastReportToDoctor()">Send Report Update</button>
                     </div>
                 </div>
 
@@ -4856,7 +4856,7 @@
                             <tr>
                                 <td colspan="8" style="text-align:center;padding:36px;color:#8e8e93;">
                                     <div style="font-size:28px;margin-bottom:6px;">🖨️</div>
-                                    No pending reports awaiting manual release. All verified results are available in patient records.
+                                    No reports waiting right now. Verified results remain available in the patient record.
                                 </td>
                             </tr>
                         </tbody>

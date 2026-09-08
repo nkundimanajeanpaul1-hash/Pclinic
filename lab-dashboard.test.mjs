@@ -45,6 +45,29 @@ test('lab dashboard hides its legacy hero chrome and adopts the doctor dashboard
   assert.match(CSS, /body\.lab-doctor-shell \.toast \{/);
 });
 
+test('lab dashboard wording now follows the cleaner doctor-dashboard tone', () => {
+  for (const token of [
+    "Today's laboratory queue",
+    'Specimen workflow',
+    'Select patient / order',
+    "Today's worklist",
+    'Lab Results',
+    'Pathology',
+    'Culture workflow • Common Server synced',
+    'Common Server sync:',
+    'Save & Release Culture Report',
+    'Blood Bank',
+    'Daily quality control',
+    'Lab Reports',
+    'Select report',
+    'Open &amp; Print Report',
+    'Send Report Update',
+    'No reports waiting right now. Verified results remain available in the patient record.'
+  ]) {
+    assert.ok(HTML.includes(token), 'Missing lab wording token: ' + token);
+  }
+});
+
 test('lab dashboard mounts and keeps the shared patient identification bar in sync with the selected lab patient', () => {
   assert.match(FIX, /function masterHeader\(\)/);
   assert.match(FIX, /function currentLabPatient\(\)/);
