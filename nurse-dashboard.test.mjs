@@ -10,7 +10,7 @@ const FIX = readFileSync(resolve(ROOT, 'nurse-dashboard-fixes.js'), 'utf8');
 const CSS = readFileSync(resolve(ROOT, 'nurse-dashboard-doctor.css'), 'utf8');
 
 test('nurse dashboard loads the dedicated fix layer and the doctor-style skin while keeping nurse auth', () => {
-  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260908_NURSEFIX_NURSEONLYBUTTONS/);
+  assert.match(HTML, /nurse-dashboard-fixes\.js\?v=20260908_NURSEFIX_NURSEONLYBUTTONS_HOTFIX1/);
   assert.match(HTML, /nurse-dashboard-doctor\.css\?v=20260907_DOCTORSKIN_MEDLOGRX/);
   assert.match(HTML, /requireAuth\(\['nurse'\]\)/);
   assert.match(HTML, /pclinic-orders\.js/);
@@ -201,10 +201,15 @@ test('nurse dashboard strips shared non-nurse header and action-bar buttons so n
   assert.match(FIX, /function isNurseDashboardPage\(\)/);
   assert.match(FIX, /function pruneNurseOnlyControls\(\)/);
   assert.match(FIX, /function observeNurseChrome\(\)/);
+  assert.match(FIX, /window\.__pruningNurseChrome/);
   assert.match(FIX, /\['dcBar', 'dcCtx'\]/);
   assert.match(FIX, /\.ab-menu, \.pc-apps-menu, \.pc-patient-menu/);
   assert.match(FIX, /\.btn-summary, \.btn-applications, \.btn-documents, \.btn-system, \.btn-patient, \.btn-nursing, \.btn-alerts, \.btn-info/);
-  assert.match(FIX, /left\.innerHTML = '<span class="chk-btn btn-nursing" style="pointer-events:none;cursor:default;opacity:1;">🏥 Nurse Dashboard<\/span>'/);
+  assert.match(FIX, /currentChip = left\.querySelector\('\.nurse-dashboard-chip'\)/);
+  assert.match(FIX, /left\.textContent = ''/);
+  assert.match(FIX, /chip\.className = 'chk-btn nurse-dashboard-chip'/);
+  assert.match(FIX, /chip\.textContent = '🏥 Nurse Dashboard'/);
+  assert.match(FIX, /finally \{ window\.__pruningNurseChrome = false; \}/);
   assert.match(FIX, /#pc_common_demo_bar \.oc-ward-btn/);
   assert.match(FIX, /pruneNurseOnlyControls\(\);/);
   assert.match(FIX, /observeNurseChrome\(\);/);

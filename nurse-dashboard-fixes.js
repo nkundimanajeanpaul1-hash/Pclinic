@@ -103,7 +103,8 @@
   }
 
   function pruneNurseOnlyControls() {
-    if (!isNurseDashboardPage()) return;
+    if (!isNurseDashboardPage() || window.__pruningNurseChrome) return;
+    window.__pruningNurseChrome = true;
     try {
       ['dcBar', 'dcCtx'].forEach(function (id) {
         var el = document.getElementById(id);
@@ -119,12 +120,24 @@
         });
         var left = top.querySelector('.chuk-menu-left');
         if (left) {
-          left.innerHTML = '<span class="chk-btn btn-nursing" style="pointer-events:none;cursor:default;opacity:1;">🏥 Nurse Dashboard</span>';
+          var currentChip = left.querySelector('.nurse-dashboard-chip');
+          var onlyChip = currentChip && left.children.length === 1 && String(left.textContent || '').trim() === '🏥 Nurse Dashboard';
+          if (!onlyChip) {
+            left.textContent = '';
+            var chip = document.createElement('span');
+            chip.className = 'chk-btn nurse-dashboard-chip';
+            chip.style.pointerEvents = 'none';
+            chip.style.cursor = 'default';
+            chip.style.opacity = '1';
+            chip.textContent = '🏥 Nurse Dashboard';
+            left.appendChild(chip);
+          }
         }
       }
       var wardBtn = document.querySelector('#pc_common_demo_bar .oc-ward-btn');
       if (wardBtn && wardBtn.parentNode) wardBtn.parentNode.removeChild(wardBtn);
     } catch (e) { console.warn('pruneNurseOnlyControls', e); }
+    finally { window.__pruningNurseChrome = false; }
   }
 
   function observeNurseChrome() {
