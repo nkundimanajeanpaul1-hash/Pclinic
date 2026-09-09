@@ -430,6 +430,41 @@ body.reception-doctor-shell .message-center-modal .message-center-sheet {
   min-height: min(78vh, 920px);
 }
 
+body.reception-doctor-shell .message-center-modal .message-center-header {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 244, 247, 0.92));
+  color: var(--tp);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+body.reception-doctor-shell .message-center-modal .message-center-title {
+  color: var(--tp) !important;
+  letter-spacing: -0.02em;
+}
+
+body.reception-doctor-shell .message-center-modal .message-center-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.reception-doctor-shell .message-center-modal .message-center-open-full {
+  min-height: 34px;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: #1f2937 !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+body.reception-doctor-shell .message-center-modal .message-center-open-full:hover {
+  background: rgba(255, 255, 255, 1) !important;
+}
+
+body.reception-doctor-shell .message-center-modal .message-center-close {
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: var(--tp) !important;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+}
+
 body.reception-doctor-shell .message-center-modal .message-center-body {
   padding: 0 !important;
   height: auto !important;

@@ -20,7 +20,7 @@ function sectionBetween(source, start, end) {
 
 test('Reception page loads Doctor-parity skin and corrected title', () => {
   assert.match(html, /<title>Reception Dashboard — PClinic<\/title>/);
-  assert.match(html, /reception-dashboard-doctor\.css\?v=20260909_RECEPTIONDOCTOR2/);
+  assert.match(html, /reception-dashboard-doctor\.css\?v=20260909_RECEPTIONDOCTOR3/);
   assert.match(html, /reception-dashboard-doctor\.js\?v=20260909_RECEPTIONDOCTOR1/);
   assert.match(html, /<body[^>]*class="reception-doctor-shell"/);
 });
@@ -50,10 +50,13 @@ test('Reception Doctor JS injects vertical role-specific quick actions', () => {
 });
 
 test('Reception exposes a visible Message button, front popup modal, and embedded message center', () => {
+  const modalSection = sectionBetween(html, '<div class="modal-overlay message-center-modal"', '<!-- ===== PATIENT SELECTOR MODAL');
   assert.match(html, />\s*<span>Message<\/span>\s*<\/button>/);
   assert.match(html, /id="messageCenterModal"/);
   assert.match(html, /class="modal-overlay message-center-modal" id="messageCenterModal"/);
   assert.match(html, /class="modal-sheet message-center-sheet"/);
+  assert.match(html, /class="modal-header message-center-header"/);
+  assert.match(html, /class="modal-title message-center-title"/);
   assert.match(html, /class="modal-body message-center-body"/);
   assert.match(html, /id="messageCenterFrame"/);
   assert.match(html, /function openMessageCenter\(\)\{/);
@@ -61,6 +64,9 @@ test('Reception exposes a visible Message button, front popup modal, and embedde
   assert.match(html, /messages\.html\?embedded=1/);
   assert.match(html, /function closeMessageCenter\(\)\{/);
   assert.match(html, /openMessageCenterWindow\(\)/);
+  assert.doesNotMatch(modalSection, /#0f766e|#0ea5a4/);
+  assert.match(css, /\.message-center-modal \.message-center-header/);
+  assert.match(css, /rgba\(255, 255, 255, 0\.96\)/);
 });
 
 test('Registration flow still drives queue and downstream views', () => {

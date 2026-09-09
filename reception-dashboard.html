@@ -6,7 +6,7 @@
 <title>Reception Dashboard — PClinic</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
-<link rel="stylesheet" href="reception-dashboard-doctor.css?v=20260909_RECEPTIONDOCTOR2" />
+<link rel="stylesheet" href="reception-dashboard-doctor.css?v=20260909_RECEPTIONDOCTOR3" />
 <script src="reception-dashboard-doctor.js?v=20260909_RECEPTIONDOCTOR1" defer></script>
 <style>
 /* ============================================================
@@ -3549,11 +3549,11 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
 <!-- ===== MESSAGE CENTER POPUP ===== -->
 <div class="modal-overlay message-center-modal" id="messageCenterModal" onclick="if(event.target===this)closeMessageCenter()">
   <div class="modal-sheet message-center-sheet">
-    <div class="modal-header" style="background:linear-gradient(135deg,#0f766e,#0ea5a4); color:#fff;">
-      <div class="modal-title" style="color:#fff;"><i class="ti ti-message-circle" style="margin-right:6px;"></i> Message Center — Common Server</div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button type="button" class="ra-btn" onclick="openMessageCenterWindow()" style="min-height:34px; background:rgba(255,255,255,.18); color:#fff; border-color:rgba(255,255,255,.28);"><i class="ti ti-external-link"></i> Open Full Page</button>
-        <button class="modal-close" onclick="closeMessageCenter()" style="background:rgba(255,255,255,0.2); color:#fff;"><i class="ti ti-x"></i></button>
+    <div class="modal-header message-center-header">
+      <div class="modal-title message-center-title"><i class="ti ti-message-circle" style="margin-right:6px;"></i> Message Center — Common Server</div>
+      <div class="message-center-header-actions">
+        <button type="button" class="ra-btn message-center-open-full" onclick="openMessageCenterWindow()"><i class="ti ti-external-link"></i> Open Full Page</button>
+        <button class="modal-close message-center-close" onclick="closeMessageCenter()"><i class="ti ti-x"></i></button>
       </div>
     </div>
     <div class="modal-body message-center-body">
