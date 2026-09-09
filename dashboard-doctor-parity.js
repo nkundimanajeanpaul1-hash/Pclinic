@@ -117,18 +117,73 @@
     ]
   };
 
-  function hostFor(role) {
-    if (role === 'beds') return first(['.stats-grid']);
-    if (role === 'cashier') return first(['.reception-action-bar']);
-    if (role === 'admin') return first(['.search-row', '.app']);
-    return first(['.content-area', '.main-panel', '.app']);
+  function layoutTargets(role) {
+    if (role === 'beds') {
+      const nodes = [
+        first(['.greeting']),
+        first(['.stats-grid']),
+        first(['.legend']),
+        first(['#wardsContainer'])
+      ].filter(Boolean);
+      return { anchor: nodes[0] || null, nodes: nodes };
+    }
+    if (role === 'cashier') {
+      const nodes = Array.from(document.body.children).filter(function (node) {
+        return node && node.classList && node.classList.contains('view');
+      });
+      return { anchor: nodes[0] || null, nodes: nodes };
+    }
+    if (role === 'admin') {
+      const mainPanel = first(['.main-panel']);
+      return { anchor: mainPanel, nodes: mainPanel ? [mainPanel] : [] };
+    }
+    const content = first(['.content-area', '.main-panel', '.app']);
+    return { anchor: content, nodes: content ? [content] : [] };
   }
 
-  function insertPanel(panel, role) {
-    const anchor = hostFor(role);
-    if (!anchor) return false;
-    if (role === 'beds' || role === 'cashier' || role === 'admin') anchor.insertAdjacentElement('afterend', panel);
-    else anchor.insertAdjacentElement('beforebegin', panel);
+  function maybeHideLegacyQuickActions(role) {
+    if (role === 'finance') {
+      const heading = Array.from(document.querySelectorAll('#tab-overview .section-title')).find(function (node) {
+        return /quick actions/i.test(String(node.textContent || ''));
+      });
+      const grid = document.querySelector('#tab-overview .qa-grid');
+      if (heading) heading.classList.add('doctor-parity-hidden-legacy-quick-actions');
+      if (grid) grid.classList.add('doctor-parity-hidden-legacy-quick-actions');
+    }
+    if (role === 'admin') {
+      const card = Array.from(document.querySelectorAll('#tab-dashboard .card')).find(function (node) {
+        return /quick actions/i.test(String(node.textContent || ''));
+      });
+      if (card) card.classList.add('doctor-parity-hidden-legacy-quick-actions');
+    }
+  }
+
+  function mountWorkspace(role, panel) {
+    const existing = document.getElementById('doctorParityWorkspace');
+    if (existing) {
+      const side = existing.querySelector('.doctor-parity-side');
+      if (side && panel && !side.contains(panel)) side.appendChild(panel);
+      return true;
+    }
+    const plan = layoutTargets(role);
+    if (!plan || !plan.anchor || !plan.nodes || !plan.nodes.length) return false;
+    const wrap = document.createElement('section');
+    wrap.id = 'doctorParityWorkspace';
+    wrap.className = 'doctor-parity-workspace';
+    const main = document.createElement('div');
+    main.className = 'doctor-parity-main';
+    const side = document.createElement('aside');
+    side.className = 'doctor-parity-side';
+    wrap.appendChild(main);
+    wrap.appendChild(side);
+    plan.anchor.insertAdjacentElement('beforebegin', wrap);
+    plan.nodes.filter(function (node, index, list) {
+      return !!node && list.indexOf(node) === index && node !== wrap;
+    }).forEach(function (node) {
+      main.appendChild(node);
+    });
+    side.appendChild(panel);
+    maybeHideLegacyQuickActions(role);
     return true;
   }
 
@@ -172,6 +227,6 @@
     const items = ACTIONS[role] || [];
     if (!role || !items.length) return;
     const panel = buildPanel(role, items);
-    if (!insertPanel(panel, role)) return;
+    if (!mountWorkspace(role, panel)) return;
   });
 })();

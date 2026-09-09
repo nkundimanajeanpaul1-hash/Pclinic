@@ -18,7 +18,7 @@ const DASHBOARDS = [
   ['beds-dashboard.html', 'role-beds']
 ];
 
-test('batch doctor parity stylesheet covers the shared shell pieces and the small vertical doctor-style quick actions used by the requested dashboards', () => {
+test('batch doctor parity stylesheet covers the shared shell pieces, doctor-style workspace split, and the small vertical quick actions used by the requested dashboards', () => {
   for (const marker of [
     'body.doctor-parity-shell {',
     'body.doctor-parity-shell .content-area {',
@@ -26,9 +26,13 @@ test('batch doctor parity stylesheet covers the shared shell pieces and the smal
     'body.doctor-parity-shell .tbl,',
     'body.doctor-parity-shell .nav,',
     'body.doctor-parity-shell .reception-action-bar {',
+    'body.doctor-parity-shell .doctor-parity-workspace {',
+    'grid-template-columns: minmax(0, 1fr) 180px;',
+    'body.doctor-parity-shell .doctor-parity-main {',
+    'body.doctor-parity-shell .doctor-parity-side {',
+    'body.doctor-parity-shell .doctor-parity-side .doctor-parity-quick-panel {',
+    'body.doctor-parity-shell .doctor-parity-workspace .view {',
     'body.doctor-parity-shell .doctor-parity-quick-panel {',
-    'width: min(180px, calc(100% - 28px));',
-    'position: sticky;',
     'top: 118px;',
     'body.doctor-parity-shell .doctor-parity-quick-grid {',
     'grid-template-columns: 1fr;',
@@ -36,6 +40,7 @@ test('batch doctor parity stylesheet covers the shared shell pieces and the smal
     'padding: 8px 10px;',
     'body.doctor-parity-shell .doctor-parity-quick-copy {',
     'flex-direction: row;',
+    'body.doctor-parity-shell .doctor-parity-hidden-legacy-quick-actions {',
     'body.doctor-parity-shell .doctor-parity-quick-note {',
     'body.doctor-parity-shell .doctor-parity-quick-desc {',
     'display: none !important;',
@@ -48,7 +53,7 @@ test('batch doctor parity stylesheet covers the shared shell pieces and the smal
   }
 });
 
-test('the shared doctor parity script defines visible quick actions for all requested roles', () => {
+test('the shared doctor parity script defines visible quick actions and the doctor-style workspace arrangement for all requested roles', () => {
   for (const marker of [
     "if (document.body.classList.contains('role-theater')) return 'theater';",
     "if (document.body.classList.contains('role-pharmacy')) return 'pharmacy';",
@@ -59,6 +64,13 @@ test('the shared doctor parity script defines visible quick actions for all requ
     "if (document.body.classList.contains('role-hr')) return 'hr';",
     "if (document.body.classList.contains('role-beds')) return 'beds';",
     'const ACTIONS = {',
+    'function layoutTargets(role) {',
+    'function maybeHideLegacyQuickActions(role) {',
+    'function mountWorkspace(role, panel) {',
+    'doctorParityWorkspace',
+    'doctor-parity-workspace',
+    'doctor-parity-main',
+    'doctor-parity-side',
     'doctorParityQuickActions',
     'doctor-parity-quick-panel',
     'doctor-parity-quick-grid'
@@ -70,8 +82,8 @@ test('the shared doctor parity script defines visible quick actions for all requ
 test('each requested dashboard loads the shared doctor parity stylesheet, the quick-actions script and the body role class', () => {
   for (const [file, roleClass] of DASHBOARDS) {
     const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
-    assert.match(html, /dashboard-doctor-parity\.css\?v=20260909_BATCH3SMALLVERTICAL/);
-    assert.match(html, /dashboard-doctor-parity\.js\?v=20260909_BATCH3SMALLVERTICAL/);
+    assert.match(html, /dashboard-doctor-parity\.css\?v=20260909_BATCH4WORKSPACE/);
+    assert.match(html, /dashboard-doctor-parity\.js\?v=20260909_BATCH4WORKSPACE/);
     assert.match(html, new RegExp(`<body class="doctor-parity-shell ${roleClass}">`));
   }
 });
