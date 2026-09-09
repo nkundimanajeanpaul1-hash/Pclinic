@@ -117,59 +117,59 @@ body.doctor-parity-shell .shortcut-item {
 }
 
 body.doctor-parity-shell .doctor-parity-quick-panel {
-  max-width: 1480px;
-  margin: 12px auto 16px;
-  padding: 12px;
+  width: min(180px, calc(100% - 28px));
+  margin: 12px 24px 16px auto;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 22px;
+  border-radius: 18px;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  position: sticky;
+  top: 118px;
+  z-index: 18;
 }
 
 body.doctor-parity-shell .doctor-parity-quick-headbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 2px 4px 10px;
+  gap: 8px;
+  padding: 0 2px 8px;
 }
 
 body.doctor-parity-shell .doctor-parity-quick-kicker {
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--tm, #6b7280);
 }
 
 body.doctor-parity-shell .doctor-parity-quick-title {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--tp, #1d1d1f);
 }
 
 body.doctor-parity-shell .doctor-parity-quick-note {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--tm, #6b7280);
-  white-space: nowrap;
+  display: none !important;
 }
 
 body.doctor-parity-shell .doctor-parity-quick-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 6px;
 }
 
 body.doctor-parity-shell .doctor-parity-quick-card {
   width: 100%;
-  min-height: 62px;
+  min-height: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-align: left;
-  padding: 10px 12px;
-  border-radius: 16px;
+  padding: 8px 10px;
+  border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: #fff;
   cursor: pointer;
@@ -180,7 +180,7 @@ body.doctor-parity-shell .doctor-parity-quick-card {
 
 body.doctor-parity-shell .doctor-parity-quick-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 body.doctor-parity-shell .doctor-parity-quick-card:active {
@@ -188,38 +188,36 @@ body.doctor-parity-shell .doctor-parity-quick-card:active {
 }
 
 body.doctor-parity-shell .doctor-parity-quick-ic {
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 34px;
+  flex: 0 0 26px;
 }
 
 body.doctor-parity-shell .doctor-parity-quick-ic i {
-  font-size: 16px;
+  font-size: 13px;
 }
 
 body.doctor-parity-shell .doctor-parity-quick-copy {
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
 }
 
 body.doctor-parity-shell .doctor-parity-quick-label {
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--tp, #1d1d1f);
   line-height: 1.35;
 }
 
 body.doctor-parity-shell .doctor-parity-quick-desc {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--tm, #6b7280);
-  line-height: 1.35;
+  display: none !important;
 }
 
 body.doctor-parity-shell .doctor-parity-quick-card[data-tone="blue"] .doctor-parity-quick-ic {
@@ -508,13 +506,9 @@ body.doctor-parity-shell.role-hr .main-panel {
 }
 
 @media (max-width: 980px) {
-  body.doctor-parity-shell .doctor-parity-quick-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  body.doctor-parity-shell .doctor-parity-quick-note {
-    white-space: normal;
-    text-align: right;
+  body.doctor-parity-shell .doctor-parity-quick-panel {
+    margin-right: 14px;
+    top: 104px;
   }
 
   body.doctor-parity-shell .app,
@@ -540,18 +534,17 @@ body.doctor-parity-shell.role-hr .main-panel {
 
 @media (max-width: 640px) {
   body.doctor-parity-shell .doctor-parity-quick-panel {
+    width: auto;
+    margin: 10px 14px 14px;
     padding: 10px;
-    border-radius: 18px;
+    border-radius: 16px;
+    position: static;
   }
 
   body.doctor-parity-shell .doctor-parity-quick-headbar {
     align-items: flex-start;
     flex-direction: column;
     padding-bottom: 8px;
-  }
-
-  body.doctor-parity-shell .doctor-parity-quick-note {
-    text-align: left;
   }
 
   body.doctor-parity-shell .doctor-parity-quick-grid {
