@@ -20,7 +20,7 @@ function sectionBetween(source, start, end) {
 
 test('Reception page loads Doctor-parity skin and corrected title', () => {
   assert.match(html, /<title>Reception Dashboard — PClinic<\/title>/);
-  assert.match(html, /reception-dashboard-doctor\.css\?v=20260909_RECEPTIONDOCTOR3/);
+  assert.match(html, /reception-dashboard-doctor\.css\?v=20260909_RECEPTIONDOCTOR4/);
   assert.match(html, /reception-dashboard-doctor\.js\?v=20260909_RECEPTIONDOCTOR1/);
   assert.match(html, /<body[^>]*class="reception-doctor-shell"/);
 });
@@ -67,6 +67,29 @@ test('Reception exposes a visible Message button, front popup modal, and embedde
   assert.doesNotMatch(modalSection, /#0f766e|#0ea5a4/);
   assert.match(css, /\.message-center-modal \.message-center-header/);
   assert.match(css, /rgba\(255, 255, 255, 0\.96\)/);
+});
+
+test('Reception action bar uses a reduced Apple-style palette instead of many mixed tones', () => {
+  const toolsSection = sectionBetween(html, '<div class="rc-tools" aria-label="Reception actions">', '<!-- ===== BODY ===== -->');
+  assert.match(toolsSection, /ra-apple-secondary/);
+  assert.match(toolsSection, /ra-apple-accent/);
+  assert.match(toolsSection, /ra-apple-neutral/);
+  assert.match(toolsSection, /ra-apple-danger/);
+  assert.doesNotMatch(toolsSection, /ra-btn ra-blue\b/);
+  assert.doesNotMatch(toolsSection, /ra-btn ra-blue-dark\b/);
+  assert.doesNotMatch(toolsSection, /ra-btn ra-green\b/);
+  assert.doesNotMatch(toolsSection, /ra-btn ra-orange\b/);
+  assert.doesNotMatch(toolsSection, /ra-btn ra-yellow\b/);
+  assert.doesNotMatch(toolsSection, /ra-btn ra-gray\b/);
+  assert.doesNotMatch(toolsSection, /ra-btn ra-indigo\b/);
+  assert.doesNotMatch(toolsSection, /ra-btn ra-teal\b/);
+  assert.doesNotMatch(toolsSection, /ra-btn ra-red\b/);
+  assert.match(css, /\.ra-apple-secondary/);
+  assert.match(css, /\.ra-apple-accent/);
+  assert.match(css, /\.ra-apple-neutral/);
+  assert.match(css, /\.ra-apple-danger/);
+  assert.match(css, /rgba\(10, 132, 255, 0\.15\)/);
+  assert.match(css, /rgba\(255, 59, 48, 0\.14\)/);
 });
 
 test('Registration flow still drives queue and downstream views', () => {
