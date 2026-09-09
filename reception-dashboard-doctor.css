@@ -19,7 +19,9 @@ body.reception-doctor-shell .reception-command-bar {
   margin-bottom: 12px;
   border: 1px solid rgba(15, 23, 42, 0.08) !important;
   border-radius: 20px;
-  overflow: hidden;
+  overflow: visible;
+  isolation: isolate;
+  z-index: 320 !important;
   background: rgba(255, 255, 255, 0.82) !important;
   backdrop-filter: blur(22px) saturate(180%);
   -webkit-backdrop-filter: blur(22px) saturate(180%);
@@ -46,8 +48,15 @@ body.reception-doctor-shell .reception-command-bar .ra-dropdown-menu {
   border-radius: 999px !important;
 }
 
+body.reception-doctor-shell .reception-command-bar .ra-dropdown,
+body.reception-doctor-shell .reception-command-bar .reception-unified-search {
+  position: relative;
+  z-index: 6;
+}
+
 body.reception-doctor-shell .reception-command-bar .ra-dropdown-menu {
   border-radius: 16px !important;
+  z-index: 1400 !important;
 }
 
 body.reception-doctor-shell .reception-command-bar .rc-tab {

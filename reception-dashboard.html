@@ -3546,6 +3546,22 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
   </div>
 </div>
 
+<!-- ===== MESSAGE CENTER POPUP ===== -->
+<div class="modal-overlay" id="messageCenterModal" onclick="if(event.target===this)closeMessageCenter()">
+  <div class="modal-sheet" style="max-width:min(1240px,96vw); width:min(1240px,96vw); max-height:92vh;">
+    <div class="modal-header" style="background:linear-gradient(135deg,#0f766e,#0ea5a4); color:#fff;">
+      <div class="modal-title" style="color:#fff;"><i class="ti ti-message-circle" style="margin-right:6px;"></i> Message Center — Common Server</div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" class="ra-btn" onclick="openMessageCenterWindow()" style="min-height:34px; background:rgba(255,255,255,.18); color:#fff; border-color:rgba(255,255,255,.28);"><i class="ti ti-external-link"></i> Open Full Page</button>
+        <button class="modal-close" onclick="closeMessageCenter()" style="background:rgba(255,255,255,0.2); color:#fff;"><i class="ti ti-x"></i></button>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:0; height:min(78vh,820px); background:rgba(246,250,253,.94);">
+      <iframe id="messageCenterFrame" title="PClinic Message Center" src="about:blank" style="width:100%; height:100%; border:0; background:#fff;"></iframe>
+    </div>
+  </div>
+</div>
+
 <!-- ===== PATIENT SELECTOR MODAL — SELECT PATIENT FOR RDV / EDIT FROM COMMON SERVER ===== -->
 <div class="modal-overlay" id="patientSelectorModal" onclick="if(event.target===this)closePatientSelector()">
   <div class="modal-sheet" style="max-width:680px; max-height:90vh;">
@@ -4281,8 +4297,26 @@ function raImaging(){
   showServerModal('🖼️ Imaging — Common Server ('+items.length+')', html);
 }
 function openMessageCenter(){
-  window.location.href='messages.html';
+  closeAllDropdowns();
+  var modal=document.getElementById('messageCenterModal');
+  var frame=document.getElementById('messageCenterFrame');
+  var src='messages.html?embedded=1';
+  if(frame){
+    if(!frame.getAttribute('src') || frame.getAttribute('src')==='about:blank') frame.setAttribute('src', src);
+    else if(frame.dataset.needsRefresh==='1'){ frame.setAttribute('src', src + '&ts=' + Date.now()); frame.dataset.needsRefresh='0'; }
+  }
+  if(modal){ modal.classList.add('open'); document.body.style.overflow='hidden'; }
   return true;
+}
+function openMessageCenterWindow(){
+  window.open('messages.html','_blank');
+  return true;
+}
+function closeMessageCenter(){
+  var modal=document.getElementById('messageCenterModal');
+  if(modal){ modal.classList.remove('open'); document.body.style.overflow=''; }
+  var frame=document.getElementById('messageCenterFrame');
+  if(frame) frame.dataset.needsRefresh='1';
 }
 async function raMessages(){
   return openMessageCenter();
@@ -6705,6 +6739,8 @@ window.raDocuments = raDocuments;
 window.raLabResult = raLabResult;
 window.raImaging = raImaging;
 window.openMessageCenter = openMessageCenter;
+window.openMessageCenterWindow = openMessageCenterWindow;
+window.closeMessageCenter = closeMessageCenter;
 window.raMessages = raMessages;
 window.raNotify = raNotify;
 window.raMyOrders = raMyOrders;

@@ -20,7 +20,9 @@ Target: `/home/user/repo3/reception-dashboard.html`
 - Added `reception-dashboard-doctor.css` for a tighter Doctor-style shell/workspace presentation.
 - Added `reception-dashboard-doctor.js` to inject a small vertical Reception quick-actions card in the right-side aside.
 - Refined command bar, workspace width, panel/cards, tables, forms, badges, and responsive behavior to better match the Doctor dashboard feel.
-- Added a visible `Message` button in the Reception action row that routes to the shared common-server message center.
+- Added a visible `Message` button in the Reception action row.
+- Fixed command-bar overflow/z-index so Communication dropdowns open in front of the patient list.
+- The shared common-server Message Center now opens from Reception as a front popup modal with an embedded `messages.html` view, plus a fallback “Open Full Page” action.
 
 ## Shared common-server messaging upgrade
 - Upgraded `messages.html` from role-only compose to a real staff message center.
