@@ -260,6 +260,71 @@
             return control;
         }
 
+        function prettyState(state) {
+            return String(state || 'pending')
+                .replace(/-/g, ' ')
+                .replace(/\b\w/g, function (char) { return char.toUpperCase(); });
+        }
+
+        function toneForPriority(priority) {
+            priority = String(priority || 'routine').toLowerCase();
+            if (priority === 'stat') return 'red';
+            if (priority === 'urgent') return 'orange';
+            return 'blue';
+        }
+
+        function toneForState(state) {
+            state = String(state || 'pending').toLowerCase();
+            if (state === 'pending') return 'orange';
+            if (state === 'in-progress') return 'blue';
+            if (state === 'acquired' || state === 'reporting') return 'purple';
+            if (state === 'reported' || state === 'final' || state === 'completed') return 'green';
+            if (state === 'cancelled') return 'red';
+            return 'slate';
+        }
+
+        function stack(main, sub) {
+            const wrap = document.createElement('div');
+            wrap.className = 'radio-cell-stack';
+            const mainLine = document.createElement('div');
+            mainLine.className = 'radio-cell-main';
+            mainLine.textContent = String(main || '—');
+            const subLine = document.createElement('div');
+            subLine.className = 'radio-cell-sub';
+            subLine.textContent = String(sub || '—');
+            wrap.appendChild(mainLine);
+            wrap.appendChild(subLine);
+            return wrap;
+        }
+
+        function pill(label, tone) {
+            const tag = document.createElement('span');
+            tag.className = 'radio-pill radio-pill-' + String(tone || 'slate');
+            tag.textContent = String(label || '—');
+            return tag;
+        }
+
+        function appendCell(row, content, className) {
+            const cell = document.createElement('td');
+            if (className) cell.className = className;
+            if (content && content.nodeType) cell.appendChild(content);
+            else cell.textContent = String(content == null ? '—' : content);
+            row.appendChild(cell);
+            return cell;
+        }
+
+        function worklistActionGroup(order, state) {
+            const actions = document.createElement('div');
+            actions.className = 'radio-action-group';
+            actions.appendChild(button('Select', 'btn-s', function () { selectStudy(order); }));
+            if (state === 'pending') actions.appendChild(button('Start Study', 'btn-s', function () { transitionOrder(order.id, 'start'); }));
+            if (state === 'in-progress') actions.appendChild(button('Complete Acquisition', 'btn-p', function () { transitionOrder(order.id, 'acquire'); }));
+            if (state === 'acquired' || state === 'reporting') actions.appendChild(button(state === 'reporting' ? 'Continue Report' : 'Open Report', 'btn-p', function () { openReportFor(order); }));
+            actions.appendChild(button('Images', 'btn-s', function () { openMediaSheet(order); }));
+            actions.appendChild(button('Cancel', 'btn-s', function () { transitionOrder(order.id, 'cancel'); }));
+            return actions;
+        }
+
         function renderWorklist() {
             const body = document.getElementById('worklistBody');
             if (!body) return;
@@ -290,25 +355,16 @@
             orders.forEach(function (order) {
                 const row = document.createElement('tr');
                 const state = stateOf(order);
-                const cells = [
-                    (order.patientName || 'Patient') + ' · ID ' + String(order.patientId || ''),
-                    studyOf(order),
-                    String(order.priority || 'routine').toUpperCase(),
-                    (order.orderedBy || '—') + ' · ' + timeAgo(order.orderedAt),
-                    state.replace('-', ' ')
-                ];
-                cells.forEach(function (content) { const cell = document.createElement('td'); cell.textContent = content; row.appendChild(cell); });
-                const actions = document.createElement('td'); actions.style.whiteSpace = 'nowrap';
-                if (state === 'pending') actions.appendChild(button('Start Study', 'btn-s', function () { transitionOrder(order.id, 'start'); }));
-                if (state === 'in-progress') actions.appendChild(button('Complete Acquisition', 'btn-p', function () { transitionOrder(order.id, 'acquire'); }));
-                if (state === 'acquired' || state === 'reporting') actions.appendChild(button(state === 'reporting' ? 'Continue Report' : 'Open Report Writer', 'btn-p', function () { openReportFor(order); }));
-                actions.appendChild(button('Study Images', 'btn-s', function () { openMediaSheet(order); }));
-                actions.appendChild(button('Cancel Study', 'btn-s', function () { transitionOrder(order.id, 'cancel'); }));
+                row.className = 'radio-table-row';
+                appendCell(row, stack(order.patientName || 'Patient', 'ID ' + String(order.patientId || '—')), 'radio-cell-patient');
+                appendCell(row, stack(studyOf(order), modalityOf(order) + ' • Accession ' + String(order.id || '—')), 'radio-cell-study');
+                appendCell(row, pill(String(order.priority || 'routine').toUpperCase(), toneForPriority(order.priority)), 'radio-cell-badge');
+                appendCell(row, stack(order.orderedBy || '—', 'Requested ' + timeAgo(order.orderedAt)), 'radio-cell-requester');
+                appendCell(row, pill(prettyState(state), toneForState(state)), 'radio-cell-badge');
+                const actions = document.createElement('td');
+                actions.className = 'radio-cell-actions';
+                actions.appendChild(worklistActionGroup(order, state));
                 row.appendChild(actions);
-                // Selecting a study IS selecting its patient: the bar used to update
-                // only from the picker, so it could sit on "No patient selected" while
-                // a row was plainly in front of you. One handler only — the signed
-                // table has its own, and re-rendering here would rebuild this row mid-click.
                 row.dataset.studyId = String(order.id);
                 row.style.cursor = 'pointer';
                 row.addEventListener('click', function () {
@@ -518,13 +574,19 @@
             }
             orders.forEach(function (order) {
                 const row = document.createElement('tr');
-                [order.id, (order.patientName || 'Patient') + ' · ' + String(order.patientId || ''), modalityOf(order), studyOf(order), timeAgo(order.orderedAt), String(order.priority || 'routine').toUpperCase(), stateOf(order)].forEach(function (content) {
-                    const cell = document.createElement('td'); cell.textContent = String(content || '—'); row.appendChild(cell);
-                });
+                const state = stateOf(order);
+                row.className = 'radio-table-row';
+                appendCell(row, String(order.id || '—'));
+                appendCell(row, stack(order.patientName || 'Patient', 'ID ' + String(order.patientId || '—')), 'radio-cell-patient');
+                appendCell(row, pill(modalityOf(order), 'blue'), 'radio-cell-badge');
+                appendCell(row, stack(studyOf(order), 'Latest workflow item'), 'radio-cell-study');
+                appendCell(row, stack(timeAgo(order.orderedAt), formatDateTime(order.orderedAt)), 'radio-cell-time');
+                appendCell(row, pill(String(order.priority || 'routine').toUpperCase(), toneForPriority(order.priority)), 'radio-cell-badge');
+                appendCell(row, pill(prettyState(state), toneForState(state)), 'radio-cell-badge');
                 row.style.cursor = 'pointer';
                 row.addEventListener('click', function () {
-                    const state = stateOf(order);
-                    if (state === 'acquired' || state === 'reporting' || state === 'reported') openReportFor(order);
+                    const next = stateOf(order);
+                    if (next === 'acquired' || next === 'reporting' || next === 'reported') openReportFor(order);
                     else notify("Open this study from Today's worklist to continue the workflow.", 'info');
                 });
                 body.appendChild(row);
@@ -543,20 +605,27 @@
             radiologyState.reports.forEach(function (report) {
                 const row = document.createElement('tr');
                 const signed = report.status === 'final';
-                [report.orderId || report.id, report.patientName || ('Patient ' + report.patientId), report.modality || 'Imaging', report.study || 'Study', signed ? formatDateTime(report.signedAt) : formatDateTime(report.updatedAt), signed ? report.signedByName : report.updatedByName, signed ? (report.critical ? 'Critical final' : 'Final') : 'Draft'].forEach(function (content) {
-                    const cell = document.createElement('td'); cell.textContent = String(content || '—'); row.appendChild(cell);
-                });
-                const actions = document.createElement('td');
+                row.className = 'radio-table-row';
+                appendCell(row, String(report.orderId || report.id || '—'));
+                appendCell(row, stack(report.patientName || ('Patient ' + report.patientId), 'MRN ' + String(report.patientMrn || report.patientId || '—')), 'radio-cell-patient');
+                appendCell(row, pill(report.modality || 'Imaging', 'blue'), 'radio-cell-badge');
+                appendCell(row, stack(report.study || 'Study', signed ? 'Common Server final report' : 'Common Server draft report'), 'radio-cell-study');
+                appendCell(row, stack(signed ? formatDateTime(report.signedAt) : formatDateTime(report.updatedAt), signed ? 'Final signed' : 'Draft updated'), 'radio-cell-time');
+                appendCell(row, stack(signed ? (report.signedByName || 'Radiologist') : (report.updatedByName || 'Radiologist'), report.critical ? 'Critical result follow-up' : 'Routine release'), 'radio-cell-requester');
+                appendCell(row, pill(signed ? (report.critical ? 'Critical final' : 'Final') : 'Draft', signed ? (report.critical ? 'red' : 'green') : 'orange'), 'radio-cell-badge');
+                const actions = document.createElement('div');
+                actions.className = 'radio-action-group';
                 if (signed) {
-                    actions.appendChild(button('PDF', 'btn-s', function () { printReportFile(report.id); }));
-                    actions.appendChild(button('Addendum', 'btn-s', function () { addAddendum(report.id); }));
+                    actions.appendChild(button('Open & Print', 'btn-s', function () { printReportFile(report.id); }));
+                    actions.appendChild(button('Add Addendum', 'btn-s', function () { addAddendum(report.id); }));
                 } else {
-                    actions.appendChild(button('Continue', 'btn-p', function () {
+                    actions.appendChild(button('Continue Draft', 'btn-p', function () {
                         const order = window.pcRadiology.orderById(report.orderId);
                         if (order) openReportFor(order); else notify('The linked order is unavailable.', 'error');
                     }));
                 }
-                row.appendChild(actions); body.appendChild(row);
+                appendCell(row, actions, 'radio-cell-actions');
+                body.appendChild(row);
             });
         }
 

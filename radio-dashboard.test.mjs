@@ -12,7 +12,7 @@ const JS = readFileSync(resolve(ROOT, 'radio-dashboard.js'), 'utf8');
 const SHARED = readFileSync(resolve(ROOT, 'pclinic-file.js'), 'utf8');
 
 test('radio dashboard now loads the doctor-style skin and parity fix layer while keeping the shared radiology stack', () => {
-  assert.match(HTML, /radio-dashboard-doctor\.css\?v=20260908_RADIODOCTORPARITY3/);
+  assert.match(HTML, /radio-dashboard-doctor\.css\?v=20260908_RADIODOCTORPARITY5FULLTIGHT/);
   assert.match(HTML, /pclinic-file\.js\?v=20260908_FILES_RADIODOCTORPARITY3/);
   assert.match(HTML, /radio-dashboard-fixes\.js\?v=20260908_RADIODOCTORPARITY3/);
   assert.match(HTML, /<body class="radio-doctor-shell">/);
@@ -28,7 +28,7 @@ test('radio dashboard now loads the doctor-style skin and parity fix layer while
   assert.match(HTML, /pclinic-radiology\.js\?v=20260828_MEDIA/);
   assert.match(HTML, /pclinic-radiology-media\.js\?v=20260902_MEDIAURL2/);
   assert.match(HTML, /pclinic-radiology-annotations\.js\?v=20260902_ANNOT/);
-  assert.match(HTML, /radio-dashboard\.js\?v=20260908_WORKSTATION_PARITY3/);
+  assert.match(HTML, /radio-dashboard\.js\?v=20260908_WORKSTATION_PARITY5FULLTIGHT/);
   assert.match(JS, /window\.requireAuth\(\['radio'\]\)/);
   assert.match(JS, /window\.pcFile\.renderDemoBar/);
 });
@@ -46,9 +46,19 @@ test('radio dashboard doctor CSS remaps the old radiology shell into the doctor-
   assert.match(CSS, /body\.radio-doctor-shell \.kpi-num \{/);
   assert.match(CSS, /body\.radio-doctor-shell \.radio-doctor-overview \{/);
   assert.match(CSS, /body\.radio-doctor-shell \.radio-overview-side \{/);
+  assert.match(CSS, /width: 180px;/);
+  assert.match(CSS, /body\.radio-doctor-shell \.radio-overview-quick-headbar \{/);
   assert.match(CSS, /body\.radio-doctor-shell \.radio-quick-actions \{/);
-  assert.match(CSS, /body\.radio-doctor-shell \.qa-card \{/);
-  assert.match(CSS, /body\.radio-doctor-shell \.qa-label \{/);
+  assert.match(CSS, /body\.radio-doctor-shell \.radio-quick-actions \.qa-card \{/);
+  assert.match(CSS, /flex-direction: row;/);
+  assert.match(CSS, /body\.radio-doctor-shell \.radio-quick-actions \.qa-label \{/);
+  assert.match(CSS, /body\.radio-doctor-shell \.radio-quick-actions \.qa-desc \{/);
+  assert.match(CSS, /display: none !important;/);
+  assert.match(CSS, /body\.radio-doctor-shell \.radio-cell-stack \{/);
+  assert.match(CSS, /body\.radio-doctor-shell \.radio-cell-main \{/);
+  assert.match(CSS, /body\.radio-doctor-shell \.radio-cell-sub \{/);
+  assert.match(CSS, /body\.radio-doctor-shell \.radio-pill \{/);
+  assert.match(CSS, /body\.radio-doctor-shell \.radio-action-group \{/);
   assert.match(CSS, /body\.radio-doctor-shell \.content-area,/);
   assert.match(CSS, /body\.radio-doctor-shell \.sc,/);
   assert.match(CSS, /body\.radio-doctor-shell \.panel,/);
@@ -85,6 +95,7 @@ test('radio dashboard wording now follows the cleaner doctor-style tone without 
     'Open Today\'s Worklist',
     'Radiology reports',
     'Sign &amp; Release Report',
+    'Signed / Updated',
     'Once signed, the report is saved to the Common Server and the referring clinician is notified in the shared clinical workflow.'
   ]) {
     assert.ok(HTML.includes(token), 'Missing radiology wording token: ' + token);
@@ -109,6 +120,16 @@ test('radio dashboard logic keeps doctor-style secondary labels and polished emp
     'function newestActionableOrderFor(patient)',
     'function newestReportReadyOrderFor(patient)',
     'window.radioQuickAction = function (action)',
+    'function prettyState(state)',
+    'function toneForPriority(priority)',
+    'function toneForState(state)',
+    'function stack(main, sub)',
+    'function pill(label, tone)',
+    'function worklistActionGroup(order, state)',
+    "button('Select', 'btn-s'",
+    "button('Open & Print', 'btn-s'",
+    "button('Add Addendum', 'btn-s'",
+    "button('Continue Draft', 'btn-p'",
     "notify('Select patient first from the identification bar.'",
     "notify(\"Open an acquired study from Today's worklist first.\"",
     "openMediaSheet(viewerOrder, currentPatient)",
