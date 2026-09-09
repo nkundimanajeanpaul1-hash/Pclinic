@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
 <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
-<script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');}catch(e){}})();</script>
+<script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');var q=new URLSearchParams(location.search);if(q.get('embedded')==='1')document.documentElement.setAttribute('data-embedded','1');}catch(e){}})();</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--f);background:var(--bg);color:var(--tp);font-size:13px;min-height:100vh;-webkit-font-smoothing:antialiased}
@@ -17,26 +17,22 @@ body::before{content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
              radial-gradient(circle at 80% 70%,rgba(52,199,89,.05) 0,transparent 50%),
              linear-gradient(180deg,#f7f9fc 0%,#eef4fb 100%)}
 .wrap{max-width:1320px;margin:0 auto;padding:0 18px 26px}
-.grid{display:grid;grid-template-columns:410px 1fr;gap:14px;align-items:start}
-.panel{background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
-  border:.5px solid var(--glass-brd);border-radius:var(--r2);box-shadow:var(--sh-2),var(--glass-spec);padding:16px}
+.grid{display:grid;grid-template-columns:410px minmax(0,1fr);gap:14px;align-items:start}
+.panel{background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:.5px solid var(--glass-brd);border-radius:var(--r2);box-shadow:var(--sh-2),var(--glass-spec);padding:16px}
 .panel h2{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .panel h2 i{color:var(--ac)}
 label{display:block;font-size:11px;font-weight:700;color:var(--tm);margin:11px 0 6px;text-transform:uppercase;letter-spacing:.04em}
-textarea,select,input{width:100%;padding:9px 11px;border-radius:12px;border:.5px solid var(--bd);
-  background:var(--s1);color:var(--tp);font-family:var(--f);font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s}
+textarea,select,input{width:100%;padding:9px 11px;border-radius:12px;border:.5px solid var(--bd);background:var(--s1);color:var(--tp);font-family:var(--f);font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s}
 textarea{min-height:98px;resize:vertical;line-height:1.55}
 select,input{height:38px;padding:0 11px}
 textarea:focus,select:focus,input:focus{border-color:var(--ac);box-shadow:0 0 0 4px var(--acl)}
-
 .modebar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .modebtn{border:.5px solid var(--bd);background:var(--s1);border-radius:14px;padding:10px 12px;cursor:pointer;font:inherit;text-align:left;transition:all .2s var(--spring)}
 .modebtn:hover{transform:translateY(-1px);box-shadow:var(--sh-1)}
 .modebtn.on{background:var(--acb);border-color:var(--ac);color:var(--ac)}
 .modebtn .t1{font-size:12px;font-weight:700}
-.modebtn .t2{font-size:10px;color:var(--tm);margin-top:2px}
+.modebtn .t2{font-size:10px;color:var(--tm);margin-top:2px;line-height:1.35}
 .modebtn.on .t2{color:var(--ac)}
-
 .replybox{display:none;gap:10px;align-items:flex-start;padding:11px 12px;border-radius:14px;margin:10px 0 2px;background:#eef5ff;border:1px solid #cfe2ff}
 .replybox.show{display:flex}
 .replyicon{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#dbeafe;color:#2563eb;flex-shrink:0}
@@ -44,43 +40,32 @@ textarea:focus,select:focus,input:focus{border-color:var(--ac);box-shadow:0 0 0 
 .replytitle{font-size:11px;font-weight:800;color:#1d4ed8;text-transform:uppercase;letter-spacing:.06em}
 .replytext{font-size:12px;color:var(--ts);margin-top:3px;line-height:1.45}
 .replyclose{border:0;background:none;color:var(--tm);cursor:pointer;font-size:16px;padding:2px}
-
 .dest-card{padding:12px;border-radius:14px;border:.5px solid var(--bd);background:rgba(255,255,255,.62);margin-bottom:10px}
 .dest-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .helper{font-size:11px;color:var(--tm);line-height:1.45;margin-top:7px}
 .helper strong{color:var(--tp)}
 .hide{display:none !important}
-
 .recips{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:8px}
-.rc{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:12px;
-  border:.5px solid var(--bd);background:var(--s1);cursor:pointer;font-size:12px;font-weight:600;
-  transition:all .22s var(--spring);-webkit-tap-highlight-color:transparent}
+.rc{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:12px;border:.5px solid var(--bd);background:var(--s1);cursor:pointer;font-size:12px;font-weight:600;transition:all .22s var(--spring);-webkit-tap-highlight-color:transparent}
 .rc:hover{transform:translateY(-1px);box-shadow:var(--sh-1)}
 .rc input{width:16px;height:16px;margin:0;accent-color:var(--ac);cursor:pointer;flex-shrink:0}
 .rc.on{background:var(--acb);border-color:var(--ac);color:var(--ac)}
 .rc i{font-size:14px;opacity:.8}
-
 .quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
-.quick button{padding:6px 11px;border-radius:30px;border:.5px solid var(--bd);background:var(--s1);
-  font-family:var(--f);font-size:11px;font-weight:700;color:var(--ts);cursor:pointer;transition:all .22s var(--spring)}
+.quick button{padding:6px 11px;border-radius:30px;border:.5px solid var(--bd);background:var(--s1);font-family:var(--f);font-size:11px;font-weight:700;color:var(--ts);cursor:pointer;transition:all .22s var(--spring)}
 .quick button:hover{transform:translateY(-1px);background:var(--acb);color:var(--ac)}
-
 .toolbar2{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
 .tabs{display:inline-flex;padding:3px;gap:2px;border-radius:11px;background:rgba(120,120,128,.14)}
-.tabs button{border:0;background:transparent;font-family:var(--f);font-size:12.5px;font-weight:700;
-  color:var(--ts);padding:6px 15px;border-radius:8px;cursor:pointer;transition:all .28s var(--ease)}
+.tabs button{border:0;background:transparent;font-family:var(--f);font-size:12.5px;font-weight:700;color:var(--ts);padding:6px 15px;border-radius:8px;cursor:pointer;transition:all .28s var(--ease)}
 .tabs button.on{background:var(--s1);box-shadow:var(--sh-1)}
 .searchline{display:flex;align-items:center;gap:8px;min-width:220px;flex:1;justify-content:flex-end}
 .searchline input{max-width:290px}
-
-.msg{display:flex;gap:11px;padding:12px 13px;border-radius:14px;border:.5px solid var(--bd);
-  background:var(--s1);margin-bottom:8px;transition:all .26s var(--spring)}
+.msg{display:flex;gap:11px;padding:12px 13px;border-radius:14px;border:.5px solid var(--bd);background:var(--s1);margin-bottom:8px;transition:all .26s var(--spring)}
 .msg:hover{transform:translateX(3px);box-shadow:var(--sh-1)}
 .msg.unread{border-left:3px solid var(--ac);background:var(--acb)}
 .msg.urgent{border-left:3px solid var(--red)}
 .msg.sent{background:rgba(255,255,255,.82)}
-.av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
-  font-size:11px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--ac),var(--purple))}
+.av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--ac),var(--purple))}
 .msg .body{flex:1;min-width:0}
 .msg .top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:3px}
 .msg .from{font-weight:800;font-size:12.5px}
@@ -98,16 +83,22 @@ textarea:focus,select:focus,input:focus{border-color:var(--ac);box-shadow:0 0 0 
 .empty i{font-size:34px;opacity:.35;display:block;margin-bottom:9px}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;background:var(--s3);color:var(--tm)}
 .statusline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:var(--tm)}
-
-html[data-embedded="1"] body{background:transparent}
+.pc-toasts{position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+html[data-embedded="1"] body{background:transparent;padding-top:0 !important;min-height:100%}
 html[data-embedded="1"] body::before{display:none}
-html[data-embedded="1"] .pc-headerbar{display:none}
-html[data-embedded="1"] .wrap{max-width:none;padding:14px}
-html[data-embedded="1"] .panel{box-shadow:0 8px 24px rgba(15,23,42,.08)}
-@media(max-width:980px){.grid{grid-template-columns:1fr}.searchline{justify-content:stretch}.searchline input{max-width:none}}
+html[data-embedded="1"] .pc-topbar,
+html[data-embedded="1"] .pc-headerbar,
+html[data-embedded="1"] #pcMasterHeader,
+html[data-embedded="1"] #pc_chuk_top_menu,
+html[data-embedded="1"] #pc_common_demo_bar,
+html[data-embedded="1"] .oc-demo-bar,
+html[data-embedded="1"] #dcBar{display:none !important}
+html[data-embedded="1"] .wrap{max-width:none;padding:12px;height:100%}
+html[data-embedded="1"] .grid{grid-template-columns:minmax(330px,400px) minmax(0,1fr);align-items:stretch}
+html[data-embedded="1"] .panel{box-shadow:0 8px 24px rgba(15,23,42,.08);min-height:calc(78vh - 24px)}
+@media(max-width:980px){.grid{grid-template-columns:1fr}.searchline{justify-content:stretch}.searchline input{max-width:none}html[data-embedded="1"] .grid{grid-template-columns:1fr}html[data-embedded="1"] .panel{min-height:auto}}
 @media(max-width:640px){.dest-grid{grid-template-columns:1fr}.modebar{grid-template-columns:1fr}.recips{grid-template-columns:1fr 1fr}}
 </style>
-<script src="pclinic-file.js?v=20260827_FILES" defer></script>
 </head>
 <body>
 
@@ -117,9 +108,9 @@ html[data-embedded="1"] .panel{box-shadow:0 8px 24px rgba(15,23,42,.08)}
     <span class="pc-appsub">Messages</span>
   </div>
   <div class="pc-tr">
-    <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
+    <button class="pc-iconbtn" onclick="void 0" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
     <div class="pc-chip"><span class="pc-avatar" id="userAvatar">··</span><span id="userName">…</span></div>
-    <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
+    <button class="pc-iconbtn" onclick="void 0" title="Sign out"><i class="ti ti-logout"></i></button>
   </div>
 </div>
 
@@ -134,7 +125,6 @@ html[data-embedded="1"] .panel{box-shadow:0 8px 24px rgba(15,23,42,.08)}
 
 <div class="wrap">
   <div class="grid">
-
     <div class="panel">
       <h2><i class="ti ti-send"></i> New Message</h2>
 
@@ -168,19 +158,15 @@ html[data-embedded="1"] .panel{box-shadow:0 8px 24px rgba(15,23,42,.08)}
       </div>
 
       <label for="msgText">Message</label>
-      <textarea id="msgText" data-pc-remember="msgDraft" placeholder="Type your message…"></textarea>
+      <textarea id="msgText" placeholder="Type your message…"></textarea>
 
       <div class="dest-card" id="directCard">
         <label style="margin-top:0">Specific recipient</label>
         <div class="dest-grid">
-          <div>
-            <select id="msgDirectRole" onchange="renderDirectStaffOptions()"></select>
-          </div>
-          <div>
-            <select id="msgDirectStaff"></select>
-          </div>
+          <div><select id="msgDirectRole" onchange="renderDirectStaffOptions()"></select></div>
+          <div><select id="msgDirectStaff"></select></div>
         </div>
-        <div class="helper">Choose the exact staff member first. This message is stored on the <strong>common server</strong> and goes only to that person. When they reply, it can come back directly to you.</div>
+        <div class="helper">Choose the exact staff member first. This message is stored on the <strong>common server</strong> and goes only to that person. When they reply, it comes back directly to you.</div>
       </div>
 
       <div class="dest-card hide" id="roleCard">
@@ -228,7 +214,6 @@ html[data-embedded="1"] .panel{box-shadow:0 8px 24px rgba(15,23,42,.08)}
       </div>
       <div id="inbox"></div>
     </div>
-
   </div>
 </div>
 
@@ -239,7 +224,6 @@ html[data-embedded="1"] .panel{box-shadow:0 8px 24px rgba(15,23,42,.08)}
 <script src="pclinic-state.js"></script>
 <script src="patient-data.js"></script>
 <script src="pclinic-orders.js"></script>
-
 <script>
 (function(){
 'use strict';
@@ -249,27 +233,35 @@ var staffRows=[];
 var replyState=null;
 
 var DEPTS=[
-  {r:'doctor',    n:'Doctors',    one:'Doctor',    i:'ti-stethoscope'},
-  {r:'nurse',     n:'Nurses',     one:'Nurse',     i:'ti-heart-rate-monitor'},
-  {r:'lab',       n:'Laboratory', one:'Lab',       i:'ti-test-pipe'},
-  {r:'radio',     n:'Radiology',  one:'Radiology', i:'ti-radioactive'},
-  {r:'pharmacy',  n:'Pharmacy',   one:'Pharmacy',  i:'ti-pill'},
-  {r:'reception', n:'Reception',  one:'Reception', i:'ti-user-circle'},
-  {r:'cashier',   n:'Cashier',    one:'Cashier',   i:'ti-cash'},
-  {r:'finance',   n:'Finance',    one:'Finance',   i:'ti-credit-card'},
-  {r:'theater',   n:'Theatre',    one:'Theatre',   i:'ti-scissors'},
-  {r:'physio',    n:'Physio',     one:'Physio',    i:'ti-accessible'},
-  {r:'inventory', n:'Inventory',  one:'Inventory', i:'ti-package'},
-  {r:'hr',        n:'HR',         one:'HR',        i:'ti-users'},
-  {r:'admin',     n:'Admin',      one:'Admin',     i:'ti-shield-lock'},
-  {r:'beds',      n:'Beds',       one:'Beds',      i:'ti-bed'}
+  {r:'doctor',n:'Doctors',one:'Doctor',i:'ti-stethoscope'},
+  {r:'nurse',n:'Nurses',one:'Nurse',i:'ti-heart-rate-monitor'},
+  {r:'lab',n:'Laboratory',one:'Lab',i:'ti-test-pipe'},
+  {r:'radio',n:'Radiology',one:'Radiology',i:'ti-radioactive'},
+  {r:'pharmacy',n:'Pharmacy',one:'Pharmacy',i:'ti-pill'},
+  {r:'reception',n:'Reception',one:'Reception',i:'ti-user-circle'},
+  {r:'cashier',n:'Cashier',one:'Cashier',i:'ti-cash'},
+  {r:'finance',n:'Finance',one:'Finance',i:'ti-credit-card'},
+  {r:'theater',n:'Theatre',one:'Theatre',i:'ti-scissors'},
+  {r:'physio',n:'Physio',one:'Physio',i:'ti-accessible'},
+  {r:'inventory',n:'Inventory',one:'Inventory',i:'ti-package'},
+  {r:'hr',n:'HR',one:'HR',i:'ti-users'},
+  {r:'admin',n:'Admin',one:'Admin',i:'ti-shield-lock'},
+  {r:'beds',n:'Beds',one:'Beds',i:'ti-bed'}
 ];
 
 function me(){ return window.currentStaff||{}; }
-function staffIdOf(staff){ return String((staff&& (staff.staffId||staff.id)) || ''); }
+function staffIdOf(staff){ return String((staff && (staff.staffId||staff.id)) || ''); }
 function roleMeta(role){ return DEPTS.find(function(x){ return x.r===role; }) || {r:role,n:role,one:role,i:'ti-user'}; }
-function toast(msg,type){ if(window.pcToast) window.pcToast(msg,type||'info'); else if(window.showToast) window.showToast(msg,type||'info'); else alert(msg); }
-function esc(text){ var div=document.createElement('div'); div.textContent=text==null?'':String(text); return div.innerHTML; }
+function toast(msg,type){
+  var host=document.querySelector('.pc-toasts') || document.body;
+  var el=document.createElement('div');
+  var color=type==='error'?'#b42318':type==='success'?'#027a48':'#0b63ce';
+  el.textContent=String(msg||'');
+  el.style.cssText='pointer-events:auto;max-width:min(420px,calc(100vw - 36px));padding:10px 14px;border-radius:14px;background:#fff;color:#111827;border:1px solid rgba(15,23,42,.08);box-shadow:0 12px 30px rgba(15,23,42,.12), inset 3px 0 0 '+color+';font:600 12px var(--f);line-height:1.45';
+  host.appendChild(el);
+  setTimeout(function(){ el.style.opacity='0'; el.style.transform='translateY(6px)'; el.style.transition='all .18s ease'; }, 2400);
+  setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 2700);
+}
 function ago(iso){ var t=new Date(iso||Date.now()); var s=Math.floor((Date.now()-t.getTime())/1000); if(s<60)return'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return t.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+t.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
 function searchTerm(){ return String((document.getElementById('msgSearch')||{}).value||'').toLowerCase().trim(); }
 function incomingForMe(message){ var my=me(); var sid=staffIdOf(my); var role=String(my.role||''); return (message.toStaffId && String(message.toStaffId)===sid) || (Array.isArray(message.toRoles) && message.toRoles.indexOf(role)!==-1); }
@@ -317,7 +309,7 @@ function renderDirectStaffOptions(preferredId){
     o.dataset.staffRole=String(row.role||'');
     sel.appendChild(o);
   });
-  if(preferredId){ sel.value=String(preferredId); }
+  if(preferredId) sel.value=String(preferredId);
 }
 
 async function loadStaffDirectory(attempt){
@@ -335,7 +327,7 @@ async function loadStaffDirectory(attempt){
       var x=docSnap.data()||{};
       staffRows.push({ uid:docSnap.id, staffId:String(x.staffId||''), name:String(x.name||''), role:String(x.role||'').toLowerCase(), active:!!x.active });
     });
-    renderDirectStaffOptions(replyState&&replyState.toStaffId?replyState.toStaffId:'');
+    renderDirectStaffOptions(replyState && replyState.toStaffId ? replyState.toStaffId : '');
     if(status) status.textContent='Staff directory loaded from common server: '+staffRows.length;
   } catch (error) {
     console.error('Staff directory load failed:', error);
@@ -348,7 +340,8 @@ function loadPatients(){
   var list=[];
   try{ if(typeof getPatients==='function') list=getPatients()||[]; }catch(e){}
   list.forEach(function(p){
-    var o=document.createElement('option'); o.value=String(p.id||'');
+    var o=document.createElement('option');
+    o.value=String(p.id||'');
     o.textContent=((p.name||((p.firstName||'')+' '+(p.lastName||'')).trim()||('Patient '+(p.id||'')))+' · '+(p.mrn||p.id||''));
     sel.appendChild(o);
   });
@@ -356,8 +349,8 @@ function loadPatients(){
 
 window.quick=function(t){
   var ta=document.getElementById('msgText');
-  ta.value=t; ta.focus();
-  ta.dispatchEvent(new Event('input',{bubbles:true}));
+  ta.value=t;
+  ta.focus();
 };
 
 window.setMode=function(mode,btn){
@@ -371,7 +364,8 @@ window.setMode=function(mode,btn){
 
 window.clearReply=function(){
   replyState=null;
-  var box=document.getElementById('replyBox'); if(box) box.classList.remove('show');
+  var box=document.getElementById('replyBox');
+  if(box) box.classList.remove('show');
   if(staffRows.length) renderDirectStaffOptions();
 };
 
@@ -391,7 +385,7 @@ function ensureReplyTargetOption(staffId, staffName, staffRole){
 }
 
 window.replyToMessage=function(messageId){
-  var all=(window.pcMessages&&window.pcMessages.all?window.pcMessages.all():[]);
+  var all=(window.pcMessages && window.pcMessages.all ? window.pcMessages.all() : []);
   var m=all.find(function(row){ return String(row.id)===String(messageId); });
   if(!m) return;
   replyState={
@@ -403,13 +397,10 @@ window.replyToMessage=function(messageId){
   };
   setMode('direct', document.getElementById('modeDirectBtn'));
   ensureReplyTargetOption(replyState.toStaffId, replyState.toStaffName, replyState.toRole);
-  var box=document.getElementById('replyBox');
   document.getElementById('replyText').textContent='Replying to '+replyState.toStaffName+' ('+roleMeta(replyState.toRole).one+'). Your response will go back to that specific staff member.';
-  box.classList.add('show');
-  var ta=document.getElementById('msgText');
-  if(incomingForMe(m) && (window.pcMessages&&window.pcMessages.markRead)) window.pcMessages.markRead(m.id);
-  ta.focus();
-  ta.scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('replyBox').classList.add('show');
+  if(incomingForMe(m) && window.pcMessages && window.pcMessages.markRead) window.pcMessages.markRead(m.id);
+  document.getElementById('msgText').focus();
   render();
 };
 
@@ -418,8 +409,8 @@ function selectedStaffMeta(){
   var opt=sel.options[sel.selectedIndex];
   return {
     id:String(sel.value||''),
-    name:String(opt&&opt.dataset&&opt.dataset.staffName||opt&&opt.textContent||''),
-    role:String(opt&&opt.dataset&&opt.dataset.staffRole||document.getElementById('msgDirectRole').value||'')
+    name:String(opt&&opt.dataset&&opt.dataset.staffName || opt&&opt.textContent || ''),
+    role:String(opt&&opt.dataset&&opt.dataset.staffRole || document.getElementById('msgDirectRole').value || '')
   };
 }
 
@@ -438,7 +429,7 @@ window.sendIt=function(){
     patientName:psel.value?psel.options[psel.selectedIndex].textContent.split('·')[0].trim():'',
     category:'message',
     threadId:currentThreadId(),
-    replyToId:replyState&&replyState.replyToId?replyState.replyToId:''
+    replyToId:replyState && replyState.replyToId ? replyState.replyToId : ''
   };
   var m;
   if(composeMode==='direct'){
@@ -454,7 +445,7 @@ window.sendIt=function(){
     if(!m){ toast('Could not send the direct message.','error'); return; }
     toast('Message sent to '+target.name,'success');
   } else {
-    var roles=[].slice.call(document.querySelectorAll('#recips input:checked')).map(function(c){return c.value;});
+    var roles=[].slice.call(document.querySelectorAll('#recips input:checked')).map(function(c){ return c.value; });
     if(!roles.length){ toast('Tick at least one role group like All Doctors or All Nurses.','error'); return; }
     m=window.pcMessages.send(Object.assign({}, base, {
       audience:'role',
@@ -470,7 +461,7 @@ window.sendIt=function(){
   document.getElementById('msgText').value='';
   document.getElementById('msgPriority').value='normal';
   document.getElementById('msgPatient').value='';
-  try{ if(window.pcStore) pcStore.drop('field:msgDraft'); }catch(e){}
+  try{ localStorage.removeItem('field:msgDraft'); }catch(e){}
   clearReply();
   render();
 };
@@ -478,7 +469,7 @@ window.sendIt=function(){
 window.setFilter=function(f,btn){
   filter=f;
   if(btn && btn.parentElement){
-    btn.parentElement.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+    btn.parentElement.querySelectorAll('button').forEach(function(x){ x.classList.remove('on'); });
     btn.classList.add('on');
   }
   render();
@@ -492,12 +483,12 @@ window.markAll=function(){
 
 function recipientText(m){
   if(m.toStaffId){
-    var label=m.toStaffName||('Staff '+m.toStaffId);
-    var roleLabel=m.toRole?(' · '+roleMeta(m.toRole).one):'';
+    var label=m.toStaffName || ('Staff '+m.toStaffId);
+    var roleLabel=m.toRole ? (' · '+roleMeta(m.toRole).one) : '';
     return '→ '+label+roleLabel;
   }
   var roles=(m.toRoles||[]).map(function(role){ return 'All '+roleMeta(role).n; });
-  return '→ '+(roles.join(', ')||'No recipient');
+  return '→ '+(roles.join(', ') || 'No recipient');
 }
 
 function searchableText(m){
@@ -509,10 +500,8 @@ function candidateMessages(){
   if(filter==='unread'){
     return (window.pcMessages.list?window.pcMessages.list():[]).filter(function(m){ return incomingForMe(m) && (m.readBy||[]).indexOf(staffIdOf(me()))===-1; });
   }
-  if(filter==='sent'){
-    return window.pcMessages.sent ? window.pcMessages.sent() : [];
-  }
-  var list = window.pcMessages.all ? window.pcMessages.all() : (window.pcMessages.list ? window.pcMessages.list() : []);
+  if(filter==='sent') return window.pcMessages.sent ? window.pcMessages.sent() : [];
+  var list=window.pcMessages.all ? window.pcMessages.all() : (window.pcMessages.list ? window.pcMessages.list() : []);
   if(filter==='urgent') list=list.filter(function(m){ return m.priority==='urgent'; });
   return list;
 }
@@ -524,8 +513,7 @@ window.render=function(){
   var q=searchTerm();
   if(q) list=list.filter(function(m){ return searchableText(m).indexOf(q)!==-1; });
   list.sort(function(a,b){ return String(b.at||'').localeCompare(String(a.at||'')); });
-
-  document.getElementById('unreadN').textContent=window.pcMessages&&window.pcMessages.unread?window.pcMessages.unread():0;
+  document.getElementById('unreadN').textContent=window.pcMessages && window.pcMessages.unread ? window.pcMessages.unread() : 0;
   var box=document.getElementById('inbox');
   if(!list.length){
     box.innerHTML='<div class="empty"><i class="ti ti-inbox"></i>'+(filter==='sent'?'You have not sent any messages yet.':'No messages match this view.')+'</div>';
@@ -537,24 +525,20 @@ window.render=function(){
     var unread=incomingForMe(m) && (m.readBy||[]).indexOf(sid)===-1;
     var d=document.createElement('div');
     d.className='msg'+(unread?' unread':'')+(m.priority==='urgent'?' urgent':'')+(mine?' sent':'');
-
     var av=document.createElement('div'); av.className='av';
     av.textContent=String(mine?(m.toStaffName||((m.toRoles||[])[0]||'?')):(m.fromName||'?')).substring(0,2).toUpperCase();
-
     var body=document.createElement('div'); body.className='body';
     var top=document.createElement('div'); top.className='top';
-    var who=document.createElement('span'); who.className='from'; who.textContent=mine?('To '+(m.toStaffName||((m.toRoles||[]).length?('All '+(m.toRoles||[]).map(function(r){return roleMeta(r).n;}).join(', All ')):'recipient'))):(m.fromName||'System');
+    var who=document.createElement('span'); who.className='from';
+    who.textContent=mine?('To '+(m.toStaffName||((m.toRoles||[]).length?('All '+(m.toRoles||[]).map(function(r){return roleMeta(r).n;}).join(', All ')):'recipient'))):(m.fromName||'System');
     var role=document.createElement('span'); role.className='role'; role.textContent=mine?(m.toStaffId?('direct '+roleMeta(m.toRole||'').one):'broadcast'):(m.fromRole||'sys');
     var when=document.createElement('span'); when.className='when'; when.textContent=ago(m.at);
     top.append(who,role,when);
-
     var tx=document.createElement('div'); tx.className='text'; tx.textContent=m.text||'';
     var meta=document.createElement('div'); meta.className='meta';
-    var to1=document.createElement('span'); to1.textContent=recipientText(m);
-    meta.appendChild(to1);
+    var to1=document.createElement('span'); to1.textContent=recipientText(m); meta.appendChild(to1);
     if(m.patientName){ var p=document.createElement('span'); p.textContent='Patient: '+m.patientName; meta.appendChild(p); }
     if(m.replyToId){ var r=document.createElement('span'); r.textContent='Reply'; meta.appendChild(r); }
-
     var actions=document.createElement('div'); actions.className='actions';
     if(unread){
       var readBtn=document.createElement('button'); readBtn.type='button'; readBtn.className='read'; readBtn.textContent='Mark read';
@@ -566,7 +550,6 @@ window.render=function(){
       replyBtn.onclick=function(ev){ ev.stopPropagation(); replyToMessage(m.id); };
       actions.appendChild(replyBtn);
     }
-
     body.append(top,tx,meta);
     if(actions.childNodes.length) body.appendChild(actions);
     d.append(av,body);
@@ -575,8 +558,8 @@ window.render=function(){
   });
 };
 
-window.addEventListener('messagesUpdated',render);
-window.addEventListener('storage',function(ev){ if(!ev || !ev.key || ev.key==='pclinic_messages') render(); });
+window.addEventListener('messagesUpdated', render);
+window.addEventListener('storage', function(ev){ if(!ev || !ev.key || ev.key==='pclinic_messages') render(); });
 
 requireAuth([]).then(function(staff){
   window.currentStaff=staff;

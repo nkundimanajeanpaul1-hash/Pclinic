@@ -16,6 +16,15 @@ test('Messages page supports specific-staff and role-broadcast compose modes', (
   assert.match(html, /reply goes back to the original sender/i);
 });
 
+test('Embedded Message Center strips shared patient bars and avoids pclinic-file injection', () => {
+  assert.match(html, /q\.get\('embedded'\)==='1'/);
+  assert.match(html, /data-embedded/);
+  assert.match(html, /#pcMasterHeader/);
+  assert.match(html, /#pc_common_demo_bar/);
+  assert.match(html, /#dcBar/);
+  assert.doesNotMatch(html, /pclinic-file\.js/);
+});
+
 test('Messages page loads active staff directory from the common server users collection', () => {
   assert.match(html, /collection\(db,'users'\)/);
   assert.match(html, /where\('active','==',true\)/);

@@ -23,6 +23,7 @@ Target: `/home/user/repo3/reception-dashboard.html`
 - Added a visible `Message` button in the Reception action row.
 - Fixed command-bar overflow/z-index so Communication dropdowns open in front of the patient list.
 - The shared common-server Message Center now opens from Reception as a front popup modal with an embedded `messages.html` view, plus a fallback “Open Full Page” action.
+- Cleaned the embedded Message Center so it no longer loads the shared patient/action-bar injector; the popup now shows the actual compose and inbox panels instead of partial unrelated page bars.
 
 ## Shared common-server messaging upgrade
 - Upgraded `messages.html` from role-only compose to a real staff message center.
