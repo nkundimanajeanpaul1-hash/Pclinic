@@ -20,7 +20,7 @@ function sectionBetween(source, start, end) {
 
 test('Reception page loads Doctor-parity skin and corrected title', () => {
   assert.match(html, /<title>Reception Dashboard — PClinic<\/title>/);
-  assert.match(html, /reception-dashboard-doctor\.css\?v=20260909_RECEPTIONDOCTOR4/);
+  assert.match(html, /reception-dashboard-doctor\.css\?v=20260909_RECEPTIONDOCTOR5/);
   assert.match(html, /reception-dashboard-doctor\.js\?v=20260909_RECEPTIONDOCTOR1/);
   assert.match(html, /<body[^>]*class="reception-doctor-shell"/);
 });
@@ -69,27 +69,32 @@ test('Reception exposes a visible Message button, front popup modal, and embedde
   assert.match(css, /rgba\(255, 255, 255, 0\.96\)/);
 });
 
-test('Reception action bar uses a reduced Apple-style palette instead of many mixed tones', () => {
+test('Reception action bar uses light glass Apple category colors', () => {
   const toolsSection = sectionBetween(html, '<div class="rc-tools" aria-label="Reception actions">', '<!-- ===== BODY ===== -->');
-  assert.match(toolsSection, /ra-apple-secondary/);
-  assert.match(toolsSection, /ra-apple-accent/);
-  assert.match(toolsSection, /ra-apple-neutral/);
-  assert.match(toolsSection, /ra-apple-danger/);
-  assert.doesNotMatch(toolsSection, /ra-btn ra-blue\b/);
-  assert.doesNotMatch(toolsSection, /ra-btn ra-blue-dark\b/);
-  assert.doesNotMatch(toolsSection, /ra-btn ra-green\b/);
-  assert.doesNotMatch(toolsSection, /ra-btn ra-orange\b/);
-  assert.doesNotMatch(toolsSection, /ra-btn ra-yellow\b/);
-  assert.doesNotMatch(toolsSection, /ra-btn ra-gray\b/);
-  assert.doesNotMatch(toolsSection, /ra-btn ra-indigo\b/);
-  assert.doesNotMatch(toolsSection, /ra-btn ra-teal\b/);
-  assert.doesNotMatch(toolsSection, /ra-btn ra-red\b/);
-  assert.match(css, /\.ra-apple-secondary/);
-  assert.match(css, /\.ra-apple-accent/);
-  assert.match(css, /\.ra-apple-neutral/);
-  assert.match(css, /\.ra-apple-danger/);
-  assert.match(css, /rgba\(10, 132, 255, 0\.15\)/);
-  assert.match(css, /rgba\(255, 59, 48, 0\.14\)/);
+  assert.match(toolsSection, /ra-btn ra-teal/);
+  assert.match(toolsSection, /ra-btn ra-blue/);
+  assert.match(toolsSection, /ra-btn ra-blue-dark/);
+  assert.match(toolsSection, /ra-btn ra-green/);
+  assert.match(toolsSection, /ra-btn ra-orange/);
+  assert.match(toolsSection, /ra-btn ra-yellow/);
+  assert.match(toolsSection, /ra-btn ra-gray/);
+  assert.match(toolsSection, /ra-btn ra-indigo/);
+  assert.match(toolsSection, /ra-btn ra-red/);
+  assert.doesNotMatch(toolsSection, /ra-apple-secondary/);
+  assert.doesNotMatch(toolsSection, /ra-apple-accent/);
+  assert.doesNotMatch(toolsSection, /ra-apple-neutral/);
+  assert.doesNotMatch(toolsSection, /ra-apple-danger/);
+  assert.match(css, /background:\s*linear-gradient\(180deg, rgba\(255, 255, 255, 0\.72\), rgba\(255, 255, 255, 0\.48\)\) !important;/);
+  assert.match(css, /\.ra-blue \{/);
+  assert.match(css, /\.ra-blue-dark,/);
+  assert.match(css, /\.ra-green \{/);
+  assert.match(css, /\.ra-orange,/);
+  assert.match(css, /\.ra-teal \{/);
+  assert.match(css, /\.ra-gray \{/);
+  assert.match(css, /\.ra-red \{/);
+  assert.match(css, /rgba\(10, 132, 255, 0\.18\)/);
+  assert.match(css, /rgba\(48, 209, 88, 0\.17\)/);
+  assert.match(css, /rgba\(255, 159, 10, 0\.17\)/);
 });
 
 test('Registration flow still drives queue and downstream views', () => {

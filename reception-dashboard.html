@@ -6,7 +6,7 @@
 <title>Reception Dashboard — PClinic</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
-<link rel="stylesheet" href="reception-dashboard-doctor.css?v=20260909_RECEPTIONDOCTOR4" />
+<link rel="stylesheet" href="reception-dashboard-doctor.css?v=20260909_RECEPTIONDOCTOR5" />
 <script src="reception-dashboard-doctor.js?v=20260909_RECEPTIONDOCTOR1" defer></script>
 <style>
 /* ============================================================
@@ -2719,7 +2719,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
       <span>AI Reception Assistant</span>
       <span class="ra-ai-live" aria-hidden="true"></span>
     </button>
-    <button type="button" class="ra-btn ra-apple-accent" onclick="openMessageCenter()" title="Direct common-server message center for staff messaging">
+    <button type="button" class="ra-btn ra-teal" onclick="openMessageCenter()" title="Direct common-server message center for staff messaging">
       <i class="ti ti-message-circle"></i>
       <span>Message</span>
     </button>
@@ -2734,7 +2734,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
     </div>
 
     <div class="ra-dropdown">
-      <button class="ra-btn ra-apple-secondary" onclick="toggleDropdown('dd-patient')"><i class="ti ti-users"></i> Patient <i class="ti ti-chevron-down"></i></button>
+      <button class="ra-btn ra-blue" onclick="toggleDropdown('dd-patient')"><i class="ti ti-users"></i> Patient <i class="ti ti-chevron-down"></i></button>
       <div class="ra-dropdown-menu" id="dd-patient">
         <div class="dd-label">Patient tools</div>
         <button onclick="openPatientSelector('rdv');closeAllDropdowns();"><i class="ti ti-user-check"></i> Select for RDV</button>
@@ -2748,7 +2748,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
     </div>
 
     <div class="ra-dropdown">
-      <button class="ra-btn ra-apple-secondary" onclick="toggleDropdown('dd-referral')"><i class="ti ti-git-branch"></i> Referral <i class="ti ti-chevron-down"></i></button>
+      <button class="ra-btn ra-blue-dark" onclick="toggleDropdown('dd-referral')"><i class="ti ti-git-branch"></i> Referral <i class="ti ti-chevron-down"></i></button>
       <div class="ra-dropdown-menu" id="dd-referral">
         <button onclick="raReferralIn();closeAllDropdowns();"><i class="ti ti-login"></i> Referral In</button>
         <button onclick="raReferralOut();closeAllDropdowns();"><i class="ti ti-external-link"></i> Referral Out</button>
@@ -2759,7 +2759,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
     </div>
 
     <div class="ra-dropdown">
-      <button class="ra-btn ra-apple-secondary" onclick="toggleDropdown('dd-ins')"><i class="ti ti-shield-check"></i> Insurance <i class="ti ti-chevron-down"></i></button>
+      <button class="ra-btn ra-green" onclick="toggleDropdown('dd-ins')"><i class="ti ti-shield-check"></i> Insurance <i class="ti ti-chevron-down"></i></button>
       <div class="ra-dropdown-menu" id="dd-ins">
         <button onclick="raInsurance();closeAllDropdowns();"><i class="ti ti-shield"></i> All Insured</button>
         <button onclick="raRSSB();closeAllDropdowns();"><i class="ti ti-id"></i> RSSB</button>
@@ -2769,7 +2769,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
     </div>
 
     <div class="ra-dropdown">
-      <button class="ra-btn ra-apple-secondary" onclick="toggleDropdown('dd-bed')"><i class="ti ti-bed"></i> Bed / Ward <i class="ti ti-chevron-down"></i></button>
+      <button class="ra-btn ra-orange" onclick="toggleDropdown('dd-bed')"><i class="ti ti-bed"></i> Bed / Ward <i class="ti ti-chevron-down"></i></button>
       <div class="ra-dropdown-menu" id="dd-bed">
         <button onclick="raAdmission();closeAllDropdowns();"><i class="ti ti-login-2"></i> Admission</button>
         <button onclick="raDischarge();closeAllDropdowns();"><i class="ti ti-logout-2"></i> Discharge</button>
@@ -2777,7 +2777,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
     </div>
 
     <div class="ra-dropdown">
-      <button class="ra-btn ra-apple-secondary" onclick="toggleDropdown('dd-finance')"><i class="ti ti-receipt"></i> Billing / Print <i class="ti ti-chevron-down"></i></button>
+      <button class="ra-btn ra-yellow" onclick="toggleDropdown('dd-finance')"><i class="ti ti-receipt"></i> Billing / Print <i class="ti ti-chevron-down"></i></button>
       <div class="ra-dropdown-menu" id="dd-finance">
         <button onclick="raBill();closeAllDropdowns();"><i class="ti ti-receipt"></i> Bill</button>
         <button onclick="raPrintCard();closeAllDropdowns();"><i class="ti ti-id-badge-2"></i> Print ID Card</button>
@@ -2787,7 +2787,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
     </div>
 
     <div class="ra-dropdown">
-      <button class="ra-btn ra-apple-accent" onclick="toggleDropdown('dd-comms')"><i class="ti ti-messages"></i> Communication <i class="ti ti-chevron-down"></i></button>
+      <button class="ra-btn ra-teal" onclick="toggleDropdown('dd-comms')"><i class="ti ti-messages"></i> Communication <i class="ti ti-chevron-down"></i></button>
       <div class="ra-dropdown-menu" id="dd-comms">
         <button onclick="openMessageCenter();closeAllDropdowns();"><i class="ti ti-message-circle"></i> Message Center</button>
         <button onclick="raNotify();closeAllDropdowns();"><i class="ti ti-bell"></i> Notify Doctor</button>
@@ -2797,10 +2797,10 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
     </div>
 
     <span class="rc-sep"></span>
-    <button class="ra-btn ra-apple-accent" onclick="raCallNext()"><i class="ti ti-player-play"></i> Call Next</button>
-    <button class="ra-btn ra-apple-danger" onclick="raEmergency()"><i class="ti ti-emergency-bed"></i> Emergency</button>
-    <button class="ra-btn ra-apple-neutral" onclick="raRefresh()"><i class="ti ti-refresh"></i> Refresh</button>
-    <button class="ra-btn ra-apple-neutral" onclick="showShortcuts()"><i class="ti ti-help"></i> Help</button>
+    <button class="ra-btn ra-green" onclick="raCallNext()"><i class="ti ti-player-play"></i> Call Next</button>
+    <button class="ra-btn ra-red" onclick="raEmergency()"><i class="ti ti-emergency-bed"></i> Emergency</button>
+    <button class="ra-btn ra-gray" onclick="raRefresh()"><i class="ti ti-refresh"></i> Refresh</button>
+    <button class="ra-btn ra-indigo" onclick="showShortcuts()"><i class="ti ti-help"></i> Help</button>
   </div>
 </div>
 
