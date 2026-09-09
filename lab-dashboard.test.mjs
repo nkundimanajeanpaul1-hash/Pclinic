@@ -10,7 +10,7 @@ const CSS = readFileSync(resolve(ROOT, 'lab-dashboard-doctor.css'), 'utf8');
 const FIX = readFileSync(resolve(ROOT, 'lab-dashboard-fixes.js'), 'utf8');
 
 test('lab dashboard now loads the doctor-style skin and lab parity fix layer while keeping lab auth', () => {
-  assert.match(HTML, /lab-dashboard-doctor\.css\?v=20260908_LABDOCTORPARITY5SMALLQAONLY/);
+  assert.match(HTML, /lab-dashboard-doctor\.css\?v=20260908_LABDOCTORPARITY6SMALLQADOCTORSTYLE/);
   assert.match(HTML, /pclinic-file\.js\?v=20260908_FILES_NURSEACTIONBAR/);
   assert.match(HTML, /lab-dashboard-fixes\.js\?v=20260908_LABDOCTORPARITY4VISIBLEQA/);
   assert.match(HTML, /<body class="lab-doctor-shell">/);
@@ -43,9 +43,12 @@ test('lab dashboard hides its legacy hero chrome and adopts the doctor dashboard
   assert.match(CSS, /body\.lab-doctor-shell \.fi,/);
   assert.match(CSS, /body\.lab-doctor-shell \.lab-doctor-overview \{/);
   assert.match(CSS, /body\.lab-doctor-shell \.lab-overview-side \{/);
-  assert.match(CSS, /body\.lab-doctor-shell \.lab-overview-quick-actions \{/);
-  assert.match(CSS, /body\.lab-doctor-shell \.qa-card \{/);
-  assert.match(CSS, /body\.lab-doctor-shell \.qa-label \{/);
+  assert.match(CSS, /width: 180px;/);
+  assert.match(CSS, /body\.lab-doctor-shell \.lab-overview-quick-card \{/);
+  assert.match(CSS, /padding: 14px !important;/);
+  assert.match(CSS, /body\.lab-doctor-shell \.lab-overview-quick-actions \.qa-card \{/);
+  assert.match(CSS, /flex-direction: row;/);
+  assert.match(CSS, /body\.lab-doctor-shell \.lab-overview-quick-actions \.qa-label \{/);
   assert.match(CSS, /body\.lab-doctor-shell \.lab-doctor-body \{/);
   assert.match(CSS, /body\.lab-doctor-shell \.lab-doctor-section-head,/);
   assert.match(CSS, /body\.lab-doctor-shell \.lab-doctor-qc-head,/);
@@ -74,11 +77,11 @@ test('lab dashboard wording now follows the cleaner doctor-dashboard tone and in
     'Send Report Update',
     'No reports waiting right now. Verified results remain available in the patient record.',
     '⚡ Quick Actions',
-    'Focus search and shared bar',
-    'Receive and accession',
-    'Enter and validate results',
-    'Crossmatch and issue',
-    'Analyzer status and logs',
+    'Select patient',
+    'Specimen workflow',
+    'Lab Results',
+    'Blood Bank',
+    'Daily quality control',
     "Select patient / order from Today's worklist or the identification bar to continue the laboratory workflow.",
     'Common Server sync: laboratory orders, validated results and released reports update live.'
   ]) {

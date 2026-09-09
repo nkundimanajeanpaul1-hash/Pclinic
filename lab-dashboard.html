@@ -4093,7 +4093,7 @@
         }
 
 </style>
-    <link rel="stylesheet" href="lab-dashboard-doctor.css?v=20260908_LABDOCTORPARITY5SMALLQAONLY">
+    <link rel="stylesheet" href="lab-dashboard-doctor.css?v=20260908_LABDOCTORPARITY6SMALLQADOCTORSTYLE">
     <script src="pclinic-file.js?v=20260908_FILES_NURSEACTIONBAR" defer></script>
     <script src="lab-dashboard-fixes.js?v=20260908_LABDOCTORPARITY4VISIBLEQA" defer></script>
 </head>
@@ -4300,70 +4300,43 @@
                     </div>
                     <div class="lab-overview-side">
                         <div class="lab-overview-quick-card">
-                            <div class="lab-overview-quick-head">⚡ Quick Actions</div>
+                            <div class="section-title lab-overview-quick-head" style="border-bottom: none; padding-bottom: 0; margin-bottom: 10px; font-size: 11px; text-align: center; border: none;">⚡ Quick Actions</div>
                             <div class="lab-overview-quick-actions">
-                                <div class="qa-card" onclick="labQuickAction('select')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                <div class="qa-card" onclick="labQuickAction('select')" title="Select patient" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--acb); color:var(--ac);"><i class="ti ti-user-search"></i></div>
-                                    <div>
-                                        <div class="qa-label" style="font-size: 10px;">Select patient</div>
-                                        <div class="qa-desc">Focus search and shared bar</div>
-                                    </div>
+                                    <div class="qa-label" style="font-size: 10px;">Select patient</div>
                                 </div>
-                                <div class="qa-card" onclick="labQuickAction('specimen')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                <div class="qa-card" onclick="labQuickAction('specimen')" title="Specimen workflow" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--orangeb); color:var(--oranged);"><i class="ti ti-test-pipe"></i></div>
-                                    <div>
-                                        <div class="qa-label" style="font-size: 10px;">Specimen workflow</div>
-                                        <div class="qa-desc">Receive and accession</div>
-                                    </div>
+                                    <div class="qa-label" style="font-size: 10px;">Specimen workflow</div>
                                 </div>
-                                <div class="qa-card" onclick="labQuickAction('worklist')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                <div class="qa-card" onclick="labQuickAction('worklist')" title="Today's worklist" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:#eaf2ff; color:#0071e3;"><i class="ti ti-list-check"></i></div>
-                                    <div>
-                                        <div class="qa-label" style="font-size: 10px;">Today's worklist</div>
-                                        <div class="qa-desc">Open and review active tests</div>
-                                    </div>
+                                    <div class="qa-label" style="font-size: 10px;">Today's worklist</div>
                                 </div>
-                                <div class="qa-card" onclick="labQuickAction('results')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                <div class="qa-card" onclick="labQuickAction('results')" title="Lab Results" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--greenb); color:var(--greend);"><i class="ti ti-report-analytics"></i></div>
-                                    <div>
-                                        <div class="qa-label" style="font-size: 10px;">Lab Results</div>
-                                        <div class="qa-desc">Enter and validate results</div>
-                                    </div>
+                                    <div class="qa-label" style="font-size: 10px;">Lab Results</div>
                                 </div>
-                                <div class="qa-card" onclick="labQuickAction('pathology')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                <div class="qa-card" onclick="labQuickAction('pathology')" title="Pathology" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--purpleb); color:var(--purpled);"><i class="ti ti-microscope"></i></div>
-                                    <div>
-                                        <div class="qa-label" style="font-size: 10px;">Pathology</div>
-                                        <div class="qa-desc">Histopathology workflow</div>
-                                    </div>
+                                    <div class="qa-label" style="font-size: 10px;">Pathology</div>
                                 </div>
-                                <div class="qa-card" onclick="labQuickAction('microbio')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                <div class="qa-card" onclick="labQuickAction('microbio')" title="Microbiology" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:#fdf0f7; color:#7a0049;"><i class="ti ti-virus"></i></div>
-                                    <div>
-                                        <div class="qa-label" style="font-size: 10px;">Microbiology</div>
-                                        <div class="qa-desc">Culture and sensitivity</div>
-                                    </div>
+                                    <div class="qa-label" style="font-size: 10px;">Microbiology</div>
                                 </div>
-                                <div class="qa-card" onclick="labQuickAction('bloodbank')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                <div class="qa-card" onclick="labQuickAction('bloodbank')" title="Blood Bank" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:#fff4e0; color:#b85d00;"><i class="ti ti-droplet"></i></div>
-                                    <div>
-                                        <div class="qa-label" style="font-size: 10px;">Blood Bank</div>
-                                        <div class="qa-desc">Crossmatch and issue</div>
-                                    </div>
+                                    <div class="qa-label" style="font-size: 10px;">Blood Bank</div>
                                 </div>
-                                <div class="qa-card" onclick="labQuickAction('qc')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                <div class="qa-card" onclick="labQuickAction('qc')" title="Daily quality control" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:#eff6ff; color:#2563eb;"><i class="ti ti-chart-line"></i></div>
-                                    <div>
-                                        <div class="qa-label" style="font-size: 10px;">Daily quality control</div>
-                                        <div class="qa-desc">Analyzer status and logs</div>
-                                    </div>
+                                    <div class="qa-label" style="font-size: 10px;">Daily quality control</div>
                                 </div>
-                                <div class="qa-card" onclick="labQuickAction('reports')" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 0; flex-direction: row; align-items: center;">
+                                <div class="qa-card" onclick="labQuickAction('reports')" title="Lab Reports" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 0; flex-direction: row; align-items: center;">
                                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:#f1f5f9; color:#475569;"><i class="ti ti-printer"></i></div>
-                                    <div>
-                                        <div class="qa-label" style="font-size: 10px;">Lab Reports</div>
-                                        <div class="qa-desc">Open and release reports</div>
-                                    </div>
+                                    <div class="qa-label" style="font-size: 10px;">Lab Reports</div>
                                 </div>
                             </div>
                         </div>
