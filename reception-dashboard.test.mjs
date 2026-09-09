@@ -20,7 +20,7 @@ function sectionBetween(source, start, end) {
 
 test('Reception page loads Doctor-parity skin and corrected title', () => {
   assert.match(html, /<title>Reception Dashboard — PClinic<\/title>/);
-  assert.match(html, /reception-dashboard-doctor\.css\?v=20260909_RECEPTIONDOCTOR1/);
+  assert.match(html, /reception-dashboard-doctor\.css\?v=20260909_RECEPTIONDOCTOR2/);
   assert.match(html, /reception-dashboard-doctor\.js\?v=20260909_RECEPTIONDOCTOR1/);
   assert.match(html, /<body[^>]*class="reception-doctor-shell"/);
 });
@@ -33,6 +33,9 @@ test('Reception Doctor CSS defines doctor-style workspace, compact quick-actions
   assert.match(css, /border-radius:\s*999px !important;/);
   assert.match(css, /overflow:\s*visible;/);
   assert.match(css, /z-index:\s*1400 !important;/);
+  assert.match(css, /\.message-center-modal \.message-center-sheet/);
+  assert.match(css, /width:\s*min\(94vw, 1680px\) !important;/);
+  assert.match(css, /height:\s*min\(88vh, 1120px\) !important;/);
 });
 
 test('Reception Doctor JS injects vertical role-specific quick actions', () => {
@@ -49,6 +52,9 @@ test('Reception Doctor JS injects vertical role-specific quick actions', () => {
 test('Reception exposes a visible Message button, front popup modal, and embedded message center', () => {
   assert.match(html, />\s*<span>Message<\/span>\s*<\/button>/);
   assert.match(html, /id="messageCenterModal"/);
+  assert.match(html, /class="modal-overlay message-center-modal" id="messageCenterModal"/);
+  assert.match(html, /class="modal-sheet message-center-sheet"/);
+  assert.match(html, /class="modal-body message-center-body"/);
   assert.match(html, /id="messageCenterFrame"/);
   assert.match(html, /function openMessageCenter\(\)\{/);
   assert.match(html, /modal\.classList\.add\('open'\)/);
