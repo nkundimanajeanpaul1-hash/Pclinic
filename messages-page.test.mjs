@@ -51,6 +51,17 @@ test('Messages page can reply directly to the original sender', () => {
   assert.match(html, /Replying to /);
 });
 
+test('Messages page action controls use a simplified Apple palette', () => {
+  assert.match(html, /rgba\(10,132,255,.06\)/);
+  assert.match(html, /rgba\(94,92,230,.045\)/);
+  assert.match(html, /modebtn\.on\{background:linear-gradient\(180deg,rgba\(10,132,255,.12\),rgba\(10,132,255,.07\)\)/);
+  assert.match(html, /quick button\{[^}]*background:rgba\(255,255,255,.92\)/);
+  assert.match(html, /tabs\{[^}]*background:rgba\(120,120,128,.12\)/);
+  assert.match(html, /msg \.actions button\.read\{background:rgba\(120,120,128,.12\);color:#374151\}/);
+  assert.doesNotMatch(html, /rgba\(52,199,89,.05\)/);
+  assert.doesNotMatch(html, /msg \.actions button\.read\{background:#eefbf2;color:#177a37\}/);
+});
+
 test('Shared message engine syncs incoming and sent messages from the common server', () => {
   assert.match(orders, /var snapshots = \{ role: \[\], staff: \[\], sent: \[\] \}/);
   assert.match(orders, /where\('fromId', '==', staff\.id\)/);
