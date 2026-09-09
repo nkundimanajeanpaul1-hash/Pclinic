@@ -44,6 +44,13 @@ test('Reception Doctor JS injects vertical role-specific quick actions', () => {
   assert.match(js, /reception-doctor-highlight/);
 });
 
+test('Reception exposes a visible common-server Message button and shared message center routing', () => {
+  assert.match(html, />\s*<span>Message<\/span>\s*<\/button>/);
+  assert.match(html, /function openMessageCenter\(\)\{/);
+  assert.match(html, /window\.location\.href='messages\.html'/);
+  assert.match(html, /Message Center/);
+});
+
 test('Registration flow still drives queue and downstream views', () => {
   const section = sectionBetween(html, 'async function registerPatient(){', '// ─── QUEUE FUNCTIONS ───');
   assert.match(section, /updatePatient\(editingPatientId, patientData\)/);

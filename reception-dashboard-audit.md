@@ -6,6 +6,7 @@ Target: `/home/user/repo3/reception-dashboard.html`
 1. Reception-only bug audit and fixes
 2. Doctor-dashboard visual parity refinement pass
 3. Dedicated Reception regression tests
+4. Shared common-server messaging upgrade with Reception entry button
 
 ## Confirmed defects fixed
 - Corrected title typo from `PClini` to `PClinic`.
@@ -19,9 +20,20 @@ Target: `/home/user/repo3/reception-dashboard.html`
 - Added `reception-dashboard-doctor.css` for a tighter Doctor-style shell/workspace presentation.
 - Added `reception-dashboard-doctor.js` to inject a small vertical Reception quick-actions card in the right-side aside.
 - Refined command bar, workspace width, panel/cards, tables, forms, badges, and responsive behavior to better match the Doctor dashboard feel.
+- Added a visible `Message` button in the Reception action row that routes to the shared common-server message center.
+
+## Shared common-server messaging upgrade
+- Upgraded `messages.html` from role-only compose to a real staff message center.
+- Added **Specific Staff** mode so Reception can choose one exact doctor, admin, nurse, or other staff member before sending.
+- Added **Role Broadcast** mode with options like **All Doctors** and **All Nurses**.
+- Added reply-to-sender flow so a response goes back to the person who started the direct message.
+- Extended `pclinic-orders.js` shared message sync so sent items also round-trip from Firestore, not only incoming inbox items.
+- Updated `firestore.rules` so message senders can read their own server-stored messages while unrelated staff still cannot.
 
 ## Dedicated tests added
 - `tests/reception-dashboard.test.mjs`
+- `tests/messages-page.test.mjs`
+- updated `tests/firestore.rules.test.mjs`
 
 Coverage includes:
 - registration flow wiring

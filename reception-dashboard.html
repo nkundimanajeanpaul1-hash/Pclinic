@@ -2719,6 +2719,10 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
       <span>AI Reception Assistant</span>
       <span class="ra-ai-live" aria-hidden="true"></span>
     </button>
+    <button type="button" class="ra-btn ra-teal" onclick="openMessageCenter()" title="Direct common-server message center for staff messaging">
+      <i class="ti ti-message-circle"></i>
+      <span>Message</span>
+    </button>
 
     <div class="reception-unified-search" role="search">
       <div class="rus-shell">
@@ -2785,7 +2789,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
     <div class="ra-dropdown">
       <button class="ra-btn ra-teal" onclick="toggleDropdown('dd-comms')"><i class="ti ti-messages"></i> Communication <i class="ti ti-chevron-down"></i></button>
       <div class="ra-dropdown-menu" id="dd-comms">
-        <button onclick="raMessages();closeAllDropdowns();"><i class="ti ti-message"></i> Messages</button>
+        <button onclick="openMessageCenter();closeAllDropdowns();"><i class="ti ti-message-circle"></i> Message Center</button>
         <button onclick="raNotify();closeAllDropdowns();"><i class="ti ti-bell"></i> Notify Doctor</button>
         <button onclick="raMyOrders();closeAllDropdowns();"><i class="ti ti-clipboard-list"></i> My Orders</button>
         <button onclick="openAIAssistant();closeAllDropdowns();"><i class="ti ti-help-circle"></i> Reception Help</button>
@@ -4276,62 +4280,12 @@ function raImaging(){
   }
   showServerModal('🖼️ Imaging — Common Server ('+items.length+')', html);
 }
+function openMessageCenter(){
+  window.location.href='messages.html';
+  return true;
+}
 async function raMessages(){
-  if(!window.firebaseDB||!window.firebaseFunctions){ showToast('❌ Common Server is not ready yet.','error'); return; }
-  var f=window.firebaseFunctions, db=window.firebaseDB, staff=window.currentStaff||{};
-  var role=String(staff.role||'reception').toLowerCase(), sid=String(staff.staffId||staff.id||'');
-  var seen={}, items=[];
-  function collect(snap){
-    snap.forEach(function(d){
-      var x=d.data()||{}; x.id=x.id||d.id;
-      if(!seen[x.id]){ seen[x.id]=true; items.push(x); }
-    });
-  }
-  try{
-    if(role) collect(await f.getDocs(f.query(f.collection(db,'notifications'), f.where('toRoles','array-contains',role))));
-    if(sid) collect(await f.getDocs(f.query(f.collection(db,'notifications'), f.where('toStaffId','==',sid))));
-  }catch(e){
-    console.error('Messages read failed:', e);
-    showToast('❌ Could not load messages from the Common Server: '+e.message,'error');
-    return;
-  }
-  function tsOf(x){ var c=x&&x.createdAt; if(c&&typeof c.toDate==='function'){ try{ return c.toDate().toISOString(); }catch(e){} } return String((x&&x.createdAt)||''); }
-  items.sort(function(a,b){ return tsOf(b).localeCompare(tsOf(a)); });
-  var unread=items.filter(function(x){ return !x.read; }).length;
-  var html='<div style="font-size:12px; color:var(--tm); margin-bottom:12px;">Server notifications addressed to Reception ('+items.length+' total), '+unread+' unread.</div>';
-  if(!items.length){
-    html+='<p style="text-align:center; color:var(--tm); padding:20px;">No server messages yet.</p>';
-  } else {
-    html+='<div style="display:grid; gap:8px;">';
-    items.slice(0,30).forEach(function(m){
-      var time=tsOf(m).replace('T',' ').slice(0,16);
-      html+='<div style="background:var(--s3); padding:10px 12px; border-radius:10px;'+(m.read?'opacity:.72;':'border-left:3px solid var(--ac);')+'">'
-        +'<div style="font-weight:600; font-size:12px;">'+(m.read?'':'🔵 ')+String(m.title||m.message||'Notification')+'</div>'
-        +'<div style="font-size:11px; color:var(--tm); margin-top:3px;">'+String(m.message||'')+'</div>'
-        +'<div style="font-size:10px; color:var(--tm); margin-top:4px;">From: '+String(m.createdByName||'staff')+' · '+time+'</div>'
-        +'</div>';
-    });
-    html+='</div>';
-  }
-  showServerModal('💬 Messages — Common Server ('+items.length+')', html);
-  if(unread){
-    var host=document.getElementById('serverDataBody');
-    if(host){
-      var wrap=document.createElement('div'); wrap.style.cssText='text-align:center;margin-top:12px;';
-      var btn=document.createElement('button'); btn.type='button'; btn.className='btn btn-primary'; btn.textContent='✅ Mark all as read';
-      btn.addEventListener('click', async function(){
-        var list=items.filter(function(x){ return !x.read; });
-        var ok=0, fail=0;
-        for(var i=0;i<list.length;i++){
-          try{ await f.updateDoc(f.doc(db,'notifications',list[i].id), { read:true, readAt:f.serverTimestamp() }); ok++; }
-          catch(e){ fail++; console.error('Mark read failed:', e); }
-        }
-        showToast(fail?('⚠️ Marked '+ok+', failed '+fail+'.'):('✅ '+ok+' message(s) marked as read.'), fail?'err':'ok');
-        raMessages();
-      });
-      wrap.appendChild(btn); host.appendChild(wrap);
-    }
-  }
+  return openMessageCenter();
 }
 async function raNotify(){
   var all=_getAllPatientsCommon();if(!all.length){showToast('❌ No patients to notify','error');return false;}
@@ -6750,6 +6704,7 @@ window.raMedicalSummary = raMedicalSummary;
 window.raDocuments = raDocuments;
 window.raLabResult = raLabResult;
 window.raImaging = raImaging;
+window.openMessageCenter = openMessageCenter;
 window.raMessages = raMessages;
 window.raNotify = raNotify;
 window.raMyOrders = raMyOrders;

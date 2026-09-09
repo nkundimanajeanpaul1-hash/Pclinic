@@ -263,11 +263,11 @@
         if (!staff.role) return;
         var f = window.firebaseFunctions;
         var ref = f.collection(window.firebaseDB, 'messages');
-        var snapshots = { role: [], staff: [] };
+        var snapshots = { role: [], staff: [], sent: [] };
 
         function publish() {
             var byId = {};
-            snapshots.role.concat(snapshots.staff).forEach(function (message) {
+            snapshots.role.concat(snapshots.staff, snapshots.sent).forEach(function (message) {
                 byId[String(message.id)] = message;
             });
             var list = Object.keys(byId).map(function (id) { return byId[id]; });
@@ -299,6 +299,7 @@
             _messagesUnsubs.push(listen('role', f.query(ref, f.where('toRoles', 'array-contains', staff.role))));
             if (staff.id) {
                 _messagesUnsubs.push(listen('staff', f.query(ref, f.where('toStaffId', '==', staff.id))));
+                _messagesUnsubs.push(listen('sent', f.query(ref, f.where('fromId', '==', staff.id))));
             }
         } catch (error) {
             console.warn('[pclinic] could not start message sync:', error && error.message);
@@ -652,6 +653,9 @@
             throw new Error('The order was not accepted by the common server' +
                 (why ? ' (' + why + ')' : '') +
                 '. Check your connection and staff permissions, then retry.');
+        }
+        if (order.billId) {
+            var billOk = await waitForTrackedSync('bilnd staff permissions, then retry.');
         }
         if (order.billId) {
             var billOk = await waitForTrackedSync('bills', order.billId);
@@ -1595,14 +1599,35 @@
     var ROLES = ['doctor','nurse','lab','pharmacy','radio','reception','cashier',
                  'finance','hr','inventory','theater','physio','admin','beds'];
 
-    function getMessages(forRole) {
+    function messageStore() {
         var all = read(MSGS_KEY, []);
+        all.sort(function (a, b) { return String(b.at || '').localeCompare(String(a.at || '')); });
+        return all;
+    }
+    function incomingFor(m, me, role) {
+        return (m.toStaffId && String(m.toStaffId) === String(me.id)) || (m.toRoles || []).indexOf(role) !== -1;
+    }
+    function sentByMe(m, me) {
+        return String(m.fromId || '') === String(me.id);
+    }
+    function getMessages(forRole, options) {
+        if (forRole && typeof forRole === 'object') {
+            options = forRole;
+            forRole = '';
+        }
+        options = options || {};
+        var all = messageStore();
         var me = who();
-        var role = forRole || me.role;
-        return all.filter(function (m) {
-            if (m.toStaffId && m.toStaffId === me.id) return true;
-            return (m.toRoles || []).indexOf(role) !== -1;
-        });
+        var role = forRole || options.forRole || me.role;
+        if (options.sentOnly) return all.filter(function (m) { return sentByMe(m, me); });
+        if (options.includeSent) return all.filter(function (m) { return incomingFor(m, me, role) || sentByMe(m, me); });
+        return all.filter(function (m) { return incomingFor(m, me, role); });
+    }
+    function getSentMessages() {
+        return getMessages({ sentOnly: true });
+    }
+    function getAllMessages() {
+        return getMessages({ includeSent: true });
     }
 
     /* sendMessage({ text, toRoles:['lab','reception'], toStaffId, priority, patientId }) */
@@ -1612,8 +1637,13 @@
         var m = {
             id: uid('msg'),
             text: String(msg.text),
-            toRoles: msg.toRoles || [],
+            toRoles: Array.isArray(msg.toRoles) ? msg.toRoles.slice() : [],
             toStaffId: msg.toStaffId || null,
+            toStaffName: msg.toStaffName || '',
+            toRole: msg.toRole || '',
+            audience: msg.audience || (msg.toStaffId ? 'staff' : 'role'),
+            threadId: msg.threadId || uid('thread'),
+            replyToId: msg.replyToId || '',
             priority: msg.priority || 'normal',      // normal | urgent
             patientId: msg.patientId || null,
             patientName: msg.patientName || '',
@@ -1624,7 +1654,7 @@
             at: new Date().toISOString(),
             readBy: []
         };
-        var all = read(MSGS_KEY, []);
+        var all = messageStore();
         all.unshift(m);
         write(MSGS_KEY, all.slice(0, 500));          // keep the log bounded
         sync('messages', m.id, m);
@@ -1830,7 +1860,8 @@
         key: PHARM_KEY
     };
     window.pcMessages = {
-        send: sendMessage, list: getMessages, markRead: markRead,
+        send: sendMessage, list: getMessages, sent: getSentMessages,
+        all: getAllMessages, markRead: markRead,
         markAllRead: markAllRead, unread: unreadCount,
         notifyRole: notifyRole, ROLES: ROLES
     };
