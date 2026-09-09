@@ -1,0 +1,413 @@
+body.doctor-parity-shell {
+  background:
+    radial-gradient(circle at top left, rgba(0, 113, 227, 0.05), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(0, 112, 128, 0.05), transparent 34%),
+    var(--bg, #f5f7fb) !important;
+  color: var(--tp, #1d1d1f);
+  -webkit-font-smoothing: antialiased;
+}
+
+body.doctor-parity-shell > .nav,
+body.doctor-parity-shell > .reception-action-bar,
+body.doctor-parity-shell > .greeting,
+body.doctor-parity-shell > .stats-grid,
+body.doctor-parity-shell > .ward-section,
+body.doctor-parity-shell > .breadcrumb,
+body.doctor-parity-shell > .content-area,
+body.doctor-parity-shell > .app,
+body.doctor-parity-shell .content-area,
+body.doctor-parity-shell .app {
+  max-width: 1480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+body.doctor-parity-shell .app {
+  width: 100%;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-bottom: 28px;
+}
+
+body.doctor-parity-shell .content-area {
+  padding: 0 24px 20px !important;
+  gap: 18px !important;
+}
+
+body.doctor-parity-shell .greeting,
+body.doctor-parity-shell .stats-grid,
+body.doctor-parity-shell .ward-section,
+body.doctor-parity-shell > .nav,
+body.doctor-parity-shell > .reception-action-bar,
+body.doctor-parity-shell > .breadcrumb {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+
+body.doctor-parity-shell .topbar {
+  background: rgba(255, 255, 255, 0.84) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+body.doctor-parity-shell .breadcrumb {
+  color: var(--tm, #6b7280) !important;
+}
+
+body.doctor-parity-shell .greeting h1,
+body.doctor-parity-shell .hero h1,
+body.doctor-parity-shell .page-title,
+body.doctor-parity-shell h1.page-title {
+  font-size: clamp(24px, 3vw, 32px) !important;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+body.doctor-parity-shell .section-title,
+body.doctor-parity-shell .panel-title,
+body.doctor-parity-shell .card-header,
+body.doctor-parity-shell .table-header,
+body.doctor-parity-shell .ph,
+body.doctor-parity-shell .panel-header {
+  letter-spacing: -0.01em;
+}
+
+body.doctor-parity-shell .main-panel,
+body.doctor-parity-shell .panel,
+body.doctor-parity-shell .card,
+body.doctor-parity-shell .table-card,
+body.doctor-parity-shell .modal,
+body.doctor-parity-shell .shortcut-item,
+body.doctor-parity-shell .qa-card,
+body.doctor-parity-shell .stat-card,
+body.doctor-parity-shell .sc,
+body.doctor-parity-shell .kpi,
+body.doctor-parity-shell .ward-section,
+body.doctor-parity-shell .bed-card,
+body.doctor-parity-shell .summary-card,
+body.doctor-parity-shell .info-bar {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06) !important;
+}
+
+body.doctor-parity-shell .panel-header,
+body.doctor-parity-shell .table-header,
+body.doctor-parity-shell .ph,
+body.doctor-parity-shell .card-header,
+body.doctor-parity-shell .panel-title,
+body.doctor-parity-shell .section-title {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+body.doctor-parity-shell .section-title {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: var(--tm, #6b7280) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+body.doctor-parity-shell .qa-card,
+body.doctor-parity-shell .shortcut-item {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+body.doctor-parity-shell .qa-card:hover,
+body.doctor-parity-shell .shortcut-item:hover,
+body.doctor-parity-shell .bed-card:hover,
+body.doctor-parity-shell .stat-card:hover,
+body.doctor-parity-shell .sc:hover,
+body.doctor-parity-shell .kpi:hover,
+body.doctor-parity-shell .main-panel:hover,
+body.doctor-parity-shell .panel:hover,
+body.doctor-parity-shell .card:hover,
+body.doctor-parity-shell .table-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.09) !important;
+}
+
+body.doctor-parity-shell .nav,
+body.doctor-parity-shell .reception-action-bar {
+  position: sticky;
+  top: 64px;
+  z-index: 35;
+  backdrop-filter: blur(20px) saturate(170%);
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+}
+
+body.doctor-parity-shell .nav {
+  margin-top: 12px;
+  margin-bottom: 12px;
+  padding: 10px;
+  gap: 8px;
+}
+
+body.doctor-parity-shell .reception-action-bar {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+}
+
+body.doctor-parity-shell .nav .ntab,
+body.doctor-parity-shell .nav-tab,
+body.doctor-parity-shell .mp-tab,
+body.doctor-parity-shell .chip {
+  border-radius: 999px !important;
+  min-height: 34px;
+  font-weight: 700 !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+body.doctor-parity-shell .nav .ntab:hover,
+body.doctor-parity-shell .nav-tab:hover,
+body.doctor-parity-shell .mp-tab:hover,
+body.doctor-parity-shell .chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+body.doctor-parity-shell .nav .ntab.active,
+body.doctor-parity-shell .nav-tab.active,
+body.doctor-parity-shell .mp-tab.active,
+body.doctor-parity-shell .chip.on,
+body.doctor-parity-shell .chip.active {
+  background: var(--acb, #eaf2ff) !important;
+  color: var(--ac, #0071e3) !important;
+  border-color: rgba(0, 113, 227, 0.12) !important;
+}
+
+body.doctor-parity-shell .badge,
+body.doctor-parity-shell .cat-pill,
+body.doctor-parity-shell .ncnt,
+body.doctor-parity-shell .ccount,
+body.doctor-parity-shell .trend {
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.03em;
+}
+
+body.doctor-parity-shell .btn,
+body.doctor-parity-shell .btn-s,
+body.doctor-parity-shell .btn-p,
+body.doctor-parity-shell .btn-sm,
+body.doctor-parity-shell .btn-blue,
+body.doctor-parity-shell .btn-red,
+body.doctor-parity-shell .btn-outline,
+body.doctor-parity-shell .btn-export,
+body.doctor-parity-shell .ra-btn,
+body.doctor-parity-shell .tb-btn,
+body.doctor-parity-shell .topbar-btn,
+body.doctor-parity-shell .theme-toggle,
+body.doctor-parity-shell .modal-x,
+body.doctor-parity-shell details.cashier-more > summary.ra-btn {
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+body.doctor-parity-shell .btn:hover,
+body.doctor-parity-shell .btn-s:hover,
+body.doctor-parity-shell .btn-p:hover,
+body.doctor-parity-shell .btn-sm:hover,
+body.doctor-parity-shell .btn-blue:hover,
+body.doctor-parity-shell .btn-red:hover,
+body.doctor-parity-shell .btn-outline:hover,
+body.doctor-parity-shell .btn-export:hover,
+body.doctor-parity-shell .ra-btn:hover,
+body.doctor-parity-shell .tb-btn:hover,
+body.doctor-parity-shell .topbar-btn:hover,
+body.doctor-parity-shell .theme-toggle:hover,
+body.doctor-parity-shell details.cashier-more > summary.ra-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+}
+
+body.doctor-parity-shell .fi,
+body.doctor-parity-shell .form-ctrl,
+body.doctor-parity-shell input,
+body.doctor-parity-shell select,
+body.doctor-parity-shell textarea {
+  border-radius: 14px !important;
+}
+
+body.doctor-parity-shell .lbl,
+body.doctor-parity-shell label,
+body.doctor-parity-shell .stat-label,
+body.doctor-parity-shell .sc-lbl,
+body.doctor-parity-shell .appsub,
+body.doctor-parity-shell .shortcut-desc,
+body.doctor-parity-shell .sc-sub {
+  font-weight: 600;
+  color: var(--tm, #6b7280) !important;
+}
+
+body.doctor-parity-shell .stat-value,
+body.doctor-parity-shell .number,
+body.doctor-parity-shell .sc-val,
+body.doctor-parity-shell .kpi-num,
+body.doctor-parity-shell .stat-card .number {
+  letter-spacing: -0.03em;
+}
+
+body.doctor-parity-shell .tbl,
+body.doctor-parity-shell .wtbl,
+body.doctor-parity-shell table {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  overflow: hidden;
+}
+
+body.doctor-parity-shell .tbl thead th,
+body.doctor-parity-shell .wtbl thead th,
+body.doctor-parity-shell table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(248, 250, 252, 0.95) !important;
+  color: var(--tm, #6b7280) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+body.doctor-parity-shell .tbl tbody td,
+body.doctor-parity-shell .wtbl tbody td,
+body.doctor-parity-shell table tbody td {
+  padding-top: 11px !important;
+  padding-bottom: 11px !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+  vertical-align: middle;
+}
+
+body.doctor-parity-shell .tbl tbody tr:hover td,
+body.doctor-parity-shell .wtbl tbody tr:hover td,
+body.doctor-parity-shell table tbody tr:hover td {
+  background: rgba(0, 113, 227, 0.035) !important;
+}
+
+body.doctor-parity-shell .tbl tbody tr:last-child td,
+body.doctor-parity-shell .wtbl tbody tr:last-child td,
+body.doctor-parity-shell table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+body.doctor-parity-shell .actions,
+body.doctor-parity-shell td.actions,
+body.doctor-parity-shell .panel-actions,
+body.doctor-parity-shell .ph-r,
+body.doctor-parity-shell .table-header,
+body.doctor-parity-shell .modal-foot {
+  gap: 8px !important;
+}
+
+body.doctor-parity-shell .overlay {
+  background: rgba(15, 23, 42, 0.35) !important;
+  backdrop-filter: blur(8px);
+}
+
+body.doctor-parity-shell .modal {
+  overflow: hidden;
+}
+
+body.doctor-parity-shell.role-beds .stats-grid {
+  gap: 16px !important;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+body.doctor-parity-shell.role-beds .ward-section {
+  padding: 18px !important;
+}
+
+body.doctor-parity-shell.role-beds .beds-grid {
+  gap: 14px !important;
+}
+
+body.doctor-parity-shell.role-beds .bed-card {
+  min-height: 120px;
+}
+
+body.doctor-parity-shell.role-cashier .view,
+body.doctor-parity-shell.role-finance .view {
+  max-width: 1480px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+body.doctor-parity-shell.role-cashier #prevBody,
+body.doctor-parity-shell.role-finance #prevBody {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06) !important;
+}
+
+body.doctor-parity-shell.role-finance .qa-card,
+body.doctor-parity-shell.role-pharmacy .shortcut-item,
+body.doctor-parity-shell.role-theater .main-panel,
+body.doctor-parity-shell.role-inventory .main-panel,
+body.doctor-parity-shell.role-hr .main-panel {
+  backdrop-filter: blur(10px);
+}
+
+@media (max-width: 980px) {
+  body.doctor-parity-shell .app,
+  body.doctor-parity-shell .content-area,
+  body.doctor-parity-shell > .nav,
+  body.doctor-parity-shell > .reception-action-bar,
+  body.doctor-parity-shell > .greeting,
+  body.doctor-parity-shell > .stats-grid,
+  body.doctor-parity-shell > .ward-section,
+  body.doctor-parity-shell > .breadcrumb,
+  body.doctor-parity-shell.role-cashier .view,
+  body.doctor-parity-shell.role-finance .view {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  body.doctor-parity-shell .nav,
+  body.doctor-parity-shell .reception-action-bar {
+    top: 56px;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  body.doctor-parity-shell .main-panel,
+  body.doctor-parity-shell .panel,
+  body.doctor-parity-shell .card,
+  body.doctor-parity-shell .table-card,
+  body.doctor-parity-shell .modal,
+  body.doctor-parity-shell .shortcut-item,
+  body.doctor-parity-shell .qa-card,
+  body.doctor-parity-shell .stat-card,
+  body.doctor-parity-shell .sc,
+  body.doctor-parity-shell .kpi,
+  body.doctor-parity-shell .ward-section,
+  body.doctor-parity-shell .bed-card,
+  body.doctor-parity-shell .summary-card,
+  body.doctor-parity-shell .info-bar,
+  body.doctor-parity-shell .nav,
+  body.doctor-parity-shell .reception-action-bar {
+    border-radius: 16px !important;
+  }
+
+  body.doctor-parity-shell .tbl tbody td,
+  body.doctor-parity-shell .wtbl tbody td,
+  body.doctor-parity-shell table tbody td {
+    padding-top: 9px !important;
+    padding-bottom: 9px !important;
+  }
+}
