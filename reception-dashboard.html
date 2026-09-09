@@ -3,9 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Reception Dashboard — PClini</title>
+<title>Reception Dashboard — PClinic</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
+<link rel="stylesheet" href="reception-dashboard-doctor.css?v=20260909_RECEPTIONDOCTOR1" />
+<script src="reception-dashboard-doctor.js?v=20260909_RECEPTIONDOCTOR1" defer></script>
 <style>
 /* ============================================================
    APPLE-STYLE PREMIUM DESIGN
@@ -2624,7 +2626,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
 </style>
     <script src="pclinic-file.js?v=20260827_FILES" defer></script>
 </head>
-<body>
+<body class="reception-doctor-shell">
 
 <!-- ===== LOADING OVERLAY ===== -->
 <div class="loading-overlay" id="loadingOverlay">
@@ -3675,8 +3677,31 @@ var feed = [];
 var refs = [];
 
 // ─── UTILITY FUNCTIONS ───
-function col(id){return COLORS[id % COLORS.length];}
-function ini(n){return n.trim().split(/\s+/).slice(0,2).map(function(w){return w[0];}).join('').toUpperCase();}
+function colorIndex(id){
+  var raw=String(id==null?'':id);
+  var digits=raw.replace(/\D/g,'');
+  if(digits){
+    var n=Number(digits);
+    if(Number.isFinite(n)) return Math.abs(n)%COLORS.length;
+  }
+  var total=0;
+  for(var i=0;i<raw.length;i++) total=(total+raw.charCodeAt(i))%COLORS.length;
+  return total;
+}
+function col(id){return COLORS[colorIndex(id)] || COLORS[0];}
+function findPatientByAnyId(id){
+  try {
+    if(typeof getPatient==='function'){
+      var exact=getPatient(String(id));
+      if(exact) return exact;
+    }
+  } catch(e) {}
+  try {
+    var all=typeof getPatients==='function'?getPatients():[];
+    return all.find(function(p){ return String(p.id)===String(id) || String(p.mrn||'')===String(id); }) || null;
+  } catch(e) { return null; }
+}
+function ini(n){return String(n||'').trim().split(/\s+/).filter(Boolean).slice(0,2).map(function(w){return w[0];}).join('').toUpperCase()||'??';}
 function todayStr(){return new Date().toISOString().split('T')[0];}
 function fmtDate(d){return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
 function timeAgo(ts){var s=Math.floor((Date.now()-ts)/1000);if(s<60)return 'Just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
@@ -4584,7 +4609,7 @@ function getReceptionWorkflowAnswer(question, patients){
     return live+'PATIENT RDV / RVC / APPOINTMENT CHECK AND BOOKING\n1. Search the patient in the one reception search bar. Existing appointments and doctor schedules appear in the same result panel.\n2. Open Appointments, then click Select Patient. Search by name, MRN, phone or National ID.\n3. Choose Select for RDV; the registered patient is inserted into the appointment form.\n4. Enter date, time, department, doctor, priority and notes.\n5. Click Book Appointment. The appointment is saved on the patient record and appears in the Appointment List/doctor schedule.\n6. Always review the existing schedule results first to avoid duplicate bookings.';
   }
   if(/bed|ward|admission|admit|discharge/.test(q)){
-    return live+'BED REVIEW AND ADMISSION\n1. Open the Beds tab to review ward occupancy and available beds.\n2. Identify the patient with the reception search and confirm the MRN.\n3. Open Bed / Ward → Admission and enter that MRN.\n4. The current workflow marks the patient as admitted and sets the location to Ward on the common server.\n5. Coordinate the exact physical bed assignment with the ward dashboard; Reception currently reviews capacity but does not reserve a numbered bed.\n6. Use Bed / Ward → Discharge only after authorization; it completes the encounter and records the discharge time.';
+    return live+'BED REVIEW AND ADMISSION\n1. Open the Beds tab to review ward occupancy and available beds.\n2. Identify the patient with the reception search and confirm the MRN.\n3. Open Bed / Ward → Admission and enter that MRN.\n4. The current workflow offers real available beds from the Common Server bed registry.\n5. When a numbered bed is chosen, Reception saves the admission, assigns that bed to the patient and marks the bed occupied on the Common Server.\n6. Use Bed / Ward → Discharge only after authorization; it completes the encounter, clears the patient bed and releases the bed back to available.';
   }
   if(/queue|triage|call next|vital|waiting/.test(q)){
     return live+'QUEUE, TRIAGE AND VITALS\n1. Open Queue to see waiting patients.\n2. Use Patient → Triage Priority and enter the MRN; choose critical, high, medium or low.\n3. Use Patient → Record Vitals after selecting a patient to save BP, pulse and temperature.\n4. Call Next opens the next waiting patient. Confirm identity before sending the patient to the department.\n5. Use Move / Transfer when the destination department changes.';
@@ -5564,13 +5589,13 @@ async function bookAppointment(){
     return;
   }
 
-  var patient = getPatient(parseInt(patientId));
+  var patient = findPatientByAnyId(patientId);
   if(!patient){ showToast('❌ Patient not found', 'error'); return; }
 
   // ─── CREATE APPOINTMENT ───
   var appt = {
     id: Date.now(),
-    patientId: parseInt(patientId),
+    patientId: String(patientId),
     patientName: patient.firstName + ' ' + patient.lastName,
     patientMrn: patient.mrn,
     date: date,
@@ -5788,7 +5813,7 @@ function renderAppointmentList() {
 
   var html = '';
   allAppointments.forEach(function(appt, index) {
-    var c = COLORS[appt.patientId % COLORS.length] || COLORS[0];
+    var c = col(appt.patientId);
     var priorityLabel = appt.priority || 'medium';
     var statusClass = appt.status === 'scheduled' ? 'pending' : appt.status;
 
@@ -5814,7 +5839,7 @@ function renderAppointmentList() {
       '<td style="padding:12px 14px;"><span class="badge-status ' + statusClass + '">' + (appt.status || 'scheduled').replace('-',' ') + '</span></td>' +
       '<td style="padding:12px 14px;">' +
         '<div class="action-group" style="gap:4px;">' +
-          '<button class="action-btn" title="View Patient" onclick="window.openPatient(' + appt.patientId + ')" style="background:var(--acb);border-color:var(--ac);color:var(--ac);border-radius:8px;width:30px;height:30px;">' +
+          '<button class="action-btn" data-patient-id="' + escHtml(appt.patientId) + '" title="View Patient" onclick="window.openPatient(this.getAttribute(\'data-patient-id\'))" style="background:var(--acb);border-color:var(--ac);color:var(--ac);border-radius:8px;width:30px;height:30px;">' +
             '<i class="ti ti-eye"></i>' +
           '</button>' +
           '<button class="action-btn accept" title="Confirm" onclick="window.confirmAppointment(' + appt.id + ')" style="border-color:var(--green);color:var(--green);border-radius:8px;width:30px;height:30px;">' +
@@ -6305,13 +6330,13 @@ async function bookSurgery() {
     return;
   }
 
-  var patient = getPatient(parseInt(patientId));
+  var patient = findPatientByAnyId(patientId);
   if(!patient){ showToast('❌ Patient not found', 'error'); return; }
 
   // ─── CREATE SURGERY ───
   var surgery = {
     id: Date.now(),
-    patientId: parseInt(patientId),
+    patientId: String(patientId),
     patientName: patient.firstName + ' ' + patient.lastName,
     patientMrn: patient.mrn,
     date: date,
@@ -6436,7 +6461,7 @@ function renderSurgeryList() {
 
   var html = '';
   allSurgeries.forEach(function(surg, index) {
-    var c = COLORS[surg.patientId % COLORS.length] || COLORS[0];
+    var c = col(surg.patientId);
     var priorityColor = surg.priority === 'emergency' ? 'var(--red)' : surg.priority === 'urgent' ? 'var(--orange)' : 'var(--green)';
     var priorityLabel = surg.priority || 'routine';
     var statusClass = surg.status === 'scheduled' ? 'pending' : surg.status;
@@ -6464,7 +6489,7 @@ function renderSurgeryList() {
       '<td style="padding:12px 14px;"><span class="badge-status ' + statusClass + '">' + (surg.status || 'scheduled').replace('-',' ') + '</span></td>' +
       '<td style="padding:12px 14px;">' +
         '<div class="action-group" style="gap:4px;">' +
-          '<button class="action-btn" title="View Patient" onclick="window.openPatient(' + surg.patientId + ')" style="background:var(--acb);border-color:var(--ac);color:var(--ac);border-radius:8px;width:30px;height:30px;">' +
+          '<button class="action-btn" data-patient-id="' + escHtml(surg.patientId) + '" title="View Patient" onclick="window.openPatient(this.getAttribute(\'data-patient-id\'))" style="background:var(--acb);border-color:var(--ac);color:var(--ac);border-radius:8px;width:30px;height:30px;">' +
             '<i class="ti ti-eye"></i>' +
           '</button>' +
           '<button class="action-btn accept" title="Confirm" onclick="window.confirmSurgery(' + surg.id + ')" style="border-color:var(--green);color:var(--green);border-radius:8px;width:30px;height:30px;">' +
