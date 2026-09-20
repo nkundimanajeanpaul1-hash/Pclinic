@@ -1,16 +1,16 @@
 ============================================================
- PCLINIC HUB - GOLDEN GATE UPDATE  (do NOT upload this file)
+ PCLINIC · UNIFORM GOLDEN GATE BACKGROUND — FULL APP PACK
+ (do NOT upload this file)
 ============================================================
-UPLOAD EXACTLY THESE 2 FILES TO THE REPO ROOT, WITH THESE
-EXACT NAMES - NEVER RENAME THEM:
+UPLOAD ALL 60 .html FILES + hub-bg.jpg TO THE REPO ROOT.
+EVERY FILE KEEPS ITS EXACT GITHUB NAME — choose REPLACE when
+GitHub asks. Renamed copies create duplicate pages.
 
-  1) hub.html     -> replaces the existing hub.html  (same name = replaces, no duplicate)
-  2) hub-bg.jpg   -> new background image, sits next to hub.html
+Changed in this pack: 58 pages received the identical photo
+background block (hub.html & doctor-dashboard.html were done
+earlier and are included unchanged-in-spirit / already styled).
+hub-bg.jpg is the single shared background image.
 
-RULES
-- If GitHub asks "Replace existing file?" -> choose REPLACE.
-- A different name (hub2.html, hub (1).html, *-preview.html…)
-  would create a SECOND hub page. Never upload renamed copies.
-- NEVER upload: this READ-ME, or any file whose name contains
-  "preview" or "DO-NOT-UPLOAD" - those are for viewing only.
+NEVER upload: this READ-ME, or files named *preview* /
+DO-NOT-UPLOAD*.
 ============================================================
