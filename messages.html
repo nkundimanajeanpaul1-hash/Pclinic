@@ -599,6 +599,30 @@ html body .container, html body .grid, html body .beds-grid, html body .dash,
 html body .dashboard, html body .board, html body .columns, html body .cols {
     background-color: transparent !important;
 }
+/* Shell-class override: dashboard-doctor-parity.css / reception-dashboard-doctor.css
+   paint body.<shell> with !important at higher specificity — out-specify them. */
+html body.doctor-parity-shell, html body.reception-doctor-shell,
+html body[class*="-shell"] {
+    background-color: transparent !important;
+    background-image:
+        linear-gradient(180deg, rgba(10, 8, 24, .22), rgba(10, 8, 24, 0) 24%, rgba(10, 8, 24, 0) 74%, rgba(10, 8, 24, .26)),
+        url('hub-bg.jpg') !important;
+    background-size: cover, cover !important;
+    background-position: center, center !important;
+    background-attachment: fixed, fixed !important;
+    background-repeat: no-repeat, no-repeat !important;
+}
+[data-theme="dark"] body.doctor-parity-shell, [data-theme="dark"] body.reception-doctor-shell,
+[data-theme="dark"] body[class*="-shell"] {
+    background-color: transparent !important;
+    background-image:
+        linear-gradient(180deg, rgba(0, 0, 0, .55), rgba(0, 0, 0, .35) 50%, rgba(0, 0, 0, .60)),
+        url('hub-bg.jpg') !important;
+    background-size: cover, cover !important;
+    background-position: center, center !important;
+    background-attachment: fixed, fixed !important;
+    background-repeat: no-repeat, no-repeat !important;
+}
 </style>
 </body>
 </html>
