@@ -2462,15 +2462,13 @@ body {
     background-attachment: fixed, fixed !important;
     background-repeat: no-repeat, no-repeat !important;
 }
-[data-theme="dark"] body {
+/* Let the photo breathe: full-page wrappers & grid containers go transparent,
+   so the shared background shows between panels on dense dashboards. */
+html body .app, html body #app, html body .main, html body .content,
+html body .shell, html body .page, html body .workspace, html body .layout,
+html body .container, html body .grid, html body .beds-grid, html body .dash,
+html body .dashboard, html body .board, html body .columns, html body .cols {
     background-color: transparent !important;
-    background-image:
-        linear-gradient(180deg, rgba(0, 0, 0, .55), rgba(0, 0, 0, .35) 50%, rgba(0, 0, 0, .60)),
-        url('hub-bg.jpg') !important;
-    background-size: cover, cover !important;
-    background-position: center, center !important;
-    background-attachment: fixed, fixed !important;
-    background-repeat: no-repeat, no-repeat !important;
 }
 </style>
 <style>
