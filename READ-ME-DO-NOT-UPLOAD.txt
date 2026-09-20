@@ -1,36 +1,16 @@
-════════════════════════════════════════════════════════════
- PClinic hub — macOS 27 "Golden Gate" FEATURE edition (2026-09-20)
- Do NOT upload this .txt — instructions only.
-════════════════════════════════════════════════════════════
-hub.html keeps YOUR hub exactly as it was — same header line, same
-stat cards, same department cards with descriptions/badges/arrows,
-same roles, search, stats and auth logic. On top of it, this file
-adds the macOS 27 Golden Gate feature set:
+============================================================
+ PCLINIC HUB - GOLDEN GATE UPDATE  (do NOT upload this file)
+============================================================
+UPLOAD EXACTLY THESE 2 FILES TO THE REPO ROOT, WITH THESE
+EXACT NAMES - NEVER RENAME THEM:
 
-  • Liquid Glass material — every existing glass surface (cards,
-    header, search) upgraded via PClinic's own CSS tokens; density
-    is live-adjustable: Control-Centre button (sliders icon, header
-    right) → "Liquid Glass" slider, Ultra Clear ↔ Tinted (saved).
-  • Siri AI assistant — rainbow orb button in the header line opens
-    a glass chat window. Try: "open lab", "how many in queue",
-    "how many patients today", "dark mode", "make glass clearer",
-    "meeting tomorrow at 9", "who am i", "help".
-  • Spotlight "Search or Ask" — search icon in the header (or
-    Ctrl/Cmd+F / Ctrl/Cmd+K): module results + questions are handed
-    to PClinic AI as an answer row; Enter/click executes. It stays
-    in sync with the hub's own module search and role filter.
-  • Visual Intelligence — Ctrl/Cmd+Shift+V (or the focus icon):
-    click any card/stat → contextual explanation + Open / Ask buttons.
-  • Context-aware quick actions — right-click any card or stat:
-    Open, Open in New Tab, Ask Assistant, Visual Intelligence.
-  • Pull to refresh — pull/scroll up hard at the top of the page:
-    live stats refresh with a glass spinner.
-  • Natural-language reminders — "meeting tomorrow at 9" via the
-    assistant creates an "Up next" chip under the header (per
-    browser, removable with ×).
+  1) hub.html     -> replaces the existing hub.html  (same name = replaces, no duplicate)
+  2) hub-bg.jpg   -> new background image, sits next to hub.html
 
-Upload: https://github.com/nkundimanajeanpaul1-hash/Pclinic/upload/main
-  • drag hub.html to the repository ROOT → "Replace existing file?" → yes
-  • commit message suggestion: "Hub: add macOS 27 Golden Gate features"
-  • nothing else to change; no ?v= cache-busting (HTML is no-store;
-    the feature layer is inline CSS/JS; icons use the existing Tabler font)
+RULES
+- If GitHub asks "Replace existing file?" -> choose REPLACE.
+- A different name (hub2.html, hub (1).html, *-preview.html…)
+  would create a SECOND hub page. Never upload renamed copies.
+- NEVER upload: this READ-ME, or any file whose name contains
+  "preview" or "DO-NOT-UPLOAD" - those are for viewing only.
+============================================================
