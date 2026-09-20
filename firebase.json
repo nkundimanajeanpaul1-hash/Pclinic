@@ -264,7 +264,6 @@
       "scripts/**",
       "*.md",
       "*.rules",
-      "doseLookup.js",
       "drug_reference_seed.json",
       "functions/**"
     ],

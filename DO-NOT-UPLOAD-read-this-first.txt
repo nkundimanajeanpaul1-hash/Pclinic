@@ -1,0 +1,84 @@
+════════════════════════════════════════════════════════════════════
+ PClinic — remediation upload package  (2026-09-20)
+ DO NOT upload this .txt file to GitHub. It is instructions only.
+════════════════════════════════════════════════════════════════════
+
+This zip contains the 6 changed/new files from commit
+"Remediate evaluation findings: green tests, hardened CI, repo hygiene".
+All 128 tests pass with these files.
+
+────────────────────────────────────────────────
+ STEP 1 — UPLOAD these 6 files (keeping folders!)
+────────────────────────────────────────────────
+Repository root layout after upload must be:
+
+  Pclinic/
+  ├── .github/workflows/firebase-deploy.yml   ← changed (CI runs ALL tests now)
+  ├── tests/dashboard-role-contracts.test.mjs ← changed
+  ├── tests/radiology-media-client.test.mjs   ← changed
+  ├── firebase.json                           ← changed
+  ├── theater-dashboard.html                  ← changed (doctype/head fixed)
+  └── README.md                               ← NEW
+
+How (GitHub web UI):
+  1. Go to https://github.com/nkundimanajeanpaul1-hash/Pclinic
+  2. Click "Add file" → "Upload files".
+  3. Drag in the extracted items: the .github folder, the tests folder,
+     firebase.json, theater-dashboard.html, README.md.
+     GitHub preserves folder paths when you drag whole folders.
+     NOTE: ".github" starts with a dot — on Windows/macOS it may be a
+     HIDDEN folder after unzipping. Enable "show hidden files" to see it.
+     If drag-and-drop of .github fails, navigate into
+     .github/workflows/ on GitHub first and upload
+     firebase-deploy.yml there directly.
+  4. Commit message (suggested):
+       Fix failing tests, theater page head, CI gating; add README
+  5. Commit directly to the main branch.
+
+────────────────────────────────────────────────
+ STEP 2 — DELETE these 12 dead files on GitHub
+────────────────────────────────────────────────
+(The zip cannot delete files — do this in the web UI: open each file,
+click the "..." menu → "Delete file" → commit. You can batch several
+deletions into one commit by deleting, then instead of committing each
+time... GitHub web UI commits one deletion at a time; that is fine.)
+
+  1.  .DS_Store
+  2.  index.js                ← root copy ONLY (duplicate of functions/index.js
+                                 that was being publicly served — functions/index.js stays!)
+  3.  package.json            ← root copy ONLY (duplicate of functions/package.json —
+                                 functions/package.json stays!)
+  4.  admin-clinical.cjs      ← root copy ONLY (functions/admin-clinical.cjs stays!)
+  5.  admin-clinical.test.cjs ← root copy ONLY (functions/test/admin-clinical.test.cjs stays!)
+  6.  doseLookup.js
+  7.  index old.html
+  8.  your-hospital-image.png
+  9.  files/HospitalAppointmentManager.jsx   (then the empty files/ folder disappears)
+  10. files/HospitalAppointments.jsx
+  11. scripts/HospitalAppointmentManager.jsx (scripts/ folder STAYS — it still has
+  12. scripts/HospitalAppointments.jsx        build-file-pages.py, fix-theme-keys.py,
+                                              patch-functions-config.cjs — do NOT delete those!)
+
+Suggested commit message for deletions:
+  Remove dead/duplicate files (root copies, old page, unused jsx, .DS_Store)
+
+────────────────────────────────────────────────
+ STEP 3 — What happens after you push
+────────────────────────────────────────────────
+The new CI workflow automatically runs ALL 8 test suites (Node 20 +
+JDK 11) and deploys to Firebase ONLY if everything is green. Watch it:
+  https://github.com/nkundimanajeanpaul1-hash/Pclinic/actions
+
+No cache-busting needed: no shared .js file changed, so no ?v= tokens
+need bumping.
+
+────────────────────────────────────────────────
+ STEP 4 — Settings only you can change (do these!)
+────────────────────────────────────────────────
+  a) Settings → General → Danger Zone → "Change repository visibility"
+     → make it PRIVATE (your own READ-ME-FIRST.md step 7).
+  b) Settings → Pages → Build and deployment → Source: "None"
+     (Firebase Hosting is the single deploy channel from now on).
+  c) Firebase Console → Firestore → Rules tab → confirm the deployed
+     rules match firestore.rules in the repo.
+════════════════════════════════════════════════════════════════════
