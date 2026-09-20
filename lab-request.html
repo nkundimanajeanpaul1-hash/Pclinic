@@ -2473,5 +2473,20 @@ body {
     background-repeat: no-repeat, no-repeat !important;
 }
 </style>
+<style>
+/* ═══ GG-CHUK-CANON · CHUK top-bar hierarchy — identical to doctor-dashboard ═══
+   Bar 1 (CHUK menu), Bar 2 (patient ID) and Bar 3 (action bar) stack in a
+   transparent, relative column exactly like the doctor dashboard. */
+html body #pcMasterHeader, html body #pcMasterHeader.pc-master-header {
+    display: flex !important; flex-direction: column !important; gap: 8px !important;
+    position: relative !important; z-index: 40 !important;
+    width: 100% !important; max-width: 100% !important; margin: 0 !important;
+    padding: 8px 16px 4px !important; background: transparent !important;
+    overflow: visible !important;
+}
+html body #pc_chuk_top_menu.chuk-top-menu { position: relative !important; top: auto !important; z-index: 3 !important; }
+html body #pc_common_demo_bar.oc-demo-bar, html body .oc-demo-bar { position: relative !important; top: auto !important; z-index: 2 !important; margin: 0 !important; flex-shrink: 0 !important; }
+html body #dcBar.dc-bar, html body #dcBar { position: relative !important; top: auto !important; z-index: 1 !important; margin: 0 !important; width: 100% !important; clear: both !important; flex-shrink: 0 !important; }
+</style>
 </body>
 </html>
