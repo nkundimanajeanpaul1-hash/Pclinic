@@ -244,8 +244,207 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
         .hub-search { max-width: none; order: 5; flex-basis: 100%; }
     }
 </style>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   macOS 27 "GOLDEN GATE" FEATURE LAYER — additive only.
+   The hub layout, cards, header and logic below are untouched.
+   1) Liquid Glass material upgrade through PClinic's own tokens
+      (one slider variable, --gg-a, drives every glass surface).
+   2) Golden Gate features: Siri AI assistant, Spotlight
+      "Search or Ask", Visual Intelligence, context-aware quick
+      actions, pull-to-refresh, natural-language reminders.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+    --gg-a: 0.55;   /* Liquid Glass density — Control-Centre slider */
+    --gg-blur: saturate(200%) blur(calc(12px + var(--gg-a) * 34));
+    --glass-bg:       rgba(255,255,255, var(--gg-a));
+    --glass-bg-hover: rgba(255,255,255, calc(var(--gg-a) + 0.17));
+    --glass-brd:      rgba(255,255,255, calc(var(--gg-a) + 0.12));
+    --glass-blur:     var(--gg-blur);
+    --glass-spec:     inset 0 1px 0 rgba(255,255,255,0.90),
+                      inset 0 0 0 0.5px rgba(255,255,255,0.35);
+    --r2: 14px;     /* Golden Gate tightened corner radius */
+}
+[data-theme="dark"] {
+    --glass-bg:       rgba(40,40,45, var(--gg-a));
+    --glass-bg-hover: rgba(56,56,62, calc(var(--gg-a) + 0.17));
+    --glass-brd:      rgba(255,255,255, calc(var(--gg-a) * 0.28));
+    --glass-spec:     inset 0 1px 0 rgba(255,255,255,0.16),
+                      inset 0 0 0 0.5px rgba(255,255,255,0.08);
+}
+
+/* Sunset ambience behind the existing texture, so the glass has
+   Golden Gate colour to refract. Layout is not affected. */
+.gg-ambient {
+    position: fixed; inset: 0; z-index: -3; pointer-events: none;
+    background:
+        radial-gradient(60% 45% at 82% -5%,  rgba(255,158,92,0.22), transparent 60%),
+        radial-gradient(50% 40% at 10% 15%,  rgba(147,78,255,0.17), transparent 60%),
+        radial-gradient(70% 50% at 50% 110%, rgba(23,190,187,0.16), transparent 60%);
+}
+[data-theme="dark"] .gg-ambient { opacity: 0.75; }
+
+/* Header feature buttons (sit inside the existing header line) */
+.gg-hbtn { margin-left: 6px; vertical-align: middle; }
+.gg-siri-orb {
+    width: 15px; height: 15px; border-radius: 50%; display: inline-block;
+    background: conic-gradient(from 0deg, #ff375f, #ff9f0a, #30d158, #0a84ff, #bf5af2, #ff375f);
+    animation: gg-orb 7s linear infinite;
+    box-shadow: 0 0 9px rgba(122,140,255,.85), inset 0 0 4px rgba(255,255,255,.7);
+}
+.gg-siri-orb.big { width: 24px; height: 24px; }
+.gg-siri-orb.think { animation: gg-orb 1.1s linear infinite, gg-think .9s ease-in-out infinite; }
+@keyframes gg-orb { to { transform: rotate(360deg); } }
+@keyframes gg-think { 50% { box-shadow: 0 0 18px rgba(122,140,255,1), inset 0 0 6px rgba(255,255,255,.9); } }
+
+/* Control Centre popover (appearance + Liquid Glass slider) */
+.gg-cc {
+    position: fixed; top: 52px; right: 12px; z-index: 70; width: 250px;
+    border-radius: 16px; padding: 13px; display: grid; gap: 11px;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur);
+    box-shadow: var(--sh-4), var(--glass-spec);
+}
+.gg-cc[hidden] { display: none; }
+.gg-cc .cc-title { font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--tm); margin-bottom: 6px; }
+.gg-cc .cc-btn {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    padding: 9px 10px; border-radius: 11px; border: 0.5px solid var(--glass-brd);
+    background: var(--glass-bg-hover); color: var(--tp);
+    font: 600 12px var(--f); cursor: pointer;
+}
+.gg-cc .cc-btn .dot { width: 15px; height: 15px; border-radius: 50%;
+    background: linear-gradient(200deg,#ffe08a,#ff9f0a); box-shadow: inset 0 1px 0 rgba(255,255,255,.5); }
+[data-theme="dark"] .gg-cc .cc-btn .dot { background: linear-gradient(200deg,#5e5ce7,#3634a3); }
+.gg-cc input[type="range"] { width: 100%; height: 22px; -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
+.gg-cc input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, rgba(255,255,255,.25), rgba(255,255,255,.8)); border: 0.5px solid var(--glass-brd); }
+.gg-cc input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px;
+    border-radius: 50%; background: #fff; margin-top: -6.5px; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+.gg-cc input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(255,255,255,.45); }
+.gg-cc input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 50%; background: #fff; }
+.gg-cc .cc-slider label { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--tm); margin-top: 5px; }
+
+/* Spotlight — Search or Ask */
+.gg-spot {
+    position: fixed; inset: 0; z-index: 80; padding: 15vh 16px 0;
+    background: rgba(10,6,26,.26);
+    -webkit-backdrop-filter: blur(10px) saturate(140%); backdrop-filter: blur(10px) saturate(140%);
+    display: flex; justify-content: center; align-items: flex-start;
+}
+.gg-spot[hidden] { display: none; }
+.gg-spot-panel {
+    width: min(640px, 94vw); border-radius: 15px; overflow: hidden;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur);
+    box-shadow: var(--sh-4), var(--glass-spec);
+    animation: gg-pop .22s cubic-bezier(.34,1.3,.4,1);
+}
+@keyframes gg-pop { from { transform: scale(.94); opacity: 0; } }
+.gg-spot-field { display: flex; align-items: center; gap: 11px; padding: 13px 17px; }
+.gg-spot-field i { font-size: 19px; color: var(--tm); }
+.gg-spot-field input { flex: 1; border: 0; outline: 0; background: transparent;
+    font: 400 21px/1.2 var(--f); letter-spacing: -.3px; color: var(--tp); }
+.gg-spot-field input::placeholder { color: var(--tm); }
+.gg-spot-list { border-top: 0.5px solid var(--bd); max-height: 320px; overflow: auto; padding: 6px; }
+.gg-spot-list a { display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+    border-radius: 9px; color: var(--tp); text-decoration: none; font-size: 13px; font-weight: 500; }
+.gg-spot-list a:hover { background: var(--glass-bg-hover); }
+.gg-spot-list .mini { width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 13px; }
+.gg-spot-list .where { margin-left: auto; color: var(--tm); font-size: 11px; }
+.gg-spot-hint { padding: 7px 16px 9px; border-top: 0.5px solid var(--bd); color: var(--tm); font-size: 10.5px; }
+.ask-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px;
+    cursor: pointer; border-bottom: 0.5px solid var(--bd); margin-bottom: 5px; }
+.ask-row:hover { background: var(--glass-bg-hover); }
+.ask-row .ans { font-size: 12.5px; font-weight: 600; letter-spacing: -.1px; }
+.ask-row .lab { margin-left: auto; color: var(--tm); font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+
+/* Siri AI assistant window */
+.gg-assist {
+    position: fixed; right: 14px; bottom: 16px; z-index: 75; width: 332px;
+    border-radius: 18px; overflow: hidden; display: flex; flex-direction: column;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur);
+    box-shadow: var(--sh-4), var(--glass-spec);
+    animation: gg-pop .24s cubic-bezier(.34,1.3,.4,1);
+}
+.gg-assist[hidden] { display: none; }
+.aa-head { display: flex; align-items: center; gap: 9px; padding: 11px 13px; border-bottom: 0.5px solid var(--bd); }
+.aa-title { font-size: 12.5px; font-weight: 700; letter-spacing: -.2px; flex: 1; }
+.aa-x { border: 0; background: var(--glass-bg-hover); color: var(--tp); width: 20px; height: 20px;
+    border-radius: 50%; cursor: pointer; font: 700 12px/1 var(--f); }
+.aa-body { padding: 12px; display: flex; flex-direction: column; gap: 8px;
+    max-height: 288px; min-height: 90px; overflow-y: auto; }
+.msg { max-width: 86%; padding: 8px 11px; border-radius: 14px; font-size: 12.5px; line-height: 1.45; }
+.msg.ai { align-self: flex-start; background: var(--glass-bg-hover);
+    border: 0.5px solid var(--glass-brd); border-bottom-left-radius: 4px; }
+.msg.me { align-self: flex-end; color: #fff; border-bottom-right-radius: 4px;
+    background: linear-gradient(200deg,#0a84ff,#0055d6); box-shadow: inset 0 1px 0 rgba(255,255,255,.3); }
+.aa-in { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-top: 0.5px solid var(--bd); }
+.aa-in input { flex: 1; border: 0; outline: 0; background: transparent; font: 400 12.5px var(--f); color: var(--tp); }
+.aa-in input::placeholder { color: var(--tm); }
+.aa-in button { border: 0; background: transparent; cursor: pointer; display: grid; place-items: center; padding: 3px; }
+
+/* Visual Intelligence */
+body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
+.vi-hl { outline: 2.5px solid rgba(10,132,255,.95); outline-offset: 3px; border-radius: var(--r2); }
+.gg-vi-banner { position: fixed; top: 52px; left: 50%; transform: translateX(-50%); z-index: 90;
+    padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--tp);
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur); box-shadow: var(--sh-3); }
+.gg-vi-banner[hidden] { display: none; }
+.gg-vip { position: fixed; z-index: 92; width: 264px; border-radius: 15px; padding: 13px; display: grid; gap: 8px;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur); box-shadow: var(--sh-4), var(--glass-spec); }
+.gg-vip[hidden] { display: none; }
+.gg-vip .vp-t { font-size: 13px; font-weight: 700; }
+.gg-vip .vp-d { font-size: 11.5px; color: var(--tm); line-height: 1.5; }
+.gg-vip .vp-row { display: flex; gap: 7px; margin-top: 2px; }
+.gg-vip .vp-row button { flex: 1; padding: 7px 8px; border-radius: 9px; cursor: pointer;
+    border: 0.5px solid var(--glass-brd); background: var(--glass-bg-hover); color: var(--tp); font: 600 11.5px var(--f); }
+
+/* Context-aware quick actions */
+.gg-ctx { position: fixed; z-index: 96; min-width: 196px; border-radius: 12px; padding: 5px;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur); box-shadow: var(--sh-4), var(--glass-spec); }
+.gg-ctx[hidden] { display: none; }
+.gg-ctx button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 6px 9px;
+    border: 0; border-radius: 8px; background: transparent; color: var(--tp);
+    font: 500 12.5px var(--f); cursor: pointer; text-align: left; }
+.gg-ctx button:hover { background: var(--glass-bg-hover); }
+.gg-ctx .ctx-sep { height: 0.5px; background: var(--bd); margin: 4px 8px; }
+
+/* Pull to refresh */
+.gg-ptr { position: fixed; top: 46px; left: 50%; transform: translateX(-50%); z-index: 65;
+    height: 0; overflow: hidden; display: flex; align-items: center; gap: 8px;
+    padding: 0 14px; border-radius: 0 0 12px 12px; color: var(--tm); font-size: 11.5px;
+    background: var(--glass-bg); -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur);
+    transition: height .22s ease; }
+.gg-ptr.on { height: 34px; }
+.gg-ptr .spin { width: 15px; height: 15px; border-radius: 50%;
+    border: 2px solid rgba(130,130,140,.35); border-top-color: var(--ac); animation: gg-spin .8s linear infinite; }
+@keyframes gg-spin { to { transform: rotate(360deg); } }
+
+/* Natural-language reminders ("Up next") */
+.gg-remind { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 0; }
+.gg-remind[hidden] { display: none; }
+.rem-chip { display: flex; align-items: center; gap: 7px; padding: 4px 6px 4px 11px; border-radius: 20px;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur);
+    box-shadow: var(--sh-1), var(--glass-spec); font-size: 11.5px; color: var(--tp); }
+.rem-chip b { font-weight: 600; }
+.rem-chip .rem-when { color: var(--tm); }
+.rem-chip .rem-x { cursor: pointer; opacity: .55; font-weight: 700; padding: 0 5px; border-radius: 50%; }
+.rem-chip .rem-x:hover { opacity: 1; background: var(--glass-bg-hover); }
+</style>
     </head>
 <body>
+
+<!-- Golden Gate ambience: sunset colour for the glass to refract -->
+<div class="gg-ambient" aria-hidden="true"></div>
 
 <!-- ═══ TOPBAR ═══ -->
 <div class="pc-topbar" style="display: none !important;">
@@ -288,9 +487,26 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
     <span class="pc-date" id="todayDate"></span>
     <span class="pc-spacer"></span>
     <span class="pc-quickstat"><i class="ti ti-users"></i> <span id="qsPatients">0</span> patients today</span>
+
+    <!-- ═══ GOLDEN GATE FEATURE CONTROLS (added to the existing header line) ═══ -->
+    <button class="pc-iconbtn gg-hbtn" id="ggSpotBtn" title="Spotlight — Search or Ask (Ctrl+F)" aria-label="Spotlight search">
+        <i class="ti ti-search"></i>
+    </button>
+    <button class="pc-iconbtn gg-hbtn" id="ggVIBtn" title="Visual Intelligence (Ctrl+Shift+V)" aria-label="Visual Intelligence">
+        <i class="ti ti-focus-2"></i>
+    </button>
+    <button class="pc-iconbtn gg-hbtn" id="ggSiri" title="PClinic Assistant — Siri AI" aria-label="PClinic Assistant">
+        <span class="gg-siri-orb"></span>
+    </button>
+    <button class="pc-iconbtn gg-hbtn" id="ggCCBtn" title="Control Centre — Liquid Glass" aria-label="Control Centre">
+        <i class="ti ti-adjustments-horizontal"></i>
+    </button>
 </div>
 
 <div class="wrap">
+
+    <!-- Natural-language reminders created via the assistant -->
+    <div class="gg-remind" id="ggRemindRow" hidden></div>
 
     <!-- ═══ STATS ═══ -->
     <div class="stats pc-stagger" id="statsGrid">
@@ -419,6 +635,50 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
         </div>
     </div>
 </div>
+
+<!-- ═══ GOLDEN GATE FEATURE SURFACES ═══ -->
+<div class="gg-ptr" id="ggPtr"><span class="spin"></span>Release to refresh</div>
+
+<div class="gg-cc" id="ggCC" hidden>
+    <div>
+        <div class="cc-title">Appearance</div>
+        <button class="cc-btn" id="ggThemeBtn"><span class="dot"></span><span id="ggThemeLabel">Toggle Light / Dark</span></button>
+    </div>
+    <div class="cc-slider">
+        <div class="cc-title">Liquid Glass</div>
+        <input type="range" id="ggGlass" min="30" max="88" value="55" aria-label="Liquid glass opacity">
+        <label><span>Ultra Clear</span><span>Tinted</span></label>
+    </div>
+</div>
+
+<div class="gg-spot" id="ggSpot" hidden>
+    <div class="gg-spot-panel">
+        <div class="gg-spot-field">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="text" id="ggSpotIn" placeholder="Spotlight — search modules or ask a question"
+                   aria-label="Spotlight search or ask" autocomplete="off">
+        </div>
+        <div class="gg-spot-list" id="ggSpotList"></div>
+        <div class="gg-spot-hint">Questions are handed to PClinic AI · Esc to close · the window behind filters live</div>
+    </div>
+</div>
+
+<div class="gg-assist" id="ggAssist" hidden>
+    <div class="aa-head">
+        <span class="gg-siri-orb big" id="ggAssistOrb"></span>
+        <span class="aa-title">PClinic Assistant</span>
+        <button class="aa-x" id="ggAssistX" aria-label="Close">×</button>
+    </div>
+    <div class="aa-body" id="ggAssistBody"></div>
+    <div class="aa-in">
+        <input id="ggAssistIn" placeholder="Ask or command…" autocomplete="off" aria-label="Ask the assistant">
+        <button id="ggAssistSend" aria-label="Send"><span class="gg-siri-orb"></span></button>
+    </div>
+</div>
+
+<div class="gg-vi-banner" id="ggViBanner" hidden>Visual Intelligence — click any card or stat to understand it</div>
+<div class="gg-vip" id="ggViPop" hidden></div>
+<div class="gg-ctx" id="ggCtx" hidden></div>
 
 <div class="pc-toasts" id="toastContainer"></div>
 
@@ -555,6 +815,333 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
     }).catch(function (err) {
         console.warn('Auth guard:', err && err.message);
     });
+})();
+</script>
+<!-- ═══ GOLDEN GATE FEATURE ENGINE — additive; never modifies the hub logic
+     above. Siri AI · Spotlight handoff · Visual Intelligence · quick actions ·
+     pull-to-refresh · natural-language reminders · Liquid Glass slider. ═══ -->
+<script>
+(function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    function toast(m) { if (typeof pcToast === 'function') pcToast(m, 'info'); }
+    function nav(href, newTab) {
+        if (window.__GG_PREVIEW__) { aiSay('In the static preview navigation is disabled — on the live hub this opens ' + href + '.'); return; }
+        if (newTab) window.open(href, '_blank'); else window.location.href = href;
+    }
+    function cards() { return Array.prototype.slice.call(document.querySelectorAll('.module-card')); }
+    function visibleCards() { return cards().filter(function (c) { return c.dataset.visible !== '0'; }); }
+    function num(id) { var el = $(id); return el ? el.textContent.trim() : '0'; }
+
+    /* ═══ 1 · Liquid Glass slider (drives every glass surface) ═══ */
+    var glass = $('ggGlass');
+    function setGlass(v) {
+        v = Math.max(30, Math.min(88, v));
+        glass.value = v;
+        document.documentElement.style.setProperty('--gg-a', (v / 100).toFixed(2));
+        lsSet('pclinic-gg-glass', String(v));
+    }
+    var savedGlass = parseInt(lsGet('pclinic-gg-glass') || '', 10);
+    if (savedGlass >= 30 && savedGlass <= 88) glass.value = savedGlass;
+    setGlass(parseInt(glass.value, 10));
+    glass.addEventListener('input', function () { setGlass(parseInt(glass.value, 10)); });
+
+    var cc = $('ggCC');
+    $('ggCCBtn').addEventListener('click', function (e) { e.stopPropagation(); cc.hidden = !cc.hidden; });
+    cc.addEventListener('click', function (e) { e.stopPropagation(); });
+    document.addEventListener('click', function () { cc.hidden = true; $('ggCtx').hidden = true; });
+    $('ggThemeBtn').addEventListener('click', function () { if (typeof pcToggleTheme === 'function') pcToggleTheme(); });
+
+    /* ═══ 2 · Siri AI intent engine ═══ */
+    var DAYS = 'today|tomorrow|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday';
+    function findModule(phrase) {
+        var key = phrase.toLowerCase()
+            .replace(/\b(the|a|an|portal|dashboard|module|page|dept|department)\b/g, '').trim();
+        if (!key) return null;
+        var pool = visibleCards();
+        var hit = pool.filter(function (c) {
+            return c.querySelector('.card-title').textContent.toLowerCase().indexOf(key) !== -1;
+        })[0];
+        if (hit) return hit;
+        var words = key.split(/\s+/);
+        for (var i = 0; i < words.length; i++) {
+            hit = pool.filter(function (c) { return c.textContent.toLowerCase().indexOf(words[i]) !== -1; })[0];
+            if (hit) return hit;
+        }
+        return null;
+    }
+    function renderReminders() {
+        var row = $('ggRemindRow'), list = [];
+        try { list = JSON.parse(lsGet('pclinic-gg-remind') || '[]'); } catch (e) {}
+        row.innerHTML = ''; row.hidden = !list.length;
+        list.forEach(function (r, i) {
+            var chip = document.createElement('span'); chip.className = 'rem-chip';
+            var b = document.createElement('b'); b.textContent = r.label;
+            var w = document.createElement('span'); w.className = 'rem-when'; w.textContent = '· ' + r.when;
+            var x = document.createElement('span'); x.className = 'rem-x'; x.textContent = '×'; x.title = 'Remove';
+            x.addEventListener('click', function () {
+                list.splice(i, 1); lsSet('pclinic-gg-remind', JSON.stringify(list)); renderReminders();
+            });
+            chip.appendChild(b); chip.appendChild(w); chip.appendChild(x); row.appendChild(chip);
+        });
+    }
+    renderReminders();
+    function addReminder(raw) {
+        var rest = raw;
+        var wm = rest.match(new RegExp('\\b(' + DAYS + ')\\b', 'i'));
+        var tm = rest.match(/\bat\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+        var when = (wm ? wm[1].toLowerCase() : 'today');
+        if (tm) {
+            var h = parseInt(tm[1], 10);
+            if (tm[3] && tm[3].toLowerCase() === 'pm' && h < 12) h += 12;
+            if (tm[3] && tm[3].toLowerCase() === 'am' && h === 12) h = 0;
+            when += ' ' + String(h).padStart(2, '0') + ':' + (tm[2] || '00');
+        }
+        var label = rest.replace(new RegExp('\\b(' + DAYS + ')\\b', 'i'), '')
+            .replace(/\bat\s+\d{1,2}(:\d{2})?\s*(am|pm)?/i, '')
+            .replace(/\b(remind me|remind|reminder|schedule|book|meeting|appointment)\b/gi, '')
+            .replace(/[,.!\s]+$/g, '').trim() || 'Reminder';
+        label = label.charAt(0).toUpperCase() + label.slice(1);
+        var list = [];
+        try { list = JSON.parse(lsGet('pclinic-gg-remind') || '[]'); } catch (e) {}
+        list.push({ label: label, when: when });
+        lsSet('pclinic-gg-remind', JSON.stringify(list)); renderReminders();
+        return { label: label, when: when };
+    }
+    function ask(text) {
+        var t = (text || '').toLowerCase().trim(), m;
+        m = t.match(/(?:open|go to|launch|take me to|show me)\s+(.+)/);
+        if (m) {
+            var mod = findModule(m[1]);
+            if (mod) return { reply: 'Opening ' + mod.querySelector('.card-title').textContent + '…',
+                run: function () { nav(mod.getAttribute('href')); } };
+            return { reply: 'I couldn’t find a module called “' + m[1] + '”. Try: reception, lab, radiology, pharmacy, beds, HR, inventory, admin…' };
+        }
+        m = t.match(/(?:tell me about|explain|describe)\s+(.+)/);
+        if (m) {
+            var ab = findModule(m[1]);
+            if (ab) return { reply: ab.querySelector('.card-title').textContent + ' — ' +
+                ab.querySelector('.card-desc').textContent + '. Category: ' +
+                ab.querySelector('.card-badge').textContent + '. Opens ' + ab.getAttribute('href') + '.' };
+        }
+        if (/how many|count|number of/.test(t)) {
+            if (/queue|waiting/.test(t)) return { reply: num('queueCount') + ' patients are waiting in the queue right now.' };
+            if (/appointment/.test(t)) return { reply: num('todayAppointments') + ' appointments today.' };
+            if (/doctor/.test(t)) return { reply: num('totalDoctors') + ' doctors on the staff roster.' };
+            if (/patient/.test(t)) return { reply: num('totalPatients') + ' patients registered in total, ' + num('qsPatients') + ' of them today.' };
+        }
+        if (/patients today/.test(t)) return { reply: num('qsPatients') + ' patients registered today.' };
+        if (/(dark|light)\s*(mode|theme)?|switch theme|toggle theme/.test(t))
+            return { reply: 'Switching appearance…', run: function () { if (typeof pcToggleTheme === 'function') pcToggleTheme(); } };
+        if (/glass|transparen|blur|tint|clearer|opaque/.test(t)) {
+            var cur = parseInt(glass.value, 10);
+            if (/more|increase|tint|opaque/.test(t)) return { reply: 'Made the glass more tinted.', run: function () { setGlass(cur + 12); } };
+            if (/less|decrease|clear|transparent/.test(t)) return { reply: 'Made the glass more clear.', run: function () { setGlass(cur - 12); } };
+        }
+        m = t.match(/(?:remind me|reminder|schedule|book|meeting|appointment)\s+(.+)/);
+        if (m) { var r = addReminder(m[1]); return { reply: 'Added to Up next: “' + r.label + '” — ' + r.when + '.' }; }
+        if (/who am i|my name|logged in|my role/.test(t)) {
+            var s = window.currentStaff;
+            return { reply: s ? ('You’re ' + s.name + ' (' + (s.role || 'staff') + ', ID ' + (s.staffId || '—') + ').') : 'I don’t see a signed-in profile yet.' };
+        }
+        if (/visual intelligence|inspect/.test(t))
+            return { reply: 'Turning on Visual Intelligence — click any card or stat.', run: function () { if (!viOn) toggleVI(); } };
+        if (/^(hi|hello|hey)\b|help|what can you do/.test(t))
+            return { reply: 'I can open modules (“open lab”), report live numbers (“how many patients today”), change appearance (“dark mode”, “make glass clearer”), add reminders (“meeting tomorrow at 9”), and explain cards via Visual Intelligence (Ctrl+Shift+V).' };
+        var guess = findModule(t);
+        if (guess) {
+            var g = guess;
+            return { reply: 'Did you mean ' + g.querySelector('.card-title').textContent + '?',
+                run: function () { nav(g.getAttribute('href')); } };
+        }
+        return { reply: 'I’m not sure about that yet. Try “open radiology”, “how many in queue”, “meeting tomorrow at 9” or “dark mode”.' };
+    }
+
+    /* ═══ 3 · Assistant window ═══ */
+    var assist = $('ggAssist'), aBody = $('ggAssistBody'), aIn = $('ggAssistIn'), orb = $('ggAssistOrb');
+    function aiSay(text) {
+        var d = document.createElement('div'); d.className = 'msg ai'; d.textContent = text;
+        aBody.appendChild(d); aBody.scrollTop = aBody.scrollHeight;
+    }
+    function meSay(text) {
+        var d = document.createElement('div'); d.className = 'msg me'; d.textContent = text;
+        aBody.appendChild(d); aBody.scrollTop = aBody.scrollHeight;
+    }
+    function openAssist(prefill) {
+        assist.hidden = false;
+        if (!aBody.children.length)
+            aiSay('Hi — I’m your PClinic assistant. Ask me about patients, queues, modules, or say “help”.');
+        if (prefill) { aIn.value = prefill; send(); } else setTimeout(function () { aIn.focus(); }, 0);
+    }
+    function send() {
+        var text = aIn.value.trim(); if (!text) return;
+        aIn.value = ''; meSay(text); orb.classList.add('think');
+        setTimeout(function () {
+            var r = ask(text); orb.classList.remove('think'); aiSay(r.reply);
+            if (r.run) setTimeout(r.run, 450);
+        }, 380);
+    }
+    $('ggSiri').addEventListener('click', function () { openAssist(); });
+    $('ggAssistX').addEventListener('click', function () { assist.hidden = true; });
+    $('ggAssistSend').addEventListener('click', send);
+    aIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+
+    /* ═══ 4 · Spotlight "Search or Ask" (syncs with the hub's own search) ═══ */
+    var hubSearch = $('moduleSearch'), spotIn = $('ggSpotIn'),
+        spot = $('ggSpot'), spotList = $('ggSpotList');
+    var pendingRun = null;
+    function isOpen() { return !spot.hidden; }
+    function openSpot() {
+        spot.hidden = false; spotIn.value = hubSearch.value || '';
+        renderSpot(); setTimeout(function () { spotIn.focus(); }, 0);
+    }
+    function closeSpot() { spot.hidden = true; }
+    function renderSpot() {
+        var q = spotIn.value.trim().toLowerCase();
+        // keep the hub's own search + remember + role filter in sync
+        if (hubSearch.value !== spotIn.value) {
+            hubSearch.value = spotIn.value;
+            hubSearch.dispatchEvent(new Event('input'));
+        }
+        spotList.innerHTML = '';
+        pendingRun = null;
+        if (isQuestion(spotIn.value.trim())) {
+            var r = ask(spotIn.value.trim());
+            var row = document.createElement('div'); row.className = 'ask-row';
+            row.innerHTML = '<span class="gg-siri-orb"></span>';
+            var ans = document.createElement('span'); ans.className = 'ans'; ans.textContent = r.reply;
+            var lab = document.createElement('span'); lab.className = 'lab'; lab.textContent = 'Ask PClinic AI';
+            row.appendChild(ans); row.appendChild(lab); spotList.appendChild(row);
+            pendingRun = r.run || function () { openAssist(spotIn.value.trim()); };
+            row.addEventListener('click', function () {
+                var run = pendingRun; closeSpot(); if (run) run();
+            });
+        }
+        visibleCards().filter(function (c) {
+            return !q || c.textContent.toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 7).forEach(function (c) {
+            var a = document.createElement('a'); a.href = c.getAttribute('href');
+            var mini = document.createElement('span');
+            mini.className = 'mini ' + c.querySelector('.card-icon').className.replace('card-icon', '').trim();
+            mini.innerHTML = c.querySelector('.card-icon').innerHTML;
+            var t = document.createElement('span'); t.textContent = c.querySelector('.card-title').textContent;
+            var w = document.createElement('span'); w.className = 'where';
+            w.textContent = c.querySelector('.card-badge').textContent;
+            a.appendChild(mini); a.appendChild(t); a.appendChild(w); spotList.appendChild(a);
+        });
+    }
+    function isQuestion(q) {
+        return /\?$/.test(q) ||
+            /^(how|what|who|where|when|why|can|could|should|is|are|open|show|tell|give|count)\b/.test(q) ||
+            /\b(many|count)\b/.test(q) || q.split(/\s+/).length >= 3;
+    }
+    spotIn.addEventListener('input', renderSpot);
+    $('ggSpotBtn').addEventListener('click', function () { isOpen() ? closeSpot() : openSpot(); });
+    spot.addEventListener('click', function (e) { if (e.target === spot) closeSpot(); });
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'k')) { e.preventDefault(); openSpot(); }
+        if (e.key === 'Enter' && isOpen() && document.activeElement === spotIn && pendingRun) {
+            e.preventDefault(); var run = pendingRun; closeSpot(); run();
+        }
+        if (e.key === 'Escape') { closeSpot(); if (viOn) toggleVI(); $('ggViPop').hidden = true; }
+    });
+
+    /* ═══ 5 · Visual Intelligence ═══ */
+    var viOn = false, viLast = null, viBanner = $('ggViBanner'), viPop = $('ggViPop');
+    document.querySelectorAll('.module-card, .stat-card').forEach(function (el) { el.setAttribute('data-vi', '1'); });
+    function toggleVI() {
+        viOn = !viOn;
+        document.body.classList.toggle('gg-vi', viOn);
+        viBanner.hidden = !viOn; viPop.hidden = true;
+        if (viLast) { viLast.classList.remove('vi-hl'); viLast = null; }
+    }
+    $('ggVIBtn').addEventListener('click', toggleVI);
+    document.addEventListener('mouseover', function (e) {
+        if (!viOn) return;
+        var t = e.target.closest && e.target.closest('[data-vi]');
+        if (viLast && viLast !== t) viLast.classList.remove('vi-hl');
+        if (t) { t.classList.add('vi-hl'); viLast = t; }
+    });
+    document.addEventListener('click', function (e) {
+        if (!viOn) return;
+        var t = e.target.closest && e.target.closest('[data-vi]');
+        if (!t) return;
+        e.preventDefault(); e.stopPropagation();
+        var title = (t.querySelector('.card-title') || t.querySelector('.lab') || {}).textContent || 'Element';
+        var desc = (t.querySelector('.card-desc') || {}).textContent || '';
+        var badge = (t.querySelector('.card-badge') || {}).textContent || '';
+        var href = t.getAttribute('href') || '';
+        var live = t.querySelector('.num');
+        var info = desc || 'Quick-launch card.';
+        if (live) info = 'Live value: ' + live.textContent + ' ' + ((t.querySelector('.lab') || {}).textContent || '') + '.';
+        viPop.innerHTML = '';
+        var h = document.createElement('div'); h.className = 'vp-t'; h.textContent = title;
+        var d = document.createElement('div'); d.className = 'vp-d';
+        d.textContent = info + (badge ? ' Category: ' + badge + '.' : '') + (href ? ' Opens ' + href + '.' : '');
+        var row = document.createElement('div'); row.className = 'vp-row';
+        var b1 = document.createElement('button'); b1.textContent = 'Open';
+        b1.addEventListener('click', function () { if (href) nav(href); toggleVI(); });
+        var b2 = document.createElement('button'); b2.textContent = 'Ask about this';
+        b2.addEventListener('click', function () { toggleVI(); openAssist('Tell me about ' + title); });
+        row.appendChild(b1); row.appendChild(b2);
+        viPop.appendChild(h); viPop.appendChild(d); viPop.appendChild(row);
+        viPop.style.left = Math.min(window.innerWidth - 280, e.clientX + 12) + 'px';
+        viPop.style.top = Math.min(window.innerHeight - 160, e.clientY + 10) + 'px';
+        viPop.hidden = false;
+    }, true);
+
+    /* ═══ 6 · Context-aware quick actions (right-click) ═══ */
+    var ctx = $('ggCtx');
+    document.addEventListener('contextmenu', function (e) {
+        var t = e.target.closest && e.target.closest('.module-card, .stat-card');
+        if (!t) { ctx.hidden = true; return; }
+        e.preventDefault();
+        var title = (t.querySelector('.card-title') || t.querySelector('.lab') || {}).textContent || 'Item';
+        var href = t.getAttribute('href') || '';
+        ctx.innerHTML = '';
+        function item(label, fn) {
+            var b = document.createElement('button'); b.textContent = label;
+            b.addEventListener('click', function () { ctx.hidden = true; fn(); });
+            ctx.appendChild(b);
+        }
+        if (href) {
+            item('Open ' + title, function () { nav(href); });
+            item('Open in New Tab', function () { nav(href, true); });
+        }
+        item('Ask Assistant about ' + title, function () { openAssist('Tell me about ' + title); });
+        var sep = document.createElement('div'); sep.className = 'ctx-sep'; ctx.appendChild(sep);
+        item('Visual Intelligence here', function () { if (!viOn) toggleVI(); });
+        ctx.style.left = Math.min(window.innerWidth - 210, e.clientX) + 'px';
+        ctx.style.top = Math.min(window.innerHeight - 170, e.clientY) + 'px';
+        ctx.hidden = false;
+    });
+
+    /* ═══ 7 · Pull to refresh (page scroll) ═══ */
+    var ptr = $('ggPtr'), pulling = false, touchY = null;
+    function doRefresh() {
+        ptr.classList.add('on');
+        setTimeout(function () {
+            window.dispatchEvent(new Event('patientsUpdated'));
+            ptr.classList.remove('on');
+            toast('🔄 Hub refreshed');
+        }, 550);
+    }
+    window.addEventListener('wheel', function (e) {
+        if ((window.scrollY || document.documentElement.scrollTop) <= 0 && e.deltaY < -60 && !pulling) {
+            pulling = true; doRefresh(); setTimeout(function () { pulling = false; }, 900);
+        }
+    }, { passive: true });
+    document.addEventListener('touchstart', function (e) {
+        if ((window.scrollY || 0) <= 0) touchY = e.touches[0].clientY;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+        if (touchY !== null && e.touches[0].clientY - touchY > 70 && !pulling) {
+            pulling = true; doRefresh(); touchY = null; setTimeout(function () { pulling = false; }, 900);
+        }
+    }, { passive: true });
+    document.addEventListener('touchend', function () { touchY = null; }, { passive: true });
 })();
 </script>
 </body>
