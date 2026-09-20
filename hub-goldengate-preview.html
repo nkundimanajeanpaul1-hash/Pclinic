@@ -1,0 +1,3177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PClinic — Hub · Golden Gate (self-contained preview)</title>
+<link rel="icon" type="image/png" href="logo.png">
+
+<!-- Warm connections + pull the texture early -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+
+
+
+<style>/* pclinic-ui.css inlined for offline preview */
+/* ============================================================
+   PCLINIC — SHARED UI SYSTEM
+   Extracted from doctor-dashboard.html so every page shares one
+   design language. Link this BEFORE any page-specific <style>.
+
+     <link rel="stylesheet" href="pclinic-ui.css">
+
+   Change a token here and every page updates.
+   ============================================================ */
+
+/* ─────────────────────────────────────────────
+   1. DESIGN TOKENS
+   ───────────────────────────────────────────── */
+:root {
+    /* Surfaces */
+    --bg:   #c3c4ca;          /* page base (doctor-dashboard grey) */
+    --s0:   #f5f5f7;          /* recessed / rail */
+    --s1:   #ffffff;          /* cards */
+    --s2:   #ffffff;          /* raised */
+    --s3:   #f2f2f4;          /* inset / table head */
+
+    /* Borders — hairlines, Apple-style */
+    --bd:   rgba(0,0,0,0.06);
+    --bds:  rgba(0,0,0,0.08);
+
+    /* Text */
+    --tp:   #1c1c1e;          /* primary */
+    --ts:   #3a3a3c;          /* secondary */
+    --tm:   #8e8e93;          /* muted */
+
+    /* Accent */
+    --ac:   #0071e3;
+    --ach:  #0066d6;
+    --acb:  #eaf2ff;
+    --acl:  rgba(0,113,227,0.15);
+
+    /* Semantic — base / background / deep */
+    --green:  #34c759;  --greenb:  #e9f9ee;  --greend:  #1a7a32;
+    --orange: #ff9500;  --orangeb: #fff4e0;  --oranged: #7a4500;
+    --red:    #ff3b30;  --redb:    #ffebe9;  --redd:    #8a1f1a;
+    --purple: #af52de;  --purpleb: #f5eaff;  --purpled: #5c2475;
+
+    /* Radii */
+    --r:  12px;
+    --r2: 16px;
+
+    /* Elevation — two-layer, soft */
+    --shadow:  0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+    --shadow2: 0 2px 12px rgba(0,0,0,.10), 0 8px 32px rgba(0,0,0,.06);
+
+    /* Type */
+    --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+         'Inter', 'Helvetica Neue', Arial, sans-serif;
+
+    /* Motion — the 1.56 overshoot IS the Apple bounce */
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease:   cubic-bezier(0.4, 0.0, 0.2, 1);
+    --spring-soft: cubic-bezier(0.25, 1.4, 0.5, 1);
+
+    /* ── LIQUID GLASS (iOS material) ──
+       Real Apple glass is four things at once: a translucent tint, a
+       heavy backdrop blur, saturation boost so colour bleeds through,
+       and a 1px inner highlight along the top edge (specular). */
+    --glass-bg:       rgba(255,255,255,0.55);
+    --glass-bg-hover: rgba(255,255,255,0.72);
+    --glass-brd:      rgba(255,255,255,0.65);
+    --glass-blur:     saturate(180%) blur(20px);
+    --glass-spec:     inset 0 1px 0 rgba(255,255,255,0.85);
+    --glass-inner:    inset 0 -1px 0 rgba(0,0,0,0.04);
+
+    /* Apple's elevation ladder — always two layers: a tight contact
+       shadow plus a wide soft ambient one. */
+    --sh-1: 0 1px 2px rgba(0,0,0,.06),  0 2px 8px rgba(0,0,0,.04);
+    --sh-2: 0 2px 6px rgba(0,0,0,.08),  0 8px 24px rgba(0,0,0,.07);
+    --sh-3: 0 4px 12px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.10);
+    --sh-4: 0 8px 24px rgba(0,0,0,.14), 0 30px 70px rgba(0,0,0,.16);
+    --sh-ac: 0 4px 14px rgba(0,113,227,.32), 0 10px 30px rgba(0,113,227,.18);
+}
+
+[data-theme="dark"] {
+    --bg:  #000000;
+    --s0:  #0a0a0c;
+    --s1:  #1c1c1e;
+    --s2:  #2c2c2e;
+    --s3:  #242426;
+    --bd:  rgba(255,255,255,0.08);
+    --bds: rgba(255,255,255,0.12);
+    --tp:  #f5f5f7;
+    --ts:  #d1d1d6;
+    --tm:  #8e8e93;
+    --acb: rgba(0,113,227,0.18);
+    --greenb:  rgba(52,199,89,0.16);
+    --orangeb: rgba(255,149,0,0.16);
+    --redb:    rgba(255,59,48,0.16);
+    --purpleb: rgba(175,82,222,0.16);
+    --shadow:  0 1px 3px rgba(0,0,0,.5),  0 4px 12px rgba(0,0,0,.4);
+    --shadow2: 0 2px 12px rgba(0,0,0,.6), 0 8px 32px rgba(0,0,0,.5);
+
+    --glass-bg:       rgba(40,40,45,0.55);
+    --glass-bg-hover: rgba(56,56,62,0.72);
+    --glass-brd:      rgba(255,255,255,0.14);
+    --glass-spec:     inset 0 1px 0 rgba(255,255,255,0.14);
+    --glass-inner:    inset 0 -1px 0 rgba(0,0,0,0.28);
+    --sh-1: 0 1px 2px rgba(0,0,0,.5),  0 2px 8px rgba(0,0,0,.4);
+    --sh-2: 0 2px 6px rgba(0,0,0,.55), 0 8px 24px rgba(0,0,0,.45);
+    --sh-3: 0 4px 12px rgba(0,0,0,.6), 0 16px 40px rgba(0,0,0,.5);
+    --sh-4: 0 8px 24px rgba(0,0,0,.7), 0 30px 70px rgba(0,0,0,.6);
+}
+
+/* ─────────────────────────────────────────────
+   2. PAGE BASE
+   ───────────────────────────────────────────── */
+.pc-body {
+    font-family: var(--f);
+    background: var(--bg);
+    color: var(--tp);
+    font-size: 13px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ambient colour washes — the depth in the doctor dashboard */
+.pc-body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(0,113,227,0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(52,199,89,0.05) 0%, transparent 50%);
+}
+
+/* Optional faint photographic texture. Add class .pc-textured and set
+   --pc-texture to an image url. Deliberately very low opacity: this page
+   is a working tool, and a legible card beats a pretty backdrop. */
+.pc-textured::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: var(--pc-texture, none);
+    background-size: cover;
+    background-position: center;
+    opacity: 0.10;
+    filter: blur(2px) saturate(0.85);
+}
+[data-theme="dark"] .pc-textured::after { opacity: 0.055; }
+
+/* ─────────────────────────────────────────────
+   3. BRAND / LOGO
+   The artwork is a WIDE dark-navy lockup (~3.7:1).
+   Forcing it into a 32x32 box either crops it (object-fit:cover)
+   or shrinks it to ~9px tall (contain). Both were happening.
+   Natural ratio + light chip so it survives dark mode.
+   ───────────────────────────────────────────── */
+.pc-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+.pc-logo {
+    height: 30px;
+    width: auto;
+    max-width: 132px;
+    object-fit: contain;
+    display: block;
+    padding: 4px 9px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    transition: transform 0.25s var(--spring), box-shadow 0.25s var(--ease);
+    flex-shrink: 0;
+}
+.pc-logo:hover { transform: scale(1.04); box-shadow: 0 3px 12px rgba(0,0,0,0.18); }
+[data-theme="dark"] .pc-logo { background: rgba(255,255,255,0.94); }
+
+.pc-appsub {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--tm);
+    background: rgba(0,0,0,0.04);
+    padding: 3px 10px;
+    border-radius: 30px;
+    border: 0.5px solid var(--bd);
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+}
+[data-theme="dark"] .pc-appsub { background: rgba(255,255,255,0.07); }
+
+/* ─────────────────────────────────────────────
+   4. TOPBAR
+   ───────────────────────────────────────────── */
+.pc-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    height: 52px;
+    padding: 0 20px;
+    background: rgba(255,255,255,0.72);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    backdrop-filter: saturate(180%) blur(28px);
+    border-bottom: 0.5px solid var(--glass-brd);
+    box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 1px 12px rgba(0,0,0,.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+[data-theme="dark"] .pc-topbar {
+    background: rgba(22,22,25,0.72);
+    box-shadow: 0 1px 0 rgba(255,255,255,.07) inset, 0 1px 12px rgba(0,0,0,.4);
+}
+
+.pc-tr { display: flex; align-items: center; gap: 8px; }
+
+.pc-iconbtn {
+    position: relative;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 0.5px solid var(--glass-brd);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--sh-1), var(--glass-spec), var(--glass-inner);
+    color: var(--ts);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: 15px;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.34s var(--spring),
+                background 0.28s var(--ease),
+                box-shadow 0.34s var(--ease),
+                color 0.24s var(--ease);
+    flex-shrink: 0;
+}
+/* Specular sheen that sweeps across on hover */
+.pc-iconbtn::after,
+.pc-btn::after,
+.pc-chip::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(115deg,
+        transparent 30%, rgba(255,255,255,.55) 48%, transparent 66%);
+    transform: translateX(-130%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.7s var(--ease), opacity 0.3s var(--ease);
+}
+.pc-iconbtn:hover::after,
+.pc-btn:hover::after,
+.pc-chip:hover::after { transform: translateX(130%); opacity: 1; }
+
+.pc-iconbtn:hover {
+    transform: translateY(-2px) scale(1.1);
+    background: var(--glass-bg-hover);
+    box-shadow: var(--sh-3), var(--glass-spec);
+    color: var(--tp);
+}
+.pc-iconbtn:active {
+    transform: scale(0.9);
+    box-shadow: var(--sh-1), var(--glass-spec);
+    transition-duration: 0.09s;
+}
+
+.pc-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 13px;
+    border-radius: 30px;
+    border: 0.5px solid var(--glass-brd);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--sh-1), var(--glass-spec), var(--glass-inner);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ts);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.34s var(--spring),
+                background 0.28s var(--ease),
+                box-shadow 0.34s var(--ease);
+}
+.pc-chip:hover {
+    transform: translateY(-2px) scale(1.03);
+    background: var(--glass-bg-hover);
+    box-shadow: var(--sh-3), var(--glass-spec);
+}
+.pc-chip:active { transform: scale(0.96); transition-duration: 0.09s; }
+
+.pc-avatar {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ac), var(--purple));
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.pc-dot {
+    position: absolute;
+    top: 5px; right: 6px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    border: 1.5px solid var(--s1);
+    animation: pcPulseDot 2s infinite;
+}
+
+/* ─────────────────────────────────────────────
+   5. ONE-LINE HEADER (breadcrumb + greeting + stat)
+   Replaces the old 3-band stack that ate 175px.
+   ───────────────────────────────────────────── */
+.pc-headerbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 10px 20px;
+    animation: pcFadeSlide 0.4s var(--ease) both;
+}
+
+.pc-crumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--tm);
+    white-space: nowrap;
+}
+.pc-crumb a {
+    color: var(--ac);
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s var(--ease);
+}
+.pc-crumb a:hover { opacity: 0.7; }
+.pc-crumb .sep { opacity: 0.45; }
+
+.pc-divider {
+    width: 1px;
+    height: 16px;
+    background: var(--bd);
+    flex-shrink: 0;
+}
+
+.pc-greet {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--tp);
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+}
+.pc-greet .hl {
+    background: linear-gradient(135deg, var(--ac), var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.pc-date { font-size: 12px; color: var(--tm); white-space: nowrap; }
+
+.pc-headerbar .pc-spacer { margin-left: auto; }
+
+.pc-quickstat {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 13px;
+    border-radius: 30px;
+    background: var(--acb);
+    border: 0.5px solid var(--acl);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ac);
+    white-space: nowrap;
+}
+
+/* ─────────────────────────────────────────────
+   6. CARDS
+   ───────────────────────────────────────────── */
+.pc-card {
+    position: relative;
+    background: var(--s1);
+    border: 0.5px solid var(--bd);
+    border-radius: var(--r2);
+    box-shadow: var(--sh-1), var(--glass-spec);
+    transform-style: preserve-3d;
+    transition: transform 0.38s var(--spring),
+                box-shadow 0.38s var(--ease),
+                border-color 0.3s var(--ease);
+}
+.pc-card:hover {
+    transform: translateY(-5px) scale(1.012);
+    box-shadow: var(--sh-3), var(--glass-spec);
+    border-color: var(--bds);
+}
+.pc-card:active { transform: translateY(-1px) scale(0.995); transition-duration: 0.1s; }
+
+/* Pointer-tracked tilt. JS writes --mx/--my as percentages; the card
+   leans a couple of degrees toward the cursor and a soft highlight
+   follows it, the way iOS/visionOS cards behave. */
+.pc-tilt {
+    --mx: 50%; --my: 50%; --rx: 0deg; --ry: 0deg;
+    --lift: 0px; --scale: 1;
+    /* One composed transform: lift + scale + pointer tilt. Keeping these
+       in a single declaration means a component's :hover can raise the
+       card (via --lift/--scale) without wiping out the tilt rotation. */
+    transform: perspective(900px) translateY(var(--lift)) scale(var(--scale)) rotateX(var(--rx)) rotateY(var(--ry));
+    transition: transform 0.42s var(--spring), box-shadow 0.4s var(--ease),
+                background 0.3s var(--ease);
+}
+.pc-tilt:hover  { --lift: -6px; --scale: 1.022; }
+.pc-tilt:active { --lift: -2px; --scale: 0.985; transition-duration: 0.1s; }
+.pc-tilt::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(320px circle at var(--mx) var(--my),
+                rgba(255,255,255,.42), transparent 42%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.34s var(--ease);
+}
+.pc-tilt:hover::after { opacity: 1; }
+[data-theme="dark"] .pc-tilt::after {
+    background: radial-gradient(320px circle at var(--mx) var(--my),
+                rgba(255,255,255,.10), transparent 42%);
+}
+
+/* Staggered entrance — cards cascade in rather than snapping */
+.pc-stagger > * {
+    animation: pcCardAppear 0.45s var(--spring) both;
+}
+.pc-stagger > *:nth-child(1)  { animation-delay: 0.02s; }
+.pc-stagger > *:nth-child(2)  { animation-delay: 0.05s; }
+.pc-stagger > *:nth-child(3)  { animation-delay: 0.08s; }
+.pc-stagger > *:nth-child(4)  { animation-delay: 0.11s; }
+.pc-stagger > *:nth-child(5)  { animation-delay: 0.14s; }
+.pc-stagger > *:nth-child(6)  { animation-delay: 0.17s; }
+.pc-stagger > *:nth-child(7)  { animation-delay: 0.20s; }
+.pc-stagger > *:nth-child(8)  { animation-delay: 0.23s; }
+.pc-stagger > *:nth-child(9)  { animation-delay: 0.26s; }
+.pc-stagger > *:nth-child(10) { animation-delay: 0.29s; }
+.pc-stagger > *:nth-child(11) { animation-delay: 0.32s; }
+.pc-stagger > *:nth-child(12) { animation-delay: 0.35s; }
+.pc-stagger > *:nth-child(13) { animation-delay: 0.38s; }
+.pc-stagger > *:nth-child(14) { animation-delay: 0.41s; }
+
+/* Tap feedback */
+.pc-bounce:active { animation: pcAppleBounce 0.32s var(--ease); }
+
+/* ─────────────────────────────────────────────
+   7. BUTTONS
+   ───────────────────────────────────────────── */
+.pc-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 0.5px solid var(--glass-brd);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--sh-1), var(--glass-spec), var(--glass-inner);
+    color: var(--ts);
+    font-family: var(--f);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.34s var(--spring),
+                background 0.28s var(--ease),
+                box-shadow 0.34s var(--ease);
+}
+.pc-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: var(--glass-bg-hover);
+    box-shadow: var(--sh-3), var(--glass-spec);
+}
+.pc-btn:active { transform: scale(0.96); transition-duration: 0.09s; }
+
+.pc-btn-primary {
+    background: linear-gradient(180deg, #3d94ff 0%, var(--ac) 100%);
+    border-color: rgba(255,255,255,0.28);
+    color: #fff;
+    box-shadow: var(--sh-ac), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.pc-btn-primary:hover {
+    background: linear-gradient(180deg, #4d9dff 0%, var(--ach) 100%);
+    box-shadow: 0 6px 20px rgba(0,113,227,.42), 0 16px 44px rgba(0,113,227,.26),
+                inset 0 1px 0 rgba(255,255,255,0.45);
+}
+.pc-btn-danger {
+    background: linear-gradient(180deg, #ff6b62 0%, var(--red) 100%);
+    border-color: rgba(255,255,255,0.24);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(255,59,48,.32), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.pc-btn-danger:hover {
+    box-shadow: 0 6px 20px rgba(255,59,48,.42), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+
+/* ── SEGMENTED CONTROL (iOS pill tabs) ── */
+.pc-seg {
+    display: inline-flex;
+    padding: 3px;
+    gap: 2px;
+    border-radius: 11px;
+    background: rgba(120,120,128,0.14);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-inner);
+}
+.pc-seg button {
+    border: 0;
+    background: transparent;
+    font-family: var(--f);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ts);
+    padding: 6px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.28s var(--ease), transform 0.3s var(--spring),
+                box-shadow 0.28s var(--ease);
+}
+.pc-seg button:hover:not(.on) { background: rgba(255,255,255,0.4); }
+.pc-seg button.on {
+    background: var(--s1);
+    box-shadow: var(--sh-1), var(--glass-spec);
+    transform: scale(1.02);
+}
+
+/* ── iOS TOGGLE SWITCH ── */
+.pc-switch { position: relative; display: inline-block; width: 50px; height: 30px; flex-shrink: 0; }
+.pc-switch input { opacity: 0; width: 0; height: 0; }
+.pc-switch .track {
+    position: absolute; inset: 0; cursor: pointer;
+    background: rgba(120,120,128,0.32);
+    border-radius: 30px;
+    box-shadow: var(--glass-inner);
+    transition: background 0.34s var(--ease);
+}
+.pc-switch .track::before {
+    content: ''; position: absolute;
+    height: 26px; width: 26px; left: 2px; bottom: 2px;
+    background: #fff; border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,.22), 0 1px 2px rgba(0,0,0,.14);
+    transition: transform 0.38s var(--spring), width 0.2s var(--ease);
+}
+.pc-switch input:checked + .track { background: var(--green); }
+.pc-switch input:checked + .track::before { transform: translateX(20px); }
+.pc-switch .track:active::before { width: 31px; }
+
+/* ─────────────────────────────────────────────
+   8. TOASTS
+   ───────────────────────────────────────────── */
+.pc-toasts {
+    position: fixed;
+    bottom: 22px; right: 22px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    pointer-events: none;
+}
+.pc-toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: var(--r);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 0.5px solid var(--glass-brd);
+    box-shadow: var(--sh-3), var(--glass-spec);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--tp);
+    animation: pcToastIn 0.4s var(--spring) both;
+    pointer-events: auto;
+    max-width: 340px;
+}
+.pc-toast.out { animation: pcToastOut 0.28s var(--ease) forwards; }
+.pc-toast.success { border-left: 3px solid var(--green); }
+.pc-toast.error   { border-left: 3px solid var(--red); }
+.pc-toast.info    { border-left: 3px solid var(--ac); }
+.pc-toast.warning { border-left: 3px solid var(--orange); }
+
+/* ─────────────────────────────────────────────
+   9. AUTOSAVE INDICATOR
+   ───────────────────────────────────────────── */
+.pc-autosave {
+    position: fixed;
+    bottom: 18px; left: 18px;
+    z-index: 9998;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 30px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 0.5px solid var(--glass-brd);
+    box-shadow: var(--sh-2), var(--glass-spec);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--tm);
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+    transition: opacity 0.3s var(--ease), transform 0.3s var(--spring);
+}
+.pc-autosave.show { opacity: 1; transform: translateY(0); }
+.pc-autosave .sdot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+}
+.pc-autosave.saving .sdot { background: var(--orange); animation: pcPulseDot 1s infinite; }
+
+/* ─────────────────────────────────────────────
+   10. SKELETON (shown while restoring, avoids layout jump)
+   ───────────────────────────────────────────── */
+.pc-skel {
+    background: linear-gradient(90deg, var(--s3) 25%, var(--s0) 50%, var(--s3) 75%);
+    background-size: 200% 100%;
+    animation: pcShimmer 1.4s infinite;
+    border-radius: 8px;
+}
+
+/* ─────────────────────────────────────────────
+   11. KEYFRAMES
+   ───────────────────────────────────────────── */
+@keyframes pcCardAppear {
+    from { opacity: 0; translate: 0 -10px; scale: 0.98; }
+    to   { opacity: 1; translate: 0 0;     scale: 1; }
+}
+@keyframes pcFadeSlide {
+    from { opacity: 0; translate: 0 6px; }
+    to   { opacity: 1; translate: 0 0; }
+}
+@keyframes pcRowAppear {
+    from { opacity: 0; translate: 0 8px; scale: 0.98; }
+    to   { opacity: 1; translate: 0 0;   scale: 1; }
+}
+@keyframes pcAppleBounce {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(0.92); }
+    60%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}
+@keyframes pcModalSpring {
+    from { opacity: 0; transform: scale(0.92) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes pcToastIn {
+    from { opacity: 0; transform: translateX(40px) scale(0.94); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes pcToastOut {
+    to { opacity: 0; transform: translateX(40px) scale(0.94); }
+}
+@keyframes pcPulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.55; transform: scale(1.18); }
+}
+@keyframes pcShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+@keyframes pcSpin { to { transform: rotate(360deg); } }
+@keyframes pcGlassIn {
+    from { opacity: 0; transform: scale(0.96) translateY(8px); filter: blur(6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0);      filter: blur(0); }
+}
+@keyframes pcSheen { to { transform: translateX(130%); } }
+
+/* Browsers without backdrop-filter get a solid surface instead of a
+   washed-out translucent one that would be unreadable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .pc-iconbtn, .pc-chip, .pc-btn, .pc-toast, .pc-autosave, .pc-topbar {
+        background: var(--s1);
+    }
+    [data-theme="dark"] .pc-iconbtn,
+    [data-theme="dark"] .pc-chip,
+    [data-theme="dark"] .pc-btn,
+    [data-theme="dark"] .pc-toast,
+    [data-theme="dark"] .pc-autosave,
+    [data-theme="dark"] .pc-topbar { background: var(--s2); }
+}
+
+/* ─────────────────────────────────────────────
+   12. ACCESSIBILITY
+   ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+    .pc-tilt { transform: none !important; }
+    .pc-iconbtn::after, .pc-btn::after, .pc-chip::after { display: none; }
+}
+.pc-iconbtn:focus-visible,
+.pc-btn:focus-visible,
+.pc-chip:focus-visible,
+.pc-card:focus-visible {
+    outline: 2px solid var(--ac);
+    outline-offset: 2px;
+}
+
+/* ─────────────────────────────────────────────
+   13. RESPONSIVE
+   ───────────────────────────────────────────── */
+@media (max-width: 820px) {
+    .pc-topbar { height: auto; padding: 8px 14px; flex-wrap: wrap; gap: 8px; }
+    .pc-headerbar { padding: 9px 14px; gap: 10px; }
+    .pc-headerbar .pc-spacer { margin-left: 0; }
+    .pc-date, .pc-divider { display: none; }
+    .pc-logo { height: 26px; max-width: 112px; }
+}
+@media (max-width: 560px) {
+    .pc-greet { font-size: 13.5px; }
+    .pc-quickstat { font-size: 11px; padding: 4px 10px; }
+    .pc-toasts { left: 14px; right: 14px; bottom: 14px; }
+    .pc-toast { max-width: none; }
+}
+
+
+/* ═════════════════════════════════════════════
+   14. LEGACY CLASS BRIDGE
+   The dashboards were each written with their own button/card class
+   names before this system existed. Rather than rewrite 24 files of
+   markup, map the existing names onto the glass treatment. Pages keep
+   working exactly as before; they just look and feel like iOS now.
+   ═════════════════════════════════════════════ */
+
+.tb-btn, .topbar-btn, .theme-toggle, .ab, .bbtn, .tbtn {
+    position: relative;
+    -webkit-backdrop-filter: var(--glass-blur) !important;
+    backdrop-filter: var(--glass-blur) !important;
+    background: var(--glass-bg) !important;
+    border: 0.5px solid var(--glass-brd) !important;
+    box-shadow: var(--sh-1), var(--glass-spec), var(--glass-inner) !important;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.34s var(--spring),
+                background 0.28s var(--ease),
+                box-shadow 0.34s var(--ease) !important;
+}
+.tb-btn:hover, .topbar-btn:hover, .theme-toggle:hover,
+.ab:hover, .bbtn:hover, .tbtn:hover {
+    transform: translateY(-2px) scale(1.08) !important;
+    background: var(--glass-bg-hover) !important;
+    box-shadow: var(--sh-3), var(--glass-spec) !important;
+}
+.tb-btn:active, .topbar-btn:active, .theme-toggle:active,
+.ab:active, .bbtn:active, .tbtn:active {
+    transform: scale(0.9) !important;
+    transition-duration: 0.09s !important;
+}
+
+/* Primary / secondary action buttons across the dashboards */
+.btn-p, .btn-s, .btn, .pc-action {
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.34s var(--spring),
+                box-shadow 0.34s var(--ease),
+                background 0.28s var(--ease) !important;
+}
+.btn-p:hover, .btn-s:hover, .btn:hover, .pc-action:hover {
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: var(--sh-3) !important;
+}
+.btn-p:active, .btn-s:active, .btn:active, .pc-action:active {
+    transform: scale(0.96) !important;
+    transition-duration: 0.09s !important;
+}
+
+/* Sheen sweep on legacy buttons too */
+.tb-btn::after, .topbar-btn::after, .theme-toggle::after,
+.btn-p::after, .btn-s::after, .btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(115deg, transparent 30%,
+                rgba(255,255,255,.5) 48%, transparent 66%);
+    transform: translateX(-130%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.7s var(--ease), opacity 0.3s var(--ease);
+}
+.tb-btn:hover::after, .topbar-btn:hover::after, .theme-toggle:hover::after,
+.btn-p:hover::after, .btn-s:hover::after, .btn:hover::after {
+    transform: translateX(130%); opacity: 1;
+}
+
+/* Cards / KPIs / module tiles across the dashboards */
+.card, .kpi, .stat-card, .module-card, .panel {
+    transition: transform 0.4s var(--spring),
+                box-shadow 0.38s var(--ease) !important;
+}
+.card:hover, .kpi:hover, .panel:hover {
+    transform: translateY(-4px) scale(1.008) !important;
+    box-shadow: var(--sh-3), var(--glass-spec) !important;
+}
+
+/* Sticky headers pick up the frosted material */
+.topbar, .nav-secondary, .toolbar {
+    -webkit-backdrop-filter: saturate(180%) blur(28px) !important;
+    backdrop-filter: saturate(180%) blur(28px) !important;
+}
+
+/* Native-feeling scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: rgba(120,120,128,0.32);
+    border-radius: 10px;
+    border: 2.5px solid transparent;
+    background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(120,120,128,0.55); background-clip: content-box; }
+
+/* Momentum scrolling + no rubber-band flash on iOS */
+html { -webkit-overflow-scrolling: touch; }
+
+/* ============================================================
+   PCLINIC — APPLE-GRADE DARK MODE (FROM ZERO)
+   Guarantees 0 invisible text, 0 black-on-black, crisp contrast
+   ============================================================ */
+[data-theme="dark"],
+html[data-theme="dark"],
+body.dark-mode {
+    --bg: #0d0d12 !important;
+    --s1: #161620 !important;
+    --s2: #1e1e2c !important;
+    --s3: #262638 !important;
+    --bd: rgba(255, 255, 255, 0.14) !important;
+    --tp: #f3f4f6 !important;
+    --ts: #d1d5db !important;
+    --tm: #9ca3af !important;
+    --ac: #60a5fa !important;
+    --ach: #93c5fd !important;
+    --acb: rgba(96, 165, 250, 0.15) !important;
+    --glass-bg: rgba(22, 22, 32, 0.88) !important;
+    --card-bg: #1e1e2c !important;
+    --hover-bg: #262638 !important;
+    color-scheme: dark;
+}
+
+[data-theme="dark"] body,
+body.dark-mode {
+    background: #0d0d12 !important;
+    color: #f3f4f6 !important;
+}
+
+/* 1. Header, Topbar, Navigation, Breadcrumbs */
+[data-theme="dark"] .topbar,
+[data-theme="dark"] .breadcrumb,
+[data-theme="dark"] .header,
+[data-theme="dark"] .main-header,
+[data-theme="dark"] .navbar,
+[data-theme="dark"] .stats-bar {
+    background: rgba(22, 22, 32, 0.92) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f3f4f6 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 2. Patient Cards, Panels, Modals, Dropdowns, Sidebars */
+[data-theme="dark"] .card,
+[data-theme="dark"] .patient-card,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .dropdown,
+[data-theme="dark"] .menu,
+[data-theme="dark"] .tab-content,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .widget {
+    background: #161620 !important;
+    color: #f3f4f6 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 3. Text contrast enforcement — zero invisible characters! */
+[data-theme="dark"] .card *,
+[data-theme="dark"] .patient-card *,
+[data-theme="dark"] .modal *,
+[data-theme="dark"] .dropdown *,
+[data-theme="dark"] .breadcrumb *,
+[data-theme="dark"] table *,
+[data-theme="dark"] th,
+[data-theme="dark"] td,
+[data-theme="dark"] label,
+[data-theme="dark"] span:not(.badge):not(.tag):not(.btn-apple):not(.ab-loc),
+[data-theme="dark"] p,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4 {
+    color: inherit !important;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] th,
+[data-theme="dark"] .modal-title,
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .patient-name {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .subtitle,
+[data-theme="dark"] .meta,
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] small {
+    color: #9ca3af !important;
+}
+
+/* 4. Form inputs, Search bar, Selects, Textareas */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+[data-theme="dark"] .search-bar,
+[data-theme="dark"] .search-input,
+[data-theme="dark"] .fi {
+    background: #242432 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: #9ca3af !important;
+    opacity: 1 !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] .fi:focus {
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25) !important;
+    background: #2c2c3e !important;
+}
+
+/* 5. Buttons & Badges in Dark Mode */
+[data-theme="dark"] button:not(.primary):not(.btn-danger):not(.btn-apple):not(.modal-close) {
+    background: #262638 !important;
+    color: #f3f4f6 !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+[data-theme="dark"] button:hover {
+    background: #32324a !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-apple {
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+[data-theme="dark"] .badge,
+[data-theme="dark"] .tag,
+[data-theme="dark"] .pill {
+    background: rgba(96, 165, 250, 0.18) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(96, 165, 250, 0.3) !important;
+}
+
+/* 6. Tables & Rows */
+[data-theme="dark"] table tr {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+[data-theme="dark"] table tr:hover,
+[data-theme="dark"] .result-item:hover,
+[data-theme="dark"] .list-item:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ============================================================
+   FONT SIZE & COMPACT VIEW SCALING (SETTINGS SUPPORT)
+   ============================================================ */
+body.font-small, body.font-small * { font-size: 11.5px !important; }
+body.font-small h1 { font-size: 18px !important; }
+body.font-small h2 { font-size: 15px !important; }
+body.font-small h3 { font-size: 13px !important; }
+body.font-small .btn-apple, body.font-small button { font-size: 11px !important; padding: 5px 10px !important; }
+
+body.font-large, body.font-large * { font-size: 15px !important; }
+body.font-large h1 { font-size: 24px !important; }
+body.font-large h2 { font-size: 20px !important; }
+body.font-large h3 { font-size: 17px !important; }
+body.font-large .btn-apple, body.font-large button { font-size: 14px !important; padding: 9px 16px !important; }
+
+body.compact .patient-card, body.compact .card {
+    padding: 10px 14px !important;
+    margin-bottom: 8px !important;
+    gap: 6px !important;
+}
+
+/* ============================================================
+   PCLINIC COMPLETE PATIENT IDENTIFICATION BAR (COMMON)
+   Seductive Apple Glassmorphism Design (macOS Sequoia / iOS 18)
+   ============================================================ */
+/* ============================================================
+   PCLINIC COMPLETE PATIENT IDENTIFICATION BAR
+   Seductive Apple Favorite Light Neutral & Darker Input Boxes
+   (macOS Sequoia / iOS 18 - Replicating Screenshot 2026-08-04 at 12.23.03.png)
+   ============================================================ */
+/* ============================================================
+   PCLINIC COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   SMART iOS 18 + GOOGLE PIXEL 9 PRO (MATERIAL YOU) HYBRID UI
+   Replicating Screenshot 2026-08-04 at 12.23.03.png with Ultra-Polish
+   ============================================================ */
+/* ============================================================
+   PCLINIC COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   ULTRA-COMPACT SMART iOS 18 + GOOGLE PIXEL 9 PRO UI (~75px Total Height!)
+   ============================================================ */
+/* ============================================================
+   PCLINIC v5.346.01 / CHUK COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   100/100 EXACT REPLICATION OF Screenshot 2026-08-04 at 13.48.46.png
+   Same Greenish-Beige Pastel Background (#e4e8dc), Cream Input Boxes (#f8faee), & Classic Clinical UI
+   ============================================================ */
+/* ============================================================
+   PCLINIC COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   BILL PAGE APPLE / PIXEL 9 PRO HYBRID (iOS 18 + Material You)
+   3-Row CHUK Grid (~85px Height) with Seductive Glassmorphism & Card Inputs
+   ============================================================ */
+.oc-demo-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    background: linear-gradient(135deg, rgba(240, 240, 245, 0.94) 0%, rgba(238, 240, 245, 0.88) 100%) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+    border-radius: 16px !important;
+    padding: 12px 18px !important;
+    margin-bottom: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+    font-size: 12px !important;
+    color: #1d1d1f !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    position: relative !important;
+    top: auto !important;
+    z-index: 2 !important;
+}
+
+.oc-demo-bar .oc-row-grid {
+    display: grid !important;
+    grid-template-columns: 1.35fr 1.25fr 1.3fr 1.1fr !important;
+    gap: 8px 16px !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+@media(max-width: 1050px) { .oc-demo-bar .oc-row-grid { grid-template-columns: 1fr 1fr !important; } }
+@media(max-width: 650px)  { .oc-demo-bar .oc-row-grid { grid-template-columns: 1fr !important; } }
+
+.oc-demo-bar .oc-cell {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+
+/* 🌟 BILL PAGE STYLE LABELS: SLEEK UPPERCASE TRACKING (#5f6368) 🌟 */
+.oc-demo-bar .oc-lbl,
+.oc-demo-bar .demo-lbl {
+    color: #5f6368 !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    font-size: 11px !important;
+    letter-spacing: 0.3px !important;
+    text-transform: uppercase !important;
+    flex-shrink: 0 !important;
+    min-width: 82px !important;
+    text-align: right !important;
+}
+
+/* 🌟 BILL PAGE STYLE INPUT BOXES: DARKER APPLE CARD (#e2e2e7) WITH TACTILE INNER SHADOW 🌟 */
+.oc-demo-bar .oc-input,
+.oc-demo-bar .demo-input,
+.oc-demo-bar select.demo-input,
+#ocInsurance {
+    background: #e2e2e7 !important;
+    color: #1d1d1f !important;
+    border: 1px solid #d1d1d6 !important;
+    border-radius: 8px !important;
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    height: 28px !important;
+    outline: none !important;
+    width: 100% !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.oc-demo-bar .oc-input::placeholder,
+.oc-demo-bar .demo-input::placeholder {
+    color: #8e8e93 !important;
+    font-weight: 500 !important;
+}
+
+/* SMART GOOGLE PIXEL 9 PRO / APPLE SPOTLIGHT FOCUS RING */
+.oc-demo-bar .oc-input:focus,
+.oc-demo-bar .demo-input:focus,
+.oc-demo-bar select.demo-input:focus,
+#ocInsurance:focus {
+    background: #ffffff !important;
+    border-color: #0b57d0 !important;
+    box-shadow: 0 0 0 3px rgba(11, 87, 208, 0.16), inset 0 1px 1px rgba(255, 255, 255, 1) !important;
+}
+
+/* 🌟 ARCHIVE CODE: APPLE RED BADGE BOX (#ff3b30) 🌟 */
+.oc-demo-bar .oc-archive-box,
+#ocArchiveCode {
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+    border-color: #d93025 !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    border-radius: 8px !important;
+}
+
+/* 🌟 BILL PAGE STYLE BUTTONS ([Find] = PIXEL 9 BLUE, [Clear] = APPLE SECONDARY RED) 🌟 */
+.oc-demo-bar .oc-btn-cell,
+.oc-demo-bar .demo-btn-group {
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    flex-shrink: 0 !important;
+}
+
+.oc-demo-bar .oc-action-btn,
+.oc-demo-bar .demo-btn {
+    background: linear-gradient(135deg, #0b57d0 0%, #0071e3 100%) !important;
+    color: #ffffff !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    padding: 3px 16px !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    height: 28px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(11, 87, 208, 0.25) !important;
+    white-space: nowrap !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.oc-demo-bar .oc-action-btn:hover,
+.oc-demo-bar .demo-btn:hover {
+    transform: translateY(-1.5px) scale(1.02) !important;
+    box-shadow: 0 4px 12px rgba(11, 87, 208, 0.35) !important;
+}
+
+.oc-demo-bar .oc-action-btn:active,
+.oc-demo-bar .demo-btn:active {
+    transform: scale(0.95) !important;
+}
+
+.oc-demo-bar .oc-action-btn.clear-btn,
+.oc-demo-bar .demo-btn.clear-btn {
+    background: #f2f2f7 !important;
+    color: #d93025 !important;
+    border: 1px solid #d1d1d6 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+.oc-demo-bar .oc-action-btn.clear-btn:hover,
+.oc-demo-bar .demo-btn.clear-btn:hover {
+    background: #ffebe9 !important;
+    border-color: #d93025 !important;
+    color: #b31412 !important;
+}
+
+/* WARD BUTTON */
+.oc-demo-bar .oc-ward-btn {
+    background: #e2e8f0 !important;
+    color: #1e293b !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 6px !important;
+    padding: 2px 10px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    height: 28px !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+}
+
+.oc-demo-bar .oc-ward-btn:hover { background: #cbd5e1 !important; }
+
+.oc-demo-bar .oc-age-txt {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    color: #5f6368 !important;
+    white-space: nowrap !important;
+}
+
+.oc-demo-bar .oc-mini-icons {
+    display: inline-flex !important;
+    gap: 6px !important;
+    align-items: center !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    opacity: 0.8 !important;
+}
+
+
+/* ============================================================
+   PCLINIC TOP MENU STRIP & COMPREHENSIVE MODALS
+   (Patient Demographics/Caretaker & System Settings/Language/Theme)
+   ============================================================ */
+/* ============================================================
+   PCLINIC CHUK UNIFIED TOP MENU STRIP (.chuk-top-menu)
+   1. Distinct Action-Coded Button Colors (Replicating Screenshot 2026-08-04 at 17.38.06.png)
+   2. Left-Side Clinical Portals + Right-Corner Controls (Theme, Alerts, Dr. Mutua, Logout, Info)
+   ============================================================ */
+/* ============================================================
+   PCLINIC CHUK UNIFIED TOP MENU STRIP (.chuk-top-menu)
+   100/100 EXACT ACTION BAR BUTTON STYLING (.ab-btn clone)
+   Replicating Screenshot 2026-08-04 at 17.38.06.png
+   ============================================================ */
+/* Master header container — full-bleed edge-to-edge on dashboards & every
+   page that does NOT load pclinic-file.css. Clinical file pages (opd-file,
+   prescription, etc.) load pclinic-file.css AFTER this stylesheet, and its
+   .pc-master-header rule (max-width:1360px; margin:0 auto) intentionally
+   overrides this to box the header to match the file layout — do not add
+   !important here or that override will stop working. */
+#pcMasterHeader.pc-master-header {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    /* ── STICKY APP CHROME ──
+       Keeps the CHUK top bar (and the action/demo bars beneath it)
+       pinned to the top of every page while the content scrolls.
+       Frosted so scrolling content blurs beneath it, iOS-style. */
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 500 !important;
+    background: rgba(245, 245, 247, 0.78) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.10) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
+}
+[data-theme="dark"] #pcMasterHeader.pc-master-header,
+body.dark-mode #pcMasterHeader.pc-master-header {
+    background: rgba(22, 22, 25, 0.78) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+.chuk-top-menu {
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 10px 8px 12px !important;
+    background: rgba(245, 245, 247, 0.55) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(22px) !important;
+    backdrop-filter: saturate(180%) blur(22px) !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.07) !important;
+    border-bottom: none !important;
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 16px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-wrap: nowrap !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    position: relative !important;
+    top: auto !important;
+    z-index: 200 !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    box-sizing: border-box !important;
+}
+
+.chuk-menu-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+}
+.chuk-menu-left::-webkit-scrollbar { height: 0 !important; display: none !important; }
+
+.chuk-menu-center {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    max-width: 220px !important;
+}
+.chuk-menu-center .pc-global-clock,
+#pcGlobalClock {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 220px !important;
+}
+
+/* RIGHT CORNER — always on screen */
+.chuk-menu-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    margin-left: 6px !important;
+    flex-wrap: nowrap !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+}
+
+@media (max-width: 1180px) {
+    .chuk-menu-center { display: none !important; }
+}
+@media (max-width: 980px) {
+    .chuk-top-menu .chk-btn { padding: 0 8px !important; font-size: 11px !important; }
+    .chk-btn.btn-user { max-width: 120px !important; overflow: hidden !important; }
+}
+@media (max-width: 760px) {
+    .chk-btn.btn-theme,
+    .chk-btn.btn-alerts,
+    .chk-btn.btn-info { padding: 0 8px !important; }
+    .chk-btn.btn-user { max-width: 88px !important; }
+}
+
+/* Never allow a second CHUK strip */
+.chuk-top-menu ~ .chuk-top-menu,
+#pc_chuk_top_menu ~ #pc_chuk_top_menu {
+    display: none !important;
+}
+
+/* 🌟 100/100 EXACT REPLICATION OF .ab-btn FROM DOCTOR ACTION BAR 🌟 */
+.chuk-top-menu .chk-btn {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    height: 32px !important;
+    padding: 0 12px !important;
+    border-radius: 9px !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.07) !important;
+    font-family: inherit !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+    overflow: hidden !important;
+    -webkit-tap-highlight-color: transparent !important;
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s, opacity 0.2s, filter 0.2s !important;
+    text-decoration: none !important;
+}
+
+.chuk-top-menu .chk-btn:hover {
+    transform: translateY(-2px) scale(1.04) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14) !important;
+    text-decoration: none !important;
+}
+
+.chuk-top-menu .chk-btn:active {
+    transform: scale(0.94) !important;
+    transition-duration: 0.08s !important;
+}
+
+/* Glassmorphism Shine Effect exactly like Action Bar */
+.chuk-top-menu .chk-btn::after {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    border-radius: inherit !important;
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.5) 48%, transparent 66%) !important;
+    transform: translateX(-130%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: transform 0.65s, opacity 0.3s !important;
+}
+
+.chuk-top-menu .chk-btn:hover::after {
+    transform: translateX(130%) !important;
+    opacity: 1 !important;
+}
+
+/* 🌟 ACTION-CODED BUTTON COLORS EXACTLY AS IN SCREENSHOT 2026-08-04 at 17.38.06.png 🌟 */
+/* 1. 👤 Patient (White/Neutral) */
+.chk-btn.btn-patient { background: #ffffff !important; color: #1e293b !important; border-color: rgba(0,0,0,0.1) !important; }
+
+/* 2. 📋 Medical summary (Pink/Purple Pill - #f5eaff, #5c2475) */
+.chk-btn.btn-summary { background: #f5eaff !important; color: #5c2475 !important; border-color: rgba(175, 82, 222, 0.2) !important; }
+
+/* 3. 🏥 Nursing (Soft Green/Teal - #e9f9ee, #1a7a32) */
+.chk-btn.btn-nursing { background: #e9f9ee !important; color: #1a7a32 !important; border-color: rgba(52, 199, 89, 0.2) !important; }
+
+/* 4. 💉 Applications (Soft Blue - #eaf2ff, #0066d6) */
+.chk-btn.btn-applications { background: #eaf2ff !important; color: #0066d6 !important; border-color: rgba(0, 113, 227, 0.2) !important; }
+
+/* 5. 📂 Documents (Lavender/Purple - #f3e8ff, #6b21a8) */
+.chk-btn.btn-documents { background: #f3e8ff !important; color: #6b21a8 !important; border-color: rgba(147, 51, 234, 0.2) !important; }
+
+/* 6. ⚙️ System (Slate/Gray - #f3f4f6, #374151) */
+.chk-btn.btn-system { background: #f3f4f6 !important; color: #374151 !important; border-color: rgba(0,0,0,0.1) !important; }
+
+/* 7. ☀️ Theme (Soft Cool-Slate Apple Pill - ZERO YELLOW!) */
+.chk-btn.btn-theme { background: #e2e8f0 !important; color: #1e293b !important; border-color: #cbd5e1 !important; }
+
+/* 8. 🔔 3 Alerts (Soft Orange - #ffedd5, #c2410c) */
+.chk-btn.btn-alerts { background: #ffedd5 !important; color: #c2410c !important; border-color: rgba(249, 115, 22, 0.25) !important; }
+
+/* 9. 👨‍⚕️ Dr. Mutua (Indigo/Slate - #e0e7ff, #3730a3) */
+.chk-btn.btn-user { background: #e0e7ff !important; color: #3730a3 !important; border-color: rgba(99, 102, 241, 0.25) !important; }
+
+/* 10. 🚪 Logout (Subtle Silver/Charcoal Apple Pill - ZERO RED!) */
+.chk-btn.btn-logout { background: #f3f4f6 !important; color: #374151 !important; border-color: #cbd5e1 !important; }
+
+/* 11. ❓ Info (Soft Slate - #f1f5f9, #475569) */
+.chk-btn.btn-info { background: #f1f5f9 !important; color: #475569 !important; border-color: rgba(0,0,0,0.1) !important; }
+
+/* ============================================================
+   REMOVE BREADCRUMB BAR EVERYWHERE PER USER INSTRUCTION
+   (Saves ~45px vertical screen space across all pages!)
+   ============================================================ */
+.breadcrumb, #breadcrumb, .header-breadcrumb {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+}
+
+
+/* ============================================================
+   REMOVE TOPBAR / HEADER EVERYWHERE PER USER INSTRUCTION
+   (Reclaims ~60px vertical screen space across all pages!)
+   ============================================================ */
+.topbar, .top-bar, .app-header, .header, #header, header.topbar, .top-header {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+}
+
+/* Style for moved Topbar Buttons inside CHUK Top Menu Strip */
+.chuk-top-menu .topbar-moved-btn {
+    background: rgba(11, 87, 208, 0.1) !important;
+    color: #0b57d0 !important;
+    border: 1px solid rgba(11, 87, 208, 0.25) !important;
+    border-radius: 6px !important;
+    padding: 2px 8px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.chuk-top-menu .topbar-moved-btn:hover {
+    background: #0b57d0 !important;
+    color: #ffffff !important;
+}
+
+.chuk-top-menu .topbar-moved-btn.logout-btn {
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #d93025 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.chuk-top-menu .topbar-moved-btn.logout-btn:hover {
+    background: #d93025 !important;
+    color: #ffffff !important;
+}
+
+
+/* ============================================================
+   HIDE LEGACY #pcHandoff SLIM BAR EVERYWHERE
+   Ensure only Complete Patient Identification Bar (.oc-demo-bar) is shown
+   ============================================================ */
+#pcHandoff {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+}
+
+
+/* USER REQUEST: DELETE file action bar everywhere */
+#pcFileBar { display: none !important; }
+
+
+/* === APPLE COLOR 50% TRANSPARENT BACKGROUND FOR ONLY BAR 3 (#dcBar) === */
+#dcBar.dc-bar, .dc-bar {
+    background: rgba(245, 245, 247, 0.50) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+    backdrop-filter: saturate(180%) blur(20px) !important;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.12) !important;
+}
+[data-theme="dark"] #dcBar.dc-bar, [data-theme="dark"] .dc-bar {
+    background: rgba(28, 28, 30, 0.50) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+
+/* ============================================================
+   100% FULL-WIDTH EDGE-TO-EDGE LAYOUT + SIDE-BY-SIDE EDIT FORM & PREVIEW
+   Guarantees Out-Patient Consultation and all pages/documents span 100% full width
+   from left corner to right corner, and restores side-by-side preview and edit mode.
+   ============================================================ */
+.pcf-wrap,
+#pcfRoot,
+.pcf-bill-layout,
+.patient-file-container,
+#opdFileContainer,
+#patientFileContainer,
+iframe#opdIframe,
+iframe#prescriptionFrame,
+iframe#labResultsIframe,
+iframe#imagingResultsIframe,
+iframe#labRequestIframe {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* 1. Ensure .pcf-bill-layout is 100% full width block so History or File view takes full width */
+.pcf-bill-layout {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#viewFile,
+#viewHistory {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 2. Restore Side-by-Side Edit Form (#workPane) and Live Document Preview (#doc) expanding 100% full width */
+.pcf-grid.wide {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) !important;
+    gap: 24px !important;
+    align-items: start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.pcf-grid,
+.pcf-grid.single {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 950px) {
+    .pcf-grid.wide {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* ============================================================
+   HIGHLY APPLE-FEATURED DESIGN FOR ALL CLINICAL NOTES & FORMS (LIKE BILLING.HTML)
+   Features:
+     • Apple Frosted Glass panels (var(--glass-bg), blur(24px), subtle border, specular highlights)
+     • Apple ambient background radial-gradient light wash (body::before)
+     • Buttery smooth scrolling (scroll-behavior: smooth)
+     • Apple navigation Back buttons & spring physics hover animations
+   ============================================================ */
+
+/* Buttery smooth scrolling across all clinical note/form pages */
+html, body, .pcf-wrap, #pcfRoot, .pcf-hist, .pcf-bill-layout, .pcf-panel {
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    -webkit-font-smoothing: antialiased !important;
+}
+
+/* Ambient blue & green light wash in background like billing.html */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background: radial-gradient(circle at 20% 30%, rgba(0, 113, 227, 0.05) 0, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(52, 199, 89, 0.05) 0, transparent 50%) !important;
+}
+
+/* Apple Frosted Glass panels for all note/form panels */
+.pcf-panel,
+#workPane,
+#viewHistory .pcf-panel,
+.pcf-sheet,
+.patient-file-container,
+#opdFileContainer,
+#patientFileContainer {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.78)) !important;
+    -webkit-backdrop-filter: var(--glass-blur, saturate(180%) blur(24px)) !important;
+    backdrop-filter: var(--glass-blur, saturate(180%) blur(24px)) !important;
+    border: 0.5px solid var(--glass-brd, rgba(255, 255, 255, 0.82)) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.07), 0 1px 4px -1px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+[data-theme="dark"] .pcf-panel,
+[data-theme="dark"] #workPane,
+[data-theme="dark"] #viewHistory .pcf-panel,
+[data-theme="dark"] .pcf-sheet,
+[data-theme="dark"] .patient-file-container,
+[data-theme="dark"] #opdFileContainer,
+[data-theme="dark"] #patientFileContainer {
+    background: var(--glass-bg, rgba(28, 28, 30, 0.78)) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Apple Form Controls (smooth focus rings, rounded inputs, spring hover transitions) */
+.pcf-in,
+.pcf-textarea,
+.pcf-select,
+.pcf-panel input,
+.pcf-panel textarea,
+.pcf-panel select {
+    border-radius: 12px !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.12) !important;
+    background: var(--s1, rgba(255, 255, 255, 0.9)) !important;
+    color: var(--tp, #1d1d1f) !important;
+    font-family: inherit !important;
+    transition: border-color 0.2s, box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.pcf-in:focus,
+.pcf-textarea:focus,
+.pcf-select:focus,
+.pcf-panel input:focus,
+.pcf-panel textarea:focus,
+.pcf-panel select:focus {
+    border-color: #0071e3 !important;
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15) !important;
+}
+
+/* Apple Buttons & Navigation Back Buttons with hover elevation & spring press */
+.pcf-btn,
+.pcf-cmd button,
+#btnNew,
+#btnBack,
+#btnPrint,
+#editBtn,
+#saveBtn {
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s, background 0.2s !important;
+}
+
+.pcf-btn:hover,
+.pcf-cmd button:hover,
+#btnNew:hover,
+#btnBack:hover,
+#btnPrint:hover,
+#editBtn:hover,
+#saveBtn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+.pcf-btn:active,
+.pcf-cmd button:active,
+#btnNew:active,
+#btnBack:active,
+#btnPrint:active,
+#editBtn:active,
+#saveBtn:active {
+    transform: scale(0.95) !important;
+    transition-duration: 0.08s !important;
+}
+
+
+/* ============================================================
+   1. UNIVERSAL SMOOTH SCROLLING TO THE BOTTOM FOR ALL PAGES & DOCUMENTS
+   Overrides height: 100vh and overflow: hidden so every page scrolls smoothly
+   from top to bottom without refusing.
+   ============================================================ */
+html, body, body.pcf, .app {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: auto !important;
+    overflow-x: hidden !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.pcf-wrap,
+#pcfRoot,
+.pcf-bill-layout,
+#viewFile,
+#viewHistory,
+.pcf-grid,
+#workPane,
+.pcf-pane,
+#doc,
+.pcf-hist,
+.content-area,
+.main-panel,
+.patient-file-container,
+#opdFileContainer,
+#patientFileContainer {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+/* ============================================================
+   2. 100% FULL-SCREEN EDGE-TO-EDGE FOR ALL DOCUMENTS, NOTES & FORMS
+   Ensures all documents (.wrap, .container, .page, .grid) and notes extend
+   100% full screen width from left corner to right corner.
+   ============================================================ */
+.wrap,
+.container,
+.pcf-wrap,
+#pcfRoot,
+.pcf-bill-layout,
+.grid,
+.wtbl,
+.patient-file-container,
+#opdFileContainer,
+#patientFileContainer,
+#app,
+.content-area,
+.main-panel,
+.modal-content,
+.sheet-content,
+iframe#opdIframe,
+iframe#prescriptionFrame,
+iframe#labResultsIframe,
+iframe#imagingResultsIframe,
+iframe#labRequestIframe {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+
+/* ============================================================
+   SOFT GRAY-TINTED WRITING AREAS (LIKE APPOINTMENT SCREENSHOT)
+   Makes input boxes and textareas stand out with a soft grey-blue tint
+   that turns crisp white with an Apple blue glow on focus.
+   ============================================================ */
+.pcf-in,
+.pcf-textarea,
+.pcf-select,
+.pcf-panel input,
+.pcf-panel textarea,
+.pcf-panel select,
+.ta-auto,
+.fi,
+.ta,
+.oc-input,
+textarea,
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+    background: #ebeef3 !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.12) !important;
+    border-radius: 12px !important;
+    padding: 10px 14px !important;
+    color: #1d1d1f !important;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.pcf-in:focus,
+.pcf-textarea:focus,
+.pcf-select:focus,
+.pcf-panel input:focus,
+.pcf-panel textarea:focus,
+.pcf-panel select:focus,
+.ta-auto:focus,
+.fi:focus,
+.ta:focus,
+.oc-input:focus,
+textarea:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus {
+    background: #ffffff !important;
+    border-color: #0071e3 !important;
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15) !important;
+}
+
+[data-theme="dark"] .pcf-in,
+[data-theme="dark"] .pcf-textarea,
+[data-theme="dark"] .ta-auto,
+[data-theme="dark"] .fi,
+[data-theme="dark"] .ta,
+[data-theme="dark"] textarea,
+[data-theme="dark"] input[type="text"] {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f3f4f6 !important;
+}
+
+
+/* ============================================================
+   APPLE PLATINUM SYSTEM BACKGROUND (#f5f5f7) & FROSTED GLASS PANELS
+   Replaces harsh plain white with macOS/iOS Platinum background
+   and frosted glass panels.
+   ============================================================ */
+body.pcf, html, body {
+    background: var(--bg, #f5f5f7) !important;
+}
+
+[data-theme="dark"] body.pcf, [data-theme="dark"] html, [data-theme="dark"] body {
+    background: #0d1117 !important;
+}
+
+.pcf-panel,
+#workPane,
+#viewHistory .pcf-panel,
+.pcf-sheet,
+.patient-file-container,
+#opdFileContainer,
+#patientFileContainer {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(242, 246, 252, 0.80)) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 36px -4px rgba(0, 0, 0, 0.07), 0 2px 6px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="dark"] .pcf-panel,
+[data-theme="dark"] #workPane,
+[data-theme="dark"] #viewHistory .pcf-panel,
+[data-theme="dark"] .pcf-sheet,
+[data-theme="dark"] .patient-file-container,
+[data-theme="dark"] #opdFileContainer,
+[data-theme="dark"] #patientFileContainer {
+    background: linear-gradient(135deg, rgba(28, 28, 30, 0.84), rgba(22, 24, 28, 0.80)) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 14px 44px -4px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ============================================================
+   HIGHLY APPLE-FEATURED CLINICAL REPORT PREVIEW (#doc / .pcf-doc)
+   Transforms post-save preview from plain white to an Apple Report Card
+   ============================================================ */
+#doc,
+.pcf-doc,
+.pcf-doc-preview {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(242, 247, 255, 0.88)) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+    backdrop-filter: saturate(180%) blur(24px) !important;
+    border: 0.5px solid rgba(0, 113, 227, 0.18) !important;
+    border-top: 4px solid #0071e3 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 14px 44px -8px rgba(0, 0, 0, 0.09), 0 2px 8px -2px rgba(0, 113, 227, 0.06) !important;
+    padding: 28px 32px !important;
+    color: #1d1d1f !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+#doc .sec,
+.pcf-doc .sec,
+.pcf-doc-section {
+    background: rgba(0, 113, 227, 0.04) !important;
+    border: 0.5px solid rgba(0, 113, 227, 0.1) !important;
+    border-radius: 14px !important;
+    padding: 14px 18px !important;
+    margin-bottom: 14px !important;
+    transition: background 0.2s !important;
+}
+
+#doc .sec:hover,
+.pcf-doc .sec:hover {
+    background: rgba(0, 113, 227, 0.07) !important;
+}
+
+#doc h3,
+.pcf-doc h3,
+#doc .sec-title,
+.pcf-doc .sec-title {
+    color: #0071e3 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+[data-theme="dark"] #doc,
+[data-theme="dark"] .pcf-doc {
+    background: linear-gradient(135deg, rgba(32, 34, 40, 0.94), rgba(24, 26, 32, 0.90)) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    border-top-color: #0b57d0 !important;
+    color: #f3f4f6 !important;
+    box-shadow: 0 16px 48px -8px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] #doc .sec,
+[data-theme="dark"] .pcf-doc .sec {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] #doc h3,
+[data-theme="dark"] .pcf-doc h3 {
+    color: #60a5fa !important;
+}
+
+
+.tisvg{width:1.15em;height:1.15em;vertical-align:-0.22em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+</style>
+
+<!-- Icon font, non-blocking: page paints first, glyphs fill in after -->
+<link rel="preload" as="style"
+      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"
+      onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
+
+<!-- Theme applied before first paint so dark mode never flashes white -->
+<script>
+(function(){try{var t=localStorage.getItem('pclinic-theme')||'light';
+document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
+
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: var(--f);
+        background: var(--bg);
+        color: var(--tp);
+        font-size: 13px;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Faint hospital texture — deliberately subtle. This page is a
+       working tool; a legible card matters more than a pretty backdrop. */
+    body::before {
+        content: '';
+        position: fixed; inset: 0; z-index: -2; pointer-events: none;
+        background:
+            radial-gradient(circle at 20% 30%, rgba(0,113,227,0.05) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(52,199,89,0.05) 0%, transparent 50%);
+    }
+    body::after {
+        content: '';
+        position: fixed; inset: 0; z-index: -1; pointer-events: none;
+        background-image: url('hub-texture.jpg');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.42;
+        filter: saturate(0.92);
+    }
+    /* Soften it behind the cards so text keeps its contrast, while the
+       edges of the page still show the hospital clearly. */
+    body::after {
+        -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 42%,
+                            rgba(0,0,0,0.34) 0%, rgba(0,0,0,0.72) 55%, #000 100%);
+        mask-image: radial-gradient(ellipse 78% 62% at 50% 42%,
+                            rgba(0,0,0,0.34) 0%, rgba(0,0,0,0.72) 55%, #000 100%);
+    }
+    [data-theme="dark"] body::after { opacity: 0.20; }
+
+    /* ── SEARCH ── */
+    .hub-search {
+        position: relative;
+        flex: 1 1 190px;
+        max-width: 260px;
+        min-width: 130px;
+    }
+    .hub-search input {
+        width: 100%;
+        height: 34px;
+        padding: 0 12px 0 32px;
+        border-radius: 10px;
+        border: 0.5px solid var(--glass-brd);
+        background: var(--glass-bg);
+        -webkit-backdrop-filter: var(--glass-blur);
+        backdrop-filter: var(--glass-blur);
+        box-shadow: var(--glass-inner);
+        color: var(--tp);
+        font-family: var(--f);
+        font-size: 12.5px;
+        outline: none;
+        transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    }
+    .hub-search input:focus { border-color: var(--ac); background: var(--glass-bg-hover);
+        box-shadow: 0 0 0 4px var(--acl), var(--sh-1); }
+    .hub-search input::placeholder { color: var(--tm); }
+    .hub-search i {
+        position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+        color: var(--tm); font-size: 14px; pointer-events: none;
+    }
+
+    /* ── LAYOUT ── */
+    .wrap { padding: 0 20px 28px; max-width: 1600px; margin: 0 auto; }
+
+    /* ── STATS ── */
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .stat-card {
+        position: relative;
+        display: flex; align-items: center; gap: 13px;
+        padding: 15px 17px;
+        background: var(--glass-bg);
+        -webkit-backdrop-filter: var(--glass-blur);
+        backdrop-filter: var(--glass-blur);
+        border: 0.5px solid var(--glass-brd);
+        border-radius: var(--r2);
+        box-shadow: var(--sh-2), var(--glass-spec), var(--glass-inner);
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
+        transition: transform 0.4s var(--spring), box-shadow 0.38s var(--ease),
+                    background 0.3s var(--ease);
+    }
+    .stat-card:hover {
+        background: var(--glass-bg-hover);
+        box-shadow: var(--sh-4), var(--glass-spec);
+    }
+    .stat-card .ic {
+        width: 40px; height: 40px; border-radius: 11px;
+        display: grid; place-items: center; font-size: 19px; flex-shrink: 0;
+        transition: transform 0.28s var(--spring);
+    }
+    .stat-card:hover .ic { transform: scale(1.08) rotate(-5deg); }
+    .stat-card .txt { display: flex; flex-direction: column; min-width: 0; }
+    .stat-card .num { display: block; font-size: 22px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.15; }
+    .stat-card .lab { display: block; font-size: 11.5px; color: var(--tm); margin-top: 2px; }
+
+    .ic.blue   { background: var(--acb);     color: var(--ac); }
+    .ic.green  { background: var(--greenb);  color: var(--greend); }
+    .ic.orange { background: var(--orangeb); color: var(--oranged); }
+    .ic.purple { background: var(--purpleb); color: var(--purpled); }
+    .ic.red    { background: var(--redb);    color: var(--redd); }
+    .ic.teal   { background: #e0f7f5;        color: #0f766e; }
+    .ic.pink   { background: #fde8f3;        color: #9d174d; }
+    [data-theme="dark"] .ic.teal { background: rgba(20,184,166,0.16); color: #5eead4; }
+    [data-theme="dark"] .ic.pink { background: rgba(236,72,153,0.16); color: #f9a8d4; }
+
+    /* ── SECTION LABEL ── */
+    .sec {
+        display: flex; align-items: center; gap: 9px;
+        font-size: 10.5px; font-weight: 700; letter-spacing: 0.09em;
+        text-transform: uppercase; color: var(--tm);
+        margin: 20px 0 11px;
+    }
+    .sec::after { content: ''; flex: 1; height: 0.5px; background: var(--bd); }
+
+    /* ── MODULE CARDS ── */
+    .modules {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+        gap: 13px;
+    }
+    .module-card {
+        position: relative;
+        display: block;
+        padding: 17px 17px 15px;
+        background: var(--glass-bg);
+        -webkit-backdrop-filter: var(--glass-blur);
+        backdrop-filter: var(--glass-blur);
+        border: 0.5px solid var(--glass-brd);
+        border-radius: var(--r2);
+        box-shadow: var(--sh-2), var(--glass-spec), var(--glass-inner);
+        text-decoration: none;
+        color: inherit;
+        overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
+        transform-style: preserve-3d;
+        transition: transform 0.42s var(--spring),
+                    box-shadow 0.4s var(--ease),
+                    background 0.3s var(--ease),
+                    border-color 0.3s var(--ease);
+    }
+    .module-card::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(135deg, rgba(0,113,227,0.05), transparent 62%);
+        opacity: 0;
+        transition: opacity 0.3s var(--ease);
+        pointer-events: none;
+    }
+    .module-card:hover {
+        background: var(--glass-bg-hover);
+        box-shadow: var(--sh-4), var(--glass-spec);
+        border-color: rgba(255,255,255,0.85);
+    }
+    .module-card:hover::before { opacity: 1; }
+    [data-theme="dark"] .module-card:hover { border-color: rgba(255,255,255,0.2); }
+
+    .card-icon {
+        width: 38px; height: 38px; border-radius: 11px;
+        display: grid; place-items: center; font-size: 18px;
+        margin-bottom: 11px;
+        transition: transform 0.3s var(--spring);
+    }
+    .module-card:hover .card-icon { transform: scale(1.1) rotate(-6deg); }
+
+    .card-title { font-size: 14px; font-weight: 700; letter-spacing: -0.25px; margin-bottom: 3px; }
+    .card-desc  { font-size: 11.5px; color: var(--tm); line-height: 1.45; margin-bottom: 9px; min-height: 32px; }
+    .card-badge {
+        display: inline-block;
+        font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
+        padding: 3px 9px; border-radius: 30px;
+        background: var(--s3); color: var(--ts);
+        border: 0.5px solid var(--bd);
+    }
+    .card-arrow {
+        position: absolute; bottom: 15px; right: 15px;
+        color: var(--tm); font-size: 15px; line-height: 1;
+        opacity: 0.35; transform: translateX(-4px);
+        transition: opacity 0.28s var(--ease), transform 0.28s var(--spring), color 0.28s var(--ease);
+    }
+    .module-card:hover .card-arrow { opacity: 1; transform: translateX(0); color: var(--ac); }
+
+    .no-results {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--tm);
+        font-size: 13px;
+    }
+
+    @media (max-width: 820px) {
+        .wrap { padding: 0 14px 22px; }
+        .modules { grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 10px; }
+        .card-desc { display: none; }
+        .card-icon { width: 34px; height: 34px; font-size: 16px; margin-bottom: 9px; }
+        .stats { grid-template-columns: repeat(2, 1fr); gap: 9px; }
+        .stat-card { padding: 12px 13px; gap: 10px; }
+        .stat-card .num { font-size: 18px; }
+        .hub-search { max-width: none; order: 5; flex-basis: 100%; }
+    }
+</style>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   macOS 27 "GOLDEN GATE" FEATURE LAYER — additive only.
+   The hub layout, cards, header and logic below are untouched.
+   1) Liquid Glass material upgrade through PClinic's own tokens
+      (one slider variable, --gg-a, drives every glass surface).
+   2) Golden Gate features: Siri AI assistant, Spotlight
+      "Search or Ask", Visual Intelligence, context-aware quick
+      actions, pull-to-refresh, natural-language reminders.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+    --gg-a: 0.48;   /* Liquid Glass density — Control-Centre slider */
+    --gg-blur: saturate(200%) blur(calc(12px + var(--gg-a) * 34));
+    --glass-bg:       rgba(255,255,255, var(--gg-a));
+    --glass-bg-hover: rgba(255,255,255, calc(var(--gg-a) + 0.17));
+    --glass-brd:      rgba(255,255,255, calc(var(--gg-a) + 0.12));
+    --glass-blur:     var(--gg-blur);
+    --glass-spec:     inset 0 1px 0 rgba(255,255,255,0.90),
+                      inset 0 0 0 0.5px rgba(255,255,255,0.35);
+    --r2: 14px;     /* Golden Gate tightened corner radius */
+}
+[data-theme="dark"] {
+    --glass-bg:       rgba(40,40,45, var(--gg-a));
+    --glass-bg-hover: rgba(56,56,62, calc(var(--gg-a) + 0.17));
+    --glass-brd:      rgba(255,255,255, calc(var(--gg-a) * 0.28));
+    --glass-spec:     inset 0 1px 0 rgba(255,255,255,0.16),
+                      inset 0 0 0 0.5px rgba(255,255,255,0.08);
+}
+
+/* Sunset ambience behind the existing texture, so the glass has
+   Golden Gate colour to refract. Layout is not affected. */
+.gg-ambient {
+    position: fixed; inset: 0; z-index: -3; pointer-events: none;
+    background:
+        radial-gradient(60% 45% at 82% -5%,  rgba(255,158,92,0.22), transparent 60%),
+        radial-gradient(50% 40% at 10% 15%,  rgba(147,78,255,0.17), transparent 60%),
+        radial-gradient(70% 50% at 50% 110%, rgba(23,190,187,0.16), transparent 60%);
+}
+[data-theme="dark"] .gg-ambient { opacity: 0.75; }
+
+/* Header feature buttons (sit inside the existing header line) */
+.gg-hbtn { margin-left: 6px; vertical-align: middle; }
+.gg-siri-orb {
+    width: 15px; height: 15px; border-radius: 50%; display: inline-block;
+    background: conic-gradient(from 0deg, #ff375f, #ff9f0a, #30d158, #0a84ff, #bf5af2, #ff375f);
+    animation: gg-orb 7s linear infinite;
+    box-shadow: 0 0 9px rgba(122,140,255,.85), inset 0 0 4px rgba(255,255,255,.7);
+}
+.gg-siri-orb.big { width: 24px; height: 24px; }
+.gg-siri-orb.think { animation: gg-orb 1.1s linear infinite, gg-think .9s ease-in-out infinite; }
+@keyframes gg-orb { to { transform: rotate(360deg); } }
+@keyframes gg-think { 50% { box-shadow: 0 0 18px rgba(122,140,255,1), inset 0 0 6px rgba(255,255,255,.9); } }
+
+/* Control Centre popover (appearance + Liquid Glass slider) */
+.gg-cc {
+    position: fixed; top: 52px; right: 12px; z-index: 70; width: 250px;
+    border-radius: 16px; padding: 13px; display: grid; gap: 11px;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur);
+    box-shadow: var(--sh-4), var(--glass-spec);
+}
+.gg-cc[hidden] { display: none; }
+.gg-cc .cc-title { font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--tm); margin-bottom: 6px; }
+.gg-cc .cc-btn {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    padding: 9px 10px; border-radius: 11px; border: 0.5px solid var(--glass-brd);
+    background: var(--glass-bg-hover); color: var(--tp);
+    font: 600 12px var(--f); cursor: pointer;
+}
+.gg-cc .cc-btn .dot { width: 15px; height: 15px; border-radius: 50%;
+    background: linear-gradient(200deg,#ffe08a,#ff9f0a); box-shadow: inset 0 1px 0 rgba(255,255,255,.5); }
+[data-theme="dark"] .gg-cc .cc-btn .dot { background: linear-gradient(200deg,#5e5ce7,#3634a3); }
+.gg-cc input[type="range"] { width: 100%; height: 22px; -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
+.gg-cc input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, rgba(255,255,255,.25), rgba(255,255,255,.8)); border: 0.5px solid var(--glass-brd); }
+.gg-cc input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px;
+    border-radius: 50%; background: #fff; margin-top: -6.5px; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+.gg-cc input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(255,255,255,.45); }
+.gg-cc input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 50%; background: #fff; }
+.gg-cc .cc-slider label { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--tm); margin-top: 5px; }
+
+/* Spotlight — Search or Ask */
+.gg-spot {
+    position: fixed; inset: 0; z-index: 80; padding: 15vh 16px 0;
+    background: rgba(10,6,26,.26);
+    -webkit-backdrop-filter: blur(10px) saturate(140%); backdrop-filter: blur(10px) saturate(140%);
+    display: flex; justify-content: center; align-items: flex-start;
+}
+.gg-spot[hidden] { display: none; }
+.gg-spot-panel {
+    width: min(640px, 94vw); border-radius: 15px; overflow: hidden;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur);
+    box-shadow: var(--sh-4), var(--glass-spec);
+    animation: gg-pop .22s cubic-bezier(.34,1.3,.4,1);
+}
+@keyframes gg-pop { from { transform: scale(.94); opacity: 0; } }
+.gg-spot-field { display: flex; align-items: center; gap: 11px; padding: 13px 17px; }
+.gg-spot-field i { font-size: 19px; color: var(--tm); }
+.gg-spot-field input { flex: 1; border: 0; outline: 0; background: transparent;
+    font: 400 21px/1.2 var(--f); letter-spacing: -.3px; color: var(--tp); }
+.gg-spot-field input::placeholder { color: var(--tm); }
+.gg-spot-list { border-top: 0.5px solid var(--bd); max-height: 320px; overflow: auto; padding: 6px; }
+.gg-spot-list a { display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+    border-radius: 9px; color: var(--tp); text-decoration: none; font-size: 13px; font-weight: 500; }
+.gg-spot-list a:hover { background: var(--glass-bg-hover); }
+.gg-spot-list .mini { width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 13px; }
+.gg-spot-list .where { margin-left: auto; color: var(--tm); font-size: 11px; }
+.gg-spot-hint { padding: 7px 16px 9px; border-top: 0.5px solid var(--bd); color: var(--tm); font-size: 10.5px; }
+.ask-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px;
+    cursor: pointer; border-bottom: 0.5px solid var(--bd); margin-bottom: 5px; }
+.ask-row:hover { background: var(--glass-bg-hover); }
+.ask-row .ans { font-size: 12.5px; font-weight: 600; letter-spacing: -.1px; }
+.ask-row .lab { margin-left: auto; color: var(--tm); font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+
+/* Siri AI assistant window */
+.gg-assist {
+    position: fixed; right: 14px; bottom: 16px; z-index: 75; width: 332px;
+    border-radius: 18px; overflow: hidden; display: flex; flex-direction: column;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur);
+    box-shadow: var(--sh-4), var(--glass-spec);
+    animation: gg-pop .24s cubic-bezier(.34,1.3,.4,1);
+}
+.gg-assist[hidden] { display: none; }
+.aa-head { display: flex; align-items: center; gap: 9px; padding: 11px 13px; border-bottom: 0.5px solid var(--bd); }
+.aa-title { font-size: 12.5px; font-weight: 700; letter-spacing: -.2px; flex: 1; }
+.aa-x { border: 0; background: var(--glass-bg-hover); color: var(--tp); width: 20px; height: 20px;
+    border-radius: 50%; cursor: pointer; font: 700 12px/1 var(--f); }
+.aa-body { padding: 12px; display: flex; flex-direction: column; gap: 8px;
+    max-height: 288px; min-height: 90px; overflow-y: auto; }
+.msg { max-width: 86%; padding: 8px 11px; border-radius: 14px; font-size: 12.5px; line-height: 1.45; }
+.msg.ai { align-self: flex-start; background: var(--glass-bg-hover);
+    border: 0.5px solid var(--glass-brd); border-bottom-left-radius: 4px; }
+.msg.me { align-self: flex-end; color: #fff; border-bottom-right-radius: 4px;
+    background: linear-gradient(200deg,#0a84ff,#0055d6); box-shadow: inset 0 1px 0 rgba(255,255,255,.3); }
+.aa-in { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-top: 0.5px solid var(--bd); }
+.aa-in input { flex: 1; border: 0; outline: 0; background: transparent; font: 400 12.5px var(--f); color: var(--tp); }
+.aa-in input::placeholder { color: var(--tm); }
+.aa-in button { border: 0; background: transparent; cursor: pointer; display: grid; place-items: center; padding: 3px; }
+
+/* Visual Intelligence */
+body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
+.vi-hl { outline: 2.5px solid rgba(10,132,255,.95); outline-offset: 3px; border-radius: var(--r2); }
+.gg-vi-banner { position: fixed; top: 52px; left: 50%; transform: translateX(-50%); z-index: 90;
+    padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--tp);
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur); box-shadow: var(--sh-3); }
+.gg-vi-banner[hidden] { display: none; }
+.gg-vip { position: fixed; z-index: 92; width: 264px; border-radius: 15px; padding: 13px; display: grid; gap: 8px;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur); box-shadow: var(--sh-4), var(--glass-spec); }
+.gg-vip[hidden] { display: none; }
+.gg-vip .vp-t { font-size: 13px; font-weight: 700; }
+.gg-vip .vp-d { font-size: 11.5px; color: var(--tm); line-height: 1.5; }
+.gg-vip .vp-row { display: flex; gap: 7px; margin-top: 2px; }
+.gg-vip .vp-row button { flex: 1; padding: 7px 8px; border-radius: 9px; cursor: pointer;
+    border: 0.5px solid var(--glass-brd); background: var(--glass-bg-hover); color: var(--tp); font: 600 11.5px var(--f); }
+
+/* Context-aware quick actions */
+.gg-ctx { position: fixed; z-index: 96; min-width: 196px; border-radius: 12px; padding: 5px;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur); box-shadow: var(--sh-4), var(--glass-spec); }
+.gg-ctx[hidden] { display: none; }
+.gg-ctx button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 6px 9px;
+    border: 0; border-radius: 8px; background: transparent; color: var(--tp);
+    font: 500 12.5px var(--f); cursor: pointer; text-align: left; }
+.gg-ctx button:hover { background: var(--glass-bg-hover); }
+.gg-ctx .ctx-sep { height: 0.5px; background: var(--bd); margin: 4px 8px; }
+
+/* Pull to refresh */
+.gg-ptr { position: fixed; top: 46px; left: 50%; transform: translateX(-50%); z-index: 65;
+    height: 0; overflow: hidden; display: flex; align-items: center; gap: 8px;
+    padding: 0 14px; border-radius: 0 0 12px 12px; color: var(--tm); font-size: 11.5px;
+    background: var(--glass-bg); -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur);
+    transition: height .22s ease; }
+.gg-ptr.on { height: 34px; }
+.gg-ptr .spin { width: 15px; height: 15px; border-radius: 50%;
+    border: 2px solid rgba(130,130,140,.35); border-top-color: var(--ac); animation: gg-spin .8s linear infinite; }
+@keyframes gg-spin { to { transform: rotate(360deg); } }
+
+/* Natural-language reminders ("Up next") */
+.gg-remind { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 0; }
+.gg-remind[hidden] { display: none; }
+.rem-chip { display: flex; align-items: center; gap: 7px; padding: 4px 6px 4px 11px; border-radius: 20px;
+    background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--gg-blur); backdrop-filter: var(--gg-blur);
+    box-shadow: var(--sh-1), var(--glass-spec); font-size: 11.5px; color: var(--tp); }
+.rem-chip b { font-weight: 600; }
+.rem-chip .rem-when { color: var(--tm); }
+.rem-chip .rem-x { cursor: pointer; opacity: .55; font-weight: 700; padding: 0 5px; border-radius: 50%; }
+.rem-chip .rem-x:hover { opacity: 1; background: var(--glass-bg-hover); }
+
+/* ── Smart polish ── */
+.gg-topline {
+    position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 66;
+    pointer-events: none; opacity: .9;
+    background: linear-gradient(90deg, #ff9f0a, #ff375f 35%, #bf5af2 65%, #0a84ff);
+}
+.pc-greet .hl, #greetingText .hl {
+    background: linear-gradient(92deg, #ff9f0a, #ff375f 55%, #bf5af2);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-weight: 800;
+}
+.sec::before {
+    content: ''; width: 8px; height: 8px; border-radius: 3px;
+    background: linear-gradient(135deg, #ff9f0a, #ff375f);
+    box-shadow: 0 0 9px rgba(255, 55, 95, .55);
+}
+.stat-card .num { font-variant-numeric: tabular-nums; }
+.gg-hbtn { transition: transform .25s cubic-bezier(.34,1.3,.4,1), box-shadow .25s ease; }
+.gg-hbtn:hover { transform: translateY(-1.5px); box-shadow: var(--sh-3), var(--glass-spec); }
+.module-card:hover .card-icon {
+    box-shadow: 0 10px 26px rgba(10,5,30,.22), var(--glass-spec),
+                0 0 0 0.5px rgba(255,255,255,.55), 0 0 20px rgba(0,113,227,.28);
+}
+.stat-card:hover .ic { transform: scale(1.07) rotate(-4deg); }
+.stat-card .ic { transition: transform .3s cubic-bezier(.34,1.3,.4,1); }
+</style>
+    </head>
+<body>
+
+<!-- Golden Gate ambience: sunset colour for the glass to refract -->
+<div class="gg-ambient" aria-hidden="true"></div>
+<div class="gg-topline" aria-hidden="true"></div>
+
+<!-- ═══ TOPBAR ═══ -->
+<div class="pc-topbar" style="display: none !important;">
+    <div class="pc-brand">
+        <img class="pc-logo" src="logo-wide.png" alt="PClinic" width="118" height="30">
+        <span class="pc-appsub">Hub</span>
+    </div>
+
+    <div class="pc-tr">
+        <div class="hub-search">
+            <svg class="ti ti-search tisvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"/><path d="M14.8 14.8 20 20"/></svg>
+            <input type="text" id="moduleSearch" placeholder="Search modules…"
+                   aria-label="Search modules" autocomplete="off">
+        </div>
+        <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode (Ctrl+D)" aria-label="Toggle dark mode">
+            <svg class="ti ti-moon tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+        </button>
+        <button class="pc-iconbtn" onclick="pcToast('🔔 3 new notifications','info')" title="Notifications" aria-label="Notifications">
+            <svg class="ti ti-bell tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2.5h-15Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="pc-dot"></span>
+        </button>
+        <div class="pc-chip" onclick="pcToast('👤 ' + (window.currentStaff ? window.currentStaff.name : 'Staff'),'info')">
+            <span class="pc-avatar" id="userAvatar">··</span>
+            <span id="userName">Loading…</span>
+        </div>
+        <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out (Ctrl+L)" aria-label="Sign out">
+            <svg class="ti ti-logout tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8 6 12l4 4M6 12h10"/></svg>
+        </button>
+    </div>
+</div>
+
+<!-- ═══ ONE-LINE HEADER ═══ -->
+<div class="pc-headerbar">
+    <nav class="pc-crumb" aria-label="Breadcrumb">
+        <a href="hub.html">🏥 Hub</a>
+        <span class="sep">›</span>
+        <span>Dashboard</span>
+    </nav>
+    <span class="pc-divider"></span>
+    <span class="pc-greet" id="greetingText">Good morning, <span class="hl">…</span></span>
+    <span class="pc-date" id="todayDate"></span>
+    <span class="pc-spacer"></span>
+    <span class="pc-quickstat"><svg class="ti ti-users tisvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.4 2.8-5 5.5-5s4.9 1.6 5.5 5"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.5 14.2c2.4.2 4.2 1.7 4.8 4.3"/></svg> <span id="qsPatients">0</span> patients today</span>
+
+    <!-- ═══ GOLDEN GATE FEATURE CONTROLS (added to the existing header line) ═══ -->
+    <button class="pc-iconbtn gg-hbtn" id="ggSpotBtn" title="Spotlight — Search or Ask (Ctrl+F)" aria-label="Spotlight search">
+        <svg class="ti ti-search tisvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"/><path d="M14.8 14.8 20 20"/></svg>
+    </button>
+    <button class="pc-iconbtn gg-hbtn" id="ggVIBtn" title="Visual Intelligence (Ctrl+Shift+V)" aria-label="Visual Intelligence">
+        <svg class="ti ti-focus-2 tisvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v3.5M12 18v3.5M2.5 12H6M18 12h3.5"/></svg>
+    </button>
+    <button class="pc-iconbtn gg-hbtn" id="ggSiri" title="PClinic Assistant — Siri AI" aria-label="PClinic Assistant">
+        <span class="gg-siri-orb"></span>
+    </button>
+    <button class="pc-iconbtn gg-hbtn" id="ggCCBtn" title="Control Centre — Liquid Glass" aria-label="Control Centre">
+        <svg class="ti ti-adjustments-horizontal tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h8M18 8h2M4 16h2M12 16h8"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></svg>
+    </button>
+</div>
+
+<div class="wrap">
+
+    <!-- Natural-language reminders created via the assistant -->
+    <div class="gg-remind" id="ggRemindRow" hidden></div>
+
+    <!-- ═══ STATS ═══ -->
+    <div class="stats pc-stagger" id="statsGrid">
+        <a class="stat-card pc-tilt" href="reception-dashboard.html">
+            <span class="ic blue"><svg class="ti ti-users tisvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.4 2.8-5 5.5-5s4.9 1.6 5.5 5"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.5 14.2c2.4.2 4.2 1.7 4.8 4.3"/></svg></span>
+            <span class="txt"><span class="num" id="totalPatients">0</span><span class="lab">Total Patients</span></span>
+        </a>
+        <a class="stat-card pc-tilt" href="doctor-dashboard.html">
+            <span class="ic green"><svg class="ti ti-stethoscope tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v5a4 4 0 0 0 8 0V4"/><path d="M10 13v3a4.5 4.5 0 0 0 9 0v-1"/><circle cx="19" cy="13" r="2"/></svg></span>
+            <span class="txt"><span class="num" id="totalDoctors">0</span><span class="lab">Doctors</span></span>
+        </a>
+        <a class="stat-card pc-tilt" href="appointments.html">
+            <span class="ic orange"><svg class="ti ti-calendar tisvg" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="15" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10.5h16"/></svg></span>
+            <span class="txt"><span class="num" id="todayAppointments">0</span><span class="lab">Today's Appointments</span></span>
+        </a>
+        <a class="stat-card pc-tilt" href="queue.html">
+            <span class="ic purple"><svg class="ti ti-list-numbers tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01"/></svg></span>
+            <span class="txt"><span class="num" id="queueCount">0</span><span class="lab">In Queue</span></span>
+        </a>
+    </div>
+
+    <div class="sec">Departments</div>
+
+    <!-- ═══ MODULES ═══ -->
+    <div class="modules pc-stagger" id="moduleGrid">
+        <a href="reception-dashboard.html" class="module-card pc-tilt" data-role="reception">
+            <div class="card-icon ic blue"><svg class="ti ti-file-invoice tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 20V5A1.5 1.5 0 0 1 7.5 3.5Z"/><path d="M14 3.5V8h4"/><path d="M9.5 12h6M9.5 15.5h6"/></svg></div>
+            <div class="card-title">Reception</div>
+            <div class="card-desc">Patient registration, appointments, queue</div>
+            <span class="card-badge">Front Desk</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="doctor-dashboard.html" class="module-card pc-tilt" data-role="doctor">
+            <div class="card-icon ic green"><svg class="ti ti-stethoscope tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v5a4 4 0 0 0 8 0V4"/><path d="M10 13v3a4.5 4.5 0 0 0 9 0v-1"/><circle cx="19" cy="13" r="2"/></svg></div>
+            <div class="card-title">Doctor Portal</div>
+            <div class="card-desc">Clinical notes, diagnosis, patient care</div>
+            <span class="card-badge">Clinical</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="nurse-dashboard.html" class="module-card pc-tilt" data-role="nurse">
+            <div class="card-icon ic teal"><svg class="ti ti-heart-rate-monitor tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2.5-5 4 10L16 12h5"/></svg></div>
+            <div class="card-title">Nurse Portal</div>
+            <div class="card-desc">Vitals, patient care, triage</div>
+            <span class="card-badge">Clinical</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="lab-dashboard.html" class="module-card pc-tilt" data-role="lab">
+            <div class="card-icon ic purple"><svg class="ti ti-test-pipe tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 3h5"/><path d="M10 3v11a2.5 2.5 0 0 0 5 0V3"/><path d="M10 11.5h5"/></svg></div>
+            <div class="card-title">Laboratory</div>
+            <div class="card-desc">Lab requests, results, diagnostics</div>
+            <span class="card-badge">Diagnostic</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="pharmacy-dashboard.html" class="module-card pc-tilt" data-role="pharmacy">
+            <div class="card-icon ic pink"><svg class="ti ti-pill tisvg" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="9" width="15" height="7" rx="3.5" transform="rotate(-45 12 12.5)"/><path d="M9.2 9.7l5.6 5.6"/></svg></div>
+            <div class="card-title">Pharmacy</div>
+            <div class="card-desc">Prescriptions, drug inventory</div>
+            <span class="card-badge">Pharmacy</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="radio-dashboard.html" class="module-card pc-tilt" data-role="radio">
+            <div class="card-icon ic orange"><svg class="ti ti-radioactive tisvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><path d="M12 10.4V5.2M10.6 12.8l-4.5 2.6M13.4 12.8l4.5 2.6"/><circle cx="12" cy="12" r="8"/></svg></div>
+            <div class="card-title">Radiology</div>
+            <div class="card-desc">Imaging, X-rays, scans</div>
+            <span class="card-badge">Diagnostic</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="theater-dashboard.html" class="module-card pc-tilt" data-role="theater">
+            <div class="card-icon ic red"><svg class="ti ti-scissors tisvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.5" cy="7" r="2.2"/><circle cx="6.5" cy="17" r="2.2"/><path d="M8.5 8.3 19 17M8.5 15.7 19 7"/></svg></div>
+            <div class="card-title">Theatre</div>
+            <div class="card-desc">Surgery, operating room</div>
+            <span class="card-badge">Surgical</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="physio-dashboard.html" class="module-card pc-tilt" data-role="physio">
+            <div class="card-icon ic green"><svg class="ti ti-accessible tisvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5.5" r="2"/><path d="M12 8v5l-3 6M12 13l3 6M7 10.5l5-1 5 1"/></svg></div>
+            <div class="card-title">Physiotherapy</div>
+            <div class="card-desc">Rehabilitation, therapy</div>
+            <span class="card-badge">Therapy</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="cashier-dashboard.html" class="module-card pc-tilt" data-role="cashier">
+            <div class="card-icon ic teal"><svg class="ti ti-currency-dollar tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16"/><path d="M16 7.5c-.8-1.3-2.2-2-4-2-2.2 0-4 1.2-4 3s1.8 2.6 4 3 4 1.2 4 3-1.8 3-4 3c-1.8 0-3.2-.7-4-2"/></svg></div>
+            <div class="card-title">Cashier</div>
+            <div class="card-desc">Payments, invoices, billing</div>
+            <span class="card-badge">Finance</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="Finance-dashboard.html" class="module-card pc-tilt" data-role="finance">
+            <div class="card-icon ic blue"><svg class="ti ti-credit-card tisvg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6" width="17" height="12" rx="2.5"/><path d="M3.5 10h17"/><path d="M7 14.5h4"/></svg></div>
+            <div class="card-title">Finance</div>
+            <div class="card-desc">Accounting, reports, management</div>
+            <span class="card-badge">Finance</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="hr-dashboard.html" class="module-card pc-tilt" data-role="hr">
+            <div class="card-icon ic purple"><svg class="ti ti-users tisvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.4 2.8-5 5.5-5s4.9 1.6 5.5 5"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.5 14.2c2.4.2 4.2 1.7 4.8 4.3"/></svg></div>
+            <div class="card-title">Human Resources</div>
+            <div class="card-desc">Staff, payroll, attendance</div>
+            <span class="card-badge">Admin</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="inventory-dashboard.html" class="module-card pc-tilt" data-role="inventory">
+            <div class="card-icon ic orange"><svg class="ti ti-package tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 20 8v8l-8 4.5L4 16V8Z"/><path d="M4 8l8 4.5L20 8M12 12.5v8"/></svg></div>
+            <div class="card-title">Inventory</div>
+            <div class="card-desc">Supplies, equipment, stock</div>
+            <span class="card-badge">Admin</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="admin-dashboard.html" class="module-card pc-tilt" data-role="admin">
+            <div class="card-icon ic red"><svg class="ti ti-settings tisvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 4.5v2M12 17.5v2M4.5 12h2M17.5 12h2M6.7 6.7l1.4 1.4M15.9 15.9l1.4 1.4M17.3 6.7l-1.4 1.4M8.1 15.9l-1.4 1.4"/></svg></div>
+            <div class="card-title">Administration</div>
+            <div class="card-desc">System settings, user management</div>
+            <span class="card-badge">Admin</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <a href="beds-dashboard.html" class="module-card pc-tilt" data-role="beds nurse reception">
+            <div class="card-icon ic pink"><svg class="ti ti-bed tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10v8M3.5 15h17v3"/><circle cx="8" cy="12.5" r="1.6"/><path d="M11 14h6.5a3 3 0 0 0 3-1"/></svg></div>
+            <div class="card-title">Bed Management</div>
+            <div class="card-desc">Ward occupancy, allocation</div>
+            <span class="card-badge">Operations</span>
+            <span class="card-arrow"><svg class="ti ti-chevron-right tisvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </a>
+        <div class="no-results" id="noResults" style="display:none;">
+            No modules match that search.
+        </div>
+    </div>
+</div>
+
+<!-- ═══ GOLDEN GATE FEATURE SURFACES ═══ -->
+<div class="gg-ptr" id="ggPtr"><span class="spin"></span>Release to refresh</div>
+
+<div class="gg-cc" id="ggCC" hidden>
+    <div>
+        <div class="cc-title">Appearance</div>
+        <button class="cc-btn" id="ggThemeBtn"><span class="dot"></span><span id="ggThemeLabel">Toggle Light / Dark</span></button>
+    </div>
+    <div class="cc-slider">
+        <div class="cc-title">Liquid Glass</div>
+        <input type="range" id="ggGlass" min="30" max="88" value="55" aria-label="Liquid glass opacity">
+        <label><span>Ultra Clear</span><span>Tinted</span></label>
+    </div>
+</div>
+
+<div class="gg-spot" id="ggSpot" hidden>
+    <div class="gg-spot-panel">
+        <div class="gg-spot-field">
+            <svg class="ti ti-search tisvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"/><path d="M14.8 14.8 20 20"/></svg>
+            <input type="text" id="ggSpotIn" placeholder="Spotlight — search modules or ask a question"
+                   aria-label="Spotlight search or ask" autocomplete="off">
+        </div>
+        <div class="gg-spot-list" id="ggSpotList"></div>
+        <div class="gg-spot-hint">Questions are handed to PClinic AI · Esc to close · the window behind filters live</div>
+    </div>
+</div>
+
+<div class="gg-assist" id="ggAssist" hidden>
+    <div class="aa-head">
+        <span class="gg-siri-orb big" id="ggAssistOrb"></span>
+        <span class="aa-title">PClinic Assistant</span>
+        <button class="aa-x" id="ggAssistX" aria-label="Close">×</button>
+    </div>
+    <div class="aa-body" id="ggAssistBody"></div>
+    <div class="aa-in">
+        <input id="ggAssistIn" placeholder="Ask or command…" autocomplete="off" aria-label="Ask the assistant">
+        <button id="ggAssistSend" aria-label="Send"><span class="gg-siri-orb"></span></button>
+    </div>
+</div>
+
+<div class="gg-vi-banner" id="ggViBanner" hidden>Visual Intelligence — click any card or stat to understand it</div>
+<div class="gg-vip" id="ggViPop" hidden></div>
+<div class="gg-ctx" id="ggCtx" hidden></div>
+
+<div class="pc-toasts" id="toastContainer"></div>
+
+<script>
+window.__GG_PREVIEW__ = true;
+window.pcToggleTheme = function () {
+    var t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+};
+window.pcToast = function (m) { console.log('[preview toast]', m); };
+window.pclinicLogout = function () {};
+window.pcRemember = function () {};
+window.requireAuth = function () { return Promise.resolve({ role: 'admin', name: 'Dr. Uwase', staffId: '41054' }); };
+window.getPatients = function () {
+    var today = new Date().toISOString().slice(0, 10); var out = [];
+    for (var i = 1; i <= 46; i++) out.push({ id: 'P' + i,
+        registered: (i <= 7) ? today : '2026-09-1' + (i % 9),
+        queueStatus: (i <= 3) ? 'waiting' : 'done' });
+    return out;
+};
+setTimeout(function () {
+    window.dispatchEvent(new CustomEvent('pclinicStaffReady',
+        { detail: { role: 'admin', name: 'Dr. Uwase', staffId: '41054' } }));
+}, 60);
+</script>
+
+
+<script>
+(function () {
+    'use strict';
+
+    // ── Date in the header line ──
+    var d = new Date();
+    document.getElementById('todayDate').textContent =
+        '· ' + d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+
+    // ── Stats ──
+    function refreshStats() {
+        var patients = [];
+        try { if (typeof getPatients === 'function') patients = getPatients() || []; } catch (e) {}
+        var total = patients.length;
+        var today = d.toISOString().slice(0, 10);
+        var todayCount = patients.filter(function (p) { return p && p.registered === today; }).length;
+        var queued = patients.filter(function (p) { return p && p.queueStatus === 'waiting'; }).length;
+
+        countTo('totalPatients', total);
+        countTo('totalDoctors', 12);
+        countTo('todayAppointments', todayCount);
+        countTo('queueCount', queued);
+        document.getElementById('qsPatients').textContent = todayCount;
+    }
+
+    function countTo(id, target) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            el.textContent = target; return;
+        }
+        var start = 0, step = Math.max(1, Math.ceil(target / 26));
+        (function tick() {
+            start += step;
+            if (start >= target) { el.textContent = target; }
+            else { el.textContent = start; setTimeout(tick, 26); }
+        })();
+    }
+
+    refreshStats();
+    window.addEventListener('patientsUpdated', refreshStats);
+
+    // ── Search ── (declared before the auth listener uses it)
+    var search = document.getElementById('moduleSearch');
+    pcRemember('moduleSearch', search);
+    function applySearch() {
+        var q = search.value.trim().toLowerCase();
+        var shown = 0;
+        document.querySelectorAll('.module-card').forEach(function (c) {
+            if (c.dataset.visible === '0') return;
+            var hit = !q || c.textContent.toLowerCase().indexOf(q) !== -1;
+            c.style.display = hit ? '' : 'none';
+            if (hit) shown++;
+        });
+        document.getElementById('noResults').style.display = shown ? 'none' : '';
+    }
+    search.addEventListener('input', applySearch);
+    if (search.value) applySearch();
+
+    // ── Role-based module visibility ──
+    window.addEventListener('pclinicStaffReady', function (e) {
+        var staff = e.detail;
+        var role = (staff.role || '').toLowerCase();
+        var name = staff.name || 'Staff';
+
+        var h = new Date().getHours();
+        var greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+        document.getElementById('greetingText').innerHTML =
+            greet + ', <span class="hl"></span>';
+        document.querySelector('#greetingText .hl').textContent = name;
+
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userAvatar').textContent =
+            name.trim().substring(0, 2).toUpperCase();
+
+        var cards = document.querySelectorAll('.module-card');
+        var visible = 0;
+        cards.forEach(function (c) {
+            var roles = (c.dataset.role || '').split(/\s+/).filter(Boolean);
+            var ok = role === 'admin' || roles.indexOf(role) !== -1;
+            c.dataset.visible = ok ? '1' : '0';
+            c.style.display = ok ? '' : 'none';
+            if (ok) visible++;
+        });
+        if (visible === 0) {
+            cards.forEach(function (c) { c.dataset.visible = '1'; c.style.display = ''; });
+        }
+
+        applySearch();      // re-apply any restored search once roles are known
+        prefetchVisible();
+    });
+
+
+    // ── Prefetch the dashboards this user can actually reach, so
+    //    clicking a card is near-instant. Idle time only, so it never
+    //    competes with the initial render. ──
+    function prefetchVisible() {
+        var run = window.requestIdleCallback || function (f) { setTimeout(f, 1200); };
+        run(function () {
+            var seen = {};
+            document.querySelectorAll('.module-card[data-visible="1"]').forEach(function (c) {
+                var href = c.getAttribute('href');
+                if (!href || seen[href]) return;
+                seen[href] = 1;
+                var l = document.createElement('link');
+                l.rel = 'prefetch';
+                l.href = href;
+                l.as = 'document';
+                document.head.appendChild(l);
+            });
+        });
+    }
+
+    // ── Shortcuts ──
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'd') { e.preventDefault(); pcToggleTheme(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); search.focus(); }
+        if (e.key === 'Escape' && document.activeElement === search) {
+            search.value = ''; applySearch(); search.blur();
+        }
+    });
+
+    // ── Auth ──
+    requireAuth([]).then(function (staff) {
+        window.currentStaff = staff;
+    }).catch(function (err) {
+        console.warn('Auth guard:', err && err.message);
+    });
+})();
+</script>
+<!-- ═══ GOLDEN GATE FEATURE ENGINE — additive; never modifies the hub logic
+     above. Siri AI · Spotlight handoff · Visual Intelligence · quick actions ·
+     pull-to-refresh · natural-language reminders · Liquid Glass slider. ═══ -->
+<script>
+(function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    function toast(m) { if (typeof pcToast === 'function') pcToast(m, 'info'); }
+    function nav(href, newTab) {
+        if (window.__GG_PREVIEW__) { aiSay('In the static preview navigation is disabled — on the live hub this opens ' + href + '.'); return; }
+        if (newTab) window.open(href, '_blank'); else window.location.href = href;
+    }
+    function cards() { return Array.prototype.slice.call(document.querySelectorAll('.module-card')); }
+    function visibleCards() { return cards().filter(function (c) { return c.dataset.visible !== '0'; }); }
+    function num(id) { var el = $(id); return el ? el.textContent.trim() : '0'; }
+
+    /* ═══ 1 · Liquid Glass slider (drives every glass surface) ═══ */
+    var glass = $('ggGlass');
+    function setGlass(v) {
+        v = Math.max(30, Math.min(88, v));
+        glass.value = v;
+        document.documentElement.style.setProperty('--gg-a', (v / 100).toFixed(2));
+        lsSet('pclinic-gg-glass', String(v));
+    }
+    var savedGlass = parseInt(lsGet('pclinic-gg-glass') || '', 10);
+    if (savedGlass >= 30 && savedGlass <= 88) glass.value = savedGlass;
+    setGlass(parseInt(glass.value, 10));
+    glass.addEventListener('input', function () { setGlass(parseInt(glass.value, 10)); });
+
+    var cc = $('ggCC');
+    $('ggCCBtn').addEventListener('click', function (e) { e.stopPropagation(); cc.hidden = !cc.hidden; });
+    cc.addEventListener('click', function (e) { e.stopPropagation(); });
+    document.addEventListener('click', function () { cc.hidden = true; $('ggCtx').hidden = true; });
+    $('ggThemeBtn').addEventListener('click', function () { if (typeof pcToggleTheme === 'function') pcToggleTheme(); });
+
+    /* ═══ 2 · Siri AI intent engine ═══ */
+    var DAYS = 'today|tomorrow|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday';
+    function findModule(phrase) {
+        var key = phrase.toLowerCase()
+            .replace(/\b(the|a|an|portal|dashboard|module|page|dept|department)\b/g, '').trim();
+        if (!key) return null;
+        var pool = visibleCards();
+        var hit = pool.filter(function (c) {
+            return c.querySelector('.card-title').textContent.toLowerCase().indexOf(key) !== -1;
+        })[0];
+        if (hit) return hit;
+        var words = key.split(/\s+/);
+        for (var i = 0; i < words.length; i++) {
+            hit = pool.filter(function (c) { return c.textContent.toLowerCase().indexOf(words[i]) !== -1; })[0];
+            if (hit) return hit;
+        }
+        return null;
+    }
+    function renderReminders() {
+        var row = $('ggRemindRow'), list = [];
+        try { list = JSON.parse(lsGet('pclinic-gg-remind') || '[]'); } catch (e) {}
+        row.innerHTML = ''; row.hidden = !list.length;
+        list.forEach(function (r, i) {
+            var chip = document.createElement('span'); chip.className = 'rem-chip';
+            var b = document.createElement('b'); b.textContent = r.label;
+            var w = document.createElement('span'); w.className = 'rem-when'; w.textContent = '· ' + r.when;
+            var x = document.createElement('span'); x.className = 'rem-x'; x.textContent = '×'; x.title = 'Remove';
+            x.addEventListener('click', function () {
+                list.splice(i, 1); lsSet('pclinic-gg-remind', JSON.stringify(list)); renderReminders();
+            });
+            chip.appendChild(b); chip.appendChild(w); chip.appendChild(x); row.appendChild(chip);
+        });
+    }
+    renderReminders();
+    function addReminder(raw) {
+        var rest = raw;
+        var wm = rest.match(new RegExp('\\b(' + DAYS + ')\\b', 'i'));
+        var tm = rest.match(/\bat\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+        var when = (wm ? wm[1].toLowerCase() : 'today');
+        if (tm) {
+            var h = parseInt(tm[1], 10);
+            if (tm[3] && tm[3].toLowerCase() === 'pm' && h < 12) h += 12;
+            if (tm[3] && tm[3].toLowerCase() === 'am' && h === 12) h = 0;
+            when += ' ' + String(h).padStart(2, '0') + ':' + (tm[2] || '00');
+        }
+        var label = rest.replace(new RegExp('\\b(' + DAYS + ')\\b', 'i'), '')
+            .replace(/\bat\s+\d{1,2}(:\d{2})?\s*(am|pm)?/i, '')
+            .replace(/\b(remind me|remind|reminder|schedule|book|meeting|appointment)\b/gi, '')
+            .replace(/[,.!\s]+$/g, '').trim() || 'Reminder';
+        label = label.charAt(0).toUpperCase() + label.slice(1);
+        var list = [];
+        try { list = JSON.parse(lsGet('pclinic-gg-remind') || '[]'); } catch (e) {}
+        list.push({ label: label, when: when });
+        lsSet('pclinic-gg-remind', JSON.stringify(list)); renderReminders();
+        return { label: label, when: when };
+    }
+    function ask(text) {
+        var t = (text || '').toLowerCase().trim(), m;
+        m = t.match(/(?:open|go to|launch|take me to|show me)\s+(.+)/);
+        if (m) {
+            var mod = findModule(m[1]);
+            if (mod) return { reply: 'Opening ' + mod.querySelector('.card-title').textContent + '…',
+                run: function () { nav(mod.getAttribute('href')); } };
+            return { reply: 'I couldn’t find a module called “' + m[1] + '”. Try: reception, lab, radiology, pharmacy, beds, HR, inventory, admin…' };
+        }
+        m = t.match(/(?:tell me about|explain|describe)\s+(.+)/);
+        if (m) {
+            var ab = findModule(m[1]);
+            if (ab) return { reply: ab.querySelector('.card-title').textContent + ' — ' +
+                ab.querySelector('.card-desc').textContent + '. Category: ' +
+                ab.querySelector('.card-badge').textContent + '. Opens ' + ab.getAttribute('href') + '.' };
+        }
+        if (/how many|count|number of/.test(t)) {
+            if (/queue|waiting/.test(t)) return { reply: num('queueCount') + ' patients are waiting in the queue right now.' };
+            if (/appointment/.test(t)) return { reply: num('todayAppointments') + ' appointments today.' };
+            if (/doctor/.test(t)) return { reply: num('totalDoctors') + ' doctors on the staff roster.' };
+            if (/patient/.test(t)) return { reply: num('totalPatients') + ' patients registered in total, ' + num('qsPatients') + ' of them today.' };
+        }
+        if (/patients today/.test(t)) return { reply: num('qsPatients') + ' patients registered today.' };
+        if (/(dark|light)\s*(mode|theme)?|switch theme|toggle theme/.test(t))
+            return { reply: 'Switching appearance…', run: function () { if (typeof pcToggleTheme === 'function') pcToggleTheme(); } };
+        if (/glass|transparen|blur|tint|clearer|opaque/.test(t)) {
+            var cur = parseInt(glass.value, 10);
+            if (/more|increase|tint|opaque/.test(t)) return { reply: 'Made the glass more tinted.', run: function () { setGlass(cur + 12); } };
+            if (/less|decrease|clear|transparent/.test(t)) return { reply: 'Made the glass more clear.', run: function () { setGlass(cur - 12); } };
+        }
+        m = t.match(/(?:remind me|reminder|schedule|book|meeting|appointment)\s+(.+)/);
+        if (m) { var r = addReminder(m[1]); return { reply: 'Added to Up next: “' + r.label + '” — ' + r.when + '.' }; }
+        if (/who am i|my name|logged in|my role/.test(t)) {
+            var s = window.currentStaff;
+            return { reply: s ? ('You’re ' + s.name + ' (' + (s.role || 'staff') + ', ID ' + (s.staffId || '—') + ').') : 'I don’t see a signed-in profile yet.' };
+        }
+        if (/visual intelligence|inspect/.test(t))
+            return { reply: 'Turning on Visual Intelligence — click any card or stat.', run: function () { if (!viOn) toggleVI(); } };
+        if (/^(hi|hello|hey)\b|help|what can you do/.test(t))
+            return { reply: 'I can open modules (“open lab”), report live numbers (“how many patients today”), change appearance (“dark mode”, “make glass clearer”), add reminders (“meeting tomorrow at 9”), and explain cards via Visual Intelligence (Ctrl+Shift+V).' };
+        var guess = findModule(t);
+        if (guess) {
+            var g = guess;
+            return { reply: 'Did you mean ' + g.querySelector('.card-title').textContent + '?',
+                run: function () { nav(g.getAttribute('href')); } };
+        }
+        return { reply: 'I’m not sure about that yet. Try “open radiology”, “how many in queue”, “meeting tomorrow at 9” or “dark mode”.' };
+    }
+
+    /* ═══ 3 · Assistant window ═══ */
+    var assist = $('ggAssist'), aBody = $('ggAssistBody'), aIn = $('ggAssistIn'), orb = $('ggAssistOrb');
+    function aiSay(text) {
+        var d = document.createElement('div'); d.className = 'msg ai'; d.textContent = text;
+        aBody.appendChild(d); aBody.scrollTop = aBody.scrollHeight;
+    }
+    function meSay(text) {
+        var d = document.createElement('div'); d.className = 'msg me'; d.textContent = text;
+        aBody.appendChild(d); aBody.scrollTop = aBody.scrollHeight;
+    }
+    function openAssist(prefill) {
+        assist.hidden = false;
+        if (!aBody.children.length)
+            aiSay('Hi — I’m your PClinic assistant. Ask me about patients, queues, modules, or say “help”.');
+        if (prefill) { aIn.value = prefill; send(); } else setTimeout(function () { aIn.focus(); }, 0);
+    }
+    function send() {
+        var text = aIn.value.trim(); if (!text) return;
+        aIn.value = ''; meSay(text); orb.classList.add('think');
+        setTimeout(function () {
+            var r = ask(text); orb.classList.remove('think'); aiSay(r.reply);
+            if (r.run) setTimeout(r.run, 450);
+        }, 380);
+    }
+    $('ggSiri').addEventListener('click', function () { openAssist(); });
+    $('ggAssistX').addEventListener('click', function () { assist.hidden = true; });
+    $('ggAssistSend').addEventListener('click', send);
+    aIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+
+    /* ═══ 4 · Spotlight "Search or Ask" (syncs with the hub's own search) ═══ */
+    var hubSearch = $('moduleSearch'), spotIn = $('ggSpotIn'),
+        spot = $('ggSpot'), spotList = $('ggSpotList');
+    var pendingRun = null;
+    function isOpen() { return !spot.hidden; }
+    function openSpot() {
+        spot.hidden = false; spotIn.value = hubSearch.value || '';
+        renderSpot(); setTimeout(function () { spotIn.focus(); }, 0);
+    }
+    function closeSpot() { spot.hidden = true; }
+    function renderSpot() {
+        var q = spotIn.value.trim().toLowerCase();
+        // keep the hub's own search + remember + role filter in sync
+        if (hubSearch.value !== spotIn.value) {
+            hubSearch.value = spotIn.value;
+            hubSearch.dispatchEvent(new Event('input'));
+        }
+        spotList.innerHTML = '';
+        pendingRun = null;
+        if (isQuestion(spotIn.value.trim())) {
+            var r = ask(spotIn.value.trim());
+            var row = document.createElement('div'); row.className = 'ask-row';
+            row.innerHTML = '<span class="gg-siri-orb"></span>';
+            var ans = document.createElement('span'); ans.className = 'ans'; ans.textContent = r.reply;
+            var lab = document.createElement('span'); lab.className = 'lab'; lab.textContent = 'Ask PClinic AI';
+            row.appendChild(ans); row.appendChild(lab); spotList.appendChild(row);
+            pendingRun = r.run || function () { openAssist(spotIn.value.trim()); };
+            row.addEventListener('click', function () {
+                var run = pendingRun; closeSpot(); if (run) run();
+            });
+        }
+        visibleCards().filter(function (c) {
+            return !q || c.textContent.toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 7).forEach(function (c) {
+            var a = document.createElement('a'); a.href = c.getAttribute('href');
+            var mini = document.createElement('span');
+            mini.className = 'mini ' + c.querySelector('.card-icon').className.replace('card-icon', '').trim();
+            mini.innerHTML = c.querySelector('.card-icon').innerHTML;
+            var t = document.createElement('span'); t.textContent = c.querySelector('.card-title').textContent;
+            var w = document.createElement('span'); w.className = 'where';
+            w.textContent = c.querySelector('.card-badge').textContent;
+            a.appendChild(mini); a.appendChild(t); a.appendChild(w); spotList.appendChild(a);
+        });
+    }
+    function isQuestion(q) {
+        return /\?$/.test(q) ||
+            /^(how|what|who|where|when|why|can|could|should|is|are|open|show|tell|give|count)\b/.test(q) ||
+            /\b(many|count)\b/.test(q) || q.split(/\s+/).length >= 3;
+    }
+    spotIn.addEventListener('input', renderSpot);
+    $('ggSpotBtn').addEventListener('click', function () { isOpen() ? closeSpot() : openSpot(); });
+    spot.addEventListener('click', function (e) { if (e.target === spot) closeSpot(); });
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'k')) { e.preventDefault(); openSpot(); }
+        if (e.key === 'Enter' && isOpen() && document.activeElement === spotIn && pendingRun) {
+            e.preventDefault(); var run = pendingRun; closeSpot(); run();
+        }
+        if (e.key === 'Escape') { closeSpot(); if (viOn) toggleVI(); $('ggViPop').hidden = true; }
+    });
+
+    /* ═══ 5 · Visual Intelligence ═══ */
+    var viOn = false, viLast = null, viBanner = $('ggViBanner'), viPop = $('ggViPop');
+    document.querySelectorAll('.module-card, .stat-card').forEach(function (el) { el.setAttribute('data-vi', '1'); });
+    function toggleVI() {
+        viOn = !viOn;
+        document.body.classList.toggle('gg-vi', viOn);
+        viBanner.hidden = !viOn; viPop.hidden = true;
+        if (viLast) { viLast.classList.remove('vi-hl'); viLast = null; }
+    }
+    $('ggVIBtn').addEventListener('click', toggleVI);
+    document.addEventListener('mouseover', function (e) {
+        if (!viOn) return;
+        var t = e.target.closest && e.target.closest('[data-vi]');
+        if (viLast && viLast !== t) viLast.classList.remove('vi-hl');
+        if (t) { t.classList.add('vi-hl'); viLast = t; }
+    });
+    document.addEventListener('click', function (e) {
+        if (!viOn) return;
+        var t = e.target.closest && e.target.closest('[data-vi]');
+        if (!t) return;
+        e.preventDefault(); e.stopPropagation();
+        var title = (t.querySelector('.card-title') || t.querySelector('.lab') || {}).textContent || 'Element';
+        var desc = (t.querySelector('.card-desc') || {}).textContent || '';
+        var badge = (t.querySelector('.card-badge') || {}).textContent || '';
+        var href = t.getAttribute('href') || '';
+        var live = t.querySelector('.num');
+        var info = desc || 'Quick-launch card.';
+        if (live) info = 'Live value: ' + live.textContent + ' ' + ((t.querySelector('.lab') || {}).textContent || '') + '.';
+        viPop.innerHTML = '';
+        var h = document.createElement('div'); h.className = 'vp-t'; h.textContent = title;
+        var d = document.createElement('div'); d.className = 'vp-d';
+        d.textContent = info + (badge ? ' Category: ' + badge + '.' : '') + (href ? ' Opens ' + href + '.' : '');
+        var row = document.createElement('div'); row.className = 'vp-row';
+        var b1 = document.createElement('button'); b1.textContent = 'Open';
+        b1.addEventListener('click', function () { if (href) nav(href); toggleVI(); });
+        var b2 = document.createElement('button'); b2.textContent = 'Ask about this';
+        b2.addEventListener('click', function () { toggleVI(); openAssist('Tell me about ' + title); });
+        row.appendChild(b1); row.appendChild(b2);
+        viPop.appendChild(h); viPop.appendChild(d); viPop.appendChild(row);
+        viPop.style.left = Math.min(window.innerWidth - 280, e.clientX + 12) + 'px';
+        viPop.style.top = Math.min(window.innerHeight - 160, e.clientY + 10) + 'px';
+        viPop.hidden = false;
+    }, true);
+
+    /* ═══ 6 · Context-aware quick actions (right-click) ═══ */
+    var ctx = $('ggCtx');
+    document.addEventListener('contextmenu', function (e) {
+        var t = e.target.closest && e.target.closest('.module-card, .stat-card');
+        if (!t) { ctx.hidden = true; return; }
+        e.preventDefault();
+        var title = (t.querySelector('.card-title') || t.querySelector('.lab') || {}).textContent || 'Item';
+        var href = t.getAttribute('href') || '';
+        ctx.innerHTML = '';
+        function item(label, fn) {
+            var b = document.createElement('button'); b.textContent = label;
+            b.addEventListener('click', function () { ctx.hidden = true; fn(); });
+            ctx.appendChild(b);
+        }
+        if (href) {
+            item('Open ' + title, function () { nav(href); });
+            item('Open in New Tab', function () { nav(href, true); });
+        }
+        item('Ask Assistant about ' + title, function () { openAssist('Tell me about ' + title); });
+        var sep = document.createElement('div'); sep.className = 'ctx-sep'; ctx.appendChild(sep);
+        item('Visual Intelligence here', function () { if (!viOn) toggleVI(); });
+        ctx.style.left = Math.min(window.innerWidth - 210, e.clientX) + 'px';
+        ctx.style.top = Math.min(window.innerHeight - 170, e.clientY) + 'px';
+        ctx.hidden = false;
+    });
+
+    /* ═══ 7 · Pull to refresh (page scroll) ═══ */
+    var ptr = $('ggPtr'), pulling = false, touchY = null;
+    function doRefresh() {
+        ptr.classList.add('on');
+        setTimeout(function () {
+            window.dispatchEvent(new Event('patientsUpdated'));
+            ptr.classList.remove('on');
+            toast('🔄 Hub refreshed');
+        }, 550);
+    }
+    window.addEventListener('wheel', function (e) {
+        if ((window.scrollY || document.documentElement.scrollTop) <= 0 && e.deltaY < -60 && !pulling) {
+            pulling = true; doRefresh(); setTimeout(function () { pulling = false; }, 900);
+        }
+    }, { passive: true });
+    document.addEventListener('touchstart', function (e) {
+        if ((window.scrollY || 0) <= 0) touchY = e.touches[0].clientY;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+        if (touchY !== null && e.touches[0].clientY - touchY > 70 && !pulling) {
+            pulling = true; doRefresh(); touchY = null; setTimeout(function () { pulling = false; }, 900);
+        }
+    }, { passive: true });
+    document.addEventListener('touchend', function () { touchY = null; }, { passive: true });
+})();
+</script>
+</body>
+</html>
