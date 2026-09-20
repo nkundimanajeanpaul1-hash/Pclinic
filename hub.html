@@ -480,13 +480,15 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
     text-shadow: 0 1px 6px rgba(255, 255, 255, 0.45);
 }
 /* Cards float over the photo, so they get a denser frost — the big
-   numbers (appointments, doctors, in queue…) must read instantly. */
-:root { --gg-card: rgba(255, 255, 255, 0.82); }
-[data-theme="dark"] { --gg-card: rgba(18, 18, 22, 0.76); }
+   numbers (appointments, doctors, in queue…) must read instantly.
+   Density still follows the Liquid Glass slider (--gg-a), just offset
+   denser so text stays legible at every setting. */
+:root { --gg-card: rgba(255, 255, 255, min(1, var(--gg-a) + 0.34)); }
+[data-theme="dark"] { --gg-card: rgba(18, 18, 22, min(1, var(--gg-a) + 0.28)); }
 .stat-card, .module-card {
     background: var(--gg-card);
-    -webkit-backdrop-filter: saturate(170%) blur(26px);
-    backdrop-filter: saturate(170%) blur(26px);
+    -webkit-backdrop-filter: var(--gg-blur);
+    backdrop-filter: var(--gg-blur);
 }
 .stat-card .lab, .module-card .desc { color: var(--tp); }
 .stat-card .num { letter-spacing: -0.02em; }
@@ -1572,5 +1574,5 @@ body[data-gg-focus] .module-card.gg-focus-on { opacity: 1; filter: none; box-sha
     }, 900);
 })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e0f70d4d47a148',t:'MTc4OTkwODcyMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
