@@ -446,15 +446,26 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
 .rem-chip .rem-x:hover { opacity: 1; background: var(--glass-bg-hover); }
 
 /* ── Smart polish ── */
-/* The header line and section labels sit straight on the photo, so they
-   get their own Liquid Glass strips — every character stays legible. */
-.pc-headerbar {
-    position: sticky; top: 0; z-index: 40;
-    background: var(--glass-bg);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
-    border-bottom: 0.5px solid var(--glass-brd);
-    box-shadow: var(--sh-1), var(--glass-spec);
+/* Header bar stays transparent exactly like the original hub — legibility
+   comes from soft glows behind the characters, not from a background. */
+.pc-headerbar .pc-crumb, .pc-headerbar .pc-crumb a,
+.pc-headerbar .pc-date, .pc-headerbar .pc-quickstat {
+    color: var(--tp);
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6), 0 0 14px rgba(255, 255, 255, 0.4);
+}
+.pc-headerbar .pc-greet {
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.55), 0 0 16px rgba(255, 255, 255, 0.4);
+}
+.pc-greet .hl, #greetingText .hl {
+    filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.5));
+}
+[data-theme="dark"] .pc-headerbar .pc-crumb, [data-theme="dark"] .pc-headerbar .pc-crumb a,
+[data-theme="dark"] .pc-headerbar .pc-date, [data-theme="dark"] .pc-headerbar .pc-quickstat,
+[data-theme="dark"] .pc-headerbar .pc-greet {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75), 0 0 14px rgba(0, 0, 0, 0.5);
+}
+[data-theme="dark"] .pc-greet .hl, [data-theme="dark"] #greetingText .hl {
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
 }
 .sec {
     background: var(--glass-bg);
@@ -465,7 +476,7 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
     padding: 7px 12px;
     box-shadow: var(--sh-1), var(--glass-spec);
 }
-.no-results, .pc-crumb, .pc-date, .pc-quickstat {
+.no-results {
     text-shadow: 0 1px 6px rgba(255, 255, 255, 0.45);
 }
 /* Cards float over the photo, so they get a denser frost — the big
@@ -479,10 +490,24 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
 }
 .stat-card .lab, .module-card .desc { color: var(--tp); }
 .stat-card .num { letter-spacing: -0.02em; }
-[data-theme="dark"] .no-results, [data-theme="dark"] .pc-crumb,
-[data-theme="dark"] .pc-date, [data-theme="dark"] .pc-quickstat {
+[data-theme="dark"] .no-results {
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
+/* Final smart sweep: cards float a touch deeper over the photo, focus
+   rings and selection tint match the Golden Gate accent. */
+.stat-card, .module-card {
+    box-shadow: 0 12px 32px rgba(15, 10, 40, 0.12), var(--glass-spec);
+}
+[data-theme="dark"] .stat-card, [data-theme="dark"] .module-card {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), var(--glass-spec);
+}
+::selection { background: rgba(10, 132, 255, 0.28); }
+:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+html { scroll-behavior: smooth; }
 .gg-topline {
     position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 66;
     pointer-events: none; opacity: .9;
@@ -514,6 +539,99 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
 }
 .stat-card:hover .ic { transform: scale(1.07) rotate(-4deg); }
 .stat-card .ic { transition: transform .3s cubic-bezier(.34,1.3,.4,1); }
+
+/* ═══ GOLDEN GATE PACK 2 · A–H ═══ */
+/* B · coloured department icons (macOS 27 restored coloured icons) */
+.module-card .card-icon { color: var(--ic, var(--blue)); background: rgba(128, 128, 128, .12); }
+@supports (background: color-mix(in srgb, red 10%, transparent)) {
+    .module-card .card-icon { background: color-mix(in srgb, var(--ic, var(--blue)) 13%, transparent); }
+}
+.module-card[data-role~="reception"]  .card-icon { --ic: #0a84ff; }
+.module-card[data-role~="doctor"]     .card-icon { --ic: #ff453a; }
+.module-card[data-role~="nurse"]      .card-icon { --ic: #ff375f; }
+.module-card[data-role~="lab"]        .card-icon { --ic: #bf5af2; }
+.module-card[data-role~="pharmacy"]   .card-icon { --ic: #30d158; }
+.module-card[data-role~="radio"]      .card-icon { --ic: #64d2ff; }
+.module-card[data-role~="theater"]    .card-icon { --ic: #ff9f0a; }
+.module-card[data-role~="physio"]     .card-icon { --ic: #00c895; }
+.module-card[data-role~="cashier"]    .card-icon { --ic: #ffd60a; }
+.module-card[data-role~="finance"]    .card-icon { --ic: #5e5ce6; }
+.module-card[data-role~="hr"]         .card-icon { --ic: #a2845e; }
+.module-card[data-role~="inventory"]  .card-icon { --ic: #30b0c0; }
+.module-card[data-role~="admin"]      .card-icon { --ic: #8e8e93; }
+.module-card[data-role="beds nurse reception"] .card-icon { --ic: #40c8e0; }
+/* G · ultrawide (5K) grid + tighter macOS 27 radii */
+@media (min-width: 2560px) {
+    .wrap { max-width: 2240px; }
+    #moduleGrid { grid-template-columns: repeat(4, 1fr); }
+}
+.stat-card, .module-card { border-radius: 12px; }
+/* C · Focus modes */
+.cc-focus { display: flex; gap: 6px; flex-wrap: wrap; }
+.cc-focus button {
+    border: 0.5px solid var(--glass-brd); background: var(--glass-bg); color: var(--tp);
+    font-family: inherit; font-size: 12px; font-weight: 600; padding: 7px 11px;
+    border-radius: 999px; cursor: pointer;
+}
+.cc-focus button.on { background: var(--blue); border-color: transparent; color: #fff; }
+body[data-gg-focus] .module-card { opacity: .38; filter: saturate(.5); transition: opacity .4s ease, filter .4s ease; }
+body[data-gg-focus] .module-card.gg-focus-on { opacity: 1; filter: none; box-shadow: 0 0 0 2px var(--blue), var(--sh-2); }
+/* D · Live Activities pill */
+.gg-live {
+    display: inline-flex; align-items: center; gap: 7px; margin-left: 10px; padding: 4px 12px 4px 9px;
+    border-radius: 999px; background: var(--glass-bg); border: 0.5px solid var(--glass-brd);
+    -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    font-size: 12.5px; font-weight: 600; color: var(--tp); vertical-align: middle;
+    box-shadow: var(--sh-1); white-space: nowrap;
+}
+.gg-live .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(48, 209, 88, .5); animation: ggPulse 2s infinite; flex: none; }
+@keyframes ggPulse { 70% { box-shadow: 0 0 0 8px rgba(48, 209, 88, 0); } 100% { box-shadow: 0 0 0 0 rgba(48, 209, 88, 0); } }
+.gg-live.swap #ggLiveTxt { display: inline-block; animation: ggSwap .45s ease; }
+@keyframes ggSwap { from { opacity: 0; transform: translateY(5px); } }
+/* A · Notification Centre + banner stack */
+.gg-hbtn { position: relative; }
+.gg-hbtn .dot-badge {
+    position: absolute; top: -3px; right: -4px; min-width: 15px; height: 15px; border-radius: 8px;
+    background: #ff453a; color: #fff; font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; padding: 0 3px;
+}
+.gg-banner-stack { position: fixed; top: 14px; right: 14px; z-index: 90; display: flex; flex-direction: column; gap: 10px; width: min(360px, 92vw); pointer-events: none; }
+.gg-banner {
+    pointer-events: auto; display: flex; gap: 10px; align-items: flex-start;
+    background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    border: 0.5px solid var(--glass-brd); border-radius: 14px; padding: 12px 14px;
+    box-shadow: var(--sh-3), var(--glass-spec); animation: ggBin .5s cubic-bezier(.32, .72, 0, 1);
+}
+@keyframes ggBin { from { transform: translateY(-16px) scale(.96); opacity: 0; } }
+.gg-banner.out { opacity: 0; transform: translateX(30px); transition: .3s ease; }
+.gg-banner .bi, .gg-nc-item .bi { font-size: 17px; line-height: 1.2; }
+.gg-banner .bt, .gg-nc-item .bt { font-weight: 700; font-size: 13.5px; color: var(--ts); }
+.gg-banner .bm, .gg-nc-item .bm { font-size: 12.5px; color: var(--tm); margin-top: 2px; }
+.gg-banner .ba { border: 0; background: var(--blue); color: #fff; font-family: inherit; font-size: 12px; font-weight: 600; border-radius: 8px; padding: 6px 10px; margin-top: 8px; cursor: pointer; }
+.gg-nc {
+    position: fixed; top: 0; right: 0; height: 100%; width: min(380px, 92vw); z-index: 85;
+    background: var(--glass-bg); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%);
+    border-left: 0.5px solid var(--glass-brd); box-shadow: -20px 0 60px rgba(0, 0, 0, .25);
+    padding: 18px; overflow-y: auto; transform: translateX(105%);
+    transition: transform .45s cubic-bezier(.32, .72, 0, 1);
+}
+.gg-nc.open { transform: none; }
+.gg-nc-top { display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 700; color: var(--ts); }
+.gg-nc-clear { border: 0; background: transparent; color: var(--blue); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.gg-nc-head { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--tm); }
+.gg-nc-head button { border: 0; background: transparent; color: var(--tm); font-size: 11px; cursor: pointer; }
+.gg-nc-item { display: flex; gap: 10px; background: var(--glass-bg); border: 0.5px solid var(--glass-brd); border-radius: 12px; padding: 10px 12px; margin: 6px 0; box-shadow: var(--sh-1); }
+.gg-nc-item .ts2 { font-size: 10.5px; color: var(--tm); opacity: .8; margin-top: 3px; }
+.gg-nc-empty { color: var(--tm); font-size: 13px; text-align: center; margin-top: 40px; }
+/* E · Writing Tools wand */
+.gg-wand { border: 0; background: transparent; color: #bf5af2; font-size: 16px; padding: 0 8px; cursor: pointer; }
+.gg-wand-pop {
+    position: fixed; z-index: 95; display: flex; gap: 4px;
+    background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    border: 0.5px solid var(--glass-brd); border-radius: 12px; padding: 5px; box-shadow: var(--sh-3);
+}
+.gg-wand-pop button { border: 0; background: transparent; padding: 6px 10px; border-radius: 8px; font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--tp); cursor: pointer; }
+.gg-wand-pop button:hover { box-shadow: var(--sh-1); }
 </style>
     </head>
 <body>
@@ -560,6 +678,7 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
     </nav>
     <span class="pc-divider"></span>
     <span class="pc-greet" id="greetingText">Good morning, <span class="hl">…</span></span>
+    <span class="gg-live" id="ggLive" title="Live activity"><span class="pulse"></span><span id="ggLiveTxt">Queue · –</span></span>
     <span class="pc-date" id="todayDate"></span>
     <span class="pc-spacer"></span>
     <span class="pc-quickstat"><i class="ti ti-users"></i> <span id="qsPatients">0</span> patients today</span>
@@ -576,6 +695,9 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
     </button>
     <button class="pc-iconbtn gg-hbtn" id="ggCCBtn" title="Control Centre — Liquid Glass" aria-label="Control Centre">
         <i class="ti ti-adjustments-horizontal"></i>
+    </button>
+    <button class="pc-iconbtn gg-hbtn" id="ggNcBtn" title="Notification Centre" aria-label="Notification Centre">
+        <i class="ti ti-bell"></i><span class="dot-badge" id="ggNcCount" hidden>0</span>
     </button>
 </div>
 
@@ -725,6 +847,15 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
         <input type="range" id="ggGlass" min="30" max="88" value="55" aria-label="Liquid glass opacity">
         <label><span>Ultra Clear</span><span>Tinted</span></label>
     </div>
+    <div class="cc-slider">
+        <div class="cc-title">Focus</div>
+        <div class="cc-focus" id="ggFocusRow">
+            <button data-focus="" class="on">Off</button>
+            <button data-focus="reception">Reception</button>
+            <button data-focus="theater">Theater</button>
+            <button data-focus="night">Night</button>
+        </div>
+    </div>
 </div>
 
 <div class="gg-spot" id="ggSpot" hidden>
@@ -748,6 +879,7 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
     <div class="aa-body" id="ggAssistBody"></div>
     <div class="aa-in">
         <input id="ggAssistIn" placeholder="Ask or command…" autocomplete="off" aria-label="Ask the assistant">
+        <button class="gg-wand" id="ggWandBtn" title="Writing Tools — rewrite tone" aria-label="Writing Tools">✦</button>
         <button id="ggAssistSend" aria-label="Send"><span class="gg-siri-orb"></span></button>
     </div>
 </div>
@@ -755,6 +887,18 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
 <div class="gg-vi-banner" id="ggViBanner" hidden>Visual Intelligence — click any card or stat to understand it</div>
 <div class="gg-vip" id="ggViPop" hidden></div>
 <div class="gg-ctx" id="ggCtx" hidden></div>
+
+<!-- ═══ GOLDEN GATE PACK 2 surfaces ═══ -->
+<div class="gg-banner-stack" id="ggBanners"></div>
+<aside class="gg-nc" id="ggNC" aria-label="Notification Centre">
+    <div class="gg-nc-top"><strong>Notifications</strong><button id="ggNcClear" class="gg-nc-clear">Clear all</button></div>
+    <div id="ggNcBody"></div>
+</aside>
+<div class="gg-wand-pop" id="ggWandPop" hidden>
+    <button data-tone="professional">Professional</button>
+    <button data-tone="friendly">Friendly</button>
+    <button data-tone="concise">Concise</button>
+</div>
 
 <div class="pc-toasts" id="toastContainer"></div>
 
@@ -955,7 +1099,8 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
         list.forEach(function (r, i) {
             var chip = document.createElement('span'); chip.className = 'rem-chip';
             var b = document.createElement('b'); b.textContent = r.label;
-            var w = document.createElement('span'); w.className = 'rem-when'; w.textContent = '· ' + r.when;
+            var w = document.createElement('span'); w.className = 'rem-when';
+            w.textContent = (r.rec ? '↻ ' + r.rec + ' · ' : '· ') + r.when;
             var x = document.createElement('span'); x.className = 'rem-x'; x.textContent = '×'; x.title = 'Remove';
             x.addEventListener('click', function () {
                 list.splice(i, 1); lsSet('pclinic-gg-remind', JSON.stringify(list)); renderReminders();
@@ -968,7 +1113,20 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
         var rest = raw;
         var wm = rest.match(new RegExp('\\b(' + DAYS + ')\\b', 'i'));
         var tm = rest.match(/\bat\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
-        var when = (wm ? wm[1].toLowerCase() : 'today');
+        var rm = rest.match(/\b(every\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|day|week|month)|daily|weekly|monthly)\b/i);
+        var rec = rm ? rm[1].toLowerCase() : '';
+        var im = rest.match(/\bin\s+(\d+)\s+(minute|hour|day|week)s?\b/i);
+        var rel = '';
+        if (im) {
+            var nn = parseInt(im[1], 10), uu = im[2].toLowerCase();
+            if (uu === 'minute' || uu === 'hour') rel = 'in ' + nn + ' ' + uu + (nn > 1 ? 's' : '');
+            else {
+                var rd = new Date(Date.now() + nn * (uu === 'day' ? 864e5 : 6048e5));
+                rel = rd.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+            }
+        } else if (/\bnext week\b/i.test(rest)) rel = 'next week';
+        else if (/\bnext month\b/i.test(rest)) rel = 'next month';
+        var when = (wm ? wm[1].toLowerCase() : (rel || 'today'));
         if (tm) {
             var h = parseInt(tm[1], 10);
             if (tm[3] && tm[3].toLowerCase() === 'pm' && h < 12) h += 12;
@@ -977,14 +1135,17 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
         }
         var label = rest.replace(new RegExp('\\b(' + DAYS + ')\\b', 'i'), '')
             .replace(/\bat\s+\d{1,2}(:\d{2})?\s*(am|pm)?/i, '')
+            .replace(/\b(every\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|day|week|month)|daily|weekly|monthly)\b/i, '')
+            .replace(/\bin\s+\d+\s+(minute|hour|day|week)s?\b/i, '')
+            .replace(/\b(next week|next month)\b/i, '')
             .replace(/\b(remind me|remind|reminder|schedule|book|meeting|appointment)\b/gi, '')
             .replace(/[,.!\s]+$/g, '').trim() || 'Reminder';
         label = label.charAt(0).toUpperCase() + label.slice(1);
         var list = [];
         try { list = JSON.parse(lsGet('pclinic-gg-remind') || '[]'); } catch (e) {}
-        list.push({ label: label, when: when });
+        list.push({ label: label, when: when, rec: rec || null });
         lsSet('pclinic-gg-remind', JSON.stringify(list)); renderReminders();
-        return { label: label, when: when };
+        return { label: label, when: when, rec: rec || null };
     }
     function ask(text) {
         var t = (text || '').toLowerCase().trim(), m;
@@ -1220,5 +1381,196 @@ body.gg-vi, body.gg-vi * { cursor: crosshair !important; }
     document.addEventListener('touchend', function () { touchY = null; }, { passive: true });
 })();
 </script>
-</body>
+<script>
+/* ═══ GOLDEN GATE PACK 2 ENGINE · Notification Centre (A), Focus (C),
+   Live Activities (D), Writing Tools (E), Automations (H) — additive ═══ */
+(function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+    /* ── A · Notification Centre: store, badge, groups, banners ── */
+    var NKEY = 'pclinic-gg-notif';
+    var NICONS = { Queue: '⏳', Lab: '🧪', Registrations: '🧑‍⚕️', System: '✨', Focus: '🌙' };
+    function loadN() { try { return JSON.parse(lsGet(NKEY) || '[]'); } catch (e) { return []; } }
+    function saveN(l) { lsSet(NKEY, JSON.stringify(l.slice(0, 40))); }
+    function badge() {
+        var n = loadN().filter(function (x) { return !x.read; }).length;
+        var b = $('ggNcCount'); if (!b) return;
+        b.hidden = !n; b.textContent = n > 9 ? '9+' : String(n);
+    }
+    function renderNC() {
+        var body = $('ggNcBody'); if (!body) return;
+        var list = loadN(); body.innerHTML = '';
+        if (!list.length) { body.innerHTML = '<div class="gg-nc-empty">No notifications — quiet shift ✨</div>'; return; }
+        var groups = {};
+        list.forEach(function (n) { (groups[n.src] = groups[n.src] || []).push(n); });
+        Object.keys(groups).forEach(function (src) {
+            var head = document.createElement('div'); head.className = 'gg-nc-head';
+            var ttl = document.createElement('span'); ttl.textContent = src + ' · ' + groups[src].length;
+            var clr = document.createElement('button'); clr.textContent = 'clear'; clr.setAttribute('data-clear', src);
+            head.appendChild(ttl); head.appendChild(clr); body.appendChild(head);
+            groups[src].forEach(function (n) {
+                var it = document.createElement('div'); it.className = 'gg-nc-item';
+                var bi = document.createElement('span'); bi.className = 'bi'; bi.textContent = NICONS[n.src] || '🔔';
+                var tx = document.createElement('div');
+                var t = document.createElement('div'); t.className = 'bt'; t.textContent = n.title;
+                var m = document.createElement('div'); m.className = 'bm'; m.textContent = n.msg;
+                var ts = document.createElement('div'); ts.className = 'ts2';
+                ts.textContent = new Date(n.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                tx.appendChild(t); tx.appendChild(m); tx.appendChild(ts);
+                it.appendChild(bi); it.appendChild(tx); body.appendChild(it);
+            });
+        });
+    }
+    $('ggNcBody').addEventListener('click', function (e) {
+        var c = e.target.closest ? e.target.closest('[data-clear]') : null; if (!c) return;
+        saveN(loadN().filter(function (n) { return n.src !== c.getAttribute('data-clear'); }));
+        renderNC(); badge();
+    });
+    $('ggNcClear').addEventListener('click', function () { saveN([]); renderNC(); badge(); });
+    var nc = $('ggNC');
+    $('ggNcBtn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        nc.classList.toggle('open');
+        if (nc.classList.contains('open')) {
+            var l = loadN(); l.forEach(function (n) { n.read = true; }); saveN(l); badge();
+        }
+    });
+    document.addEventListener('click', function (e) {
+        if (!nc.classList.contains('open')) return;
+        if (nc.contains(e.target)) return;
+        if (e.target.closest && e.target.closest('#ggNcBtn')) return;
+        nc.classList.remove('open');
+    });
+    function banner(n) {
+        var stack = $('ggBanners'); if (!stack) return;
+        var el = document.createElement('div'); el.className = 'gg-banner';
+        var bi = document.createElement('span'); bi.className = 'bi'; bi.textContent = NICONS[n.src] || '🔔';
+        var tx = document.createElement('div');
+        var t = document.createElement('div'); t.className = 'bt'; t.textContent = n.title;
+        var m = document.createElement('div'); m.className = 'bm'; m.textContent = n.msg;
+        tx.appendChild(t); tx.appendChild(m);
+        if (n.href) {
+            var a = document.createElement('button'); a.className = 'ba'; a.textContent = 'Open';
+            a.addEventListener('click', function () { location.href = n.href; });
+            tx.appendChild(a);
+        }
+        el.appendChild(bi); el.appendChild(tx); stack.appendChild(el);
+        setTimeout(function () { el.classList.add('out'); setTimeout(function () { el.remove(); }, 320); }, 6000);
+        while (stack.children.length > 3) stack.firstChild.remove();
+    }
+    function notify(src, title, msg, href) {
+        var n = { src: src, title: title, msg: msg, href: href || null, ts: Date.now(), read: false };
+        var l = loadN(); l.unshift(n); saveN(l); badge(); banner(n);
+        if (nc.classList.contains('open')) { l.forEach(function (x) { x.read = true; }); saveN(l); renderNC(); }
+    }
+    window.ggNotify = notify;
+
+    /* ── H · Shortcuts-style automations ── */
+    var fired = {};
+    function automations() {
+        var q = parseInt((($('queueCount') || {}).textContent || '0'), 10) || 0;
+        var reg = parseInt((($('qsPatients') || {}).textContent || '0'), 10) || 0;
+        if (q > 8 && !fired.q) { fired.q = true; notify('Queue', 'Queue building', q + ' patients waiting — open the queue board?', 'nurse-dashboard.html'); }
+        if (reg > 40 && !fired.r) { fired.r = true; notify('Registrations', 'Busy day', reg + ' patients registered today — reception may need a hand.', 'reception-dashboard.html'); }
+        var h = new Date().getHours();
+        if ((h >= 22 || h < 6) && !fired.n) { fired.n = true; notify('Focus', 'Night shift?', 'It’s late — switch to Night focus in Control Centre for a calmer hub.'); }
+    }
+
+    /* ── C · Focus modes ── */
+    var FOCUS = {
+        reception: ['reception', 'beds', 'cashier', 'finance'],
+        theater: ['theater', 'nurse', 'beds'],
+        night: ['nurse', 'lab', 'theater']
+    };
+    function applyFocus(mode) {
+        var row = $('ggFocusRow'); if (!row) return;
+        Array.prototype.forEach.call(row.querySelectorAll('button'), function (b) {
+            b.classList.toggle('on', (b.getAttribute('data-focus') || '') === (mode || ''));
+        });
+        if (!mode || !FOCUS[mode]) document.body.removeAttribute('data-gg-focus');
+        else document.body.setAttribute('data-gg-focus', mode);
+        Array.prototype.forEach.call(document.querySelectorAll('.module-card'), function (c) {
+            var roles = (c.getAttribute('data-role') || '').split(/\s+/);
+            var on = !!(mode && FOCUS[mode]) && roles.some(function (r) { return FOCUS[mode].indexOf(r) !== -1; });
+            c.classList.toggle('gg-focus-on', on);
+        });
+        lsSet('pclinic-gg-focus', mode || '');
+    }
+    $('ggFocusRow').addEventListener('click', function (e) {
+        var b = e.target.closest ? e.target.closest('button') : null; if (!b) return;
+        applyFocus(b.getAttribute('data-focus'));
+    });
+
+    /* ── D · Live Activities pill (rotates every 6 s) ── */
+    var liveIdx = 0;
+    function liveFacts() {
+        var q = (($('queueCount') || {}).textContent || '–').trim();
+        var reg = (($('qsPatients') || {}).textContent || '–').trim();
+        var now = new Date();
+        var next = new Date(now); next.setMinutes(0, 0, 0); next.setHours(now.getHours() + 1);
+        var mins = Math.max(1, Math.round((next - now) / 6e4));
+        return ['Queue · ' + q + ' waiting', 'Today · ' + reg + ' registered', 'Next slot · in ' + mins + ' min'];
+    }
+    function liveTick() {
+        var el = $('ggLiveTxt'); if (!el) return;
+        var f = liveFacts(); el.textContent = f[liveIdx % f.length]; liveIdx++;
+        var pill = $('ggLive'); if (pill) { pill.classList.remove('swap'); void pill.offsetWidth; pill.classList.add('swap'); }
+    }
+
+    /* ── E · Writing Tools (✦ wand beside the assistant input) ── */
+    var WMAP = { pls: 'please', tmr: 'tomorrow', thx: 'thank you', asap: 'as soon as possible', btw: 'by the way', docs: 'doctors' };
+    function rewrite(text, tone) {
+        var t = text || '';
+        if (tone === 'professional') {
+            Object.keys(WMAP).forEach(function (k) { t = t.replace(new RegExp('\\b' + k + '\\b', 'gi'), WMAP[k]); });
+            t = t.replace(/\bu\b/g, 'you').replace(/\bur\b/gi, 'your');
+            t = t.charAt(0).toUpperCase() + t.slice(1);
+            if (!/[.!?]$/.test(t)) t += '.';
+        } else if (tone === 'friendly') {
+            if (!/\bplease\b/i.test(t)) t += ', please';
+            if (!/😊|🙏|✅/.test(t)) t += ' 😊';
+        } else if (tone === 'concise') {
+            t = t.replace(/\b(please|just|really|very|basically|actually|kind of|sort of)\b/gi, '')
+                 .replace(/\s{2,}/g, ' ').trim();
+        }
+        return t;
+    }
+    var wandPop = $('ggWandPop'), wandBtn = $('ggWandBtn'), wandTarget = $('ggAssistIn');
+    wandBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!wandPop.hidden) { wandPop.hidden = true; return; }
+        var r = wandBtn.getBoundingClientRect();
+        wandPop.style.top = (r.bottom + 8) + 'px';
+        wandPop.style.left = Math.max(10, r.left - 130) + 'px';
+        wandPop.hidden = false;
+    });
+    wandPop.addEventListener('click', function (e) {
+        var b = e.target.closest ? e.target.closest('button') : null; if (!b) return;
+        var out = rewrite(wandTarget.value, b.getAttribute('data-tone'));
+        if (out) wandTarget.value = out;
+        wandPop.hidden = true; wandTarget.focus();
+    });
+    document.addEventListener('click', function () { wandPop.hidden = true; });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { nc.classList.remove('open'); wandPop.hidden = true; }
+    });
+
+    /* ── boot ── */
+    applyFocus(lsGet('pclinic-gg-focus') || '');
+    renderNC(); badge(); liveTick();
+    setInterval(liveTick, 6000);
+    setTimeout(automations, 1500);
+    window.addEventListener('patientsUpdated', function () { setTimeout(automations, 400); });
+    setTimeout(function () {
+        if (!lsGet('pclinic-gg-hello')) {
+            lsSet('pclinic-gg-hello', '1');
+            notify('System', 'Golden Gate pack active', 'Notifications, Focus, Live Activities & Writing Tools are ready — see Control Centre.');
+        }
+    }, 900);
+})();
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e0f70d4d47a148',t:'MTc4OTkwODcyMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
