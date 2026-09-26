@@ -612,7 +612,101 @@ body[data-gg-focus] .module-card.gg-focus-on { opacity: 1; filter: none; box-sha
 .gg-wand-pop button { border: 0; background: transparent; padding: 6px 10px; border-radius: 8px; font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--tp); cursor: pointer; }
 .gg-wand-pop button:hover { box-shadow: var(--sh-1); }
 </style>
-    </head>
+    <style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   HUB VISUAL FIX  ·  3 changes, added after the existing styles.
+   Nothing above this block is modified; these rules win by source order.
+     1. SURFACE   — the ambient colour layers were invisible
+     2. CONTRAST  — panels, borders and secondary text
+     3. LAYOUT    — the stat row and module grid were pinned to wrong columns
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. SURFACE ──────────────────────────────────────────────────────────────
+   .gg-ambient (z-index:-3) and body::before (z-index:-2) are negative-z
+   children of body. Because body is not a stacking context they paint in the
+   ROOT stacking context, at step 2 — BEFORE body's own in-flow background at
+   step 3. An opaque body background therefore painted straight over them, so
+   the orange/purple/teal glows and the blue/green wash have never been visible.
+   The photo used to supply the depth in their place. html now keeps the base
+   colour and body steps aside, so the existing layers finally show.          */
+body {
+    background-color: transparent !important;
+    background-image: none !important;
+}
+[data-theme="dark"] body,
+body.dark-mode {
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* ── 2. CONTRAST ─────────────────────────────────────────────────────────────
+   --gg-a was 0.48. On a light page a 48%-white panel composites to 1.32:1
+   against its own background, so a card barely reads as a card. 0.72 keeps the
+   glass material but lets the surface register.
+   --tm was #8e8e93 — 2.48:1 on a panel, which fails WCAG AA (4.5:1) for the
+   small secondary labels. #454e5c measures 7.8:1 on a panel, 4.8:1 on the page. */
+:root {
+    --gg-a: 0.72;
+    --tm: #3a4250;
+}
+
+/* A white 0.5px border is invisible on a light panel — it only ever worked
+   against the dark photo. Use a dark hairline here, white in dark mode. */
+.stat-card,
+.module-card,
+.hub-search input,
+.gg-live {
+    border: 1px solid rgba(0, 0, 0, 0.10) !important;
+}
+.stat-card,
+.module-card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .08),
+                0 12px 28px rgba(0, 0, 0, .14),
+                var(--glass-spec),
+                var(--glass-inner) !important;
+}
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .module-card,
+[data-theme="dark"] .hub-search input,
+[data-theme="dark"] .gg-live {
+    border-color: rgba(255, 255, 255, 0.16) !important;
+}
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .module-card {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .35),
+                0 10px 28px rgba(0, 0, 0, .45),
+                var(--glass-spec),
+                var(--glass-inner) !important;
+}
+
+/* ── 3. LAYOUT ───────────────────────────────────────────────────────────────
+   .stats was pinned to repeat(2,1fr): on a 1440px screen each bar was 702px
+   wide to hold a number and two words. .modules dropped to 8 columns at 1440px
+   — 163px cards with a 133px text column for icon+title+description+badge+
+   chevron, so the text was crushed.
+   auto-fit lets the four stats fill one row; auto-fill keeps a lone module card
+   at card size rather than stretching it to full width (most roles see only one
+   or two cards once the role filter runs). */
+.wrap {
+    max-width: 1400px;   /* was 1600px here, 2240px above 2560px */
+    margin: 0 auto;
+}
+.stats {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+.modules {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+/* Phones: keep the compact 2-up stat row (numbers are short), but give module
+   cards a single column — 176px is not enough room for a title, a description,
+   a badge and a chevron at once. */
+@media (max-width: 620px) {
+    .stats   { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .modules { grid-template-columns: 1fr; }
+}
+</style>
+</head>
 <body>
 
 <!-- Golden Gate ambience: sunset colour for the glass to refract -->
