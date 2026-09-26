@@ -706,6 +706,341 @@ body.dark-mode {
     .modules { grid-template-columns: 1fr; }
 }
 </style>
+<style id="pclinic-hub-v2">
+/* ══════════════════════════════════════════════════════════════════════════
+   PClinic Hub · visual pass v2 — "Liquid Glass + iOS"
+   ──────────────────────────────────────────────────────────────────────────
+   Appended AFTER the tier 1–3 fix. Nothing above is edited: this block is
+   purely additive and wins by source order plus !important.
+   To revert: delete this entire <style> block.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1 · MATERIAL ────────────────────────────────────────────────────────
+   Liquid Glass is four things at once: a translucent tint, a heavy blur,
+   a saturation boost so colour bleeds through, and a specular highlight
+   on the top edge. These tokens drive every surface below.              */
+:root{
+    --v2-fill:    rgba(255,255,255,.66);
+    --v2-fill-hi: rgba(255,255,255,.84);
+    --v2-rim:     inset 0 1px 0 rgba(255,255,255,.95), inset 0 0 0 .5px rgba(255,255,255,.42);
+    --v2-base:    inset 0 -1px 0 rgba(12,14,30,.045);
+    --v2-edge:    rgba(12,14,30,.10);
+    --v2-edge-hi: rgba(12,14,30,.17);
+    --v2-sh:      0 1px 2px rgba(12,14,30,.05), 0 6px 16px rgba(12,14,30,.09), 0 20px 44px rgba(12,14,30,.11);
+    --v2-sh-hi:   0 2px 5px rgba(12,14,30,.07), 0 12px 28px rgba(12,14,30,.13), 0 34px 66px rgba(12,14,30,.16);
+    --v2-r:       24px;
+    --v2-r-chip:  15px;
+    --v2-blur:    saturate(190%) blur(40px);
+    --v2-blur-sm: saturate(180%) blur(24px);
+    --v2-gap:     16px;
+}
+[data-theme="dark"], html[data-theme="dark"], body.dark-mode{
+    --v2-fill:    rgba(30,32,46,.62);
+    --v2-fill-hi: rgba(46,49,70,.78);
+    --v2-rim:     inset 0 1px 0 rgba(255,255,255,.16), inset 0 0 0 .5px rgba(255,255,255,.07);
+    --v2-base:    inset 0 -1px 0 rgba(0,0,0,.32);
+    --v2-edge:    rgba(255,255,255,.13);
+    --v2-edge-hi: rgba(255,255,255,.25);
+    --v2-sh:      0 1px 2px rgba(0,0,0,.45), 0 8px 20px rgba(0,0,0,.42), 0 24px 48px rgba(0,0,0,.48);
+    --v2-sh-hi:   0 2px 6px rgba(0,0,0,.5),  0 14px 32px rgba(0,0,0,.5),  0 38px 70px rgba(0,0,0,.55);
+}
+
+/* ── 2 · ONE ACCENT PER CARD ─────────────────────────────────────────────
+   The role colours already lived on .card-icon only. Lifting them onto the
+   card itself lets the badge, the arrow and the hover wash share the hue. */
+.module-card[data-role~="reception"]{ --ic:#0a84ff }
+.module-card[data-role~="doctor"]   { --ic:#ff453a }
+.module-card[data-role~="nurse"]    { --ic:#ff375f }
+.module-card[data-role~="lab"]      { --ic:#bf5af2 }
+.module-card[data-role~="pharmacy"] { --ic:#30d158 }
+.module-card[data-role~="radio"]    { --ic:#64d2ff }
+.module-card[data-role~="theater"]  { --ic:#ff9f0a }
+.module-card[data-role~="physio"]   { --ic:#00c895 }
+.module-card[data-role~="cashier"]  { --ic:#ffd60a }
+.module-card[data-role~="finance"]  { --ic:#5e5ce6 }
+.module-card[data-role~="hr"]       { --ic:#a2845e }
+.module-card[data-role~="inventory"]{ --ic:#30b0c0 }
+.module-card[data-role~="admin"]    { --ic:#8e8e93 }
+.module-card[data-role~="beds"]     { --ic:#40c8e0 }
+.ic.blue  { --ic:#0a84ff }
+.ic.green { --ic:#30d158 }
+.ic.orange{ --ic:#ff9f0a }
+.ic.purple{ --ic:#bf5af2 }
+.ic.red   { --ic:#ff453a }
+.ic.teal  { --ic:#40c8e0 }
+
+/* ── 3 · AMBIENT ─────────────────────────────────────────────────────────
+   Wider, softer colour fields — the mesh an iOS wallpaper would use, plus
+   a whisper of film grain so the glass has something to refract.        */
+.gg-ambient{
+    background:
+        radial-gradient(62% 46% at 86% -8%,  rgba(255,158,92,.20), transparent 64%),
+        radial-gradient(48% 40% at 4%  10%,  rgba(147,78,255,.15), transparent 64%),
+        radial-gradient(68% 48% at 52% 114%, rgba(23,190,187,.16), transparent 64%),
+        radial-gradient(42% 36% at 98% 74%,  rgba(10,132,255,.11), transparent 62%),
+        radial-gradient(54% 42% at 12% 94%,  rgba(255,55,95,.07), transparent 64%) !important;
+}
+[data-theme="dark"] .gg-ambient{ opacity:.82 }
+body::after{
+    content:''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    opacity: .34; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+}
+[data-theme="dark"] body::after{ opacity:.55; mix-blend-mode: soft-light }
+
+/* ── 4 · HEADER — a proper iOS nav bar ──────────────────────────────────
+   Three zones: identity (crumb + greeting) · live status · actions.
+   The five floating circles are now ONE segmented glass control, so the
+   bar reads as a designed object instead of loose buttons.              */
+.pc-headerbar{
+    position: sticky !important; top: 0; z-index: 60;
+    min-height: 62px;
+    padding: 12px 22px !important; gap: 12px !important;
+    background: var(--v2-fill) !important;
+    -webkit-backdrop-filter: var(--v2-blur-sm) !important;
+    backdrop-filter: var(--v2-blur-sm) !important;
+    border-bottom: 1px solid var(--v2-edge);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 6px 22px rgba(12,14,30,.07);
+}
+[data-theme="dark"] .pc-headerbar{ box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 6px 22px rgba(0,0,0,.5) }
+/* the white text-shadow stack only existed to survive the old photo */
+.pc-headerbar .pc-crumb, .pc-headerbar .pc-crumb a, .pc-headerbar .pc-date,
+.pc-headerbar .pc-greet, .pc-headerbar .pc-quickstat{ text-shadow: none !important }
+
+/* zone 1 — who and where. The greeting is secondary, the name is primary. */
+.pc-crumb{ font-size: 12px !important; font-weight: 500;
+    color: color-mix(in srgb, var(--tm) 45%, var(--ts)) !important }
+.pc-crumb a{ color: color-mix(in srgb, var(--tm) 45%, var(--ts)) !important;
+    font-weight: 600; text-decoration: none }
+.pc-crumb a:hover{ color: var(--ac) !important }
+.pc-crumb .sep{ opacity: .3 }
+#greetingText, .pc-greet{
+    font-size: 14.5px !important; font-weight: 500 !important;
+    letter-spacing: -.012em; color: var(--ts) !important;
+}
+/* the name: same ink as everything else, just heavier. No gradient, no colour. */
+#greetingText .hl, .pc-greet .hl{
+    background: none !important;
+    -webkit-background-clip: border-box !important;
+            background-clip: border-box !important;
+    -webkit-text-fill-color: currentColor !important;
+    color: var(--tp) !important;
+    font-weight: 700 !important; font-size: 1em !important;
+    filter: none !important;
+}
+[data-theme="dark"] #greetingText .hl, [data-theme="dark"] .pc-greet .hl{ color: var(--tp) !important }
+.pc-divider{ background: var(--v2-edge) !important; height: 20px !important; width: 1px !important }
+.pc-date{ font-size: 12px !important; font-weight: 500;
+    color: color-mix(in srgb, var(--tm) 45%, var(--ts)) !important }
+[data-theme="dark"] .pc-crumb, [data-theme="dark"] .pc-crumb a, [data-theme="dark"] .pc-date,
+[data-theme="dark"] .pc-crumb .sep{ color: color-mix(in srgb, var(--tm) 78%, #ffffff) !important }
+
+/* zone 2 — status. One blue accent, one semantic green. Nothing else. */
+.pc-quickstat{
+    background: color-mix(in srgb, var(--ac) 9%, var(--v2-fill)) !important;
+    border: .5px solid color-mix(in srgb, var(--ac) 20%, transparent) !important;
+    color: color-mix(in srgb, var(--ac) 60%, var(--tp)) !important;
+    padding: 5px 13px !important; font-size: 12px !important;
+    -webkit-backdrop-filter: var(--v2-blur-sm); backdrop-filter: var(--v2-blur-sm);
+}
+.pc-quickstat span{ font-weight: 800; font-variant-numeric: tabular-nums }
+.gg-live{
+    background: color-mix(in srgb, var(--green) 10%, var(--v2-fill)) !important;
+    border: .5px solid color-mix(in srgb, var(--green) 24%, transparent) !important;
+    color: color-mix(in srgb, var(--greend, #1a7a32) 52%, var(--tp)) !important;
+    padding: 5px 13px 5px 10px !important; font-size: 12px !important;
+    -webkit-backdrop-filter: var(--v2-blur-sm); backdrop-filter: var(--v2-blur-sm);
+}
+[data-theme="dark"] .gg-live{ color: color-mix(in srgb, var(--green) 55%, var(--tp)) !important }
+.gg-live .pulse{ width: 8px; height: 8px; animation: v2pulse 2.4s var(--ease, ease) infinite }
+@keyframes v2pulse{
+    0%  { box-shadow: 0 0 0 0   color-mix(in srgb, var(--green) 40%, transparent) }
+    70% { box-shadow: 0 0 0 9px transparent }
+    100%{ box-shadow: 0 0 0 0   transparent }
+}
+
+/* zone 3 — ONE segmented glass control instead of five loose circles */
+.pc-headerbar > .gg-hbtn{
+    width: 42px !important; height: 38px !important;
+    border-radius: 0 !important;
+    border: 1px solid var(--v2-edge) !important;
+    background: var(--v2-fill) !important;
+    box-shadow: 0 1px 2px rgba(12,14,30,.05), 0 6px 16px rgba(12,14,30,.08) !important;
+    -webkit-backdrop-filter: var(--v2-blur-sm) !important;
+    backdrop-filter: var(--v2-blur-sm) !important;
+    font-size: 16px !important; color: var(--ts) !important;
+    margin-left: 0 !important; transition: background .2s var(--ease, ease), color .2s var(--ease, ease) !important;
+}
+.pc-headerbar > .gg-hbtn + .gg-hbtn{ margin-left: -13px !important }  /* 12px flex gap − 13px = 1px overlap */
+.pc-headerbar > .gg-hbtn:first-of-type{ border-radius: 12px 0 0 12px !important }
+.pc-headerbar > .gg-hbtn:last-of-type { border-radius: 0 12px 12px 0 !important }
+/* the shine sweep reads as noise on a segmented bar — drop it here only */
+.pc-headerbar > .gg-hbtn::after{ display: none !important }
+/* hairline separator between the status zone and the cluster */
+.pc-headerbar > .gg-hbtn:first-of-type::before{
+    content: ''; position: absolute; left: -7px; top: 50%; translate: 0 -50%;
+    width: 1px; height: 22px; background: var(--v2-edge);
+}
+.pc-headerbar > .gg-hbtn:hover{
+    transform: none !important; z-index: 3;
+    background: var(--v2-fill-hi) !important; color: var(--tp) !important;
+}
+.pc-headerbar > .gg-hbtn:active{
+    transform: none !important;
+    background: color-mix(in srgb, var(--ac) 9%, var(--v2-fill)) !important;
+}
+/* the assistant orb: an indigo/blue globe, not a rainbow */
+.gg-siri-orb{
+    background: conic-gradient(from 0deg, #5e5ce6, #0a84ff, #64d2ff, #0a84ff, #5e5ce6) !important;
+    box-shadow: 0 0 8px rgba(94,92,230,.45) !important;
+    animation-duration: 16s !important;
+}
+/* the 3 px rainbow topline → a single hairline accent */
+.gg-topline{
+    height: 1.5px !important; opacity: 1 !important;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        color-mix(in srgb, var(--ac) 55%, transparent) 20%,
+        color-mix(in srgb, var(--ac) 55%, transparent) 80%,
+        transparent 100%) !important;
+}
+
+/* ── 5 · LAYOUT — bigger cards, calmer rhythm ───────────────────────────── */
+.wrap{ max-width: 1360px !important; padding: 20px 20px 40px !important }
+.stats{ grid-template-columns: repeat(auto-fit, minmax(210px,1fr)) !important; gap: var(--v2-gap) !important; margin-bottom: 20px !important }
+.modules{ grid-template-columns: repeat(auto-fill, minmax(258px,1fr)) !important; gap: var(--v2-gap) !important }
+.sec{ margin: 24px 0 14px !important }
+
+/* ── 6 · CARDS ──────────────────────────────────────────────────────────── */
+.stat-card, .module-card{
+    border-radius: var(--v2-r) !important;
+    background: var(--v2-fill) !important;
+    -webkit-backdrop-filter: var(--v2-blur) !important;
+    backdrop-filter: var(--v2-blur) !important;
+    border: 1px solid var(--v2-edge) !important;
+    box-shadow: var(--v2-sh), var(--v2-rim), var(--v2-base) !important;
+    /* mirrors .pc-tilt's own timing so the JS 3-D tilt keeps its spring */
+    transition: transform .42s var(--spring, cubic-bezier(.34,1.56,.64,1)),
+                box-shadow .4s var(--ease, ease), background .3s var(--ease, ease),
+                border-color .3s var(--ease, ease);
+}
+.stat-card:hover, .module-card:hover{
+    background: var(--v2-fill-hi) !important;
+    border-color: var(--v2-edge-hi) !important;
+    box-shadow: var(--v2-sh-hi), var(--v2-rim), var(--v2-base) !important;
+}
+/* the icon keeps its own colour glow on hover (the old rule forced blue) */
+.module-card:hover .card-icon, .stat-card:hover .ic{
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.55),
+                inset 0 0 0 .5px color-mix(in srgb, var(--ic,#0a84ff) 32%, transparent),
+                0 8px 20px color-mix(in srgb, var(--ic,#0a84ff) 30%, transparent) !important;
+}
+/* the hover wash now takes the card's own colour */
+.module-card::before{
+    background: linear-gradient(150deg, color-mix(in srgb, var(--ic,#0a84ff) 15%, transparent), transparent 62%) !important;
+}
+
+.stat-card{ padding: 18px 20px !important; gap: 15px !important }
+.stat-card .ic{
+    width: 46px; height: 46px; border-radius: var(--v2-r-chip);
+    font-size: 21px; color: var(--v2-ink, color-mix(in srgb, var(--ic,#0a84ff) 40%, #0b0d12));
+    background: linear-gradient(158deg,
+        color-mix(in srgb, var(--ic,#0a84ff) 21%, transparent),
+        color-mix(in srgb, var(--ic,#0a84ff) 9%, transparent));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.55),
+                inset 0 0 0 .5px color-mix(in srgb, var(--ic,#0a84ff) 26%, transparent),
+                0 4px 14px color-mix(in srgb, var(--ic,#0a84ff) 20%, transparent);
+}
+.stat-card .num{
+    font-size: 27px !important; font-weight: 800;
+    letter-spacing: -1.1px !important; line-height: 1.05;
+}
+.stat-card .lab{ font-size: 12px !important; margin-top: 3px !important; font-weight: 500 }
+
+.module-card{ padding: 20px 20px 58px !important; min-height: 178px }
+.module-card .card-icon{
+    width: 46px; height: 46px; border-radius: var(--v2-r-chip);
+    font-size: 21px; margin-bottom: 14px;
+    color: var(--v2-ink, color-mix(in srgb, var(--ic,#0a84ff) 40%, #0b0d12));
+    background: linear-gradient(158deg,
+        color-mix(in srgb, var(--ic,#0a84ff) 23%, transparent),
+        color-mix(in srgb, var(--ic,#0a84ff) 10%, transparent));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.55),
+                inset 0 0 0 .5px color-mix(in srgb, var(--ic,#0a84ff) 28%, transparent),
+                0 4px 14px color-mix(in srgb, var(--ic,#0a84ff) 20%, transparent);
+}
+.card-title{ font-size: 15.5px !important; font-weight: 700; letter-spacing: -.3px !important; margin-bottom: 5px !important }
+.card-desc{ font-size: 12.5px !important; line-height: 1.5 !important; margin-bottom: 0 !important; min-height: 0 !important }
+.card-badge{
+    position: absolute; left: 20px; bottom: 20px;
+    font-size: 10px !important; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    padding: 4px 10px !important; border-radius: 999px !important;
+    background: color-mix(in srgb, var(--ic,#0a84ff) 10%, var(--v2-fill)) !important;
+    border: .5px solid color-mix(in srgb, var(--ic,#0a84ff) 26%, transparent) !important;
+    color: var(--v2-ink, color-mix(in srgb, var(--ic,#0a84ff) 40%, #0b0d12)) !important;
+}
+.card-arrow{
+    bottom: 18px !important; right: 18px !important;
+    width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 15px !important; opacity: .5 !important;
+    color: var(--v2-ink, color-mix(in srgb, var(--ic,#0a84ff) 40%, #0b0d12)) !important;
+    background: color-mix(in srgb, var(--ic,#0a84ff) 9%, var(--v2-fill));
+    border: .5px solid color-mix(in srgb, var(--ic,#0a84ff) 22%, transparent);
+    transform: none !important;
+    transition: opacity .28s var(--ease, ease), translate .3s var(--spring, ease),
+                background .3s var(--ease, ease);
+}
+.module-card:hover .card-arrow{
+    transform: none !important; opacity: 1 !important; translate: 2px 0;
+    background: color-mix(in srgb, var(--ic,#0a84ff) 22%, var(--v2-fill));
+}
+.sec{
+    background: var(--v2-fill) !important;
+    border: 1px solid var(--v2-edge) !important;
+    border-radius: 999px !important; padding: 7px 15px !important;
+    box-shadow: var(--v2-sh), var(--v2-rim) !important;
+    -webkit-backdrop-filter: var(--v2-blur-sm) !important;
+    backdrop-filter: var(--v2-blur-sm) !important;
+    font-size: 11px !important; letter-spacing: .10em !important;
+    color: var(--ts) !important;
+}
+.sec::after{ background: linear-gradient(90deg, var(--v2-edge), transparent) !important }
+.sec::before{
+    width: 6px !important; height: 6px !important; border-radius: 50% !important;
+    background: color-mix(in srgb, var(--ac) 55%, transparent) !important;
+    box-shadow: none !important;
+}
+
+/* in dark mode the chips are dark, so the ink flips light */
+[data-theme="dark"] .stat-card .ic,
+[data-theme="dark"] .module-card .card-icon,
+[data-theme="dark"] .card-badge,
+[data-theme="dark"] .card-arrow{
+    --v2-ink: color-mix(in srgb, var(--ic,#0a84ff) 74%, #ffffff);
+}
+
+/* ── 7 · SMALL SCREENS ──────────────────────────────────────────────────── */
+@media (max-width: 820px){
+    .pc-headerbar{ padding: 10px 14px !important; gap: 9px !important; min-height: 0 }
+    .pc-headerbar > .gg-hbtn{ width: 38px !important; height: 36px !important }
+    .stat-card, .module-card{ border-radius: 20px !important }
+    .module-card{ padding: 18px 18px 54px !important; min-height: 0 }
+    .card-badge{ left: 18px; bottom: 18px }
+    .stat-card .num{ font-size: 23px !important }
+    .stat-card .ic, .module-card .card-icon{ width: 42px; height: 42px; border-radius: 14px }
+}
+@media (max-width: 620px){
+    .wrap{ padding: 16px 14px 30px !important }
+    .stats, .modules{ gap: 12px !important }
+    .module-card .card-desc{ display: none }
+}
+@media (prefers-reduced-motion: reduce){
+    .gg-live .pulse{ animation: none }
+    .stat-card, .module-card, .card-arrow{ transition: none }
+}
+</style>
 </head>
 <body>
 
@@ -991,19 +1326,53 @@ body.dark-mode {
 
     // ── Stats ──
     function refreshStats() {
+        // Counts come from the common server (Firestore). window.__pclinicLive is
+        // filled by the hub-live module at the end of this page. Until it answers,
+        // this falls back to the browser's local mirror of the same collection —
+        // and if there is no mirror yet it shows a dash rather than a false 0.
+        var live = window.__pclinicLive || null;
         var patients = [];
         try { if (typeof getPatients === 'function') patients = getPatients() || []; } catch (e) {}
-        var total = patients.length;
         var today = d.toISOString().slice(0, 10);
-        var todayCount = patients.filter(function (p) { return p && p.registered === today; }).length;
-        var queued = patients.filter(function (p) { return p && p.queueStatus === 'waiting'; }).length;
+        var hasCache = patients.length > 0;
+
+        if (!live && !hasCache) {
+            ['totalPatients', 'totalDoctors', 'todayAppointments', 'queueCount'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = '–';
+            });
+            var qs0 = document.getElementById('qsPatients');
+            if (qs0) qs0.textContent = '–';
+            document.body.setAttribute('data-live-source', 'loading');
+            return;
+        }
+
+        var total   = live && live.total   != null ? live.total   : patients.length;
+        var doctors = live && live.doctors != null ? live.doctors : 12;
+        var todayCount = live && live.today != null ? live.today
+                       : patients.filter(function (p) { return p && p.registered === today; }).length;
+        var queued = live && live.queue != null ? live.queue
+                   : patients.filter(function (p) { return p && p.queueStatus === 'waiting'; }).length;
 
         countTo('totalPatients', total);
-        countTo('totalDoctors', 12);
+        countTo('totalDoctors', doctors);
         countTo('todayAppointments', todayCount);
         countTo('queueCount', queued);
         document.getElementById('qsPatients').textContent = todayCount;
+
+        document.body.setAttribute('data-live-source', live ? 'server' : 'cache');
+        document.body.setAttribute('data-live-at', live ? String(live.at || '') : '');
+
+        // the pill says where its numbers came from, so nobody has to guess
+        var pill = document.getElementById('ggLive');
+        if (pill) {
+            var stamp = live && live.at ? new Date(live.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
+            pill.title = live ? ('Live from the server · ' + stamp)
+                              : 'Showing this device\'s cached copy — open a signed-in session for live server figures';
+        }
     }
+    // the hub-live module calls this once real server counts arrive
+    window.refreshHubStats = refreshStats;
 
     function countTo(id, target) {
         var el = document.getElementById(id);
@@ -1643,6 +2012,104 @@ body.dark-mode {
             notify('System', 'Golden Gate pack active', 'Notifications, Focus, Live Activities & Writing Tools are ready — see Control Centre.');
         }
     }, 900);
+})();
+</script>
+
+<!-- ═══ LIVE COUNTS — read from the common server (Firestore) ═══════════════
+     The stat numbers and the Live Activity pill come from here. Counts are
+     computed ON THE SERVER with count aggregations, so the page does not have
+     to download the patient collection just to learn how many patients exist.
+     Falls back silently to the local mirror (and to 12 doctors) if the server
+     is unreachable or the rules refuse the aggregation.
+     Re-runs on sign-in, on every patientsUpdated, on tab focus, on reconnect,
+     and every 60 s while the tab is visible.                                  -->
+<script type="module">
+(async function () {
+    'use strict';
+    var REFRESH_MS = 60000;
+    var lastAt = 0, inFlight = false, backoffUntil = 0;
+
+    function log() { try { console.log.apply(console, ['[hub-live]'].concat([].slice.call(arguments))); } catch (e) {} }
+
+    // ── wait for firebase-config.js to publish the app/db ──
+    function waitFor(cond, ms) {
+        return new Promise(function (resolve) {
+            var t0 = Date.now();
+            (function poll() {
+                var v; try { v = cond(); } catch (e) {}
+                if (v) return resolve(v);
+                if (Date.now() - t0 > ms) return resolve(null);
+                setTimeout(poll, 120);
+            })();
+        });
+    }
+
+    var fs;
+    try { fs = await import('https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js'); }
+    catch (e) { log('firestore module unavailable — staying on the local mirror'); return; }
+
+    var app = await waitFor(function () { return window.firebaseApp; }, 12000);
+    if (!app) { log('no firebase app — staying on the local mirror'); return; }
+
+    var db = fs.getFirestore(app);
+    var patientsRef = fs.collection(db, 'patients');
+
+    async function fetchCounts() {
+        var today = new Date().toISOString().slice(0, 10);
+        var out = {};
+        var r = await Promise.all([
+            fs.getCountFromServer(patientsRef),
+            fs.getCountFromServer(fs.query(patientsRef, fs.where('registered', '==', today))),
+            fs.getCountFromServer(fs.query(patientsRef, fs.where('queueStatus', '==', 'waiting')))
+        ]);
+        out.total = r[0].data().count;
+        out.today = r[1].data().count;
+        out.queue = r[2].data().count;
+        try {
+            var u = await fs.getDocs(fs.query(fs.collection(db, 'users'), fs.where('role', '==', 'doctor')));
+            if (u && u.size > 0) out.doctors = u.size;
+        } catch (e) { /* rules may not allow listing users — keep the local figure */ }
+        out.at = Date.now();
+        return out;
+    }
+
+    async function refresh(why) {
+        if (inFlight) return;
+        if (Date.now() < backoffUntil) return;
+        if (document.hidden && why !== 'auth') return;
+        inFlight = true;
+        try {
+            var counts = await fetchCounts();
+            window.__pclinicLive = counts;
+            window.__pclinicLiveError = null;
+            lastAt = counts.at;
+            log('server counts', counts, '(' + why + ')');
+            if (typeof window.refreshHubStats === 'function') window.refreshHubStats();
+        } catch (err) {
+            window.__pclinicLiveError = (err && err.code) || String(err);
+            backoffUntil = Date.now() + 5 * 60000;   // don't hammer a denied/failed query
+            log('server counts unavailable (' + window.__pclinicLiveError + ') — local mirror stays');
+        } finally { inFlight = false; }
+    }
+
+    // ── triggers ──
+    window.addEventListener('firebaseReady', function () { refresh('ready'); });
+    window.addEventListener('patientsUpdated', function () { setTimeout(function () { refresh('patients'); }, 1500); });
+    window.addEventListener('online', function () { backoffUntil = 0; refresh('online'); });
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden && Date.now() - lastAt > 30000) refresh('focus');
+    });
+    setInterval(function () { if (!document.hidden) refresh('timer'); }, REFRESH_MS);
+
+    var af = window.firebaseAuthFunctions, auth = window.firebaseAuth;
+    if (af && auth && af.onAuthStateChanged) {
+        af.onAuthStateChanged(auth, function (user) {
+            if (user) { backoffUntil = 0; refresh('auth'); }
+            else { window.__pclinicLive = null; if (typeof window.refreshHubStats === 'function') window.refreshHubStats(); }
+        });
+    } else {
+        refresh('boot');
+    }
 })();
 </script>
 </body>
