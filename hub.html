@@ -1186,22 +1186,22 @@ html { scroll-behavior: smooth; }
 
     <!-- ═══ STATS ═══ -->
     <div class="stats pc-stagger" id="statsGrid">
-        <a class="stat-card pc-tilt" href="reception-dashboard.html">
+        <div class="stat-card pc-tilt" id="statCardPatients" onclick="onStatCardClick('reception')">
             <span class="ic blue"><i class="ti ti-users"></i></span>
             <span class="txt"><span class="num" id="totalPatients">0</span><span class="lab">Total Patients</span></span>
-        </a>
-        <a class="stat-card pc-tilt" href="doctor-dashboard.html">
+        </div>
+        <div class="stat-card pc-tilt" id="statCardDoctors" onclick="onStatCardClick('doctor')">
             <span class="ic green"><i class="ti ti-stethoscope"></i></span>
             <span class="txt"><span class="num" id="totalDoctors">0</span><span class="lab">Doctors</span></span>
-        </a>
-        <a class="stat-card pc-tilt" href="appointments.html">
+        </div>
+        <div class="stat-card pc-tilt" id="statCardAppointments" onclick="onStatCardClick('appointments')">
             <span class="ic orange"><i class="ti ti-calendar"></i></span>
             <span class="txt"><span class="num" id="todayAppointments">0</span><span class="lab">Today's Appointments</span></span>
-        </a>
-        <a class="stat-card pc-tilt" href="queue.html">
+        </div>
+        <div class="stat-card pc-tilt" id="statCardQueue" onclick="onStatCardClick('queue')">
             <span class="ic purple"><i class="ti ti-list-numbers"></i></span>
             <span class="txt"><span class="num" id="queueCount">0</span><span class="lab">In Queue</span></span>
-        </a>
+        </div>
     </div>
 
     <div class="sec">Departments</div>
@@ -1503,13 +1503,56 @@ html { scroll-behavior: smooth; }
             c.style.display = ok ? '' : 'none';
             if (ok) visible++;
         });
-        if (visible === 0) {
+        if (visible === 0 && role === 'admin') {
             cards.forEach(function (c) { c.dataset.visible = '1'; c.style.display = ''; });
         }
+
+        try {
+            sessionStorage.setItem('pclinic_role', role);
+            localStorage.setItem('userRole', role);
+        } catch(e){}
 
         applySearch();      // re-apply any restored search once roles are known
         prefetchVisible();
     });
+
+    // ── Stat Card Click Handler (Enforces strict portal permissions) ──
+    window.onStatCardClick = function (type) {
+        var role = (window.currentStaff && window.currentStaff.role || sessionStorage.getItem('pclinic_role') || localStorage.getItem('userRole') || '').toLowerCase();
+        var isAdmin = role === 'admin';
+        if (type === 'doctor') {
+            if (role === 'doctor' || isAdmin) {
+                window.location.href = 'doctor-dashboard.html';
+            } else {
+                if (typeof pcToast === 'function') {
+                    pcToast('🩺 ' + (document.getElementById('totalDoctors').textContent || '0') + ' active physicians on staff.', 'info');
+                }
+            }
+        } else if (type === 'reception') {
+            if (role === 'reception' || isAdmin) {
+                window.location.href = 'reception-dashboard.html';
+            } else {
+                if (typeof pcToast === 'function') {
+                    pcToast('👥 ' + (document.getElementById('totalPatients').textContent || '0') + ' active registered patients.', 'info');
+                }
+            }
+        } else if (type === 'appointments') {
+            window.location.href = 'appointments.html';
+        } else if (type === 'queue') {
+            window.location.href = 'queue.html';
+        }
+    };
+
+    // ── Check Pending Auth Notice ──
+    try {
+        var authNotice = sessionStorage.getItem('pclinic_auth_message');
+        if (authNotice) {
+            sessionStorage.removeItem('pclinic_auth_message');
+            setTimeout(function () {
+                if (typeof pcToast === 'function') pcToast(authNotice, 'warning');
+            }, 300);
+        }
+    } catch(e){}
 
 
     // ── Prefetch the dashboards this user can actually reach, so

@@ -1751,5 +1751,12 @@ html body #pc_chuk_top_menu.chuk-top-menu { position: relative !important; top: 
 html body #pc_common_demo_bar.oc-demo-bar, html body .oc-demo-bar { position: relative !important; top: auto !important; z-index: 2 !important; margin: 0 !important; flex-shrink: 0 !important; }
 html body #dcBar.dc-bar, html body #dcBar { position: relative !important; top: auto !important; z-index: 1 !important; margin: 0 !important; width: 100% !important; clear: both !important; flex-shrink: 0 !important; }
 </style>
+    <script>
+        requireAuth(['radio']).then(function(staff) {
+            window.currentStaff = staff;
+            window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: staff }));
+            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
+        });
+    </script>
 </body>
 </html>

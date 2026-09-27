@@ -94,8 +94,7 @@
 </div>
 
 <div class="pc-headerbar">
-    <nav class="pc-crumb"><a href="hub.html">🏥 Hub</a><span class="sep">›</span>
-        <a href="doctor-dashboard.html">Doctor</a><span class="sep">›</span><span>Physio Request</span></nav>
+    <nav class="pc-crumb"><a href="hub.html">🏥 Hub</a><span class="sep">›</span><span>Physiotherapy</span></nav>
     <span class="pc-divider"></span>
     <span class="pc-greet">Order physiotherapy &amp; bill cashier</span>
     <span class="pc-spacer"></span>
@@ -432,7 +431,11 @@ window.closePhysioPage = function(){
             return;
         }
     } catch (e) {}
-    window.location.href = 'doctor-dashboard.html';
+    if (window.currentStaff && window.currentStaff.role === 'doctor') {
+        window.location.href = 'doctor-dashboard.html';
+    } else {
+        window.location.href = 'hub.html';
+    }
 };
 
 window.addEventListener('ordersUpdated', renderHistory);

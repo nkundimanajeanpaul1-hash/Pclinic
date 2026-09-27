@@ -280,7 +280,7 @@
                     </div>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <button type="button" class="pc-btn pc-btn-secondary" onclick="window.location.href='doctor-dashboard.html'">
+                    <button type="button" class="pc-btn pc-btn-secondary" onclick="if(window.currentStaff && window.currentStaff.role==='doctor'){window.location.href='doctor-dashboard.html';}else{window.location.href='hub.html';}">
                         <i class="ti ti-arrow-left"></i> ← Doctor Dashboard
                     </button>
                     <button type="button" class="pc-btn" onclick="window.print()">

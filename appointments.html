@@ -122,7 +122,7 @@
             <h1>All <span class="highlight">Appointments</span></h1>
             <p style="color:var(--tm); font-size:13px; margin-top:2px;">Every scheduled appointment, across every patient</p>
         </div>
-        <button class="btn" onclick="window.location.href='reception-dashboard.html'"><i class="ti ti-plus"></i> Book via Reception</button>
+        <button class="btn" onclick="if(window.currentStaff && window.currentStaff.role==='reception'){window.location.href='reception-dashboard.html';}else if(typeof pcToast==='function'){pcToast('Booking new appointments is handled by Reception staff.','info');}else{alert('Booking new appointments is handled by Reception staff.');}"><i class="ti ti-plus"></i> Book via Reception</button>
     </div>
 
     <div class="filters">

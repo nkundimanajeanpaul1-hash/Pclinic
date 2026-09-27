@@ -366,7 +366,7 @@
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <a href="medical-summary.html" class="btn-apple green" title="Medical summary"><i class="ti ti-file-text"></i> Medical summary</a>
-            <a href="doctor-dashboard.html" class="btn-apple" title="Doctor Console"><i class="ti ti-user-check"></i> Doctor</a>
+            <a href="hub.html" class="btn-apple" title="Return to Hub"><i class="ti ti-smart-home"></i> Hub</a>
             <a href="lab-request.html" class="btn-apple" title="Lab Request"><i class="ti ti-test-pipe"></i> Lab Request</a>
             <a href="imaging-request.html" class="btn-apple" title="Imaging Request"><i class="ti ti-radio"></i> Imaging</a>
             <button class="btn-apple" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
@@ -619,7 +619,11 @@
                 return;
             }
         } catch(e) {}
-        window.location.href = 'doctor-dashboard.html';
+        if (window.currentStaff && window.currentStaff.role === 'doctor') {
+            window.location.href = 'doctor-dashboard.html';
+        } else {
+            window.location.href = 'hub.html';
+        }
     };
 
     function escapeHtml(str) {

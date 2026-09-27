@@ -1820,15 +1820,25 @@
         var menuDiv = document.createElement('div');
         menuDiv.id = 'pc_chuk_top_menu';
         menuDiv.className = 'chuk-top-menu noprint';
+        var curRole = '';
+        try {
+            curRole = ((window.currentStaff && window.currentStaff.role) || sessionStorage.getItem('pclinic_role') || localStorage.getItem('userRole') || '').toLowerCase();
+        } catch(e){}
+        var isClinical = curRole === 'doctor' || curRole === 'nurse' || curRole === 'admin' || !curRole;
+
+        var leftHtml = '<a class="chk-btn btn-patient" onclick="window.pcPatientMenu&&window.pcPatientMenu(this);">👤 Patient <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
+        if (isClinical) {
+            leftHtml += '<a class="chk-btn btn-summary" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; window.location.href=\'medical-summary.html?patient=\'+encodeURIComponent(id);">📋 Medical summary</a>';
+            leftHtml += '<a class="chk-btn btn-nursing" onclick="window.pcNursingMenu&&window.pcNursingMenu(this);">🏥 Nursing <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
+        }
+        leftHtml += '<a class="chk-btn btn-applications" onclick="window.pcApplicationsMenu&&window.pcApplicationsMenu(this);">💉 Applications <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
+        if (isClinical) {
+            leftHtml += '<a class="chk-btn btn-documents" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(id);">📂 Documents</a>';
+        }
+        leftHtml += '<a class="chk-btn btn-system" onclick="window.pcSystemMenu&&window.pcSystemMenu(this);">⚙️ System <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
+
         menuDiv.innerHTML =
-            '<div class="chuk-menu-left">' +
-                '<a class="chk-btn btn-patient" onclick="window.pcPatientMenu&&window.pcPatientMenu(this);">👤 Patient <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>' +
-                '<a class="chk-btn btn-summary" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; window.location.href=\'medical-summary.html?patient=\'+encodeURIComponent(id);">📋 Medical summary</a>' +
-                '<a class="chk-btn btn-nursing" onclick="window.pcNursingMenu&&window.pcNursingMenu(this);">🏥 Nursing <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>' +
-                '<a class="chk-btn btn-applications" onclick="window.pcApplicationsMenu&&window.pcApplicationsMenu(this);">💉 Applications <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>' +
-                '<a class="chk-btn btn-documents" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(id);">📂 Documents</a>' +
-                '<a class="chk-btn btn-system" onclick="window.pcSystemMenu&&window.pcSystemMenu(this);">⚙️ System <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>' +
-            '</div>' +
+            '<div class="chuk-menu-left">' + leftHtml + '</div>' +
             '<div class="chuk-menu-center" style="flex:1;display:flex;justify-content:center;align-items:center;"><div id="pcGlobalClock" class="pc-global-clock" style="font-size:11px;font-weight:700;color:#1e293b;background:#e2e8f0;padding:4px 12px;border-radius:20px;">🕒 Loading...</div></div>' +
             '<div class="chuk-menu-right">' +
                 '<a class="chk-btn btn-theme" onclick="if(window.pcFile&&pcFile.toggleThemeFromMenu)pcFile.toggleThemeFromMenu();">☀️ Theme</a>' +
@@ -2065,6 +2075,14 @@
     }
 
     function menuGo(page) {
+        if (!canAccessPortal(page)) {
+            var r = '';
+            try { r = ((window.currentStaff && window.currentStaff.role) || sessionStorage.getItem('pclinic_role') || localStorage.getItem('userRole') || '').toLowerCase(); } catch(e){}
+            var pName = (page || '').split('?')[0].split('/').pop().replace('-dashboard.html', '').replace('.html', '').toUpperCase();
+            var msg = '⛔ Access restricted: ' + pName + ' is not available for your role (' + (r || 'staff') + ').';
+            if (window.pcToast) pcToast(msg, 'warning'); else alert(msg);
+            return;
+        }
         var p = menuPatient();
         var id = (p && p.id) || '';
         try { id = id || localStorage.getItem('pclinic_active_patient') || ''; } catch(e){}
@@ -2172,6 +2190,49 @@
        patient (?patient=), Print prints the selected patient's ID
        card or the current page.
        ══════════════════════════════════════════════════════════════ */
+    function canAccessPortal(page) {
+        var clean = (page || '').split('?')[0].split('#')[0].split('/').pop().toLowerCase();
+        var perms = window.PORTAL_PERMISSIONS || {
+            'doctor-dashboard.html': ['doctor'],
+            'doctor-dashboard': ['doctor'],
+            'cashier-dashboard.html': ['cashier'],
+            'cashier-dashboard': ['cashier'],
+            'nurse-dashboard.html': ['nurse'],
+            'nurse-dashboard': ['nurse'],
+            'lab-dashboard.html': ['lab'],
+            'lab-dashboard': ['lab'],
+            'pharmacy-dashboard.html': ['pharmacy'],
+            'pharmacy-dashboard': ['pharmacy'],
+            'reception-dashboard.html': ['reception'],
+            'reception-dashboard': ['reception'],
+            'hr-dashboard.html': ['hr', 'admin'],
+            'hr-dashboard': ['hr', 'admin'],
+            'admin-dashboard.html': ['admin'],
+            'admin-dashboard': ['admin'],
+            'finance-dashboard.html': ['finance'],
+            'finance-dashboard': ['finance'],
+            'inventory-dashboard.html': ['inventory'],
+            'inventory-dashboard': ['inventory'],
+            'physio-dashboard.html': ['physio'],
+            'physio-dashboard': ['physio'],
+            'radio-dashboard.html': ['radio'],
+            'radio-dashboard': ['radio'],
+            'beds-dashboard.html': ['beds', 'nurse', 'reception', 'doctor'],
+            'beds-dashboard': ['beds', 'nurse', 'reception', 'doctor'],
+            'theater-dashboard.html': ['theater', 'doctor', 'nurse', 'reception'],
+            'theater-dashboard': ['theater', 'doctor', 'nurse', 'reception']
+        };
+        var req = perms[clean];
+        if (!req || req.length === 0) return true;
+        var r = '';
+        try {
+            r = ((window.currentStaff && window.currentStaff.role) || sessionStorage.getItem('pclinic_role') || localStorage.getItem('userRole') || '').toLowerCase();
+        } catch(e){}
+        if (!r) return false;
+        if (r === 'admin') return true;
+        return req.indexOf(r) !== -1;
+    }
+
     function showApplicationsMenu(btn) {
         closePatientMenu();
         closeNursingMenu();
@@ -2192,23 +2253,35 @@
             document.head.appendChild(st);
         }
 
-        var items = [
-            { icon:'ti-list-numbers',    label:'Queue management',              run:function(){ appsGo('queue.html'); } },
-            { icon:'ti-calendar-event',  label:'Planning',                      run:function(){ appsGo('appointments.html'); } },
-            { icon:'ti-pill',            label:'Prescriptions',                 run:function(){ menuGo('prescription.html'); } },
-            { icon:'ti-ambulance',       label:'Emergencies actual situation',  run:function(){ appsGo('beds-dashboard.html'); } },
-            { icon:'ti-building-store',  label:'Pharmacy',                      run:function(){ appsGo('pharmacy-dashboard.html'); } },
-            { icon:'ti-cash',            label:'Financial',                     run:function(){ appsGo('cashier-dashboard.html'); } },
-            { icon:'ti-test-pipe',       label:'Technical examinations',        run:function(){ appsGo('global-examinations.html'); } },
-            { icon:'ti-bed',             label:'ADT',                           run:function(){ menuGo('admission-form.html'); } },
-            { icon:'ti-stethoscope',     label:'Diagnoses',                     run:function(){ menuGo('opd-file.html'); } },
-            { icon:'ti-chart-bar',       label:'Statistics',                    run:function(){ appsGo('admin-dashboard.html'); } },
-            { icon:'ti-database',        label:'Data center',                   run:function(){ appsGo('hub.html'); } },
-            { icon:'ti-run',             label:'Fast physiotherapy data entry', run:function(){ menuGo('physio-request.html'); } },
-            { icon:'ti-briefcase',       label:'Executive',                     run:function(){ appsGo('Finance-dashboard.html'); } },
-            { icon:'ti-chart-pie',       label:'Mini-stats',                    run:function(){ appsGo('reception-dashboard.html'); } },
+        var curRole = '';
+        try {
+            curRole = ((window.currentStaff && window.currentStaff.role) || sessionStorage.getItem('pclinic_role') || localStorage.getItem('userRole') || '').toLowerCase();
+        } catch(e){}
+        var isAdmin = curRole === 'admin';
+
+        var allItems = [
+            { icon:'ti-list-numbers',    label:'Queue management',              page:'queue.html',              run:function(){ appsGo('queue.html'); } },
+            { icon:'ti-calendar-event',  label:'Planning',                      page:'appointments.html',       run:function(){ appsGo('appointments.html'); } },
+            { icon:'ti-pill',            label:'Prescriptions',                 page:'prescription.html',       roles:['doctor','nurse','pharmacy'], run:function(){ menuGo('prescription.html'); } },
+            { icon:'ti-ambulance',       label:'Emergencies actual situation',  page:'beds-dashboard.html',     roles:['beds','nurse','reception','doctor'], run:function(){ appsGo('beds-dashboard.html'); } },
+            { icon:'ti-building-store',  label:'Pharmacy',                      page:'pharmacy-dashboard.html', roles:['pharmacy'], run:function(){ appsGo('pharmacy-dashboard.html'); } },
+            { icon:'ti-cash',            label:'Financial',                     page:'cashier-dashboard.html',  roles:['cashier','finance'], run:function(){ appsGo('cashier-dashboard.html'); } },
+            { icon:'ti-test-pipe',       label:'Technical examinations',        page:'global-examinations.html',roles:['lab','radio','doctor'], run:function(){ appsGo('global-examinations.html'); } },
+            { icon:'ti-bed',             label:'ADT',                           page:'admission-form.html',     roles:['doctor','nurse','reception'], run:function(){ menuGo('admission-form.html'); } },
+            { icon:'ti-stethoscope',     label:'Diagnoses',                     page:'opd-file.html',           roles:['doctor','nurse'], run:function(){ menuGo('opd-file.html'); } },
+            { icon:'ti-chart-bar',       label:'Statistics',                    page:'admin-dashboard.html',    roles:['admin'], run:function(){ appsGo('admin-dashboard.html'); } },
+            { icon:'ti-database',        label:'Data center',                   page:'hub.html',                run:function(){ appsGo('hub.html'); } },
+            { icon:'ti-run',             label:'Fast physiotherapy data entry', page:'physio-request.html',     roles:['physio','doctor'], run:function(){ menuGo('physio-request.html'); } },
+            { icon:'ti-briefcase',       label:'Executive',                     page:'Finance-dashboard.html',  roles:['finance'], run:function(){ appsGo('Finance-dashboard.html'); } },
+            { icon:'ti-chart-pie',       label:'Mini-stats',                    page:'reception-dashboard.html',roles:['reception'], run:function(){ appsGo('reception-dashboard.html'); } },
             { icon:'ti-printer',         label:'Print',                         run:function(){ var p = menuPatient(); if (p && p.id) { printPatientIdCard(); } else { window.print(); } } }
         ];
+
+        var items = allItems.filter(function(it) {
+            if (!it.roles) return true;
+            if (isAdmin) return true;
+            return it.roles.indexOf(curRole) !== -1;
+        });
 
         var m = document.createElement('div');
         m.className = 'pc-patient-menu pc-apps-menu noprint';
@@ -2243,6 +2316,14 @@
         if (old && old.parentNode) old.parentNode.removeChild(old);
     }
     function appsGo(page) {
+        if (!canAccessPortal(page)) {
+            var r = '';
+            try { r = ((window.currentStaff && window.currentStaff.role) || sessionStorage.getItem('pclinic_role') || localStorage.getItem('userRole') || '').toLowerCase(); } catch(e){}
+            var pName = (page || '').split('?')[0].split('/').pop().replace('-dashboard.html', '').replace('.html', '').toUpperCase();
+            var msg = '⛔ Access restricted: ' + pName + ' portal is not available for your role (' + (r || 'staff') + ').';
+            if (window.pcToast) pcToast(msg, 'warning'); else alert(msg);
+            return;
+        }
         if (window.pcPatient && typeof window.pcPatient.open === 'function') {
             try { window.pcPatient.open(page); return; } catch(e){}
         }
@@ -2281,19 +2362,30 @@
             document.head.appendChild(st);
         }
 
-        var items = [
+        var curRole = '';
+        try {
+            curRole = ((window.currentStaff && window.currentStaff.role) || sessionStorage.getItem('pclinic_role') || localStorage.getItem('userRole') || '').toLowerCase();
+        } catch(e){}
+        var isAdmin = curRole === 'admin';
+
+        var allItems = [
             { icon:'ti-user',          label:'My profile',            run:function(){ openStaffProfileModal(); } },
-            { icon:'ti-users',         label:'Staff & users',         run:function(){ systemGo('admin-dashboard.html?tab=staff'); } },
+            { icon:'ti-users',         label:'Staff & users',         adminOnly:true, run:function(){ systemGo('admin-dashboard.html?tab=staff'); } },
             { icon:'ti-palette',       label:'Appearance',            run:function(){ toggleThemeFromMenu(); } },
             { icon:'ti-world',         label:'Language & settings',   run:function(){ openSystemSettingsModal(); } },
             { icon:'ti-bell',          label:'Notifications',         run:function(){ showNotificationsModal(); } },
-            { icon:'ti-download',      label:'Backup data',           run:function(){ sysBackup(); } },
-            { icon:'ti-upload',        label:'Restore data',          run:function(){ sysRestore(); } },
-            { icon:'ti-eraser',        label:'Purge template data',   run:function(){ sysPurge(); } },
+            { icon:'ti-download',      label:'Backup data',           adminOnly:true, run:function(){ sysBackup(); } },
+            { icon:'ti-upload',        label:'Restore data',          adminOnly:true, run:function(){ sysRestore(); } },
+            { icon:'ti-eraser',        label:'Purge template data',   adminOnly:true, run:function(){ sysPurge(); } },
             { icon:'ti-database',      label:'Data center',           run:function(){ systemGo('hub.html'); } },
             { icon:'ti-info-circle',   label:'System info',           run:function(){ openSystemInfoModal(); } },
             { icon:'ti-logout',        label:'Logout',                run:function(){ confirmLogout(); } }
         ];
+
+        var items = allItems.filter(function(it) {
+            if (it.adminOnly && !isAdmin) return false;
+            return true;
+        });
 
         var m = document.createElement('div');
         m.className = 'pc-patient-menu pc-sys-menu noprint';
@@ -2328,6 +2420,14 @@
         if (old && old.parentNode) old.parentNode.removeChild(old);
     }
     function systemGo(page) {
+        if (!canAccessPortal(page)) {
+            var r = '';
+            try { r = ((window.currentStaff && window.currentStaff.role) || sessionStorage.getItem('pclinic_role') || localStorage.getItem('userRole') || '').toLowerCase(); } catch(e){}
+            var pName = (page || '').split('?')[0].split('/').pop().replace('-dashboard.html', '').replace('.html', '').toUpperCase();
+            var msg = '⛔ Access restricted: ' + pName + ' portal is not available for your role (' + (r || 'staff') + ').';
+            if (window.pcToast) pcToast(msg, 'warning'); else alert(msg);
+            return;
+        }
         if (window.pcPatient && typeof window.pcPatient.open === 'function') {
             try { window.pcPatient.open(page); return; } catch(e){}
         }

@@ -478,8 +478,7 @@
             }
 
             // Staff identifiers are not retained on shared clinic devices.
-            localStorage.setItem('pclinic_login_time', String(Date.now()));
-                    localStorage.removeItem('pclinic_remember_staffid');
+            localStorage.removeItem('pclinic_remember_staffid');
 
             // If a previous page redirected us here with a reason, show it once the form is visible.
             const authMsg = sessionStorage.getItem('pclinic_auth_message');
@@ -600,12 +599,16 @@
                         return;
                     }
 
+                    var userRole = (profile.role || '').toLowerCase();
                     localStorage.setItem('pclinic_login_time', String(Date.now()));
+                    localStorage.setItem('userRole', userRole);
+                    localStorage.setItem('userName', profile.name || staffId || '');
+                    sessionStorage.setItem('pclinic_role', userRole);
                     localStorage.removeItem('pclinic_remember_staffid');
 
                     showMessage(`✅ Welcome, ${profile.name || staffId}!`, 'success');
                     // Redirect right away — no artificial waiting.
-                    window.location.replace('hub');
+                    window.location.replace('hub.html');
 
                 } catch (err) {
                     console.error('Login error:', err);

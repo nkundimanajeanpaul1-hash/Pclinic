@@ -23,6 +23,131 @@
 (function () {
     'use strict';
 
+    // ─── STRICT PORTAL PERMISSIONS REGISTRY ───
+    var PORTAL_PERMISSIONS = {
+        'doctor-dashboard.html': ['doctor'],
+        'doctor-dashboard': ['doctor'],
+        'cashier-dashboard.html': ['cashier'],
+        'cashier-dashboard': ['cashier'],
+        'nurse-dashboard.html': ['nurse'],
+        'nurse-dashboard': ['nurse'],
+        'lab-dashboard.html': ['lab'],
+        'lab-dashboard': ['lab'],
+        'pharmacy-dashboard.html': ['pharmacy'],
+        'pharmacy-dashboard': ['pharmacy'],
+        'reception-dashboard.html': ['reception'],
+        'reception-dashboard': ['reception'],
+        'hr-dashboard.html': ['hr', 'admin'],
+        'hr-dashboard': ['hr', 'admin'],
+        'admin-dashboard.html': ['admin'],
+        'admin-dashboard': ['admin'],
+        'finance-dashboard.html': ['finance'],
+        'finance-dashboard': ['finance'],
+        'inventory-dashboard.html': ['inventory'],
+        'inventory-dashboard': ['inventory'],
+        'physio-dashboard.html': ['physio'],
+        'physio-dashboard': ['physio'],
+        'radio-dashboard.html': ['radio'],
+        'radio-dashboard': ['radio'],
+        'beds-dashboard.html': ['beds', 'nurse', 'reception', 'doctor'],
+        'beds-dashboard': ['beds', 'nurse', 'reception', 'doctor'],
+        'theater-dashboard.html': ['theater', 'doctor', 'nurse', 'reception'],
+        'theater-dashboard': ['theater', 'doctor', 'nurse', 'reception']
+    };
+    window.PORTAL_PERMISSIONS = PORTAL_PERMISSIONS;
+
+    function uncloak() {
+        if (document.documentElement) {
+            document.documentElement.classList.remove('pc-auth-pending');
+        }
+        var cloak = document.getElementById('pc-auth-cloak');
+        if (cloak && cloak.parentNode) {
+            cloak.parentNode.removeChild(cloak);
+        }
+    }
+
+    function goToLogin(reason) {
+        if (reason) {
+            try { sessionStorage.setItem('pclinic_auth_message', reason); } catch (e) {}
+        }
+        window.location.replace('login.html');
+    }
+
+    function goToHub(reason) {
+        if (reason) {
+            try { sessionStorage.setItem('pclinic_auth_message', reason); } catch (e) {}
+        }
+        var here = (window.location.pathname || '').split('/').pop().toLowerCase();
+        if (here === 'hub.html' || here === 'hub') {
+            window.location.replace('login.html');
+            return;
+        }
+        window.location.replace('hub.html');
+    }
+
+    // ─── INSTANT PRE-RENDER ROLE GUARD & ZERO-FLASH CLOAK ───
+    var curPage = (window.location.pathname || '').split('/').pop().toLowerCase();
+    var reqRoles = PORTAL_PERMISSIONS[curPage];
+
+    if (reqRoles && reqRoles.length > 0) {
+        var cachedRole = '';
+        try {
+            cachedRole = (sessionStorage.getItem('pclinic_role') || localStorage.getItem('userRole') || '').toLowerCase();
+        } catch(e) {}
+
+        if (cachedRole) {
+            var isAllowed = cachedRole === 'admin' || reqRoles.indexOf(cachedRole) !== -1;
+            if (!isAllowed) {
+                var portalName = curPage.replace('-dashboard.html', '').replace('.html', '').toUpperCase();
+                var msg = '⛔ Portal restricted: ' + portalName + ' dashboard is not available for your role (' + cachedRole + ').';
+                try { sessionStorage.setItem('pclinic_auth_message', msg); } catch (e) {}
+                if (window.stop) {
+                    try { window.stop(); } catch (e) {}
+                }
+                window.location.replace('hub.html');
+                return;
+            }
+        }
+
+        // Either role is authorized or pending Firebase verification — cloak body so zero flash of content
+        var style = document.createElement('style');
+        style.id = 'pc-auth-cloak';
+        style.textContent = 'html.pc-auth-pending body { visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; }';
+        document.head.appendChild(style);
+        document.documentElement.classList.add('pc-auth-pending');
+    }
+
+    // ─── GLOBAL CROSS-PORTAL NAVIGATION INTERCEPTOR ───
+    // Prevent ANY link or anchor from jumping across roles (e.g. Cashier clicking Doctor link)
+    document.addEventListener('click', function (e) {
+        var a = e.target.closest && e.target.closest('a[href]');
+        if (!a) return;
+        var href = a.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+        var targetPage = href.split('?')[0].split('#')[0].split('/').pop().toLowerCase();
+        var needed = PORTAL_PERMISSIONS[targetPage];
+        if (!needed || needed.length === 0) return;
+
+        var role = '';
+        try {
+            role = (sessionStorage.getItem('pclinic_role') || (window.currentStaff && window.currentStaff.role) || localStorage.getItem('userRole') || '').toLowerCase();
+        } catch(e) {}
+        if (!role) return;
+        if (role === 'admin') return;
+
+        if (needed.indexOf(role) === -1) {
+            e.preventDefault();
+            e.stopPropagation();
+            var targetName = targetPage.replace('-dashboard.html', '').replace('.html', '').toUpperCase();
+            var warningMsg = '⛔ Access restricted: ' + targetName + ' portal is not available for your role (' + role + ').';
+            if (typeof window.pcToast === 'function') {
+                window.pcToast(warningMsg, 'warning');
+            } else {
+                alert(warningMsg);
+            }
+        }
+    }, true);
+
     function waitForFirebase() {
         return new Promise(function (resolve) {
             if (window.firebaseReady && window.firebaseAuth) {
@@ -38,35 +163,11 @@
         });
     }
 
-    function goToLogin(reason) {
-        // Clinical file pages are protected exactly like dashboards. Never
-        // render a dummy user: stale browser caches may contain real PHI.
-        if (reason) {
-            try { sessionStorage.setItem('pclinic_auth_message', reason); } catch (e) {}
-        }
-        // replace() not href: a signed-out user pressing Back must not be
-        // able to re-enter a protected page from the bfcache.
-        window.location.replace('login');
-    }
-
-    // "Hub first": if someone opens a dashboard URL directly but isn't
-    // allowed on it, send them to the hub rather than bouncing them out
-    // to login. They ARE authenticated - they just picked the wrong door.
-    function goToHub(reason) {
-        if (reason) {
-            try { sessionStorage.setItem('pclinic_auth_message', reason); } catch (e) {}
-        }
-        var here = window.location.pathname.split('/').pop();
-        if (here === 'hub.html' || here === 'hub') {           // never redirect hub to itself
-            window.location.replace('login');
-            return;
-        }
-        window.location.replace('hub');
-    }
-
     // ─── MAIN GUARD ───
     window.requireAuth = function (allowedRoles) {
-        allowedRoles = allowedRoles || [];
+        if (!allowedRoles || allowedRoles.length === 0) {
+            allowedRoles = PORTAL_PERMISSIONS[curPage] || [];
+        }
 
         return waitForFirebase().then(async function (ready) {
             if (!ready) {
@@ -74,25 +175,17 @@
                 return Promise.reject(new Error('firebase-not-ready'));
             }
 
-            // Wait for Firebase to FULLY settle its initial auth check
-            // (e.g. restoring a session after a page refresh) before we
-            // make any decision. Without this, a refresh can briefly
-            // report "no user yet" and incorrectly bounce a logged-in
-            // person back to the login page.
             try {
                 if (typeof window.firebaseAuth.authStateReady === 'function') {
                     await window.firebaseAuth.authStateReady();
                 }
-            } catch (e) {
-                // If this isn't supported for some reason, fall through
-                // to the onAuthStateChanged-based check below.
-            }
+            } catch (e) {}
 
             return new Promise(function (resolve, reject) {
                 let settled = false;
                 const { onAuthStateChanged } = window.firebaseAuthFunctions;
                 const unsubscribe = onAuthStateChanged(window.firebaseAuth, async function (user) {
-                    if (settled) return; // ignore any later firings once we've already decided
+                    if (settled) return;
                     settled = true;
                     if (typeof unsubscribe === 'function') unsubscribe();
 
@@ -103,15 +196,16 @@
                     }
 
                     // ─── 24-HOUR SESSION EXPIRATION CHECK ───
-                    // Keep staff logged in across tabs, refreshes and browser restarts
-                    // for up to 24 hours, unless manually signed out earlier.
                     var MAX_SESSION_MS = 24 * 60 * 60 * 1000;
                     var now = Date.now();
-                    var loginTimeStr = localStorage.getItem('pclinic_login_time');
+                    var loginTimeStr = null;
+                    try { loginTimeStr = localStorage.getItem('pclinic_login_time'); } catch(e){}
                     if (loginTimeStr) {
                         var loginTime = parseInt(loginTimeStr, 10);
                         if (!isNaN(loginTime) && (now - loginTime > MAX_SESSION_MS)) {
                             try { localStorage.removeItem('pclinic_login_time'); } catch(e){}
+                            try { sessionStorage.removeItem('pclinic_role'); } catch(e){}
+                            try { localStorage.removeItem('userRole'); } catch(e){}
                             if (window.firebaseAuth && window.firebaseAuthFunctions && window.firebaseAuthFunctions.signOut) {
                                 try { await window.firebaseAuthFunctions.signOut(window.firebaseAuth); } catch(e){}
                             }
@@ -143,14 +237,25 @@
                             return;
                         }
 
-                        const role = profile.role || '';
+                        const role = (profile.role || '').toLowerCase();
                         const isAdmin = role === 'admin';
 
+                        // Synchronize cached role across session & local storage
+                        try {
+                            sessionStorage.setItem('pclinic_role', role);
+                            localStorage.setItem('userRole', role);
+                            localStorage.setItem('userName', profile.name || profile.staffId || 'Staff');
+                        } catch(e){}
+
                         if (allowedRoles.length > 0 && !isAdmin && allowedRoles.indexOf(role) === -1) {
-                            goToHub('⛔ That page is not available for your role.');
+                            var pName = curPage.replace('-dashboard.html', '').replace('.html', '').toUpperCase();
+                            goToHub('⛔ Access restricted: ' + pName + ' portal is not available for your role (' + role + ').');
                             reject(new Error('forbidden'));
                             return;
                         }
+
+                        // Authenticated and authorized: reveal document
+                        uncloak();
 
                         const staff = {
                             uid: user.uid,
@@ -173,8 +278,6 @@
     };
 
     // ─── LOGOUT HELPER ───
-    // pclinic-state.js installs a faster implementation (it does not await
-    // the network round trip). Only define a fallback if that isn't loaded.
     if (typeof window.pclinicLogout !== 'function') {
         window.pclinicLogout = async function () {
             try { localStorage.removeItem('pclinic_login_time'); } catch(e){}
@@ -192,7 +295,7 @@
                     await window.pclinicClearFirebaseCache();
                 }
             } catch (e) {}
-            window.location.replace('login');
+            window.location.replace('login.html');
         };
     }
 
