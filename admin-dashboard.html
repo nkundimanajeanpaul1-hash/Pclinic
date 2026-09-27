@@ -1710,11 +1710,15 @@
 
         function safeProfile(uid, profile) {
             profile = profile || {};
+            var sId = profile.staffId || profile.staff_id || profile.id || profile.phone || '';
+            if (!sId && profile.email && String(profile.email).indexOf('@pclinic.local') !== -1) {
+                sId = String(profile.email).split('@')[0];
+            }
             return {
                 uid: String(uid || profile.uid || ''),
-                staffId: String(profile.staffId || ''),
-                name: String(profile.name || ''),
-                role: String(profile.role || ''),
+                staffId: String(sId),
+                name: String(profile.name || profile.displayName || profile.fullName || 'Staff Member'),
+                role: String(profile.role || 'general'),
                 active: profile.active !== false
             };
         }
@@ -1994,12 +1998,52 @@
             }
 
             try {
-                // 1. Create Firebase Auth account via secondary app instance
-                const uid = await createFirebaseStaffAuth(staffId, password);
+                let uid = null;
+                let linkedExisting = false;
+
+                // 1. Try to create Firebase Auth account via secondary app instance
+                try {
+                    uid = await createFirebaseStaffAuth(staffId, password);
+                } catch (authErr) {
+                    if (authErr && authErr.code === 'auth/email-already-in-use') {
+                        // Account already exists in Firebase Auth.
+                        // Seamlessly resolve/link it right here in the Admin Dashboard!
+                        try {
+                            const { initializeApp, deleteApp } = await import("https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js");
+                            const { getAuth, signInWithEmailAndPassword, updatePassword, signOut } = await import("https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js");
+                            const config = window.firebaseApp.options;
+                            const tempAppName = 'pclinic_link_' + Date.now();
+                            const tempApp = initializeApp(config, tempAppName);
+                            const tempAuth = getAuth(tempApp);
+                            const email = window.pclinicStaffIdToEmail ? window.pclinicStaffIdToEmail(staffId) : (String(staffId).trim() + '@pclinic.local');
+                            let cred = null;
+                            // Attempt A: Try signing in with the password the admin just entered
+                            try {
+                                cred = await signInWithEmailAndPassword(tempAuth, email, password);
+                            } catch (errA) {
+                                // Attempt B: Try fallback password (the staffId itself, e.g. 0788920911)
+                                cred = await signInWithEmailAndPassword(tempAuth, email, String(staffId).trim());
+                                // Now update the password in Firebase Auth to the new password entered by admin
+                                if (password && password !== String(staffId).trim()) {
+                                    try { await updatePassword(cred.user, password); } catch(upErr){ console.warn('Could not update password to new value:', upErr); }
+                                }
+                            }
+                            uid = cred.user.uid;
+                            try { await signOut(tempAuth); } catch(e){}
+                            try { await deleteApp(tempApp); } catch(e){}
+                            linkedExisting = true;
+                        } catch (signInErr) {
+                            // Neither password worked; pass error along
+                            throw authErr;
+                        }
+                    } else {
+                        throw authErr;
+                    }
+                }
 
                 // 2. Create profile document in Firestore 'users' collection
                 if (!window.firebaseDB || !window.firebaseFunctions || !window.firebaseFunctions.setDoc) {
-                    throw new Error('Firestore database is not connected. User created in Auth (UID: ' + uid + ') but profile was not saved.');
+                    throw new Error('Firestore database is not connected. User UID: ' + uid);
                 }
                 const { doc, setDoc } = window.firebaseFunctions;
                 await setDoc(doc(window.firebaseDB, 'users', uid), {
@@ -2007,33 +2051,94 @@
                     name: name,
                     role: role,
                     active: true,
-                    createdAt: new Date().toISOString()
-                });
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
 
                 closeStaffModal();
-                showToast('✅ Staff account created for ' + name + ' (ID: ' + staffId + ')', 'success');
+                showToast(linkedExisting 
+                    ? '✅ Existing Firebase Auth account linked to Common Server for ' + name + ' (ID: ' + staffId + ')'
+                    : '✅ Staff account created for ' + name + ' (ID: ' + staffId + ')', 'success');
                 await loadStaffList();
 
             } catch (err) {
                 console.error('Staff creation failed:', err);
-                var errMessage = 'Failed to create staff account.';
                 if (err && err.code === 'auth/email-already-in-use') {
-                    errMessage = '❌ Staff ID ' + staffId + ' already has a login account in Firebase Authentication.';
-                } else if (err && err.code === 'auth/weak-password') {
-                    errMessage = '❌ Password is too weak (Firebase requires at least 6 characters).';
-                } else if (err && err.code === 'auth/invalid-email') {
-                    errMessage = '❌ Staff ID generated an invalid email (' + staffId + '@pclinic.local).';
-                } else if (err && err.code === 'auth/network-request-failed') {
-                    errMessage = '❌ Network connection failed. Please check your internet connection.';
-                } else if (err && err.message) {
-                    errMessage = '❌ ' + err.message;
+                    showOrphanedAuthAlert(staffId, name, role);
+                } else {
+                    var errMessage = 'Failed to create staff account.';
+                    if (err && err.code === 'auth/weak-password') {
+                        errMessage = '❌ Password is too weak (Firebase requires at least 6 characters).';
+                    } else if (err && err.code === 'auth/invalid-email') {
+                        errMessage = '❌ Staff ID generated an invalid email (' + staffId + '@pclinic.local).';
+                    } else if (err && err.code === 'auth/network-request-failed') {
+                        errMessage = '❌ Network connection failed. Please check your internet connection.';
+                    } else if (err && err.message) {
+                        errMessage = '❌ ' + err.message;
+                    }
+                    showAlert(errMessage);
                 }
-                showAlert(errMessage);
             } finally {
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="ti ti-check"></i> Create Staff Account';
                 }
+            }
+        }
+
+        function showOrphanedAuthAlert(staffId, name, role) {
+            var alertBox = document.getElementById('staffModalAlert');
+            if (!alertBox) return;
+            alertBox.innerHTML =
+                '<div style="font-weight:700;margin-bottom:6px;font-size:13px;">⚠️ Staff ID "' + esc(staffId) + '" is already in Firebase Authentication!</div>' +
+                '<div style="font-size:11.5px;line-height:1.45;margin-bottom:10px;">' +
+                    'This login account exists in Firebase Auth (<code>' + esc(staffId) + '@pclinic.local</code>), but its profile was missing from the Staff database (which is why it didn\'t show in the table).' +
+                '</div>' +
+                '<div style="background:rgba(255,255,255,0.7);padding:8px 10px;border-radius:8px;margin-bottom:8px;">' +
+                    '<div style="font-size:11.5px;font-weight:700;margin-bottom:4px;">Option 1: Link using Firebase User UID (Fastest)</div>' +
+                    '<div style="font-size:11px;color:var(--ts);margin-bottom:6px;">In Firebase Console → Authentication → Users, copy the User UID for this account and paste it here:</div>' +
+                    '<div style="display:flex;gap:6px;">' +
+                        '<input type="text" id="pastedStaffUid" class="fi" placeholder="Paste User UID from Firebase Console" style="flex:1;height:30px;font-size:11px;">' +
+                        '<button type="button" class="btn btn-sm btn-blue" onclick="linkExistingStaffByUid(\'" + esc(staffId) + "\')"><i class="ti ti-link"></i> Link Profile</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="font-size:11px;color:var(--ts);line-height:1.4;">' +
+                    '<b>Option 2: Delete in Firebase Console to recreate with a fresh password:</b><br>' +
+                    'Go to <b>Firebase Console → Authentication → Users</b>, find <code>' + esc(staffId) + '@pclinic.local</code> and click <b>Delete user</b>. Then return here and click Create Staff again.' +
+                '</div>';
+            alertBox.style.display = 'block';
+        }
+
+        async function linkExistingStaffByUid(staffId) {
+            var uidInput = document.getElementById('pastedStaffUid');
+            var uid = uidInput ? uidInput.value.trim() : '';
+            var name = (document.getElementById('newStaffName') && document.getElementById('newStaffName').value.trim()) || ('Staff ' + staffId);
+            var role = (document.getElementById('newStaffRole') && document.getElementById('newStaffRole').value.trim()) || 'doctor';
+
+            if (!uid) {
+                showToast('⚠️ Please paste the User UID from Firebase Console', 'warning');
+                if (uidInput) uidInput.focus();
+                return;
+            }
+
+            try {
+                if (!window.firebaseDB || !window.firebaseFunctions || !window.firebaseFunctions.setDoc) {
+                    throw new Error('Firestore connection is unavailable.');
+                }
+                const { doc, setDoc } = window.firebaseFunctions;
+                await setDoc(doc(window.firebaseDB, 'users', uid), {
+                    staffId: staffId,
+                    name: name,
+                    role: role,
+                    active: true,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+
+                closeStaffModal();
+                showToast('✅ Profile linked successfully for ' + name + ' (ID: ' + staffId + ')!', 'success');
+                await loadStaffList();
+            } catch(e) {
+                console.error('Failed to link existing staff:', e);
+                showToast('❌ Linking failed: ' + (e && e.message ? e.message : 'Unknown error'), 'error');
             }
         }
 
@@ -2937,6 +3042,8 @@
         window.closeStaffModal = closeStaffModal;
         window.toggleNewStaffPassword = toggleNewStaffPassword;
         window.submitCreateStaff = submitCreateStaff;
+        window.linkExistingStaffByUid = linkExistingStaffByUid;
+        window.showOrphanedAuthAlert = showOrphanedAuthAlert;
         window.toggleStaff = toggleStaff;
         window.loadStaffList = loadStaffList;
         window.closeNotifications = closeNotifications;
