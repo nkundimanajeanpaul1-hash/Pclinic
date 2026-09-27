@@ -1397,6 +1397,72 @@
                                 <span><i class="ti ti-cloud-check"></i> Common Server sync: orders, reports and alerts update live.</span>
                             </div>
                         </div>
+
+                        <div class="stat-row">
+                            <div class="sc">
+                                <div class="sc-ic" style="background:var(--rad-bg)"><i class="ti ti-radio" style="color:var(--rad)"></i></div>
+                                <div class="sc-lbl">Today's studies</div>
+                                <div class="sc-val" id="stStudies">0</div>
+                                <div class="sc-sub" id="stStudiesSub">Common Server live</div>
+                            </div>
+                            <div class="sc">
+                                <div class="sc-ic" style="background:var(--orange-bg)"><i class="ti ti-hourglass" style="color:var(--orange)"></i></div>
+                                <div class="sc-lbl">Awaiting review</div>
+                                <div class="sc-val" id="stPending">0</div>
+                                <div class="sc-sub" id="stPendingSub">Common Server live</div>
+                            </div>
+                            <div class="sc">
+                                <div class="sc-ic" style="background:var(--green-bg)"><i class="ti ti-check" style="color:var(--green)"></i></div>
+                                <div class="sc-lbl">Reports released</div>
+                                <div class="sc-val" id="stReported">0</div>
+                                <div class="sc-sub" id="stReportedSub">Common Server live</div>
+                            </div>
+                            <div class="sc">
+                                <div class="sc-ic" style="background:var(--red-bg)"><i class="ti ti-alert-triangle" style="color:var(--red)"></i></div>
+                                <div class="sc-lbl">Critical findings</div>
+                                <div class="sc-val" id="stCritical">0</div>
+                                <div class="sc-sub" id="stCriticalSub">Common Server live</div>
+                            </div>
+                            <div class="sc">
+                                <div class="sc-ic" style="background:var(--purple-bg)"><i class="ti ti-zap" style="color:var(--purple)"></i></div>
+                                <div class="sc-lbl">STAT queue</div>
+                                <div class="sc-val" id="stStat">0</div>
+                                <div class="sc-sub" id="stStatSub">Common Server live</div>
+                            </div>
+                        </div>
+
+                        <div class="ov-grid">
+                            <div class="ov-c" onclick="radioQuickAction('request')">
+                                <div class="ov-ic" style="background:var(--rad-bg)"><i class="ti ti-file-plus" style="color:var(--rad)"></i></div>
+                                <div class="ov-lbl">Request policy</div>
+                                <div class="ov-d">How imaging orders reach radiology</div>
+                            </div>
+                            <div class="ov-c" onclick="radioQuickAction('worklist')">
+                                <div class="ov-ic" style="background:var(--blue-bg)"><i class="ti ti-list" style="color:var(--blue)"></i></div>
+                                <div class="ov-lbl">Today's worklist</div>
+                                <div class="ov-d">Open and review active studies</div>
+                            </div>
+                            <div class="ov-c" onclick="radioQuickAction('viewer')">
+                                <div class="ov-ic" style="background:var(--purple-bg)"><i class="ti ti-photo" style="color:var(--purple)"></i></div>
+                                <div class="ov-lbl">Image viewer</div>
+                                <div class="ov-d">Open local files and study images</div>
+                            </div>
+                            <div class="ov-c" onclick="radioQuickAction('report')">
+                                <div class="ov-ic" style="background:var(--green-bg)"><i class="ti ti-pencil" style="color:var(--green)"></i></div>
+                                <div class="ov-lbl">Report writer</div>
+                                <div class="ov-d">Document findings and impression</div>
+                            </div>
+                            <div class="ov-c" onclick="radioQuickAction('reports')">
+                                <div class="ov-ic" style="background:var(--green-bg)"><i class="ti ti-check" style="color:var(--green-t)"></i></div>
+                                <div class="ov-lbl">Radiology reports</div>
+                                <div class="ov-d">Review signed and draft reports</div>
+                            </div>
+                            <div class="ov-c" onclick="radioQuickAction('alerts')">
+                                <div class="ov-ic" style="background:var(--red-bg)"><i class="ti ti-bell" style="color:var(--red)"></i></div>
+                                <div class="ov-lbl">Alerts</div>
+                                <div class="ov-d">Critical findings and pending follow-up</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="radio-overview-side">
                         <div class="panel radio-overview-quick-panel">
@@ -1446,72 +1512,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="stat-row">
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--rad-bg)"><i class="ti ti-radio" style="color:var(--rad)"></i></div>
-                        <div class="sc-lbl">Today's studies</div>
-                        <div class="sc-val" id="stStudies">0</div>
-                        <div class="sc-sub" id="stStudiesSub">Common Server live</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--orange-bg)"><i class="ti ti-hourglass" style="color:var(--orange)"></i></div>
-                        <div class="sc-lbl">Awaiting review</div>
-                        <div class="sc-val" id="stPending">0</div>
-                        <div class="sc-sub" id="stPendingSub">Common Server live</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--green-bg)"><i class="ti ti-check" style="color:var(--green)"></i></div>
-                        <div class="sc-lbl">Reports released</div>
-                        <div class="sc-val" id="stReported">0</div>
-                        <div class="sc-sub" id="stReportedSub">Common Server live</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--red-bg)"><i class="ti ti-alert-triangle" style="color:var(--red)"></i></div>
-                        <div class="sc-lbl">Critical findings</div>
-                        <div class="sc-val" id="stCritical">0</div>
-                        <div class="sc-sub" id="stCriticalSub">Common Server live</div>
-                    </div>
-                    <div class="sc">
-                        <div class="sc-ic" style="background:var(--purple-bg)"><i class="ti ti-zap" style="color:var(--purple)"></i></div>
-                        <div class="sc-lbl">STAT queue</div>
-                        <div class="sc-val" id="stStat">0</div>
-                        <div class="sc-sub" id="stStatSub">Common Server live</div>
-                    </div>
-                </div>
-
-                <div class="ov-grid">
-                    <div class="ov-c" onclick="radioQuickAction('request')">
-                        <div class="ov-ic" style="background:var(--rad-bg)"><i class="ti ti-file-plus" style="color:var(--rad)"></i></div>
-                        <div class="ov-lbl">Request policy</div>
-                        <div class="ov-d">How imaging orders reach radiology</div>
-                    </div>
-                    <div class="ov-c" onclick="radioQuickAction('worklist')">
-                        <div class="ov-ic" style="background:var(--blue-bg)"><i class="ti ti-list" style="color:var(--blue)"></i></div>
-                        <div class="ov-lbl">Today's worklist</div>
-                        <div class="ov-d">Open and review active studies</div>
-                    </div>
-                    <div class="ov-c" onclick="radioQuickAction('viewer')">
-                        <div class="ov-ic" style="background:var(--purple-bg)"><i class="ti ti-photo" style="color:var(--purple)"></i></div>
-                        <div class="ov-lbl">Image viewer</div>
-                        <div class="ov-d">Open local files and study images</div>
-                    </div>
-                    <div class="ov-c" onclick="radioQuickAction('report')">
-                        <div class="ov-ic" style="background:var(--green-bg)"><i class="ti ti-pencil" style="color:var(--green)"></i></div>
-                        <div class="ov-lbl">Report writer</div>
-                        <div class="ov-d">Document findings and impression</div>
-                    </div>
-                    <div class="ov-c" onclick="radioQuickAction('reports')">
-                        <div class="ov-ic" style="background:var(--green-bg)"><i class="ti ti-check" style="color:var(--green-t)"></i></div>
-                        <div class="ov-lbl">Radiology reports</div>
-                        <div class="ov-d">Review signed and draft reports</div>
-                    </div>
-                    <div class="ov-c" onclick="radioQuickAction('alerts')">
-                        <div class="ov-ic" style="background:var(--red-bg)"><i class="ti ti-bell" style="color:var(--red)"></i></div>
-                        <div class="ov-lbl">Alerts</div>
-                        <div class="ov-d">Critical findings and pending follow-up</div>
                     </div>
                 </div>
             </div>
