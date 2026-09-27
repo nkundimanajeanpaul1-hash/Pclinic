@@ -76,6 +76,7 @@
         .loading-overlay.show { display: flex; }
         .loading-spinner { width: 40px; height: 40px; border: 3px solid #e5e5ea; border-top-color: #007080; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .ti-spin { animation: spin 0.8s linear infinite; display: inline-block; }
         .loading-text { font-size: 13px; font-weight: 600; color: var(--tm); }
 
         /* ─── GREETING ─── */
@@ -648,12 +649,13 @@
                     <div class="card-header">
                         <h3><i class="ti ti-user-cog"></i> Staff &amp; User Management</h3>
                         <div class="actions">
-                            <button class="btn" id="staff-create-btn" type="button" disabled title="Use the approved server-side or Firebase Console process"><i class="ti ti-lock"></i> Creation temporarily disabled</button>
+                            <button class="btn btn-green" id="staff-create-btn" type="button" onclick="openStaffModal()"><i class="ti ti-user-plus"></i> Add Staff</button>
+                            <button class="btn btn-outline" type="button" onclick="loadStaffList()"><i class="ti ti-refresh"></i> Refresh</button>
                         </div>
                     </div>
-                    <div class="info-bar" style="background:#fff7e6;color:#8a5a00;border-color:#f0ad4e;margin-bottom:12px;">
-                        <i class="ti ti-shield-lock"></i>
-                        Emergency security mode: browser-based account creation, password viewing and permanent deletion are disabled. Create or reset staff only through the authorized Firebase administrator process. PClinic never stores staff passwords.
+                    <div class="info-bar blue" style="margin-bottom:12px;">
+                        <i class="ti ti-shield-check"></i>
+                        Staff credentials created here are registered in Firebase Authentication and linked to the Common Server. PClinic never stores plain-text passwords.
                     </div>
                     <div class="table-wrap">
                         <table>
@@ -815,6 +817,72 @@
                 <button class="modal-x" onclick="closeProfile()"><i class="ti ti-x"></i></button>
             </div>
             <div class="modal-body" id="prof-body"></div>
+        </div>
+    </div>
+
+    <!-- ═══ CREATE STAFF CREDENTIALS MODAL ═══ -->
+    <div class="overlay" id="createStaffModal" onclick="if(event.target===this)closeStaffModal()">
+        <div class="modal" style="max-width:520px;">
+            <div class="modal-head">
+                <div class="modal-ic" style="background:#eaf2ff;color:#0071e3;"><i class="ti ti-user-plus"></i></div>
+                <div class="modal-title">Create Staff Login &amp; Credentials</div>
+                <button class="modal-x" type="button" onclick="closeStaffModal()"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="modal-body" style="padding:18px 20px;">
+                <div id="staffModalAlert" style="display:none;margin-bottom:12px;" class="info-bar red"></div>
+                
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div>
+                        <label class="lbl" for="newStaffName" style="margin-bottom:4px;display:block;font-weight:700;">Full Name</label>
+                        <input type="text" id="newStaffName" class="fi" placeholder="e.g. Dr. Jean Habimana" style="width:100%;box-sizing:border-box;">
+                    </div>
+                    
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <label class="lbl" for="newStaffId" style="margin-bottom:4px;display:block;font-weight:700;">Staff ID (Login ID)</label>
+                            <input type="text" id="newStaffId" class="fi" placeholder="e.g. 1005" style="width:100%;box-sizing:border-box;">
+                            <div style="font-size:11px;color:var(--tm);margin-top:2px;">Used to log in at /login</div>
+                        </div>
+                        <div>
+                            <label class="lbl" for="newStaffRole" style="margin-bottom:4px;display:block;font-weight:700;">Assigned Role</label>
+                            <select id="newStaffRole" class="fi" style="width:100%;box-sizing:border-box;">
+                                <option value="doctor">Doctor</option>
+                                <option value="nurse">Nurse</option>
+                                <option value="lab">Laboratory</option>
+                                <option value="pharmacy">Pharmacy</option>
+                                <option value="cashier">Cashier</option>
+                                <option value="reception">Reception</option>
+                                <option value="admin">Admin</option>
+                                <option value="radio">Radiology</option>
+                                <option value="physio">Physiotherapy</option>
+                                <option value="theater">Theater / Surgery</option>
+                                <option value="beds">Bed Management</option>
+                                <option value="inventory">Inventory</option>
+                                <option value="finance">Finance</option>
+                                <option value="hr">HR</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="lbl" for="newStaffPassword" style="margin-bottom:4px;display:block;font-weight:700;">Login Password</label>
+                        <div style="position:relative;display:flex;align-items:center;">
+                            <input type="password" id="newStaffPassword" class="fi" placeholder="Min. 6 characters" style="width:100%;box-sizing:border-box;padding-right:75px;" autocomplete="new-password">
+                            <button type="button" class="btn btn-sm btn-outline" id="btnToggleStaffPw" onclick="toggleNewStaffPassword()" style="position:absolute;right:4px;height:26px;font-size:11px;padding:0 8px;">Show</button>
+                        </div>
+                        <div style="font-size:11px;color:var(--tm);margin-top:2px;">Initial password for first login (min. 6 characters).</div>
+                    </div>
+
+                    <div class="info-bar blue" style="font-size:11.5px;padding:8px 10px;margin-top:4px;">
+                        <i class="ti ti-lock"></i> Account will be registered under Firebase Auth (<code>&lt;id&gt;@pclinic.local</code>) and linked to the Common Server.
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
+                    <button type="button" class="btn btn-outline" onclick="closeStaffModal()">Cancel</button>
+                    <button type="button" class="btn btn-green" id="btnSubmitCreateStaff" onclick="submitCreateStaff()"><i class="ti ti-check"></i> Create Staff Account</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1775,8 +1843,202 @@
             }
         }
 
+        function getNextStaffId() {
+            var maxId = 1000;
+            if (typeof staffCache === 'object' && staffCache) {
+                Object.values(staffCache).forEach(function(s) {
+                    var num = parseInt(s && s.staffId, 10);
+                    if (!isNaN(num) && num > maxId) maxId = num;
+                });
+            }
+            return String(maxId + 1);
+        }
+
+        function openStaffModal() {
+            var nameInput = document.getElementById('newStaffName');
+            var idInput = document.getElementById('newStaffId');
+            var roleInput = document.getElementById('newStaffRole');
+            var pwInput = document.getElementById('newStaffPassword');
+            var alertBox = document.getElementById('staffModalAlert');
+            var btn = document.getElementById('btnSubmitCreateStaff');
+            var pwToggle = document.getElementById('btnToggleStaffPw');
+
+            if (nameInput) nameInput.value = '';
+            if (idInput) idInput.value = getNextStaffId();
+            if (roleInput) roleInput.value = 'doctor';
+            if (pwInput) {
+                pwInput.value = '';
+                pwInput.type = 'password';
+            }
+            if (pwToggle) pwToggle.textContent = 'Show';
+            if (alertBox) {
+                alertBox.textContent = '';
+                alertBox.style.display = 'none';
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ti ti-check"></i> Create Staff Account';
+            }
+
+            ['newStaffName', 'newStaffId', 'newStaffPassword'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el && !el._clearAlertBound) {
+                    el.addEventListener('input', function() {
+                        var ab = document.getElementById('staffModalAlert');
+                        if (ab) { ab.textContent = ''; ab.style.display = 'none'; }
+                    });
+                    el._clearAlertBound = true;
+                }
+            });
+            if (pwInput && !pwInput._enterBound) {
+                pwInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') { e.preventDefault(); submitCreateStaff(); }
+                });
+                pwInput._enterBound = true;
+            }
+
+            var modal = document.getElementById('createStaffModal');
+            if (modal) modal.classList.add('show');
+            setTimeout(function() { if (nameInput) nameInput.focus(); }, 120);
+        }
+
+        function closeStaffModal() {
+            var modal = document.getElementById('createStaffModal');
+            if (modal) modal.classList.remove('show');
+        }
+
+        function toggleNewStaffPassword() {
+            var pwInput = document.getElementById('newStaffPassword');
+            var pwToggle = document.getElementById('btnToggleStaffPw');
+            if (!pwInput) return;
+            var isPass = pwInput.type === 'password';
+            pwInput.type = isPass ? 'text' : 'password';
+            if (pwToggle) pwToggle.textContent = isPass ? 'Hide' : 'Show';
+        }
+
+        async function createFirebaseStaffAuth(staffId, password) {
+            // Dynamically import from Firebase SDK v12.16.0
+            const { initializeApp, deleteApp } = await import("https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js");
+            const { getAuth, createUserWithEmailAndPassword, signOut } = await import("https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js");
+
+            if (!window.firebaseApp || !window.firebaseApp.options) {
+                throw new Error("Firebase is not initialized yet. Please wait a few seconds and try again.");
+            }
+
+            const config = window.firebaseApp.options;
+            const tempAppName = 'pclinic_staff_creator_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+            const tempApp = initializeApp(config, tempAppName);
+            const tempAuth = getAuth(tempApp);
+
+            try {
+                const email = window.pclinicStaffIdToEmail ? window.pclinicStaffIdToEmail(staffId) : (String(staffId).trim() + '@pclinic.local');
+                const cred = await createUserWithEmailAndPassword(tempAuth, email, password);
+                const uid = cred.user.uid;
+                try { await signOut(tempAuth); } catch(e){}
+                try { await deleteApp(tempApp); } catch(e){}
+                return uid;
+            } catch(err) {
+                try { await signOut(tempAuth); } catch(e){}
+                try { await deleteApp(tempApp); } catch(e){}
+                throw err;
+            }
+        }
+
+        async function submitCreateStaff() {
+            var nameInput = document.getElementById('newStaffName');
+            var idInput = document.getElementById('newStaffId');
+            var roleInput = document.getElementById('newStaffRole');
+            var pwInput = document.getElementById('newStaffPassword');
+            var alertBox = document.getElementById('staffModalAlert');
+            var btn = document.getElementById('btnSubmitCreateStaff');
+
+            function showAlert(msg) {
+                if (alertBox) {
+                    alertBox.textContent = msg;
+                    alertBox.style.display = 'block';
+                } else {
+                    showToast(msg, 'error');
+                }
+            }
+
+            if (alertBox) {
+                alertBox.textContent = '';
+                alertBox.style.display = 'none';
+            }
+
+            var name = nameInput ? nameInput.value.trim() : '';
+            var staffId = idInput ? idInput.value.trim() : '';
+            var role = roleInput ? roleInput.value.trim() : 'doctor';
+            var password = pwInput ? pwInput.value : '';
+
+            if (!name) { showAlert('⚠️ Full Name is required.'); if (nameInput) nameInput.focus(); return; }
+            if (!staffId) { showAlert('⚠️ Staff ID is required.'); if (idInput) idInput.focus(); return; }
+            if (/\s/.test(staffId) || /@/.test(staffId)) { showAlert('⚠️ Staff ID should not contain spaces or "@".'); if (idInput) idInput.focus(); return; }
+            if (!password || password.length < 6) { showAlert('⚠️ Password must be at least 6 characters long.'); if (pwInput) pwInput.focus(); return; }
+
+            // Check duplicate staff ID in loaded staffCache
+            if (typeof staffCache === 'object' && staffCache) {
+                var duplicate = Object.values(staffCache).some(function(s) {
+                    return s && String(s.staffId).trim().toLowerCase() === staffId.toLowerCase();
+                });
+                if (duplicate) {
+                    showAlert('⚠️ Staff ID ' + staffId + ' is already assigned to another staff member.');
+                    if (idInput) idInput.focus();
+                    return;
+                }
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Creating credentials…';
+            }
+
+            try {
+                // 1. Create Firebase Auth account via secondary app instance
+                const uid = await createFirebaseStaffAuth(staffId, password);
+
+                // 2. Create profile document in Firestore 'users' collection
+                if (!window.firebaseDB || !window.firebaseFunctions || !window.firebaseFunctions.setDoc) {
+                    throw new Error('Firestore database is not connected. User created in Auth (UID: ' + uid + ') but profile was not saved.');
+                }
+                const { doc, setDoc } = window.firebaseFunctions;
+                await setDoc(doc(window.firebaseDB, 'users', uid), {
+                    staffId: staffId,
+                    name: name,
+                    role: role,
+                    active: true,
+                    createdAt: new Date().toISOString()
+                });
+
+                closeStaffModal();
+                showToast('✅ Staff account created for ' + name + ' (ID: ' + staffId + ')', 'success');
+                await loadStaffList();
+
+            } catch (err) {
+                console.error('Staff creation failed:', err);
+                var errMessage = 'Failed to create staff account.';
+                if (err && err.code === 'auth/email-already-in-use') {
+                    errMessage = '❌ Staff ID ' + staffId + ' already has a login account in Firebase Authentication.';
+                } else if (err && err.code === 'auth/weak-password') {
+                    errMessage = '❌ Password is too weak (Firebase requires at least 6 characters).';
+                } else if (err && err.code === 'auth/invalid-email') {
+                    errMessage = '❌ Staff ID generated an invalid email (' + staffId + '@pclinic.local).';
+                } else if (err && err.code === 'auth/network-request-failed') {
+                    errMessage = '❌ Network connection failed. Please check your internet connection.';
+                } else if (err && err.message) {
+                    errMessage = '❌ ' + err.message;
+                }
+                showAlert(errMessage);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ti ti-check"></i> Create Staff Account';
+                }
+            }
+        }
+
         function addStaff() {
-            showToast('🔒 Browser-based account creation is disabled. Use the authorized Firebase administrator process.', 'warning');
+            openStaffModal();
             return false;
         }
 
@@ -2671,6 +2933,10 @@
         window.openShortcuts = openShortcuts;
         window.closeShortcuts = closeShortcuts;
         window.addStaff = addStaff;
+        window.openStaffModal = openStaffModal;
+        window.closeStaffModal = closeStaffModal;
+        window.toggleNewStaffPassword = toggleNewStaffPassword;
+        window.submitCreateStaff = submitCreateStaff;
         window.toggleStaff = toggleStaff;
         window.loadStaffList = loadStaffList;
         window.closeNotifications = closeNotifications;
@@ -2758,7 +3024,7 @@
         // Keyboard shortcuts
         document.addEventListener('keydown', function(e){
             if ((e.ctrlKey || e.metaKey) && e.key === 'd') { e.preventDefault(); var n = localStorage.getItem('pclinic-theme') !== 'dark' ? 'dark' : 'light'; localStorage.setItem('pclinic-theme', n); applyDark(); }
-            if (e.key === 'Escape') { closeLogoutModal(); closeShortcuts(); closeViewPatient(); closeViewBill(); closeRevenueReport(); closeNotifications(); closeProfile(); closePatientData(); }
+            if (e.key === 'Escape') { closeLogoutModal(); closeShortcuts(); closeViewPatient(); closeViewBill(); closeRevenueReport(); closeNotifications(); closeProfile(); closePatientData(); closeStaffModal(); }
             if (e.key === '?' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); openShortcuts(); }
         });
 
