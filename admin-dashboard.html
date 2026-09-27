@@ -1977,7 +1977,7 @@
 
             if (!name) { showAlert('⚠️ Full Name is required.'); if (nameInput) nameInput.focus(); return; }
             if (!staffId) { showAlert('⚠️ Staff ID is required.'); if (idInput) idInput.focus(); return; }
-            if (/\s/.test(staffId) || /@/.test(staffId)) { showAlert('⚠️ Staff ID should not contain spaces or "@".'); if (idInput) idInput.focus(); return; }
+            if (!/^[0-9]{1,20}$/.test(staffId)) { showAlert('⚠️ Staff ID must be digits only (e.g. 0788920911 or 1005).'); if (idInput) idInput.focus(); return; }
             if (!password || password.length < 6) { showAlert('⚠️ Password must be at least 6 characters long.'); if (pwInput) pwInput.focus(); return; }
 
             // Check duplicate staff ID in loaded staffCache
@@ -2051,7 +2051,7 @@
                     name: name,
                     role: role,
                     active: true,
-                    updatedAt: new Date().toISOString()
+                    createdAt: new Date().toISOString()
                 }, { merge: true });
 
                 closeStaffModal();
@@ -2130,7 +2130,7 @@
                     name: name,
                     role: role,
                     active: true,
-                    updatedAt: new Date().toISOString()
+                    createdAt: new Date().toISOString()
                 }, { merge: true });
 
                 closeStaffModal();
