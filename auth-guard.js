@@ -102,6 +102,27 @@
                         return;
                     }
 
+                    // ─── 24-HOUR SESSION EXPIRATION CHECK ───
+                    // Keep staff logged in across tabs, refreshes and browser restarts
+                    // for up to 24 hours, unless manually signed out earlier.
+                    var MAX_SESSION_MS = 24 * 60 * 60 * 1000;
+                    var now = Date.now();
+                    var loginTimeStr = localStorage.getItem('pclinic_login_time');
+                    if (loginTimeStr) {
+                        var loginTime = parseInt(loginTimeStr, 10);
+                        if (!isNaN(loginTime) && (now - loginTime > MAX_SESSION_MS)) {
+                            try { localStorage.removeItem('pclinic_login_time'); } catch(e){}
+                            if (window.firebaseAuth && window.firebaseAuthFunctions && window.firebaseAuthFunctions.signOut) {
+                                try { await window.firebaseAuthFunctions.signOut(window.firebaseAuth); } catch(e){}
+                            }
+                            goToLogin('⏳ Session expired after 24 hours. Please log in again.');
+                            reject(new Error('session-expired'));
+                            return;
+                        }
+                    } else {
+                        try { localStorage.setItem('pclinic_login_time', String(now)); } catch(e){}
+                    }
+
                     try {
                         const { doc, getDoc } = window.firebaseFunctions;
                         const snap = await getDoc(doc(window.firebaseDB, 'users', user.uid));
@@ -156,6 +177,7 @@
     // the network round trip). Only define a fallback if that isn't loaded.
     if (typeof window.pclinicLogout !== 'function') {
         window.pclinicLogout = async function () {
+            try { localStorage.removeItem('pclinic_login_time'); } catch(e){}
             try {
                 Object.keys(localStorage).forEach(function (k) {
                     if (k.indexOf('pclinic') === 0 || k === 'userRole' || k === 'userName') {

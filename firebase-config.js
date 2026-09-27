@@ -32,7 +32,7 @@ import {
     signOut,
     onAuthStateChanged,
     setPersistence,
-    browserSessionPersistence
+    browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import {
     getFunctions,
@@ -64,12 +64,12 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const cloudFunctions = getFunctions(app, 'africa-south1');
 
-// Session-only auth is safer on shared clinic devices: closing the tab/browser
-// does not intentionally retain the staff session across a new work session.
+// Retain staff login across tabs, refreshes and browser restarts for 24 hours.
+// auth-guard.js enforces the 24-hour expiration window or until manual sign out.
 try {
-    await setPersistence(auth, browserSessionPersistence);
+    await setPersistence(auth, browserLocalPersistence);
 } catch (err) {
-    console.warn('⚠️ Could not set session-only auth persistence:', err);
+    console.warn('⚠️ Could not set local auth persistence:', err);
 }
 
 // ─── EMERGENCY PRIVACY MODE ───

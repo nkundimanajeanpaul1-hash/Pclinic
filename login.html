@@ -478,7 +478,8 @@
             }
 
             // Staff identifiers are not retained on shared clinic devices.
-            localStorage.removeItem('pclinic_remember_staffid');
+            localStorage.setItem('pclinic_login_time', String(Date.now()));
+                    localStorage.removeItem('pclinic_remember_staffid');
 
             // If a previous page redirected us here with a reason, show it once the form is visible.
             const authMsg = sessionStorage.getItem('pclinic_auth_message');
@@ -599,6 +600,7 @@
                         return;
                     }
 
+                    localStorage.setItem('pclinic_login_time', String(Date.now()));
                     localStorage.removeItem('pclinic_remember_staffid');
 
                     showMessage(`✅ Welcome, ${profile.name || staffId}!`, 'success');
