@@ -1800,7 +1800,7 @@ table.apple-table .empty-state p{
    RESPONSIVE
    ════════════════════════════════════════════════════════════ */
 @media(max-width:1024px){
-  .aside{display:none}
+  .aside{display:flex}
   .stats{grid-template-columns:repeat(3,1fr)}
 }
 @media(max-width:768px){
@@ -3443,6 +3443,61 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
        Changed to 58% opaque (42% transparent) Apple glass with folding reception buttons
   -->
   <div class="aside">
+    <!-- ─── RECEPTION QUICK ACTIONS (MATCHING DOCTOR & RADIOLOGY DASHBOARDS) ─── -->
+    <div class="panel reception-quick-panel" id="receptionDoctorQuickPanel">
+      <div class="section-title reception-quick-headbar">⚡ Quick Actions</div>
+      <div class="pb reception-quick-actions">
+        <div class="qa-card" onclick="receptionQuickAction('search')" title="Search patient">
+          <div class="qa-ic" style="background:#eaf2ff; color:#0071e3;"><i class="ti ti-user-search"></i></div>
+          <div class="qa-label">Search patient</div>
+        </div>
+        <div class="qa-card" onclick="receptionQuickAction('register')" title="Register new patient">
+          <div class="qa-ic" style="background:#e9f9ee; color:#1a7a32;"><i class="ti ti-user-plus"></i></div>
+          <div class="qa-label">Register patient</div>
+        </div>
+        <div class="qa-card" onclick="receptionQuickAction('queue')" title="Live queue">
+          <div class="qa-ic" style="background:#e6f6f8; color:#007080;"><i class="ti ti-list-numbers"></i></div>
+          <div class="qa-label">Queue list</div>
+        </div>
+        <div class="qa-card" onclick="receptionQuickAction('callnext')" title="Call next patient">
+          <div class="qa-ic" style="background:#e9f9ee; color:#1a7a32;"><i class="ti ti-player-play"></i></div>
+          <div class="qa-label">Call next</div>
+        </div>
+        <div class="qa-card" onclick="receptionQuickAction('appointments')" title="Appointments & RDV">
+          <div class="qa-ic" style="background:#f5eaff; color:#7c3aed;"><i class="ti ti-calendar-plus"></i></div>
+          <div class="qa-label">Appointments</div>
+        </div>
+        <div class="qa-card" onclick="receptionQuickAction('referrals')" title="Referrals">
+          <div class="qa-ic" style="background:#eaf2ff; color:#0071e3;"><i class="ti ti-git-branch"></i></div>
+          <div class="qa-label">Referrals</div>
+        </div>
+        <div class="qa-card" onclick="receptionQuickAction('beds')" title="Bed occupancy">
+          <div class="qa-ic" style="background:#fff4e0; color:#b85d00;"><i class="ti ti-bed"></i></div>
+          <div class="qa-label">Bed occupancy</div>
+        </div>
+        <div class="qa-card" onclick="receptionQuickAction('admission')" title="Patient admission">
+          <div class="qa-ic" style="background:#fff4e0; color:#b85d00;"><i class="ti ti-login-2"></i></div>
+          <div class="qa-label">Admission</div>
+        </div>
+        <div class="qa-card" onclick="receptionQuickAction('printcard')" title="Print patient ID card">
+          <div class="qa-ic" style="background:#f1f5f9; color:#475569;"><i class="ti ti-id-badge-2"></i></div>
+          <div class="qa-label">Print ID card</div>
+        </div>
+        <div class="qa-card" onclick="receptionQuickAction('emergency')" title="Emergency triage">
+          <div class="qa-ic" style="background:#ffebe9; color:#c0392b;"><i class="ti ti-emergency-bed"></i></div>
+          <div class="qa-label">Emergency</div>
+        </div>
+        <div class="qa-card" onclick="receptionQuickAction('messages')" title="Message center">
+          <div class="qa-ic" style="background:#f5eaff; color:#7c3aed;"><i class="ti ti-message-circle"></i></div>
+          <div class="qa-label">Messages</div>
+        </div>
+        <div class="qa-card" onclick="receptionQuickAction('help')" title="Help & shortcuts" style="margin-bottom:0;">
+          <div class="qa-ic" style="background:#eaf2ff; color:#0284c7;"><i class="ti ti-help"></i></div>
+          <div class="qa-label">Help & shortcuts</div>
+        </div>
+      </div>
+    </div>
+
     <!-- QUICK STATS — Smart transparent card with folding action buttons -->
     <div class="aside-section" id="aside-quick">
       <div class="aside-title" onclick="toggleAsideFold('aside-quick')">
@@ -3481,10 +3536,6 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
 
       </div>
     </div>
-
-    <!-- RECEPTION QUICK ACTIONS — New smart card 50-60% transparent with folding buttons from action bar -->
-
-
   </div>
 </div>
 
@@ -3902,6 +3953,29 @@ function clearReceptionSearch(){
   var panel=document.getElementById('receptionSearchResults');if(panel){panel.replaceChildren();panel.classList.remove('open');}
   var clear=document.getElementById('receptionSearchClear');if(clear)clear.style.display='none';
   var active=document.querySelector('.view.active');if(active){if(active.id==='view-referrals')renderRefs();else if(active.id==='view-queue')renderQueue();else if(active.id==='view-history')renderHistory();else if(active.id==='view-reports')renderReports();}
+}
+
+function receptionQuickAction(action){
+  try{
+    switch(action){
+      case 'search': focusDupSearch(); break;
+      case 'register': showView('booking', getNavBtn('booking')); break;
+      case 'queue': showView('queue', getNavBtn('queue')); break;
+      case 'callnext': raCallNext(); break;
+      case 'appointments': showView('appointments', getNavBtn('appointments')); break;
+      case 'referrals': showView('referrals', getNavBtn('referrals')); break;
+      case 'beds': showView('beds', getNavBtn('beds')); break;
+      case 'admission': raAdmission(); break;
+      case 'printcard': raPrintCard(); break;
+      case 'emergency': raEmergency(); break;
+      case 'messages': openMessageCenter(); break;
+      case 'help': showShortcuts(); break;
+      default: console.warn('Unknown reception quick action:', action);
+    }
+  }catch(e){
+    console.error('reception quick action error:', e);
+    showToast('Action failed: ' + e.message, 'error');
+  }
 }
 
 function focusDupSearch(){
