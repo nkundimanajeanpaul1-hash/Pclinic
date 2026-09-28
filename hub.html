@@ -708,406 +708,422 @@ body.dark-mode {
 </style>
 <style id="pclinic-hub-v2">
 /* ══════════════════════════════════════════════════════════════════════════
-   PClinic Hub · visual pass v2 — "Liquid Glass + iOS"
+   PClinic Hub · Apple iOS 26 Dark Liquid Glass Theme
    ──────────────────────────────────────────────────────────────────────────
-   Appended AFTER the tier 1–3 fix. Nothing above is edited: this block is
-   purely additive and wins by source order plus !important.
-   To revert: delete this entire <style> block.
+   Inspired by iOS lockscreen customization & dark liquid glass design language.
+   Deep midnight obsidian & twilight violet fluid ribbons backdrop with
+   translucent frosted dark glass cards, specular rim lighting, and luminous
+   Apple typography.
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* ── 1 · MATERIAL ────────────────────────────────────────────────────────
-   Liquid Glass is four things at once: a translucent tint, a heavy blur,
-   a saturation boost so colour bleeds through, and a specular highlight
-   on the top edge. These tokens drive every surface below.              */
-:root{
-    --v2-fill:    rgba(255,255,255,.66);
-    --v2-fill-hi: rgba(255,255,255,.84);
-    --v2-rim:     inset 0 1px 0 rgba(255,255,255,.95), inset 0 0 0 .5px rgba(255,255,255,.42);
-    --v2-base:    inset 0 -1px 0 rgba(12,14,30,.045);
-    --v2-edge:    rgba(12,14,30,.10);
-    --v2-edge-hi: rgba(12,14,30,.17);
-    --v2-sh:      0 1px 2px rgba(12,14,30,.05), 0 6px 16px rgba(12,14,30,.09), 0 20px 44px rgba(12,14,30,.11);
-    --v2-sh-hi:   0 2px 5px rgba(12,14,30,.07), 0 12px 28px rgba(12,14,30,.13), 0 34px 66px rgba(12,14,30,.16);
-    --v2-r:       24px;
-    --v2-r-chip:  15px;
-    --v2-blur:    saturate(190%) blur(40px);
-    --v2-blur-sm: saturate(180%) blur(24px);
-    --v2-gap:     16px;
-}
-[data-theme="dark"], html[data-theme="dark"], body.dark-mode{
-    --v2-fill:    rgba(30,32,46,.62);
-    --v2-fill-hi: rgba(46,49,70,.78);
-    --v2-rim:     inset 0 1px 0 rgba(255,255,255,.16), inset 0 0 0 .5px rgba(255,255,255,.07);
-    --v2-base:    inset 0 -1px 0 rgba(0,0,0,.32);
-    --v2-edge:    rgba(255,255,255,.13);
-    --v2-edge-hi: rgba(255,255,255,.25);
-    --v2-sh:      0 1px 2px rgba(0,0,0,.45), 0 8px 20px rgba(0,0,0,.42), 0 24px 48px rgba(0,0,0,.48);
-    --v2-sh-hi:   0 2px 6px rgba(0,0,0,.5),  0 14px 32px rgba(0,0,0,.5),  0 38px 70px rgba(0,0,0,.55);
+:root {
+    --v2-fill:    rgba(22, 26, 44, 0.68);
+    --v2-fill-hi: rgba(34, 40, 68, 0.85);
+    --v2-rim:     inset 0 1px 0 rgba(255, 255, 255, 0.26), inset 0 0 0 0.5px rgba(255, 255, 255, 0.12);
+    --v2-base:    inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+    --v2-edge:    rgba(255, 255, 255, 0.13);
+    --v2-edge-hi: rgba(255, 255, 255, 0.30);
+    --v2-sh:      0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.30);
+    --v2-sh-hi:   0 24px 56px rgba(0, 0, 0, 0.60), 0 4px 16px rgba(0, 0, 0, 0.35);
+    --v2-r:       22px;
+    --v2-r-chip:  14px;
+    --v2-blur:    saturate(210%) blur(36px);
+    --v2-blur-sm: saturate(190%) blur(24px);
+    --v2-gap:     12px;
+    --tp:         #ffffff;
+    --ts:         rgba(240, 244, 255, 0.85);
+    --tm:         rgba(160, 175, 200, 0.72);
+    --ac:         #38bdf8;
+    --green:      #34d399;
+    --greend:     #10b981;
 }
 
-/* ── 2 · ONE ACCENT PER CARD ─────────────────────────────────────────────
-   The role colours already lived on .card-icon only. Lifting them onto the
-   card itself lets the badge, the arrow and the hover wash share the hue. */
-.module-card[data-role~="reception"]{ --ic:#0a84ff }
-.module-card[data-role~="doctor"]   { --ic:#ff453a }
-.module-card[data-role~="nurse"]    { --ic:#ff375f }
-.module-card[data-role~="lab"]      { --ic:#bf5af2 }
-.module-card[data-role~="pharmacy"] { --ic:#30d158 }
-.module-card[data-role~="radio"]    { --ic:#64d2ff }
-.module-card[data-role~="theater"]  { --ic:#ff9f0a }
-.module-card[data-role~="physio"]   { --ic:#00c895 }
-.module-card[data-role~="cashier"]  { --ic:#ffd60a }
-.module-card[data-role~="finance"]  { --ic:#5e5ce6 }
-.module-card[data-role~="hr"]       { --ic:#a2845e }
-.module-card[data-role~="inventory"]{ --ic:#30b0c0 }
-.module-card[data-role~="admin"]    { --ic:#8e8e93 }
-.module-card[data-role~="beds"]     { --ic:#40c8e0 }
-.ic.blue  { --ic:#0a84ff }
-.ic.green { --ic:#30d158 }
-.ic.orange{ --ic:#ff9f0a }
-.ic.purple{ --ic:#bf5af2 }
-.ic.red   { --ic:#ff453a }
-.ic.teal  { --ic:#40c8e0 }
+/* ── 1 · WALLPAPER & BASE ───────────────────────────────────────────────── */
+html, body {
+    min-height: 100vh;
+    background-color: #0b0c16 !important;
+    background-image: url('hub-dark-bg.jpg') !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-attachment: fixed !important;
+    background-repeat: no-repeat !important;
+    color: #ffffff !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
 
-/* ── 3 · AMBIENT ─────────────────────────────────────────────────────────
-   Wider, softer colour fields — the mesh an iOS wallpaper would use, plus
-   a whisper of film grain so the glass has something to refract.        */
-.gg-ambient{
+body::before {
+    display: none !important;
+}
+
+.gg-ambient {
     background:
-        radial-gradient(62% 46% at 86% -8%,  rgba(255,158,92,.20), transparent 64%),
-        radial-gradient(48% 40% at 4%  10%,  rgba(147,78,255,.15), transparent 64%),
-        radial-gradient(68% 48% at 52% 114%, rgba(23,190,187,.16), transparent 64%),
-        radial-gradient(42% 36% at 98% 74%,  rgba(10,132,255,.11), transparent 62%),
-        radial-gradient(54% 42% at 12% 94%,  rgba(255,55,95,.07), transparent 64%) !important;
+        radial-gradient(60% 46% at 85% -5%, rgba(139, 92, 246, 0.22), transparent 64%),
+        radial-gradient(50% 42% at 5% 15%, rgba(56, 189, 248, 0.16), transparent 64%),
+        radial-gradient(70% 50% at 50% 115%, rgba(99, 102, 241, 0.20), transparent 64%) !important;
+    opacity: 0.85 !important;
+    pointer-events: none !important;
 }
-[data-theme="dark"] .gg-ambient{ opacity:.82 }
-body::after{
-    content:''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-    opacity: .34; mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
-    background-size: 160px 160px;
-}
-[data-theme="dark"] body::after{ opacity:.55; mix-blend-mode: soft-light }
 
-/* ── 4 · HEADER — a proper iOS nav bar ──────────────────────────────────
-   Three zones: identity (crumb + greeting) · live status · actions.
-   The five floating circles are now ONE segmented glass control, so the
-   bar reads as a designed object instead of loose buttons.              */
-.pc-headerbar{
+body::after {
+    opacity: 0.16 !important;
+    mix-blend-mode: overlay !important;
+}
+
+/* ── 2 · DEPARTMENT ACCENT TONES (GLOWING iOS 26 PALETTE) ───────────────── */
+.module-card[data-role~="reception"] { --ic: #38bdf8; }
+.module-card[data-role~="doctor"]    { --ic: #f87171; }
+.module-card[data-role~="nurse"]     { --ic: #fb7185; }
+.module-card[data-role~="lab"]       { --ic: #c084fc; }
+.module-card[data-role~="pharmacy"]  { --ic: #34d399; }
+.module-card[data-role~="radio"]     { --ic: #38bdf8; }
+.module-card[data-role~="theater"]   { --ic: #fbbf24; }
+.module-card[data-role~="physio"]    { --ic: #2dd4bf; }
+.module-card[data-role~="cashier"]   { --ic: #facc15; }
+.module-card[data-role~="finance"]   { --ic: #818cf8; }
+.module-card[data-role~="hr"]        { --ic: #a78bfa; }
+.module-card[data-role~="inventory"] { --ic: #2dd4bf; }
+.module-card[data-role~="admin"]     { --ic: #94a3b8; }
+.module-card[data-role~="beds"]      { --ic: #38bdf8; }
+
+.ic.blue   { --ic: #38bdf8; }
+.ic.green  { --ic: #34d399; }
+.ic.orange { --ic: #fbbf24; }
+.ic.purple { --ic: #c084fc; }
+.ic.red    { --ic: #f87171; }
+.ic.teal   { --ic: #2dd4bf; }
+
+/* ── 3 · FLOATING HEADER BAR ────────────────────────────────────────────── */
+.pc-headerbar {
     position: sticky !important; top: 0; z-index: 60;
-    min-height: 62px;
-    padding: 12px 22px !important; gap: 12px !important;
-    background: var(--v2-fill) !important;
-    -webkit-backdrop-filter: var(--v2-blur-sm) !important;
-    backdrop-filter: var(--v2-blur-sm) !important;
-    border-bottom: 1px solid var(--v2-edge);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 6px 22px rgba(12,14,30,.07);
+    min-height: 58px;
+    padding: 10px 24px !important; gap: 12px !important;
+    background: rgba(18, 22, 36, 0.76) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
+    backdrop-filter: blur(40px) saturate(200%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
 }
-[data-theme="dark"] .pc-headerbar{ box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 6px 22px rgba(0,0,0,.5) }
-/* the white text-shadow stack only existed to survive the old photo */
+
 .pc-headerbar .pc-crumb, .pc-headerbar .pc-crumb a, .pc-headerbar .pc-date,
-.pc-headerbar .pc-greet, .pc-headerbar .pc-quickstat{ text-shadow: none !important }
-
-/* zone 1 — who and where. The greeting is secondary, the name is primary. */
-.pc-crumb{ font-size: 12px !important; font-weight: 500;
-    color: color-mix(in srgb, var(--tm) 45%, var(--ts)) !important }
-.pc-crumb a{ color: color-mix(in srgb, var(--tm) 45%, var(--ts)) !important;
-    font-weight: 600; text-decoration: none }
-.pc-crumb a:hover{ color: var(--ac) !important }
-.pc-crumb .sep{ opacity: .3 }
-#greetingText, .pc-greet{
-    font-size: 14.5px !important; font-weight: 500 !important;
-    letter-spacing: -.012em; color: var(--ts) !important;
+.pc-headerbar .pc-greet, .pc-headerbar .pc-quickstat {
+    text-shadow: none !important;
 }
-/* the name: same ink as everything else, just heavier. No gradient, no colour. */
-#greetingText .hl, .pc-greet .hl{
-    background: none !important;
-    -webkit-background-clip: border-box !important;
-            background-clip: border-box !important;
-    -webkit-text-fill-color: currentColor !important;
-    color: var(--tp) !important;
-    font-weight: 700 !important; font-size: 1em !important;
-    filter: none !important;
-}
-[data-theme="dark"] #greetingText .hl, [data-theme="dark"] .pc-greet .hl{ color: var(--tp) !important }
-.pc-divider{ background: var(--v2-edge) !important; height: 20px !important; width: 1px !important }
-.pc-date{ font-size: 12px !important; font-weight: 500;
-    color: color-mix(in srgb, var(--tm) 45%, var(--ts)) !important }
-[data-theme="dark"] .pc-crumb, [data-theme="dark"] .pc-crumb a, [data-theme="dark"] .pc-date,
-[data-theme="dark"] .pc-crumb .sep{ color: color-mix(in srgb, var(--tm) 78%, #ffffff) !important }
 
-/* zone 2 — status. One blue accent, one semantic green. Nothing else. */
-.pc-quickstat{
-    background: color-mix(in srgb, var(--ac) 9%, var(--v2-fill)) !important;
-    border: .5px solid color-mix(in srgb, var(--ac) 20%, transparent) !important;
-    color: color-mix(in srgb, var(--ac) 60%, var(--tp)) !important;
+.pc-crumb {
+    font-size: 12px !important; font-weight: 500;
+    color: rgba(226, 232, 240, 0.85) !important;
+}
+.pc-crumb a {
+    color: #ffffff !important;
+    font-weight: 600; text-decoration: none;
+}
+.pc-crumb a:hover { color: #38bdf8 !important; }
+.pc-crumb .sep { color: rgba(255, 255, 255, 0.35) !important; }
+
+#greetingText, .pc-greet {
+    font-size: 14px !important; font-weight: 500 !important;
+    letter-spacing: -0.01em; color: rgba(226, 232, 240, 0.85) !important;
+    max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#greetingText .hl, .pc-greet .hl {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+.pc-divider {
+    background: rgba(255, 255, 255, 0.15) !important;
+    height: 18px !important; width: 1px !important;
+}
+
+.pc-date {
+    font-size: 12px !important; font-weight: 500;
+    color: rgba(226, 232, 240, 0.70) !important;
+}
+
+.pc-quickstat {
+    background: rgba(56, 189, 248, 0.14) !important;
+    border: 0.5px solid rgba(56, 189, 248, 0.32) !important;
+    color: #7dd3fc !important;
     padding: 5px 13px !important; font-size: 12px !important;
-    -webkit-backdrop-filter: var(--v2-blur-sm); backdrop-filter: var(--v2-blur-sm);
+    border-radius: 999px !important;
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
 }
-.pc-quickstat span{ font-weight: 800; font-variant-numeric: tabular-nums }
-.gg-live{
-    background: color-mix(in srgb, var(--green) 10%, var(--v2-fill)) !important;
-    border: .5px solid color-mix(in srgb, var(--green) 24%, transparent) !important;
-    color: color-mix(in srgb, var(--greend, #1a7a32) 52%, var(--tp)) !important;
+.pc-quickstat span { font-weight: 800; font-variant-numeric: tabular-nums; color: #ffffff !important; }
+
+.gg-live {
+    background: rgba(52, 211, 153, 0.14) !important;
+    border: 0.5px solid rgba(52, 211, 153, 0.32) !important;
+    color: #86efac !important;
     padding: 5px 13px 5px 10px !important; font-size: 12px !important;
-    -webkit-backdrop-filter: var(--v2-blur-sm); backdrop-filter: var(--v2-blur-sm);
+    border-radius: 999px !important;
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
 }
-[data-theme="dark"] .gg-live{ color: color-mix(in srgb, var(--green) 55%, var(--tp)) !important }
-.gg-live .pulse{ width: 8px; height: 8px; animation: v2pulse 2.4s var(--ease, ease) infinite }
-@keyframes v2pulse{
-    0%  { box-shadow: 0 0 0 0   color-mix(in srgb, var(--green) 40%, transparent) }
-    70% { box-shadow: 0 0 0 9px transparent }
-    100%{ box-shadow: 0 0 0 0   transparent }
+.gg-live .pulse {
+    width: 8px; height: 8px; background: #34d399;
+    box-shadow: 0 0 10px #34d399;
+    animation: v2pulse 2.4s ease infinite;
+}
+@keyframes v2pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6); }
+    70%  { box-shadow: 0 0 0 9px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
 }
 
-/* zone 3 — ONE segmented glass control instead of five loose circles */
-.pc-headerbar > .gg-hbtn{
-    width: 42px !important; height: 38px !important;
+/* Header buttons */
+.pc-headerbar > .gg-hbtn {
+    width: 40px !important; height: 36px !important;
     border-radius: 0 !important;
-    border: 1px solid var(--v2-edge) !important;
-    background: var(--v2-fill) !important;
-    box-shadow: 0 1px 2px rgba(12,14,30,.05), 0 6px 16px rgba(12,14,30,.08) !important;
-    -webkit-backdrop-filter: var(--v2-blur-sm) !important;
-    backdrop-filter: var(--v2-blur-sm) !important;
-    font-size: 16px !important; color: var(--ts) !important;
-    margin-left: 0 !important; transition: background .2s var(--ease, ease), color .2s var(--ease, ease) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    backdrop-filter: blur(24px) !important;
+    font-size: 15px !important; color: #ffffff !important;
+    margin-left: 0 !important;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease !important;
 }
-.pc-headerbar > .gg-hbtn + .gg-hbtn{ margin-left: -13px !important }  /* 12px flex gap − 13px = 1px overlap */
-.pc-headerbar > .gg-hbtn:first-of-type{ border-radius: 12px 0 0 12px !important }
-.pc-headerbar > .gg-hbtn:last-of-type { border-radius: 0 12px 12px 0 !important }
-/* the shine sweep reads as noise on a segmented bar — drop it here only */
-.pc-headerbar > .gg-hbtn::after{ display: none !important }
-/* hairline separator between the status zone and the cluster */
-.pc-headerbar > .gg-hbtn:first-of-type::before{
-    content: ''; position: absolute; left: -7px; top: 50%; translate: 0 -50%;
-    width: 1px; height: 22px; background: var(--v2-edge);
+.pc-headerbar > .gg-hbtn + .gg-hbtn { margin-left: -1px !important; }
+.pc-headerbar > .gg-hbtn:first-of-type { border-radius: 12px 0 0 12px !important; }
+.pc-headerbar > .gg-hbtn:last-of-type  { border-radius: 0 12px 12px 0 !important; }
+.pc-headerbar > .gg-hbtn::after { display: none !important; }
+.pc-headerbar > .gg-hbtn:hover {
+    background: rgba(255, 255, 255, 0.18) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
 }
-.pc-headerbar > .gg-hbtn:hover{
-    transform: none !important; z-index: 3;
-    background: var(--v2-fill-hi) !important; color: var(--tp) !important;
-}
-.pc-headerbar > .gg-hbtn:active{
-    transform: none !important;
-    background: color-mix(in srgb, var(--ac) 9%, var(--v2-fill)) !important;
-}
-/* the assistant orb: an indigo/blue globe, not a rainbow */
-.gg-siri-orb{
-    background: conic-gradient(from 0deg, #5e5ce6, #0a84ff, #64d2ff, #0a84ff, #5e5ce6) !important;
-    box-shadow: 0 0 8px rgba(94,92,230,.45) !important;
+
+.gg-siri-orb {
+    background: conic-gradient(from 0deg, #6366f1, #38bdf8, #a855f7, #38bdf8, #6366f1) !important;
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.6) !important;
     animation-duration: 16s !important;
 }
-/* the 3 px rainbow topline → a single hairline accent */
-.gg-topline{
+
+.gg-topline {
     height: 1.5px !important; opacity: 1 !important;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        color-mix(in srgb, var(--ac) 55%, transparent) 20%,
-        color-mix(in srgb, var(--ac) 55%, transparent) 80%,
-        transparent 100%) !important;
+    background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.6) 20%, rgba(168, 85, 247, 0.6) 80%, transparent 100%) !important;
 }
 
-/* ── 5 · LAYOUT — bigger cards, calmer rhythm ───────────────────────────── */
-.wrap{ max-width: 1360px !important; padding: 20px 20px 40px !important }
-.stats{ grid-template-columns: repeat(auto-fit, minmax(210px,1fr)) !important; gap: var(--v2-gap) !important; margin-bottom: 20px !important }
-.modules{ grid-template-columns: repeat(auto-fill, minmax(258px,1fr)) !important; gap: var(--v2-gap) !important }
-.sec{ margin: 24px 0 14px !important }
+/* ── 4 · LAYOUT & SCREEN FIT ────────────────────────────────────────────── */
+.wrap {
+    max-width: 1600px !important;
+    padding: 12px 24px 18px !important;
+}
+.stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    margin-bottom: 12px !important;
+}
+.sec {
+    margin: 10px 0 !important;
+    padding: 6px 14px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 999px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    backdrop-filter: blur(20px) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.10em !important;
+    color: #ffffff !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.sec::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+}
 
-/* ── 6 · CARDS ──────────────────────────────────────────────────────────── */
-.stat-card, .module-card{
+.modules {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+}
+
+/* ── 5 · CARDS (iOS 26 LIQUID GLASS) ────────────────────────────────────── */
+.stat-card, .module-card {
     border-radius: var(--v2-r) !important;
     background: var(--v2-fill) !important;
     -webkit-backdrop-filter: var(--v2-blur) !important;
     backdrop-filter: var(--v2-blur) !important;
     border: 1px solid var(--v2-edge) !important;
     box-shadow: var(--v2-sh), var(--v2-rim), var(--v2-base) !important;
-    /* mirrors .pc-tilt's own timing so the JS 3-D tilt keeps its spring */
-    transition: transform .42s var(--spring, cubic-bezier(.34,1.56,.64,1)),
-                box-shadow .4s var(--ease, ease), background .3s var(--ease, ease),
-                border-color .3s var(--ease, ease);
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.28s ease, background 0.24s ease, border-color 0.24s ease !important;
+    position: relative;
+    overflow: hidden;
 }
-.stat-card:hover, .module-card:hover{
+
+.stat-card:hover, .module-card:hover {
     background: var(--v2-fill-hi) !important;
     border-color: var(--v2-edge-hi) !important;
-    box-shadow: var(--v2-sh-hi), var(--v2-rim), var(--v2-base) !important;
-}
-/* the icon keeps its own colour glow on hover (the old rule forced blue) */
-.module-card:hover .card-icon, .stat-card:hover .ic{
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.55),
-                inset 0 0 0 .5px color-mix(in srgb, var(--ic,#0a84ff) 32%, transparent),
-                0 8px 20px color-mix(in srgb, var(--ic,#0a84ff) 30%, transparent) !important;
-}
-/* the hover wash now takes the card's own colour */
-.module-card::before{
-    background: linear-gradient(150deg, color-mix(in srgb, var(--ic,#0a84ff) 15%, transparent), transparent 62%) !important;
+    box-shadow: var(--v2-sh-hi),
+                0 0 24px color-mix(in srgb, var(--ic, #38bdf8) 22%, transparent),
+                inset 0 1px 0 rgba(255, 255, 255, 0.40),
+                var(--v2-base) !important;
+    transform: translateY(-4px) !important;
 }
 
-.stat-card{ padding: 18px 20px !important; gap: 15px !important }
-.stat-card .ic{
-    width: 46px; height: 46px; border-radius: var(--v2-r-chip);
-    font-size: 21px; color: var(--v2-ink, color-mix(in srgb, var(--ic,#0a84ff) 40%, #0b0d12));
-    background: linear-gradient(158deg,
-        color-mix(in srgb, var(--ic,#0a84ff) 21%, transparent),
-        color-mix(in srgb, var(--ic,#0a84ff) 9%, transparent));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.55),
-                inset 0 0 0 .5px color-mix(in srgb, var(--ic,#0a84ff) 26%, transparent),
-                0 4px 14px color-mix(in srgb, var(--ic,#0a84ff) 20%, transparent);
+/* Stat Cards */
+.stat-card {
+    padding: 12px 18px !important;
+    gap: 14px !important;
+    display: flex;
+    align-items: center;
 }
-.stat-card .num{
-    font-size: 27px !important; font-weight: 800;
-    letter-spacing: -1.1px !important; line-height: 1.05;
+.stat-card .ic {
+    width: 38px; height: 38px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    background: color-mix(in srgb, var(--ic, #38bdf8) 20%, rgba(255,255,255,0.06)) !important;
+    border: 1px solid color-mix(in srgb, var(--ic, #38bdf8) 42%, transparent) !important;
+    color: color-mix(in srgb, var(--ic, #38bdf8) 90%, #ffffff) !important;
+    box-shadow: 0 0 16px color-mix(in srgb, var(--ic, #38bdf8) 30%, transparent),
+                inset 0 1px 0 rgba(255,255,255,0.40) !important;
 }
-.stat-card .lab{ font-size: 12px !important; margin-top: 3px !important; font-weight: 500 }
-
-.module-card{ padding: 20px 20px 58px !important; min-height: 178px }
-.module-card .card-icon{
-    width: 46px; height: 46px; border-radius: var(--v2-r-chip);
-    font-size: 21px; margin-bottom: 14px;
-    color: var(--v2-ink, color-mix(in srgb, var(--ic,#0a84ff) 40%, #0b0d12));
-    background: linear-gradient(158deg,
-        color-mix(in srgb, var(--ic,#0a84ff) 23%, transparent),
-        color-mix(in srgb, var(--ic,#0a84ff) 10%, transparent));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.55),
-                inset 0 0 0 .5px color-mix(in srgb, var(--ic,#0a84ff) 28%, transparent),
-                0 4px 14px color-mix(in srgb, var(--ic,#0a84ff) 20%, transparent);
+.stat-card .num {
+    font-size: 25px !important; font-weight: 700;
+    color: #ffffff !important;
+    letter-spacing: -0.02em !important; line-height: 1.1;
+    text-shadow: 0 2px 12px rgba(255, 255, 255, 0.15);
 }
-.card-title{ font-size: 15.5px !important; font-weight: 700; letter-spacing: -.3px !important; margin-bottom: 5px !important }
-.card-desc{ font-size: 12.5px !important; line-height: 1.5 !important; margin-bottom: 0 !important; min-height: 0 !important }
-.card-badge{
-    position: absolute; left: 20px; bottom: 20px;
-    font-size: 10px !important; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
-    padding: 4px 10px !important; border-radius: 999px !important;
-    background: color-mix(in srgb, var(--ic,#0a84ff) 10%, var(--v2-fill)) !important;
-    border: .5px solid color-mix(in srgb, var(--ic,#0a84ff) 26%, transparent) !important;
-    color: var(--v2-ink, color-mix(in srgb, var(--ic,#0a84ff) 40%, #0b0d12)) !important;
-}
-.card-arrow{
-    bottom: 18px !important; right: 18px !important;
-    width: 30px; height: 30px; border-radius: 50%;
-    display: grid; place-items: center;
-    font-size: 15px !important; opacity: .5 !important;
-    color: var(--v2-ink, color-mix(in srgb, var(--ic,#0a84ff) 40%, #0b0d12)) !important;
-    background: color-mix(in srgb, var(--ic,#0a84ff) 9%, var(--v2-fill));
-    border: .5px solid color-mix(in srgb, var(--ic,#0a84ff) 22%, transparent);
-    transform: none !important;
-    transition: opacity .28s var(--ease, ease), translate .3s var(--spring, ease),
-                background .3s var(--ease, ease);
-}
-.module-card:hover .card-arrow{
-    transform: none !important; opacity: 1 !important; translate: 2px 0;
-    background: color-mix(in srgb, var(--ic,#0a84ff) 22%, var(--v2-fill));
-}
-.sec{
-    background: var(--v2-fill) !important;
-    border: 1px solid var(--v2-edge) !important;
-    border-radius: 999px !important; padding: 7px 15px !important;
-    box-shadow: var(--v2-sh), var(--v2-rim) !important;
-    -webkit-backdrop-filter: var(--v2-blur-sm) !important;
-    backdrop-filter: var(--v2-blur-sm) !important;
-    font-size: 11px !important; letter-spacing: .10em !important;
-    color: var(--ts) !important;
-}
-.sec::after{ background: linear-gradient(90deg, var(--v2-edge), transparent) !important }
-.sec::before{
-    width: 6px !important; height: 6px !important; border-radius: 50% !important;
-    background: color-mix(in srgb, var(--ac) 55%, transparent) !important;
-    box-shadow: none !important;
+.stat-card .lab {
+    font-size: 11.5px !important;
+    color: rgba(240, 244, 255, 0.85) !important;
+    margin-top: 2px !important;
+    font-weight: 500;
 }
 
-/* in dark mode the chips are dark, so the ink flips light */
-[data-theme="dark"] .stat-card .ic,
-[data-theme="dark"] .module-card .card-icon,
-[data-theme="dark"] .card-badge,
-[data-theme="dark"] .card-arrow{
-    --v2-ink: color-mix(in srgb, var(--ic,#0a84ff) 74%, #ffffff);
-}
-
-/* ── 7 · SMALL SCREENS ──────────────────────────────────────────────────── */
-@media (max-width: 820px){
-    .pc-headerbar{ padding: 10px 14px !important; gap: 9px !important; min-height: 0 }
-    .pc-headerbar > .gg-hbtn{ width: 38px !important; height: 36px !important }
-    .stat-card, .module-card{ border-radius: 20px !important }
-    .module-card{ padding: 18px 18px 54px !important; min-height: 0 }
-    .card-badge{ left: 18px; bottom: 18px }
-    .stat-card .num{ font-size: 23px !important }
-    .stat-card .ic, .module-card .card-icon{ width: 42px; height: 42px; border-radius: 14px }
-}
-@media (max-width: 620px){
-    .wrap{ padding: 16px 14px 30px !important }
-    .stats, .modules{ gap: 12px !important }
-    .module-card .card-desc{ display: none }
-}
-@media (prefers-reduced-motion: reduce){
-    .gg-live .pulse{ animation: none }
-    .stat-card, .module-card, .card-arrow{ transition: none }
-}
-/* Screen-fit refinement: compact departments; no scroll locking or hidden cards. */
-html { scroll-behavior: smooth; }
-.wrap { max-width: 1600px !important; padding: 12px 20px 18px !important; }
-.stats { grid-template-columns: repeat(4,minmax(0,1fr)) !important; gap: 12px !important; margin-bottom: 12px !important; }
-.stat-card { padding: 12px 16px !important; gap: 12px !important; border-radius: 18px !important; }
-.stat-card .ic { width: 36px; height: 36px; font-size: 18px; border-radius: 12px; }
-.stat-card .num { font-size: 24px !important; }
-.sec { margin: 10px 0 !important; padding: 6px 13px !important; }
-.modules { grid-template-columns: repeat(5,minmax(0,1fr)) !important; gap: 12px !important; }
+/* Module Cards */
 .module-card {
-    display: grid; grid-template-columns: 34px minmax(0,1fr) 24px;
-    grid-template-rows: 34px minmax(32px,1fr) 20px;
-    column-gap: 10px; row-gap: 5px; align-items: center;
-    height: var(--hub-card-height,146px); min-height: 122px;
-    padding: 12px !important; border-radius: 18px !important;
-    transform: none !important;
-    transition: translate .24s cubic-bezier(.2,.7,.3,1), background-color .2s ease, border-color .2s ease !important;
-    /* Keep the glass, but avoid animating blur and large shadows per frame. */
-    backdrop-filter: saturate(160%) blur(18px) !important;
-    -webkit-backdrop-filter: saturate(160%) blur(18px) !important;
+    display: grid !important;
+    grid-template-columns: 36px minmax(0, 1fr) 24px !important;
+    grid-template-rows: 36px minmax(32px, 1fr) 20px !important;
+    column-gap: 10px !important; row-gap: 6px !important;
+    align-items: center !important;
+    height: 146px !important; min-height: 124px !important;
+    padding: 12px 14px !important;
+    text-decoration: none !important;
 }
-.module-card .card-icon { grid-column: 1; grid-row: 1; width: 34px; height: 34px; font-size: 18px; border-radius: 11px; margin: 0; transition: transform .24s ease !important; }
-.module-card .card-title { grid-column: 2 / 4; grid-row: 1; font-size: 14px !important; margin: 0 !important; line-height: 1.2; }
-.module-card .card-desc { grid-column: 1 / 4; grid-row: 2; font-size: 11.5px !important; line-height: 1.4 !important; align-self: start; }
-.module-card .card-badge { position: static; grid-column: 1 / 3; grid-row: 3; justify-self: start; padding: 2px 8px !important; font-size: 9px !important; line-height: 14px; }
-.module-card .card-arrow { position: static; grid-column: 3; grid-row: 3; width: 24px; height: 24px; font-size: 13px !important; }
-.module-card:hover .card-icon { transform: none; }
-.module-card:focus-visible { outline: 3px solid var(--ac); outline-offset: 3px; }
-.pc-stagger > * { animation: hubSettle .28s ease-out both !important; }
-@keyframes hubSettle { from { opacity: 0; } to { opacity: 1; } }
-@media (hover:hover) and (pointer:fine) {
-    .module-card:hover { translate: 0 -2px; }
-    .module-card:active { translate: 0 0; }
+
+.module-card .card-icon {
+    grid-column: 1; grid-row: 1;
+    width: 36px; height: 36px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; margin: 0 !important;
+    background: color-mix(in srgb, var(--ic, #38bdf8) 20%, rgba(255,255,255,0.06)) !important;
+    border: 1px solid color-mix(in srgb, var(--ic, #38bdf8) 42%, transparent) !important;
+    color: color-mix(in srgb, var(--ic, #38bdf8) 90%, #ffffff) !important;
+    box-shadow: 0 0 16px color-mix(in srgb, var(--ic, #38bdf8) 30%, transparent),
+                inset 0 1px 0 rgba(255,255,255,0.40) !important;
 }
-@media (min-width:821px) and (max-width:1099px) {
-    .modules { grid-template-columns: repeat(4,minmax(0,1fr)) !important; }
+
+.module-card .card-title {
+    grid-column: 2 / 4; grid-row: 1;
+    color: #ffffff !important;
+    font-size: 14.5px !important; font-weight: 600 !important;
+    letter-spacing: -0.015em !important;
+    margin: 0 !important; line-height: 1.25;
 }
-@media (max-width:1200px) {
+
+.module-card .card-desc {
+    grid-column: 1 / 4; grid-row: 2;
+    color: rgba(240, 244, 255, 0.85) !important;
+    font-size: 11.5px !important; line-height: 1.4 !important;
+    margin: 0 !important; align-self: start;
+}
+
+.module-card .card-badge {
+    position: static !important;
+    grid-column: 1 / 3; grid-row: 3;
+    justify-self: start;
+    padding: 2.5px 9px !important;
+    font-size: 9.5px !important; font-weight: 600 !important;
+    letter-spacing: 0.05em !important; text-transform: uppercase !important;
+    border-radius: 999px !important;
+    background: color-mix(in srgb, var(--ic, #38bdf8) 18%, rgba(255,255,255,0.08)) !important;
+    border: 0.5px solid color-mix(in srgb, var(--ic, #38bdf8) 45%, transparent) !important;
+    color: color-mix(in srgb, var(--ic, #38bdf8) 95%, #ffffff) !important;
+    text-shadow: 0 0 10px color-mix(in srgb, var(--ic, #38bdf8) 40%, transparent);
+    line-height: 14px;
+}
+
+.module-card .card-arrow {
+    position: static !important;
+    grid-column: 3; grid-row: 3;
+    width: 24px; height: 24px; border-radius: 50% !important;
+    display: grid; place-items: center;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.22) !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 12px !important;
+    transition: transform 0.24s ease, background 0.24s ease, color 0.24s ease !important;
+}
+
+.module-card:hover .card-arrow {
+    background: rgba(255, 255, 255, 0.28) !important;
+    border-color: rgba(255, 255, 255, 0.40) !important;
+    color: #ffffff !important;
+    transform: translateX(2px) !important;
+}
+
+/* Subtle corner light reflection */
+.module-card::before {
+    content: '';
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--ic, #38bdf8) 18%, transparent), transparent 60%) !important;
+    opacity: 0.7;
+}
+.module-card:hover::before {
+    opacity: 1;
+}
+
+/* ── 6 · RESPONSIVE BREAKPOINTS ─────────────────────────────────────────── */
+@media (min-width: 821px) and (max-width: 1099px) {
+    .modules { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 1200px) {
     .pc-headerbar .pc-date { display: none; }
     .pc-headerbar { gap: 8px !important; }
 }
-@media (max-width:820px) {
+@media (max-width: 820px) {
     .wrap { padding: 12px 14px 18px !important; }
-    .modules { grid-template-columns: repeat(3,minmax(0,1fr)) !important; }
-    .module-card { height: auto; min-height: 126px; }
-    .pc-headerbar .pc-crumb, .pc-headerbar .pc-divider { display:none; }
+    .modules { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    .module-card { height: auto !important; min-height: 126px !important; }
+    .pc-headerbar .pc-crumb, .pc-headerbar .pc-divider { display: none; }
     .stat-card { padding: 10px !important; }
 }
-@media (max-width:620px) {
-    .stats { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
-    .modules { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 10px !important; }
-    .module-card { min-height: 100px; grid-template-columns: 28px minmax(0,1fr) 20px; grid-template-rows: minmax(36px,1fr) 20px; gap: 8px; padding: 10px !important; }
-    .module-card .card-icon { width: 28px; height: 28px; font-size: 16px; }
-    .module-card .card-title { font-size: 12px !important; }
-    .module-card .card-badge, .module-card .card-arrow { grid-row: 2; }
-    .module-card .card-desc { display:none; }
-}
-@media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
-    .pc-stagger > *, .module-card, .module-card .card-icon, .card-arrow { animation: none !important; transition: none !important; }
-    .module-card:hover { translate: none; }
+@media (max-width: 620px) {
+    .pc-headerbar {
+        padding: 8px 12px !important;
+        gap: 6px !important;
+        min-height: 48px !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important;
+    }
+    .pc-headerbar::-webkit-scrollbar { display: none !important; }
+    .pc-headerbar .pc-quickstat { display: none !important; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+    .stat-card { padding: 10px 12px !important; border-radius: 16px !important; gap: 8px !important; }
+    .stat-card .num { font-size: 20px !important; }
+    .modules { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+    .module-card { min-height: 100px !important; grid-template-columns: 28px minmax(0, 1fr) 20px !important; grid-template-rows: minmax(36px, 1fr) 20px !important; gap: 6px !important; padding: 10px !important; border-radius: 16px !important; }
+    .module-card .card-icon { width: 28px !important; height: 28px !important; font-size: 15px !important; border-radius: 9px !important; }
+    .module-card .card-title { font-size: 12.5px !important; }
+    .module-card .card-badge, .module-card .card-arrow { grid-row: 2 !important; }
+    .module-card .card-desc { display: none !important; }
 }
 
-@media (min-width:821px) and (max-width:1099px) and (max-height:740px) {
-    .module-card { min-height: 96px; grid-template-rows: 34px 20px; row-gap: 8px; align-content: space-between; }
-    .module-card .card-desc { display: none; }
-    .module-card .card-badge, .module-card .card-arrow { grid-row: 2; }
-    .pc-headerbar .pc-crumb, .pc-headerbar .pc-divider { display:none; }
+/* ── 7 · CLEANUP POPUPS ─────────────────────────────────────────────────── */
+.gg-wand-pop[hidden],
+.gg-wand-pop:not(.open),
+.gg-remind[hidden] {
+    display: none !important;
 }
 
 </style>
