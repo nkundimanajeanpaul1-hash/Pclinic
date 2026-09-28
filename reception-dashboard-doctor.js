@@ -2,8 +2,11 @@
   'use strict';
 
   function onReady(fn) {
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once: true });
-    else fn();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn, { once: true });
+    } else {
+      fn();
+    }
   }
 
   function getNavBtn(view) {
@@ -41,7 +44,7 @@
           if (typeof window.focusDupSearch === 'function') {
             window.focusDupSearch();
           } else {
-            focus('#receptionSearch');
+            focus('#receptionDockSearch') || focus('#receptionSearch');
           }
           break;
         case 'register':
@@ -116,71 +119,236 @@
     }
   };
 
-  function injectQuickPanel() {
-    var aside = document.querySelector('.aside');
-    if (!aside || document.getElementById('receptionDoctorQuickPanel')) return false;
+  /* ── LIVE ACTIVITY & ROTATING FACTS (MATCHING HUB) ── */
+  var liveIdx = 0;
+  function liveFacts() {
+    var live = window.__pclinicLive || null;
+    var q = live && live.queue != null ? live.queue :
+      (typeof window.queue !== 'undefined' && Array.isArray(window.queue) ?
+        window.queue.filter(function(x){ return x.status === 'waiting' || x.status === 'in-progress'; }).length :
+        (document.getElementById('qcnt') ? document.getElementById('qcnt').textContent : '–'));
 
-    var panel = document.createElement('div');
-    panel.id = 'receptionDoctorQuickPanel';
-    panel.className = 'panel reception-quick-panel';
-    panel.innerHTML =
-      '<div class="section-title reception-quick-headbar">⚡ Quick Actions</div>' +
-      '<div class="reception-quick-actions">' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'search\')" title="Search patient">' +
-          '<div class="qa-ic" style="background:#eaf2ff; color:#0071e3;"><i class="ti ti-user-search"></i></div>' +
-          '<div class="qa-label">Search patient</div>' +
-        '</div>' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'register\')" title="Register new patient">' +
-          '<div class="qa-ic" style="background:#e9f9ee; color:#1a7a32;"><i class="ti ti-user-plus"></i></div>' +
-          '<div class="qa-label">Register patient</div>' +
-        '</div>' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'queue\')" title="Live queue">' +
-          '<div class="qa-ic" style="background:#e6f6f8; color:#007080;"><i class="ti ti-list-numbers"></i></div>' +
-          '<div class="qa-label">Queue list</div>' +
-        '</div>' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'callnext\')" title="Call next patient">' +
-          '<div class="qa-ic" style="background:#e9f9ee; color:#1a7a32;"><i class="ti ti-player-play"></i></div>' +
-          '<div class="qa-label">Call next</div>' +
-        '</div>' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'appointments\')" title="Appointments & RDV">' +
-          '<div class="qa-ic" style="background:#f5eaff; color:#7c3aed;"><i class="ti ti-calendar-plus"></i></div>' +
-          '<div class="qa-label">Appointments</div>' +
-        '</div>' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'referrals\')" title="Referrals">' +
-          '<div class="qa-ic" style="background:#eaf2ff; color:#0071e3;"><i class="ti ti-git-branch"></i></div>' +
-          '<div class="qa-label">Referrals</div>' +
-        '</div>' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'beds\')" title="Bed occupancy">' +
-          '<div class="qa-ic" style="background:#fff4e0; color:#b85d00;"><i class="ti ti-bed"></i></div>' +
-          '<div class="qa-label">Bed occupancy</div>' +
-        '</div>' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'admission\')" title="Patient admission">' +
-          '<div class="qa-ic" style="background:#fff4e0; color:#b85d00;"><i class="ti ti-login-2"></i></div>' +
-          '<div class="qa-label">Admission</div>' +
-        '</div>' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'printcard\')" title="Print patient ID card">' +
-          '<div class="qa-ic" style="background:#f1f5f9; color:#475569;"><i class="ti ti-id-badge-2"></i></div>' +
-          '<div class="qa-label">Print ID card</div>' +
-        '</div>' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'emergency\')" title="Emergency triage">' +
-          '<div class="qa-ic" style="background:#ffebe9; color:#c0392b;"><i class="ti ti-emergency-bed"></i></div>' +
-          '<div class="qa-label">Emergency</div>' +
-        '</div>' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'messages\')" title="Message center">' +
-          '<div class="qa-ic" style="background:#f5eaff; color:#7c3aed;"><i class="ti ti-message-circle"></i></div>' +
-          '<div class="qa-label">Messages</div>' +
-        '</div>' +
-        '<div class="qa-card" onclick="receptionQuickAction(\'help\')" title="Help & shortcuts" style="margin-bottom:0;">' +
-          '<div class="qa-ic" style="background:#eaf2ff; color:#0284c7;"><i class="ti ti-help"></i></div>' +
-          '<div class="qa-label">Help & shortcuts</div>' +
-        '</div>' +
-      '</div>';
+    var reg = live && live.today != null ? live.today :
+      (typeof window.getPatients === 'function' ?
+        (window.getPatients() || []).filter(function(p){
+          var today = new Date().toISOString().slice(0, 10);
+          return (p.date && p.date.indexOf(today) === 0) || (p.registeredAt && p.registeredAt.indexOf(today) === 0) || p.registeredToday;
+        }).length :
+        (document.getElementById('stTotal') ? document.getElementById('stTotal').textContent : '–'));
 
-    aside.insertAdjacentElement('afterbegin', panel);
-    return true;
+    var total = live && live.total != null ? live.total :
+      (typeof window.getPatients === 'function' ? (window.getPatients() || []).length : '–');
+
+    var now = new Date();
+    var next = new Date(now); next.setMinutes(0, 0, 0); next.setHours(now.getHours() + 1);
+    var mins = Math.max(1, Math.round((next - now) / 6e4));
+
+    return [
+      'Queue · ' + q + ' waiting',
+      'Today · ' + reg + ' registered',
+      'Next slot · in ' + mins + ' min',
+      'Total · ' + total + ' patients'
+    ];
+  }
+
+  function liveTick() {
+    var el = document.getElementById('ggLiveTxt');
+    if (!el) return;
+    var f = liveFacts();
+    el.textContent = f[liveIdx % f.length];
+    liveIdx++;
+    var pill = document.getElementById('ggLive');
+    if (pill) {
+      pill.classList.remove('swap');
+      void pill.offsetWidth;
+      pill.classList.add('swap');
+    }
+  }
+
+  function refreshReceptionHeader() {
+    // Date
+    var d = new Date();
+    var dateEl = document.getElementById('todayDate');
+    if (dateEl) {
+      dateEl.textContent = '· ' + d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+    }
+
+    // Today patients count
+    var live = window.__pclinicLive || null;
+    var today = d.toISOString().slice(0, 10);
+    var todayCount = 0;
+    if (live && live.today != null) {
+      todayCount = live.today;
+    } else if (typeof window.getPatients === 'function') {
+      var pts = window.getPatients() || [];
+      todayCount = pts.filter(function(p) {
+        return (p.date && p.date.indexOf(today) === 0) || (p.registeredAt && p.registeredAt.indexOf(today) === 0) || p.registeredToday;
+      }).length;
+    }
+    var qs = document.getElementById('qsPatients');
+    if (qs) qs.textContent = todayCount;
+
+    // Sync theme icon
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var tIcon = document.getElementById('receptionThemeIcon');
+    if (tIcon) tIcon.className = isDark ? 'ti ti-sun' : 'ti ti-moon';
+  }
+
+  async function fetchReceptionCommonCounts() {
+    if (!window.firebaseDB || !window.firebaseFunctions) return null;
+    var fs = window.firebaseFunctions, db = window.firebaseDB;
+    var today = new Date().toISOString().slice(0, 10);
+    var out = {};
+    var patientsRef = fs.collection(db, 'patients');
+    try {
+      var r = await Promise.all([
+        fs.getCountFromServer(patientsRef),
+        fs.getCountFromServer(fs.query(patientsRef, fs.where('registered', '==', today))),
+        fs.getCountFromServer(fs.query(patientsRef, fs.where('queueStatus', '==', 'waiting')))
+      ]);
+      out.total = r[0].data().count;
+      out.today = r[1].data().count;
+      out.queue = r[2].data().count;
+      out.at = Date.now();
+      window.__pclinicLive = out;
+      refreshReceptionHeader();
+      liveTick();
+      return out;
+    } catch (e) {
+      console.warn('Common server counts query fallback to local cache:', e);
+      return null;
+    }
+  }
+
+  /* ── DOCK SEARCH CAPSULE EVENT HANDLING (MATCHING SCREENSHOT) ── */
+  function setupDockSearch() {
+    var dockInput = document.getElementById('receptionDockSearch');
+    var dockResults = document.getElementById('receptionDockResults');
+    if (!dockInput) return;
+
+    function renderDockMatches(query) {
+      if (!dockResults) return;
+      var q = String(query || '').trim().toLowerCase();
+      dockResults.replaceChildren();
+
+      if (q.length < 2) {
+        dockResults.classList.remove('open');
+        return;
+      }
+
+      var patients = [];
+      try { patients = window.getPatients() || []; } catch (e) {}
+
+      var words = q.split(/\s+/).filter(Boolean);
+      var matches = patients.filter(function (p) {
+        var hay = [p.name, p.firstName, p.middleName, p.lastName, p.id, p.mrn, p.phone, p.nationalId].join(' ').toLowerCase();
+        return words.every(function (w) { return hay.indexOf(w) !== -1; });
+      }).slice(0, 6);
+
+      if (!matches.length) {
+        var empty = document.createElement('div');
+        empty.style.cssText = 'padding:14px; text-align:center; color:#8e8e93; font-size:11.5px;';
+        empty.textContent = 'No matching patient found for “' + q + '”';
+        dockResults.appendChild(empty);
+      } else {
+        matches.forEach(function (p) {
+          var item = document.createElement('div');
+          item.className = 'reception-dock-item';
+          var name = p.name || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || ('Patient ' + (p.id || ''));
+          var mrn = p.mrn || p.id || '—';
+          var phone = p.phone || 'No phone';
+
+          item.innerHTML =
+            '<div class="rdi-ic" style="background:#eaf2ff; color:#0071e3;"><i class="ti ti-user"></i></div>' +
+            '<div style="flex:1; min-width:0;">' +
+              '<div class="rdi-name">' + name + '</div>' +
+              '<div class="rdi-meta">MRN: ' + mrn + ' · Tel: ' + phone + '</div>' +
+            '</div>' +
+            '<span style="font-size:10px; font-weight:600; color:#0071e3; background:#eaf2ff; padding:2px 7px; border-radius:6px;">View</span>';
+
+          item.addEventListener('click', function () {
+            dockResults.classList.remove('open');
+            dockInput.value = '';
+            if (typeof window.openPatient === 'function') {
+              window.openPatient(p.id);
+            } else if (typeof window.showView === 'function') {
+              window.showView('history', getNavBtn('history'));
+            }
+          });
+
+          dockResults.appendChild(item);
+        });
+      }
+
+      dockResults.classList.add('open');
+    }
+
+    dockInput.addEventListener('input', function () {
+      var val = this.value;
+      var mainSearch = document.getElementById('receptionSearch');
+      if (mainSearch) mainSearch.value = val;
+      if (typeof window.searchReceptionHub === 'function') {
+        window.searchReceptionHub(val);
+      }
+      renderDockMatches(val);
+    });
+
+    dockInput.addEventListener('focus', function () {
+      if (this.value.length >= 2) {
+        renderDockMatches(this.value);
+      }
+    });
+
+    dockInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        this.value = '';
+        var mainSearch = document.getElementById('receptionSearch');
+        if (mainSearch) mainSearch.value = '';
+        if (dockResults) dockResults.classList.remove('open');
+        this.blur();
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.hub-dock-search')) {
+        if (dockResults) dockResults.classList.remove('open');
+      }
+    });
+
+    // Keyboard shortcut: ⌘F / Ctrl+F
+    window.addEventListener('keydown', function (e) {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'f' || e.key === 'F')) {
+        e.preventDefault();
+        dockInput.focus();
+        dockInput.select();
+      }
+    });
   }
 
   onReady(function () {
-    injectQuickPanel();
+    refreshReceptionHeader();
+    liveTick();
+    setInterval(liveTick, 5000);
+    setInterval(refreshReceptionHeader, 10000);
+
+    setupDockSearch();
+
+    window.addEventListener('firebaseReady', function () {
+      fetchReceptionCommonCounts();
+    });
+    window.addEventListener('patientsUpdated', function () {
+      setTimeout(fetchReceptionCommonCounts, 1200);
+      refreshReceptionHeader();
+    });
+    window.addEventListener('storage', function (ev) {
+      if (!ev || !ev.key || ev.key.indexOf('pclinic_') > -1) {
+        refreshReceptionHeader();
+        liveTick();
+      }
+    });
+
+    if (window.firebaseDB && window.firebaseFunctions) {
+      fetchReceptionCommonCounts();
+    }
   });
 })();
