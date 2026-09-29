@@ -1669,6 +1669,7 @@
 
     window.pcOpenMedicalSummary = openMedicalSummary;
     window.pcSelectPatientForMedicalSummary = openPatientPickerForSummary;
+    window.pcOpenPatientPicker = openPatientPickerForSummary;
 
     function openPatientProfileModal(patientId) {
         try {
@@ -2054,7 +2055,7 @@
         }
         leftHtml += '<a class="chk-btn btn-applications" onclick="window.pcApplicationsMenu&&window.pcApplicationsMenu(this);">💉 Applications <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
         if (isClinical) {
-            leftHtml += '<a class="chk-btn btn-documents" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(id);">📂 Documents</a>';
+            leftHtml += '<a class="chk-btn btn-documents" onclick="var p=(window.pcFile&&pcFile.patient)?pcFile.patient():(window.currentPatient||null); var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; if(!id&&window.pcOpenPatientPicker){ window.pcOpenPatientPicker(function(sel){ if(sel&&sel.id){ window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(sel.id); } }, { title:\'📂 Select Patient for Documents &amp; OPD File\', subtitle:\'Search and select a patient to view and record their clinical documents.\', actionLabel:\'Open Documents\' }); return; } window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(id);">📂 Documents</a>';
         }
         leftHtml += '<a class="chk-btn btn-system" onclick="window.pcSystemMenu&&window.pcSystemMenu(this);">⚙️ System <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
 
@@ -3807,6 +3808,7 @@
         openWardPicker: openWardPicker,
         openPatientProfileModal: openPatientProfileModal,
         openPatientPickerForSummary: openPatientPickerForSummary,
+        openPatientPicker: openPatientPickerForSummary,
         openMedicalSummary: openMedicalSummary,
         openReadOnlyCarePlan: openReadOnlyCarePlanModal,
         openReadOnlyVitalsGraph: openReadOnlyVitalsGraphModal,
