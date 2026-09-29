@@ -537,14 +537,6 @@
 
         <!-- ─── CONTENT GRID ─── -->
         <div class="mac-body-content">
-            <div id="medSummaryLock" style="display:none;">
-                <div class="lock-orb">🔒</div>
-                <div style="font-weight:700;font-size:15px;color:var(--tp);">No patient selected</div>
-                <span style="font-size:11.5px;line-height:1.6;color:var(--tm);margin-top:4px;display:inline-block;">
-                    Choose a patient in the identification bar above (Bar 2) to open and record medical summaries.
-                </span>
-            </div>
-
             <div class="mac-cards-grid" id="macCardsGrid"></div>
         </div>
     </div>
@@ -639,16 +631,16 @@
     function applyPatientGate() {
         const p = currentPatient;
         const grid = document.getElementById('macCardsGrid');
-        const lock = document.getElementById('medSummaryLock');
         const count = document.getElementById('medSummaryCount');
 
-        if (p && p.id) {
-            if (grid) grid.style.display = 'grid';
-            if (lock) lock.style.display = 'none';
-        } else {
-            if (grid) grid.style.display = 'none';
-            if (lock) lock.style.display = 'block';
-            if (count) count.textContent = '🔒 Locked';
+        if (grid) grid.style.display = 'grid';
+        if (count) {
+            const num = grid ? grid.querySelectorAll('.mac-card:not([style*="display: none"])').length : 30;
+            if (p && p.id) {
+                count.textContent = `${num} of 30 Records · Pt #${p.id}`;
+            } else {
+                count.textContent = `${num} of 30 Records`;
+            }
         }
     }
 
@@ -731,22 +723,27 @@
 
     // ─── INSTANT FORM LAUNCH (NO DELAY) ───
     window.launchForm = function(target, title) {
-        if (!currentPatient || !currentPatient.id) {
-            showToast('🔒 Select a patient first in the identification bar above.', 'warning');
-            return;
-        }
         const p = currentPatient;
-        try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
-
         if (target === 'vitals-action') {
             if (window.pcVitals) pcVitals.open();
-            else showToast('📊 Recording Vital Signs for ' + (p.firstName || p.name), 'info');
+            else showToast('📊 Recording Vital Signs', 'info');
             return;
         }
 
-        showToast(`📄 Opening ${title}…`, 'info');
-        // Immediate navigation without delay
-        window.location.href = `${target}?patient=${encodeURIComponent(p.id)}`;
+        if (p && p.id) {
+            try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
+            window.location.href = `${target}?patient=${encodeURIComponent(p.id)}`;
+        } else {
+            const typedId = (document.getElementById('ocSearchId') && document.getElementById('ocSearchId').value.trim()) ||
+                            (document.getElementById('ocSearchMrn') && document.getElementById('ocSearchMrn').value.trim()) ||
+                            localStorage.getItem('pclinic_active_patient') || '';
+            if (typedId) {
+                try { localStorage.setItem('pclinic_active_patient', String(typedId)); } catch(e){}
+                window.location.href = `${target}?patient=${encodeURIComponent(typedId)}`;
+            } else {
+                window.location.href = target;
+            }
+        }
     };
 
     window.closeMedicalSummary = function() {
