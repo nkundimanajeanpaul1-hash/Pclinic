@@ -7,7 +7,7 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PClinic • PClinic Medical Summary</title>
+    <title>PClinic • Medical Summary</title>
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
     <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
@@ -27,176 +27,452 @@
             --ac: #0071e3;
             --ach: #005bb5;
             --green: #10b981;
-            --green-dark: #059669;
+            --greenb: #e9f9ee;
+            --greend: #1a7a32;
+            --orange: #ff9500;
+            --orangeb: #fff4e0;
+            --oranged: #7a4500;
             --red: #ef4444;
+            --redb: #ffebe9;
+            --redd: #8a1f1a;
             --purple: #7c3aed;
-            --shadow: 0 1px 4px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.04);
-            --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
-            --smooth: cubic-bezier(0.23, 1, 0.32, 1);
+            --purpleb: #f5eaff;
+            --purpled: #5c2475;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 14px rgba(0,0,0,0.05);
+            --shadow2: 0 6px 20px rgba(0, 113, 227, 0.12), 0 2px 6px rgba(0,0,0,0.04);
+            --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
             color-scheme: light;
         }
 
         [data-theme="dark"], html[data-theme="dark"], body.dark-mode {
-            --bg: #0d1117 !important;
-            --s1: #161b22 !important;
-            --s2: #1e242e !important;
-            --s3: #262c36 !important;
-            --bd: #30363d !important;
-            --tp: #f0f6fc !important;
-            --ts: #c9d1d9 !important;
-            --tm: #8b949e !important;
-            --ac: #58a6ff !important;
+            --bg: #0b111e !important;
+            --s1: #161f30 !important;
+            --s2: #1e293b !important;
+            --s3: #263346 !important;
+            --bd: rgba(255, 255, 255, 0.12) !important;
+            --tp: #f1f5f9 !important;
+            --ts: #cbd5e1 !important;
+            --tm: #94a3b8 !important;
+            --ac: #38bdf8 !important;
+            --ach: #0284c7 !important;
             color-scheme: dark;
         }
 
         body {
             font-family: var(--f);
             background: var(--bg);
+            background-image:
+                radial-gradient(1200px 700px at 12% 8%, rgba(0, 113, 227, 0.05), transparent 55%),
+                radial-gradient(1100px 680px at 88% 14%, rgba(16, 185, 129, 0.04), transparent 55%);
+            background-attachment: fixed;
             color: var(--tp);
             font-size: 13px;
-            padding: 20px;
+            padding: 0 16px 32px;
             -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
         }
 
-        .wrap {
-            max-width: 1400px;
+        /* ═══ 3 BARS TOP HIERARCHY — MATCHING OTHER OPD PAGES ═══ */
+        html body #pcMasterHeader, html body #pcMasterHeader.pc-master-header {
+            display: flex !important; flex-direction: column !important; gap: 8px !important;
+            position: relative !important; z-index: 40 !important;
+            width: 100% !important; max-width: 100% !important; margin: 0 auto 12px auto !important;
+            padding: 8px 16px 4px !important; background: transparent !important;
+            overflow: visible !important;
+        }
+        html body #pc_chuk_top_menu.chuk-top-menu { position: relative !important; top: auto !important; z-index: 3 !important; }
+        html body #pc_common_demo_bar.oc-demo-bar, html body .oc-demo-bar { position: relative !important; top: auto !important; z-index: 2 !important; margin: 0 !important; flex-shrink: 0 !important; }
+        html body #dcBar.dc-bar, html body #dcBar { position: relative !important; top: auto !important; z-index: 1 !important; margin: 0 !important; width: 100% !important; clear: both !important; flex-shrink: 0 !important; }
+
+        /* ═══ MAIN MACBOOK CONTAINER ═══ */
+        .mac-summary-wrap {
+            max-width: 1440px;
             margin: 0 auto;
-            animation: fadeIn 0.12s var(--smooth);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .summary-wrapper {
             position: relative;
-            background: rgba(255, 255, 255, 0.72);
-            -webkit-backdrop-filter: saturate(180%) blur(24px);
-            backdrop-filter: saturate(180%) blur(24px);
-            border: 0.5px solid rgba(255, 255, 255, 0.6);
-            border-radius: 24px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
+        }
+
+        .mac-window-shell {
+            background: rgba(255, 255, 255, 0.80);
+            -webkit-backdrop-filter: blur(32px) saturate(190%);
+            backdrop-filter: blur(32px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(15, 45, 90, 0.08), inset 0 1px 1px #ffffff;
             overflow: hidden;
-            margin-bottom: 24px;
-            transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.45s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .summary-wrapper:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06), 0 16px 44px rgba(0,0,0,0.10);
-        }
-        .summary-wrapper::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            pointer-events: none;
-            background: linear-gradient(160deg,
-                rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 28%, rgba(255,255,255,0) 55%);
+            transition: all 0.25s ease;
         }
 
-        .summary-title-strip {
-            position: relative;
-            padding: 14px 20px;
-            background: rgba(0, 113, 227, 0.08);
-            -webkit-backdrop-filter: saturate(180%) blur(18px);
-            backdrop-filter: saturate(180%) blur(18px);
-            border-bottom: 0.5px solid rgba(0, 0, 0, 0.07);
-            font-weight: 800;
-            font-size: 13.5px;
-            color: #0071e3;
-            letter-spacing: -0.01em;
+        [data-theme="dark"] .mac-window-shell {
+            background: rgba(20, 28, 45, 0.82);
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255,255,255,0.06);
+        }
+
+        /* ═══ MACBOOK WINDOW HEADER STRIP ═══ */
+        .mac-title-bar {
+            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.65);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
             display: flex;
             align-items: center;
             justify-content: space-between;
-        }
-        .summary-title-strip i { color: #0071e3; }
-
-        [data-theme="dark"] .summary-title-strip {
-            background: #1e242e !important;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
-        table.oc-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
+        [data-theme="dark"] .mac-title-bar {
+            background: rgba(26, 36, 56, 0.70);
+            border-bottom-color: rgba(255, 255, 255, 0.08);
         }
 
-        table.oc-table td {
-            position: relative;
-            padding: 11px 18px;
-            border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
-            color: var(--tp);
-            vertical-align: middle;
+        .mac-title-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        table.oc-table tr:last-child td { border-bottom: none; }
-
-        table.oc-table tbody tr {
-            transition: background 0.3s cubic-bezier(0.25,0.1,0.25,1), transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        .mac-traffic-dots {
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
         }
 
-        table.oc-table tr:hover {
-            background: rgba(0, 113, 227, 0.06);
-            transform: scale(1.004);
-        }
-
-        .form-bullet {
-            color: var(--ac);
-            font-weight: 800;
-            margin-right: 8px;
-        }
-
-        .form-name {
-            font-weight: 600;
-            color: var(--tp);
-        }
-
-        .new-link {
-            color: #ffffff;
-            font-weight: 800;
-            text-decoration: none;
+        .mac-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            display: inline-block;
             cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .mac-dot:hover { opacity: 0.8; }
+        .mac-dot-red    { background: #ff5f56; border: 0.5px solid #e0443e; }
+        .mac-dot-yellow { background: #ffbd2e; border: 0.5px solid #dea123; }
+        .mac-dot-green  { background: #27c93f; border: 0.5px solid #1aab29; }
+
+        .mac-heading {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--tp);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.01em;
+        }
+        .mac-heading i { color: var(--ac); font-size: 16px; }
+
+        .mac-count-pill {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #0369a1;
+            background: rgba(224, 242, 254, 0.85);
+            border: 0.5px solid rgba(56, 189, 248, 0.40);
+            padding: 2px 9px;
+            border-radius: 999px;
+        }
+
+        [data-theme="dark"] .mac-count-pill {
+            color: #38bdf8;
+            background: rgba(14, 165, 233, 0.18);
+            border-color: rgba(56, 189, 248, 0.35);
+        }
+
+        /* ═══ MACBOOK FILTER SEARCH CAPSULE ═══ */
+        .mac-search-capsule {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            height: 34px;
+            padding: 0 12px;
+            background: rgba(255, 255, 255, 0.90);
+            border: 1px solid rgba(15, 23, 42, 0.10);
+            border-radius: 999px;
+            box-shadow: 0 2px 6px rgba(15, 45, 90, 0.05);
+            width: 280px;
+            transition: all 0.22s ease;
+        }
+
+        .mac-search-capsule:focus-within {
+            width: 320px;
+            border-color: var(--ac);
+            box-shadow: 0 4px 14px rgba(0, 113, 227, 0.18);
+            background: #ffffff;
+        }
+
+        [data-theme="dark"] .mac-search-capsule {
+            background: rgba(30, 41, 59, 0.85);
+            border-color: rgba(255, 255, 255, 0.14);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .mac-search-capsule i {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .mac-search-capsule input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 12px;
+            color: var(--tp);
+            width: 100%;
+        }
+
+        .mac-search-capsule input::placeholder {
+            color: #94a3b8;
+        }
+
+        .mac-key-badge {
+            font-size: 9.5px;
+            font-weight: 600;
+            color: #64748b;
+            background: rgba(15, 23, 42, 0.06);
+            border: 0.5px solid rgba(15, 23, 42, 0.08);
+            border-radius: 5px;
+            padding: 1px 4.5px;
+            flex-shrink: 0;
+        }
+
+        [data-theme="dark"] .mac-key-badge {
+            color: #94a3b8;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        /* ═══ CATEGORY TABS ROW ═══ */
+        .mac-filter-tabs {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            background: rgba(255, 255, 255, 0.40);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .mac-filter-tabs::-webkit-scrollbar { display: none; }
+
+        [data-theme="dark"] .mac-filter-tabs {
+            background: rgba(18, 25, 39, 0.50);
+            border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+
+        .mac-pill-btn {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
             gap: 5px;
-            height: 30px;
-            padding: 0 16px;
-            border-radius: 980px;
-            background: linear-gradient(180deg, #0a84ff, #0071e3);
+            height: 28px;
+            padding: 0 11px;
+            border-radius: 999px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            background: rgba(255, 255, 255, 0.70);
             font-size: 11.5px;
-            letter-spacing: -0.01em;
-            box-shadow: 0 2px 8px rgba(0, 113, 227, 0.35), inset 0 1px 0 rgba(255,255,255,0.25);
-            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s cubic-bezier(0.34,1.56,0.64,1);
-            -webkit-tap-highlight-color: transparent;
+            font-weight: 600;
+            color: var(--ts);
+            cursor: pointer;
+            transition: all 0.18s ease;
+            white-space: nowrap;
         }
 
-        .new-link:hover {
-            transform: translateY(-2px) scale(1.06);
-            box-shadow: 0 10px 26px rgba(0, 113, 227, 0.45);
-            text-decoration: none;
+        .mac-pill-btn:hover {
+            background: #ffffff;
+            color: var(--ac);
+            border-color: rgba(0, 113, 227, 0.3);
+            transform: translateY(-1px);
         }
-        .new-link:active {
-            transform: scale(0.93);
-            transition-duration: 0.08s;
+
+        .mac-pill-btn.active {
+            background: #0071e3 !important;
+            color: #ffffff !important;
+            border-color: #0071e3 !important;
+            box-shadow: 0 2px 8px rgba(0, 113, 227, 0.35);
+        }
+
+        [data-theme="dark"] .mac-pill-btn {
+            background: rgba(30, 41, 59, 0.65);
+            border-color: rgba(255, 255, 255, 0.10);
+            color: #cbd5e1;
+        }
+        [data-theme="dark"] .mac-pill-btn:hover {
+            background: rgba(51, 65, 85, 0.9);
+            color: #38bdf8;
+        }
+        [data-theme="dark"] .mac-pill-btn.active {
+            background: #0284c7 !important;
+            color: #ffffff !important;
+            border-color: #0284c7 !important;
+        }
+
+        /* ═══ MACBOOK 2-COLUMN FORM CARDS GRID ═══ */
+        .mac-body-content {
+            padding: 16px 18px 22px;
+        }
+
+        .mac-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        @media (max-width: 900px) {
+            .mac-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mac-card {
+            background: rgba(255, 255, 255, 0.85);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            border-radius: 14px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(15, 45, 90, 0.04), inset 0 1px 1px #ffffff;
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-decoration: none;
+            position: relative;
+        }
+
+        .mac-card:hover {
+            background: #ffffff;
+            transform: translateY(-2px) scale(1.006);
+            box-shadow: 0 8px 24px rgba(0, 113, 227, 0.14), 0 2px 6px rgba(0,0,0,0.04);
+            border-color: rgba(0, 113, 227, 0.35);
+        }
+
+        .mac-card:active {
+            transform: scale(0.985);
+        }
+
+        [data-theme="dark"] .mac-card {
+            background: rgba(26, 36, 56, 0.80);
+            border-color: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        [data-theme="dark"] .mac-card:hover {
+            background: rgba(33, 46, 70, 0.95);
+            border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .mac-card-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+        }
+
+        .mac-card-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .mac-card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--tp);
+            line-height: 1.3;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .mac-card-sub {
+            font-size: 11px;
+            color: var(--tm);
+            margin-top: 1.5px;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .rec-date {
             display: inline-flex;
             align-items: center;
-            height: 22px;
-            padding: 0 10px;
-            margin-left: 8px;
-            border-radius: 980px;
-            background: rgba(0, 112, 128, 0.10);
-            color: #007080;
-            font-family: inherit;
-            font-size: 10.5px;
-            font-weight: 800;
+            gap: 3px;
+            height: 19px;
+            padding: 0 7px;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.12);
+            color: #059669;
+            font-size: 10px;
+            font-weight: 700;
             letter-spacing: -0.01em;
+            margin-left: 6px;
         }
 
+        [data-theme="dark"] .rec-date {
+            background: rgba(16, 185, 129, 0.20);
+            color: #34d399;
+        }
+
+        .mac-card-btn {
+            height: 28px;
+            padding: 0 12px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #0a84ff, #0071e3);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            box-shadow: 0 2px 6px rgba(0, 113, 227, 0.30);
+            cursor: pointer;
+            transition: all 0.18s ease;
+            flex-shrink: 0;
+        }
+
+        .mac-card:hover .mac-card-btn {
+            background: #0071e3;
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.45);
+            transform: scale(1.05);
+        }
+
+        /* ═══ EMPTY FILTER RESULT ═══ */
+        .mac-no-match {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--tm);
+            font-size: 12.5px;
+            grid-column: 1 / -1;
+        }
+
+        /* ═══ LOCK / PATIENT GATE ═══ */
+        #medSummaryLock {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--tm);
+            font-size: 13px;
+        }
+        #medSummaryLock .lock-orb {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background: rgba(0, 113, 227, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        /* ═══ TOAST ═══ */
         .toast-container {
             position: fixed;
             bottom: 24px;
@@ -206,107 +482,139 @@
             flex-direction: column;
             gap: 8px;
         }
-
         .toast {
-            padding: 12px 18px;
+            padding: 10px 16px;
             border-radius: 12px;
             background: var(--tp);
             color: var(--bg);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             gap: 8px;
         }
     </style>
 </head>
-<body class="apple-ui apple-mesh">
+<body class="apple-ui">
 
-<div class="wrap apple-rise">
-    <!-- ═══ COMPLETE 30-ITEM MEDICAL SUMMARY TABLE (FROM PHOTO 1 & 2) ═══ -->
-    <div class="summary-wrapper">
-        <div class="summary-title-strip" id="medSummaryFoldHeader" onclick="toggleMedicalSummaryFold()" style="cursor:pointer; user-select:none;">
-            <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-chevron-down" id="medSummaryChevron" style="transition:transform 0.3s; transform:rotate(0deg);"></i> Medical summary</span>
-            <span style="color:var(--tm);font-size:12px;font-weight:500; display:flex; align-items:center; gap:8px;"><span id="medSummaryCount">30 Clinical Records Available</span> <i class="ti ti-fold" style="font-size:14px;" title="Click to unfold"></i></span>
+<!-- ═══ 3 BARS (TOP, MID/DEMO, ACTION) INJECTED AT TOP OF BODY ═══ -->
+<div id="pcMasterHeader" class="pc-master-header"></div>
+
+<div class="mac-summary-wrap">
+    <div class="mac-window-shell">
+        <!-- ─── WINDOW HEADER STRIP ─── -->
+        <div class="mac-title-bar">
+            <div class="mac-title-left">
+                <div class="mac-traffic-dots">
+                    <span class="mac-dot mac-dot-red" onclick="window.closeMedicalSummary()" title="Close directory"></span>
+                    <span class="mac-dot mac-dot-yellow" title="Minimize"></span>
+                    <span class="mac-dot mac-dot-green" title="Full size"></span>
+                </div>
+                <div class="mac-heading">
+                    <i class="ti ti-file-text"></i> Medical Summary
+                </div>
+                <span class="mac-count-pill" id="medSummaryCount">30 Records</span>
+            </div>
+
+            <div class="mac-search-capsule" title="Quick search (⌘F / Ctrl+F)">
+                <i class="ti ti-search"></i>
+                <input type="text" id="formFilterInput" placeholder="Filter 30 clinical forms…" autocomplete="off">
+                <span class="mac-key-badge">⌘ F</span>
+            </div>
         </div>
-        <div id="medSummaryFoldBody" style="max-height:2000px; opacity:1; overflow:hidden; transition: max-height 0.5s cubic-bezier(0.32,0.72,0,1), opacity 0.4s;">
-        <div id="medSummaryLock" style="display:none; text-align:center; padding:48px 20px; color:var(--tm); font-size:13px;">
-            <div style="width:64px;height:64px;margin:0 auto 14px;border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:30px;background:rgba(0,113,227,0.08);box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);">🔒</div>
-            <div style="font-weight:800;font-size:15px;color:var(--tp);letter-spacing:-0.01em;">No patient selected</div>
-            <span style="font-size:11.5px;line-height:1.6;">Choose the patient in the identification bar above (Find / search) —<br>the 30 Medical Summary forms open only for that patient.</span>
+
+        <!-- ─── CATEGORY PILL SELECTOR ─── -->
+        <div class="mac-filter-tabs" id="categoryFilterBar">
+            <button class="mac-pill-btn active" data-cat="all"><i class="ti ti-grid-dots"></i> All (30)</button>
+            <button class="mac-pill-btn" data-cat="notes"><i class="ti ti-notes"></i> Notes (4)</button>
+            <button class="mac-pill-btn" data-cat="ward"><i class="ti ti-bed"></i> Inpatient (7)</button>
+            <button class="mac-pill-btn" data-cat="surgery"><i class="ti ti-scalpel"></i> Surgery (4)</button>
+            <button class="mac-pill-btn" data-cat="diagnostics"><i class="ti ti-heartbeat"></i> Diagnostics (4)</button>
+            <button class="mac-pill-btn" data-cat="registry"><i class="ti ti-clipboard-list"></i> Registries (7)</button>
+            <button class="mac-pill-btn" data-cat="legal"><i class="ti ti-file-certificate"></i> Legal (4)</button>
         </div>
-        <table class="oc-table" id="medSummaryFormsTable">
-            <tbody id="summaryTableBody"></tbody>
-        </table>
+
+        <!-- ─── CONTENT GRID ─── -->
+        <div class="mac-body-content">
+            <div id="medSummaryLock" style="display:none;">
+                <div class="lock-orb">🔒</div>
+                <div style="font-weight:700;font-size:15px;color:var(--tp);">No patient selected</div>
+                <span style="font-size:11.5px;line-height:1.6;color:var(--tm);margin-top:4px;display:inline-block;">
+                    Choose a patient in the identification bar above (Bar 2) to open and record medical summaries.
+                </span>
+            </div>
+
+            <div class="mac-cards-grid" id="macCardsGrid"></div>
         </div>
     </div>
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
 
+<!-- ═══ DEPENDENCIES ═══ -->
+<script src="patient-data.js"></script>
 <script src="pclinic-catalog.js"></script>
 <script src="pclinic-orders.js"></script>
 <script src="pclinic-file.js?v=20260827_FILES"></script>
 <script src="pclinic-vitals.js"></script>
 <script src="pclinic-handoff.js"></script>
+
 <script>
 (function() {
     'use strict';
 
     let currentPatient = null;
+    let activeCategory = 'all';
+    let searchQuery = '';
 
-    // EXACT 30 MEDICAL SUMMARY FORMS FROM PHOTO 1 & 2
-    // ═══ THE 30 MEDICAL SUMMARY FORMS — every one linked to a real page.
-    // 'type' = the Common Server record type (pclinic_files) used to show
-    // the last recorded date for THIS patient. All pages pull the patient
-    // from the Common Server and save their records back to it. ═══
+    // EXACT 30 CLINICAL RECORDS WITH MACBOOK OS CATEGORIZATION & ICONS
     const SUMMARY_ITEMS = [
-        { title: 'Clinical Progress',                     target: 'clinical-note.html',        type: 'clinical' },
-        { title: 'Daily note',                            target: 'clinical-note.html',        type: 'clinical' },
-        { title: 'Death certificate in ICD-11',           target: 'medical-certificate.html',  type: null },
-        { title: 'Discharge malnutrition ward',           target: 'discharge-summary.html',    type: null },
-        { title: 'ECG',                                   target: 'ecg-form.html',             type: 'ecg' },
-        { title: 'Follow-up malnutrition',                target: 'malnutrition-followup.html', type: 'malnut' },
-        { title: 'Follow-up of the psychiatric patient',  target: 'psychiatric-care.html',     type: 'psych' },
-        { title: 'Fysiotherapy order',                    target: 'physio-request.html',       type: 'physio' },
-        { title: 'Inpatient admission form (NDH model)',  target: 'admission-form.html',       type: 'admission' },
-        { title: 'Inpatient discharge form (RMH model)',  target: 'discharge-summary.html',    type: null },
-        { title: 'Inpatient follow-up form (HPRC model)', target: 'ward-round.html',           type: 'ward' },
-        { title: 'Intensive care surveillance',           target: 'icu-surveillance.html',     type: 'icu' },
-        { title: 'MSAS - Register Injection',             target: 'injection-registry.html',   type: 'injection' },
-        { title: 'MSAS - Register pansement',             target: 'pansement-registry.html',   type: 'pansement' },
-        { title: 'MSHP - Blood transfusion receiver registry', target: 'transfusion-registry.html', type: 'transfusion' },
-        { title: 'MSPLS - HC - Deaths registry',          target: 'deaths-registry.html',      type: 'death' },
-        { title: 'Outpatient consultation (RMH)',         target: 'opd-file.html',             type: 'opd' },
-        { title: 'Patient transfer',                      target: 'transfer-form.html',        type: null },
-        { title: 'Pediatric triage (CPTAS)',              target: 'triage-form.html',          type: 'triage' },
-        { title: 'Physiotherapy evaluation form',         target: 'physio-request.html',       type: 'physio' },
-        { title: 'Pre-anaesthesia record (KIRA model)',   target: 'surgical-note.html',        type: 'surgical' },
-        { title: 'Progress Note',                         target: 'clinical-note.html',        type: 'clinical' },
-        { title: 'Psychiatric care',                      target: 'psychiatric-care.html',     type: 'psych' },
-        { title: 'Referral letter',                       target: 'referral.html',             type: null },
-        { title: 'Stomatology surgery protocol',          target: 'surgical-note.html',        type: 'surgical' },
-        { title: 'Surgery protocol',                      target: 'surgical-note.html',        type: 'surgical' },
-        { title: 'Surveillance during anaestesia',        target: 'surgical-note.html',        type: 'surgical' },
-        { title: 'Surveillance protocol',                 target: 'nursing-note.html',         type: 'nursing' },
-        { title: 'Vital signs',                           target: 'vitals-action',             type: null },
-        { title: 'Warning',                               target: 'messages.html',             type: null }
+        // ── Notes & Consultations ──
+        { id: 1,  cat: 'notes',       title: 'Clinical Progress',                    target: 'clinical-note.html',        type: 'clinical',    icon: 'ti-notes',                icBg: '#eaf2ff', icCol: '#0071e3', desc: 'Physician progress assessment note' },
+        { id: 2,  cat: 'notes',       title: 'Daily note',                           target: 'clinical-note.html',        type: 'clinical',    icon: 'ti-file-pencil',          icBg: '#eaf2ff', icCol: '#0071e3', desc: 'Daily inpatient physician review' },
+        { id: 17, cat: 'notes',       title: 'Outpatient consultation (RMH)',        target: 'opd-file.html',             type: 'opd',         icon: 'ti-clipboard-heart',      icBg: '#eaf2ff', icCol: '#0071e3', desc: 'Outpatient general consultation' },
+        { id: 22, cat: 'notes',       title: 'Progress Note',                        target: 'clinical-note.html',        type: 'clinical',    icon: 'ti-file-text',            icBg: '#eaf2ff', icCol: '#0071e3', desc: 'SOAP clinical assessment record' },
+
+        // ── Inpatient & Wards ──
+        { id: 9,  cat: 'ward',        title: 'Inpatient admission form (NDH model)', target: 'admission-form.html',       type: 'admission',   icon: 'ti-bed',                  icBg: '#e9f9ee', icCol: '#1a7a32', desc: 'Hospitalization admission record' },
+        { id: 10, cat: 'ward',        title: 'Inpatient discharge form (RMH model)', target: 'discharge-summary.html',    type: null,          icon: 'ti-door-exit',            icBg: '#e9f9ee', icCol: '#1a7a32', desc: 'Discharge summary & instructions' },
+        { id: 11, cat: 'ward',        title: 'Inpatient follow-up form (HPRC model)',target: 'ward-round.html',           type: 'ward',        icon: 'ti-stethoscope',          icBg: '#e9f9ee', icCol: '#1a7a32', desc: 'Inpatient ward round progress' },
+        { id: 4,  cat: 'ward',        title: 'Discharge malnutrition ward',          target: 'discharge-summary.html',    type: null,          icon: 'ti-file-export',          icBg: '#fff4e0', icCol: '#b85d00', desc: 'Therapeutic malnutrition discharge' },
+        { id: 6,  cat: 'ward',        title: 'Follow-up malnutrition',               target: 'malnutrition-followup.html',type: 'malnut',      icon: 'ti-scale',                icBg: '#fff4e0', icCol: '#b85d00', desc: 'Nutrition monitoring record' },
+        { id: 12, cat: 'ward',        title: 'Intensive care surveillance',          target: 'icu-surveillance.html',     type: 'icu',         icon: 'ti-activity',             icBg: '#ffebe9', icCol: '#c0392b', desc: 'ICU flow sheet & parameters' },
+        { id: 28, cat: 'ward',        title: 'Surveillance protocol',                target: 'nursing-note.html',         type: 'nursing',     icon: 'ti-eye',                  icBg: '#e9f9ee', icCol: '#1a7a32', desc: 'Nursing inpatient surveillance' },
+
+        // ── Surgery & Anaesthesia ──
+        { id: 26, cat: 'surgery',     title: 'Surgery protocol',                     target: 'surgical-note.html',        type: 'surgical',    icon: 'ti-scalpel',              icBg: '#ffebe9', icCol: '#c0392b', desc: 'Operative surgical procedure note' },
+        { id: 25, cat: 'surgery',     title: 'Stomatology surgery protocol',         target: 'surgical-note.html',        type: 'surgical',    icon: 'ti-dental',               icBg: '#ffebe9', icCol: '#c0392b', desc: 'Oral & maxillofacial surgical note' },
+        { id: 21, cat: 'surgery',     title: 'Pre-anaesthesia record (KIRA model)',  target: 'surgical-note.html',        type: 'surgical',    icon: 'ti-lungs',                icBg: '#ffebe9', icCol: '#c0392b', desc: 'Pre-operative anaesthesia risk' },
+        { id: 27, cat: 'surgery',     title: 'Surveillance during anaestesia',       target: 'surgical-note.html',        type: 'surgical',    icon: 'ti-heart-rate-monitor',   icBg: '#ffebe9', icCol: '#c0392b', desc: 'Intra-operative monitor record' },
+
+        // ── Diagnostics & Vitals ──
+        { id: 5,  cat: 'diagnostics', title: 'ECG',                                  target: 'ecg-form.html',             type: 'ecg',         icon: 'ti-heart-rate-monitor',   icBg: '#f5eaff', icCol: '#7c3aed', desc: '12-lead electrocardiogram review' },
+        { id: 29, cat: 'diagnostics', title: 'Vital signs',                          target: 'vitals-action',             type: null,          icon: 'ti-heartbeat',            icBg: '#ffebe9', icCol: '#e11d48', desc: 'BP, Pulse, Temp, SpO2 & RR' },
+        { id: 8,  cat: 'diagnostics', title: 'Fysiotherapy order',                   target: 'physio-request.html',       type: 'physio',      icon: 'ti-stretching',           icBg: '#e6f6f8', icCol: '#007080', desc: 'Physiotherapy requisition order' },
+        { id: 20, cat: 'diagnostics', title: 'Physiotherapy evaluation form',        target: 'physio-request.html',       type: 'physio',      icon: 'ti-run',                  icBg: '#e6f6f8', icCol: '#007080', desc: 'Functional physiotherapy report' },
+
+        // ── Registries & Nursing ──
+        { id: 13, cat: 'registry',    title: 'MSAS - Register Injection',            target: 'injection-registry.html',   type: 'injection',   icon: 'ti-needle',               icBg: '#e6f6f8', icCol: '#007080', desc: 'MOH injectable medication register' },
+        { id: 14, cat: 'registry',    title: 'MSAS - Register pansement',            target: 'pansement-registry.html',   type: 'pansement',   icon: 'ti-bandage',              icBg: '#e6f6f8', icCol: '#007080', desc: 'Wound dressing & pansement log' },
+        { id: 15, cat: 'registry',    title: 'MSHP - Blood transfusion receiver',    target: 'transfusion-registry.html', type: 'transfusion', icon: 'ti-droplet',              icBg: '#ffebe9', icCol: '#c0392b', desc: 'Blood product receiver registry' },
+        { id: 16, cat: 'registry',    title: 'MSPLS - HC - Deaths registry',         target: 'deaths-registry.html',      type: 'death',       icon: 'ti-book',                 icBg: '#f1f5f9', icCol: '#475569', desc: 'Mortality & deaths health register' },
+        { id: 19, cat: 'registry',    title: 'Pediatric triage (CPTAS)',             target: 'triage-form.html',          type: 'triage',      icon: 'ti-shield-check',         icBg: '#eaf2ff', icCol: '#0071e3', desc: 'Canadian Pediatric Triage Scale' },
+        { id: 7,  cat: 'registry',    title: 'Follow-up of psychiatric patient',     target: 'psychiatric-care.html',     type: 'psych',       icon: 'ti-mood-smile',           icBg: '#f5eaff', icCol: '#7c3aed', desc: 'Mental health & psychiatric review' },
+        { id: 23, cat: 'registry',    title: 'Psychiatric care',                     target: 'psychiatric-care.html',     type: 'psych',       icon: 'ti-brain',                icBg: '#f5eaff', icCol: '#7c3aed', desc: 'Psychiatric assessment & care plan' },
+
+        // ── Legal & Transfers ──
+        { id: 3,  cat: 'legal',       title: 'Death certificate in ICD-11',          target: 'medical-certificate.html',  type: null,          icon: 'ti-file-certificate',     icBg: '#f1f5f9', icCol: '#334155', desc: 'Official death certificate ICD-11' },
+        { id: 18, cat: 'legal',       title: 'Patient transfer',                     target: 'transfer-form.html',        type: null,          icon: 'ti-ambulance',            icBg: '#eaf2ff', icCol: '#0071e3', desc: 'Inter-facility patient transfer' },
+        { id: 24, cat: 'legal',       title: 'Referral letter',                      target: 'referral.html',             type: null,          icon: 'ti-mail-forward',         icBg: '#eaf2ff', icCol: '#0071e3', desc: 'Specialist clinical referral letter' },
+        { id: 30, cat: 'legal',       title: 'Warning',                              target: 'messages.html',             type: null,          icon: 'ti-alert-triangle',       icBg: '#fff4e0', icCol: '#b85d00', desc: 'Clinical alert & warning notice' }
     ];
 
-    function init() {
-        loadDarkMode();
-        loadPatient();
-        renderSummaryTable();
-    }
-
-    function loadDarkMode() {
-        const isDark = localStorage.getItem('pclinic-theme') === 'dark';
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-        document.body.classList.toggle('dark-mode', isDark);
-    }
-
-    function loadPatient() {
+    // ─── FAST PATIENT RESOLVER (0ms DELAY) ───
+    function resolvePatientImmediately() {
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const pid = urlParams.get('patient') || localStorage.getItem('pclinic_active_patient');
@@ -317,45 +625,73 @@
                     currentPatient = found;
                     return;
                 }
+                // Construct instantaneous patient object so forms never lock
+                currentPatient = {
+                    id: String(pid),
+                    mrn: String(pid),
+                    name: 'Patient #' + pid,
+                    firstName: 'Patient #' + pid
+                };
             }
         } catch(e) {}
-
-        try {
-            if (window.parent && window.parent.currentPatient && window.parent.currentPatient.id) {
-                currentPatient = window.parent.currentPatient;
-                return;
-            }
-        } catch(e) {}
-
-        // ⛔ NO TEMPLATE DATA: no patient → the forms stay locked
-        currentPatient = null;
     }
 
-    /* ── 🔒 PATIENT GATE: the 30 Medical Summary forms open ONLY for the
-          patient sitting in the identification bar ── */
     function applyPatientGate() {
         const p = currentPatient;
-        const table = document.getElementById('medSummaryFormsTable');
-        const lock  = document.getElementById('medSummaryLock');
+        const grid = document.getElementById('macCardsGrid');
+        const lock = document.getElementById('medSummaryLock');
         const count = document.getElementById('medSummaryCount');
 
         if (p && p.id) {
-            if (table) table.style.display = '';
-            if (lock)  lock.style.display = 'none';
-            if (count) count.textContent = '30 Clinical Records Available';
+            if (grid) grid.style.display = 'grid';
+            if (lock) lock.style.display = 'none';
         } else {
-            if (table) table.style.display = 'none';
-            if (lock)  lock.style.display = 'block';
-            if (count) count.textContent = '🔒 No patient selected';
+            if (grid) grid.style.display = 'none';
+            if (lock) lock.style.display = 'block';
+            if (count) count.textContent = '🔒 Locked';
         }
     }
 
-    function renderSummaryTable() {
-        const tbody = document.getElementById('summaryTableBody');
-        tbody.innerHTML = SUMMARY_ITEMS.map((item, idx) => {
-            // 📅 PULL FROM COMMON SERVER: the latest record of this type for
-            // the selected patient (pclinic_files — the shared document store)
-            let dateBadge = '';
+    function renderCards() {
+        const grid = document.getElementById('macCardsGrid');
+        if (!grid) return;
+
+        let filtered = SUMMARY_ITEMS;
+
+        // Category filter
+        if (activeCategory !== 'all') {
+            filtered = filtered.filter(item => item.cat === activeCategory);
+        }
+
+        // Search text filter
+        if (searchQuery.trim().length > 0) {
+            const q = searchQuery.trim().toLowerCase();
+            filtered = filtered.filter(item =>
+                item.title.toLowerCase().includes(q) ||
+                item.desc.toLowerCase().includes(q) ||
+                item.cat.toLowerCase().includes(q)
+            );
+        }
+
+        const countEl = document.getElementById('medSummaryCount');
+        if (countEl && currentPatient) {
+            countEl.textContent = `${filtered.length} of 30 Records`;
+        }
+
+        if (!filtered.length) {
+            grid.innerHTML = `
+                <div class="mac-no-match">
+                    <i class="ti ti-search" style="font-size:24px; color:var(--tm); display:block; margin-bottom:6px;"></i>
+                    No clinical record matching “${escapeHtml(searchQuery)}”.
+                </div>
+            `;
+            applyPatientGate();
+            return;
+        }
+
+        // Render macOS Cards
+        grid.innerHTML = filtered.map(item => {
+            let lastBadge = '';
             if (currentPatient && currentPatient.id && item.type) {
                 try {
                     const docs = (window.pcFile && typeof pcFile.list === 'function')
@@ -365,37 +701,38 @@
                     if (docs && docs.length) {
                         const last = docs.reduce((a, b) => (new Date(a.at || a.timestamp || 0) > new Date(b.at || b.timestamp || 0) ? a : b));
                         const d = last.at || last.timestamp;
-                        if (d) dateBadge = `<span class="rec-date">Last: ${new Date(d).toLocaleDateString('en-GB')}</span>`;
+                        if (d) {
+                            lastBadge = `<span class="rec-date"><i class="ti ti-check"></i> Last: ${new Date(d).toLocaleDateString('en-GB')}</span>`;
+                        }
                     }
                 } catch(e) {}
             }
+
             return `
-            <tr>
-                <td>
-                    <span class="form-bullet">▸</span>
-                    <span class="form-name">${escapeHtml(item.title)}</span>
-                </td>
-                <td style="text-align:right;width:200px;">
-                    <a class="new-link" onclick="launchForm('${item.target}', '${escapeHtml(item.title)}')">New</a>
-                    ${dateBadge}
-                </td>
-            </tr>`;
+            <div class="mac-card" onclick="window.launchForm('${item.target}', '${escapeHtml(item.title)}')">
+                <div class="mac-card-icon" style="background:${item.icBg}; color:${item.icCol};">
+                    <i class="ti ${item.icon}"></i>
+                </div>
+                <div class="mac-card-body">
+                    <div class="mac-card-title">
+                        <span>${escapeHtml(item.title)}</span>
+                        ${lastBadge}
+                    </div>
+                    <div class="mac-card-sub">${escapeHtml(item.desc)}</div>
+                </div>
+                <button class="mac-card-btn" aria-label="Open ${escapeHtml(item.title)}">
+                    New <i class="ti ti-chevron-right" style="font-size:11px;"></i>
+                </button>
+            </div>`;
         }).join('');
+
         applyPatientGate();
     }
 
-    // ─── TAPTIC FEEDBACK (iOS-style haptics on supported devices) ───
-    document.addEventListener('click', function(e) {
-        try {
-            if (navigator.vibrate && (e.target.closest('.new-link') || e.target.closest('.summary-title-strip'))) {
-                navigator.vibrate(10);
-            }
-        } catch(err) {}
-    });
-
+    // ─── INSTANT FORM LAUNCH (NO DELAY) ───
     window.launchForm = function(target, title) {
         if (!currentPatient || !currentPatient.id) {
-            showToast('🔒 Select a patient first — the identification bar must show the patient before opening a form.', 'warning');
+            showToast('🔒 Select a patient first in the identification bar above.', 'warning');
             return;
         }
         const p = currentPatient;
@@ -403,14 +740,13 @@
 
         if (target === 'vitals-action') {
             if (window.pcVitals) pcVitals.open();
-            else showToast('📊 Recording Vital Signs for ' + p.firstName, 'info');
+            else showToast('📊 Recording Vital Signs for ' + (p.firstName || p.name), 'info');
             return;
         }
 
-        showToast(`📄 Opening ${title} for patient #${p.id}`, 'info');
-        setTimeout(() => {
-            window.location.href = `${target}?patient=${encodeURIComponent(p.id)}`;
-        }, 200);
+        showToast(`📄 Opening ${title}…`, 'info');
+        // Immediate navigation without delay
+        window.location.href = `${target}?patient=${encodeURIComponent(p.id)}`;
     };
 
     window.closeMedicalSummary = function() {
@@ -429,96 +765,92 @@
 
     function showToast(msg, type = 'info') {
         const c = document.getElementById('toastContainer');
+        if (!c) return;
         const t = document.createElement('div');
         t.className = 'toast';
-        t.style.background = type === 'success' ? '#059669' : type === 'error' ? '#ef4444' : '#1a1a2e';
-        t.textContent = msg;
+        t.style.background = type === 'success' ? '#059669' : type === 'warning' ? '#b45309' : '#0f172a';
+        t.innerHTML = `<i class="ti ti-info-circle"></i> ${escapeHtml(msg)}`;
         c.appendChild(t);
-        setTimeout(() => t.remove(), 3000);
+        setTimeout(() => t.remove(), 2600);
     }
+
+    // ─── SEARCH & FILTER LISTENERS ───
+    function setupFilters() {
+        const searchInput = document.getElementById('formFilterInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                searchQuery = this.value;
+                renderCards();
+            });
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    this.value = '';
+                    searchQuery = '';
+                    renderCards();
+                    this.blur();
+                }
+            });
+        }
+
+        // Category buttons
+        const pills = document.querySelectorAll('.mac-pill-btn');
+        pills.forEach(btn => {
+            btn.addEventListener('click', function() {
+                pills.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                activeCategory = this.getAttribute('data-cat') || 'all';
+                renderCards();
+            });
+        });
+
+        // ⌘F / Ctrl+F Shortcut
+        window.addEventListener('keydown', function(e) {
+            if ((e.metaKey || e.ctrlKey) && (e.key === 'f' || e.key === 'F')) {
+                e.preventDefault();
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }
+        });
+    }
+
+    // ─── IMMEDIATE BOOT ON PARSE ───
+    resolvePatientImmediately();
+    renderCards();
 
     window.addEventListener('DOMContentLoaded', function () {
-        requireAuth(['doctor','nurse']).then(init).catch(function () {});
+        resolvePatientImmediately();
+        setupFilters();
+        renderCards();
+
+        if (typeof window.requireAuth === 'function') {
+            window.requireAuth(['doctor','nurse']).then(function() {
+                resolvePatientImmediately();
+                renderCards();
+            }).catch(function () {});
+        }
     });
+
     window.addEventListener('pcPatientChanged', function(e) {
         if (e.detail && e.detail.id) {
-            // Patient picked from the identification bar / another dashboard
             currentPatient = e.detail;
         } else {
-            // ⛔ Explicit CLEAR → lock the forms (do NOT re-read the URL patient)
             currentPatient = null;
         }
-        renderSummaryTable();
+        renderCards();
     });
+
     window.addEventListener('storage', function() {
-        loadPatient();
-        renderSummaryTable();
+        resolvePatientImmediately();
+        renderCards();
     });
     window.addEventListener('patientsUpdated', function() {
-        loadPatient();
-        renderSummaryTable();
+        resolvePatientImmediately();
+        renderCards();
     });
-    window.closeMedicalSummary = closeMedicalSummary;
+
 })();
-
-    function toggleMedicalSummaryFold(){
-      var body=document.getElementById('medSummaryFoldBody');
-      var chev=document.getElementById('medSummaryChevron');
-      var count=document.getElementById('medSummaryCount');
-      if(!body) return;
-      var style=window.getComputedStyle(body);
-      var isOpen = body.style.maxHeight!=='0px' && body.style.opacity!=='0' && style.maxHeight!=='0px';
-      if(isOpen && body.style.maxHeight!=='0px'){
-        // Actually check if open
-        if(body.dataset.open==='false'){
-          body.style.maxHeight='2000px'; body.style.opacity='1'; body.dataset.open='true';
-          if(chev) chev.style.transform='rotate(0deg)';
-          if(count) count.textContent='30 Clinical Records Available — all medical summary of the patient';
-        } else {
-          body.style.maxHeight='0px'; body.style.opacity='0'; body.dataset.open='false';
-          if(chev) chev.style.transform='rotate(-90deg)';
-          if(count) count.textContent='Medical summary folded — click to unfold';
-        }
-      } else {
-        // toggle based on dataset
-        var isCurrentlyOpen = body.dataset.open!=='false';
-        if(isCurrentlyOpen){
-          body.style.maxHeight='0px'; body.style.opacity='0'; body.dataset.open='false';
-          if(chev) chev.style.transform='rotate(-90deg)';
-          if(count) count.textContent='Medical summary folded — click to unfold';
-        } else {
-          body.style.maxHeight='2000px'; body.style.opacity='1'; body.dataset.open='true';
-          if(chev) chev.style.transform='rotate(0deg)';
-          if(count) count.textContent='30 Clinical Records Available — all medical summary of the patient';
-        }
-      }
-    }
-    window.toggleMedicalSummaryFold=toggleMedicalSummaryFold;
-    
-    document.addEventListener('DOMContentLoaded', function(){
-      var body=document.getElementById('medSummaryFoldBody');
-      if(body){ body.dataset.open='true'; body.style.maxHeight='2000px'; body.style.opacity='1'; }
-    });
 </script>
-
-
-<style>
-
-</style>
-<style>
-/* ═══ GG-CHUK-CANON · CHUK top-bar hierarchy — identical to doctor-dashboard ═══
-   Bar 1 (CHUK menu), Bar 2 (patient ID) and Bar 3 (action bar) stack in a
-   transparent, relative column exactly like the doctor dashboard. */
-html body #pcMasterHeader, html body #pcMasterHeader.pc-master-header {
-    display: flex !important; flex-direction: column !important; gap: 8px !important;
-    position: relative !important; z-index: 40 !important;
-    width: 100% !important; max-width: 100% !important; margin: 0 !important;
-    padding: 8px 16px 4px !important; background: transparent !important;
-    overflow: visible !important;
-}
-html body #pc_chuk_top_menu.chuk-top-menu { position: relative !important; top: auto !important; z-index: 3 !important; }
-html body #pc_common_demo_bar.oc-demo-bar, html body .oc-demo-bar { position: relative !important; top: auto !important; z-index: 2 !important; margin: 0 !important; flex-shrink: 0 !important; }
-html body #dcBar.dc-bar, html body #dcBar { position: relative !important; top: auto !important; z-index: 1 !important; margin: 0 !important; width: 100% !important; clear: both !important; flex-shrink: 0 !important; }
-</style>
 </body>
 </html>

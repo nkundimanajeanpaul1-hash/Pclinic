@@ -2895,9 +2895,9 @@
             // Cashier follows the generic path: show the Patient
             // Identification bar, while the context/action bar is removed at
             // the end of autoMountPatientBar().
-            // Medical Summary and Imaging Results: keep only the CHUK top bar.
-            // No patient identification demo bar, no dcBar action bar.
-            if (file.indexOf('medical-summary') !== -1 || file.indexOf('imaging-results') !== -1) {
+            // Medical Summary now displays all 3 bars (Top, Mid, Action) exactly like other OPD file pages.
+            // Imaging Results: keep only the CHUK top bar.
+            if (file.indexOf('imaging-results') !== -1) {
                 var oldMedDemo = document.getElementById('pc_common_demo_bar');
                 if (oldMedDemo && oldMedDemo.parentNode) oldMedDemo.parentNode.removeChild(oldMedDemo);
                 var oldMedDc = document.getElementById('dcBar');
