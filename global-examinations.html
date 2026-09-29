@@ -410,7 +410,7 @@
 
 <script src="pclinic-catalog.js"></script>
 <script src="pclinic-orders.js"></script>
-<script src="pclinic-file.js?v=20260827_FILES"></script>
+<script src="pclinic-file.js?v=20260929_TECH_EXAMS"></script>
 <script src="pclinic-vitals.js"></script>
 <script src="pclinic-handoff.js"></script>
 <script>
@@ -604,6 +604,14 @@
             if (window.pcVitals) pcVitals.open();
             else showToast('📊 Recording Vital Signs for ' + p.firstName, 'info');
             return;
+        }
+
+        if (target === 'nursing-note.html') {
+            var curRole = ((window.currentStaff && window.currentStaff.role) || sessionStorage.getItem('pclinic_role') || localStorage.getItem('userRole') || '').toLowerCase();
+            if (curRole === 'doctor' && window.pcOpenReadOnlyCarePlan) {
+                window.pcOpenReadOnlyCarePlan(p);
+                return;
+            }
         }
 
         showToast(`📄 Opening ${title} for patient #${p.id}`, 'info');
