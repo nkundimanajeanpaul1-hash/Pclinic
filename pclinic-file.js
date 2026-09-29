@@ -1385,7 +1385,7 @@
         var st = document.createElement('style');
         st.id = 'pc_modal_styles';
         st.textContent =
-            '.pc-modal-scrim { position:fixed !important; inset:0 !important; background:rgba(0,0,0,0.55) !important; -webkit-backdrop-filter:blur(6px) !important; backdrop-filter:blur(6px) !important; z-index:9900 !important; display:flex !important; align-items:center !important; justify-content:center !important; padding:20px !important; overflow:auto !important; }' +
+            '.pc-modal-scrim { position:fixed !important; inset:0 !important; background:rgba(0,0,0,0.55) !important; -webkit-backdrop-filter:blur(6px) !important; backdrop-filter:blur(6px) !important; z-index:999999 !important; display:flex !important; align-items:center !important; justify-content:center !important; padding:20px !important; overflow:auto !important; }' +
             '.pc-modal-box { background:var(--s1,#ffffff) !important; color:var(--tp,#1d1d1f) !important; border-radius:20px !important; width:100% !important; max-width:880px !important; max-height:92vh !important; overflow:hidden !important; display:flex !important; flex-direction:column !important; box-shadow:0 24px 60px rgba(0,0,0,0.3) !important; border:0.5px solid rgba(0,0,0,0.12) !important; }' +
             '.pc-modal-head { display:flex !important; align-items:center !important; justify-content:space-between !important; gap:10px !important; padding:14px 20px !important; border-bottom:0.5px solid var(--bd,rgba(0,0,0,0.1)) !important; font-size:14px !important; font-weight:800 !important; }' +
             '.pc-modal-body { padding:16px 20px !important; overflow-y:auto !important; flex:1 !important; }' +
@@ -1459,8 +1459,13 @@
        Medical Summary is opened or clicked without an active patient.
        Once selected, opens the summary and loads their Common Server data.
        ══════════════════════════════════════════════════════════════ */
-    function openPatientPickerForSummary(onPick) {
+    function openPatientPickerForSummary(onPick, opts) {
         ensurePcModalStyles();
+        opts = opts || {};
+        var headerTitle = opts.title || '📋 Select Patient for Medical Summary';
+        var headerSubtitle = opts.subtitle || 'Search and select a patient to open, view, and record their 30 medical summary forms.';
+        var actionText = opts.actionLabel || (headerTitle.indexOf('Summary') !== -1 ? 'Open Summary' : (headerTitle.indexOf('Care Plan') !== -1 ? 'View Care Plan' : (headerTitle.indexOf('Vital Signs') !== -1 ? 'View Vitals' : 'Select Patient')));
+
         var existing = document.getElementById('pc_summary_picker_modal');
         if (existing) existing.remove();
 
@@ -1473,7 +1478,7 @@
         var scrim = document.createElement('div');
         scrim.id = 'pc_summary_picker_modal';
         scrim.className = 'pc-modal-scrim noprint';
-        scrim.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,0.65);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);display:flex;align-items:center;justify-content:center;padding:16px;';
+        scrim.style.cssText = 'position:fixed;inset:0;z-index:10000000;background:rgba(15,23,42,0.65);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);display:flex;align-items:center;justify-content:center;padding:16px;';
 
         var box = document.createElement('div');
         box.className = 'pc-modal-box';
@@ -1487,12 +1492,12 @@
                         '<span style="width:11px;height:11px;border-radius:50%;background:#ffbd2e;display:inline-block;"></span>' +
                         '<span style="width:11px;height:11px;border-radius:50%;background:#27c93f;display:inline-block;"></span>' +
                     '</div>' +
-                    '<div style="font-weight:800;font-size:14.5px;color:#1d1d1f;letter-spacing:-0.01em;">📋 Select Patient for Medical Summary</div>' +
+                    '<div style="font-weight:800;font-size:14.5px;color:#1d1d1f;letter-spacing:-0.01em;">' + esc(headerTitle) + '</div>' +
                 '</div>' +
                 '<button type="button" class="close-summary-picker-btn" style="width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,0.06);color:#666;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">&times;</button>' +
             '</div>' +
             '<div style="padding:12px 20px 8px;font-size:12px;color:#6e6e73;line-height:1.5;">' +
-                'Search and select a patient to open, view, and record their 30 medical summary forms.' +
+                esc(headerSubtitle) +
             '</div>' +
             '<div style="padding:4px 20px 12px;">' +
                 '<div style="position:relative;display:flex;align-items:center;">' +
@@ -1573,7 +1578,7 @@
                         '</div>' +
                     '</div>' +
                     '<button type="button" class="pc-pick-btn" style="padding:6px 14px;border-radius:980px;background:#0071e3;color:#fff;border:0;font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;flex-shrink:0;transition:transform .2s,background .2s;">' +
-                        'Open Summary <i class="ti ti-chevron-right" style="font-size:11px;"></i>' +
+                        esc(actionText) + ' <i class="ti ti-chevron-right" style="font-size:11px;"></i>' +
                     '</button>' +
                 '</div>';
             }).join('');
@@ -2348,6 +2353,9 @@
             if (typeof openPatientPickerForSummary === 'function') {
                 openPatientPickerForSummary(function(selected) {
                     openReadOnlyCarePlanModal(selected);
+                }, {
+                    title: '📋 Select Patient for Nursing Care Plan',
+                    subtitle: 'Search and select a patient to view their nursing diagnoses, goals, and interventions.'
                 });
                 return;
             }
@@ -2404,7 +2412,7 @@
         var scrim = document.createElement('div');
         scrim.id = 'pc_readonly_careplan_modal';
         scrim.className = 'pc-modal-scrim noprint';
-        scrim.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,0.68);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);display:flex;align-items:center;justify-content:center;padding:16px;animation:pcFadeIn .2s ease;';
+        scrim.style.cssText = 'position:fixed;inset:0;z-index:10000000;background:rgba(15,23,42,0.68);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);display:flex;align-items:center;justify-content:center;padding:16px;animation:pcFadeIn .2s ease;';
 
         var box = document.createElement('div');
         box.className = 'pc-modal-box';
@@ -2572,6 +2580,553 @@
     window.pcOpenReadOnlyCarePlan = openReadOnlyCarePlanModal;
 
     /* ══════════════════════════════════════════════════════════════
+       READ-ONLY VITAL SIGNS GRAPH VIEWER MODAL
+       When accessed from doctor-dashboard or any non-nurse page,
+       shows the patient's vital signs trends and charts in READ-ONLY mode.
+       Prevents opening the nurse portal and provides doctors with
+       a clean clinical graph and historical breakdown.
+       ══════════════════════════════════════════════════════════════ */
+    function openReadOnlyVitalsGraphModal(patient) {
+        ensurePcModalStyles();
+        var existing = document.getElementById('pc_readonly_vitalsgraph_modal');
+        if (existing) existing.remove();
+
+        var p = patient || menuPatient();
+        if (!p || !p.id) {
+            if (typeof openPatientPickerForSummary === 'function') {
+                openPatientPickerForSummary(function(selected) {
+                    openReadOnlyVitalsGraphModal(selected);
+                }, {
+                    title: '📈 Select Patient for Vital Signs Graph',
+                    subtitle: 'Search and select a patient to view their vital signs trends, curves, and clinical history.'
+                });
+                return;
+            }
+            if (window.pcToast) pcToast('Please select a patient first to view their vital signs graph.', 'warning');
+            else alert('Please select a patient first.');
+            return;
+        }
+
+        try {
+            var list = [];
+            if (typeof getPatients === 'function') list = getPatients() || [];
+            if (!list.length) list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+            var found = list.find(function(x) { return String(x.id) === String(p.id) || String(x.mrn) === String(p.id); });
+            if (found) p = found;
+        } catch(e){}
+
+        var vitals = (p && p.vitals) || [];
+
+        // Also check if any vitals records exist in pclinic_files
+        try {
+            var files = (typeof pcFile !== 'undefined' && typeof pcFile.list === 'function')
+                ? pcFile.list(p.id, 'vitals')
+                : JSON.parse(localStorage.getItem('pclinic_files') || '[]').filter(function(d) {
+                    return String(d.patientId) === String(p.id) && d.type === 'vitals';
+                });
+            if (files && files.length) {
+                files.forEach(function(f) {
+                    if (f.vitals && !vitals.some(function(v) { return v.id === f.id; })) {
+                        vitals.push(Object.assign({ id: f.id, at: f.at || f.timestamp, by: f.by }, f.vitals));
+                    }
+                });
+            }
+        } catch(e){}
+
+        var normalized = vitals.map(function(v, idx) {
+            var bpSys = v.bpSystolic != null ? v.bpSystolic : (v.systolic != null ? v.systolic : null);
+            var bpDia = v.bpDiastolic != null ? v.bpDiastolic : (v.diastolic != null ? v.diastolic : null);
+            if ((bpSys == null || bpDia == null) && typeof v.bp === 'string' && v.bp.includes('/')) {
+                var parts = v.bp.split('/');
+                bpSys = parseFloat(parts[0]) || bpSys;
+                bpDia = parseFloat(parts[1]) || bpDia;
+            }
+            return {
+                id: v.id || ('V-' + idx),
+                temp: v.temperature != null ? Number(v.temperature) : (v.temp != null ? Number(v.temp) : null),
+                pulse: v.pulse != null ? Number(v.pulse) : (v.heartRate != null ? Number(v.heartRate) : null),
+                bpSys: bpSys != null ? Number(bpSys) : null,
+                bpDia: bpDia != null ? Number(bpDia) : null,
+                spo2: v.spo2 != null ? Number(v.spo2) : (v.o2 != null ? Number(v.o2) : null),
+                rr: v.respiratoryRate != null ? Number(v.respiratoryRate) : (v.respRate != null ? Number(v.respRate) : (v.rr != null ? Number(v.rr) : null)),
+                weight: v.weight != null ? Number(v.weight) : (v.wt != null ? Number(v.wt) : null),
+                at: v.timestamp || v.recordedAt || v.at || v.date || '',
+                by: v.recordedBy || v.by || 'Nurse'
+            };
+        }).sort(function(a, b) {
+            return new Date(a.at || 0) - new Date(b.at || 0);
+        });
+
+        var pName = (p.name || ((p.firstName || '') + ' ' + (p.lastName || ''))).trim() || ('Patient #' + p.id);
+        var mrn = p.mrn || p.id || '—';
+        var dept = p.department || p.location || 'General Ward';
+        var gender = p.gender || '';
+        var ageStr = '';
+        if (p.dob) {
+            var y = new Date().getFullYear() - new Date(p.dob).getFullYear();
+            if (!isNaN(y) && y >= 0) ageStr = y + ' yrs';
+        }
+
+        var scrim = document.createElement('div');
+        scrim.id = 'pc_readonly_vitalsgraph_modal';
+        scrim.className = 'pc-modal-scrim noprint';
+        scrim.style.cssText = 'position:fixed;inset:0;z-index:10000000;background:rgba(15,23,42,0.68);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);display:flex;align-items:center;justify-content:center;padding:16px;animation:pcFadeIn .2s ease;';
+
+        var box = document.createElement('div');
+        box.className = 'pc-modal-box';
+        box.style.cssText = 'width:100%;max-width:740px;max-height:90vh;background:rgba(255,255,255,0.98);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,0.35),0 0 0 0.5px rgba(255,255,255,0.8) inset;display:flex;flex-direction:column;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;color:#1d1d1f;';
+
+        function makeSparkChart(points, color, unit, label, yMinPref, yMaxPref) {
+            var W = 280, H = 84, pad = 12;
+            if (!points || !points.length) {
+                return '<div style="flex:1;min-width:240px;background:#fff;border:0.5px solid rgba(0,0,0,0.08);border-radius:14px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+                    '<div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:6px;">' + esc(label) + '</div>' +
+                    '<div style="height:60px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11.5px;">No records</div></div>';
+            }
+            var vals = points.map(function(pt){ return pt.v; });
+            var min = Math.min.apply(null, vals);
+            var max = Math.max.apply(null, vals);
+            if (yMinPref != null) min = Math.min(min, yMinPref);
+            if (yMaxPref != null) max = Math.max(max, yMaxPref);
+            if (min === max) { min -= 1; max += 1; }
+            var span = max - min;
+
+            var px = function(i) {
+                if (points.length === 1) return W / 2;
+                return pad + (i / (points.length - 1)) * (W - 2 * pad);
+            };
+            var py = function(v) {
+                return H - pad - ((v - min) / span) * (H - 2 * pad);
+            };
+
+            var pathD = '';
+            var areaD = '';
+            if (points.length === 1) {
+                pathD = 'M ' + (W/2 - 20) + ' ' + py(points[0].v) + ' L ' + (W/2 + 20) + ' ' + py(points[0].v);
+            } else {
+                pathD = points.map(function(pt, i) {
+                    return (i === 0 ? 'M ' : 'L ') + px(i).toFixed(1) + ' ' + py(pt.v).toFixed(1);
+                }).join(' ');
+                areaD = pathD + ' L ' + px(points.length - 1).toFixed(1) + ' ' + (H - pad) + ' L ' + px(0).toFixed(1) + ' ' + (H - pad) + ' Z';
+            }
+
+            var dots = points.map(function(pt, i) {
+                var dateStr = pt.t ? new Date(pt.t).toLocaleString('en-GB') : '';
+                return '<circle cx="' + px(i).toFixed(1) + '" cy="' + py(pt.v).toFixed(1) + '" r="3.5" fill="' + color + '" stroke="#fff" stroke-width="1.5"><title>' + pt.v + ' ' + esc(unit) + (dateStr ? ' (' + dateStr + ')' : '') + '</title></circle>';
+            }).join('');
+
+            var lastVal = points[points.length - 1].v;
+
+            return '<div style="flex:1;min-width:240px;background:#fff;border:0.5px solid rgba(0,0,0,0.08);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+                    '<span style="font-size:12px;font-weight:700;color:#1e293b;">' + esc(label) + '</span>' +
+                    '<span style="font-size:13px;font-weight:800;color:' + color + ';">' + esc(lastVal) + ' <small style="font-size:10px;font-weight:600;color:#64748b;">' + esc(unit) + '</small></span>' +
+                '</div>' +
+                '<svg width="100%" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="display:block;overflow:visible;">' +
+                    (areaD ? '<path d="' + areaD + '" fill="' + color + '" fill-opacity="0.08"/>' : '') +
+                    '<path d="' + pathD + '" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                    dots +
+                '</svg>' +
+                '<div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:#94a3b8;">' +
+                    '<span>Min: ' + min.toFixed(0) + '</span>' +
+                    '<span>' + points.length + ' record' + (points.length === 1 ? '' : 's') + '</span>' +
+                    '<span>Max: ' + max.toFixed(0) + '</span>' +
+                '</div>' +
+            '</div>';
+        }
+
+        var contentHtml = '';
+        if (!normalized.length) {
+            contentHtml =
+                '<div style="text-align:center;padding:48px 24px;color:#8e8e93;">' +
+                    '<div style="font-size:36px;margin-bottom:10px;">📈</div>' +
+                    '<div style="font-weight:700;font-size:15px;color:#1d1d1f;margin-bottom:6px;">No Vital Signs on File</div>' +
+                    '<div style="font-size:12.5px;line-height:1.6;max-width:440px;margin:0 auto;color:#64748b;">' +
+                        'No vital signs have been recorded for <strong>' + esc(pName) + '</strong> yet. ' +
+                        'When medical or nursing staff record vital signs, the trend charts and graphs will appear here.' +
+                    '</div>' +
+                '</div>';
+        } else {
+            var last = normalized[normalized.length - 1];
+            var lastDateStr = last.at ? new Date(last.at).toLocaleString('en-GB') : '—';
+
+            var bpSeries = normalized.filter(function(x){ return x.bpSys != null; }).map(function(x){ return { t: x.at, v: x.bpSys }; });
+            var pulseSeries = normalized.filter(function(x){ return x.pulse != null; }).map(function(x){ return { t: x.at, v: x.pulse }; });
+            var tempSeries = normalized.filter(function(x){ return x.temp != null; }).map(function(x){ return { t: x.at, v: x.temp }; });
+            var spo2Series = normalized.filter(function(x){ return x.spo2 != null; }).map(function(x){ return { t: x.at, v: x.spo2 }; });
+            var rrSeries = normalized.filter(function(x){ return x.rr != null; }).map(function(x){ return { t: x.at, v: x.rr }; });
+
+            // KPI Pill Cards
+            var kpiHtml =
+                '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">' +
+                    (last.bpSys != null ? '<div style="flex:1;min-width:110px;background:#eaf2ff;border-radius:10px;padding:8px 12px;"><div style="font-size:10.5px;font-weight:700;color:#0071e3;">🩸 BLOOD PRESSURE</div><div style="font-size:16px;font-weight:800;color:#0071e3;margin-top:2px;">' + last.bpSys + (last.bpDia != null ? '/' + last.bpDia : '') + ' <small style="font-size:10px;">mmHg</small></div></div>' : '') +
+                    (last.pulse != null ? '<div style="flex:1;min-width:110px;background:#ffebe9;border-radius:10px;padding:8px 12px;"><div style="font-size:10.5px;font-weight:700;color:#e11d48;">💓 PULSE / HR</div><div style="font-size:16px;font-weight:800;color:#e11d48;margin-top:2px;">' + last.pulse + ' <small style="font-size:10px;">bpm</small></div></div>' : '') +
+                    (last.temp != null ? '<div style="flex:1;min-width:110px;background:#fef3c7;border-radius:10px;padding:8px 12px;"><div style="font-size:10.5px;font-weight:700;color:#b45309;">🌡️ TEMPERATURE</div><div style="font-size:16px;font-weight:800;color:#b45309;margin-top:2px;">' + last.temp + ' <small style="font-size:10px;">°C</small></div></div>' : '') +
+                    (last.spo2 != null ? '<div style="flex:1;min-width:110px;background:#ecfdf5;border-radius:10px;padding:8px 12px;"><div style="font-size:10.5px;font-weight:700;color:#059669;">🫁 SpO₂ OXYGEN</div><div style="font-size:16px;font-weight:800;color:#059669;margin-top:2px;">' + last.spo2 + ' <small style="font-size:10px;">%</small></div></div>' : '') +
+                    (last.rr != null ? '<div style="flex:1;min-width:110px;background:#e6f6f8;border-radius:10px;padding:8px 12px;"><div style="font-size:10.5px;font-weight:700;color:#007080;">💨 RESPIRATION</div><div style="font-size:16px;font-weight:800;color:#007080;margin-top:2px;">' + last.rr + ' <small style="font-size:10px;">/min</small></div></div>' : '') +
+                '</div>';
+
+            // Spark Charts Grid
+            var chartsHtml =
+                '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">' +
+                    makeSparkChart(bpSeries, '#0071e3', 'mmHg', 'Systolic Blood Pressure', 90, 150) +
+                    makeSparkChart(pulseSeries, '#e11d48', 'bpm', 'Pulse / Heart Rate', 50, 110) +
+                    makeSparkChart(tempSeries, '#f59e0b', '°C', 'Temperature', 35.5, 39.0) +
+                    makeSparkChart(spo2Series, '#10b981', '%', 'Oxygen Saturation (SpO₂)', 90, 100) +
+                    (rrSeries.length ? makeSparkChart(rrSeries, '#007080', '/min', 'Respiratory Rate', 12, 28) : '') +
+                '</div>';
+
+            // Historical Table
+            var tableRows = normalized.slice().reverse().map(function(v) {
+                var dStr = v.at ? new Date(v.at).toLocaleString('en-GB') : '—';
+                var bp = (v.bpSys != null) ? (v.bpSys + (v.bpDia != null ? '/' + v.bpDia : '') + ' mmHg') : '—';
+                return '<tr style="border-bottom:0.5px solid rgba(0,0,0,0.06);">' +
+                    '<td style="padding:8px 10px;font-size:11.5px;color:#334155;white-space:nowrap;"><i class="ti ti-clock" style="color:#0071e3;"></i> ' + esc(dStr) + '</td>' +
+                    '<td style="padding:8px 10px;font-size:11.5px;font-weight:700;color:#0071e3;">' + esc(bp) + '</td>' +
+                    '<td style="padding:8px 10px;font-size:11.5px;font-weight:700;color:#e11d48;">' + (v.pulse != null ? v.pulse + ' bpm' : '—') + '</td>' +
+                    '<td style="padding:8px 10px;font-size:11.5px;font-weight:700;color:#b45309;">' + (v.temp != null ? v.temp + ' °C' : '—') + '</td>' +
+                    '<td style="padding:8px 10px;font-size:11.5px;font-weight:700;color:#059669;">' + (v.spo2 != null ? v.spo2 + ' %' : '—') + '</td>' +
+                    '<td style="padding:8px 10px;font-size:11.5px;color:#64748b;">' + (v.rr != null ? v.rr + ' /min' : '—') + '</td>' +
+                    '<td style="padding:8px 10px;font-size:11px;color:#64748b;">👩‍⚕️ ' + esc(v.by) + '</td>' +
+                '</tr>';
+            }).join('');
+
+            var tableHtml =
+                '<div style="background:#fff;border:0.5px solid rgba(0,0,0,0.08);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+                    '<div style="padding:10px 14px;background:#f8fafc;border-bottom:0.5px solid rgba(0,0,0,0.06);font-size:12px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:6px;">' +
+                        '<i class="ti ti-table"></i> Complete Vital Signs Log (' + normalized.length + ' entries)' +
+                    '</div>' +
+                    '<div style="max-height:180px;overflow-y:auto;">' +
+                        '<table style="width:100%;border-collapse:collapse;text-align:left;">' +
+                            '<thead><tr style="background:#f1f5f9;font-size:10.5px;color:#64748b;text-transform:uppercase;">' +
+                                '<th style="padding:6px 10px;">Date & Time</th><th style="padding:6px 10px;">BP</th><th style="padding:6px 10px;">Pulse</th><th style="padding:6px 10px;">Temp</th><th style="padding:6px 10px;">SpO₂</th><th style="padding:6px 10px;">RR</th><th style="padding:6px 10px;">Recorded By</th>' +
+                            '</tr></thead>' +
+                            '<tbody>' + tableRows + '</tbody>' +
+                        '</table>' +
+                    '</div>' +
+                '</div>';
+
+            contentHtml = kpiHtml + chartsHtml + tableHtml;
+        }
+
+        box.innerHTML =
+            '<div style="padding:16px 20px;border-bottom:0.5px solid rgba(0,0,0,0.08);background:linear-gradient(180deg,rgba(0,113,227,0.06),transparent);display:flex;align-items:center;justify-content:space-between;">' +
+                '<div style="display:flex;align-items:center;gap:10px;">' +
+                    '<div style="display:flex;gap:6px;">' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#ff5f56;display:inline-block;"></span>' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#ffbd2e;display:inline-block;"></span>' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#27c93f;display:inline-block;"></span>' +
+                    '</div>' +
+                    '<div style="font-weight:800;font-size:14.5px;color:#1d1d1f;letter-spacing:-0.01em;">📈 Vital Signs Trends &amp; Graph (Read-Only)</div>' +
+                '</div>' +
+                '<button type="button" class="close-vitalsgraph-modal-btn" style="width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,0.06);color:#666;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">&times;</button>' +
+            '</div>' +
+
+            // Patient Identity Subheader
+            '<div style="padding:12px 20px;background:#f1f5f9;border-bottom:0.5px solid rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+                '<div style="display:flex;align-items:center;gap:10px;">' +
+                    '<div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff375f,#ff9f0a);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;">' +
+                        esc((p.firstName || p.lastName || pName).charAt(0).toUpperCase()) +
+                    '</div>' +
+                    '<div>' +
+                        '<div style="font-weight:800;font-size:13.5px;color:#0f172a;">' + esc(pName) + '</div>' +
+                        '<div style="font-size:11px;color:#64748b;">MRN ' + esc(mrn) + (ageStr ? ' • ' + ageStr : '') + (gender ? ' • ' + gender : '') + ' • ' + esc(dept) + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:6px;">' +
+                    '<span style="padding:3px 9px;border-radius:6px;background:#e2e8f0;color:#334155;font-weight:700;font-size:11px;">' + normalized.length + (normalized.length === 1 ? ' Vital Entry' : ' Vital Entries') + '</span>' +
+                    '<span style="padding:3px 9px;border-radius:6px;background:rgba(0,113,227,0.12);color:#0071e3;font-weight:700;font-size:11px;"><i class="ti ti-chart-line"></i> Common Server Sync</span>' +
+                '</div>' +
+            '</div>' +
+
+            // Scrollable Graph & Table Body
+            '<div style="flex:1;overflow-y:auto;padding:16px 20px;max-height:65vh;">' +
+                contentHtml +
+            '</div>' +
+
+            // Footer
+            '<div style="padding:12px 20px;border-top:0.5px solid rgba(0,0,0,0.08);background:#fbfbfd;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">' +
+                '<div style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:5px;">' +
+                    '<i class="ti ti-info-circle" style="color:#0071e3;"></i> Multi-visit clinical vitals trend • Read-Only' +
+                '</div>' +
+                '<div style="display:flex;gap:8px;">' +
+                    (normalized.length ? '<button type="button" class="print-vitalsgraph-btn" style="padding:6px 14px;border-radius:9px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#1e293b;font-weight:600;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;"><i class="ti ti-printer"></i> Print Trends</button>' : '') +
+                    '<button type="button" class="close-vitalsgraph-modal-btn" style="padding:6px 16px;border-radius:9px;border:0;background:#0071e3;color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Done</button>' +
+                '</div>' +
+            '</div>';
+
+        scrim.appendChild(box);
+        document.body.appendChild(scrim);
+
+        function closeModal() {
+            scrim.remove();
+        }
+
+        scrim.onclick = function(e) {
+            if (e.target === scrim) { closeModal(); return; }
+            if (e.target.closest('.close-vitalsgraph-modal-btn')) { closeModal(); return; }
+            if (e.target.closest('.print-vitalsgraph-btn')) {
+                var printWin = window.open('', '_blank', 'width=740,height=800');
+                if (printWin) {
+                    printWin.document.write('<!DOCTYPE html><html><head><title>Vital Signs Trends — ' + esc(pName) + '</title>');
+                    printWin.document.write('<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:24px;color:#0f172a;line-height:1.5;} h2{margin:0 0 4px 0;} .sub{color:#64748b;font-size:12px;margin-bottom:16px;} table{width:100%;border-collapse:collapse;margin-top:12px;} th,td{border:1px solid #cbd5e1;padding:8px 10px;font-size:12px;text-align:left;} th{background:#f1f5f9;}</style></head><body>');
+                    printWin.document.write('<h2>📈 CHUK / PClinic — Patient Vital Signs Trend Log</h2>');
+                    printWin.document.write('<div class="sub">Patient: <strong>' + esc(pName) + '</strong> (MRN: ' + esc(mrn) + ') • Ward: ' + esc(dept) + ' • Date: ' + new Date().toLocaleDateString('en-GB') + '</div><hr style="border:0;border-top:1px solid #e2e8f0;margin-bottom:16px;">');
+                    printWin.document.write('<table><thead><tr><th>Date & Time</th><th>BP</th><th>Pulse</th><th>Temp</th><th>SpO₂</th><th>Resp</th><th>Recorded By</th></tr></thead><tbody>');
+                    normalized.forEach(function(v) {
+                        var bp = (v.bpSys != null) ? (v.bpSys + (v.bpDia != null ? '/' + v.bpDia : '') + ' mmHg') : '—';
+                        printWin.document.write('<tr><td>' + (v.at ? new Date(v.at).toLocaleString('en-GB') : '—') + '</td><td><strong>' + esc(bp) + '</strong></td><td>' + (v.pulse != null ? v.pulse + ' bpm' : '—') + '</td><td>' + (v.temp != null ? v.temp + ' °C' : '—') + '</td><td>' + (v.spo2 != null ? v.spo2 + ' %' : '—') + '</td><td>' + (v.rr != null ? v.rr + ' /min' : '—') + '</td><td>' + esc(v.by) + '</td></tr>');
+                    });
+                    printWin.document.write('</tbody></table></body></html>');
+                    printWin.document.close();
+                    printWin.focus();
+                    setTimeout(function(){ printWin.print(); }, 250);
+                }
+            }
+        };
+
+        var keyCloseHandler = function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', keyCloseHandler);
+            }
+        };
+        document.addEventListener('keydown', keyCloseHandler);
+    }
+
+    window.pcOpenReadOnlyVitalsGraph = openReadOnlyVitalsGraphModal;
+
+    /* ══════════════════════════════════════════════════════════════
+       READ-ONLY DELIVERIES / MATERNITY VIEWER MODAL
+       When accessed from doctor-dashboard or any non-nurse page,
+       shows maternal delivery records recorded by nurses/midwives
+       in READ-ONLY mode. Prevents opening the nurse portal and provides
+       doctors with an obstetrics history and newborn record viewer.
+       ══════════════════════════════════════════════════════════════ */
+    function openReadOnlyDeliveriesModal(patient) {
+        ensurePcModalStyles();
+        var existing = document.getElementById('pc_readonly_deliveries_modal');
+        if (existing) existing.remove();
+
+        var p = patient || menuPatient();
+        if (!p || !p.id) {
+            if (typeof openPatientPickerForSummary === 'function') {
+                openPatientPickerForSummary(function(selected) {
+                    openReadOnlyDeliveriesModal(selected);
+                }, {
+                    title: '🤰 Select Patient for Delivery Records',
+                    subtitle: 'Search and select a maternal patient to view their delivery history and newborn records.',
+                    actionLabel: 'View Deliveries'
+                });
+                return;
+            }
+            if (window.pcToast) pcToast('Please select a patient first to view their delivery records.', 'warning');
+            else alert('Please select a patient first.');
+            return;
+        }
+
+        try {
+            var list = [];
+            if (typeof getPatients === 'function') list = getPatients() || [];
+            if (!list.length) list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+            var found = list.find(function(x) { return String(x.id) === String(p.id) || String(x.mrn) === String(p.id); });
+            if (found) p = found;
+        } catch(e){}
+
+        var deliveries = (p && p.deliveries) || [];
+
+        // Also check if any delivery records exist in pclinic_files
+        try {
+            var files = (typeof pcFile !== 'undefined' && typeof pcFile.list === 'function')
+                ? pcFile.list(p.id, 'delivery')
+                : JSON.parse(localStorage.getItem('pclinic_files') || '[]').filter(function(d) {
+                    return String(d.patientId) === String(p.id) && (d.type === 'delivery' || d.type === 'cpn');
+                });
+            if (files && files.length) {
+                files.forEach(function(f) {
+                    if (f.delivery && !deliveries.some(function(d) { return d.id === f.id; })) {
+                        deliveries.push(Object.assign({ id: f.id, at: f.at || f.timestamp }, f.delivery));
+                    }
+                });
+            }
+        } catch(e){}
+
+        var pName = (p.name || ((p.firstName || '') + ' ' + (p.lastName || ''))).trim() || ('Patient #' + p.id);
+        var mrn = p.mrn || p.id || '—';
+        var dept = p.department || p.location || 'Maternity';
+        var gender = (p.gender || '').trim();
+        var isMale = gender.toUpperCase() === 'M' || gender.toLowerCase() === 'male';
+        var ageStr = '';
+        if (p.dob) {
+            var y = new Date().getFullYear() - new Date(p.dob).getFullYear();
+            if (!isNaN(y) && y >= 0) ageStr = y + ' yrs';
+        }
+
+        var scrim = document.createElement('div');
+        scrim.id = 'pc_readonly_deliveries_modal';
+        scrim.className = 'pc-modal-scrim noprint';
+        scrim.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(15,23,42,0.68);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);display:flex;align-items:center;justify-content:center;padding:16px;animation:pcFadeIn .2s ease;';
+
+        var box = document.createElement('div');
+        box.className = 'pc-modal-box';
+        box.style.cssText = 'width:100%;max-width:740px;max-height:90vh;background:rgba(255,255,255,0.98);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,0.35),0 0 0 0.5px rgba(255,255,255,0.8) inset;display:flex;flex-direction:column;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;color:#1d1d1f;';
+
+        var contentHtml = '';
+
+        // Notice banner for male patients
+        var genderBanner = isMale ?
+            '<div style="padding:10px 14px;background:#fffbeb;border:0.5px solid #fde68a;border-radius:12px;color:#b45309;font-size:12px;margin-bottom:14px;display:flex;align-items:center;gap:8px;">' +
+                '<span style="font-size:16px;">⚠️</span>' +
+                '<span><strong>Clinical Notice:</strong> Patient is registered as Male. Delivery and maternal records typically apply to female obstetrics patients.</span>' +
+            '</div>' : '';
+
+        if (!deliveries.length) {
+            contentHtml = genderBanner +
+                '<div style="text-align:center;padding:48px 20px;color:#8e8e93;">' +
+                    '<div style="font-size:38px;margin-bottom:10px;">🤰</div>' +
+                    '<div style="font-weight:700;font-size:14.5px;color:#1d1d1f;margin-bottom:4px;">No Delivery Records Recorded</div>' +
+                    '<div style="font-size:12px;line-height:1.5;max-width:400px;margin:0 auto;">No maternal delivery entries or newborn records have been filed for this patient on the Common Server yet.</div>' +
+                '</div>';
+        } else {
+            var totalCount = deliveries.length;
+            var liveBirthCount = deliveries.filter(function(d){ return (d.outcome || '').toLowerCase().indexOf('live') !== -1; }).length;
+            var cesareanCount = deliveries.filter(function(d){ return (d.type || '').toLowerCase().indexOf('cesar') !== -1; }).length;
+            var normalCount = totalCount - cesareanCount;
+
+            var kpiHtml =
+                '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">' +
+                    '<div style="flex:1;min-width:110px;background:#fdf2f8;border-radius:10px;padding:8px 12px;"><div style="font-size:10.5px;font-weight:700;color:#db2777;">🤰 TOTAL DELIVERIES</div><div style="font-size:16px;font-weight:800;color:#db2777;margin-top:2px;">' + totalCount + ' <small style="font-size:10px;">recorded</small></div></div>' +
+                    '<div style="flex:1;min-width:110px;background:#ecfdf5;border-radius:10px;padding:8px 12px;"><div style="font-size:10.5px;font-weight:700;color:#059669;">👶 LIVE BIRTHS</div><div style="font-size:16px;font-weight:800;color:#059669;margin-top:2px;">' + liveBirthCount + ' <small style="font-size:10px;">infants</small></div></div>' +
+                    '<div style="flex:1;min-width:110px;background:#eaf2ff;border-radius:10px;padding:8px 12px;"><div style="font-size:10.5px;font-weight:700;color:#0071e3;">🩺 EUTOCIC / NORMAL</div><div style="font-size:16px;font-weight:800;color:#0071e3;margin-top:2px;">' + normalCount + '</div></div>' +
+                    (cesareanCount > 0 ? '<div style="flex:1;min-width:110px;background:#fff7ed;border-radius:10px;padding:8px 12px;"><div style="font-size:10.5px;font-weight:700;color:#c2410c;">🔪 CESAREAN</div><div style="font-size:16px;font-weight:800;color:#c2410c;margin-top:2px;">' + cesareanCount + '</div></div>' : '') +
+                '</div>';
+
+            var cardsHtml = deliveries.slice().reverse().map(function(d) {
+                var dStr = d.dateTime ? new Date(d.dateTime).toLocaleString('en-GB') : (d.at ? new Date(d.at).toLocaleString('en-GB') : '—');
+                var type = d.type || 'Eutocic';
+                var sex = d.sex || '—';
+                var weight = d.weight != null ? (d.weight + ' kg') : '—';
+                var apgar = d.apgar || '—';
+                var outcome = d.outcome || 'Live birth';
+                var by = d.by || 'Nurse';
+                var notes = d.notes || '';
+
+                var outcomeBg = (outcome.toLowerCase().indexOf('live') !== -1) ? '#ecfdf5' : '#fef2f2';
+                var outcomeColor = (outcome.toLowerCase().indexOf('live') !== -1) ? '#059669' : '#dc2626';
+
+                return '<div style="background:#fff;border:0.5px solid rgba(0,0,0,0.08);border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
+                        '<div style="display:flex;align-items:center;gap:8px;">' +
+                            '<span style="padding:3px 9px;border-radius:7px;background:rgba(219,39,119,0.1);color:#db2777;font-weight:800;font-size:12px;">' + esc(type) + '</span>' +
+                            '<span style="font-size:12px;font-weight:600;color:#1e293b;"><i class="ti ti-calendar" style="color:#0071e3;"></i> ' + esc(dStr) + '</span>' +
+                        '</div>' +
+                        '<span style="padding:2px 8px;border-radius:6px;background:' + outcomeBg + ';color:' + outcomeColor + ';font-weight:700;font-size:11px;">' + esc(outcome) + '</span>' +
+                    '</div>' +
+                    '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
+                        '<div style="flex:1;min-width:110px;padding:6px 10px;background:#f8fafc;border-radius:8px;font-size:11.5px;"><span style="color:#64748b;font-size:10.5px;">👶 INFANT SEX:</span> <strong>' + esc(sex) + '</strong></div>' +
+                        '<div style="flex:1;min-width:110px;padding:6px 10px;background:#f8fafc;border-radius:8px;font-size:11.5px;"><span style="color:#64748b;font-size:10.5px;">⚖️ WEIGHT:</span> <strong>' + esc(weight) + '</strong></div>' +
+                        '<div style="flex:1;min-width:110px;padding:6px 10px;background:#f8fafc;border-radius:8px;font-size:11.5px;"><span style="color:#64748b;font-size:10.5px;">🩺 APGAR:</span> <strong>' + esc(apgar) + '</strong></div>' +
+                        '<div style="flex:1;min-width:140px;padding:6px 10px;background:#f8fafc;border-radius:8px;font-size:11.5px;"><span style="color:#64748b;font-size:10.5px;">👩‍⚕️ ASSISTED BY:</span> <strong>' + esc(by) + '</strong></div>' +
+                    '</div>' +
+                    (notes ? '<div style="padding:8px 12px;background:#f8fafc;border-left:3px solid #db2777;border-radius:6px;font-size:11.5px;color:#334155;line-height:1.4;">' + esc(notes) + '</div>' : '') +
+                '</div>';
+            }).join('');
+
+            contentHtml = genderBanner + kpiHtml + cardsHtml;
+        }
+
+        box.innerHTML =
+            '<div style="padding:16px 20px;border-bottom:0.5px solid rgba(0,0,0,0.08);background:linear-gradient(180deg,rgba(219,39,119,0.06),transparent);display:flex;align-items:center;justify-content:space-between;">' +
+                '<div style="display:flex;align-items:center;gap:10px;">' +
+                    '<div style="display:flex;gap:6px;">' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#ff5f56;display:inline-block;"></span>' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#ffbd2e;display:inline-block;"></span>' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#27c93f;display:inline-block;"></span>' +
+                    '</div>' +
+                    '<div style="font-weight:800;font-size:14.5px;color:#1d1d1f;letter-spacing:-0.01em;">🤰 Maternal &amp; Delivery Records (Read-Only)</div>' +
+                '</div>' +
+                '<button type="button" class="close-deliveries-modal-btn" style="width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,0.06);color:#666;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">&times;</button>' +
+            '</div>' +
+
+            // Patient Identity Subheader
+            '<div style="padding:12px 20px;background:#f1f5f9;border-bottom:0.5px solid rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+                '<div style="display:flex;align-items:center;gap:10px;">' +
+                    '<div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#db2777,#f43f5e);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;">' +
+                        esc((p.firstName || p.lastName || pName).charAt(0).toUpperCase()) +
+                    '</div>' +
+                    '<div>' +
+                        '<div style="font-weight:800;font-size:13.5px;color:#0f172a;">' + esc(pName) + '</div>' +
+                        '<div style="font-size:11px;color:#64748b;">MRN ' + esc(mrn) + (ageStr ? ' • ' + ageStr : '') + (gender ? ' • ' + gender : '') + ' • ' + esc(dept) + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:6px;">' +
+                    '<span style="padding:3px 9px;border-radius:6px;background:#e2e8f0;color:#334155;font-weight:700;font-size:11px;">' + deliveries.length + (deliveries.length === 1 ? ' Delivery' : ' Deliveries') + '</span>' +
+                    '<span style="padding:3px 9px;border-radius:6px;background:rgba(219,39,119,0.12);color:#db2777;font-weight:700;font-size:11px;"><i class="ti ti-baby-carriage"></i> Common Server Sync</span>' +
+                '</div>' +
+            '</div>' +
+
+            // Scrollable Cards Body
+            '<div style="flex:1;overflow-y:auto;padding:16px 20px;max-height:65vh;">' +
+                contentHtml +
+            '</div>' +
+
+            // Footer
+            '<div style="padding:12px 20px;border-top:0.5px solid rgba(0,0,0,0.08);background:#fbfbfd;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">' +
+                '<div style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:5px;">' +
+                    '<i class="ti ti-info-circle" style="color:#db2777;"></i> CPN Delivery Registry • Read-Only' +
+                '</div>' +
+                '<div style="display:flex;gap:8px;">' +
+                    (deliveries.length ? '<button type="button" class="print-deliveries-btn" style="padding:6px 14px;border-radius:9px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#1e293b;font-weight:600;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;"><i class="ti ti-printer"></i> Print Summary</button>' : '') +
+                    '<button type="button" class="close-deliveries-modal-btn" style="padding:6px 16px;border-radius:9px;border:0;background:#db2777;color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Done</button>' +
+                '</div>' +
+            '</div>';
+
+        scrim.appendChild(box);
+        document.body.appendChild(scrim);
+
+        function closeModal() {
+            scrim.remove();
+        }
+
+        scrim.onclick = function(e) {
+            if (e.target === scrim) closeModal();
+            if (e.target.closest('.close-deliveries-modal-btn')) closeModal();
+            if (e.target.closest('.print-deliveries-btn')) {
+                var printWin = window.open('', '_blank');
+                if (printWin) {
+                    printWin.document.write('<!DOCTYPE html><html><head><title>Maternal Delivery Records - ' + esc(pName) + '</title>');
+                    printWin.document.write('<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:24px;color:#1e293b;} h2{margin-bottom:4px;} .sub{color:#64748b;font-size:12px;margin-bottom:20px;} .card{border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;margin-bottom:12px;} .type{font-weight:800;color:#db2777;} .dt{color:#64748b;font-size:11px;} .grid{display:flex;gap:16px;margin:8px 0;font-size:12px;} .notes{margin-top:6px;font-size:11.5px;color:#475569;}</style>');
+                    printWin.document.write('</head><body>');
+                    printWin.document.write('<h2>🤰 Maternal & Delivery Records (CPN Registry)</h2>');
+                    printWin.document.write('<div class="sub">Patient: <strong>' + esc(pName) + '</strong> | MRN: ' + esc(mrn) + ' | Department: ' + esc(dept) + ' | ' + deliveries.length + ' Recorded Deliveries</div>');
+                    deliveries.forEach(function(d) {
+                        var dStr = d.dateTime ? new Date(d.dateTime).toLocaleString('en-GB') : (d.at ? new Date(d.at).toLocaleString('en-GB') : '—');
+                        printWin.document.write('<div class="card">');
+                        printWin.document.write('<div><span class="type">' + esc(d.type || 'Eutocic') + '</span> &bull; <span class="dt">' + esc(dStr) + '</span></div>');
+                        printWin.document.write('<div class="grid"><span>Infant: <strong>' + esc(d.sex || '—') + '</strong></span><span>Weight: <strong>' + (d.weight ? d.weight + ' kg' : '—') + '</strong></span><span>APGAR: <strong>' + esc(d.apgar || '—') + '</strong></span><span>Outcome: <strong>' + esc(d.outcome || '—') + '</strong></span><span>Assisted by: <strong>' + esc(d.by || '—') + '</strong></span></div>');
+                        if (d.notes) printWin.document.write('<div class="notes">Notes: ' + esc(d.notes) + '</div>');
+                        printWin.document.write('</div>');
+                    });
+                    printWin.document.write('</body></html>');
+                    printWin.document.close();
+                    printWin.focus();
+                    setTimeout(function(){ printWin.print(); }, 250);
+                }
+            }
+        };
+
+        var keyCloseHandler = function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', keyCloseHandler);
+            }
+        };
+        document.addEventListener('keydown', keyCloseHandler);
+    }
+
+    window.pcOpenReadOnlyDeliveries = openReadOnlyDeliveriesModal;
+
+    /* ══════════════════════════════════════════════════════════════
        NURSING MENU (🏥 Nursing ▾ in the CHUK top bar — EVERY page)
        Unfolds the sub-buttons: Careplan, Vital signs graph, Deliveries.
        When on doctor-dashboard or other non-nurse pages, Careplan opens
@@ -2610,8 +3165,28 @@
                     }
                 }
             },
-            { icon:'ti-chart-line',  label:'Vital signs graph',  run:function(){ nurseGo('vitalsgraph'); } },
-            { icon:'ti-baby-carriage', label:'Deliveries',       run:function(){ nurseGo('deliveries'); } }
+            {
+                icon: 'ti-chart-line',
+                label: 'Vital signs graph',
+                run: function() {
+                    if (isNursePage) {
+                        nurseGo('vitalsgraph');
+                    } else {
+                        openReadOnlyVitalsGraphModal();
+                    }
+                }
+            },
+            {
+                icon: 'ti-baby-carriage',
+                label: 'Deliveries',
+                run: function() {
+                    if (isNursePage) {
+                        nurseGo('deliveries');
+                    } else {
+                        openReadOnlyDeliveriesModal();
+                    }
+                }
+            }
         ];
 
         var m = document.createElement('div');
@@ -2646,6 +3221,26 @@
         if (old && old.parentNode) old.parentNode.removeChild(old);
     }
     function nurseGo(section) {
+        var isNursePage = (window.location.pathname || '').toLowerCase().indexOf('nurse-dashboard') !== -1;
+        if (isNursePage) {
+            if (section === 'careplan' && typeof switchTab === 'function') {
+                var tabBtn = document.querySelector('[data-tab="careplan"]');
+                switchTab('careplan', tabBtn);
+                return;
+            }
+            if (section === 'vitalsgraph' && typeof switchTab === 'function' && typeof switchSub === 'function') {
+                var tabBtn = document.querySelector('[data-tab="vitals"]');
+                switchTab('vitals', tabBtn);
+                switchSub('vitals-graph');
+                return;
+            }
+            if (section === 'deliveries' && typeof switchTab === 'function' && typeof switchSub === 'function') {
+                var tabBtn = document.querySelector('[data-tab="cpn"]');
+                switchTab('cpn', tabBtn);
+                switchSub('cpn-del');
+                return;
+            }
+        }
         var p = menuPatient();
         var id = (p && p.id) || '';
         try { id = id || localStorage.getItem('pclinic_active_patient') || ''; } catch(e){}
@@ -3214,6 +3809,8 @@
         openPatientPickerForSummary: openPatientPickerForSummary,
         openMedicalSummary: openMedicalSummary,
         openReadOnlyCarePlan: openReadOnlyCarePlanModal,
+        openReadOnlyVitalsGraph: openReadOnlyVitalsGraphModal,
+        openReadOnlyDeliveries: openReadOnlyDeliveriesModal,
         openSystemSettingsModal: openSystemSettingsModal,
         openSystemInfoModal: openSystemInfoModal,
         toggleThemeFromMenu: toggleThemeFromMenu,
