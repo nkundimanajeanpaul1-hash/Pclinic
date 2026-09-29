@@ -1568,6 +1568,10 @@
                         <span style="font-size:14px;font-weight:700;letter-spacing:-0.01em;">🤰 Deliveries — registry</span>
                         <span class="apple-chip" id="delPatientChip">No patient selected</span>
                     </div>
+                    <div id="delGenderNotice" style="display:none; padding:8px 12px; border-radius:10px; background:rgba(245,158,11,0.1); border:0.5px solid rgba(245,158,11,0.3); color:#b45309; font-size:12px; margin-bottom:12px; align-items:center; gap:8px;">
+                        <i class="ti ti-alert-triangle" style="font-size:15px;flex-shrink:0;"></i>
+                        <span id="delGenderNoticeTxt">Clinical Notice: Patient is registered as Male. Confirm maternal record before saving deliveries.</span>
+                    </div>
                     <div class="fg" style="margin-bottom:12px;">
                         <div class="fgl"><div class="lbl">Delivery date &amp; time</div><input class="fi apple-input" type="datetime-local" id="delDateTime"/></div>
                         <div class="fgl"><div class="lbl">Type of delivery</div>
@@ -2181,14 +2185,15 @@
         }
 
         // ─── SELECT PATIENT ───
-        function selectPatient(id) {
+        function selectPatient(id, preserveTab) {
             var patients = getPatients() || [];
-            var p = patients.find(function(pt) { return pt.id === id; });
+            var p = patients.find(function(pt) { return String(pt.id) === String(id) || String(pt.mrn) === String(id); });
             if (!p) {
                 showToast('❌ Patient not found', 'error');
                 return;
             }
             currentPatient = p;
+            try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
             displayPatientCard(p);
             fillForms(p);
             try {
@@ -2198,8 +2203,11 @@
                 updateNursingChips();
             } catch(e) { console.warn(e); }
             showToast('👤 Loaded patient: ' + (p.firstName || '') + ' ' + (p.lastName || ''), 'success');
-            document.getElementById('suggestions').classList.remove('show');
-            switchTab('overview', document.querySelector('[data-tab="overview"]'));
+            var sugg = document.getElementById('suggestions');
+            if (sugg) sugg.classList.remove('show');
+            if (!preserveTab) {
+                switchTab('overview', document.querySelector('[data-tab="overview"]'));
+            }
         }
 
         // ─── DISPLAY PATIENT CARD (WITH ALL HISTORIES) ───

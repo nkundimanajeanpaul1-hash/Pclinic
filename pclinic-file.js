@@ -2332,10 +2332,251 @@
     }
 
     /* ══════════════════════════════════════════════════════════════
+       READ-ONLY NURSING CARE PLAN VIEWER MODAL
+       When accessed from doctor-dashboard or any non-nurse page,
+       shows the nursing care plan recorded by nurses in READ-ONLY mode.
+       Prevents opening the nurse portal and prevents doctors from
+       editing what a nurse wrote.
+       ══════════════════════════════════════════════════════════════ */
+    function openReadOnlyCarePlanModal(patient) {
+        ensurePcModalStyles();
+        var existing = document.getElementById('pc_readonly_careplan_modal');
+        if (existing) existing.remove();
+
+        var p = patient || menuPatient();
+        if (!p || !p.id) {
+            if (typeof openPatientPickerForSummary === 'function') {
+                openPatientPickerForSummary(function(selected) {
+                    openReadOnlyCarePlanModal(selected);
+                });
+                return;
+            }
+            if (window.pcToast) pcToast('Please select a patient first to view their nursing care plan.', 'warning');
+            else alert('Please select a patient first.');
+            return;
+        }
+
+        try {
+            var list = [];
+            if (typeof getPatients === 'function') list = getPatients() || [];
+            if (!list.length) list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+            var found = list.find(function(x) { return String(x.id) === String(p.id) || String(x.mrn) === String(p.id); });
+            if (found) p = found;
+        } catch(e){}
+
+        var carePlans = (p && p.carePlans) || [];
+
+        // Also check if any careplan documents exist in pclinic_files
+        try {
+            var docs = (typeof pcFile !== 'undefined' && typeof pcFile.list === 'function')
+                ? pcFile.list(p.id, 'careplan')
+                : JSON.parse(localStorage.getItem('pclinic_files') || '[]').filter(function(d) {
+                    return String(d.patientId) === String(p.id) && (d.type === 'careplan' || d.type === 'nursing');
+                });
+            if (docs && docs.length) {
+                docs.forEach(function(d) {
+                    if (!carePlans.some(function(cp) { return String(cp.id) === String(d.id); })) {
+                        carePlans.push({
+                            id: d.id,
+                            problem: d.problem || d.title || d.complaint || 'Nursing Note',
+                            goals: d.goals || '',
+                            interventions: d.interventions || d.management || d.notes || '',
+                            evalDate: d.evalDate || '',
+                            status: d.status || 'Active',
+                            by: d.by || 'Nurse',
+                            at: d.at || d.timestamp || new Date().toISOString()
+                        });
+                    }
+                });
+            }
+        } catch(e){}
+
+        var pName = (p.name || ((p.firstName || '') + ' ' + (p.lastName || ''))).trim() || ('Patient #' + p.id);
+        var mrn = p.mrn || p.id || '—';
+        var dept = p.department || p.location || 'General Ward';
+        var gender = p.gender || '';
+        var ageStr = '';
+        if (p.dob) {
+            var y = new Date().getFullYear() - new Date(p.dob).getFullYear();
+            if (!isNaN(y) && y >= 0) ageStr = y + ' yrs';
+        }
+
+        var scrim = document.createElement('div');
+        scrim.id = 'pc_readonly_careplan_modal';
+        scrim.className = 'pc-modal-scrim noprint';
+        scrim.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,0.68);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);display:flex;align-items:center;justify-content:center;padding:16px;animation:pcFadeIn .2s ease;';
+
+        var box = document.createElement('div');
+        box.className = 'pc-modal-box';
+        box.style.cssText = 'width:100%;max-width:680px;max-height:88vh;background:rgba(255,255,255,0.98);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,0.35),0 0 0 0.5px rgba(255,255,255,0.8) inset;display:flex;flex-direction:column;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;color:#1d1d1f;';
+
+        var contentHtml = '';
+        if (!carePlans.length) {
+            contentHtml =
+                '<div style="text-align:center;padding:48px 24px;color:#8e8e93;">' +
+                    '<div style="font-size:36px;margin-bottom:10px;">📋</div>' +
+                    '<div style="font-weight:700;font-size:15px;color:#1d1d1f;margin-bottom:6px;">No Nursing Care Plan on File</div>' +
+                    '<div style="font-size:12.5px;line-height:1.6;max-width:440px;margin:0 auto;color:#64748b;">' +
+                        'No nursing care plan has been authored for <strong>' + esc(pName) + '</strong> yet. ' +
+                        'When attending nurses record care plans, they will be readable here in this protected view.' +
+                    '</div>' +
+                '</div>';
+        } else {
+            contentHtml = carePlans.map(function(cp, idx) {
+                var st = String(cp.status || 'Active').toLowerCase();
+                var stBadge = '<span style="padding:3px 9px;border-radius:980px;font-size:11px;font-weight:700;background:rgba(0,113,227,0.1);color:#0071e3;">● Active</span>';
+                if (st === 'achieved') {
+                    stBadge = '<span style="padding:3px 9px;border-radius:980px;font-size:11px;font-weight:700;background:rgba(16,185,129,0.1);color:#059669;">✓ Goal Achieved</span>';
+                } else if (st === 'discontinued') {
+                    stBadge = '<span style="padding:3px 9px;border-radius:980px;font-size:11px;font-weight:700;background:rgba(239,68,68,0.1);color:#dc2626;">✕ Discontinued</span>';
+                }
+
+                var dateStr = '—';
+                if (cp.at || cp.dateTime) {
+                    try { dateStr = new Date(cp.at || cp.dateTime).toLocaleString('en-GB'); } catch(e){}
+                }
+                var nurseAuthor = cp.by || 'Attending Nurse';
+
+                return '<div style="background:#f8fafc;border:0.5px solid rgba(0,0,0,0.08);border-radius:14px;padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">' +
+                        '<div style="display:flex;align-items:center;gap:8px;">' +
+                            '<span style="font-size:12px;font-weight:800;color:#0071e3;">Care Plan #' + (idx + 1) + '</span>' +
+                            stBadge +
+                        '</div>' +
+                        '<div style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:4px;">' +
+                            '<i class="ti ti-calendar" style="font-size:12px;"></i> ' + esc(dateStr) +
+                            ' · <span style="font-weight:600;color:#334155;">👩‍⚕️ ' + esc(nurseAuthor) + '</span>' +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div style="margin-bottom:10px;">' +
+                        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;margin-bottom:3px;">🩺 Nursing Diagnosis / Problem</div>' +
+                        '<div style="font-size:13.5px;font-weight:700;color:#0f172a;line-height:1.4;background:#fff;padding:8px 12px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.06);">' +
+                            esc(cp.problem || '—') +
+                        '</div>' +
+                    '</div>' +
+
+                    (cp.goals ?
+                    '<div style="margin-bottom:10px;">' +
+                        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;margin-bottom:3px;">🎯 Expected Patient Goals & Outcomes</div>' +
+                        '<div style="font-size:12.5px;color:#334155;line-height:1.5;background:#fff;padding:8px 12px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.06);">' +
+                            esc(cp.goals) +
+                        '</div>' +
+                    '</div>' : '') +
+
+                    (cp.interventions ?
+                    '<div style="margin-bottom:10px;">' +
+                        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;margin-bottom:3px;">📋 Nursing Orders & Interventions</div>' +
+                        '<div style="font-size:12.5px;color:#334155;line-height:1.5;background:#fff;padding:8px 12px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.06);">' +
+                            esc(cp.interventions) +
+                        '</div>' +
+                    '</div>' : '') +
+
+                    (cp.evalDate ?
+                    '<div style="font-size:11.5px;color:#64748b;margin-top:6px;display:flex;align-items:center;gap:4px;">' +
+                        '<i class="ti ti-clock" style="color:#0071e3;"></i> Scheduled evaluation date: <strong style="color:#0f172a;">' + esc(cp.evalDate) + '</strong>' +
+                    '</div>' : '') +
+                '</div>';
+            }).join('');
+        }
+
+        box.innerHTML =
+            '<div style="padding:16px 20px;border-bottom:0.5px solid rgba(0,0,0,0.08);background:linear-gradient(180deg,rgba(0,113,227,0.06),transparent);display:flex;align-items:center;justify-content:space-between;">' +
+                '<div style="display:flex;align-items:center;gap:10px;">' +
+                    '<div style="display:flex;gap:6px;">' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#ff5f56;display:inline-block;"></span>' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#ffbd2e;display:inline-block;"></span>' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#27c93f;display:inline-block;"></span>' +
+                    '</div>' +
+                    '<div style="font-weight:800;font-size:14.5px;color:#1d1d1f;letter-spacing:-0.01em;">🏥 Nursing Care Plan (Read-Only)</div>' +
+                '</div>' +
+                '<button type="button" class="close-careplan-modal-btn" style="width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,0.06);color:#666;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">&times;</button>' +
+            '</div>' +
+
+            // Patient Identity Subheader
+            '<div style="padding:12px 20px;background:#f1f5f9;border-bottom:0.5px solid rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+                '<div style="display:flex;align-items:center;gap:10px;">' +
+                    '<div style="width:34px;height:34px;border-radius:10px;background:#0071e3;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;">' +
+                        esc((p.firstName || p.lastName || pName).charAt(0).toUpperCase()) +
+                    '</div>' +
+                    '<div>' +
+                        '<div style="font-weight:800;font-size:13.5px;color:#0f172a;">' + esc(pName) + '</div>' +
+                        '<div style="font-size:11px;color:#64748b;">MRN ' + esc(mrn) + (ageStr ? ' • ' + ageStr : '') + (gender ? ' • ' + gender : '') + ' • ' + esc(dept) + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:6px;">' +
+                    '<span style="padding:3px 9px;border-radius:6px;background:#e2e8f0;color:#334155;font-weight:700;font-size:11px;">' + carePlans.length + ' Care Plan' + (carePlans.length === 1 ? '' : 's') + '</span>' +
+                    '<span style="padding:3px 9px;border-radius:6px;background:rgba(16,185,129,0.12);color:#059669;font-weight:700;font-size:11px;"><i class="ti ti-lock"></i> Protected Nursing Record</span>' +
+                '</div>' +
+            '</div>' +
+
+            // Scrollable Care Plan Body
+            '<div style="flex:1;overflow-y:auto;padding:16px 20px;max-height:60vh;">' +
+                contentHtml +
+            '</div>' +
+
+            // Footer
+            '<div style="padding:12px 20px;border-top:0.5px solid rgba(0,0,0,0.08);background:#fbfbfd;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">' +
+                '<div style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:5px;">' +
+                    '<i class="ti ti-info-circle" style="color:#0071e3;"></i> Authored by Nursing Staff • Read-Only (Doctors cannot edit nursing entries)' +
+                '</div>' +
+                '<div style="display:flex;gap:8px;">' +
+                    (carePlans.length ? '<button type="button" class="print-careplan-btn" style="padding:6px 14px;border-radius:9px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#1e293b;font-weight:600;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;"><i class="ti ti-printer"></i> Print</button>' : '') +
+                    '<button type="button" class="close-careplan-modal-btn" style="padding:6px 16px;border-radius:9px;border:0;background:#0071e3;color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Done</button>' +
+                '</div>' +
+            '</div>';
+
+        scrim.appendChild(box);
+        document.body.appendChild(scrim);
+
+        function closeModal() {
+            scrim.remove();
+        }
+
+        scrim.onclick = function(e) {
+            if (e.target === scrim) { closeModal(); return; }
+            if (e.target.closest('.close-careplan-modal-btn')) { closeModal(); return; }
+            if (e.target.closest('.print-careplan-btn')) {
+                var printWin = window.open('', '_blank', 'width=700,height=800');
+                if (printWin) {
+                    printWin.document.write('<!DOCTYPE html><html><head><title>Nursing Care Plan — ' + esc(pName) + '</title>');
+                    printWin.document.write('<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:24px;color:#0f172a;line-height:1.5;} h2{margin:0 0 4px 0;} .sub{color:#64748b;font-size:12px;margin-bottom:16px;} .card{border:1px solid #cbd5e1;border-radius:8px;padding:12px 14px;margin-bottom:12px;} .lbl{font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:2px;} .val{font-size:13px;margin-bottom:8px;} .by{font-size:11px;color:#64748b;margin-top:4px;}</style></head><body>');
+                    printWin.document.write('<h2>🏥 CHUK / PClinic — Nursing Care Plan</h2>');
+                    printWin.document.write('<div class="sub">Patient: <strong>' + esc(pName) + '</strong> (MRN: ' + esc(mrn) + ') • Ward: ' + esc(dept) + ' • Date: ' + new Date().toLocaleDateString('en-GB') + '</div><hr style="border:0;border-top:1px solid #e2e8f0;margin-bottom:16px;">');
+                    carePlans.forEach(function(cp, i) {
+                        printWin.document.write('<div class="card">');
+                        printWin.document.write('<div style="display:flex;justify-content:space-between;"><strong>Care Plan #' + (i+1) + ' (' + esc(cp.status || 'Active') + ')</strong><span>' + esc(cp.at ? new Date(cp.at).toLocaleString('en-GB') : '') + '</span></div>');
+                        printWin.document.write('<div class="lbl" style="margin-top:8px;">Diagnosis / Problem:</div><div class="val"><strong>' + esc(cp.problem || '—') + '</strong></div>');
+                        if (cp.goals) printWin.document.write('<div class="lbl">Goals:</div><div class="val">' + esc(cp.goals) + '</div>');
+                        if (cp.interventions) printWin.document.write('<div class="lbl">Interventions:</div><div class="val">' + esc(cp.interventions) + '</div>');
+                        printWin.document.write('<div class="by">Recorded by: ' + esc(cp.by || 'Nurse') + (cp.evalDate ? ' • Eval Date: ' + esc(cp.evalDate) : '') + '</div>');
+                        printWin.document.write('</div>');
+                    });
+                    printWin.document.write('</body></html>');
+                    printWin.document.close();
+                    printWin.focus();
+                    setTimeout(function(){ printWin.print(); }, 250);
+                }
+            }
+        };
+
+        var keyCloseHandler = function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', keyCloseHandler);
+            }
+        };
+        document.addEventListener('keydown', keyCloseHandler);
+    }
+
+    window.pcOpenReadOnlyCarePlan = openReadOnlyCarePlanModal;
+
+    /* ══════════════════════════════════════════════════════════════
        NURSING MENU (🏥 Nursing ▾ in the CHUK top bar — EVERY page)
        Unfolds the sub-buttons: Careplan, Vital signs graph, Deliveries.
-       Each deep-links into the Nurse Dashboard for the SELECTED patient
-       (Common Server) with the right section opened.
+       When on doctor-dashboard or other non-nurse pages, Careplan opens
+       a READ-ONLY modal viewer so doctors can see what nurses wrote
+       without navigating to the nurse dashboard or editing entries.
        ══════════════════════════════════════════════════════════════ */
     function showNursingMenu(btn) {
         closePatientMenu();
@@ -2356,8 +2597,19 @@
             document.head.appendChild(st);
         }
 
+        var isNursePage = (window.location.pathname || '').toLowerCase().indexOf('nurse-dashboard') !== -1;
         var items = [
-            { icon:'ti-notes',       label:'Careplan',           run:function(){ nurseGo('careplan'); } },
+            {
+                icon: 'ti-notes',
+                label: 'Nursing care plan',
+                run: function() {
+                    if (isNursePage) {
+                        nurseGo('careplan');
+                    } else {
+                        openReadOnlyCarePlanModal();
+                    }
+                }
+            },
             { icon:'ti-chart-line',  label:'Vital signs graph',  run:function(){ nurseGo('vitalsgraph'); } },
             { icon:'ti-baby-carriage', label:'Deliveries',       run:function(){ nurseGo('deliveries'); } }
         ];
@@ -2961,6 +3213,7 @@
         openPatientProfileModal: openPatientProfileModal,
         openPatientPickerForSummary: openPatientPickerForSummary,
         openMedicalSummary: openMedicalSummary,
+        openReadOnlyCarePlan: openReadOnlyCarePlanModal,
         openSystemSettingsModal: openSystemSettingsModal,
         openSystemInfoModal: openSystemInfoModal,
         toggleThemeFromMenu: toggleThemeFromMenu,
