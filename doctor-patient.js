@@ -166,7 +166,7 @@
             '<!-- LEFT SIDE: CLINICAL PORTALS (ACTION-CODED COLORS) -->' +
             '<div class="chuk-menu-left">' +
                 '<a class="chk-btn btn-patient" onclick="if(window.pcPatientMenu)window.pcPatientMenu(this);else if(window.pcFile)pcFile.openPatientProfileModal();">👤 Patient <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>' +
-                '<a class="chk-btn btn-summary" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; window.location.href=\'medical-summary.html?patient=\'+encodeURIComponent(id);">📋 Medical summary</a>' +
+                '<a class="chk-btn btn-summary" onclick="if(window.pcOpenMedicalSummary)window.pcOpenMedicalSummary();else window.location.href=\'medical-summary.html\';">📋 Medical summary</a>' +
                 '<a class="chk-btn btn-nursing" onclick="if(window.pcNursingMenu)window.pcNursingMenu(this);else if(typeof pcToast===\'function\')pcToast(\'Nursing tools menu unavailable\',\'info\');">🏥 Nursing <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>' +
                 '<a class="chk-btn btn-applications" onclick="if(window.pcApplicationsMenu)window.pcApplicationsMenu(this);else window.location.href=\'lab-request.html\';">💉 Applications <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>' +
                 '<a class="chk-btn btn-documents" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(id);">📂 Documents</a>' +

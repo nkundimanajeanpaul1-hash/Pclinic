@@ -79,7 +79,7 @@
     /* ══════════ BAR DEFINITION — each action appears ONCE ══════════ */
     var ACTIONS = [
         { id:'patient',  label:'Patient',             icon:'ti-user-search',     grp:'util',  always:true, run:openPatientSearch },
-        { id:'medsum',   label:'Medical summary',     icon:'ti-file-text',       grp:'file',  always:true, run:function(){ go('medical-summary.html'); } },
+        { id:'medsum',   label:'Medical summary',     icon:'ti-file-text',       grp:'file',  always:true, run:function(){ if(window.pcOpenMedicalSummary) window.pcOpenMedicalSummary(); else go('medical-summary.html'); } },
         { id:'global',   label:'Global examinations', icon:'ti-clipboard-list',  grp:'order', always:true, run:function(){ go('global-examinations.html'); } },
         { id:'documents',label:'Documents', icon:'ti-file-text',   grp:'file',  menu:[
             { label:'Medical Certificate',      icon:'ti-certificate',       run:function(){ go('medical-certificate.html'); } },

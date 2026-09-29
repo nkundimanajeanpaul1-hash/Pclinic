@@ -721,31 +721,6 @@
         applyPatientGate();
     }
 
-    // ─── INSTANT FORM LAUNCH (NO DELAY) ───
-    window.launchForm = function(target, title) {
-        const p = currentPatient;
-        if (target === 'vitals-action') {
-            if (window.pcVitals) pcVitals.open();
-            else showToast('📊 Recording Vital Signs', 'info');
-            return;
-        }
-
-        if (p && p.id) {
-            try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
-            window.location.href = `${target}?patient=${encodeURIComponent(p.id)}`;
-        } else {
-            const typedId = (document.getElementById('ocSearchId') && document.getElementById('ocSearchId').value.trim()) ||
-                            (document.getElementById('ocSearchMrn') && document.getElementById('ocSearchMrn').value.trim()) ||
-                            localStorage.getItem('pclinic_active_patient') || '';
-            if (typedId) {
-                try { localStorage.setItem('pclinic_active_patient', String(typedId)); } catch(e){}
-                window.location.href = `${target}?patient=${encodeURIComponent(typedId)}`;
-            } else {
-                window.location.href = target;
-            }
-        }
-    };
-
     window.closeMedicalSummary = function() {
         try {
             if (window.parent && window.parent !== window) {
@@ -816,15 +791,56 @@
     resolvePatientImmediately();
     renderCards();
 
+    function onPatientSelected(picked) {
+        if (!picked || !picked.id) return;
+        currentPatient = picked;
+        try { localStorage.setItem('pclinic_active_patient', String(picked.id)); } catch(e){}
+        window.location.href = 'medical-summary.html?patient=' + encodeURIComponent(picked.id);
+    }
+
+    function checkPatientSelection() {
+        if (!currentPatient || !currentPatient.id) {
+            if (typeof window.pcSelectPatientForMedicalSummary === 'function') {
+                window.pcSelectPatientForMedicalSummary(onPatientSelected);
+            } else if (window.pcFile && typeof window.pcFile.openPatientPickerForSummary === 'function') {
+                window.pcFile.openPatientPickerForSummary(onPatientSelected);
+            }
+        }
+    }
+
+    window.launchForm = function(target, title) {
+        if (!currentPatient || !currentPatient.id) {
+            showToast('⚠️ Select a patient first to open ' + title, 'info');
+            checkPatientSelection();
+            return;
+        }
+
+        const p = currentPatient;
+        try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
+
+        if (target === 'vitals-action') {
+            if (window.pcVitals) pcVitals.open();
+            else showToast('📊 Recording Vital Signs for ' + (p.firstName || p.name), 'info');
+            return;
+        }
+
+        showToast(`📄 Opening ${title} for ${p.firstName || p.name}…`, 'info');
+        window.location.href = `${target}?patient=${encodeURIComponent(p.id)}`;
+    };
+
     window.addEventListener('DOMContentLoaded', function () {
         resolvePatientImmediately();
         setupFilters();
         renderCards();
 
+        // Prompt patient selection immediately if no patient is currently selected
+        setTimeout(checkPatientSelection, 100);
+
         if (typeof window.requireAuth === 'function') {
             window.requireAuth(['doctor','nurse']).then(function() {
                 resolvePatientImmediately();
                 renderCards();
+                setTimeout(checkPatientSelection, 150);
             }).catch(function () {});
         }
     });
@@ -832,10 +848,12 @@
     window.addEventListener('pcPatientChanged', function(e) {
         if (e.detail && e.detail.id) {
             currentPatient = e.detail;
+            renderCards();
         } else {
             currentPatient = null;
+            renderCards();
+            setTimeout(checkPatientSelection, 200);
         }
-        renderCards();
     });
 
     window.addEventListener('storage', function() {

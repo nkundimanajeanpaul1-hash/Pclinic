@@ -838,7 +838,11 @@
                 if (typeof window.movePatient === 'function') window.movePatient();
                 else alert('Move Patient Ward:\nSelect destination ward from Ward Picker.');
             }},
-            { id:'medsum', label:'Medical summary', icon:'ti-file-text', grp:'file', always:true, run: function(){ goPage('medical-summary.html'); } },
+            { id:'medsum', label:'Medical summary', icon:'ti-file-text', grp:'file', always:true, run: function(){
+                if (typeof openMedicalSummary === 'function') openMedicalSummary();
+                else if (window.pcOpenMedicalSummary) window.pcOpenMedicalSummary();
+                else goPage('medical-summary.html');
+            }},
             { id:'global', label:'Global examinations', icon:'ti-clipboard-list', grp:'order', always:true, run: function(){ goPage('global-examinations.html'); } },
             { id:'documents', label:'Documents', icon:'ti-file-text', grp:'file', menu:[
                 { label:'Medical Certificate',   icon:'ti-certificate',       run: function(){ goPage('medical-certificate.html'); } },
@@ -1449,6 +1453,218 @@
         };
     }
 
+    /* ══════════════════════════════════════════════════════════════
+       PATIENT SEARCH & SELECTION MODAL FOR MEDICAL SUMMARY
+       Directs the user to search and select a patient first whenever
+       Medical Summary is opened or clicked without an active patient.
+       Once selected, opens the summary and loads their Common Server data.
+       ══════════════════════════════════════════════════════════════ */
+    function openPatientPickerForSummary(onPick) {
+        ensurePcModalStyles();
+        var existing = document.getElementById('pc_summary_picker_modal');
+        if (existing) existing.remove();
+
+        var list = [];
+        try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
+        if (!list.length) {
+            try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+        }
+
+        var scrim = document.createElement('div');
+        scrim.id = 'pc_summary_picker_modal';
+        scrim.className = 'pc-modal-scrim noprint';
+        scrim.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,0.65);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);display:flex;align-items:center;justify-content:center;padding:16px;';
+
+        var box = document.createElement('div');
+        box.className = 'pc-modal-box';
+        box.style.cssText = 'width:100%;max-width:640px;max-height:86vh;background:rgba(255,255,255,0.96);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,0.35),0 0 0 0.5px rgba(255,255,255,0.8) inset;display:flex;flex-direction:column;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;';
+
+        box.innerHTML =
+            '<div style="padding:16px 20px;border-bottom:0.5px solid rgba(0,0,0,0.08);background:linear-gradient(180deg,rgba(0,113,227,0.06),transparent);display:flex;align-items:center;justify-content:space-between;">' +
+                '<div style="display:flex;align-items:center;gap:10px;">' +
+                    '<div style="display:flex;gap:6px;">' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#ff5f56;display:inline-block;"></span>' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#ffbd2e;display:inline-block;"></span>' +
+                        '<span style="width:11px;height:11px;border-radius:50%;background:#27c93f;display:inline-block;"></span>' +
+                    '</div>' +
+                    '<div style="font-weight:800;font-size:14.5px;color:#1d1d1f;letter-spacing:-0.01em;">📋 Select Patient for Medical Summary</div>' +
+                '</div>' +
+                '<button type="button" class="close-summary-picker-btn" style="width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,0.06);color:#666;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">&times;</button>' +
+            '</div>' +
+            '<div style="padding:12px 20px 8px;font-size:12px;color:#6e6e73;line-height:1.5;">' +
+                'Search and select a patient to open, view, and record their 30 medical summary forms.' +
+            '</div>' +
+            '<div style="padding:4px 20px 12px;">' +
+                '<div style="position:relative;display:flex;align-items:center;">' +
+                    '<i class="ti ti-search" style="position:absolute;left:13px;font-size:16px;color:#0071e3;pointer-events:none;"></i>' +
+                    '<input type="text" id="pcSumSearchInput" placeholder="Search patient by name, MRN, national ID, phone, ward…" style="width:100%;height:40px;padding:0 36px 0 38px;border-radius:11px;border:0.5px solid rgba(0,0,0,0.15);background:#fff;font-family:inherit;font-size:13px;font-weight:500;color:#1d1d1f;outline:none;box-shadow:0 1px 3px rgba(0,0,0,0.04) inset;transition:all .2s;" autocomplete="off">' +
+                    '<span style="position:absolute;right:10px;font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;background:#f2f2f7;color:#8e8e93;">⌘K</span>' +
+                '</div>' +
+            '</div>' +
+            '<div id="pcSumPatientList" style="flex:1;overflow-y:auto;padding:4px 20px 14px;max-height:50vh;"></div>' +
+            '<div style="padding:10px 20px;border-top:0.5px solid rgba(0,0,0,0.08);background:#fbfbfd;display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:#8e8e93;">' +
+                '<span id="pcSumCountTxt">Showing ' + list.length + ' registered patients</span>' +
+                '<span style="display:flex;align-items:center;gap:4px;"><i class="ti ti-server" style="color:#0071e3;"></i> Common Server Sync</span>' +
+            '</div>';
+
+        scrim.appendChild(box);
+        document.body.appendChild(scrim);
+
+        var searchInp = box.querySelector('#pcSumSearchInput');
+        var listEl = box.querySelector('#pcSumPatientList');
+        var countEl = box.querySelector('#pcSumCountTxt');
+
+        function renderPatientList(query) {
+            var q = (query || '').toLowerCase().trim();
+            var filtered = list.filter(function(p) {
+                if (!q) return true;
+                var fn = String(p.firstName || '').toLowerCase();
+                var ln = String(p.lastName || '').toLowerCase();
+                var nm = String(p.name || '').toLowerCase();
+                var mrn = String(p.mrn || p.id || '').toLowerCase();
+                var nat = String(p.nationalId || '').toLowerCase();
+                var ph = String(p.phone || '').toLowerCase();
+                var dept = String(p.department || p.location || '').toLowerCase();
+                var ins = String(p.insurance || '').toLowerCase();
+                return fn.includes(q) || ln.includes(q) || nm.includes(q) || mrn.includes(q) || nat.includes(q) || ph.includes(q) || dept.includes(q) || ins.includes(q);
+            });
+
+            if (countEl) countEl.textContent = 'Showing ' + filtered.length + ' of ' + list.length + ' patients';
+
+            if (!filtered.length) {
+                listEl.innerHTML =
+                    '<div style="text-align:center;padding:36px 16px;color:#8e8e93;font-size:12.5px;">' +
+                        '<div style="font-size:28px;margin-bottom:8px;">🔍</div>' +
+                        '<div style="font-weight:700;color:#1d1d1f;margin-bottom:4px;">No patients found</div>' +
+                        '<span>No matching record for “' + esc(q) + '”. Try searching by MRN or Name.</span>' +
+                    '</div>';
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(function(p) {
+                var name = (p.name || ((p.firstName || '') + ' ' + (p.lastName || ''))).trim() || ('Patient #' + p.id);
+                var initial = (p.firstName || p.lastName || p.name || '?').charAt(0).toUpperCase();
+                var mrn = p.mrn || p.id || '—';
+                var dept = p.department || p.location || 'Internal Medicine';
+                var ins = p.insurance || 'RSSB / RAMA';
+                var gen = p.gender || 'Unknown';
+                var ageStr = '';
+                if (p.dob) {
+                    var y = new Date().getFullYear() - new Date(p.dob).getFullYear();
+                    if (!isNaN(y) && y >= 0) ageStr = y + ' yrs';
+                }
+                var care = p.phone || p.caretakerPhone || '';
+
+                return '<div class="pc-sum-pick-row" data-id="' + esc(p.id) + '" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:0.5px solid rgba(0,0,0,0.08);border-radius:12px;background:#fff;margin-bottom:8px;cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+                    '<div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#0071e3,#58a6ff);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;">' + esc(initial) + '</div>' +
+                    '<div style="flex:1;min-width:0;">' +
+                        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">' +
+                            '<span style="font-weight:700;font-size:13.5px;color:#1d1d1f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(name) + '</span>' +
+                            '<span style="padding:1px 7px;border-radius:6px;background:rgba(0,113,227,0.08);color:#0071e3;font-size:10.5px;font-weight:700;">MRN ' + esc(mrn) + '</span>' +
+                        '</div>' +
+                        '<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#6e6e73;flex-wrap:wrap;">' +
+                            (ageStr ? '<span>' + esc(ageStr) + '</span>' : '') +
+                            '<span>' + esc(gen) + '</span>' +
+                            '<span>•</span>' +
+                            '<span style="color:#0284c7;font-weight:600;">' + esc(dept) + '</span>' +
+                            '<span>•</span>' +
+                            '<span style="color:#059669;font-weight:600;">' + esc(ins) + '</span>' +
+                            (care ? '<span>• ☎ ' + esc(care) + '</span>' : '') +
+                        '</div>' +
+                    '</div>' +
+                    '<button type="button" class="pc-pick-btn" style="padding:6px 14px;border-radius:980px;background:#0071e3;color:#fff;border:0;font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;flex-shrink:0;transition:transform .2s,background .2s;">' +
+                        'Open Summary <i class="ti ti-chevron-right" style="font-size:11px;"></i>' +
+                    '</button>' +
+                '</div>';
+            }).join('');
+        }
+
+        renderPatientList('');
+
+        searchInp.addEventListener('input', function() {
+            renderPatientList(searchInp.value);
+        });
+
+        setTimeout(function() { searchInp.focus(); }, 120);
+
+        function closeModal() {
+            scrim.remove();
+        }
+
+        scrim.onclick = function(e) {
+            if (e.target === scrim) { closeModal(); return; }
+            if (e.target.closest('.close-summary-picker-btn')) { closeModal(); return; }
+            var row = e.target.closest('.pc-sum-pick-row');
+            if (row) {
+                var pId = row.getAttribute('data-id');
+                var picked = null;
+                for (var pi = 0; pi < list.length; pi++) {
+                    if (String(list[pi].id) === String(pId)) { picked = list[pi]; break; }
+                }
+                closeModal();
+                if (onPick) onPick(picked || { id: pId });
+            }
+        };
+
+        var keyCloseHandler = function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', keyCloseHandler);
+            }
+        };
+        document.addEventListener('keydown', keyCloseHandler);
+    }
+
+    function openMedicalSummary(patientId) {
+        var p = null;
+        if (patientId) {
+            var list = [];
+            try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
+            if (!list.length) {
+                try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+            }
+            for (var i = 0; i < list.length; i++) {
+                if (String(list[i].id) === String(patientId)) { p = list[i]; break; }
+            }
+            p = p || { id: patientId };
+        } else if (typeof pcFile !== 'undefined' && pcFile.patient && pcFile.patient()) {
+            p = pcFile.patient();
+        } else if (window.currentPatient && window.currentPatient.id) {
+            p = window.currentPatient;
+        } else {
+            var savedId = null;
+            try { savedId = localStorage.getItem('pclinic_active_patient'); } catch(e){}
+            if (savedId) {
+                var list2 = [];
+                try { if (typeof getPatients === 'function') list2 = getPatients() || []; } catch(e){}
+                if (!list2.length) {
+                    try { list2 = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+                }
+                for (var j = 0; j < list2.length; j++) {
+                    if (String(list2[j].id) === String(savedId)) { p = list2[j]; break; }
+                }
+                p = p || { id: savedId };
+            }
+        }
+
+        if (p && p.id) {
+            try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
+            window.location.href = 'medical-summary.html?patient=' + encodeURIComponent(p.id);
+            return;
+        }
+
+        // ⛔ NO patient selected: Direct to select patient first via search popup!
+        openPatientPickerForSummary(function(selected) {
+            if (selected && selected.id) {
+                try { localStorage.setItem('pclinic_active_patient', String(selected.id)); } catch(e){}
+                window.location.href = 'medical-summary.html?patient=' + encodeURIComponent(selected.id);
+            }
+        });
+    }
+
+    window.pcOpenMedicalSummary = openMedicalSummary;
+    window.pcSelectPatientForMedicalSummary = openPatientPickerForSummary;
+
     function openPatientProfileModal(patientId) {
         try {
             return openPatientProfileModalInner(patientId);
@@ -1828,7 +2044,7 @@
 
         var leftHtml = '<a class="chk-btn btn-patient" onclick="window.pcPatientMenu&&window.pcPatientMenu(this);">👤 Patient <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
         if (isClinical) {
-            leftHtml += '<a class="chk-btn btn-summary" onclick="var p=window.pcFile&&pcFile.patient?pcFile.patient():null; var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; window.location.href=\'medical-summary.html?patient=\'+encodeURIComponent(id);">📋 Medical summary</a>';
+            leftHtml += '<a class="chk-btn btn-summary" onclick="if(window.pcOpenMedicalSummary)window.pcOpenMedicalSummary();else window.location.href=\'medical-summary.html\';">📋 Medical summary</a>';
             leftHtml += '<a class="chk-btn btn-nursing" onclick="window.pcNursingMenu&&window.pcNursingMenu(this);">🏥 Nursing <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
         }
         leftHtml += '<a class="chk-btn btn-applications" onclick="window.pcApplicationsMenu&&window.pcApplicationsMenu(this);">💉 Applications <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
@@ -1975,7 +2191,21 @@
             var mrn = document.getElementById('ocSearchMrn') ? document.getElementById('ocSearchMrn').value.trim() : '';
             var pid = document.getElementById('ocSearchId') ? document.getElementById('ocSearchId').value.trim() : '';
             var q = [f, fi, nat, mrn, pid].filter(Boolean).join(' ').trim();
-            if (!q) { if (window.pcToast) pcToast('Enter at least one search field', 'info'); return; }
+            if (!q) {
+                if (typeof openPatientPickerForSummary === 'function') {
+                    openPatientPickerForSummary(function(best) {
+                        try { localStorage.setItem('pclinic_active_patient', String(best.id)); } catch(e){}
+                        if (window.pcFile && window.pcFile.renderDemoBar) {
+                            var master = document.getElementById('pcMasterHeader') || document.body;
+                            window.pcFile.renderDemoBar(master, best);
+                        }
+                        window.dispatchEvent(new CustomEvent('pcPatientChanged', {detail: best}));
+                    });
+                    return;
+                }
+                if (window.pcToast) pcToast('Enter at least one search field', 'info');
+                return;
+            }
             var results = [];
             try {
                 var cashierPage = String((window.location && window.location.pathname) || '').toLowerCase().indexOf('cashier-dashboard') !== -1;
@@ -2729,6 +2959,8 @@
         addAdministrativeDocument: addAdministrativeDocument,
         openWardPicker: openWardPicker,
         openPatientProfileModal: openPatientProfileModal,
+        openPatientPickerForSummary: openPatientPickerForSummary,
+        openMedicalSummary: openMedicalSummary,
         openSystemSettingsModal: openSystemSettingsModal,
         openSystemInfoModal: openSystemInfoModal,
         toggleThemeFromMenu: toggleThemeFromMenu,
