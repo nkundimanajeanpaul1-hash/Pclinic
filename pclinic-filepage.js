@@ -115,7 +115,7 @@
         if (c.att) chips += '<button class="pcf-tool" type="button" id="toolAtt" style="--c:#7a4500;--b:#fff4e0">' +
                             '<i class="ti ti-paperclip"></i> Attachments<span class="n" data-n="0"></span></button>';
 
-        // 🌟 MASTER HEADER: CHUK + Patient ID bar always on top, file opens BELOW 🌟
+        // 🌟 MASTER HEADER: PClinic + Patient ID bar always on top, file opens BELOW 🌟
         // Ensure master header exists at top of body, BEFORE pcf-wrap
         if (!$('#pcMasterHeader')) {
             var master = document.createElement('div');
@@ -879,7 +879,7 @@
                 try { P = (window.pcFile && pcFile.patient) ? pcFile.patient() : null; } catch(e){ P=null; }
                 if (!P || !P.id) P = resolvePatientFromUrl();
                 if (P && P.id) {
-                    // Always render CHUK + ID bar into master header, so file opens BELOW
+                    // Always render PClinic + ID bar into master header, so file opens BELOW
                     var headerTarget = document.getElementById('pcMasterHeader') || document.getElementById('pcfRoot');
                     if (!headerTarget) headerTarget = '#pcfRoot';
                     if (typeof pcFile.renderDemoBar === 'function') {

@@ -140,7 +140,7 @@
             return;
         }
 
-        // Complete standalone fallback that matches 100/100 EXACT PClinic CHUK 3-Row Grid (~85px height) & Top Menu
+        // Complete standalone fallback that matches 100/100 EXACT PClinic 3-Row Grid (~85px height) & Top Menu
         p = p || {};
         var isCleared = !!p._cleared || !p.id;
         var name = isCleared ? '' : ((p.lastName || p.name || '').toUpperCase());
@@ -156,9 +156,9 @@
         var ins = isCleared ? 'RSSB / RAMA' : (p.insurance || 'RSSB / RAMA');
         var dist = isCleared ? 'NYARUGENGE' : (p.district || 'NYARUGENGE');
 
-        /* One CHUK strip only — never rebuild it here (pclinic-file owns Bar 1). */
-        var existingChuk = document.getElementById('pc_chuk_top_menu');
-        if (!existingChuk) {
+        /* One PClinic strip only — never rebuild it here (pclinic-file owns Bar 1). */
+        var existingTopBar = document.getElementById('pc_chuk_top_menu');
+        if (!existingTopBar) {
         var menuDiv = document.createElement('div');
         menuDiv.id = 'pc_chuk_top_menu';
         menuDiv.className = 'chuk-top-menu noprint';

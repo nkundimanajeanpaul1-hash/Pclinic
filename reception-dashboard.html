@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Reception Dashboard — PClinic</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
-<link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
+<link rel="stylesheet" href="pclinic-ui.css?v=20260804_PCLINIC_3ROW">
 <link rel="stylesheet" href="reception-dashboard-doctor.css?v=20260909_RECEPTIONDOCTOR5" />
 <script src="reception-dashboard-doctor.js?v=20260909_RECEPTIONDOCTOR1" defer></script>
 <style>
@@ -2624,7 +2624,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
   border: none !important;
 }
 </style>
-    <script src="pclinic-file.js?v=20260827_FILES" defer></script>
+    <script src="pclinic-file.js?v=20260929_TECH_EXAMS" defer></script>
 </head>
 <body class="reception-doctor-shell">
 
@@ -2753,7 +2753,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
         <button onclick="raReferralIn();closeAllDropdowns();"><i class="ti ti-login"></i> Referral In</button>
         <button onclick="raReferralOut();closeAllDropdowns();"><i class="ti ti-external-link"></i> Referral Out</button>
         <button onclick="raCounterReferral();closeAllDropdowns();"><i class="ti ti-arrow-back-up"></i> Counter-Referral</button>
-        <button onclick="raHC();closeAllDropdowns();"><i class="ti ti-building-community"></i> HC / CHUK Patients</button>
+        <button onclick="raHC();closeAllDropdowns();"><i class="ti ti-building-community"></i> HC / PClinic Patients</button>
         <button onclick="raAmbulance();closeAllDropdowns();"><i class="ti ti-ambulance"></i> Ambulance Arrivals</button>
       </div>
     </div>
@@ -3205,7 +3205,7 @@ html[data-reduce-transparency="true"] .topbar,html[data-reduce-transparency="tru
               <div class="form-group"><label>Priority *</label><select id="bPri" class="apple-input"><option>low</option><option>medium</option><option>high</option><option>critical</option></select></div>
               <div class="form-group"><label>Blood Group</label><select id="bBloodGroup" class="apple-input"><option>O+</option><option>O-</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option></select></div>
               <div class="form-group"><label>Allergies</label><input type="text" id="bAllergies" placeholder="Penicillin, None" class="apple-input"></div>
-              <div class="form-group"><label>Referral Source</label><select id="bReferralSource" class="apple-input"><option>Self</option><option>Health Center</option><option>Private clinic</option><option>CHUK</option></select></div>
+              <div class="form-group"><label>Referral Source</label><select id="bReferralSource" class="apple-input"><option>Self</option><option>Health Center</option><option>Private clinic</option><option>PClinic</option></select></div>
               <div class="form-group"><label>Arrival Mode</label><select id="bArrivalMode" class="apple-input"><option>Walking</option><option>Ambulance</option><option>Wheelchair</option><option>Stretcher</option></select></div>
               <div class="form-group form-grid-full" style="margin-top:8px; padding:12px; background:rgba(255,255,255,0.6); border-radius:12px; border:0.5px solid rgba(0,0,0,0.06);"><label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600;"><input type="checkbox" id="bConsent" checked style="width:18px; height:18px;"> I confirm patient information is correct and consent obtained</label></div>
               </div>
@@ -4171,7 +4171,7 @@ async function markCounterReferral(id, currentlyMarked){
   if(updated){ showToast('↩️ MRN '+String(patient.mrn||id)+' marked for counter-referral on the Common Server.','success'); openPatient(id); }
   else showToast('❌ Counter-referral was not saved.','error');
 }
-function raHC(){ _showHistoryFiltered('CHUK', 'all', '🏥 Filtering HC/CHUK referral patients from common server'); }
+function raHC(){ _showHistoryFiltered('PClinic', 'all', '🏥 Filtering HC/PClinic referral patients from common server'); }
 function raAmbulance(){
   var all=_getAllPatientsCommon(); var amb=all.filter(function(p){ return String(p.arrivalMode||'').toLowerCase().indexOf('ambulance')>-1; });
   var btn=document.querySelector('.ntab[onclick*=\"history\"]'); showView('history', btn);
@@ -4680,7 +4680,7 @@ function getReceptionWorkflowAnswer(question, patients){
     return live+'INSURANCE PERCENTAGE AND BILLING\n1. In Insurance & Visit select the provider and enter Patient pays %.\n2. RSSB/RAMA defaults to patient 15% and insurer 85%. Mutuelle defaults to 10% patient share; MMI defaults to 15%. These values can be edited for the actual policy.\n3. The percentage is stored on the patient record and frozen onto each new bill.\n4. Example: gross RWF 100,000 at 15% creates patient due RWF 15,000 and insurance claim RWF 85,000.\n5. Cashier collects only Patient Due. The insurer portion appears in RSSB / Insurance Claims.\n6. Verify provider, policy, validity and percentage before registration or editing.';
   }
   if(/referral|counter referral|health center|ambulance/.test(q)){
-    return live+'REFERRAL WORKFLOW\n1. Referral In: verify the referral document, register/select the patient, set Visit Type to Referral and record the source.\n2. Referral Out: use Referral → Referral Out, enter MRN and confirm the destination process.\n3. Counter-Referral: use the counter-referral list after specialist care.\n4. Health-centre/CHUK and Ambulance filters show the corresponding patient groups.\n5. Set triage priority immediately for urgent referrals.';
+    return live+'REFERRAL WORKFLOW\n1. Referral In: verify the referral document, register/select the patient, set Visit Type to Referral and record the source.\n2. Referral Out: use Referral → Referral Out, enter MRN and confirm the destination process.\n3. Counter-Referral: use the counter-referral list after specialist care.\n4. Health-centre/PClinic and Ambulance filters show the corresponding patient groups.\n5. Set triage priority immediately for urgent referrals.';
   }
   if(/emergency|critical|urgent/.test(q)){
     return live+'EMERGENCY RECEPTION WORKFLOW\n1. Click Emergency in the action bar.\n2. Identify or rapidly register the patient; do not delay life-saving care for missing nonessential fields.\n3. Set Visit Type=Emergency and Priority=critical/high.\n4. Record available vitals, add the patient to the queue and notify the receiving clinical team.\n5. Use Bed/Ward admission when authorized. The assistant gives workflow guidance only—not diagnosis or treatment advice.';
@@ -6877,8 +6877,8 @@ window.sendSurgeonNotification = sendSurgeonNotification;
 
 </style>
 <style>
-/* ═══ GG-CHUK-CANON · CHUK top-bar hierarchy — identical to doctor-dashboard ═══
-   Bar 1 (CHUK menu), Bar 2 (patient ID) and Bar 3 (action bar) stack in a
+/* ═══ GG-PCLINIC-CANON · PClinic top-bar hierarchy — identical to doctor-dashboard ═══
+   Bar 1 (PClinic menu), Bar 2 (patient ID) and Bar 3 (action bar) stack in a
    transparent, relative column exactly like the doctor dashboard. */
 html body #pcMasterHeader, html body #pcMasterHeader.pc-master-header {
     display: flex !important; flex-direction: column !important; gap: 8px !important;

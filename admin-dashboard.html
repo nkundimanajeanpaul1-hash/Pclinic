@@ -85,7 +85,7 @@
         .greeting h1 small { display: block; font-size: 12px; font-weight: 500; color: var(--tm); margin-top: 2px; }
         .date-badge { background: var(--s1); border: 0.5px solid var(--bd); border-radius: 20px; padding: 6px 14px; font-size: 11.5px; font-weight: 700; color: var(--ts); box-shadow: 0 1px 3px rgba(0,0,0,0.05); white-space: nowrap; }
 
-        /* ─── TOP CHUK BAR: single line (same as every other dashboard) ─── */
+        /* ─── TOP PCLINIC BAR: single line (same as every other dashboard) ─── */
         .chuk-top-menu {
             flex-wrap: nowrap !important;
             overflow-x: auto !important;
@@ -101,7 +101,7 @@
             flex-wrap: nowrap !important;
             flex-shrink: 0 !important;
         }
-        /* ── ADMIN BAR (below the CHUK top bar) — grey strip like the other
+        /* ── ADMIN BAR (below the PClinic top bar) — grey strip like the other
                dashboards' action strip: buttons wrap into rows naturally ── */
         #dcBar.dc-bar {
             gap: 6px !important;
@@ -311,7 +311,7 @@
         }
 
         /* ════════════════════════════════════════════════════════════
-           CHUK BAR 1 — INLINE EXACT REPLICA OF THE DOCTOR DASHBOARD BAR
+           PCLINIC BAR 1 — INLINE EXACT REPLICA OF THE DOCTOR DASHBOARD BAR
            (self-contained: styled even if a shared stylesheet is missing)
            ════════════════════════════════════════════════════════════ */
         .pc-master-header {
@@ -408,7 +408,7 @@
         .pc-global-clock { font-family: inherit !important; }
 
     </style>
-    <script src="pclinic-file.js?v=20260827_FILES" defer></script>
+    <script src="pclinic-file.js?v=20260929_TECH_EXAMS" defer></script>
     <link rel="stylesheet" href="dashboard-doctor-parity.css?v=20260909_BATCH4WORKSPACE" />
     <script src="dashboard-doctor-parity.js?v=20260909_BATCH4WORKSPACE" defer></script>
 </head>
@@ -677,7 +677,7 @@
                         <div>
                             <h4 style="font-size:12px; margin-bottom:10px; color:var(--tm); text-transform:uppercase; letter-spacing:0.4px;">Hospital Info</h4>
                             <div style="display:flex; flex-direction:column; gap:8px;">
-                                <div><label class="lbl">Clinic Name</label><input class="fi" id="set-hospital-name" style="width:100%;" value="PClinic / CHUK"></div>
+                                <div><label class="lbl">Clinic Name</label><input class="fi" id="set-hospital-name" style="width:100%;" value="PClinic"></div>
                                 <div><label class="lbl">Default Currency</label>
                                     <select class="fi" id="set-currency" style="width:100%;">
                                         <option value="RWF" selected>RWF — Rwandan Franc</option>
@@ -1592,8 +1592,8 @@
         /* ══════════════ SETTINGS (persistent) ══════════════ */
         function loadSettings() {
             var s = readJSON(SETTINGS_KEY, null);
-            if (!s) s = { hospitalName: 'PClinic / CHUK', currency: 'RWF', twoFA: false, selfReg: false, autoBackup: true };
-            document.getElementById('set-hospital-name').value = s.hospitalName || 'PClinic / CHUK';
+            if (!s) s = { hospitalName: 'PClinic', currency: 'RWF', twoFA: false, selfReg: false, autoBackup: true };
+            document.getElementById('set-hospital-name').value = s.hospitalName || 'PClinic';
             document.getElementById('set-currency').value = s.currency || 'RWF';
             setToggle('set-2fa', !!s.twoFA);
             setToggle('set-selfreg', !!s.selfReg);
@@ -1606,7 +1606,7 @@
         }
         function saveSettings() {
             var s = {
-                hospitalName: document.getElementById('set-hospital-name').value.trim() || 'PClinic / CHUK',
+                hospitalName: document.getElementById('set-hospital-name').value.trim() || 'PClinic',
                 currency: document.getElementById('set-currency').value || 'RWF',
                 twoFA: document.getElementById('set-2fa').classList.contains('active'),
                 selfReg: document.getElementById('set-selfreg').classList.contains('active'),
@@ -1627,7 +1627,7 @@
         function backupNow() {
             try {
                 var payload = {
-                    system: 'PClinic / CHUK',
+                    system: 'PClinic',
                     exportedAt: new Date().toISOString(),
                     patients: readJSON('pclinic_patients', []) || [],
                     orders: readJSON('pclinic_orders', []) || [],
@@ -2181,7 +2181,7 @@
                 var pharm = readJSON(PHARM_KEY, []) || [];
                 var critical = pharm.filter(function(it){ var q = Number(it.qty) || 0; return q > 0 && q <= 20; }).length;
                 var total = unpaid + critical;
-                // Attach the live count badge to the common CHUK bar 🔔 button
+                // Attach the live count badge to the common PClinic bar 🔔 button
                 var badge = document.getElementById('pcAdminNotifBadge');
                 if (!badge) {
                     var alertsBtn = document.querySelector('#pc_chuk_top_menu .chk-btn.btn-alerts');
@@ -2237,7 +2237,7 @@
                     '<div><b>Name:</b> ' + esc(s.name || 'Administrator') + '</div>' +
                     '<div><b>Staff ID:</b> ' + esc(s.staffId || '—') + '</div>' +
                     '<div><b>Role:</b> ' + esc(s.role || 'admin') + '</div>' +
-                    '<div><b>Department:</b> Administration — CHUK</div>' +
+                    '<div><b>Department:</b> Administration — PClinic</div>' +
                     '<div><b>Access:</b> Full system control (patients, pharmacy, billing, lab tariff, staff, settings)</div>' +
                 '</div>' +
                 '<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">' +
@@ -3159,8 +3159,8 @@
 
 </style>
 <style>
-/* ═══ GG-CHUK-CANON · CHUK top-bar hierarchy — identical to doctor-dashboard ═══
-   Bar 1 (CHUK menu), Bar 2 (patient ID) and Bar 3 (action bar) stack in a
+/* ═══ GG-PCLINIC-CANON · PClinic top-bar hierarchy — identical to doctor-dashboard ═══
+   Bar 1 (PClinic menu), Bar 2 (patient ID) and Bar 3 (action bar) stack in a
    transparent, relative column exactly like the doctor dashboard. */
 html body #pcMasterHeader, html body #pcMasterHeader.pc-master-header {
     display: flex !important; flex-direction: column !important; gap: 8px !important;

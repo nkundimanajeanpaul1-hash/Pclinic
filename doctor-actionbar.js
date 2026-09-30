@@ -294,7 +294,7 @@
         if (!bar) return;
         var demo = document.getElementById('pc_common_demo_bar');
         var master = document.getElementById('pcMasterHeader');
-        var chuk = document.getElementById('pc_chuk_top_menu');
+        var pcTop = document.getElementById('pc_chuk_top_menu');
         if (demo && demo.parentNode) {
             if (demo.nextSibling !== bar) demo.parentNode.insertBefore(bar, demo.nextSibling);
             return;
@@ -303,8 +303,8 @@
             if (bar.parentNode !== master) master.appendChild(bar);
             return;
         }
-        if (chuk && chuk.parentNode) {
-            if (chuk.nextSibling !== bar) chuk.parentNode.insertBefore(bar, chuk.nextSibling);
+        if (pcTop && pcTop.parentNode) {
+            if (pcTop.nextSibling !== bar) pcTop.parentNode.insertBefore(bar, pcTop.nextSibling);
         }
     }
 

@@ -677,7 +677,7 @@
     }
     box.innerHTML = '' +
       '<div class="dh">' +
-        '<div><div class="org">PCLINIC / CHUK</div><div class="sub">Maternity service · ANC / CPN documentation preview</div></div>' +
+        '<div><div class="org">PCLINIC</div><div class="sub">Maternity service · ANC / CPN documentation preview</div></div>' +
         '<div class="meta"><b>' + esc(cpnPreviewRecordId ? 'Saved ANC / CPN Visit' : 'ANC / CPN Preview') + '</b><br>' + esc(fmtDateTime(record.timestamp)) + '</div>' +
       '</div>' +
       '<div class="dtitle">ANC / CPN File</div>' +
@@ -2221,7 +2221,7 @@
     var summary = nursingNoteSummary(record) || record.note || record.body || '';
     box.innerHTML = '' +
       '<div class="dh">' +
-        '<div><div class="org">PCLINIC / CHUK</div><div class="sub">Nursing service · progress documentation preview</div></div>' +
+        '<div><div class="org">PCLINIC</div><div class="sub">Nursing service · progress documentation preview</div></div>' +
         '<div class="meta"><b>' + esc(nursingNotePreviewId ? 'Saved Nursing Note' : 'Nursing Note Preview') + '</b><br>' + esc(fmtDateTime(record.timestamp || record.date)) + '</div>' +
       '</div>' +
       '<div class="dtitle">Nursing Note</div>' +
@@ -2340,7 +2340,7 @@
     var summary = carePlanSummary(record) || '';
     box.innerHTML = '' +
       '<div class="dh">' +
-        '<div><div class="org">PCLINIC / CHUK</div><div class="sub">Nursing service · care plan documentation preview</div></div>' +
+        '<div><div class="org">PCLINIC</div><div class="sub">Nursing service · care plan documentation preview</div></div>' +
         '<div class="meta"><b>' + esc(carePlanPreviewId ? 'Saved Nursing Care Plan' : 'Nursing Care Plan Preview') + '</b><br>' + esc(fmtDateTime(record.timestamp || record.at || record.date)) + '</div>' +
       '</div>' +
       '<div class="dtitle">Nursing Care Plan</div>' +

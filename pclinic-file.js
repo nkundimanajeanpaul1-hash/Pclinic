@@ -533,11 +533,11 @@
             bar.setAttribute('data-admin-complete', '1');
             bar.innerHTML = '';
 
-            // Hierarchy: Bar 1 (CHUK) then admin action bar — no patient bar
-            var chuk = document.getElementById('pc_chuk_top_menu');
-            if (chuk && chuk.parentNode) {
-                if (chuk.nextSibling) chuk.parentNode.insertBefore(bar, chuk.nextSibling);
-                else chuk.parentNode.appendChild(bar);
+            // Hierarchy: Bar 1 (PClinic) then admin action bar — no patient bar
+            var pcTop = document.getElementById('pc_chuk_top_menu');
+            if (pcTop && pcTop.parentNode) {
+                if (pcTop.nextSibling) pcTop.parentNode.insertBefore(bar, pcTop.nextSibling);
+                else pcTop.parentNode.appendChild(bar);
             } else if (master.firstChild) {
                 master.insertBefore(bar, master.firstChild);
             } else {
@@ -734,7 +734,7 @@
             renderRadiologyActionBar(el);
             return;
         }
-        /* ── ADMIN DASHBOARD: admin buttons live on the bar BELOW the CHUK top bar ── */
+        /* ── ADMIN DASHBOARD: admin buttons live on the bar BELOW the PClinic top bar ── */
         if (pathStr.indexOf('admin-dashboard') !== -1) {
             renderAdminActionBar(el);
             return;
@@ -1031,10 +1031,10 @@
         // Keep the strict hierarchy inside #pcMasterHeader:
         // 1st #pc_chuk_top_menu · 2nd #pc_common_demo_bar · 3rd #dcBar
         var master = document.getElementById('pcMasterHeader') || el;
-        var chuk = document.getElementById('pc_chuk_top_menu');
-        if (chuk && chuk.parentNode) {
-            if (chuk.nextSibling && chuk.nextSibling !== bar) chuk.parentNode.insertBefore(bar, chuk.nextSibling);
-            else if (!chuk.nextSibling) chuk.parentNode.appendChild(bar);
+        var pcTop = document.getElementById('pc_chuk_top_menu');
+        if (pcTop && pcTop.parentNode) {
+            if (pcTop.nextSibling && pcTop.nextSibling !== bar) pcTop.parentNode.insertBefore(bar, pcTop.nextSibling);
+            else if (!pcTop.nextSibling) pcTop.parentNode.appendChild(bar);
         } else if (bar.parentNode !== master) {
             if (master.firstChild) master.insertBefore(bar, master.firstChild);
             else master.appendChild(bar);
@@ -1086,12 +1086,12 @@
         }
 
         var master = document.getElementById('pcMasterHeader') || el;
-        var chuk = document.getElementById('pc_chuk_top_menu');
-        // ── CHUK TOP BAR IS ALWAYS THE TOPMOST BAR ──
+        var pcTop = document.getElementById('pc_chuk_top_menu');
+        // ── PCLINIC TOP BAR IS ALWAYS THE TOPMOST BAR ──
         // Force the hierarchy: 1st #pc_chuk_top_menu, 2nd #dcBar (HR bar).
-        if (chuk && chuk.parentNode) {
-            if (chuk.parentNode.firstChild !== chuk) chuk.parentNode.insertBefore(chuk, chuk.parentNode.firstChild);
-            if (chuk.nextSibling !== bar) chuk.parentNode.insertBefore(bar, chuk.nextSibling);
+        if (pcTop && pcTop.parentNode) {
+            if (pcTop.parentNode.firstChild !== pcTop) pcTop.parentNode.insertBefore(pcTop, pcTop.parentNode.firstChild);
+            if (pcTop.nextSibling !== bar) pcTop.parentNode.insertBefore(bar, pcTop.nextSibling);
         } else if (bar.parentNode !== master) {
             if (master.firstChild) master.insertBefore(bar, master.firstChild);
             else master.appendChild(bar);
@@ -2017,7 +2017,7 @@
     }
 
     function openSystemInfoModal() {
-        alert('🏥 PClinic Clinical Suite • PClinic v5.346.01 / CHUK\nReadiness Score: 100/100\nConnected to Local Common Server (Hybrid localStorage + Firestore)');
+        alert('🏥 PClinic Clinical Suite • PClinic v5.346.01\nReadiness Score: 100/100\nConnected to Local Common Server (Hybrid localStorage + Firestore)');
     }
 
     function createGlobalTopBar() {
@@ -2135,7 +2135,7 @@
             if (allBcs[idx] && allBcs[idx].parentNode) allBcs[idx].parentNode.removeChild(allBcs[idx]);
         }
 
-        // Do NOT delete global CHUK menu - keep it
+        // Do NOT delete global PClinic menu - keep it
         var isCleared = !!p._cleared;
         // Older/common-server records may expose only `name`. Split it so a
         // selected patient is still visibly identified in the shared bar.
@@ -2290,7 +2290,7 @@
 
     
     /* ══════════════════════════════════════════════════════════════
-       PATIENT MENU (👤 Patient ▾ in the CHUK top bar — EVERY page)
+       PATIENT MENU (👤 Patient ▾ in the PClinic top bar — EVERY page)
        Unfolds the sub-buttons: Patient, Medical summary, Nursing,
        Administration (full patient identification incl. caretaker phone),
        Clear, Print ID card, Upload/Take/Show picture, Digital fingerprint,
@@ -2557,7 +2557,7 @@
                 if (printWin) {
                     printWin.document.write('<!DOCTYPE html><html><head><title>Nursing Care Plan — ' + esc(pName) + '</title>');
                     printWin.document.write('<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:24px;color:#0f172a;line-height:1.5;} h2{margin:0 0 4px 0;} .sub{color:#64748b;font-size:12px;margin-bottom:16px;} .card{border:1px solid #cbd5e1;border-radius:8px;padding:12px 14px;margin-bottom:12px;} .lbl{font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:2px;} .val{font-size:13px;margin-bottom:8px;} .by{font-size:11px;color:#64748b;margin-top:4px;}</style></head><body>');
-                    printWin.document.write('<h2>🏥 CHUK / PClinic — Nursing Care Plan</h2>');
+                    printWin.document.write('<h2>🏥 PClinic — Nursing Care Plan</h2>');
                     printWin.document.write('<div class="sub">Patient: <strong>' + esc(pName) + '</strong> (MRN: ' + esc(mrn) + ') • Ward: ' + esc(dept) + ' • Date: ' + new Date().toLocaleDateString('en-GB') + '</div><hr style="border:0;border-top:1px solid #e2e8f0;margin-bottom:16px;">');
                     carePlans.forEach(function(cp, i) {
                         printWin.document.write('<div class="card">');
@@ -2878,7 +2878,7 @@
                 if (printWin) {
                     printWin.document.write('<!DOCTYPE html><html><head><title>Vital Signs Trends — ' + esc(pName) + '</title>');
                     printWin.document.write('<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:24px;color:#0f172a;line-height:1.5;} h2{margin:0 0 4px 0;} .sub{color:#64748b;font-size:12px;margin-bottom:16px;} table{width:100%;border-collapse:collapse;margin-top:12px;} th,td{border:1px solid #cbd5e1;padding:8px 10px;font-size:12px;text-align:left;} th{background:#f1f5f9;}</style></head><body>');
-                    printWin.document.write('<h2>📈 CHUK / PClinic — Patient Vital Signs Trend Log</h2>');
+                    printWin.document.write('<h2>📈 PClinic — Patient Vital Signs Trend Log</h2>');
                     printWin.document.write('<div class="sub">Patient: <strong>' + esc(pName) + '</strong> (MRN: ' + esc(mrn) + ') • Ward: ' + esc(dept) + ' • Date: ' + new Date().toLocaleDateString('en-GB') + '</div><hr style="border:0;border-top:1px solid #e2e8f0;margin-bottom:16px;">');
                     printWin.document.write('<table><thead><tr><th>Date & Time</th><th>BP</th><th>Pulse</th><th>Temp</th><th>SpO₂</th><th>Resp</th><th>Recorded By</th></tr></thead><tbody>');
                     normalized.forEach(function(v) {
@@ -3559,7 +3559,7 @@
     window.pcApplicationsMenu = openTechnicalExaminationsModal;
 
     /* ══════════════════════════════════════════════════════════════
-       NURSING MENU (🏥 Nursing ▾ in the CHUK top bar — EVERY page)
+       NURSING MENU (🏥 Nursing ▾ in the PClinic top bar — EVERY page)
        Unfolds the sub-buttons: Careplan, Vital signs graph, Deliveries.
        When on doctor-dashboard or other non-nurse pages, Careplan opens
        a READ-ONLY modal viewer so doctors can see what nurses wrote
@@ -3690,7 +3690,7 @@
     }
 
     /* ══════════════════════════════════════════════════════════════
-       APPLICATIONS MENU (💉 Applications ▾ in the CHUK top bar — EVERY page)
+       APPLICATIONS MENU (💉 Applications ▾ in the PClinic top bar — EVERY page)
        Unfolds the 15 application modules of the hospital suite:
        Queue management, Planning, Prescriptions, Emergencies actual
        situation, Pharmacy, Financial, Technical examinations, ADT,
@@ -3982,7 +3982,7 @@
     }
 
     /* ══════════════════════════════════════════════════════════════
-       SYSTEM MENU (⚙️ System ▾ in the CHUK top bar — EVERY page)
+       SYSTEM MENU (⚙️ System ▾ in the PClinic top bar — EVERY page)
        Full-function system suite, all Common Server powered:
        My profile (real staff), Staff & users, Appearance (Apple
        light/dark), Language & settings, Notifications (live counts),
@@ -4378,10 +4378,10 @@
         if (!menuNeedPatient('Select a patient first to print their ID card.')) return;
         var win = window.open('', '_blank', 'width=480,height=560');
         if (!win) { if (window.pcToast) pcToast('Pop-up blocked — allow pop-ups to print the ID card.', 'warning'); return; }
-        win.document.write('<!DOCTYPE html><html><head><title>Patient ID Card — PClinic / CHUK</title>');
+        win.document.write('<!DOCTYPE html><html><head><title>Patient ID Card — PClinic</title>');
         win.document.write('<style>body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;padding:24px;color:#1d1d1f;text-align:center;} .card{border:2px solid #1d1d1f;border-radius:14px;padding:20px;max-width:360px;margin:0 auto;} .hosp{font-size:12px;font-weight:800;letter-spacing:.5px;color:#007080;} .name{font-size:18px;font-weight:800;margin-top:8px;} .row{display:flex;justify-content:space-between;font-size:12px;margin-top:6px;} .lbl{color:#6e6e73;}</style></head><body>');
         win.document.write('<div class="card">');
-        win.document.write('<div class="hosp">PCLINIC / CHUK — PATIENT IDENTIFICATION CARD</div>');
+        win.document.write('<div class="hosp">PCLINIC — PATIENT IDENTIFICATION CARD</div>');
         win.document.write('<div class="name">' + esc((p.name || ((p.firstName || '') + ' ' + (p.lastName || ''))).trim() || 'Patient') + '</div>');
         win.document.write('<div class="row"><span class="lbl">MRN</span><span>' + esc(p.mrn || p.id || '—') + '</span></div>');
         win.document.write('<div class="row"><span class="lbl">Date of birth</span><span>' + esc(p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '—') + '</span></div>');
@@ -4447,7 +4447,7 @@
             navigator.credentials.create({
                 publicKey: {
                     challenge: chal,
-                    rp: { name: 'PClinic / CHUK' },
+                    rp: { name: 'PClinic' },
                     user: { id: new Uint8Array(8), name: String(p.mrn || p.id), displayName: ((p.name || ((p.firstName || '') + ' ' + (p.lastName || ''))).trim()) },
                     pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
                     authenticatorSelection: { userVerification: 'required' },
@@ -4588,7 +4588,7 @@
         var name = (st && (st.name || ((st.firstName || '') + ' ' + (st.lastName || '')).trim())) || 'PClinic Staff';
         var staffId = (st && (st.staffId || st.id)) || '—';
         var role = (st && st.role) || 'Hospital Staff';
-        var dept = (st && (st.department || st.dept)) || 'CHUK';
+        var dept = (st && (st.department || st.dept)) || 'PClinic';
         alert('👨‍⚕️ Active Staff Account Profile\n\nName: ' + name + '\nStaff ID: ' + staffId + '\nRole: ' + role + '\nDepartment: ' + dept + '\nStatus: Authenticated and active\n\nPasswords are never displayed or stored.');
     }
 
@@ -4617,7 +4617,7 @@
         // Cashier uses the normal shared Patient Identification bar. The
         // generic mounting path below restores the last selected patient (or
         // renders empty searchable fields when no patient is active).
-        /* ── ADMIN DASHBOARD: common CHUK top bar + admin buttons on the bar below ── */
+        /* ── ADMIN DASHBOARD: common PClinic top bar + admin buttons on the bar below ── */
         if (pathStr.indexOf('admin-dashboard') !== -1) {
             if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
             var oldDemoAdm = document.getElementById('pc_common_demo_bar');
@@ -4625,7 +4625,7 @@
             renderAdminActionBar(document.getElementById('pcMasterHeader') || document.body);
             return;
         }
-        /* ── THEATER DASHBOARD: CHUK top bar + theater action bar only ── */
+        /* ── THEATER DASHBOARD: PClinic top bar + theater action bar only ── */
         if (pathStr.indexOf('theater-dashboard') !== -1) {
             if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
             var oldDemoTh = document.getElementById('pc_common_demo_bar');
@@ -4633,14 +4633,14 @@
             renderTheaterActionBar(document.getElementById('pcMasterHeader') || document.body);
             return;
         }
-        /* ── HR DASHBOARD: CHUK top bar + HR action bar only ── */
+        /* ── HR DASHBOARD: PClinic top bar + HR action bar only ── */
         if (pathStr.indexOf('hr-dashboard') !== -1) {
             if (typeof createGlobalTopBar === 'function') createGlobalTopBar();
             var oldDemoHr = document.getElementById('pc_common_demo_bar');
             if (oldDemoHr && oldDemoHr.parentNode) oldDemoHr.parentNode.removeChild(oldDemoHr);
-            // ── CHUK TOP BAR ON TOP OF EVERYTHING ──
+            // ── PCLINIC TOP BAR ON TOP OF EVERYTHING ──
             // Re-assert the master header as the very first element of
-            // <body>, so the CHUK strip sits above the page's own
+            // <body>, so the PClinic strip sits above the page's own
             // nav-tabs / search row / content on the HR dashboard.
             var _m = document.getElementById('pcMasterHeader');
             if (_m && _m.parentNode === document.body && document.body.firstChild !== _m) {
@@ -4700,7 +4700,7 @@
             // Identification bar, while the context/action bar is removed at
             // the end of autoMountPatientBar().
             // Medical Summary now displays all 3 bars (Top, Mid, Action) exactly like other OPD file pages.
-            // Imaging Results: keep only the CHUK top bar.
+            // Imaging Results: keep only the PClinic top bar.
             if (file.indexOf('imaging-results') !== -1) {
                 var oldMedDemo = document.getElementById('pc_common_demo_bar');
                 if (oldMedDemo && oldMedDemo.parentNode) oldMedDemo.parentNode.removeChild(oldMedDemo);

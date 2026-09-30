@@ -1048,14 +1048,14 @@ body.compact .patient-card, body.compact .card {
    ULTRA-COMPACT SMART iOS 18 + GOOGLE PIXEL 9 PRO UI (~75px Total Height!)
    ============================================================ */
 /* ============================================================
-   PCLINIC v5.346.01 / CHUK COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
+   PCLINIC v5.346.01 COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
    100/100 EXACT REPLICATION OF Screenshot 2026-08-04 at 13.48.46.png
    Same Greenish-Beige Pastel Background (#e4e8dc), Cream Input Boxes (#f8faee), & Classic Clinical UI
    ============================================================ */
 /* ============================================================
    PCLINIC COMPLETE PATIENT IDENTIFICATION BAR (.oc-demo-bar)
    BILL PAGE APPLE / PIXEL 9 PRO HYBRID (iOS 18 + Material You)
-   3-Row CHUK Grid (~85px Height) with Seductive Glassmorphism & Card Inputs
+   3-Row PClinic Grid (~85px Height) with Seductive Glassmorphism & Card Inputs
    ============================================================ */
 .oc-demo-bar {
     width: 100% !important;
@@ -1255,12 +1255,12 @@ body.compact .patient-card, body.compact .card {
    (Patient Demographics/Caretaker & System Settings/Language/Theme)
    ============================================================ */
 /* ============================================================
-   PCLINIC CHUK UNIFIED TOP MENU STRIP (.chuk-top-menu)
+   PCLINIC UNIFIED TOP MENU STRIP (.chuk-top-menu)
    1. Distinct Action-Coded Button Colors (Replicating Screenshot 2026-08-04 at 17.38.06.png)
    2. Left-Side Clinical Portals + Right-Corner Controls (Theme, Alerts, Dr. Mutua, Logout, Info)
    ============================================================ */
 /* ============================================================
-   PCLINIC CHUK UNIFIED TOP MENU STRIP (.chuk-top-menu)
+   PCLINIC UNIFIED TOP MENU STRIP (.chuk-top-menu)
    100/100 EXACT ACTION BAR BUTTON STYLING (.ab-btn clone)
    Replicating Screenshot 2026-08-04 at 17.38.06.png
    ============================================================ */
@@ -1277,7 +1277,7 @@ body.compact .patient-card, body.compact .card {
     padding: 0;
     box-sizing: border-box;
     /* ── STICKY APP CHROME ──
-       Keeps the CHUK top bar (and the action/demo bars beneath it)
+       Keeps the PClinic top bar (and the action/demo bars beneath it)
        pinned to the top of every page while the content scrolls.
        Frosted so scrolling content blurs beneath it, iOS-style. */
     position: sticky !important;
@@ -1296,7 +1296,7 @@ body.dark-mode #pcMasterHeader.pc-master-header {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
 }
 
-.chuk-top-menu {
+.chuk-top-menu, .pclinic-top-menu {
     display: flex !important;
     justify-content: flex-start !important;
     align-items: center !important;
@@ -1325,7 +1325,7 @@ body.dark-mode #pcMasterHeader.pc-master-header {
     box-sizing: border-box !important;
 }
 
-.chuk-menu-left {
+.chuk-menu-left, .pclinic-menu-left {
     display: flex !important;
     align-items: center !important;
     gap: 6px !important;
@@ -1339,7 +1339,7 @@ body.dark-mode #pcMasterHeader.pc-master-header {
 }
 .chuk-menu-left::-webkit-scrollbar { height: 0 !important; display: none !important; }
 
-.chuk-menu-center {
+.chuk-menu-center, .pclinic-menu-center {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1355,7 +1355,7 @@ body.dark-mode #pcMasterHeader.pc-master-header {
 }
 
 /* RIGHT CORNER — always on screen */
-.chuk-menu-right {
+.chuk-menu-right, .pclinic-menu-right {
     display: flex !important;
     align-items: center !important;
     gap: 5px !important;
@@ -1366,7 +1366,7 @@ body.dark-mode #pcMasterHeader.pc-master-header {
 }
 
 @media (max-width: 1180px) {
-    .chuk-menu-center { display: none !important; }
+    .chuk-menu-center, .pclinic-menu-center { display: none !important; }
 }
 @media (max-width: 980px) {
     .chuk-top-menu .chk-btn { padding: 0 8px !important; font-size: 11px !important; }
@@ -1379,7 +1379,7 @@ body.dark-mode #pcMasterHeader.pc-master-header {
     .chk-btn.btn-user { max-width: 88px !important; }
 }
 
-/* Never allow a second CHUK strip */
+/* Never allow a second PClinic strip */
 .chuk-top-menu ~ .chuk-top-menu,
 #pc_chuk_top_menu ~ #pc_chuk_top_menu {
     display: none !important;
@@ -1497,7 +1497,7 @@ body.dark-mode #pcMasterHeader.pc-master-header {
     border: none !important;
 }
 
-/* Style for moved Topbar Buttons inside CHUK Top Menu Strip */
+/* Style for moved Topbar Buttons inside PClinic Top Menu Strip */
 .chuk-top-menu .topbar-moved-btn {
     background: rgba(11, 87, 208, 0.1) !important;
     color: #0b57d0 !important;

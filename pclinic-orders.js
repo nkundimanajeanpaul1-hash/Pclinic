@@ -1382,7 +1382,7 @@
                     if (!o) return true;
                     if (o.type !== 'lab' && o.dept !== 'lab') return true;
                     var idOk = /^LAB-\d+-10[12]$/.test(String(o.id || ''));
-                    var byOk = String(o.orderedBy || '') === 'Dr. Mutua (CHUK OPD)';
+                    var byOk = String(o.orderedBy || '') === 'Dr. Mutua (PClinic OPD)';
                     var noteOk = String(o.notes || '').indexOf('Fasting specimen required') === 0;
                     if (idOk && byOk && noteOk) return false; // fabricated
                     return true;

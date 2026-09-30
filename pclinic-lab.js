@@ -174,7 +174,7 @@
                 if (String(OC_CATEGORIES[c].tests[i].code) === wanted) return OC_CATEGORIES[c].tests[i];
             }
         }
-        // Full CHUK catalog fallback (new parameter codes like '16110-1').
+        // Full PClinic catalog fallback (new parameter codes like '16110-1').
         if (window.pcLabCatalog && typeof window.pcLabCatalog.parameterByCode === 'function') {
             var cp = window.pcLabCatalog.parameterByCode(wanted);
             if (cp) return { code: cp.code, name: cp.name, unit: cp.unit || '', range: cp.range || '' };
@@ -258,7 +258,7 @@
             return cloneLabParameter(parameter, item);
         });
         if (known.length) return known;
-        // ── FULL CHUK CATALOG FALLBACK ──
+        // ── FULL PCLINIC CATALOG FALLBACK ──
         // Unrecognised codes/names resolve to the catalog exam's parameter
         // rows so the lab can enter results for every catalogued test.
         if (window.pcLabCatalog) {

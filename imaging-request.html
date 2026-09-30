@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PClinic — Imaging Request</title>
 <link rel="icon" type="image/png" href="logo.png">
-<link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
+<link rel="stylesheet" href="pclinic-ui.css?v=20260804_PCLINIC_3ROW">
 <link rel="stylesheet" href="pclinic-file.css">
 <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
@@ -58,8 +58,7 @@
     </div>
     <div class="pc-tr">
         <a href="imaging-results.html?v=20260828_RESULTS" class="pc-btn" style="text-decoration:none;" title="Open PACS DXViewer"><i class="ti ti-photo-scan"></i> DXViewer</a>
-        <a href="radio-dashboard.html" class="pc-btn" style="text-decoration:none;" title="Radiology Department"><i class="ti ti-layout-dashboard"></i> Radiology</a>
-        <a href="doctor-dashboard.html" class="pc-btn" style="text-decoration:none;" title="Doctor Console"><i class="ti ti-user-check"></i> Doctor</a>
+        <a href="hub.html" class="pc-btn" style="text-decoration:none;" title="Hub"><i class="ti ti-smart-home"></i> Hub</a>
         <button class="pc-iconbtn" onclick="pcToggleTheme()" title="Dark mode"><i class="ti ti-moon" id="themeIcon"></i></button>
         <div class="pc-chip"><span class="pc-avatar" id="userAvatar">··</span><span id="userName">…</span></div>
         <button class="pc-iconbtn" onclick="pclinicLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
@@ -141,7 +140,7 @@
 <script src="patient-data.js"></script>
 <script src="pclinic-orders.js"></script>
 <script src="pclinic-catalog.js"></script>
-<script src="pclinic-file.js?v=20260827_FILES"></script>
+<script src="pclinic-file.js?v=20260929_TECH_EXAMS"></script>
 <script src="pclinic-vitals.js"></script>
 
 <script>
@@ -383,8 +382,8 @@ requireAuth(['doctor']).then(function(s){
         if(++tries<20)return setTimeout(wait,200);
         $('#pcfRoot').innerHTML='<div class="pcf-panel"><div class="pcf-empty">' +
             '<i class="ti ti-user-off"></i>No patient selected.<br>' +
-            '<a href="doctor-dashboard.html" class="pcf-btn" style="margin-top:14px;text-decoration:none">' +
-            '<i class="ti ti-layout-dashboard"></i> Go to the dashboard</a></div></div>';
+            '<a href="hub.html" class="pcf-btn" style="margin-top:14px;text-decoration:none">' +
+            '<i class="ti ti-smart-home"></i> Return to Hub</a></div></div>';
     })();
 }).catch(function(){});
 })();
@@ -394,8 +393,8 @@ requireAuth(['doctor']).then(function(s){
 
 </style>
 <style>
-/* ═══ GG-CHUK-CANON · CHUK top-bar hierarchy — identical to doctor-dashboard ═══
-   Bar 1 (CHUK menu), Bar 2 (patient ID) and Bar 3 (action bar) stack in a
+/* ═══ GG-PCLINIC-CANON · PClinic top-bar hierarchy — identical to doctor-dashboard ═══
+   Bar 1 (PClinic menu), Bar 2 (patient ID) and Bar 3 (action bar) stack in a
    transparent, relative column exactly like the doctor dashboard. */
 html body #pcMasterHeader, html body #pcMasterHeader.pc-master-header {
     display: flex !important; flex-direction: column !important; gap: 8px !important;

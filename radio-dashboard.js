@@ -689,7 +689,7 @@
             if (!lock) return;
             lock.style.display = on ? 'flex' : 'none';
             if (!on) return;
-            // The lock covers the WORK area only. The header (CHUK menu, the
+            // The lock covers the WORK area only. The header (PClinic menu, the
             // identification bar with its Find/Clear, and the action bar with
             // Select patient) stays usable — that is where the patient is chosen.
             const header = document.getElementById('pcMasterHeader');

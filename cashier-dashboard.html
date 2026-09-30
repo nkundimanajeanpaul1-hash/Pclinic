@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PClinic — Cashier Dashboard (Reception 100/100 Architecture)</title>
     <link rel="icon" type="image/png" href="logo.png">
-    <link rel="stylesheet" href="pclinic-ui.css?v=20260804_CHUK_3ROW">
+    <link rel="stylesheet" href="pclinic-ui.css?v=20260804_PCLINIC_3ROW">
     <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"></noscript>
     <script>(function(){try{document.documentElement.setAttribute('data-theme',localStorage.getItem('pclinic-theme')||'light');}catch(e){}})();</script>
     <style>
-        /* Cashier keeps the shared CHUK top bar and Patient Identification bar.
+        /* Cashier keeps the shared PClinic top bar and Patient Identification bar.
            The clinical action/context bar is not needed for payment work. */
         #dcBar, #dcCtx {
             display: none !important;
@@ -516,7 +516,7 @@
         @media(prefers-reduced-transparency:reduce){.nav,.reception-action-bar,.cashier-more-menu{backdrop-filter:none !important;-webkit-backdrop-filter:none !important;background:#f7f7f9 !important}}
         :where(button,input,summary,[tabindex]):focus-visible{outline:3px solid #0a84ff !important;outline-offset:2px !important}
     </style>
-    <script src="pclinic-file.js?v=20260827_FILES" defer></script>
+    <script src="pclinic-file.js?v=20260929_TECH_EXAMS" defer></script>
     <link rel="stylesheet" href="dashboard-doctor-parity.css?v=20260909_BATCH4WORKSPACE" />
     <script src="dashboard-doctor-parity.js?v=20260909_BATCH4WORKSPACE" defer></script>
 </head>
@@ -1003,7 +1003,7 @@
             '<div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #1d1d1f; padding-bottom:16px; margin-bottom:20px;">' +
                 '<div>' +
                     '<div style="font-size:22px; font-weight:900; color:#1d1d1f; letter-spacing:-0.5px;">PClinic / OpenClinic GA (MOD)</div>' +
-                    '<div style="font-size:12px; color:#5c2475; font-weight:800; margin-top:4px;">UNIVERSITY TEACHING HOSPITAL OF KIGALI (CHUK)</div>' +
+                    '<div style="font-size:12px; color:#5c2475; font-weight:800; margin-top:4px;">PCLINIC MEDICAL CENTER</div>' +
                     '<div style="font-size:11px; color:#666; margin-top:2px;">Official Clinical Payment Verification Service</div>' +
                 '</div>' +
                 '<div style="text-align:right;">' +
@@ -1549,8 +1549,8 @@
 
 </style>
 <style>
-/* ═══ GG-CHUK-CANON · CHUK top-bar hierarchy — identical to doctor-dashboard ═══
-   Bar 1 (CHUK menu), Bar 2 (patient ID) and Bar 3 (action bar) stack in a
+/* ═══ GG-PCLINIC-CANON · PClinic top-bar hierarchy — identical to doctor-dashboard ═══
+   Bar 1 (PClinic menu), Bar 2 (patient ID) and Bar 3 (action bar) stack in a
    transparent, relative column exactly like the doctor dashboard. */
 html body #pcMasterHeader, html body #pcMasterHeader.pc-master-header {
     display: flex !important; flex-direction: column !important; gap: 8px !important;

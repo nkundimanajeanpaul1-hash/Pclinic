@@ -1,5 +1,5 @@
 /* ============================================================
-   PCLINIC — FULL LABORATORY CATALOG (CHUK / OpenClinic quicklist)
+   PCLINIC — FULL LABORATORY CATALOG (PClinic / OpenClinic quicklist)
    Single source of truth for laboratory exams and their result
    parameters. Extracted from the official quicklist (codes as
    photographed 2026-07-06); items with provisional/uncertain
