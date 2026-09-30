@@ -590,6 +590,8 @@
     window.pcApplicationsMenu = openTechnicalExaminationsModal;
     window.pcOpenApplicationsModal = openTechnicalExaminationsModal;
     window.pcApplicationsMenuClose = closeApplicationsMenu;
+    window.pcDocumentsMenu = showDocumentsMenu;
+    window.pcDocumentsMenuClose = closeDocumentsMenu;
     window.pcSystemMenu = showSystemMenu;
     window.pcSystemMenuClose = closeSystemMenu;
     window.pcRadioBar = {
@@ -845,15 +847,6 @@
                 else goPage('medical-summary.html');
             }},
             { id:'global', label:'Global examinations', icon:'ti-clipboard-list', grp:'order', always:true, run: function(){ if (window.pcOpenTechnicalExaminations) window.pcOpenTechnicalExaminations(); else goPage('global-examinations.html'); } },
-            { id:'documents', label:'Documents', icon:'ti-file-text', grp:'file', menu:[
-                { label:'Medical Certificate',   icon:'ti-certificate',       run: function(){ goPage('medical-certificate.html'); } },
-                { label:'Sick Leave',            icon:'ti-bed',               run: function(){ goPage('sick-leave.html'); } },
-                { label:'Medical Report',        icon:'ti-report-medical',    run: function(){ goPage('medical-report.html'); } },
-                { label:'Hospitalisation Cert.', icon:'ti-building-hospital', run: function(){ goPage('hospitalization-certificate.html'); } },
-                { label:'Transfer Form',         icon:'ti-arrows-exchange',   run: function(){ goPage('transfer-form.html'); } },
-                { label:'Referral Letter',       icon:'ti-send',              run: function(){ goPage('referral.html'); } },
-                { label:'Discharge Summary',     icon:'ti-door-exit',         run: function(){ goPage('discharge-summary.html'); } }
-            ]},
             { id:'notes', label:'Notes', icon:'ti-notes', grp:'file', menu:[
                 { label:'OPD File',        icon:'ti-folder-open',        run: function(){ goPage('opd-file.html'); } },
                 { label:'Clinical Note',   icon:'ti-notes',              run: function(){ goPage('clinical-note.html'); } },
@@ -2056,7 +2049,7 @@
         }
         leftHtml += '<a class="chk-btn btn-applications" onclick="if(window.pcOpenApplicationsModal)window.pcOpenApplicationsModal();else if(window.pcOpenTechnicalExaminations)window.pcOpenTechnicalExaminations();else if(window.pcApplicationsMenu)window.pcApplicationsMenu(this);">💉 Applications <i class="ti ti-layout-grid" style="font-size:10px;opacity:.65;"></i></a>';
         if (isClinical) {
-            leftHtml += '<a class="chk-btn btn-documents" onclick="var p=(window.pcFile&&pcFile.patient)?pcFile.patient():(window.currentPatient||null); var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; if(!id&&window.pcOpenPatientPicker){ window.pcOpenPatientPicker(function(sel){ if(sel&&sel.id){ window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(sel.id); } }, { title:\'📂 Select Patient for Documents &amp; OPD File\', subtitle:\'Search and select a patient to view and record their clinical documents.\', actionLabel:\'Open Documents\' }); return; } window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(id);">📂 Documents</a>';
+            leftHtml += '<a class="chk-btn btn-documents" onclick="if(window.pcDocumentsMenu)window.pcDocumentsMenu(this);else if(window.pcFile&&window.pcFile.showDocumentsMenu)window.pcFile.showDocumentsMenu(this);else window.location.href=\'opd-file.html\';">📂 Documents <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
         }
         leftHtml += '<a class="chk-btn btn-system" onclick="window.pcSystemMenu&&window.pcSystemMenu(this);">⚙️ System <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
 
@@ -3563,6 +3556,7 @@
         closePatientMenu();
         closeNursingMenu();
         closeApplicationsMenu();
+        closeDocumentsMenu();
         closeSystemMenu();
         if (!document.getElementById('pc_patient_menu_styles')) {
             var st = document.createElement('style');
@@ -3740,6 +3734,7 @@
         closePatientMenu();
         closeNursingMenu();
         closeApplicationsMenu();
+        closeDocumentsMenu();
         closeSystemMenu();
         if (!document.getElementById('pc_patient_menu_styles')) {
             var st = document.createElement('style');
@@ -3987,6 +3982,7 @@
         closePatientMenu();
         closeNursingMenu();
         closeApplicationsMenu();
+        closeDocumentsMenu();
         closeSystemMenu();
         if (!document.getElementById('pc_patient_menu_styles')) {
             var st = document.createElement('style');
@@ -4128,6 +4124,7 @@
         closePatientMenu();
         closeNursingMenu();
         closeApplicationsMenu();
+        closeDocumentsMenu();
         closeSystemMenu();
         if (!document.getElementById('pc_patient_menu_styles')) {
             var st = document.createElement('style');
@@ -4189,6 +4186,146 @@
     }
     function closePatientMenu() {
         var old = document.querySelector('.pc-patient-menu');
+        if (old && old.parentNode) old.parentNode.removeChild(old);
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       📂 DOCUMENTS MENU (TOP BAR DROPDOWN)
+       Unified menu for all clinical documents & forms:
+       - Medical Certificate
+       - Sick Leave
+       - Medical Report
+       - Hospitalisation Certificate
+       - Transfer Form
+       - Referral Letter
+       - Discharge Summary
+       - OPD File & Consultation History
+       - Add Attached Document
+       ══════════════════════════════════════════════════════════════ */
+    function showDocumentsMenu(btn) {
+        closePatientMenu();
+        closeNursingMenu();
+        closeApplicationsMenu();
+        closeDocumentsMenu();
+        closeSystemMenu();
+
+        if (!document.getElementById('pc_patient_menu_styles')) {
+            var st = document.createElement('style');
+            st.id = 'pc_patient_menu_styles';
+            st.textContent =
+                '.pc-patient-menu { position:fixed; z-index:9900; min-width:250px; padding:6px; border-radius:14px; background:rgba(255,255,255,.78); -webkit-backdrop-filter:saturate(180%) blur(24px); backdrop-filter:saturate(180%) blur(24px); border:.5px solid rgba(0,0,0,.12); box-shadow:0 14px 44px rgba(0,0,0,.24); opacity:0; transform:translateY(-6px) scale(.97); transition:opacity .2s, transform .24s cubic-bezier(.34,1.56,.64,1); pointer-events:none; }' +
+                '.pc-patient-menu.open { opacity:1; transform:none; pointer-events:auto; }' +
+                '.pc-patient-menu button { width:100%; display:flex; align-items:center; gap:10px; padding:9px 11px; border:0; background:none; border-radius:9px; font-family:inherit; font-size:12.5px; font-weight:600; color:var(--tp,#1c1c1e); cursor:pointer; text-align:left; transition:background .18s; }' +
+                '.pc-patient-menu button:hover { background:var(--acb,#eaf2ff); color:var(--ac,#0071e3); }' +
+                '.pc-patient-menu button i { font-size:15px; opacity:.8; flex-shrink:0; width:18px; text-align:center; }' +
+                '.pc-patient-menu button span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }' +
+                '.pc-patient-menu .pm-sep { height:1px; background:rgba(0,0,0,.1); margin:5px 8px; }' +
+                '.pc-patient-menu .pm-header { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:#64748b; padding:6px 11px 4px; }' +
+                '[data-theme="dark"] .pc-patient-menu { background:rgba(28,28,30,.82); border-color:rgba(255,255,255,.16); }' +
+                '[data-theme="dark"] .pc-patient-menu button { color:#e5e5ea; }' +
+                '[data-theme="dark"] .pc-patient-menu .pm-sep { background:rgba(255,255,255,.12); }' +
+                '[data-theme="dark"] .pc-patient-menu .pm-header { color:#94a3b8; }';
+            document.head.appendChild(st);
+        } else {
+            var existingStyle = document.getElementById('pc_patient_menu_styles');
+            if (existingStyle && existingStyle.textContent.indexOf('.pm-header') === -1) {
+                existingStyle.textContent += ' .pc-patient-menu .pm-header { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:#64748b; padding:6px 11px 4px; } [data-theme="dark"] .pc-patient-menu .pm-header { color:#94a3b8; }';
+            }
+        }
+
+        function goDoc(url, title) {
+            var p = menuPatient();
+            var id = (p && p.id) || '';
+            try { id = id || localStorage.getItem('pclinic_active_patient') || ''; } catch(e){}
+            if (!id && window.pcOpenPatientPicker) {
+                window.pcOpenPatientPicker(function(sel){
+                    if (sel && sel.id) {
+                        window.location.href = url + '?patient=' + encodeURIComponent(sel.id);
+                    }
+                }, {
+                    title: '📂 Select Patient for ' + (title || 'Document'),
+                    subtitle: 'Search and select a patient to view and prepare their ' + (title || 'clinical record') + '.',
+                    actionLabel: 'Open ' + (title || 'Document')
+                });
+                return;
+            }
+            if (!id) {
+                if (window.pcToast) pcToast('Please select a patient first', 'warning');
+                else alert('Please select a patient first');
+                return;
+            }
+            window.location.href = url + '?patient=' + encodeURIComponent(id);
+        }
+
+        var items = [
+            { header: 'Clinical Certificates & Forms' },
+            { icon:'ti-certificate',       label:'Medical Certificate',             run:function(){ goDoc('medical-certificate.html', 'Medical Certificate'); } },
+            { icon:'ti-bed',               label:'Sick Leave',                      run:function(){ goDoc('sick-leave.html', 'Sick Leave Certificate'); } },
+            { icon:'ti-report-medical',    label:'Medical Report',                  run:function(){ goDoc('medical-report.html', 'Medical Report'); } },
+            { icon:'ti-building-hospital', label:'Hospitalisation Certificate',     run:function(){ goDoc('hospitalization-certificate.html', 'Hospitalisation Certificate'); } },
+            { icon:'ti-arrows-exchange',   label:'Transfer Form',                   run:function(){ goDoc('transfer-form.html', 'Transfer Form'); } },
+            { icon:'ti-send',              label:'Referral Letter',                 run:function(){ goDoc('referral.html', 'Referral Letter'); } },
+            { icon:'ti-door-exit',         label:'Discharge Summary',               run:function(){ goDoc('discharge-summary.html', 'Discharge Summary'); } },
+            null,
+            { header: 'Archives & Attachments' },
+            { icon:'ti-folder-open',       label:'OPD File & Consultation History', run:function(){ goDoc('opd-file.html', 'OPD File & Consultation History'); } },
+            { icon:'ti-paperclip',         label:'Add Attached Document',           run:function(){
+                var p = menuPatient();
+                if (!p || !p.id) {
+                    if (window.pcOpenPatientPicker) {
+                        window.pcOpenPatientPicker(function(sel){
+                            if (sel && sel.id) addAdministrativeDocument();
+                        }, {
+                            title: '📎 Select Patient to Attach Document',
+                            subtitle: 'Choose a patient to attach a scanned or clinical document.',
+                            actionLabel: 'Select & Attach'
+                        });
+                        return;
+                    }
+                }
+                addAdministrativeDocument();
+            } }
+        ];
+
+        var m = document.createElement('div');
+        m.className = 'pc-patient-menu pc-docs-menu noprint';
+        m.innerHTML = items.map(function(it) {
+            if (!it) return '<div class="pm-sep"></div>';
+            if (it.header) return '<div class="pm-header">' + esc(it.header) + '</div>';
+            return '<button type="button"><i class="ti ' + it.icon + '"></i><span>' + esc(it.label) + '</span></button>';
+        }).join('');
+
+        m.addEventListener('click', function(e) {
+            var b = e.target.closest('button');
+            if (!b) return;
+            var buttons = Array.prototype.slice.call(m.querySelectorAll('button'));
+            var idx = buttons.indexOf(b);
+            var actionItems = items.filter(function(x){ return x && !x.header; });
+            var real = actionItems[idx];
+            closeDocumentsMenu();
+            if (real && real.run) real.run();
+        });
+
+        document.body.appendChild(m);
+        var r = btn.getBoundingClientRect();
+        m.style.top = (r.bottom + 6) + 'px';
+        m.style.left = Math.min(r.left, Math.max(8, window.innerWidth - 290)) + 'px';
+        m.style.minWidth = '275px';
+
+        requestAnimationFrame(function(){ m.classList.add('open'); });
+        setTimeout(function() {
+            var closer = function(e) {
+                if (!m.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+                    if (m.parentNode) m.parentNode.removeChild(m);
+                    document.removeEventListener('click', closer);
+                }
+            };
+            document.addEventListener('click', closer);
+        }, 50);
+    }
+
+    function closeDocumentsMenu() {
+        var old = document.querySelector('.pc-docs-menu');
         if (old && old.parentNode) old.parentNode.removeChild(old);
     }
 
@@ -4363,6 +4500,8 @@
         searchPatientRegistry: searchPatientRegistry,
         showPatientMenu: showPatientMenu,
         closePatientMenu: closePatientMenu,
+        showDocumentsMenu: showDocumentsMenu,
+        closeDocumentsMenu: closeDocumentsMenu,
         openPatientAdministration: openPatientAdministration,
         printPatientIdCard: printPatientIdCard,
         uploadPatientPicture: uploadPatientPicture,

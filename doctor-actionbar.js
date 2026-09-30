@@ -81,15 +81,6 @@
         { id:'patient',  label:'Patient',             icon:'ti-user-search',     grp:'util',  always:true, run:openPatientSearch },
         { id:'medsum',   label:'Medical summary',     icon:'ti-file-text',       grp:'file',  always:true, run:function(){ if(window.pcOpenMedicalSummary) window.pcOpenMedicalSummary(); else go('medical-summary.html'); } },
         { id:'global',   label:'Global examinations', icon:'ti-clipboard-list',  grp:'order', always:true, run:function(){ if(window.pcOpenTechnicalExaminations) window.pcOpenTechnicalExaminations(); else go('global-examinations.html'); } },
-        { id:'documents',label:'Documents', icon:'ti-file-text',   grp:'file',  menu:[
-            { label:'Medical Certificate',      icon:'ti-certificate',       run:function(){ go('medical-certificate.html'); } },
-            { label:'Sick Leave',               icon:'ti-bed',               run:function(){ go('sick-leave.html'); } },
-            { label:'Medical Report',           icon:'ti-report-medical',    run:function(){ go('medical-report.html'); } },
-            { label:'Hospitalisation Cert.',    icon:'ti-building-hospital', run:function(){ go('hospitalization-certificate.html'); } },
-            { label:'Transfer Form',            icon:'ti-arrows-exchange',   run:function(){ legacy('openTransferModal'); } },
-            { label:'Referral Letter',          icon:'ti-send',              run:function(){ go('referral.html'); } },
-            { label:'Discharge Summary',        icon:'ti-door-exit',         run:function(){ go('discharge-summary.html'); } }
-        ]},
         { id:'notes',    label:'Notes',     icon:'ti-notes',       grp:'file',  menu:[
             { label:'OPD File',        icon:'ti-folder-open',        run:function(){ go('opd-file.html'); } },
             { label:'Clinical Note',   icon:'ti-notes',              run:function(){ go('clinical-note.html'); } },
