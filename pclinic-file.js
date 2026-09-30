@@ -1855,7 +1855,7 @@
     }
 
     /* ══════════════ COMPREHENSIVE SYSTEM SETTINGS MODAL (LANGUAGE, THEME, PASSWORD, COMMON SERVER) ══════════════ */
-    function openSystemSettingsModal() {
+    function openSystemSettingsModal(initialTab) {
         ensurePcModalStyles();
         var scrim = document.createElement('div');
         scrim.className = 'pc-modal-scrim noprint';
@@ -1945,6 +1945,19 @@
                 var pane = scrim.querySelector('#' + this.getAttribute('data-tab'));
                 if (pane) pane.style.display = 'block';
             };
+        }
+
+        if (initialTab) {
+            var targetBtn = scrim.querySelector('.pc-tab-nav [data-tab="' + initialTab + '"]');
+            if (targetBtn) {
+                var allBtns = scrim.querySelectorAll('.pc-tab-nav .pc-tab-btn');
+                var allPanes = scrim.querySelectorAll('.pc-tab-pane');
+                for (var k=0; k<allBtns.length; k++) allBtns[k].classList.remove('active');
+                for (var k=0; k<allPanes.length; k++) allPanes[k].style.display = 'none';
+                targetBtn.classList.add('active');
+                var pane = scrim.querySelector('#' + initialTab);
+                if (pane) pane.style.display = 'block';
+            }
         }
 
         // Language Save
@@ -4008,17 +4021,14 @@
         var isAdmin = curRole === 'admin';
 
         var allItems = [
-            { icon:'ti-user',          label:'My profile',            run:function(){ openStaffProfileModal(); } },
-            { icon:'ti-users',         label:'Staff & users',         adminOnly:true, run:function(){ systemGo('admin-dashboard.html?tab=staff'); } },
-            { icon:'ti-palette',       label:'Appearance',            run:function(){ toggleThemeFromMenu(); } },
-            { icon:'ti-world',         label:'Language & settings',   run:function(){ openSystemSettingsModal(); } },
-            { icon:'ti-bell',          label:'Notifications',         run:function(){ showNotificationsModal(); } },
-            { icon:'ti-download',      label:'Backup data',           adminOnly:true, run:function(){ sysBackup(); } },
-            { icon:'ti-upload',        label:'Restore data',          adminOnly:true, run:function(){ sysRestore(); } },
-            { icon:'ti-eraser',        label:'Purge template data',   adminOnly:true, run:function(){ sysPurge(); } },
-            { icon:'ti-database',      label:'Data center',           run:function(){ systemGo('hub.html'); } },
-            { icon:'ti-info-circle',   label:'System info',           run:function(){ openSystemInfoModal(); } },
-            { icon:'ti-logout',        label:'Logout',                run:function(){ confirmLogout(); } }
+            { icon:'ti-settings',      label:'Language & Preferences',     run:function(){ openSystemSettingsModal('tab-lang'); } },
+            { icon:'ti-database',      label:'Hospital Data Center (Hub)', run:function(){ systemGo('hub.html'); } },
+            { icon:'ti-server',        label:'Local Server & Diagnostics', run:function(){ openSystemSettingsModal('tab-server'); } },
+            { header:'Administration', adminOnly:true },
+            { icon:'ti-users',         label:'Staff & Users Directory',    adminOnly:true, run:function(){ systemGo('admin-dashboard.html?tab=staff'); } },
+            { icon:'ti-download',      label:'Backup System Data',         adminOnly:true, run:function(){ sysBackup(); } },
+            { icon:'ti-upload',        label:'Restore System Data',        adminOnly:true, run:function(){ sysRestore(); } },
+            { icon:'ti-eraser',        label:'Purge Template Data',        adminOnly:true, run:function(){ sysPurge(); } }
         ];
 
         var items = allItems.filter(function(it) {
@@ -4029,14 +4039,19 @@
         var m = document.createElement('div');
         m.className = 'pc-patient-menu pc-sys-menu noprint';
         m.innerHTML = items.map(function(it) {
+            if (!it) return '<div class="pm-sep"></div>';
+            if (it.header) return '<div class="pm-header">' + esc(it.header) + '</div>';
             return '<button type="button"><i class="ti ' + it.icon + '"></i><span>' + esc(it.label) + '</span></button>';
         }).join('');
         m.addEventListener('click', function(e) {
             var b = e.target.closest('button');
             if (!b) return;
-            var idx = Array.prototype.indexOf.call(m.querySelectorAll('button'), b);
+            var buttons = Array.prototype.slice.call(m.querySelectorAll('button'));
+            var idx = buttons.indexOf(b);
+            var actionItems = items.filter(function(x){ return x && !x.header; });
+            var real = actionItems[idx];
             closeSystemMenu();
-            if (items[idx] && items[idx].run) items[idx].run();
+            if (real && real.run) real.run();
         });
         document.body.appendChild(m);
         var r = btn.getBoundingClientRect();
