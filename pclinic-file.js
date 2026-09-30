@@ -587,7 +587,8 @@
     window.pcNursingMenu = showNursingMenu;
     window.pcNursingMenuClose = closeNursingMenu;
     window.pcPatientMenuClose = closePatientMenu;
-    window.pcApplicationsMenu = showApplicationsMenu;
+    window.pcApplicationsMenu = openTechnicalExaminationsModal;
+    window.pcOpenApplicationsModal = openTechnicalExaminationsModal;
     window.pcApplicationsMenuClose = closeApplicationsMenu;
     window.pcSystemMenu = showSystemMenu;
     window.pcSystemMenuClose = closeSystemMenu;
@@ -2053,7 +2054,7 @@
             leftHtml += '<a class="chk-btn btn-summary" onclick="if(window.pcOpenMedicalSummary)window.pcOpenMedicalSummary();else window.location.href=\'medical-summary.html\';">📋 Medical summary</a>';
             leftHtml += '<a class="chk-btn btn-nursing" onclick="window.pcNursingMenu&&window.pcNursingMenu(this);">🏥 Nursing <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
         }
-        leftHtml += '<a class="chk-btn btn-applications" onclick="window.pcApplicationsMenu&&window.pcApplicationsMenu(this);">💉 Applications <i class="ti ti-chevron-down" style="font-size:10px;opacity:.65;"></i></a>';
+        leftHtml += '<a class="chk-btn btn-applications" onclick="if(window.pcOpenApplicationsModal)window.pcOpenApplicationsModal();else if(window.pcOpenTechnicalExaminations)window.pcOpenTechnicalExaminations();else if(window.pcApplicationsMenu)window.pcApplicationsMenu(this);">💉 Applications <i class="ti ti-layout-grid" style="font-size:10px;opacity:.65;"></i></a>';
         if (isClinical) {
             leftHtml += '<a class="chk-btn btn-documents" onclick="var p=(window.pcFile&&pcFile.patient)?pcFile.patient():(window.currentPatient||null); var id=(p&&p.id)||localStorage.getItem(\'pclinic_active_patient\')||\'\'; if(!id&&window.pcOpenPatientPicker){ window.pcOpenPatientPicker(function(sel){ if(sel&&sel.id){ window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(sel.id); } }, { title:\'📂 Select Patient for Documents &amp; OPD File\', subtitle:\'Search and select a patient to view and record their clinical documents.\', actionLabel:\'Open Documents\' }); return; } window.location.href=\'opd-file.html?patient=\'+encodeURIComponent(id);">📂 Documents</a>';
         }
@@ -3137,12 +3138,13 @@
        - Surveillance protocol opens read-only care plan viewer.
        ══════════════════════════════════════════════════════════════ */
     function openTechnicalExaminationsModal(patient) {
-        var p = patient || menuPatient() || (window.pcFile && pcFile.patient && pcFile.patient()) || null;
+        var p = patient || menuPatient() || (window.pcFile && window.pcFile.patient && window.pcFile.patient()) || null;
         if (!p || !p.id) {
-            var rawActive = localStorage.getItem('pclinic_active_patient');
+            var rawActive = null;
+            try { rawActive = window.localStorage ? window.localStorage.getItem('pclinic_active_patient') : null; } catch(e){}
             if (rawActive) {
                 try {
-                    var pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                    var pts = JSON.parse((window.localStorage ? window.localStorage.getItem('pclinic_patients') : null) || '[]');
                     p = pts.find(function(x){ return String(x.id) === String(rawActive) || String(x.mrn) === String(rawActive); });
                 } catch(e){}
             }
@@ -3191,37 +3193,47 @@
 
         var EXAMS = [
             // Global Examinations
-            { id: 'labreq',     title: '1 Lab Request', category: 'global', icon: 'ti-test-pipe', bg: '#eef2ff', color: '#4338ca', desc: 'Routine hematology, biochemistry, microbiology & serology orders', target: 'lab-request.html' },
-            { id: 'imaging',    title: '2 Medical Imaging', category: 'global', icon: 'ti-radioactive', bg: '#fef3c7', color: '#b45309', desc: 'Digital radiography, CT scan, ultrasound and MRI requisition', target: 'imaging-request.html' },
-            { id: 'pathology',  title: '3 Pathology Examination', category: 'global', icon: 'ti-microscope', bg: '#fce7f3', color: '#be185d', desc: 'Biopsy, cytology, histopathology specimen submission', target: 'lab-request.html' },
-            { id: 'referral',   title: '4 Referral Letter', category: 'global', icon: 'ti-send', bg: '#ecfeff', color: '#0e7490', desc: 'External patient transfer or referral to tertiary care hospital', target: 'referral.html' },
-            { id: 'counterref', title: '5 Counter Referral Letter', category: 'global', icon: 'ti-arrow-back-up', bg: '#f0fdfa', color: '#0f766e', desc: 'Counter-referral and consultation response report to sender', target: 'referral.html' },
-            { id: 'archive',    title: '6 Archive Document', category: 'global', icon: 'ti-archive', bg: '#f1f5f9', color: '#475569', desc: 'Medical report archiving, historical chart and records lookup', target: 'medical-report.html' },
-            { id: 'rx_care',    title: '7 Care Prescriptions', category: 'global', icon: 'ti-stethoscope', bg: '#ecfdf5', color: '#047857', desc: 'Nursing acts, wound care, catheterization and bedside procedures', target: 'prescription.html' },
-            { id: 'rx_drug',    title: '8 Drug Prescription', category: 'global', icon: 'ti-pill', bg: '#eff6ff', color: '#1d4ed8', desc: 'Electronic prescription, medication dosage and pharmacy order', target: 'prescription.html' },
-            { id: 'surv_proto', title: '0 Surveillance Protocol', category: 'global', icon: 'ti-activity', bg: '#fee2e2', color: '#b91c1c', desc: 'Inpatient round & vital signs monitoring record (Non-disruptive)', target: 'surveillance' },
+            { id: 'labreq',      title: 'Lab Request', category: 'global', icon: 'ti-test-pipe', bg: '#eef2ff', color: '#4338ca', desc: 'Routine hematology, biochemistry, microbiology & serology orders', target: 'lab-request.html' },
+            { id: 'imaging',     title: 'Medical Imaging', category: 'global', icon: 'ti-radioactive', bg: '#fef3c7', color: '#b45309', desc: 'Digital radiography, CT scan, ultrasound and MRI requisition', target: 'imaging-request.html' },
+            { id: 'pathology',   title: 'Pathology Examination', category: 'global', icon: 'ti-microscope', bg: '#fce7f3', color: '#be185d', desc: 'Biopsy, cytology, histopathology specimen submission', target: 'lab-request.html' },
+            { id: 'referral',    title: 'Referral Letter', category: 'global', icon: 'ti-send', bg: '#ecfeff', color: '#0e7490', desc: 'External patient transfer or referral to tertiary care hospital', target: 'referral.html' },
+            { id: 'counterref',  title: 'Counter Referral Letter', category: 'global', icon: 'ti-arrow-back-up', bg: '#f0fdfa', color: '#0f766e', desc: 'Counter-referral and consultation response report to sender', target: 'referral.html' },
+            { id: 'archive',     title: 'Archive Document', category: 'global', icon: 'ti-archive', bg: '#f1f5f9', color: '#475569', desc: 'Medical report archiving, historical chart and records lookup', target: 'medical-report.html' },
+            { id: 'rx_care',     title: 'Care Prescriptions', category: 'global', icon: 'ti-stethoscope', bg: '#ecfdf5', color: '#047857', desc: 'Nursing acts, wound care, catheterization and bedside procedures', target: 'prescription.html' },
+            { id: 'rx_drug',     title: 'Drug Prescription', category: 'global', icon: 'ti-pill', bg: '#eff6ff', color: '#1d4ed8', desc: 'Electronic prescription, medication dosage and pharmacy order', target: 'prescription.html' },
 
             // Surgery & Anesthesia
-            { id: 'preanest',   title: 'Pre-anaesthesia Record (KIRA)', category: 'surgery', icon: 'ti-heart-rate-monitor', bg: '#fff7ed', color: '#c2410c', desc: 'Pre-operative anesthesia risk evaluation and Mallampati score', target: 'surgical-note.html' },
-            { id: 'anest_rec',  title: 'Anesthesia Record', category: 'surgery', icon: 'ti-needle', bg: '#fef3c7', color: '#92400e', desc: 'Intra-operative monitoring, drug administration and induction log', target: 'surgical-note.html' },
-            { id: 'anest_rep',  title: 'Anesthesia Report', category: 'surgery', icon: 'ti-file-report', bg: '#ffedd5', color: '#9a3412', desc: 'Post-anesthesia recovery unit (PACU) emergence and sign-off', target: 'surgical-note.html' },
-            { id: 'surg_proto', title: 'Surgery Protocol', category: 'surgery', icon: 'ti-scissors', bg: '#fef2f2', color: '#991b1b', desc: 'Surgical technique, incision, findings and post-op instructions', target: 'surgical-note.html' },
-            { id: 'stomatology',title: 'Stomatology Surgery Protocol', category: 'surgery', icon: 'ti-dental', bg: '#f0f9ff', color: '#0369a1', desc: 'Maxillofacial, oral cavity and dental operative surgical note', target: 'surgical-note.html' },
-            { id: 'surv_anest', title: 'Surveillance during Anaesthesia', category: 'surgery', icon: 'ti-chart-line', bg: '#faf5ff', color: '#7e22ce', desc: 'Hemodynamic parameters log during operative anaesthesia', target: 'surgical-note.html' },
+            { id: 'preanest',    title: 'Pre-anaesthesia Record (KIRA)', category: 'surgery', icon: 'ti-heart-rate-monitor', bg: '#fff7ed', color: '#c2410c', desc: 'Pre-operative anesthesia risk evaluation and Mallampati score', target: 'surgical-note.html' },
+            { id: 'anest_rec',   title: 'Anesthesia Record', category: 'surgery', icon: 'ti-needle', bg: '#fef3c7', color: '#92400e', desc: 'Intra-operative monitoring, drug administration and induction log', target: 'surgical-note.html' },
+            { id: 'anest_rep',   title: 'Anesthesia Report', category: 'surgery', icon: 'ti-file-report', bg: '#ffedd5', color: '#9a3412', desc: 'Post-anesthesia recovery unit (PACU) emergence and sign-off', target: 'surgical-note.html' },
+            { id: 'surg_proto',  title: 'Surgery Protocol', category: 'surgery', icon: 'ti-scissors', bg: '#fef2f2', color: '#991b1b', desc: 'Surgical technique, incision, findings and post-op instructions', target: 'surgical-note.html' },
+            { id: 'stomatology', title: 'Stomatology Surgery Protocol', category: 'surgery', icon: 'ti-dental', bg: '#f0f9ff', color: '#0369a1', desc: 'Maxillofacial, oral cavity and dental operative surgical note', target: 'surgical-note.html' },
+            { id: 'surv_anest',  title: 'Surveillance during Anaesthesia', category: 'surgery', icon: 'ti-chart-line', bg: '#faf5ff', color: '#7e22ce', desc: 'Hemodynamic parameters log during operative anaesthesia', target: 'surgical-note.html' },
 
             // Clinical & Ward
-            { id: 'clin_prog',  title: 'Clinical Progress Note', category: 'clinical', icon: 'ti-notes', bg: '#f0fdf4', color: '#15803d', desc: 'Daily inpatient clinical progress, evolution and SOAP plan', target: 'clinical-note.html' },
-            { id: 'daily_note', title: 'Daily Note', category: 'clinical', icon: 'ti-calendar', bg: '#f0fdfa', color: '#115e59', desc: 'Ward physician continuous observation and round evaluation', target: 'clinical-note.html' },
-            { id: 'admission',  title: 'Admission / ADT Form', category: 'clinical', icon: 'ti-bed', bg: '#eff6ff', color: '#1e40af', desc: 'Hospital inpatient ward admission, bed assignment and demographics', target: 'admission-form.html' },
-            { id: 'discharge',  title: 'Discharge Summary', category: 'clinical', icon: 'ti-door-exit', bg: '#f8fafc', color: '#334155', desc: 'Discharge epicrisis, treatments, lifestyle recommendations', target: 'discharge-summary.html' },
-            { id: 'med_cert',   title: 'Death Certificate in ICD-11', category: 'clinical', icon: 'ti-certificate', bg: '#f1f5f9', color: '#1e293b', desc: 'Official death certificate with ICD-11 cause of death coding', target: 'medical-certificate.html' },
-            { id: 'ecg',        title: 'ECG Electrocardiogram', category: 'clinical', icon: 'ti-heartbeat', bg: '#fff1f2', color: '#be123c', desc: '12-lead ECG tracing request, rhythm strip and cardiology report', target: 'imaging-request.html' },
-            { id: 'vitals',     title: 'Vital Signs', category: 'clinical', icon: 'ti-pulse', bg: '#ffe4e6', color: '#9f1239', desc: 'BP, heart rate, temp, SpO2, respiratory rate and MAP trends', target: 'vitals' },
-            { id: 'physio',     title: 'Physiotherapy Evaluation Form', category: 'clinical', icon: 'ti-accessible', bg: '#ccfbf1', color: '#0f766e', desc: 'Musculoskeletal evaluation, rehabilitation plan & exercise order', target: 'physio-request.html' },
-            { id: 'blood_req',  title: 'Blood Request', category: 'clinical', icon: 'ti-droplet', bg: '#fee2e2', color: '#991b1b', desc: 'Urgent/routine packed red cells, whole blood and plasma requisition', target: 'lab-request.html' },
-            { id: 'malnutrition', title: 'Admission / Follow-up Malnutrition', category: 'clinical', icon: 'ti-scale', bg: '#fef9c3', color: '#854d0e', desc: 'Nutritional rehabilitation, anthropometry and therapeutic feeding', target: 'admission-form.html' },
-            { id: 'psych',      title: 'Follow-up of Psychiatric Patient', category: 'clinical', icon: 'ti-brain', bg: '#f3e8ff', color: '#6b21a8', desc: 'Mental status examination, psychotropic review and counseling', target: 'opd-file.html' },
-            { id: 'triage',     title: 'Emergency Triage Form (CPTAS)', category: 'clinical', icon: 'ti-ambulance', bg: '#ffedd5', color: '#c2410c', desc: 'Emergency department triage acuity scale and priority score', target: 'triage-form.html' }
+            { id: 'clin_prog',   title: 'Clinical Progress Note', category: 'clinical', icon: 'ti-notes', bg: '#f0fdf4', color: '#15803d', desc: 'Daily inpatient clinical progress, evolution and SOAP plan', target: 'clinical-note.html' },
+            { id: 'daily_note',  title: 'Daily Note', category: 'clinical', icon: 'ti-calendar', bg: '#f0fdfa', color: '#115e59', desc: 'Ward physician continuous observation and round evaluation', target: 'clinical-note.html' },
+            { id: 'admission',   title: 'Admission / ADT Form', category: 'clinical', icon: 'ti-bed', bg: '#eff6ff', color: '#1e40af', desc: 'Hospital inpatient ward admission, bed assignment and demographics', target: 'admission-form.html' },
+            { id: 'discharge',   title: 'Discharge Summary', category: 'clinical', icon: 'ti-door-exit', bg: '#f8fafc', color: '#334155', desc: 'Discharge epicrisis, treatments, lifestyle recommendations', target: 'discharge-summary.html' },
+            { id: 'med_cert',    title: 'Death Certificate in ICD-11', category: 'clinical', icon: 'ti-certificate', bg: '#f1f5f9', color: '#1e293b', desc: 'Official death certificate with ICD-11 cause of death coding', target: 'medical-certificate.html' },
+            { id: 'ecg',         title: 'ECG Electrocardiogram', category: 'clinical', icon: 'ti-heartbeat', bg: '#fff1f2', color: '#be123c', desc: '12-lead ECG tracing request, rhythm strip and cardiology report', target: 'imaging-request.html' },
+            { id: 'vitals',      title: 'Vital Signs', category: 'clinical', icon: 'ti-pulse', bg: '#ffe4e6', color: '#9f1239', desc: 'BP, heart rate, temp, SpO2, respiratory rate and MAP trends', target: 'vitals' },
+            { id: 'physio',      title: 'Physiotherapy Evaluation Form', category: 'clinical', icon: 'ti-accessible', bg: '#ccfbf1', color: '#0f766e', desc: 'Musculoskeletal evaluation, rehabilitation plan & exercise order', target: 'physio-request.html' },
+            { id: 'blood_req',   title: 'Blood Request', category: 'clinical', icon: 'ti-droplet', bg: '#fee2e2', color: '#991b1b', desc: 'Urgent/routine packed red cells, whole blood and plasma requisition', target: 'lab-request.html' },
+            { id: 'malnutrition',title: 'Admission / Follow-up Malnutrition', category: 'clinical', icon: 'ti-scale', bg: '#fef9c3', color: '#854d0e', desc: 'Nutritional rehabilitation, anthropometry and therapeutic feeding', target: 'admission-form.html' },
+            { id: 'psych',       title: 'Follow-up of Psychiatric Patient', category: 'clinical', icon: 'ti-brain', bg: '#f3e8ff', color: '#6b21a8', desc: 'Mental status examination, psychotropic review and counseling', target: 'opd-file.html' },
+            { id: 'triage',      title: 'Emergency Triage Form (CPTAS)', category: 'clinical', icon: 'ti-ambulance', bg: '#ffedd5', color: '#c2410c', desc: 'Emergency department triage acuity scale and priority score', target: 'triage-form.html' },
+
+            // Inpatient Nursing & Surveillance (NON-DISRUPTIVE READ-ONLY ON DOCTOR DASHBOARD)
+            { id: 'surv_proto',  title: 'Surveillance Protocol', category: 'nursing', icon: 'ti-activity', bg: '#fee2e2', color: '#b91c1c', desc: 'Inpatient round surveillance & vital signs log (Read-Only for Doctors)', target: 'surveillance' },
+            { id: 'careplan',    title: 'Nursing Care Plan', category: 'nursing', icon: 'ti-notes', bg: '#e0e7ff', color: '#3730a3', desc: 'Nursing problems, interventions and evaluation (Read-Only for Doctors)', target: 'careplan' },
+            { id: 'vitalsgraph', title: 'Vital Signs Graph & Trends', category: 'nursing', icon: 'ti-chart-line', bg: '#fdf4ff', color: '#a21caf', desc: 'Multi-visit vitals trajectory and graphic curves (Read-Only for Doctors)', target: 'vitalsgraph' },
+            { id: 'deliveries',  title: 'Deliveries & Maternity Care', category: 'nursing', icon: 'ti-baby-carriage', bg: '#fce7f3', color: '#be185d', desc: 'Delivery registry, newborn metrics and APGAR scores (Read-Only for Doctors)', target: 'deliveries' },
+
+            // Hospital Portals
+            { id: 'queue',       title: 'Queue Management', category: 'portals', icon: 'ti-list-numbers', bg: '#e0f2fe', color: '#0369a1', desc: 'Hospital patient waiting queue and live board', target: 'queue.html' },
+            { id: 'planning',    title: 'Planning / Appointments', category: 'portals', icon: 'ti-calendar-event', bg: '#fef3c7', color: '#b45309', desc: 'Outpatient consultation calendar and scheduled visits', target: 'appointments.html' },
+            { id: 'emergencies', title: 'Emergencies & Bed Situation', category: 'portals', icon: 'ti-bed', bg: '#fee2e2', color: '#dc2626', desc: 'Real-time ward occupancy, ICU beds and emergency board', target: 'beds-dashboard.html' }
         ];
 
         var curCategory = 'all';
@@ -3240,9 +3252,16 @@
             }
 
             return filtered.map(function(item) {
-                var isSurveillance = item.id === 'surv_proto';
-                var btnLabel = isDoctorPage && (item.id === 'labreq' || item.id === 'imaging' || item.id === 'rx_drug' || item.id === 'clin_prog' || item.id === 'admission' || item.id === 'physio' || item.id === 'vitals' || isSurveillance) ? 'Open in Doctor Portal' : 'Launch Form';
-                var badge = item.category === 'global' ? 'Global' : item.category === 'surgery' ? 'Surgery' : 'Clinical';
+                var isNursingItem = item.category === 'nursing';
+                var btnLabel = 'Launch Form';
+                if (isDoctorPage) {
+                    if (isNursingItem) {
+                        btnLabel = '👁️ Read-Only View';
+                    } else if (item.id === 'labreq' || item.id === 'imaging' || item.id === 'rx_drug' || item.id === 'clin_prog' || item.id === 'admission' || item.id === 'physio' || item.id === 'vitals' || item.id === 'queue') {
+                        btnLabel = '⚡ Open in Doctor Portal';
+                    }
+                }
+                var badge = item.category === 'global' ? 'Global' : item.category === 'surgery' ? 'Surgery' : item.category === 'nursing' ? 'Nursing' : item.category === 'portals' ? 'Portal' : 'Clinical';
 
                 return '<div class="tech-exam-card" data-id="' + item.id + '" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;transition:all .18s ease;box-shadow:0 1px 3px rgba(0,0,0,0.03);cursor:pointer;" onmouseenter="this.style.borderColor=\'#0071e3\';this.style.boxShadow=\'0 4px 14px rgba(0,113,227,0.12)\';this.style.transform=\'translateY(-2px)\';" onmouseleave="this.style.borderColor=\'#e2e8f0\';this.style.boxShadow=\'0 1px 3px rgba(0,0,0,0.03)\';this.style.transform=\'none\';">' +
                     '<div style="display:flex;align-items:flex-start;gap:12px;">' +
@@ -3252,6 +3271,7 @@
                         '<div style="flex:1;min-width:0;">' +
                             '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">' +
                                 '<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:#f1f5f9;color:#475569;text-transform:uppercase;">' + badge + '</span>' +
+                                (isNursingItem ? '<span style="font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;background:#fef2f2;color:#b91c1c;">NEVER EXITS DOCTOR PORTAL</span>' : '') +
                             '</div>' +
                             '<div style="font-weight:700;font-size:13px;color:#0f172a;line-height:1.25;margin-bottom:4px;">' + esc(item.title) + '</div>' +
                             '<div style="font-size:11px;color:#64748b;line-height:1.35;">' + esc(item.desc) + '</div>' +
@@ -3275,7 +3295,7 @@
                         '<span style="width:11px;height:11px;border-radius:50%;background:#27c93f;display:inline-block;"></span>' +
                     '</div>' +
                     '<div style="font-weight:800;font-size:14.5px;color:#1d1d1f;display:flex;align-items:center;gap:6px;">' +
-                        '<span>💉 Technical &amp; Global Examinations</span>' +
+                        '<span>💉 Applications &amp; Examinations Suite</span>' +
                         '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:#e2e8f0;color:#334155;">' + EXAMS.length + ' Modalities</span>' +
                     '</div>' +
                 '</div>' +
@@ -3306,13 +3326,15 @@
             '<div style="padding:10px 20px;border-bottom:1px solid #f1f5f9;background:#ffffff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">' +
                 '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
                     '<button type="button" class="techexam-cat-btn active" data-cat="all" style="padding:5px 12px;border-radius:16px;border:0;background:#0071e3;color:#fff;font-weight:700;font-size:11.5px;cursor:pointer;">All (' + EXAMS.length + ')</button>' +
-                    '<button type="button" class="techexam-cat-btn" data-cat="global" style="padding:5px 12px;border-radius:16px;border:1px solid #e2e8f0;background:#fff;color:#475569;font-weight:600;font-size:11.5px;cursor:pointer;">Global Examinations</button>' +
+                    '<button type="button" class="techexam-cat-btn" data-cat="global" style="padding:5px 12px;border-radius:16px;border:1px solid #e2e8f0;background:#fff;color:#475569;font-weight:600;font-size:11.5px;cursor:pointer;">Global Modalities</button>' +
                     '<button type="button" class="techexam-cat-btn" data-cat="surgery" style="padding:5px 12px;border-radius:16px;border:1px solid #e2e8f0;background:#fff;color:#475569;font-weight:600;font-size:11.5px;cursor:pointer;">Surgery &amp; Anesthesia</button>' +
                     '<button type="button" class="techexam-cat-btn" data-cat="clinical" style="padding:5px 12px;border-radius:16px;border:1px solid #e2e8f0;background:#fff;color:#475569;font-weight:600;font-size:11.5px;cursor:pointer;">Clinical &amp; Ward</button>' +
+                    '<button type="button" class="techexam-cat-btn" data-cat="nursing" style="padding:5px 12px;border-radius:16px;border:1px solid #e2e8f0;background:#fff;color:#475569;font-weight:600;font-size:11.5px;cursor:pointer;">Nursing (Read-Only)</button>' +
+                    '<button type="button" class="techexam-cat-btn" data-cat="portals" style="padding:5px 12px;border-radius:16px;border:1px solid #e2e8f0;background:#fff;color:#475569;font-weight:600;font-size:11.5px;cursor:pointer;">Hospital Portals</button>' +
                 '</div>' +
                 '<div style="position:relative;width:240px;">' +
                     '<i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px;"></i>' +
-                    '<input type="text" id="techExamSearchInput" placeholder="Quick search exam…" style="width:100%;box-sizing:border-box;padding:6px 10px 6px 30px;border:1px solid #cbd5e1;border-radius:16px;font-size:12px;outline:none;background:#f8fafc;" />' +
+                    '<input type="text" id="techExamSearchInput" placeholder="Quick search application…" style="width:100%;box-sizing:border-box;padding:6px 10px 6px 30px;border:1px solid #cbd5e1;border-radius:16px;font-size:12px;outline:none;background:#f8fafc;" />' +
                 '</div>' +
             '</div>';
 
@@ -3353,11 +3375,12 @@
             if (!found) return;
             closeModal();
 
-            var pid = (p && p.id) ? String(p.id) : (localStorage.getItem('pclinic_active_patient') || '');
+            var pid = (p && p.id) ? String(p.id) : '';
+            try { pid = pid || (window.localStorage ? window.localStorage.getItem('pclinic_active_patient') : '') || ''; } catch(e){}
 
-            if (found.target === 'surveillance') {
-                // SURVEILLANCE PROTOCOL:
-                // MUST NEVER OPEN NURSING DASHBOARD OR NURSING NOTE FROM DOCTOR CONTEXT!
+            // NURSING & INPATIENT ITEMS:
+            // MUST NEVER OPEN NURSING DASHBOARD OR NURSING NOTE FROM DOCTOR CONTEXT!
+            if (found.id === 'careplan' || found.id === 'surv_proto') {
                 if (isDoctorPage) {
                     openReadOnlyCarePlanModal(p);
                     return;
@@ -3369,7 +3392,31 @@
                 return;
             }
 
-            if (found.target === 'vitals') {
+            if (found.id === 'vitalsgraph') {
+                if (isDoctorPage) {
+                    openReadOnlyVitalsGraphModal(p);
+                    return;
+                } else if (isNursePage && typeof switchTab === 'function') {
+                    var tab = document.querySelector('[data-tab="vitals"]');
+                    if (tab) { switchTab('vitals', tab); return; }
+                }
+                openReadOnlyVitalsGraphModal(p);
+                return;
+            }
+
+            if (found.id === 'deliveries') {
+                if (isDoctorPage) {
+                    openReadOnlyDeliveriesModal(p);
+                    return;
+                } else if (isNursePage && typeof switchTab === 'function') {
+                    var tab = document.querySelector('[data-tab="deliveries"]');
+                    if (tab) { switchTab('deliveries', tab); return; }
+                }
+                openReadOnlyDeliveriesModal(p);
+                return;
+            }
+
+            if (found.id === 'vitals') {
                 if (window.pcVitals && typeof window.pcVitals.open === 'function') {
                     window.pcVitals.open();
                 } else if (typeof legacy === 'function') {
@@ -3381,6 +3428,12 @@
 
             // DOCTOR DASHBOARD IN-PAGE ACTIVATION:
             if (isDoctorPage) {
+                if (found.id === 'queue') {
+                    if (typeof switchTab === 'function') {
+                        var tab = document.querySelector('[data-tab="overview"]') || document.querySelector('[data-tab="patients"]');
+                        if (tab) { switchTab('overview', tab); return; }
+                    }
+                }
                 if (found.id === 'labreq' || found.id === 'blood_req' || found.id === 'pathology') {
                     if (typeof openLabRequestPage === 'function') {
                         openLabRequestPage(p);
@@ -3439,7 +3492,7 @@
                 }
             }
 
-            // Other portals / fallback:
+            // Other portals / external navigation:
             var sep = found.target.indexOf('?') !== -1 ? '&' : '?';
             window.location.href = found.target + (pid ? sep + 'patient=' + encodeURIComponent(pid) : '');
         }
@@ -3496,6 +3549,8 @@
     }
 
     window.pcOpenTechnicalExaminations = openTechnicalExaminationsModal;
+    window.pcOpenApplicationsModal = openTechnicalExaminationsModal;
+    window.pcApplicationsMenu = openTechnicalExaminationsModal;
 
     /* ══════════════════════════════════════════════════════════════
        NURSING MENU (🏥 Nursing ▾ in the CHUK top bar — EVERY page)
