@@ -1016,7 +1016,11 @@
 
     /* ── Render Overview Worklist (One Master Row per Patient) ── */
     function paintOverviewWorklist() {
-        var el = document.getElementById('pcLabWorklist');
+        if (typeof window.renderPatientTable === 'function') {
+            window.renderPatientTable();
+            return;
+        }
+        var el = document.getElementById('pcLabWorklist') || document.getElementById('patientTableBody');
         if (!el) return;
         var orders = getLabOrders();
         var patientGroups = groupOrdersByPatient(orders);
@@ -2962,9 +2966,6 @@
 
     /* ── Repaint Whole Dashboard ── */
     function repaintAll() {
-        var oldDc = document.getElementById('dcBar');
-        if (oldDc && oldDc.parentNode) oldDc.parentNode.removeChild(oldDc);
-
         if (typeof pcOrders !== 'undefined' && typeof pcOrders.aggregate === 'function') {
             try { pcOrders.aggregate(); } catch(e){}
         }

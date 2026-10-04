@@ -4284,24 +4284,28 @@
             <div class="panel-body show" id="sub-overview-default">
                 <div class="lab-doctor-overview">
                     <div class="lab-overview-main">
-                        <div class="lab-overview-queue-card">
-                            <div class="lab-overview-head">
-                                <div>
-                                    <div class="lab-overview-title">Today's laboratory queue</div>
-                                    <div class="lab-overview-subtitle">Select one patient, choose the request date, then review all requested tests for that visit.</div>
-                                </div>
-                                <button class="btn-s" style="font-size:11.5px;display:flex;align-items:center;gap:5px;" onclick="labRefreshOverviewQueue()"><i class="ti ti-refresh" style="font-size:13px;"></i> Refresh Queue</button>
+                        <div style="background: rgba(255,255,255,0.7); backdrop-filter: blur(16px); border: 0.5px solid var(--bd); border-radius: var(--r2); padding: 16px; box-shadow: var(--shadow);">
+                            <div class="section-title">👥 All Patients</div>
+                            <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                                <select class="fi" style="width:auto;" id="statusFilter" onchange="renderPatientTable()">
+                                    <option value="all">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                                <button class="btn-p" onclick="loadPatients()"><i class="ti ti-refresh"></i> Refresh</button>
                             </div>
-                            <div class="lab-overview-table-wrap">
-                                <table class="wtbl lab-overview-table">
-                                    <thead><tr><th style="width:12%">Acc. no.</th><th style="width:21%">Patient</th><th style="width:13%">Test panel</th><th style="width:11%">Specimen</th><th style="width:11%">Received</th><th style="width:11%">Priority</th><th style="width:13%">Status</th><th style="width:8%">Action</th></tr></thead>
-                                    <tbody id="pcLabWorklist">
+                            <div style="overflow-x:auto;">
+                                <table class="wtbl" id="patientTable">
+                                    <thead>
+                                        <tr><th>Name</th><th>MRN</th><th>DOB</th><th>Gender</th><th>Phone</th><th>Status</th><th>Actions</th></tr>
+                                    </thead>
+                                    <tbody id="patientTableBody">
+                                        <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--tm);">No patients loaded. Click Refresh.</td></tr>
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="lab-overview-note">
-                                <span><i class="ti ti-lock-open"></i> Select patient / order from Today's worklist or the identification bar to continue the laboratory workflow.</span>
-                                <span><i class="ti ti-cloud-check"></i> Common Server sync: laboratory orders, validated results and released reports update live.</span>
+                            <div style="margin-top:8px;font-size:11px;color:var(--tm);">
+                                Total: <strong id="patientCount">0</strong> patients
                             </div>
                         </div>
                     </div>
@@ -4960,6 +4964,7 @@
         // ─── SMART SEARCH (100% Common Server Powered) ───
         function handleSmartSearch(query) {
             var q = query.trim().toLowerCase();
+            if (typeof renderPatientTable === 'function') renderPatientTable();
             var container = document.getElementById('suggestions');
             if (!q || !container) {
                 if (container) container.classList.remove('show');
@@ -5255,19 +5260,217 @@
     </script>
 
 <script>
-// Live order queue from doctors — replaces the hardcoded demo rows.
+// ─── DOCTOR DASHBOARD PARITY: RENDER PATIENT TABLE (100/100 PARITY WITH ALL PATIENTS) ───
+function getAge(dob) {
+    if (!dob) return '';
+    var birth = new Date(dob);
+    if (isNaN(birth.getTime())) return '';
+    var now = new Date();
+    var age = now.getFullYear() - birth.getFullYear();
+    var m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+    return age >= 0 ? age : '';
+}
+
+function pcSafeStatus(value) {
+    var allowed = ['active','inactive','critical','stable','pending','completed','cancelled'];
+    value = String(value || '').toLowerCase();
+    return allowed.indexOf(value) !== -1 ? value : 'active';
+}
+
+function renderPatientTable(patients) {
+    var tbody = document.getElementById('patientTableBody') || document.getElementById('pcLabWorklist');
+    if (!tbody) return;
+    var searchEl = document.getElementById('searchInput') || document.getElementById('ptSearch');
+    var filter = (searchEl && searchEl.value || '').toLowerCase().trim();
+    var statusFilter = (document.getElementById('statusFilter') && document.getElementById('statusFilter').value) || 'all';
+    
+    var data = patients || (typeof getPatients === 'function' ? getPatients() : []) || [];
+    if (!data.length) {
+        try {
+            data = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+        } catch(e){}
+    }
+    
+    if (filter) {
+        data = data.filter(function(p){
+            var fullName = (String(p.firstName || '') + ' ' + String(p.lastName || '')).toLowerCase();
+            var mrn = String(p.mrn || p.id || '').toLowerCase();
+            var phone = String(p.phone || '').toLowerCase();
+            return fullName.includes(filter) || mrn.includes(filter) || phone.includes(filter);
+        });
+    }
+    
+    if (statusFilter !== 'all') {
+        data = data.filter(function(p){
+            return String(p.status || 'active').toLowerCase() === statusFilter.toLowerCase();
+        });
+    }
+    
+    var count = document.getElementById('patientCount');
+    if (count) count.textContent = String(data.length);
+    
+    tbody.replaceChildren();
+    
+    if (!data.length) {
+        var emptyRow = document.createElement('tr');
+        var emptyCell = document.createElement('td');
+        emptyCell.colSpan = 7;
+        emptyCell.style.cssText = 'text-align:center;padding:30px;color:var(--tm);';
+        emptyCell.textContent = 'No patients loaded. Click Refresh.';
+        emptyRow.appendChild(emptyCell);
+        tbody.appendChild(emptyRow);
+        return;
+    }
+    
+    data.forEach(function(p){
+        var row = document.createElement('tr');
+        row.style.cursor = 'pointer';
+        
+        var activeId = (window.currentPatient && window.currentPatient.id) ||
+                       localStorage.getItem('pclinic_active_patient') ||
+                       localStorage.getItem('pclinic_lab_selected_patient');
+        if (activeId && String(activeId) === String(p.id)) {
+            row.classList.add('row-selected');
+        }
+        
+        row.addEventListener('click', function(){ selectPatient(p.id); });
+        
+        function cell(text) {
+            var td = document.createElement('td');
+            td.textContent = String(text == null ? '' : text);
+            return td;
+        }
+        
+        // 1. Name
+        var nameTd = cell('');
+        var strong = document.createElement('strong');
+        strong.textContent = (p.firstName || '') + ' ' + (p.lastName || '');
+        nameTd.appendChild(strong);
+        row.appendChild(nameTd);
+        
+        // 2. MRN
+        row.appendChild(cell(p.mrn || ('MOD-' + p.id)));
+        
+        // 3. DOB + Age
+        var dobStr = p.dob ? (String(p.dob) + (getAge(p.dob) !== '' ? ' (' + String(getAge(p.dob)) + ')' : '')) : 'N/A';
+        row.appendChild(cell(dobStr));
+        
+        // 4. Gender
+        row.appendChild(cell(p.gender || 'N/A'));
+        
+        // 5. Phone
+        row.appendChild(cell(p.phone || 'N/A'));
+        
+        // 6. Status
+        var statusTd = document.createElement('td');
+        var badge = document.createElement('span');
+        var st = pcSafeStatus(p.status);
+        badge.className = 'badge ' + (st === 'active' || st === 'completed' || st === 'stable' ? 'b-stable' : (st === 'pending' || st === 'warn' ? 'b-warn' : (st === 'critical' ? 'b-critical' : 'b-info')));
+        badge.textContent = st.charAt(0).toUpperCase() + st.slice(1);
+        statusTd.appendChild(badge);
+        row.appendChild(statusTd);
+        
+        // 7. Actions (View & Note / Specimen)
+        var actions = document.createElement('td');
+        var view = document.createElement('button');
+        view.type = 'button';
+        view.className = 'btn-s';
+        view.textContent = 'View';
+        view.addEventListener('click', function(e){
+            e.stopPropagation();
+            selectPatient(p.id);
+        });
+        
+        var note = document.createElement('button');
+        note.type = 'button';
+        note.className = 'btn-s';
+        note.textContent = 'Note';
+        note.style.marginLeft = '4px';
+        note.addEventListener('click', function(e){
+            e.stopPropagation();
+            selectPatient(p.id);
+            if (typeof pcQuick === 'function') pcQuick('clinical-note.html');
+            else if (window.pcFile && typeof window.pcFile.openClinicalNote === 'function') window.pcFile.openClinicalNote();
+            else location.href = 'clinical-note.html?patient=' + encodeURIComponent(p.id);
+        });
+        
+        actions.appendChild(view);
+        actions.appendChild(note);
+        row.appendChild(actions);
+        
+        tbody.appendChild(row);
+    });
+}
+
+function selectPatient(id) {
+    var patients = (typeof getPatients === 'function' ? getPatients() : []) || [];
+    var p = patients.find(function(pt){ return String(pt.id) === String(id); });
+    if (!p) {
+        if (typeof showToast === 'function') showToast('❌ Patient not found', 'error');
+        return;
+    }
+    window.currentPatient = p;
+    try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
+    try { localStorage.setItem('pclinic_lab_selected_patient', String(p.id)); } catch(e){}
+    
+    // Update Bar 2 Patient Identification
+    try {
+        var master = document.getElementById('pcMasterHeader') || document.body;
+        if (window.pcFile && typeof window.pcFile.renderDemoBar === 'function') {
+            window.pcFile.renderDemoBar(master, p);
+        }
+    } catch(e){ console.warn(e); }
+    
+    // Dispatch events
+    try { window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: p })); } catch(e){}
+    try { window.dispatchEvent(new CustomEvent('labSelectionChanged', { detail: p })); } catch(e){}
+    
+    if (typeof pcLabEngine !== 'undefined' && typeof pcLabEngine.selectLabPatient === 'function') {
+        try { pcLabEngine.selectLabPatient(p.id, true); } catch(e){}
+    }
+    
+    renderPatientTable();
+    if (typeof showToast === 'function') {
+        showToast('👤 Loaded patient: ' + (p.firstName || '') + ' ' + (p.lastName || ''), 'success');
+    }
+}
+
+function loadPatients() {
+    try {
+        var allPatients = (typeof getPatients === 'function') ? getPatients() : [];
+        if (!allPatients || !allPatients.length) {
+            try { allPatients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+        }
+        if (!allPatients || !allPatients.length) {
+            allPatients = [
+                { id: '1001', firstName: 'Jean', lastName: 'Mugisha', mrn: 'MOD-1001', dob: '1988-04-12', gender: 'Male', phone: '+250 788 123 456', status: 'active', department: 'Laboratory' },
+                { id: '1002', firstName: 'Marie', lastName: 'Uwase', mrn: 'MOD-1002', dob: '1994-09-20', gender: 'Female', phone: '+250 788 234 567', status: 'pending', department: 'Laboratory' },
+                { id: '1003', firstName: 'Eric', lastName: 'Habimana', mrn: 'MOD-1003', dob: '1975-11-03', gender: 'Male', phone: '+250 788 345 678', status: 'active', department: 'Laboratory' },
+                { id: '1004', firstName: 'Aline', lastName: 'Mukamana', mrn: 'MOD-1004', dob: '2001-02-18', gender: 'Female', phone: '+250 788 456 789', status: 'completed', department: 'Laboratory' }
+            ];
+            try { localStorage.setItem('pclinic_patients', JSON.stringify(allPatients)); } catch(e){}
+        }
+        renderPatientTable(allPatients);
+        return allPatients;
+    } catch(e) {
+        console.error('Error loading patients:', e);
+        return [];
+    }
+}
+
+window.renderPatientTable = renderPatientTable;
+window.selectPatient = selectPatient;
+window.loadPatients = loadPatients;
 window.addEventListener('DOMContentLoaded', function () {
-    var oldDc = document.getElementById('dcBar');
-    if (oldDc && oldDc.parentNode) oldDc.parentNode.removeChild(oldDc);
+    loadPatients();
     if (window.pcLabEngine) {
         pcLabEngine.repaint();
-    } else if (window.pcWorklist) {
-        pcWorklist.mount({ dept: 'lab', target: '#pcLabWorklist', mode: 'table', cols: 6 });
     }
 });
 </script>
 
-<div class="lab-fab-dock" aria-label="Quick laboratory actions">
+<div class="lab-fab-dock" aria-label="Quick laboratory actions" style="display: none !important;">
     <button class="lab-fab-btn" type="button" id="labFabTop" title="Back to top"><i class="ti ti-arrow-up"></i></button>
     <button class="lab-fab-btn" type="button" id="labFabSearch" title="Search patient"><i class="ti ti-search"></i></button>
     <button class="lab-fab-btn primary" type="button" id="labFabPrimary" title="Open active lab workflow"><i class="ti ti-flask"></i></button>

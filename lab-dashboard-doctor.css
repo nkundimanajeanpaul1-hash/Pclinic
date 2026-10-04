@@ -516,12 +516,20 @@ body.lab-doctor-shell .wtbl {
   width: 100%;
   border-collapse: separate !important;
   border-spacing: 0 !important;
-  font-size: 12px;
-  background: transparent !important;
-  overflow: hidden;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03) !important;
+  background: rgba(255,255,255,0.7) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  font-size: 13px !important;
 }
 
-body.lab-doctor-shell .wtbl thead,
+body.lab-doctor-shell .wtbl thead {
+  background: rgba(0,0,0,0.02) !important;
+  border-bottom: 0.5px solid rgba(0,0,0,0.04) !important;
+}
+
 body.lab-doctor-shell .wtbl thead tr {
   background: transparent !important;
 }
@@ -531,23 +539,102 @@ body.lab-doctor-shell .wtbl th {
   font-weight: 600 !important;
   color: var(--tm) !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.5px !important;
-  padding: 10px 12px !important;
+  letter-spacing: 0.6px !important;
+  padding: 12px 14px !important;
+  text-align: left !important;
   border-bottom: 0.5px solid rgba(0,0,0,0.04) !important;
   background: transparent !important;
 }
 
-body.lab-doctor-shell .wtbl td {
-  padding: 10px 12px !important;
-  border-bottom: 0.5px solid rgba(0,0,0,0.03) !important;
-  color: var(--tp) !important;
-  vertical-align: middle !important;
-  transition: all 0.2s ease !important;
-  background: transparent !important;
+body.lab-doctor-shell .wtbl tbody tr {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  cursor: pointer !important;
 }
 
-body.lab-doctor-shell .wtbl tr:hover td {
-  background: rgba(0,0,0,0.02) !important;
+body.lab-doctor-shell .wtbl tbody tr td {
+  padding: 12px 14px !important;
+  border-bottom: 0.5px solid rgba(192, 179, 179, 0.1) !important;
+  background: rgba(255,255,255,0.5) !important;
+  color: var(--tp) !important;
+  font-weight: 400 !important;
+  vertical-align: middle !important;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr:nth-child(even) td {
+  background: rgba(192, 179, 179, 0.04) !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr:hover td {
+  background: rgba(192, 179, 179, 0.08) !important;
+  transform: scale(1.002) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr.row-selected td {
+  background: rgba(0, 113, 227, 0.08) !important;
+  border-bottom-color: rgba(0, 113, 227, 0.2) !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr td:first-child {
+  font-weight: 600 !important;
+  color: var(--tp) !important;
+  letter-spacing: -0.01em !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr td .badge {
+  padding: 4px 14px !important;
+  border-radius: 20px !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.3px !important;
+  border: 0.5px solid rgba(0,0,0,0.04) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr td .b-stable {
+  background: rgba(52,199,89,0.08) !important;
+  color: #1a7a32 !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr td .b-warn {
+  background: rgba(255,149,0,0.08) !important;
+  color: #7a4500 !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr td .b-critical {
+  background: rgba(255,59,48,0.08) !important;
+  color: #8a1f1a !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr td .b-info {
+  background: rgba(0,113,227,0.08) !important;
+  color: #0066d6 !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr td .btn-s {
+  background: rgba(0,0,0,0.03) !important;
+  border: 0.5px solid rgba(0,0,0,0.04) !important;
+  border-radius: 8px !important;
+  padding: 4px 12px !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  color: var(--tm) !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr td .btn-s:hover {
+  background: var(--ac) !important;
+  color: #fff !important;
+  transform: scale(1.04) !important;
+  box-shadow: 0 2px 8px rgba(0,113,227,0.2) !important;
+}
+
+body.lab-doctor-shell .wtbl tbody tr td .btn-s:active {
+  transform: scale(0.92) !important;
 }
 
 body.lab-doctor-shell .fi,

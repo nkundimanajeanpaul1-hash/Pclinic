@@ -290,6 +290,7 @@
   window.ensureSharedLabHeader = ensureSharedLabHeader;
   window.labQuickAction = labQuickAction;
   window.labRefreshOverviewQueue = function () {
+    if (typeof window.loadPatients === 'function') window.loadPatients();
     refreshLabQueue();
     notify('🔄 Laboratory queue refreshed', 'info');
   };
