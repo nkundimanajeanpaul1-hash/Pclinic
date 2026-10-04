@@ -36,7 +36,7 @@
             padding: 0;
         }
         :root {
-            --bg: #f2f4f8;
+            --bg: #c3c4ca;
             --s0: #f5f5f7;
             --s1: #ffffff;
             --s2: #ffffff;
@@ -46,10 +46,10 @@
             --tp: #1c1c1e;
             --ts: #3a3a3c;
             --tm: #8e8e93;
-            --ac: #007080;
-            --ach: #004a52;
-            --acb: #e6f6f8;
-            --acl: rgba(0, 112, 128, 0.15);
+            --ac: #0071e3;
+            --ach: #0066d6;
+            --acb: #eaf2ff;
+            --acl: rgba(0, 113, 227, 0.15);
             --green: #34c759;
             --greenb: #e9f9ee;
             --greend: #1a7a32;
@@ -65,11 +65,11 @@
             --teal: #007080;
             --tealbg: #e6f6f8;
             --tealt: #004a52;
-            --pink: #b5006e;
-            --pinkb: #fdf0f7;
-            --pinkt: #7a0049;
-            --r: 10px;
-            --r2: 14px;
+            --pink: #db2777;
+            --pinkb: #fdf2f8;
+            --pinkt: #9d174d;
+            --r: 12px;
+            --r2: 16px;
             --shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 4px 12px rgba(0, 0, 0, .04);
             --shadow2: 0 2px 12px rgba(0, 0, 0, .10), 0 8px 32px rgba(0, 0, 0, .06);
             --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
@@ -78,16 +78,22 @@
         body {
             font-family: var(--f);
             background: var(--bg);
-            color: #1c1c1e;
+            color: var(--tp);
             font-size: 13px;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
-            background-image: radial-gradient(circle at 20% 30%, rgba(0, 112, 128, 0.03) 0%, transparent 50%),
+            background-image: radial-gradient(circle at 20% 30%, rgba(0, 113, 227, 0.03) 0%, transparent 50%),
                 radial-gradient(circle at 80% 70%, rgba(52, 199, 89, 0.03) 0%, transparent 50%);
         }
 
         #dcBar, .dc-bar {
-            display: none !important;
+            position: relative !important;
+            top: auto !important;
+            z-index: 1 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            clear: both !important;
+            flex-shrink: 0 !important;
         }
 
         /* ─── SCROLLBAR ─── */
@@ -4095,10 +4101,12 @@
 </style>
     <link rel="stylesheet" href="lab-dashboard-doctor.css?v=20260908_LABDOCTORPARITY6SMALLQADOCTORSTYLE">
     <script src="pclinic-file.js?v=20260929_TECH_EXAMS" defer></script>
+    <script src="doctor-patient.js?v=20260929_TECH_EXAMS" defer></script>
+    <script src="doctor-actionbar.js?v=20260929_TECH_EXAMS" defer></script>
     <script src="lab-dashboard-fixes.js?v=20260908_LABDOCTORPARITY4VISIBLEQA" defer></script>
 </head>
 <body class="lab-doctor-shell">
-    <div class="lab-ambient-backdrop" aria-hidden="true">
+    <div class="lab-ambient-backdrop" aria-hidden="true" style="display: none !important;">
         <div class="lab-orb orb-a"></div>
         <div class="lab-orb orb-b"></div>
         <div class="lab-orb orb-c"></div>
@@ -4166,7 +4174,7 @@
     </div>
 
     <!-- ═══ SUB NAV (dynamic) ═══ -->
-    <div class="sub-nav" id="subNav">
+    <div class="sub-nav" id="subNav" style="display: none !important;">
         <button class="sub-tab active" data-sub="overview-default"><i class="ti ti-home"></i> Dashboard</button>
     </div>
 
@@ -4189,7 +4197,7 @@
     </div>
 
     <!-- ═══ SMART APPLE + PIXEL HERO ═══ -->
-    <div class="lab-smart-shell" id="labSmartShell">
+    <div class="lab-smart-shell" id="labSmartShell" style="display: none !important;">
         <section class="lab-hero">
             <div class="glass-panel lab-hero-main">
                 <div class="lab-hero-kicker"><span class="dot"></span> Liquid Glass + Material You laboratory workspace</div>
@@ -4255,7 +4263,7 @@
 
     </div>
 
-    <section class="glass-panel lab-command-ribbon" id="labCommandRibbon">
+    <section class="glass-panel lab-command-ribbon" id="labCommandRibbon" style="display: none !important;">
         <div class="lab-command-meta">
             <span class="lab-command-pill accent" id="labCommandTab">Overview</span>
             <span class="lab-command-pill" id="labCommandPatient">No patient selected</span>
@@ -5593,5 +5601,4 @@ html body #pc_common_demo_bar.oc-demo-bar, html body .oc-demo-bar { position: re
 html body #dcBar.dc-bar, html body #dcBar { position: relative !important; top: auto !important; z-index: 1 !important; margin: 0 !important; width: 100% !important; clear: both !important; flex-shrink: 0 !important; }
 </style>
 </body>
-</html>>
 </html>

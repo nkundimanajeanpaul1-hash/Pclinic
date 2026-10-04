@@ -66,6 +66,14 @@
     if (topbar) topbar.style.display = 'none';
     var breadcrumb = byId('breadcrumb');
     if (breadcrumb) breadcrumb.style.display = 'none';
+    var ambient = document.querySelector('.lab-ambient-backdrop');
+    if (ambient) ambient.style.display = 'none';
+    var smart = byId('labSmartShell');
+    if (smart) smart.style.display = 'none';
+    var ribbon = byId('labCommandRibbon');
+    if (ribbon) ribbon.style.display = 'none';
+    var subNav = byId('subNav');
+    if (subNav) subNav.style.display = 'none';
   }
 
   function ensureSharedLabHeader() {
