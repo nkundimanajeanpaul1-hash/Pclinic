@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="styles.css" />
     
     <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
+    <script>window.__pclinic_is_lab = true;</script>
     <script type="module" src="firebase-config.js"></script>
     <script src="auth-guard.js"></script>
 <script src="pclinic-state.js"></script>
@@ -5383,6 +5384,12 @@
 
 
     <script>
+        window.__pclinic_is_lab = true;
+        if (typeof uncloak === 'function') uncloak();
+        var cloak = document.getElementById('pc-auth-cloak');
+        if (cloak && cloak.parentNode) cloak.parentNode.removeChild(cloak);
+        document.documentElement.classList.remove('pc-auth-pending');
+
         requireAuth(['lab', 'doctor', 'nurse', 'admin', 'reception', 'cashier', 'finance']).then(function(staff) {
             window.currentStaff = staff;
             console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
@@ -5395,16 +5402,16 @@
                 role: (localStorage.getItem('userRole') || 'lab')
             };
             if (typeof uncloak === 'function') uncloak();
-            var cloak = document.getElementById('pc-auth-cloak');
-            if (cloak && cloak.parentNode) cloak.parentNode.removeChild(cloak);
+            var cloak2 = document.getElementById('pc-auth-cloak');
+            if (cloak2 && cloak2.parentNode) cloak2.parentNode.removeChild(cloak2);
             document.documentElement.classList.remove('pc-auth-pending');
         });
         // Failsafe uncloak to prevent stuck blank screens in preview or direct access
         setTimeout(function() {
-            var cloak = document.getElementById('pc-auth-cloak');
-            if (cloak && cloak.parentNode) cloak.parentNode.removeChild(cloak);
+            var cloak3 = document.getElementById('pc-auth-cloak');
+            if (cloak3 && cloak3.parentNode) cloak3.parentNode.removeChild(cloak3);
             document.documentElement.classList.remove('pc-auth-pending');
-        }, 1500);
+        }, 500);
     </script>
 
 <script>
