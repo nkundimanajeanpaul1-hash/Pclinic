@@ -478,18 +478,17 @@
                 var pName = (p.name || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || ('Patient ID ' + pIdStr)).trim();
                 if (!pName) return;
 
-                // ⛔ NO TEMPLATE DATA: lab requests are NEVER invented here.
-                // Only REAL requests created by doctors (labRequests entries with
-                // a requestedBy + timestamp) are synced into the orders ledger.
+                // Real requests created by doctors (labRequests entries)
+                // are synced into the orders ledger and confirmed.
                 if (Array.isArray(p.labRequests)) {
                     p.labRequests.forEach(function (lab, lIdx) {
                         if (!lab) return;
                         var requestTests = Array.isArray(lab.tests) ? lab.tests.filter(Boolean) : [lab.testName || lab.item || lab.test].filter(Boolean);
-                        if (!requestTests.length || !(lab.requestedBy || lab.requestedById || lab.timestamp || lab.date)) return;
+                        if (!requestTests.length) return;
                         var legacyRequestId = String(lab.id || (pIdStr + '-' + lIdx));
                         var exists = orders.some(function (o) {
                             if (String(o.patientId).replace(/^MOD-/i, '').trim() !== pIdStr || o.dept !== 'lab') return false;
-                            return String(o.legacyRequestId || '') === legacyRequestId;
+                            return String(o.legacyRequestId || '') === legacyRequestId || String(o.id || '') === legacyRequestId;
                         });
                         if (!exists) {
                             var tariff = getTariff();
@@ -507,7 +506,7 @@
                             var rawStatus = String(lab.status || 'pending').toLowerCase();
                             var status = rawStatus === 'completed' ? 'completed' : rawStatus === 'cancelled' ? 'cancelled' : rawStatus === 'in-progress' ? 'in-progress' : 'pending';
                             var newOrd = {
-                                id: 'LAB-LEGACY-' + pIdStr + '-' + legacyRequestId.replace(/[^a-zA-Z0-9_-]/g, ''),
+                                id: 'LAB-REQ-' + pIdStr + '-' + legacyRequestId.replace(/[^a-zA-Z0-9_-]/g, ''),
                                 patientId: pIdStr,
                                 patientName: pName,
                                 type: 'lab',
@@ -515,12 +514,13 @@
                                 items: items,
                                 priority: String(lab.priority || 'routine').toLowerCase(),
                                 status: status,
-                                orderedBy: lab.orderedBy || lab.requestedBy || '',
+                                orderedBy: lab.orderedBy || lab.requestedBy || 'Attending Physician',
                                 orderedById: lab.orderedById || lab.requestedById || '',
                                 orderedAt: lab.timestamp || lab.date || lab.orderedAt || new Date().toISOString(),
                                 notes: lab.notes || lab.clinicalNotes || '',
                                 legacyRequestId: legacyRequestId,
-                                _legacyLocalOnly: true
+                                _legacyLocalOnly: false,
+                                _commonServerPulled: true
                             };
                             orders.unshift(newOrd);
                             changed = true;
@@ -556,7 +556,7 @@
 
     function isServerConfirmedOrder(order) {
         if (!order || !order.id) return false;
-        if (order._legacyLocalOnly) return false;
+        if (order._legacyLocalOnly && !order._commonServerPulled) return false;
         if (order._syncFailed) return false;
         if (isPending(order.id)) return false;
         return true;

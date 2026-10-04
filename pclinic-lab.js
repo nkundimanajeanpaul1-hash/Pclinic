@@ -336,19 +336,26 @@
 
     /* ── Get All Lab Orders from Common Server ── */
     function getLabOrders() {
-        if (!window.pcOrders) return [];
         var list = [];
         try {
-            if (typeof pcOrders.listServerConfirmed === 'function') {
+            if (window.pcOrders && typeof pcOrders.listServerConfirmed === 'function') {
                 list = pcOrders.listServerConfirmed({ dept: 'lab' }) || [];
-            } else if (typeof pcOrders.list === 'function') {
+            } else if (window.pcOrders && typeof pcOrders.list === 'function') {
                 list = pcOrders.list({ dept: 'lab' }).filter(function(order) {
-                    return !order._legacyLocalOnly && !order._syncFailed;
+                    return (!order._legacyLocalOnly || order._commonServerPulled) && !order._syncFailed;
                 });
             }
         } catch (e) {
             console.warn('Unable to load server-confirmed lab orders:', e);
             list = [];
+        }
+        if (!list || !list.length) {
+            try {
+                var raw = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
+                list = raw.filter(function(o) {
+                    return o && (o.dept === 'lab' || o.type === 'lab') && !o._syncFailed;
+                });
+            } catch(e){}
         }
         return list.filter(function(o) {
             return normaliseOrderStatus(o.status) !== 'cancelled';

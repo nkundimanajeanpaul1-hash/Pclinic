@@ -4334,6 +4334,11 @@ function submitModalLabRequest() {
             console.log('updatePatient not available, using local storage only');
         }
     }
+    try {
+        window.dispatchEvent(new CustomEvent('ordersUpdated'));
+        window.dispatchEvent(new CustomEvent('patientsUpdated'));
+        window.dispatchEvent(new Event('storage'));
+    } catch(e){}
     
     showToast('✅ Lab request submitted! ' + selectedTests.length + ' test(s) requested.', 'success');
     
@@ -4688,6 +4693,11 @@ function toggleVitalsHistory() {
                 console.log('updatePatient not available, using local storage only');
             }
         }
+        try {
+            window.dispatchEvent(new CustomEvent('ordersUpdated'));
+            window.dispatchEvent(new CustomEvent('patientsUpdated'));
+            window.dispatchEvent(new Event('storage'));
+        } catch(e){}
 
         showToast(`✅ Lab request submitted! ${selectedLabTests.length} test(s) requested.`, 'success');
         

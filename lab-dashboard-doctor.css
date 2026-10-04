@@ -1321,3 +1321,67 @@ body.lab-doctor-shell .specimen-ordered-tests > * {
     font-size: 10px !important;
   }
 }
+
+/* ─── LAB RESULTS & RESULT ENTRY MODES (Doctor Dashboard Parity) ─── */
+.lab-results-modes button.subtab-btn {
+  font-family: inherit;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lab-results-modes button.subtab-btn.active {
+  background: #ffffff !important;
+  color: #0071e3 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12) !important;
+}
+
+.result-entry-highlight-input {
+  background: #eef6ff !important;
+  border: 1.5px solid #0071e3 !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #0071e3 !important;
+  box-shadow: 0 1px 3px rgba(0, 113, 227, 0.15) !important;
+  transition: all 0.18s ease-in-out !important;
+}
+
+.result-entry-highlight-input:focus {
+  background: #ffffff !important;
+  border-color: #005bb5 !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.28) !important;
+  outline: none !important;
+}
+
+.result-flag-select {
+  height: 28px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 0 6px !important;
+  border: 0.5px solid var(--bd) !important;
+  background: #fff !important;
+  cursor: pointer;
+}
+
+.result-flag-select.flag-normal {
+  color: #1a7a32 !important;
+  background: #e9f9ee !important;
+  border-color: rgba(26,122,50,0.3) !important;
+}
+
+.result-flag-select.flag-high, .result-flag-select.flag-low {
+  color: #7a4500 !important;
+  background: #fff4e0 !important;
+  border-color: rgba(122,69,0,0.3) !important;
+}
+
+.result-flag-select.flag-critical {
+  color: #8a1f1a !important;
+  background: #ffebe9 !important;
+  border-color: rgba(138,31,26,0.3) !important;
+}
