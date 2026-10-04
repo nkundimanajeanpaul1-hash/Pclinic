@@ -101,14 +101,7 @@ body.lab-doctor-shell .oc-demo-bar {
 body.lab-doctor-shell #dcBar.dc-bar,
 body.lab-doctor-shell #dcBar,
 body.lab-doctor-shell .dc-bar {
-  display: flex !important;
-  position: relative !important;
-  top: auto !important;
-  z-index: 1 !important;
-  margin: 0 !important;
-  width: 100% !important;
-  clear: both !important;
-  flex-shrink: 0 !important;
+  display: none !important;
 }
 
 /* ═══ NAV TABS — IDENTICAL TO DOCTOR DASHBOARD ═══ */

@@ -74,6 +74,13 @@
     if (ribbon) ribbon.style.display = 'none';
     var subNav = byId('subNav');
     if (subNav) subNav.style.display = 'none';
+    var dcBar = byId('dcBar');
+    if (dcBar) {
+      dcBar.style.display = 'none';
+      if (dcBar.parentNode) dcBar.parentNode.removeChild(dcBar);
+    }
+    var dcCtx = byId('dcCtx');
+    if (dcCtx && dcCtx.parentNode) dcCtx.parentNode.removeChild(dcCtx);
   }
 
   function ensureSharedLabHeader() {
