@@ -4752,6 +4752,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
+                        <button type="button" class="btn-s" onclick="autoFillRoutineNormals()" style="height: 26px; padding: 0 10px; font-size: 11px; border-radius: 6px; font-weight: 600;" title="Auto-fill default normal / negative values">⚡ Fill Normals</button>
+                        <button type="button" class="btn-p" onclick="saveAndSendLabResultsToDoctor()" style="height: 26px; padding: 0 14px; font-size: 11px; border-radius: 6px; font-weight: 700; background: #0071e3; color: #fff; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 5px rgba(0,113,227,0.3);"><i class="ti ti-send"></i> 💾 Save &amp; Send to Doctor</button>
                         <select id="labResultsPatientSelect" class="fi" style="width: auto; height: 26px; padding: 0 8px; font-size: 11px; border-radius: 6px; background: #fff;" onchange="onLabResultsPatientChange(this.value)">
                             <option value="all">👥 All Patients</option>
                         </select>

@@ -494,12 +494,14 @@
       try { window.pcOrders.aggregate(allOrders); } catch(e){}
     }
 
-    // 4. Populate views
-    populateLabResultsPatientSelect();
-    renderRequestedLabsTable();
-    renderVerifiedLabResultsTable();
-    if (activeLabResultsMode === 'entry') {
-      renderResultEntryTable(activeTargetOrderId);
+    // 4. Populate views only if user is NOT actively editing inputs
+    if (!isUserEditingMatrix()) {
+      populateLabResultsPatientSelect();
+      renderRequestedLabsTable();
+      renderVerifiedLabResultsTable();
+      if (activeLabResultsMode === 'entry') {
+        renderResultEntryTable(activeTargetOrderId);
+      }
     }
 
     if (window.pcLabEngine && typeof window.pcLabEngine.repaint === 'function') {
@@ -509,13 +511,14 @@
       try { window.loadPatients(); } catch(e){}
     }
 
-    // 5. Broadcast to Doctor Dashboard & Reception
-    try {
-      window.dispatchEvent(new CustomEvent('ordersUpdated'));
-      window.dispatchEvent(new CustomEvent('labResultsUpdated'));
-      window.dispatchEvent(new CustomEvent('patientsUpdated'));
-      window.dispatchEvent(new Event('storage'));
-    } catch(e){}
+    // 5. Broadcast to Doctor Dashboard & Reception ONLY when new orders arrived
+    if (cloudOrdersCount > 0 || cloudPatientsCount > 0) {
+      try {
+        window.dispatchEvent(new CustomEvent('ordersUpdated'));
+        window.dispatchEvent(new CustomEvent('labResultsUpdated'));
+        window.dispatchEvent(new CustomEvent('patientsUpdated'));
+      } catch(e){}
+    }
 
     var labCount = allOrders.filter(function(o){ return o && (o.dept === 'lab' || o.type === 'lab'); }).length;
     var pendingCount = allOrders.filter(function(o){ return o && (o.dept === 'lab' || o.type === 'lab') && (o.status || '').toLowerCase() === 'pending'; }).length;
@@ -958,6 +961,15 @@
     return day + '/' + mon + '/' + yr;
   }
 
+  function escapeHtml(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function renderMatrixFlowSheet(tableId, mode, targetOrderId) {
     var table = byId(tableId);
     if (!table) return;
@@ -1048,37 +1060,48 @@
         '</td>';
 
         // Column 1: 04/10/2026
+        var draftVal = matrixDraftValues[test.code] != null ? matrixDraftValues[test.code] : '';
+        var dirtyClass = draftVal ? ' dirty' : '';
+
         if (mode === 'entry') {
-          var isRequested = (test.code === '50001' || test.code === '10700-1');
-          if (isRequested) {
-            var quickChips = '';
-            if (test.code === '50001') {
-              quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
-                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'tropho ++++\')">tropho ++++</span>' +
-                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'Negative\')">Negative</span>' +
-              '</div>';
-            } else {
-              quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
-                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'MTB +++\')">MTB +++</span>' +
-                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'No growth\')">No growth</span>' +
-              '</div>';
-            }
-            bodyHtml += '<td class="oc-res-cell" style="padding:4px 6px;background:rgba(0,113,227,0.06);">' +
-              '<input type="text" class="matrix-entry-input" ' +
-                     'data-test-code="' + test.code + '" ' +
-                     'data-test-name="' + test.name + '" ' +
-                     'data-ref-range="' + (test.range || '') + '" ' +
-                     'placeholder="Enter result…" ' +
-                     'value="" ' +
-                     'oninput="this.classList.add(\'dirty\')" />' +
-              quickChips +
+          var isRequested = (test.code === '50001' || test.code === '10700-1' || test.code === '50002');
+          var quickChips = '';
+          if (test.code === '50001') {
+            quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
+              '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'tropho ++++\')">tropho ++++</span>' +
+              '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'Negative\')">Negative</span>' +
+            '</div>';
+          } else if (test.code.indexOf('1070') !== -1 || test.code.indexOf('211') !== -1 || test.code.indexOf('109') !== -1) {
+            quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
+              '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'MTB +++\')">MTB +++</span>' +
+              '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'No growth\')">No growth</span>' +
+            '</div>';
+          } else if (test.range) {
+            quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
+              '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'' + test.range + '\')">' + test.range + '</span>' +
+            '</div>';
+          }
+
+          var bgStyle = isRequested ? 'background:rgba(0,113,227,0.06);' : '';
+          bodyHtml += '<td class="oc-res-cell" style="padding:4px 6px;' + bgStyle + '">' +
+            '<input type="text" class="matrix-entry-input' + dirtyClass + '" ' +
+                   'data-test-code="' + test.code + '" ' +
+                   'data-test-name="' + test.name + '" ' +
+                   'data-ref-range="' + (test.range || '') + '" ' +
+                   'placeholder="Enter result…" ' +
+                   'value="' + escapeHtml(draftVal) + '" ' +
+                   'oninput="onMatrixInputChange(this)" />' +
+            quickChips +
+          '</td>';
+        } else {
+          // Read-only 04/10/2026: exact faint "--" or draft if entered
+          if (draftVal) {
+            bodyHtml += '<td class="oc-res-cell" style="cursor:pointer;" onclick="switchLabResultsMode(\'entry\'); focusTestInput(\'' + test.code + '\')">' +
+              '<span style="font-weight:800;color:#0071e3;">' + escapeHtml(draftVal) + '</span>' +
             '</td>';
           } else {
-            bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
+            bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;cursor:pointer;" onclick="switchLabResultsMode(\'entry\'); focusTestInput(\'' + test.code + '\')" title="Click to enter result">--</td>';
           }
-        } else {
-          // Read-only 04/10/2026: exact faint "--"
-          bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
         }
 
         // Column 2: 06/09/2026
@@ -1114,6 +1137,43 @@
     tbody.innerHTML = bodyHtml;
   }
 
+  /* In-memory draft store to protect entered results from ever disappearing */
+  var matrixDraftValues = {};
+
+  function onMatrixInputChange(inp) {
+    if (!inp) return;
+    inp.classList.add('dirty');
+    var code = inp.getAttribute('data-test-code');
+    if (code) {
+      matrixDraftValues[code] = inp.value;
+    }
+  }
+
+  function focusTestInput(code) {
+    setTimeout(function() {
+      var inp = document.querySelector('.matrix-entry-input[data-test-code="' + code + '"]');
+      if (inp) {
+        inp.focus();
+        inp.select();
+      }
+    }, 60);
+  }
+
+  function isUserEditingMatrix() {
+    if (activeLabResultsMode === 'entry') return true;
+    var activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA')) {
+      return true;
+    }
+    if (Object.keys(matrixDraftValues).length > 0) return true;
+    var inputs = document.querySelectorAll('.matrix-entry-input');
+    for (var i = 0; i < inputs.length; i++) {
+      if (inputs[i].value && inputs[i].value.trim() !== '') return true;
+      if (inputs[i].classList.contains('dirty')) return true;
+    }
+    return false;
+  }
+
   function fillMatrixQuick(btn, val) {
     var cell = btn.closest('td');
     if (!cell) return;
@@ -1121,6 +1181,10 @@
     if (input) {
       input.value = val;
       input.classList.add('dirty');
+      var code = input.getAttribute('data-test-code');
+      if (code) {
+        matrixDraftValues[code] = val;
+      }
       input.focus();
     }
   }
@@ -1133,6 +1197,10 @@
         var range = inp.getAttribute('data-ref-range') || 'Normal';
         inp.value = range;
         inp.classList.add('dirty');
+        var code = inp.getAttribute('data-test-code');
+        if (code) {
+          matrixDraftValues[code] = range;
+        }
         filled++;
       }
     });
@@ -1142,6 +1210,33 @@
   function saveAndSendLabResultsToDoctor() {
     var inputs = document.querySelectorAll('.matrix-entry-input');
     var results = [];
+
+    // Collect from both matrixDraftValues and live DOM inputs
+    Object.keys(matrixDraftValues).forEach(function(code) {
+      var val = (matrixDraftValues[code] || '').trim();
+      if (!val) return;
+      var testObj = null;
+      MATRIX_CATEGORIES.forEach(function(cat) {
+        cat.tests.forEach(function(t) {
+          if (t.code === code) testObj = t;
+        });
+      });
+      if (testObj && !results.some(function(r){ return r.code === code; })) {
+        var flag = 'Normal';
+        if (val.indexOf('++++') !== -1 || val.indexOf('+++') !== -1 || val.toLowerCase().indexOf('high') !== -1 || val.toLowerCase().indexOf('pos') !== -1) {
+          flag = 'High';
+        }
+        results.push({
+          code: code,
+          test: testObj.name,
+          value: val,
+          range: testObj.range || '',
+          flag: flag,
+          verifiedBy: (window.currentStaff && window.currentStaff.name) || 'Laboratory Staff (Technician)',
+          date: new Date().toISOString()
+        });
+      }
+    });
 
     inputs.forEach(function(inp) {
       var val = (inp.value || '').trim();
@@ -1154,19 +1249,21 @@
         flag = 'High';
       }
 
-      results.push({
-        code: code,
-        test: name,
-        value: val,
-        range: range,
-        flag: flag,
-        verifiedBy: (window.currentStaff && window.currentStaff.name) || 'Laboratory Staff (Technician)',
-        date: new Date().toISOString()
-      });
+      if (!results.some(function(r){ return r.code === code; })) {
+        results.push({
+          code: code,
+          test: name,
+          value: val,
+          range: range,
+          flag: flag,
+          verifiedBy: (window.currentStaff && window.currentStaff.name) || 'Laboratory Staff (Technician)',
+          date: new Date().toISOString()
+        });
+      }
     });
 
     if (!results.length) {
-      notify('⚠️ Please enter at least one test measurement in the highlighted column before saving.', 'warning');
+      notify('⚠️ Please enter at least one test measurement before saving.', 'warning');
       return;
     }
 
@@ -1195,6 +1292,9 @@
     if (window.pcOrders && typeof window.pcOrders.saveOrder === 'function' && pendingOrder) {
       try { window.pcOrders.saveOrder(pendingOrder); } catch(e){}
     }
+
+    // Reset draft store after successful release
+    matrixDraftValues = {};
 
     // Live events
     try {
@@ -1241,6 +1341,10 @@
   window.renderRequestedLabsTable = renderRequestedLabsTable;
   window.renderVerifiedLabResultsTable = renderVerifiedLabResultsTable;
   window.renderResultEntryTable = renderResultEntryTable;
+  window.onMatrixInputChange = onMatrixInputChange;
+  window.focusTestInput = focusTestInput;
+  window.isUserEditingMatrix = isUserEditingMatrix;
+  window.matrixDraftValues = matrixDraftValues;
 
 
   function initLabDoctorParity() {
@@ -1281,23 +1385,27 @@
     window.addEventListener('firebaseReady', triggerAutoPull);
     window.addEventListener('pclinicStaffReady', triggerAutoPull);
 
-    // Multi-stage auto-pull and continuous 5-second background sync
-    setTimeout(triggerAutoPull, 100);
-    setTimeout(triggerAutoPull, 600);
-    setTimeout(triggerAutoPull, 1500);
-    setTimeout(triggerAutoPull, 3000);
+    // Multi-stage auto-pull on load and safe 20-second background sync
+    setTimeout(triggerAutoPull, 200);
+    setTimeout(triggerAutoPull, 1200);
     setInterval(function() {
-      pullLabRequestsFromCommonServer(false);
-    }, 5000);
+      if (!isUserEditingMatrix()) {
+        pullLabRequestsFromCommonServer(false);
+      }
+    }, 20000);
 
     window.addEventListener('ordersUpdated', function() {
-      renderRequestedLabsTable();
-      renderVerifiedLabResultsTable();
-      if (activeLabResultsMode === 'entry') renderResultEntryTable(activeTargetOrderId);
+      if (!isUserEditingMatrix()) {
+        renderRequestedLabsTable();
+        renderVerifiedLabResultsTable();
+        if (activeLabResultsMode === 'entry') renderResultEntryTable(activeTargetOrderId);
+      }
     });
 
     window.addEventListener('patientsUpdated', function() {
-      pullLabRequestsFromCommonServer(false);
+      if (!isUserEditingMatrix()) {
+        pullLabRequestsFromCommonServer(false);
+      }
     });
 
     window.setTimeout(queueDoctorParityClasses, 60);
