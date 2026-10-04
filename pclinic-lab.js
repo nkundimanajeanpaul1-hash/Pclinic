@@ -346,17 +346,18 @@
                 });
             }
         } catch (e) {
-            console.warn('Unable to load server-confirmed lab orders:', e);
             list = [];
         }
-        if (!list || !list.length) {
-            try {
-                var raw = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
-                list = raw.filter(function(o) {
-                    return o && (o.dept === 'lab' || o.type === 'lab') && !o._syncFailed;
-                });
-            } catch(e){}
-        }
+        try {
+            var raw = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
+            var rawLab = raw.filter(function(o) {
+                return o && (o.dept === 'lab' || o.type === 'lab') && !o._syncFailed;
+            });
+            rawLab.forEach(function(ro) {
+                var exists = list.some(function(lo) { return String(lo.id) === String(ro.id); });
+                if (!exists) list.push(ro);
+            });
+        } catch(e){}
         return list.filter(function(o) {
             return normaliseOrderStatus(o.status) !== 'cancelled';
         });

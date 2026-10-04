@@ -4284,7 +4284,6 @@
                                     <span>🧪</span> <span>Today's laboratory queue</span>
                                 </div>
                                 <div style="display: flex; gap: 6px; align-items: center;">
-                                    <button type="button" class="btn-p" onclick="pullLabRequestsFromCommonServer(true)" style="height: 26px; padding: 0 10px; font-size: 11px; font-weight: 700; background: #0071e3; color: #fff; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,113,227,0.25); cursor: pointer;"><i class="ti ti-cloud-download"></i> 📥 Pull from Common Server</button>
                                     <select class="fi" style="width: auto; height: 26px; padding: 0 8px; font-size: 11px; border-radius: 6px; background: #fff;" id="statusFilter" onchange="renderPatientTable()">
                                         <option value="all">All Status</option>
                                         <option value="active">Active</option>
@@ -4501,9 +4500,6 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <button type="button" class="btn-p" onclick="pullLabRequestsFromCommonServer(true)" id="btnPullCommonServerResults" style="height: 26px; padding: 0 12px; font-size: 11px; font-weight: 700; background: #0071e3; color: #fff; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,113,227,0.25);">
-                            <i class="ti ti-cloud-download"></i> 📥 Pull from Common Server
-                        </button>
                         <select id="labResultsPatientSelect" class="fi" style="width: auto; height: 26px; padding: 0 8px; font-size: 11px; border-radius: 6px; background: #fff;" onchange="onLabResultsPatientChange(this.value)">
                             <option value="all">All Patients</option>
                         </select>
@@ -5478,13 +5474,43 @@ function renderPatientTable(patients) {
             return td;
         }
         
-        // 1. Name
         // 1. Name (Bold uppercase matching screenshot 100/100)
         var nameTd = cell('');
         var strong = document.createElement('strong');
         strong.style.cssText = 'font-weight:700; color:#000; text-transform:uppercase;';
         strong.textContent = ((p.firstName || '') + ' ' + (p.lastName || '')).trim().toUpperCase();
         nameTd.appendChild(strong);
+
+        // Requested lab tests for this patient from Common Server & orders
+        var labReqs = Array.isArray(p.labRequests) ? p.labRequests : [];
+        var allReqTests = [];
+        var hasPendingLab = false;
+        labReqs.forEach(function(r) {
+            var t = Array.isArray(r.tests) ? r.tests.join(', ') : (r.testName || r.test || 'Lab Test');
+            if (t && allReqTests.indexOf(t) === -1) allReqTests.push(t);
+            if (String(r.status || 'pending').toLowerCase() !== 'completed') hasPendingLab = true;
+        });
+        try {
+            var allO = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
+            allO.forEach(function(o) {
+                if (String(o.patientId).replace(/^MOD-/i, '') === String(p.id).replace(/^MOD-/i, '') && (o.dept === 'lab' || o.type === 'lab')) {
+                    var items = (o.items || []).map(function(it){ return it.name; }).join(', ');
+                    if (items && allReqTests.indexOf(items) === -1) allReqTests.push(items);
+                    if (String(o.status || 'pending').toLowerCase() !== 'completed') hasPendingLab = true;
+                }
+            });
+        } catch(e){}
+
+        if (allReqTests.length > 0) {
+            var reqDiv = document.createElement('div');
+            reqDiv.style.cssText = 'margin-top:3px; font-size:11px; font-weight:700; color:#0071e3; display:flex; align-items:center; gap:5px; flex-wrap:wrap;';
+            var pill = document.createElement('span');
+            pill.style.cssText = 'background:#eef6ff; border:0.5px solid rgba(0,113,227,0.3); border-radius:6px; padding:1px 6px; display:inline-flex; align-items:center; gap:4px;';
+            pill.innerHTML = '🧪 <span style="color:#0071e3;">' + allReqTests.join(', ') + '</span>' + 
+                (hasPendingLab ? ' <span style="background:#fff4e0;color:#7a4500;padding:0 5px;border-radius:8px;font-size:9.5px;font-weight:700;">Pending</span>' : ' <span style="background:#e9f9ee;color:#1a7a32;padding:0 5px;border-radius:8px;font-size:9.5px;font-weight:700;">Verified</span>');
+            reqDiv.appendChild(pill);
+            nameTd.appendChild(reqDiv);
+        }
         row.appendChild(nameTd);
         
         // 2. MRN (clean plain text e.g. 1002, 1001)
@@ -5505,7 +5531,7 @@ function renderPatientTable(patients) {
         // 6. Status (clean plain text e.g. active)
         row.appendChild(cell(pcSafeStatus(p.status)));
         
-        // 7. Actions (View & Results)
+        // 7. Actions (View, Results, Enter)
         var actions = document.createElement('td');
         var view = document.createElement('button');
         view.type = 'button';
@@ -5524,6 +5550,7 @@ function renderPatientTable(patients) {
         resultsBtn.addEventListener('click', function(e){
             e.stopPropagation();
             selectPatient(p.id);
+            if (typeof switchLabResultsMode === 'function') switchLabResultsMode('results');
             if (typeof switchTab === 'function') {
                 switchTab('results');
             } else if (typeof labQuickAction === 'function') {
@@ -5533,6 +5560,21 @@ function renderPatientTable(patients) {
         
         actions.appendChild(view);
         actions.appendChild(resultsBtn);
+
+        if (hasPendingLab) {
+            var enterBtn = document.createElement('button');
+            enterBtn.type = 'button';
+            enterBtn.className = 'btn-p';
+            enterBtn.style.cssText = 'height:24px; padding:0 8px; font-size:10.5px; font-weight:700; background:#0071e3; color:#fff; border-radius:5px; border:none; margin-left:4px; cursor:pointer;';
+            enterBtn.innerHTML = '<i class="ti ti-pencil"></i> Enter';
+            enterBtn.addEventListener('click', function(e){
+                e.stopPropagation();
+                selectPatient(p.id);
+                if (typeof switchLabResultsMode === 'function') switchLabResultsMode('entry');
+                if (typeof switchTab === 'function') switchTab('results');
+            });
+            actions.appendChild(enterBtn);
+        }
         row.appendChild(actions);
         
         tbody.appendChild(row);

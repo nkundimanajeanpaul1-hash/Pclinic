@@ -198,9 +198,14 @@
         // is NOT currently being pushed to Firestore and hasn't already
         // failed to push (in which case the UI is showing a retry banner
         // for it — discarding it here would hide that failure entirely).
+        // Lab orders derived from Common Server patient.labRequests are preserved.
         var localOnly = localList.filter(function (d) { return !cloudIds[String(d.id)]; });
-        var keep = localOnly.filter(function (d) { return isPending(d.id) || d._syncFailed; });
-        var discard = localOnly.filter(function (d) { return !isPending(d.id) && !d._syncFailed; });
+        var keep = localOnly.filter(function (d) {
+            return isPending(d.id) || d._syncFailed || d._commonServerPulled || d.fromLabRequest || (d.dept === 'lab' && d.items && d.items.length);
+        });
+        var discard = localOnly.filter(function (d) {
+            return !isPending(d.id) && !d._syncFailed && !d._commonServerPulled && !d.fromLabRequest && !(d.dept === 'lab' && d.items && d.items.length);
+        });
 
         if (discard.length) {
             console.warn('[pclinic] discarding ' + discard.length + ' unverified local-only ' + key + ' record(s)');

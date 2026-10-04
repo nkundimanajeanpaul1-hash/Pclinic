@@ -341,14 +341,23 @@
 
     // Scan every patient in pclinic_patients and aggregate their labRequests
     patients.forEach(function(p) {
-      if (!p || !Array.isArray(p.labRequests) || !p.labRequests.length) return;
+      if (!p) return;
+      var reqList = [].concat(p.labRequests || [], p.labOrders || []);
+      if (!reqList.length) return;
       var pIdStr = String(p.id).replace(/^MOD-/i, '').trim();
       var pName = (p.name || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || ('Patient #' + pIdStr)).trim();
 
-      p.labRequests.forEach(function(req, idx) {
+      reqList.forEach(function(req, idx) {
         if (!req) return;
         var reqId = String(req.orderId || req.id || ('ORD-REQ-' + pIdStr + '-' + idx));
-        var tests = Array.isArray(req.tests) ? req.tests.filter(Boolean) : [req.testName || req.test || req.item || 'Lab Examination'].filter(Boolean);
+        var tests = [];
+        if (Array.isArray(req.tests)) {
+          tests = req.tests.map(function(t){ return typeof t === 'string' ? t : (t.name || t.test); }).filter(Boolean);
+        } else if (Array.isArray(req.items)) {
+          tests = req.items.map(function(it){ return typeof it === 'string' ? it : (it.name || it.test); }).filter(Boolean);
+        } else if (req.testName || req.test || req.item) {
+          tests = [req.testName || req.test || req.item].filter(Boolean);
+        }
         if (!tests.length) return;
 
         var existing = orders.find(function(o) {
@@ -1275,22 +1284,35 @@
       queueDoctorParityClasses();
     });
 
-    // Auto pull requested labs from Common Server
-    setTimeout(function() { pullLabRequestsFromCommonServer(false); }, 150);
-
-    window.addEventListener('firebaseReady', function() {
+    function triggerAutoPull() {
       pullLabRequestsFromCommonServer(false);
       setupCommonServerLabRealtimeSync();
-    });
+    }
 
-    window.addEventListener('pclinicStaffReady', function() {
+    // Auto pull requested labs from Common Server
+    if (window.firebaseReady || window.firebaseDB) {
+      triggerAutoPull();
+    }
+    window.addEventListener('firebaseReady', triggerAutoPull);
+    window.addEventListener('pclinicStaffReady', triggerAutoPull);
+
+    // Multi-stage auto-pull and continuous 5-second background sync
+    setTimeout(triggerAutoPull, 100);
+    setTimeout(triggerAutoPull, 600);
+    setTimeout(triggerAutoPull, 1500);
+    setTimeout(triggerAutoPull, 3000);
+    setInterval(function() {
       pullLabRequestsFromCommonServer(false);
-    });
+    }, 5000);
 
     window.addEventListener('ordersUpdated', function() {
       renderRequestedLabsTable();
       renderVerifiedLabResultsTable();
       if (activeLabResultsMode === 'entry') renderResultEntryTable(activeTargetOrderId);
+    });
+
+    window.addEventListener('patientsUpdated', function() {
+      pullLabRequestsFromCommonServer(false);
     });
 
     window.setTimeout(queueDoctorParityClasses, 60);
@@ -1308,6 +1330,9 @@
   window.labQuickAction = labQuickAction;
   window.pullLabRequestsFromCommonServer = pullLabRequestsFromCommonServer;
   window.labRefreshOverviewQueue = function () {
-    pullLabRequestsFromCommonServer(true);
+    pullLabRequestsFromCommonServer(false);
+    refreshLabQueue();
+    if (typeof window.loadPatients === 'function') window.loadPatients();
+    notify('🔄 Laboratory queue refreshed', 'info');
   };
 })();
