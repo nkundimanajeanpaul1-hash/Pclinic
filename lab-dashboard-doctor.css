@@ -188,55 +188,65 @@ body.lab-doctor-shell .nav-tab.active .ncnt {
   color: #fff !important;
 }
 
-/* ═══ SEARCH ROW & KPIS — IDENTICAL TO DOCTOR DASHBOARD ═══ */
-body.lab-doctor-shell .search-row {
-  background: rgba(255, 255, 255, 0.5) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-  border-bottom: 0.5px solid var(--bd) !important;
-  padding: 10px 24px !important;
+/* ═══ SEARCH ROW & KPIS — ULTRA-THIN STREAMLINED DESIGN ═══ */
+body.lab-doctor-shell .search-row,
+html body .search-row {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  padding: 3px 14px !important;
+  min-height: 32px !important;
+  height: 32px !important;
   display: flex !important;
   align-items: center !important;
-  gap: 12px !important;
-  flex-wrap: wrap !important;
-  margin: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+  margin: 4px 16px 6px 16px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
 }
 
 body.lab-doctor-shell .search-row .search-wrap,
-body.lab-doctor-shell .search-row .sw {
+body.lab-doctor-shell .search-row .sw,
+html body .search-row .search-wrap,
+html body .search-row .sw {
   position: relative !important;
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
-  background: rgba(255, 255, 255, 0.6) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-  border: 0.5px solid var(--bd) !important;
-  border-radius: 20px !important;
-  padding: 6px 14px !important;
-  min-height: auto !important;
+  gap: 6px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.09) !important;
+  border-radius: 6px !important;
+  padding: 0 8px !important;
+  height: 24px !important;
+  min-height: 24px !important;
   flex: 1 !important;
-  min-width: 200px !important;
+  min-width: 160px !important;
   box-shadow: none !important;
   transition: all 0.2s !important;
 }
 
 body.lab-doctor-shell .search-row .search-wrap:focus-within,
 body.lab-doctor-shell .search-row .sw:focus-within {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border-color: var(--ac) !important;
-  box-shadow: 0 0 0 3px var(--acl) !important;
+  background: #ffffff !important;
+  border-color: var(--ac, #0071e3) !important;
+  box-shadow: 0 0 0 2px rgba(0,113,227,0.12) !important;
 }
 
 body.lab-doctor-shell .search-row input,
-body.lab-doctor-shell #searchInput {
+body.lab-doctor-shell #searchInput,
+html body .search-row input,
+html body #searchInput {
   border: none !important;
   background: transparent !important;
   outline: none !important;
-  font-size: 13px !important;
-  color: var(--tp) !important;
+  font-size: 11px !important;
+  height: 22px !important;
+  line-height: 22px !important;
+  color: var(--tp, #1c1c1e) !important;
   width: 100% !important;
   font-family: inherit !important;
   box-shadow: none !important;
@@ -244,44 +254,60 @@ body.lab-doctor-shell #searchInput {
 
 body.lab-doctor-shell .search-row input::placeholder,
 body.lab-doctor-shell #searchInput::placeholder {
-  color: var(--tm) !important;
+  color: var(--tm, #8e8e93) !important;
   opacity: 0.75;
 }
 
-body.lab-doctor-shell .search-row i {
-  font-size: 14px !important;
-  color: var(--tm) !important;
+body.lab-doctor-shell .search-row i,
+html body .search-row i {
+  font-size: 11px !important;
+  color: var(--tm, #8e8e93) !important;
 }
 
-body.lab-doctor-shell .kpis {
+body.lab-doctor-shell .kpis,
+html body .kpis {
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  flex-wrap: wrap !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+  margin: 0 !important;
 }
 
-body.lab-doctor-shell .kpi {
-  display: flex !important;
+body.lab-doctor-shell .kpi,
+html body .kpi,
+body.lab-doctor-shell .kpis button,
+html body .kpis button {
+  display: inline-flex !important;
   align-items: center !important;
-  gap: 5px !important;
-  padding: 5px 12px !important;
-  border: 0.5px solid var(--bd) !important;
-  border-radius: 20px !important;
+  gap: 4px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  padding: 0 8px !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 6px !important;
   cursor: pointer !important;
-  background: rgba(255, 255, 255, 0.5) !important;
-  backdrop-filter: blur(4px) !important;
-  -webkit-backdrop-filter: blur(4px) !important;
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  color: var(--tp) !important;
-  transition: all 0.2s var(--spring) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  color: var(--tp, #1c1c1e) !important;
   box-shadow: none !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
 }
 
-body.lab-doctor-shell .kpi:hover {
-  background: rgba(255, 255, 255, 0.9) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: var(--shadow) !important;
+body.lab-doctor-shell .kpi:hover,
+html body .kpi:hover,
+body.lab-doctor-shell .kpis button:hover,
+html body .kpis button:hover {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.16) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.lab-doctor-shell .kpi i,
+html body .kpi i {
+  font-size: 11px !important;
 }
 
 body.lab-doctor-shell .kpi:active {
@@ -302,8 +328,8 @@ body.lab-doctor-shell .kpi-num { font-weight: 700 !important; font-size: 13px !i
 
 /* ═══ CONTENT AREA — IDENTICAL TO DOCTOR DASHBOARD ═══ */
 body.lab-doctor-shell .content-area {
-  padding: 0 24px 16px 24px !important;
-  gap: 16px !important;
+  padding: 4px 16px 16px 16px !important;
+  gap: 8px !important;
 }
 
 body.lab-doctor-shell .main-panel {
