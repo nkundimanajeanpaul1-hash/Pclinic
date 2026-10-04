@@ -5387,21 +5387,23 @@ function renderPatientTable(patients) {
             selectPatient(p.id);
         });
         
-        var note = document.createElement('button');
-        note.type = 'button';
-        note.className = 'btn-s';
-        note.textContent = 'Note';
-        note.style.marginLeft = '4px';
-        note.addEventListener('click', function(e){
+        var resultsBtn = document.createElement('button');
+        resultsBtn.type = 'button';
+        resultsBtn.className = 'btn-s';
+        resultsBtn.textContent = 'Results';
+        resultsBtn.style.marginLeft = '4px';
+        resultsBtn.addEventListener('click', function(e){
             e.stopPropagation();
             selectPatient(p.id);
-            if (typeof pcQuick === 'function') pcQuick('clinical-note.html');
-            else if (window.pcFile && typeof window.pcFile.openClinicalNote === 'function') window.pcFile.openClinicalNote();
-            else location.href = 'clinical-note.html?patient=' + encodeURIComponent(p.id);
+            if (typeof switchTab === 'function') {
+                switchTab('results');
+            } else if (typeof labQuickAction === 'function') {
+                labQuickAction('results');
+            }
         });
         
         actions.appendChild(view);
-        actions.appendChild(note);
+        actions.appendChild(resultsBtn);
         row.appendChild(actions);
         
         tbody.appendChild(row);
