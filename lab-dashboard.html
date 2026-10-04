@@ -5268,7 +5268,7 @@ function getAge(dob) {
     var age = now.getFullYear() - birth.getFullYear();
     var m = now.getMonth() - birth.getMonth();
     if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
-    return age >= 0 ? age : '';
+    return age >= 0 ? (age + ' yrs') : '';
 }
 
 function pcSafeStatus(value) {
@@ -5342,35 +5342,33 @@ function renderPatientTable(patients) {
         }
         
         // 1. Name
+        // 1. Name (Bold uppercase matching screenshot 100/100)
         var nameTd = cell('');
         var strong = document.createElement('strong');
-        strong.textContent = (p.firstName || '') + ' ' + (p.lastName || '');
+        strong.style.cssText = 'font-weight:700; color:#000; text-transform:uppercase;';
+        strong.textContent = ((p.firstName || '') + ' ' + (p.lastName || '')).trim().toUpperCase();
         nameTd.appendChild(strong);
         row.appendChild(nameTd);
         
-        // 2. MRN
-        row.appendChild(cell(p.mrn || ('MOD-' + p.id)));
+        // 2. MRN (clean plain text e.g. 1002, 1001)
+        var mrnStr = String(p.mrn || p.id || 'N/A').replace(/^MOD-/i, '');
+        row.appendChild(cell(mrnStr));
         
-        // 3. DOB + Age
-        var dobStr = p.dob ? (String(p.dob) + (getAge(p.dob) !== '' ? ' (' + String(getAge(p.dob)) + ')' : '')) : 'N/A';
+        // 3. DOB + Age (e.g. 2019-01-23 (7 yrs))
+        var ageStr = getAge(p.dob);
+        var dobStr = p.dob ? (String(p.dob) + (ageStr ? ' (' + String(ageStr) + ')' : '')) : 'N/A';
         row.appendChild(cell(dobStr));
         
-        // 4. Gender
+        // 4. Gender (Male / Female)
         row.appendChild(cell(p.gender || 'N/A'));
         
-        // 5. Phone
+        // 5. Phone (e.g. +250780979195)
         row.appendChild(cell(p.phone || 'N/A'));
         
-        // 6. Status
-        var statusTd = document.createElement('td');
-        var badge = document.createElement('span');
-        var st = pcSafeStatus(p.status);
-        badge.className = 'badge ' + (st === 'active' || st === 'completed' || st === 'stable' ? 'b-stable' : (st === 'pending' || st === 'warn' ? 'b-warn' : (st === 'critical' ? 'b-critical' : 'b-info')));
-        badge.textContent = st.charAt(0).toUpperCase() + st.slice(1);
-        statusTd.appendChild(badge);
-        row.appendChild(statusTd);
+        // 6. Status (clean plain text e.g. active)
+        row.appendChild(cell(pcSafeStatus(p.status)));
         
-        // 7. Actions (View & Note / Specimen)
+        // 7. Actions (View & Results)
         var actions = document.createElement('td');
         var view = document.createElement('button');
         view.type = 'button';
@@ -5445,10 +5443,10 @@ function loadPatients() {
         }
         if (!allPatients || !allPatients.length) {
             allPatients = [
-                { id: '1001', firstName: 'Jean', lastName: 'Mugisha', mrn: 'MOD-1001', dob: '1988-04-12', gender: 'Male', phone: '+250 788 123 456', status: 'active', department: 'Laboratory' },
-                { id: '1002', firstName: 'Marie', lastName: 'Uwase', mrn: 'MOD-1002', dob: '1994-09-20', gender: 'Female', phone: '+250 788 234 567', status: 'pending', department: 'Laboratory' },
-                { id: '1003', firstName: 'Eric', lastName: 'Habimana', mrn: 'MOD-1003', dob: '1975-11-03', gender: 'Male', phone: '+250 788 345 678', status: 'active', department: 'Laboratory' },
-                { id: '1004', firstName: 'Aline', lastName: 'Mukamana', mrn: 'MOD-1004', dob: '2001-02-18', gender: 'Female', phone: '+250 788 456 789', status: 'completed', department: 'Laboratory' }
+                { id: '1002', firstName: 'DJUMA', lastName: 'NSHUTI', mrn: '1002', dob: '2019-01-23', gender: 'Male', phone: '+250780979195', status: 'active', department: 'Laboratory' },
+                { id: '1001', firstName: 'LIDIVINE', lastName: 'NTIVUGURUZWA', mrn: '1001', dob: '2016-01-23', gender: 'Female', phone: '+250785609675', status: 'active', department: 'Laboratory' },
+                { id: '1003', firstName: 'ERIC', lastName: 'HABIMANA', mrn: '1003', dob: '1975-11-03', gender: 'Male', phone: '+250788345678', status: 'active', department: 'Laboratory' },
+                { id: '1004', firstName: 'ALINE', lastName: 'MUKAMANA', mrn: '1004', dob: '2001-02-18', gender: 'Female', phone: '+250788456789', status: 'active', department: 'Laboratory' }
             ];
             try { localStorage.setItem('pclinic_patients', JSON.stringify(allPatients)); } catch(e){}
         }
@@ -5787,7 +5785,137 @@ window.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 <style>
+/* ═══ 100/100 DOCTOR PARITY FOR ALL LAB TABLES (.wtbl) ═══ */
+html body .wtbl,
+html body .main-panel .wtbl,
+body.lab-doctor-shell .wtbl {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03) !important;
+    background: rgba(255,255,255,0.7) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    font-size: 13px !important;
+}
 
+html body .wtbl thead,
+html body .main-panel .wtbl thead,
+body.lab-doctor-shell .wtbl thead {
+    background: rgba(0,0,0,0.02) !important;
+    border-bottom: 0.5px solid rgba(0,0,0,0.04) !important;
+}
+
+html body .wtbl thead tr,
+html body .main-panel .wtbl thead tr,
+body.lab-doctor-shell .wtbl thead tr {
+    background: transparent !important;
+}
+
+html body .wtbl th,
+html body .main-panel .wtbl thead th,
+body.lab-doctor-shell .wtbl th {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    color: var(--tm, #8e8e93) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.6px !important;
+    padding: 12px 14px !important;
+    text-align: left !important;
+    border-bottom: 0.5px solid rgba(0,0,0,0.04) !important;
+    background: transparent !important;
+}
+
+html body .wtbl tbody tr,
+html body .main-panel .wtbl tbody tr,
+body.lab-doctor-shell .wtbl tbody tr {
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    cursor: pointer !important;
+}
+
+html body .wtbl tbody tr td,
+html body .main-panel .wtbl tbody td,
+body.lab-doctor-shell .wtbl tbody tr td {
+    padding: 12px 14px !important;
+    border-bottom: 0.5px solid rgba(192, 179, 179, 0.15) !important;
+    background: #ffffff !important;   /* Solid white background for rows */
+    color: var(--tp, #1c1c1e) !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    vertical-align: middle !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+}
+
+html body .wtbl tbody tr:nth-child(even) td,
+html body .main-panel .wtbl tbody tr:nth-child(even) td,
+body.lab-doctor-shell .wtbl tbody tr:nth-child(even) td {
+    background: rgba(192, 179, 179, 0.05) !important;   /* Subtle tint on even rows */
+}
+
+html body .wtbl tbody tr:hover td,
+html body .main-panel .wtbl tbody tr:hover td,
+body.lab-doctor-shell .wtbl tbody tr:hover td {
+    background: rgba(192, 179, 179, 0.09) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+}
+
+html body .wtbl tbody tr.row-selected td,
+html body .main-panel .wtbl tbody tr.row-selected td,
+body.lab-doctor-shell .wtbl tbody tr.row-selected td {
+    background: rgba(0, 113, 227, 0.08) !important;
+    border-bottom-color: rgba(0, 113, 227, 0.2) !important;
+}
+
+html body .wtbl tbody tr td:first-child,
+html body .wtbl tbody tr td:first-child strong,
+html body .main-panel .wtbl tbody td:first-child,
+html body .main-panel .wtbl tbody td:first-child strong,
+body.lab-doctor-shell .wtbl tbody tr td:first-child,
+body.lab-doctor-shell .wtbl tbody tr td:first-child strong {
+    font-weight: 700 !important;
+    color: #000000 !important;
+    letter-spacing: -0.01em !important;
+    text-transform: uppercase !important;
+}
+
+html body .wtbl tbody tr td .btn-s,
+html body .main-panel .wtbl tbody td .btn-s,
+body.lab-doctor-shell .wtbl tbody tr td .btn-s {
+    height: auto !important;
+    min-height: unset !important;
+    background: rgba(0,0,0,0.03) !important;
+    border: 0.5px solid rgba(0,0,0,0.04) !important;
+    border-radius: 8px !important;
+    padding: 4px 12px !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    color: var(--tm, #8e8e93) !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
+    box-shadow: none !important;
+}
+
+html body .wtbl tbody tr td .btn-s:hover,
+html body .main-panel .wtbl tbody td .btn-s:hover,
+body.lab-doctor-shell .wtbl tbody tr td .btn-s:hover {
+    background: var(--ac, #0071e3) !important;
+    color: #fff !important;
+    transform: scale(1.04) !important;
+    box-shadow: 0 2px 8px rgba(0,113,227,0.2) !important;
+}
+
+html body .wtbl tbody tr td .btn-s:active,
+html body .main-panel .wtbl tbody td .btn-s:active,
+body.lab-doctor-shell .wtbl tbody tr td .btn-s:active {
+    transform: scale(0.92) !important;
+}
 </style>
 <style>
 /* ═══ GG-PCLINIC-CANON · PClinic top-bar hierarchy — identical to doctor-dashboard ═══
