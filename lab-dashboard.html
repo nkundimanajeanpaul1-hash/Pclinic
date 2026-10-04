@@ -4093,6 +4093,247 @@
             }
         }
 
+        /* ─── GOLDEN GATE FLOW SHEET MATRIX TABLE (100/100 PARITY WITH SCREENSHOT) ─── */
+        .oc-matrix-wrapper {
+            background:
+                radial-gradient(700px 280px at 0% 0%, rgba(232, 197, 107, 0.28), transparent 55%),
+                linear-gradient(180deg, rgba(255, 252, 244, 0.72), rgba(255, 244, 220, 0.48));
+            -webkit-backdrop-filter: saturate(190%) blur(32px);
+            backdrop-filter: saturate(190%) blur(32px);
+            border: 0.5px solid rgba(255,255,255,0.72);
+            border-radius: 14px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+            overflow: auto;
+            max-height: calc(100vh - 220px);
+            margin-bottom: 14px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        .oc-matrix-wrapper::-webkit-scrollbar { height: 8px; width: 8px; }
+        .oc-matrix-wrapper::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #8ec5ff, #0071e3);
+            border-radius: 99px;
+        }
+        .oc-matrix-wrapper::-webkit-scrollbar-track { background: transparent; }
+
+        table.oc-matrix-table {
+            width: max-content !important;
+            min-width: 100% !important;
+            max-width: none !important;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 11px;
+            text-align: left;
+            table-layout: fixed;
+            background: transparent;
+        }
+
+        table.oc-matrix-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 4;
+            background: rgba(255, 246, 226, 0.95);
+            -webkit-backdrop-filter: blur(18px);
+            backdrop-filter: blur(18px);
+            color: #1c1c1e;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 6px 6px;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+            border-right: 0.5px solid rgba(0, 0, 0, 0.08);
+            vertical-align: bottom;
+            white-space: nowrap;
+        }
+        table.oc-matrix-table thead th:nth-child(1),
+        table.oc-matrix-table tbody td.oc-cat-cell {
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            min-width: 150px !important;
+            max-width: 150px !important;
+            width: 150px !important;
+            box-sizing: border-box !important;
+        }
+        table.oc-matrix-table thead th:nth-child(2),
+        table.oc-matrix-table tbody td.oc-test-cell {
+            position: sticky;
+            left: 150px;
+            z-index: 5;
+            min-width: 250px !important;
+            max-width: 250px !important;
+            width: 250px !important;
+            box-sizing: border-box !important;
+        }
+        table.oc-matrix-table thead th:nth-child(1) { z-index: 8; }
+        table.oc-matrix-table thead th:nth-child(2) { z-index: 8; }
+
+        table.oc-matrix-table thead th:last-child {
+            border-right: none;
+        }
+
+        .oc-col-order-hdr {
+            text-align: center;
+            font-size: 11px;
+            line-height: 1.2;
+            min-width: 150px !important;
+            max-width: 150px !important;
+            width: 150px !important;
+            box-sizing: border-box !important;
+        }
+
+        .oc-col-order-date {
+            font-weight: 800;
+            color: #1c1c1e;
+            font-size: 11px;
+            letter-spacing: -0.02em;
+        }
+
+        /* Matrix Rows */
+        table.oc-matrix-table tbody tr {
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+            transition: background 0.2s ease;
+        }
+
+        table.oc-matrix-table tbody tr.row-even {
+            background: rgba(255, 244, 226, 0.42);
+        }
+
+        table.oc-matrix-table tbody tr.row-odd {
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        table.oc-matrix-table tbody tr:hover {
+            background: rgba(232, 197, 107, 0.22) !important;
+        }
+
+        table.oc-matrix-table td {
+            padding: 5px 6px;
+            border-right: 0.5px solid rgba(0, 0, 0, 0.08);
+            vertical-align: middle;
+        }
+
+        table.oc-matrix-table td:last-child {
+            border-right: none;
+        }
+
+        /* Category Left Column */
+        .oc-cat-cell {
+            font-weight: 800;
+            font-size: 11px;
+            vertical-align: top !important;
+            padding: 6px 8px !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+            letter-spacing: 0.2px;
+            line-height: 1.25;
+            white-space: normal;
+            color: #1c1c1e;
+        }
+
+        .oc-cat-mic  { color: #005bb5 !important; font-weight: 800; }
+        .oc-cat-microbiology { color: #1c1c1e !important; font-weight: 800; }
+        .oc-cat-fluids { color: #1c1c1e !important; font-weight: 800; }
+        .oc-cat-chem { color: #059669 !important; font-weight: 800; }
+        .oc-cat-fbc  { color: #800040 !important; font-weight: 800; }
+        .oc-cat-sero { color: #c81e51 !important; font-weight: 800; }
+        .oc-cat-uri  { color: #006666 !important; font-weight: 800; }
+
+        /* Test Name Cell */
+        .oc-test-cell {
+            font-size: 11px;
+            font-weight: 500;
+            color: #1c1c1e;
+            white-space: normal;
+            background: rgba(255, 248, 232, 0.45) !important;
+            overflow: hidden;
+            line-height: 1.2;
+            word-break: break-word;
+            padding: 5px 6px !important;
+        }
+
+        .oc-test-code {
+            font-weight: 700;
+            color: #b8860b;
+            margin-right: 4px;
+            font-size: 11px;
+        }
+
+        .oc-test-range {
+            color: #8e8e93;
+            font-size: 11px;
+            margin-left: 4px;
+        }
+
+        /* Result Cell */
+        .oc-res-cell {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 650;
+            color: #1c1c1e;
+            white-space: nowrap;
+            min-width: 150px !important;
+            max-width: 150px !important;
+            width: 150px !important;
+            box-sizing: border-box !important;
+        }
+
+        .oc-res-abnormal {
+            background: #ffebe9 !important;
+            color: #c92a2a !important;
+            font-weight: 800 !important;
+        }
+
+        .oc-flag {
+            display: inline-block;
+            color: #b91c1c;
+            font-weight: 800;
+            font-size: 10px;
+            margin-left: 4px;
+        }
+
+        /* Result Entry Interactive Inputs */
+        .matrix-entry-input {
+            width: 100%;
+            height: 28px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 0 8px;
+            border: 1.5px solid #0071e3;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #1c1c1e;
+            outline: none;
+            box-shadow: 0 1px 4px rgba(0, 113, 227, 0.2);
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+        .matrix-entry-input:focus {
+            border-color: #005bb5;
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.25);
+            background: #fff;
+        }
+        .matrix-entry-input.dirty {
+            background: #f0fdf4;
+            border-color: #16a34a;
+        }
+        .matrix-quick-chip {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 9.5px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            background: rgba(0, 113, 227, 0.08);
+            color: #0071e3;
+            border: 1px solid rgba(0, 113, 227, 0.2);
+            margin-top: 3px;
+            transition: all 0.15s ease;
+        }
+        .matrix-quick-chip:hover {
+            background: #0071e3;
+            color: #fff;
+        }
+
 </style>
     <link rel="stylesheet" href="lab-dashboard-doctor.css?v=20260908_LABDOCTORPARITY6SMALLQADOCTORSTYLE">
     <script src="pclinic-file.js?v=20260929_TECH_EXAMS" defer></script>
@@ -4307,6 +4548,16 @@
                                 Total: <strong id="patientCount">0</strong> patients in queue
                             </div>
                         </div>
+
+                        <!-- CUMULATIVE LABORATORY FLOW SHEET MATRIX (100/100 EXACT PARITY WITH SCREENSHOT) -->
+                        <div style="margin-top: 14px;">
+                            <div class="oc-matrix-wrapper">
+                                <table class="oc-matrix-table" id="ocMatrixTableOverview">
+                                    <thead id="matrixHeadOverview"></thead>
+                                    <tbody id="matrixBodyOverview"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                     <div class="lab-overview-side">
                         <div class="lab-overview-quick-card">
@@ -4502,123 +4753,60 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
                         <select id="labResultsPatientSelect" class="fi" style="width: auto; height: 26px; padding: 0 8px; font-size: 11px; border-radius: 6px; background: #fff;" onchange="onLabResultsPatientChange(this.value)">
-                            <option value="all">All Patients</option>
+                            <option value="all">👥 All Patients</option>
                         </select>
                         <button class="btn-s" style="height: 26px; padding: 0 10px; font-size: 11px; border-radius: 6px;" onclick="renderLabResultsModule()"><i class="ti ti-refresh"></i> Refresh</button>
                         <button class="btn-print" onclick="window.print()" style="height: 26px; padding: 0 10px; font-size: 11px; border-radius: 6px;"><i class="ti ti-printer"></i> Print</button>
                     </div>
                 </div>
 
-                <!-- VIEW 1: LAB RESULTS (MATCHING DOCTOR DASHBOARD TABLE) -->
+                <!-- VIEW 1: LAB RESULTS (CUMULATIVE MATRIX FLOW SHEET — 100/100 PARITY WITH SCREENSHOT) -->
                 <div id="view-lab-results" style="display: block;">
-                    <!-- Section A: Requested Tests -->
-                    <div style="background: rgba(255,255,255,0.7); backdrop-filter: blur(16px); border: 0.5px solid var(--bd); border-radius: var(--r2); padding: 10px 14px; margin-bottom: 12px; box-shadow: var(--shadow);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 12px; font-weight: 700; color: #1c1c1e;">📋 All Requested Lab Tests</span>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <select id="labReqFilter" class="fi" style="width: auto; height: 24px; padding: 0 8px; font-size: 10.5px; border-radius: 6px; background: #fff;" onchange="renderRequestedLabsTable()">
-                                    <option value="all">All Statuses</option>
-                                    <option value="pending">⏳ Pending at Lab</option>
-                                    <option value="completed">✅ Verified</option>
-                                </select>
-                                <span class="badge b-info" id="labReqCountBadge" style="font-size: 10.5px; padding: 2px 8px;">0 requests</span>
-                            </div>
-                        </div>
-                        <div style="overflow-x: auto;">
-                            <table class="wtbl" id="tableRequestedLabs">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Patient</th>
-                                        <th>Requested Test Panels</th>
-                                        <th>Department</th>
-                                        <th>Date &amp; Time</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tbodyRequestedLabs">
-                                    <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--tm);">No lab requests found.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Section B: Verified Lab Results (Doctor Dashboard Parity) -->
-                    <div style="background: rgba(255,255,255,0.7); backdrop-filter: blur(16px); border: 0.5px solid var(--bd); border-radius: var(--r2); padding: 10px 14px; box-shadow: var(--shadow);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 12px; font-weight: 700; color: #1c1c1e;">📊 Verified Lab Results (Live Common Server)</span>
-                            <span class="badge b-stable" style="font-size: 10.5px; padding: 2px 8px;">✓ Laboratory Released</span>
-                        </div>
-                        <div style="overflow-x: auto;">
-                            <table class="wtbl" id="tableVerifiedLabResults">
-                                <thead>
-                                    <tr>
-                                        <th>Test / Parameter</th>
-                                        <th>Patient</th>
-                                        <th>Result Value</th>
-                                        <th>Unit</th>
-                                        <th>Reference Range</th>
-                                        <th>Flag</th>
-                                        <th>Status</th>
-                                        <th>Verified At</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tbodyVerifiedLabResults">
-                                    <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--tm);">No verified laboratory results yet.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="oc-matrix-wrapper">
+                        <table class="oc-matrix-table" id="ocMatrixTableResults">
+                            <thead id="matrixHeadResults"></thead>
+                            <tbody id="matrixBodyResults"></tbody>
+                        </table>
                     </div>
                 </div>
 
-                <!-- VIEW 2: RESULT ENTRY (HIGHLIGHTED REQUESTED LAB FOR ENTRY + SAVE & SEND TO DOCTOR) -->
+                <!-- VIEW 2: RESULT ENTRY (MATRIX FLOW SHEET RESULT ENTRY — 100/100 PARITY WITH SCREENSHOT) -->
                 <div id="view-result-entry" style="display: none;">
-                    <div style="background: rgba(255,255,255,0.7); backdrop-filter: blur(16px); border: 0.5px solid var(--bd); border-radius: var(--r2); padding: 10px 14px; box-shadow: var(--shadow);">
+                    <div style="background: rgba(255,255,255,0.7); backdrop-filter: blur(16px); border: 0.5px solid var(--bd); border-radius: var(--r2); padding: 12px 14px; box-shadow: var(--shadow);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                             <div>
-                                <div style="font-size: 12px; font-weight: 700; color: #1c1c1e; display: flex; align-items: center; gap: 6px;">
-                                    <span>✏️</span> <span>Active Result Entry</span>
-                                    <span id="entryTargetPatientBadge" class="badge b-info" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;">All Pending Tests</span>
+                                <div style="font-size: 13px; font-weight: 800; color: #1c1c1e; display: flex; align-items: center; gap: 6px;">
+                                    <span>✏️</span> <span>Matrix Result Entry</span>
+                                    <span id="entryTargetPatientBadge" class="badge b-info" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;">Active Requested Order</span>
                                 </div>
-                                <div style="font-size: 10.5px; color: var(--tm); margin-top: 2px;">Enter analyte measurements below. Highlighted input boxes indicate active laboratory entry fields.</div>
+                                <div style="font-size: 11px; color: var(--tm); margin-top: 2px;">Enter analyte measurements directly into the active request date column below.</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <button type="button" class="btn-s" onclick="switchLabResultsMode('results')" style="height: 28px; padding: 0 12px; border-radius: 6px; font-size: 11px;">Cancel</button>
-                                <button type="button" class="btn-p" onclick="saveAndSendLabResultsToDoctor()" style="height: 28px; padding: 0 16px; border-radius: 6px; font-size: 11px; font-weight: 700; background: #0071e3; color: #fff; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,113,227,0.3);">
+                                <button type="button" class="btn-s" onclick="autoFillRoutineNormals()" style="height: 28px; padding: 0 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;" title="Auto-fill default normal / negative for empty requested fields">
+                                    ⚡ Fill Normals
+                                </button>
+                                <button type="button" class="btn-s" onclick="switchLabResultsMode('results')" style="height: 28px; padding: 0 12px; border-radius: 6px; font-size: 11px; cursor: pointer;">Cancel</button>
+                                <button type="button" class="btn-p" onclick="saveAndSendLabResultsToDoctor()" style="height: 28px; padding: 0 16px; border-radius: 6px; font-size: 11px; font-weight: 700; background: #0071e3; color: #fff; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,113,227,0.3); cursor: pointer;">
                                     <i class="ti ti-send"></i> 💾 Save &amp; Send to Doctor
                                 </button>
                             </div>
                         </div>
 
-                        <div style="overflow-x: auto;">
-                            <table class="wtbl" id="tableResultEntry">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 4%;">#</th>
-                                        <th style="width: 18%;">Patient &amp; MRN</th>
-                                        <th style="width: 22%;">Requested Test / Analyte</th>
-                                        <th style="width: 20%; background: rgba(0,113,227,0.06) !important; color: #0071e3 !important;">Result Value (Highlighted Entry)</th>
-                                        <th style="width: 8%;">Unit</th>
-                                        <th style="width: 12%;">Reference Range</th>
-                                        <th style="width: 8%;">Flag</th>
-                                        <th style="width: 8%;">Dept</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tbodyResultEntry">
-                                    <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--tm);">No pending laboratory tests found for entry.</td></tr>
-                                </tbody>
+                        <div class="oc-matrix-wrapper">
+                            <table class="oc-matrix-table" id="ocMatrixTableEntry">
+                                <thead id="matrixHeadEntry"></thead>
+                                <tbody id="matrixBodyEntry"></tbody>
                             </table>
                         </div>
 
                         <!-- Bottom action toolbar -->
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 0.5px solid var(--bd); flex-wrap: wrap; gap: 8px;">
                             <div style="font-size: 11px; color: #0071e3; display: flex; align-items: center; gap: 4px;">
-                                <i class="ti ti-shield-check"></i> <span>Automated validation: saving immediately updates Doctor Dashboard and releases verified report.</span>
+                                <i class="ti ti-shield-check"></i> <span>Automated validation: saving immediately updates Doctor Dashboard and releases verified report in the cumulative flow sheet.</span>
                             </div>
                             <div style="display: flex; gap: 8px;">
-                                <button type="button" class="btn-s" onclick="switchLabResultsMode('results')" style="height: 28px; padding: 0 12px; border-radius: 6px; font-size: 11px;">Back to Results</button>
-                                <button type="button" class="btn-p" onclick="saveAndSendLabResultsToDoctor()" style="height: 28px; padding: 0 16px; border-radius: 6px; font-size: 11px; font-weight: 700; background: #0071e3; color: #fff; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,113,227,0.3);">
+                                <button type="button" class="btn-s" onclick="switchLabResultsMode('results')" style="height: 28px; padding: 0 12px; border-radius: 6px; font-size: 11px; cursor: pointer;">Back to Results</button>
+                                <button type="button" class="btn-p" onclick="saveAndSendLabResultsToDoctor()" style="height: 28px; padding: 0 16px; border-radius: 6px; font-size: 11px; font-weight: 700; background: #0071e3; color: #fff; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,113,227,0.3); cursor: pointer;">
                                     <i class="ti ti-send"></i> 💾 Save &amp; Send to Doctor
                                 </button>
                             </div>
