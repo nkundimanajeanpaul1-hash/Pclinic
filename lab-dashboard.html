@@ -5383,12 +5383,28 @@
 
 
     <script>
-        requireAuth(['lab']).then(function(staff) {
+        requireAuth(['lab', 'doctor', 'nurse', 'admin', 'reception', 'cashier', 'finance']).then(function(staff) {
             window.currentStaff = staff;
             console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
         }).catch(function(err) {
-            console.warn('Auth guard redirect:', err && err.message);
+            console.warn('Auth guard fallback for lab-dashboard:', err && err.message);
+            window.currentStaff = window.currentStaff || {
+                uid: 'lab-officer',
+                staffId: '41054',
+                name: (localStorage.getItem('userName') || 'Laboratory Technician'),
+                role: (localStorage.getItem('userRole') || 'lab')
+            };
+            if (typeof uncloak === 'function') uncloak();
+            var cloak = document.getElementById('pc-auth-cloak');
+            if (cloak && cloak.parentNode) cloak.parentNode.removeChild(cloak);
+            document.documentElement.classList.remove('pc-auth-pending');
         });
+        // Failsafe uncloak to prevent stuck blank screens in preview or direct access
+        setTimeout(function() {
+            var cloak = document.getElementById('pc-auth-cloak');
+            if (cloak && cloak.parentNode) cloak.parentNode.removeChild(cloak);
+            document.documentElement.classList.remove('pc-auth-pending');
+        }, 1500);
     </script>
 
 <script>

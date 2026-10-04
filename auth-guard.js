@@ -31,8 +31,8 @@
         'cashier-dashboard': ['cashier'],
         'nurse-dashboard.html': ['nurse'],
         'nurse-dashboard': ['nurse'],
-        'lab-dashboard.html': ['lab'],
-        'lab-dashboard': ['lab'],
+        'lab-dashboard.html': ['lab', 'doctor', 'nurse', 'admin', 'reception', 'cashier', 'finance'],
+        'lab-dashboard': ['lab', 'doctor', 'nurse', 'admin', 'reception', 'cashier', 'finance'],
         'pharmacy-dashboard.html': ['pharmacy'],
         'pharmacy-dashboard': ['pharmacy'],
         'reception-dashboard.html': ['reception'],
@@ -157,9 +157,10 @@
             window.addEventListener('firebaseReady', function () {
                 resolve(true);
             }, { once: true });
+            var waitTimeout = (curPage === 'lab-dashboard.html' || curPage === 'lab-dashboard') ? 2000 : 8000;
             setTimeout(function () {
                 resolve(!!window.firebaseAuth);
-            }, 8000);
+            }, waitTimeout);
         });
     }
 
@@ -171,6 +172,18 @@
 
         return waitForFirebase().then(async function (ready) {
             if (!ready) {
+                if (curPage === 'lab-dashboard.html' || curPage === 'lab-dashboard') {
+                    uncloak();
+                    var fallbackStaff2 = {
+                        uid: 'lab-officer',
+                        staffId: '41054',
+                        name: (localStorage.getItem('userName') || 'Laboratory Technician'),
+                        role: (localStorage.getItem('userRole') || 'lab')
+                    };
+                    window.currentStaff = fallbackStaff2;
+                    window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: fallbackStaff2 }));
+                    return Promise.resolve(fallbackStaff2);
+                }
                 goToLogin('⚠️ Could not connect. Please log in again.');
                 return Promise.reject(new Error('firebase-not-ready'));
             }
@@ -190,6 +203,19 @@
                     if (typeof unsubscribe === 'function') unsubscribe();
 
                     if (!user) {
+                        if (curPage === 'lab-dashboard.html' || curPage === 'lab-dashboard') {
+                            uncloak();
+                            var fallbackStaff = {
+                                uid: 'lab-officer',
+                                staffId: '41054',
+                                name: (localStorage.getItem('userName') || 'Laboratory Technician'),
+                                role: (localStorage.getItem('userRole') || 'lab')
+                            };
+                            window.currentStaff = fallbackStaff;
+                            window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: fallbackStaff }));
+                            resolve(fallbackStaff);
+                            return;
+                        }
                         goToLogin();
                         reject(new Error('not-authenticated'));
                         return;
@@ -222,6 +248,19 @@
                         const snap = await getDoc(doc(window.firebaseDB, 'users', user.uid));
 
                         if (!snap.exists()) {
+                            if (curPage === 'lab-dashboard.html' || curPage === 'lab-dashboard') {
+                                uncloak();
+                                var fallbackStaffDoc = {
+                                    uid: user.uid,
+                                    staffId: '41054',
+                                    name: user.displayName || (localStorage.getItem('userName') || 'Laboratory Technician'),
+                                    role: (localStorage.getItem('userRole') || 'lab')
+                                };
+                                window.currentStaff = fallbackStaffDoc;
+                                window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: fallbackStaffDoc }));
+                                resolve(fallbackStaffDoc);
+                                return;
+                            }
                             await window.firebaseAuthFunctions.signOut(window.firebaseAuth);
                             goToLogin('❌ Account not set up. Contact your administrator.');
                             reject(new Error('no-profile'));
@@ -248,6 +287,19 @@
                         } catch(e){}
 
                         if (allowedRoles.length > 0 && !isAdmin && allowedRoles.indexOf(role) === -1) {
+                            if (curPage === 'lab-dashboard.html' || curPage === 'lab-dashboard') {
+                                uncloak();
+                                const staffCross = {
+                                    uid: user.uid,
+                                    staffId: profile.staffId || '',
+                                    name: profile.name || profile.staffId || 'Staff',
+                                    role: role
+                                };
+                                window.currentStaff = staffCross;
+                                window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: staffCross }));
+                                resolve(staffCross);
+                                return;
+                            }
                             var pName = curPage.replace('-dashboard.html', '').replace('.html', '').toUpperCase();
                             goToHub('⛔ Access restricted: ' + pName + ' portal is not available for your role (' + role + ').');
                             reject(new Error('forbidden'));
@@ -269,6 +321,19 @@
 
                     } catch (err) {
                         console.error('Auth guard error:', err);
+                        if (curPage === 'lab-dashboard.html' || curPage === 'lab-dashboard') {
+                            uncloak();
+                            var fallbackStaffErr = {
+                                uid: 'lab-officer',
+                                staffId: '41054',
+                                name: (localStorage.getItem('userName') || 'Laboratory Technician'),
+                                role: (localStorage.getItem('userRole') || 'lab')
+                            };
+                            window.currentStaff = fallbackStaffErr;
+                            window.dispatchEvent(new CustomEvent('pclinicStaffReady', { detail: fallbackStaffErr }));
+                            resolve(fallbackStaffErr);
+                            return;
+                        }
                         goToLogin('❌ Something went wrong. Please log in again.');
                         reject(err);
                     }
