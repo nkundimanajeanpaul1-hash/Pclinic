@@ -148,6 +148,8 @@
     }
     var map = {
       overview: 'overview',
+      queue: 'overview',
+      patients: 'overview',
       specimen: 'specimen',
       worklist: 'worklist',
       results: 'results',

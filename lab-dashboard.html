@@ -4162,7 +4162,7 @@
 
     <!-- ═══ NAV TABS ═══ -->
     <div class="nav-tabs" id="navTabs">
-        <button class="nav-tab active" data-tab="overview" onclick="switchTab('overview',this)"><i class="ti ti-layout-dashboard"></i> Overview</button>
+        <button class="nav-tab active" data-tab="overview" onclick="switchTab('overview',this)"><i class="ti ti-flask"></i> Today's laboratory queue</button>
         <button class="nav-tab" data-tab="specimen" onclick="switchTab('specimen',this)"><i class="ti ti-test-pipe"></i> Specimen <span class="ncnt" id="labSpecimenTabCount">0</span></button>
         <button class="nav-tab" data-tab="worklist" onclick="switchTab('worklist',this)"><i class="ti ti-list-check"></i> Worklist <span class="ncnt" id="labWorklistTabCount">0</span></button>
         <button class="nav-tab" data-tab="results" onclick="switchTab('results',this)"><i class="ti ti-report-analytics"></i> Results</button>
@@ -4270,7 +4270,7 @@
             <span class="lab-command-pill subtle" id="labCommandStatus">Queue ready</span>
         </div>
         <div class="lab-command-actions">
-            <button class="lab-command-btn" type="button" id="labRibbonOverview" data-tab-link="overview"><i class="ti ti-layout-dashboard"></i> Overview</button>
+            <button class="lab-command-btn" type="button" id="labRibbonOverview" data-tab-link="overview"><i class="ti ti-flask"></i> Today's laboratory queue</button>
             <button class="lab-command-btn" type="button" id="labRibbonWorklist" data-tab-link="worklist"><i class="ti ti-list-check"></i> Worklist</button>
             <button class="lab-command-btn" type="button" id="labRibbonReports" data-tab-link="reports"><i class="ti ti-printer"></i> Reports</button>
         </div>
@@ -4285,7 +4285,7 @@
                 <div class="lab-doctor-overview">
                     <div class="lab-overview-main">
                         <div style="background: rgba(255,255,255,0.7); backdrop-filter: blur(16px); border: 0.5px solid var(--bd); border-radius: var(--r2); padding: 16px; box-shadow: var(--shadow);">
-                            <div class="section-title">👥 All Patients</div>
+                            <div class="section-title">🧪 Today's laboratory queue</div>
                             <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
                                 <select class="fi" style="width:auto;" id="statusFilter" onchange="renderPatientTable()">
                                     <option value="all">All Status</option>
@@ -4305,7 +4305,7 @@
                                 </table>
                             </div>
                             <div style="margin-top:8px;font-size:11px;color:var(--tm);">
-                                Total: <strong id="patientCount">0</strong> patients
+                                Total: <strong id="patientCount">0</strong> patients in queue
                             </div>
                         </div>
                     </div>
@@ -4313,6 +4313,10 @@
                         <div class="lab-overview-quick-card">
                             <div class="section-title lab-overview-quick-head" style="border-bottom: none; padding-bottom: 0; margin-bottom: 10px; font-size: 11px; text-align: center; border: none;">⚡ Quick Actions</div>
                             <div class="lab-overview-quick-actions">
+                                <div class="qa-card" onclick="switchTab('overview')" title="Today's laboratory queue" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
+                                    <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:#eaf2ff; color:#0071e3;"><i class="ti ti-flask"></i></div>
+                                    <div class="qa-label" style="font-size: 10px;">Today's queue</div>
+                                </div>
                                 <div class="qa-card" onclick="labQuickAction('select')" title="Select patient" style="padding: 6px 10px; gap: 4px; border-radius: 8px; margin-bottom: 3px; flex-direction: row; align-items: center;">
                                     <div class="qa-ic" style="width: 22px; height: 22px; font-size: 11px; background:var(--acb); color:var(--ac);"><i class="ti ti-user-search"></i></div>
                                     <div class="qa-label" style="font-size: 10px;">Select patient</div>
@@ -5031,6 +5035,7 @@
 
         // ─── TAB SWITCHING ───
         function switchTab(name, btn) {
+            if (name === 'queue' || name === 'patients') name = 'overview';
             // 🔒 Selected Patient Mode: no button works until a patient is selected
             var tabBtn = btn || document.querySelector('.nav-tab[data-tab="' + name + '"]');
             if (tabBtn && tabBtn.classList.contains('tab-locked')) {
