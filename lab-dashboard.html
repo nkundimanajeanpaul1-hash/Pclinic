@@ -4783,7 +4783,11 @@
                                 </div>
                                 <div style="font-size: 11px; color: var(--tm); margin-top: 2px;">Enter analyte measurements directly into the active request date column below.</div>
                             </div>
-                            <div style="display: flex; gap: 8px; align-items: center;">
+                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <div class="entry-scope-toggle" style="display:inline-flex; background:rgba(0,0,0,0.06); padding:2px; border-radius:7px; gap:2px;">
+                                    <button type="button" id="btnScopeRequested" onclick="setEntryCatalogMode('requested')" style="height:26px; padding:0 10px; font-size:11px; border-radius:5px; border:none; background:#fff; color:#0071e3; font-weight:700; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.1);">🎯 Requested only</button>
+                                    <button type="button" id="btnScopeCatalog" onclick="setEntryCatalogMode('catalog')" style="height:26px; padding:0 10px; font-size:11px; border-radius:5px; border:none; background:transparent; color:#8e8e93; font-weight:600; cursor:pointer;">📋 Full catalog</button>
+                                </div>
                                 <button type="button" class="btn-s" onclick="autoFillRoutineNormals()" style="height: 28px; padding: 0 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;" title="Auto-fill default normal / negative for empty requested fields">
                                     ⚡ Fill Normals
                                 </button>
@@ -5354,11 +5358,16 @@
         // ─── TAB SWITCHING ───
         function switchTab(name, btn) {
             if (name === 'queue' || name === 'patients') name = 'overview';
-            // 🔒 Selected Patient Mode: no button works until a patient is selected
+            // 🔒 Selected Patient Mode: only locked tabs block, Overview and Results stay accessible
             var tabBtn = btn || document.querySelector('.nav-tab[data-tab="' + name + '"]');
-            if (tabBtn && tabBtn.classList.contains('tab-locked')) {
+            if (name !== 'overview' && name !== 'results' && tabBtn && tabBtn.classList.contains('tab-locked')) {
                 showToast('🔒 Select a patient first — click ✓ Select on the patient list, or search by name/ID in the patient identification bar above', 'warning');
                 return;
+            }
+            // If opening results without a patient, auto-select first available patient
+            if (name === 'results' && !window.currentPatient) {
+                var allP = (typeof getPatients === 'function' ? getPatients() : []) || [];
+                if (allP.length) selectPatient(allP[0].id);
             }
             document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
             if (btn) btn.classList.add('active');
@@ -5509,24 +5518,22 @@
 
         // ─── TOAST WRAPPER ───
         function showToast(msg, type) {
-            if (typeof window.showToast === 'function') {
-                window.showToast(msg, type || 'info');
-            } else {
-                var container = document.getElementById('toastContainer');
-                if (container) {
-                    var toast = document.createElement('div');
-                    toast.className = 'toast ' + (type || 'info');
-                    var icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-                    toast.textContent = (icons[type] || 'ℹ️') + ' ' + msg;
-                    container.appendChild(toast);
-                    setTimeout(function() { toast.classList.add('show'); }, 10);
-                    setTimeout(function() {
-                        toast.classList.remove('show');
-                        setTimeout(function() { toast.remove(); }, 400);
-                    }, 3500);
-                } else {
-                    alert(msg);
-                }
+            if (typeof window.pcToast === 'function') {
+                window.pcToast(msg, type || 'info');
+                return;
+            }
+            var container = document.getElementById('toastContainer');
+            if (container) {
+                var toast = document.createElement('div');
+                toast.className = 'toast ' + (type || 'info');
+                var icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+                toast.textContent = (icons[type] || 'ℹ️') + ' ' + msg;
+                container.appendChild(toast);
+                setTimeout(function() { toast.classList.add('show'); }, 10);
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    setTimeout(function() { toast.remove(); }, 400);
+                }, 3500);
             }
         }
 
@@ -5698,10 +5705,14 @@ function renderPatientTable(patients) {
         var labReqs = Array.isArray(p.labRequests) ? p.labRequests : [];
         var allReqTests = [];
         var hasPendingLab = false;
+        var pendingOrderId = null;
         labReqs.forEach(function(r) {
             var t = Array.isArray(r.tests) ? r.tests.join(', ') : (r.testName || r.test || 'Lab Test');
             if (t && allReqTests.indexOf(t) === -1) allReqTests.push(t);
-            if (String(r.status || 'pending').toLowerCase() !== 'completed') hasPendingLab = true;
+            if (String(r.status || 'pending').toLowerCase() !== 'completed') {
+                hasPendingLab = true;
+                if (!pendingOrderId) pendingOrderId = r.id || r.orderId;
+            }
         });
         try {
             var allO = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
@@ -5709,7 +5720,10 @@ function renderPatientTable(patients) {
                 if (String(o.patientId).replace(/^MOD-/i, '') === String(p.id).replace(/^MOD-/i, '') && (o.dept === 'lab' || o.type === 'lab')) {
                     var items = (o.items || []).map(function(it){ return it.name; }).join(', ');
                     if (items && allReqTests.indexOf(items) === -1) allReqTests.push(items);
-                    if (String(o.status || 'pending').toLowerCase() !== 'completed') hasPendingLab = true;
+                    if (String(o.status || 'pending').toLowerCase() !== 'completed') {
+                        hasPendingLab = true;
+                        if (!pendingOrderId) pendingOrderId = o.id;
+                    }
                 }
             });
         } catch(e){}
@@ -5783,7 +5797,11 @@ function renderPatientTable(patients) {
             enterBtn.addEventListener('click', function(e){
                 e.stopPropagation();
                 selectPatient(p.id);
-                if (typeof switchLabResultsMode === 'function') switchLabResultsMode('entry');
+                if (typeof openResultEntryForOrder === 'function') {
+                    openResultEntryForOrder(pendingOrderId);
+                } else if (typeof switchLabResultsMode === 'function') {
+                    switchLabResultsMode('entry');
+                }
                 if (typeof switchTab === 'function') switchTab('results');
             });
             actions.appendChild(enterBtn);

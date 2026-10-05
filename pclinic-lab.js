@@ -863,12 +863,12 @@
         var sel = getSelectedLabPatient();
         var selId = sel ? stripMod(sel.id).toLowerCase() : '';
 
-        // 1) Nav tabs: only Overview stays unlocked without a patient
+        // 1) Nav tabs: Overview and Results stay unlocked without a patient
         var tabs = document.querySelectorAll('.nav-tab');
         for (var i = 0; i < tabs.length; i++) {
             var t = tabs[i];
             var name = t.getAttribute('data-tab');
-            var locked = !sel && name !== 'overview';
+            var locked = !sel && name !== 'overview' && name !== 'results';
             if (locked) {
                 t.classList.add('tab-locked');
                 t.setAttribute('disabled', 'disabled');

@@ -729,6 +729,8 @@
     } catch(e) {}
   }
 
+  var entryCatalogMode = 'requested'; // 'requested' (default) | 'catalog'
+
   function populateLabResultsPatientSelect() {
     var sel = byId('labResultsPatientSelect');
     if (!sel) return;
@@ -753,7 +755,42 @@
 
   function onLabResultsPatientChange(val) {
     activeLabResultsPatientId = val || 'all';
+    if (val && val !== 'all') {
+      if (typeof window.selectPatient === 'function') {
+        window.selectPatient(val);
+      }
+    }
+    activeTargetOrderId = null;
+    matrixDraftValues = {};
     renderLabResultsModule();
+  }
+
+  function setEntryCatalogMode(mode) {
+    entryCatalogMode = mode || 'requested';
+    var btnReq = byId('btnScopeRequested');
+    var btnCat = byId('btnScopeCatalog');
+    if (btnReq && btnCat) {
+      if (entryCatalogMode === 'requested') {
+        btnReq.style.background = '#fff';
+        btnReq.style.color = '#0071e3';
+        btnReq.style.fontWeight = '700';
+        btnReq.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        btnCat.style.background = 'transparent';
+        btnCat.style.color = '#8e8e93';
+        btnCat.style.fontWeight = '600';
+        btnCat.style.boxShadow = 'none';
+      } else {
+        btnCat.style.background = '#fff';
+        btnCat.style.color = '#0071e3';
+        btnCat.style.fontWeight = '700';
+        btnCat.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        btnReq.style.background = 'transparent';
+        btnReq.style.color = '#8e8e93';
+        btnReq.style.fontWeight = '600';
+        btnReq.style.boxShadow = 'none';
+      }
+    }
+    renderMatrixFlowSheet('ocMatrixTableEntry', 'entry', activeTargetOrderId);
   }
 
   function switchLabResultsMode(mode) {
@@ -800,6 +837,18 @@
 
   function openResultEntryForOrder(orderId) {
     activeTargetOrderId = orderId;
+    if (orderId) {
+      var allOrders = getAllRawOrders();
+      var targetOrder = allOrders.find(function(o){ return String(o.id) === String(orderId); });
+      if (targetOrder && targetOrder.patientId) {
+        activeLabResultsPatientId = String(targetOrder.patientId);
+        var sel = byId('labResultsPatientSelect');
+        if (sel) sel.value = activeLabResultsPatientId;
+        if (typeof window.selectPatient === 'function') {
+          window.selectPatient(targetOrder.patientId);
+        }
+      }
+    }
     switchLabResultsMode('entry');
   }
 
@@ -854,101 +903,168 @@
         { code: '10903-3', name: 'Culture', range: 'No growth' },
         { code: '10904-3', name: 'Culture', range: 'No growth' }
       ]
+    },
+    {
+      id: 'chem',
+      title: '20000 BIOCHEMISTRY',
+      className: 'oc-cat-chem',
+      tests: [
+        { code: '20001', name: 'UREA/BLOOD', range: '3-9.2 mmol/l' },
+        { code: '20002', name: 'CREATININE/BLOOD', range: '63.6-110.5 µmol/l' },
+        { code: '20003', name: 'NA + (SODIUM)/BLOOD', range: '135-145 mmol/l' },
+        { code: '20004', name: 'K + (POTASSIUM)/BLOOD', range: '3.5-5.0 mmol/l' },
+        { code: '20007', name: 'FASTING BLOOD SUGAR (GLUCOSE)', range: '70-110 mg/dL' },
+        { code: '20008', name: 'ALT / SGPT', range: '0-45 U/L' },
+        { code: '20009', name: 'AST / SGOT', range: '0-35 U/L' }
+      ]
+    },
+    {
+      id: 'hem',
+      title: '30000 HEMATOLOGY',
+      className: 'oc-cat-fbc',
+      tests: [
+        { code: '31000', name: 'COMPLETE BLOOD COUNT (CBC)', range: 'Normal' },
+        { code: '31001', name: 'WBC (WHITE BLOOD CELLS)', range: '4.0-11.0 10^3/µL' },
+        { code: '31003', name: 'HEMOGLOBIN (Hb)', range: '12.0-17.5 g/dL' },
+        { code: '31008', name: 'PLATELETS', range: '150-450 10^3/µL' },
+        { code: '31011', name: 'ESR (ERYTHROCYTE SEDIMENTATION RATE)', range: '0-20 mm/hr' }
+      ]
+    },
+    {
+      id: 'ser',
+      title: '40000 SEROLOGY',
+      className: 'oc-cat-sero',
+      tests: [
+        { code: '40001', name: 'HIV 1/2 RAPID TEST', range: 'Negative' },
+        { code: '40002', name: 'HBsAg (HEPATITIS B)', range: 'Negative' },
+        { code: '40003', name: 'HCV (HEPATITIS C)', range: 'Negative' },
+        { code: '40004', name: 'RPR / VDRL (SYPHILIS)', range: 'Non-reactive' },
+        { code: '40005', name: 'CRP (C-REACTIVE PROTEIN)', range: '< 6 mg/L' },
+        { code: '40006', name: 'WIDAL TEST (TYPHOID)', range: 'Negative' }
+      ]
+    },
+    {
+      id: 'uri',
+      title: '60000 URINALYSIS',
+      className: 'oc-cat-uri',
+      tests: [
+        { code: '60001', name: 'URINE DIPSTICK (COMPLETE)', range: 'Normal' },
+        { code: '60002', name: 'URINE MICROSCOPY', range: 'No cells or casts' },
+        { code: '60003', name: 'URINE PROTEIN', range: 'Negative' },
+        { code: '60004', name: 'URINE GLUCOSE', range: 'Negative' }
+      ]
     }
   ];
 
-  function seedSampleLabRequestsIfEmpty() {
-    var orders = getAllRawOrders();
-    var hasSample0906 = orders.some(function(o){ return String(o.id) === 'ORD-LAB-2026-0906'; });
-    var hasSample1004 = orders.some(function(o){ return String(o.id) === 'ORD-LAB-2026-1004'; });
-
-    if (hasSample0906 && hasSample1004) return;
-
-    var patients = getPatientList();
-    if (!patients || !patients.length) return;
-    var targetPt = patients[0];
-
-    var seededOrders = [
-      {
-        id: 'ORD-LAB-2026-1004',
-        dept: 'lab',
-        type: 'lab',
-        patientId: String(targetPt.id),
-        patientName: (targetPt.firstName + ' ' + (targetPt.lastName || '')).trim(),
-        doctor: 'Dr. Jean Dupont',
-        priority: 'Routine',
-        sampleType: 'Whole Blood / Smear',
-        status: 'pending',
-        date: '2026-10-04T08:30:00.000Z',
-        createdAt: '2026-10-04T08:30:00.000Z',
-        items: [
-          { code: '50001', name: 'MALARIA PARASITE (MP)' },
-          { code: '10700-1', name: 'Culture' }
-        ]
-      },
-      {
-        id: 'ORD-LAB-2026-0906',
-        dept: 'lab',
-        type: 'lab',
-        patientId: String(targetPt.id),
-        patientName: (targetPt.firstName + ' ' + (targetPt.lastName || '')).trim(),
-        doctor: 'Dr. Alice Mukamana',
-        priority: 'Routine',
-        sampleType: 'Whole Blood / Sputum / CSF',
-        status: 'completed',
-        date: '2026-09-06T10:00:00.000Z',
-        createdAt: '2026-09-06T10:00:00.000Z',
-        completedAt: '2026-09-06T11:00:00.000Z',
-        completedBy: 'Laboratory Staff (Technician)',
-        items: [
-          { code: '50001', name: 'MALARIA PARASITE (MP)' },
-          { code: '10700-1', name: 'Culture' }
-        ],
-        results: [
-          { code: '50001', test: 'MALARIA PARASITE (MP)', value: 'tropho ++++', flag: 'High' },
-          { code: '50004', test: 'STOOL OVA & CYSTS', value: '--' },
-          { code: '10700-1', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '10701-1', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '10702-1', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '10703-1', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '10704-1', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '21100-1', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '21110-1', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '21130-1', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '11110-1', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '10901-3', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '10902-3', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '10903-3', test: 'Culture', value: 'MTB +++', flag: 'Normal' },
-          { code: '10904-3', test: 'Culture', value: 'MTB +++', flag: 'Normal' }
-        ]
-      },
-      {
-        id: 'ORD-LAB-2026-0823',
-        dept: 'lab',
-        type: 'lab',
-        patientId: String(targetPt.id),
-        patientName: (targetPt.firstName + ' ' + (targetPt.lastName || '')).trim(),
-        doctor: 'Dr. Robert Kagabo',
-        priority: 'Routine',
-        sampleType: 'Serum',
-        status: 'completed',
-        date: '2026-08-23T11:00:00.000Z',
-        createdAt: '2026-08-23T11:00:00.000Z',
-        completedAt: '2026-08-23T12:00:00.000Z',
-        completedBy: 'Laboratory Staff (Technician)',
-        items: [
-          { code: '50001', name: 'MALARIA PARASITE (MP)' }
-        ],
-        results: []
+  function findInMatrixCategories(code, name) {
+    code = String(code || '').trim().toUpperCase();
+    name = String(name || '').trim().toLowerCase();
+    for (var c = 0; c < MATRIX_CATEGORIES.length; c++) {
+      var cat = MATRIX_CATEGORIES[c];
+      for (var t = 0; t < cat.tests.length; t++) {
+        var test = cat.tests[t];
+        if (code && String(test.code).toUpperCase() === code) {
+          return {
+            code: test.code,
+            name: test.name,
+            range: test.range,
+            catId: cat.id,
+            catTitle: cat.title,
+            catClass: cat.className
+          };
+        }
+        if (name && (test.name.toLowerCase() === name || name.indexOf(test.name.toLowerCase()) !== -1 || test.name.toLowerCase().indexOf(name) !== -1)) {
+          return {
+            code: test.code,
+            name: test.name,
+            range: test.range,
+            catId: cat.id,
+            catTitle: cat.title,
+            catClass: cat.className
+          };
+        }
       }
-    ];
+    }
+    return null;
+  }
 
-    seededOrders.forEach(function(seed) {
-      var exists = orders.some(function(o){ return String(o.id) === String(seed.id); });
-      if (!exists) orders.unshift(seed);
-    });
+  function resolveOrderItemToTests(item) {
+    if (!item) return [];
+    var code = String(item.code || '').trim();
+    var name = String(item.name || item.test || 'Laboratory Test').trim();
 
-    saveAllRawOrders(orders);
+    if (Array.isArray(item.parameters) && item.parameters.length > 0) {
+      return item.parameters.map(function(p) {
+        var match = findInMatrixCategories(p.code, p.name);
+        return {
+          code: p.code || code || 'LAB',
+          name: p.name || name,
+          range: p.range || (match ? match.range : ''),
+          catId: match ? match.catId : 'micro',
+          catTitle: match ? match.catTitle : '50000 MICROBIOLOGY &<br>CULTURES',
+          catClass: match ? match.catClass : 'oc-cat-mic'
+        };
+      });
+    }
+
+    var directMatch = findInMatrixCategories(code, name);
+    if (directMatch) return [directMatch];
+
+    if (window.pcLabCatalog) {
+      var exam = (code ? window.pcLabCatalog.byCode(code) : null) || (name ? window.pcLabCatalog.findByName(name) : null);
+      if (exam) {
+        var catId = exam.category || 'micro';
+        var catClass = 'oc-cat-mic';
+        var catTitle = '50000 MICROBIOLOGY &<br>CULTURES';
+        if (catId === 'hematology') { catClass = 'oc-cat-fbc'; catTitle = '30000 HEMATOLOGY'; }
+        else if (catId === 'biochemistry') { catClass = 'oc-cat-chem'; catTitle = '20000 BIOCHEMISTRY'; }
+        else if (catId === 'serology' || catId === 'immunology') { catClass = 'oc-cat-sero'; catTitle = '40000 SEROLOGY'; }
+        else if (catId === 'urinalysis') { catClass = 'oc-cat-uri'; catTitle = '60000 URINALYSIS'; }
+        else if (catId === 'fluids') { catClass = 'oc-cat-fluids'; catTitle = 'BODY FLUIDS'; }
+
+        if (Array.isArray(exam.parameters) && exam.parameters.length > 1) {
+          return exam.parameters.map(function(p) {
+            return {
+              code: p.code || exam.code,
+              name: p.name,
+              range: p.range || '',
+              catId: catId,
+              catTitle: catTitle,
+              catClass: catClass
+            };
+          });
+        }
+        return [{
+          code: exam.code || code || 'LAB',
+          name: exam.name || name,
+          range: exam.range || (exam.parameters && exam.parameters[0] ? exam.parameters[0].range : ''),
+          catId: catId,
+          catTitle: catTitle,
+          catClass: catClass
+        }];
+      }
+    }
+
+    var lowerName = name.toLowerCase();
+    var defaultCat = { id: 'micro', title: '50000 MICROBIOLOGY &<br>CULTURES', className: 'oc-cat-mic' };
+    if (/blood|cbc|fbc|hemoglobin|platelet|wbc/.test(lowerName)) {
+      defaultCat = { id: 'hem', title: '30000 HEMATOLOGY', className: 'oc-cat-fbc' };
+    } else if (/urea|creat|sugar|glucose|liver|alt|ast|sodium|potassium/.test(lowerName)) {
+      defaultCat = { id: 'chem', title: '20000 BIOCHEMISTRY', className: 'oc-cat-chem' };
+    } else if (/urine|urinalysis/.test(lowerName)) {
+      defaultCat = { id: 'uri', title: '60000 URINALYSIS', className: 'oc-cat-uri' };
+    } else if (/hiv|widal|syphilis|vdrl|rpr|hepatitis/.test(lowerName)) {
+      defaultCat = { id: 'ser', title: '40000 SEROLOGY', className: 'oc-cat-sero' };
+    }
+
+    return [{
+      code: code || 'LAB',
+      name: name,
+      range: item.range || 'Normal',
+      catId: defaultCat.id,
+      catTitle: defaultCat.title,
+      catClass: defaultCat.className
+    }];
   }
 
   function formatMatrixDate(dStr) {
@@ -978,11 +1094,109 @@
     var tbody = table.querySelector('tbody') || byId(tableId.replace('ocMatrixTable', 'matrixBody'));
     if (!thead || !tbody) return;
 
-    // 1. Columns exactly matching screenshot
+    var allOrders = getAllRawOrders();
+    var allPatients = getPatientList();
+
+    // 1. Resolve Active Patient
+    var curPtId = activeLabResultsPatientId;
+    if (!curPtId || curPtId === 'all') {
+      var curPt = currentLabPatient();
+      if (curPt && curPt.id) {
+        curPtId = String(curPt.id);
+      } else {
+        var pOrder = allOrders.find(function(o){
+          return (o.dept === 'lab' || o.type === 'lab') && String(o.status || '').toLowerCase() === 'pending';
+        });
+        if (pOrder && pOrder.patientId) curPtId = String(pOrder.patientId);
+        else if (allPatients.length) curPtId = String(allPatients[0].id);
+      }
+    }
+
+    var targetPatient = allPatients.find(function(p){
+      return String(p.id).replace(/^MOD-/i, '') === String(curPtId).replace(/^MOD-/i, '');
+    }) || allPatients[0];
+
+    // 2. Resolve Active Order
+    var patientOrders = allOrders.filter(function(o){
+      return (o.dept === 'lab' || o.type === 'lab') &&
+             String(o.patientId || '').replace(/^MOD-/i, '') === String(targetPatient ? targetPatient.id : '').replace(/^MOD-/i, '');
+    });
+
+    var activeOrder = null;
+    if (targetOrderId) {
+      activeOrder = allOrders.find(function(o){ return String(o.id) === String(targetOrderId); });
+    }
+    if (!activeOrder && patientOrders.length) {
+      activeOrder = patientOrders.find(function(o){ return String(o.status || '').toLowerCase() === 'pending'; });
+      if (!activeOrder) activeOrder = patientOrders[0];
+    }
+    if (!activeOrder && allOrders.length) {
+      activeOrder = allOrders.find(function(o){ return String(o.status || '').toLowerCase() === 'pending'; }) || allOrders[0];
+    }
+
+    // 3. Update Result Entry Header Badge
+    if (mode === 'entry') {
+      var badgeEl = byId('entryTargetPatientBadge');
+      if (badgeEl) {
+        if (activeOrder) {
+          var pName = (targetPatient ? ((targetPatient.firstName || '') + ' ' + (targetPatient.lastName || '')).trim() : activeOrder.patientName) || 'Patient';
+          var reqCount = (activeOrder.items || []).length;
+          badgeEl.innerHTML = '📋 ' + escapeHtml(activeOrder.id) + ' • ' + escapeHtml(pName) + ' (' + reqCount + ' test' + (reqCount === 1 ? '' : 's') + ' requested)';
+          badgeEl.className = 'badge b-info';
+        } else {
+          badgeEl.innerHTML = '⚠️ No active request found';
+          badgeEl.className = 'badge b-warning';
+        }
+      }
+    }
+
+    // 4. Resolve Tests to Render
+    // IN RESULT ENTRY MODE: Show ONLY the requested labs for this order (unless catalog toggle clicked)!
+    var categoriesToRender = [];
+
+    if (mode === 'entry' && entryCatalogMode !== 'catalog') {
+      // Extract ONLY tests requested in activeOrder!
+      var requestedTests = [];
+      if (activeOrder && Array.isArray(activeOrder.items) && activeOrder.items.length > 0) {
+        activeOrder.items.forEach(function(item) {
+          var resolved = resolveOrderItemToTests(item);
+          resolved.forEach(function(t) {
+            if (!requestedTests.some(function(rt){ return rt.code === t.code && rt.name === t.name; })) {
+              requestedTests.push(t);
+            }
+          });
+        });
+      }
+
+      // Group requested tests by category
+      var catBucket = {};
+      requestedTests.forEach(function(t) {
+        var cId = t.catId || 'micro';
+        if (!catBucket[cId]) {
+          catBucket[cId] = {
+            id: cId,
+            title: t.catTitle || '50000 MICROBIOLOGY &<br>CULTURES',
+            className: t.catClass || 'oc-cat-mic',
+            tests: []
+          };
+        }
+        catBucket[cId].tests.push(t);
+      });
+      categoriesToRender = Object.values(catBucket);
+    } else {
+      // In Cumulative View or Catalog Mode: Use the comprehensive matrix categories
+      categoriesToRender = MATRIX_CATEGORIES;
+    }
+
+    // 5. Date Columns (Column 1 is active order date e.g. today / 04/10/2026)
+    var reqDateStr = activeOrder && (activeOrder.orderedAt || activeOrder.date) ? formatMatrixDate(activeOrder.orderedAt || activeOrder.date) : formatMatrixDate(new Date());
+    if (!reqDateStr) reqDateStr = '04/10/2026';
+
+    var reqItemsCount = (activeOrder && activeOrder.items ? activeOrder.items.length : 2);
     var dateColumns = [
       {
-        dateStr: '04/10/2026',
-        chipHtml: '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">⏳ 2 requests</span>'
+        dateStr: reqDateStr,
+        chipHtml: '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">⏳ ' + reqItemsCount + ' request' + (reqItemsCount === 1 ? '' : 's') + '</span>'
       },
       {
         dateStr: '06/09/2026',
@@ -996,10 +1210,10 @@
 
     var paddingEmptyCols = 4;
 
-    // 2. Build Header HTML
+    // Build Header HTML
     var headHtml = '<tr>' +
       '<th style="width:150px;min-width:150px;max-width:150px;text-align:left;">Analysis</th>' +
-      '<th style="width:250px;min-width:250px;max-width:250px;text-align:left;">Parameter</th>';
+      '<th style="width:260px;min-width:260px;max-width:260px;text-align:left;">Parameter</th>';
 
     dateColumns.forEach(function(col, idx) {
       var activeHighlight = (mode === 'entry' && idx === 0) ? 'background:#eaf2ff !important;border-bottom:2px solid #0071e3 !important;' : '';
@@ -1015,7 +1229,7 @@
     headHtml += '</tr>';
     thead.innerHTML = headHtml;
 
-    // 3. Exact Row Results on 06/09/2026
+    // 6. Historical Results on 06/09/2026
     var results0609 = {
       '50001': { value: 'tropho ++++', flag: 'High' },
       '50004': { value: '--' },
@@ -1034,105 +1248,119 @@
       '10904-3': { value: 'MTB +++' }
     };
 
-    // 4. Build Body HTML
+    // 7. Build Body HTML
     var bodyHtml = '';
     var totalRowCount = 0;
 
-    MATRIX_CATEGORIES.forEach(function(cat) {
-      var catRowCount = cat.tests.length;
+    if (!categoriesToRender.length || (categoriesToRender.length === 1 && !categoriesToRender[0].tests.length)) {
+      bodyHtml = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#8e8e93;background:#fff;">' +
+        'ℹ️ No pending laboratory tests requested for this patient.<br>' +
+        '<button type="button" class="btn-s" onclick="setEntryCatalogMode(\'catalog\')" style="margin-top:8px;cursor:pointer;">📋 Show Full Catalog</button>' +
+        '</td></tr>';
+    } else {
+      categoriesToRender.forEach(function(cat) {
+        var catRowCount = cat.tests.length;
 
-      cat.tests.forEach(function(test, tIdx) {
-        var rowClass = (totalRowCount % 2 === 0) ? 'row-even' : 'row-odd';
-        totalRowCount++;
-        bodyHtml += '<tr class="' + rowClass + '">';
+        cat.tests.forEach(function(test, tIdx) {
+          var rowClass = (totalRowCount % 2 === 0) ? 'row-even' : 'row-odd';
+          totalRowCount++;
+          bodyHtml += '<tr class="' + rowClass + '">';
 
-        // Category cell
-        if (tIdx === 0) {
-          bodyHtml += '<td class="oc-cat-cell ' + cat.className + '" rowspan="' + catRowCount + '">' + cat.title + '</td>';
-        }
-
-        // Parameter cell
-        var rangeLabel = test.range ? ' [' + test.range + ']' : '';
-        bodyHtml += '<td class="oc-test-cell">' +
-          '<span class="oc-test-code">' + test.code + '</span>' +
-          '<span>' + test.name + '</span>' +
-          '<span class="oc-test-range">' + rangeLabel + '</span>' +
-        '</td>';
-
-        // Column 1: 04/10/2026
-        var draftVal = matrixDraftValues[test.code] != null ? matrixDraftValues[test.code] : '';
-        var dirtyClass = draftVal ? ' dirty' : '';
-
-        if (mode === 'entry') {
-          var isRequested = (test.code === '50001' || test.code === '10700-1' || test.code === '50002');
-          var quickChips = '';
-          if (test.code === '50001') {
-            quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
-              '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'tropho ++++\')">tropho ++++</span>' +
-              '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'Negative\')">Negative</span>' +
-            '</div>';
-          } else if (test.code.indexOf('1070') !== -1 || test.code.indexOf('211') !== -1 || test.code.indexOf('109') !== -1) {
-            quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
-              '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'MTB +++\')">MTB +++</span>' +
-              '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'No growth\')">No growth</span>' +
-            '</div>';
-          } else if (test.range) {
-            quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
-              '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'' + test.range + '\')">' + test.range + '</span>' +
-            '</div>';
+          // Category cell
+          if (tIdx === 0) {
+            bodyHtml += '<td class="oc-cat-cell ' + cat.className + '" rowspan="' + catRowCount + '">' + cat.title + '</td>';
           }
 
-          var bgStyle = isRequested ? 'background:rgba(0,113,227,0.06);' : '';
-          bodyHtml += '<td class="oc-res-cell" style="padding:4px 6px;' + bgStyle + '">' +
-            '<input type="text" class="matrix-entry-input' + dirtyClass + '" ' +
-                   'data-test-code="' + test.code + '" ' +
-                   'data-test-name="' + test.name + '" ' +
-                   'data-ref-range="' + (test.range || '') + '" ' +
-                   'placeholder="Enter result…" ' +
-                   'value="' + escapeHtml(draftVal) + '" ' +
-                   'oninput="onMatrixInputChange(this)" />' +
-            quickChips +
+          // Parameter cell
+          var rangeLabel = test.range ? ' [' + test.range + ']' : '';
+          bodyHtml += '<td class="oc-test-cell">' +
+            '<span class="oc-test-code">' + test.code + '</span>' +
+            '<span>' + escapeHtml(test.name) + '</span>' +
+            '<span class="oc-test-range">' + escapeHtml(rangeLabel) + '</span>' +
           '</td>';
-        } else {
-          // Read-only 04/10/2026: exact faint "--" or draft if entered
-          if (draftVal) {
-            bodyHtml += '<td class="oc-res-cell" style="cursor:pointer;" onclick="switchLabResultsMode(\'entry\'); focusTestInput(\'' + test.code + '\')">' +
-              '<span style="font-weight:800;color:#0071e3;">' + escapeHtml(draftVal) + '</span>' +
+
+          // Column 1: Active Request
+          var draftVal = matrixDraftValues[test.code] != null ? matrixDraftValues[test.code] : '';
+          var existingVerified = null;
+          if (activeOrder && Array.isArray(activeOrder.results)) {
+            existingVerified = activeOrder.results.find(function(r){ return r.code === test.code || r.test === test.name; });
+          }
+          if (!draftVal && existingVerified) {
+            draftVal = existingVerified.value || '';
+          }
+
+          var dirtyClass = draftVal ? ' dirty' : '';
+
+          if (mode === 'entry') {
+            var quickChips = '';
+            var lowerName = test.name.toLowerCase();
+            if (test.code === '50001' || lowerName.indexOf('malaria') !== -1) {
+              quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
+                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'tropho ++++\')">tropho ++++</span>' +
+                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'Negative\')">Negative</span>' +
+              '</div>';
+            } else if (test.code.indexOf('1070') !== -1 || lowerName.indexOf('culture') !== -1) {
+              quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
+                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'MTB +++\')">MTB +++</span>' +
+                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'No growth\')">No growth</span>' +
+              '</div>';
+            } else if (test.range) {
+              quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
+                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'' + escapeHtml(test.range) + '\')">' + escapeHtml(test.range) + '</span>' +
+                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'Normal\')">Normal</span>' +
+              '</div>';
+            }
+
+            bodyHtml += '<td class="oc-res-cell" style="padding:4px 6px; background:rgba(0,113,227,0.06);">' +
+              '<input type="text" class="matrix-entry-input' + dirtyClass + '" ' +
+                     'data-test-code="' + escapeHtml(test.code) + '" ' +
+                     'data-test-name="' + escapeHtml(test.name) + '" ' +
+                     'data-ref-range="' + escapeHtml(test.range || '') + '" ' +
+                     'placeholder="Enter result…" ' +
+                     'value="' + escapeHtml(draftVal) + '" ' +
+                     'oninput="onMatrixInputChange(this)" />' +
+              quickChips +
             '</td>';
           } else {
-            bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;cursor:pointer;" onclick="switchLabResultsMode(\'entry\'); focusTestInput(\'' + test.code + '\')" title="Click to enter result">--</td>';
+            // Read-only cumulative column:
+            if (draftVal) {
+              bodyHtml += '<td class="oc-res-cell" style="cursor:pointer;" onclick="switchLabResultsMode(\'entry\'); focusTestInput(\'' + escapeHtml(test.code) + '\')">' +
+                '<span style="font-weight:800;color:#0071e3;">' + escapeHtml(draftVal) + '</span>' +
+              '</td>';
+            } else {
+              bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;cursor:pointer;" onclick="switchLabResultsMode(\'entry\'); focusTestInput(\'' + escapeHtml(test.code) + '\')" title="Click to enter result">--</td>';
+            }
           }
-        }
 
-        // Column 2: 06/09/2026
-        var res0609 = results0609[test.code];
-        if (res0609) {
-          if (res0609.value === '--') {
+          // Column 2: 06/09/2026
+          var res0609 = results0609[test.code];
+          if (res0609) {
+            if (res0609.value === '--') {
+              bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
+            } else if (res0609.flag === 'High') {
+              bodyHtml += '<td class="oc-res-cell">' +
+                '<span style="font-weight:800;">' + res0609.value + '</span> ' +
+                '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:0 3px;border-radius:8px;margin-left:2px;">H</span>' +
+              '</td>';
+            } else {
+              bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + res0609.value + '</span></td>';
+            }
+          } else {
             bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
-          } else if (res0609.flag === 'High') {
-            bodyHtml += '<td class="oc-res-cell">' +
-              '<span style="font-weight:800;">' + res0609.value + '</span> ' +
-              '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:0 3px;border-radius:8px;margin-left:2px;">H</span>' +
-            '</td>';
-          } else {
-            bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + res0609.value + '</span></td>';
           }
-        } else {
-          // Empty cell on 06/09/2026
-          bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;"></td>';
-        }
 
-        // Column 3: 23/08/2026
-        bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
+          // Column 3: 23/08/2026
+          bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
 
-        // Padding Columns 4 to 7
-        for (var ep = 0; ep < paddingEmptyCols; ep++) {
-          bodyHtml += '<td class="oc-res-cell oc-empty-col" style="color:#9ca3af;opacity:0.28;">--</td>';
-        }
+          // Padding Columns 4 to 7
+          for (var ep = 0; ep < paddingEmptyCols; ep++) {
+            bodyHtml += '<td class="oc-res-cell oc-empty-col" style="color:#9ca3af;opacity:0.28;">--</td>';
+          }
 
-        bodyHtml += '</tr>';
+          bodyHtml += '</tr>';
+        });
       });
-    });
+    }
 
     tbody.innerHTML = bodyHtml;
   }
@@ -1142,101 +1370,82 @@
 
   function onMatrixInputChange(inp) {
     if (!inp) return;
-    inp.classList.add('dirty');
-    var code = inp.getAttribute('data-test-code');
-    if (code) {
-      matrixDraftValues[code] = inp.value;
-    }
+    var code = inp.getAttribute('data-test-code') || '';
+    if (!code) return;
+    var val = inp.value;
+    matrixDraftValues[code] = val;
+    if (val) inp.classList.add('dirty');
+    else inp.classList.remove('dirty');
   }
 
   function focusTestInput(code) {
     setTimeout(function() {
-      var inp = document.querySelector('.matrix-entry-input[data-test-code="' + code + '"]');
+      var inp = document.querySelector('input.matrix-entry-input[data-test-code="' + code + '"]');
       if (inp) {
         inp.focus();
         inp.select();
       }
-    }, 60);
+    }, 50);
   }
 
   function isUserEditingMatrix() {
-    if (activeLabResultsMode === 'entry') return true;
-    var activeEl = document.activeElement;
-    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA')) {
+    var active = document.activeElement;
+    if (active && (active.classList.contains('matrix-entry-input') || active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
       return true;
     }
-    if (Object.keys(matrixDraftValues).length > 0) return true;
-    var inputs = document.querySelectorAll('.matrix-entry-input');
-    for (var i = 0; i < inputs.length; i++) {
-      if (inputs[i].value && inputs[i].value.trim() !== '') return true;
-      if (inputs[i].classList.contains('dirty')) return true;
-    }
-    return false;
+    return Object.keys(matrixDraftValues).length > 0;
   }
 
   function fillMatrixQuick(btn, val) {
-    var cell = btn.closest('td');
-    if (!cell) return;
-    var input = cell.querySelector('.matrix-entry-input');
-    if (input) {
-      input.value = val;
-      input.classList.add('dirty');
-      var code = input.getAttribute('data-test-code');
-      if (code) {
-        matrixDraftValues[code] = val;
-      }
-      input.focus();
-    }
+    var td = btn.closest('td');
+    if (!td) return;
+    var inp = td.querySelector('input.matrix-entry-input');
+    if (!inp) return;
+    inp.value = val;
+    inp.classList.add('dirty');
+    var code = inp.getAttribute('data-test-code') || '';
+    if (code) matrixDraftValues[code] = val;
   }
 
   function autoFillRoutineNormals() {
-    var inputs = document.querySelectorAll('.matrix-entry-input');
-    var filled = 0;
+    var inputs = document.querySelectorAll('#matrixBodyEntry input.matrix-entry-input');
+    var filledCount = 0;
     inputs.forEach(function(inp) {
-      if (!inp.value.trim()) {
-        var range = inp.getAttribute('data-ref-range') || 'Normal';
-        inp.value = range;
-        inp.classList.add('dirty');
-        var code = inp.getAttribute('data-test-code');
-        if (code) {
-          matrixDraftValues[code] = range;
-        }
-        filled++;
+      if ((inp.value || '').trim()) return;
+      var code = inp.getAttribute('data-test-code') || '';
+      var range = inp.getAttribute('data-ref-range') || '';
+      var name = inp.getAttribute('data-test-name') || '';
+
+      var fillVal = 'Normal';
+      var lowerName = name.toLowerCase();
+      if (code === '50001' || lowerName.indexOf('malaria') !== -1) {
+        fillVal = 'Negative';
+      } else if (code.indexOf('1070') !== -1 || lowerName.indexOf('culture') !== -1) {
+        fillVal = 'No growth';
+      } else if (range && range.indexOf('-') === -1 && range.indexOf('<') === -1 && range.indexOf('>') === -1) {
+        fillVal = range;
+      } else if (range && range.indexOf('-') !== -1) {
+        fillVal = 'Normal';
+      } else {
+        fillVal = 'Negative';
       }
+
+      inp.value = fillVal;
+      inp.classList.add('dirty');
+      matrixDraftValues[code] = fillVal;
+      filledCount++;
     });
-    notify('⚡ Auto-filled ' + filled + ' routine normal measurement(s). Click Save to release.', 'info');
+
+    if (filledCount > 0) {
+      notify('⚡ Auto-filled ' + filledCount + ' test field(s) with normal / negative values.', 'success');
+    } else {
+      notify('ℹ️ All test fields already contain values.', 'info');
+    }
   }
 
   function saveAndSendLabResultsToDoctor() {
-    var inputs = document.querySelectorAll('.matrix-entry-input');
+    var inputs = document.querySelectorAll('#matrixBodyEntry input.matrix-entry-input');
     var results = [];
-
-    // Collect from both matrixDraftValues and live DOM inputs
-    Object.keys(matrixDraftValues).forEach(function(code) {
-      var val = (matrixDraftValues[code] || '').trim();
-      if (!val) return;
-      var testObj = null;
-      MATRIX_CATEGORIES.forEach(function(cat) {
-        cat.tests.forEach(function(t) {
-          if (t.code === code) testObj = t;
-        });
-      });
-      if (testObj && !results.some(function(r){ return r.code === code; })) {
-        var flag = 'Normal';
-        if (val.indexOf('++++') !== -1 || val.indexOf('+++') !== -1 || val.toLowerCase().indexOf('high') !== -1 || val.toLowerCase().indexOf('pos') !== -1) {
-          flag = 'High';
-        }
-        results.push({
-          code: code,
-          test: testObj.name,
-          value: val,
-          range: testObj.range || '',
-          flag: flag,
-          verifiedBy: (window.currentStaff && window.currentStaff.name) || 'Laboratory Staff (Technician)',
-          date: new Date().toISOString()
-        });
-      }
-    });
 
     inputs.forEach(function(inp) {
       var val = (inp.value || '').trim();
@@ -1245,8 +1454,13 @@
       var name = inp.getAttribute('data-test-name') || '';
       var range = inp.getAttribute('data-ref-range') || '';
       var flag = 'Normal';
-      if (val.indexOf('++++') !== -1 || val.indexOf('+++') !== -1 || val.toLowerCase().indexOf('high') !== -1 || val.toLowerCase().indexOf('pos') !== -1) {
+      var lowerVal = val.toLowerCase();
+      if (val.indexOf('++++') !== -1 || val.indexOf('+++') !== -1 || lowerVal.indexOf('high') !== -1 || lowerVal.indexOf('pos') !== -1) {
         flag = 'High';
+      } else if (lowerVal.indexOf('low') !== -1) {
+        flag = 'Low';
+      } else if (lowerVal.indexOf('crit') !== -1) {
+        flag = 'Critical';
       }
 
       if (!results.some(function(r){ return r.code === code; })) {
@@ -1262,6 +1476,20 @@
       }
     });
 
+    Object.keys(matrixDraftValues).forEach(function(code) {
+      var val = (matrixDraftValues[code] || '').trim();
+      if (!val || results.some(function(r){ return r.code === code; })) return;
+      results.push({
+        code: code,
+        test: 'Laboratory Result (' + code + ')',
+        value: val,
+        range: '',
+        flag: 'Normal',
+        verifiedBy: (window.currentStaff && window.currentStaff.name) || 'Laboratory Staff (Technician)',
+        date: new Date().toISOString()
+      });
+    });
+
     if (!results.length) {
       notify('⚠️ Please enter at least one test measurement before saving.', 'warning');
       return;
@@ -1269,48 +1497,151 @@
 
     var allOrders = getAllRawOrders();
     var allPatients = getPatientList();
-    var pendingOrder = allOrders.find(function(o){ return String(o.id) === 'ORD-LAB-2026-1004' || o.status === 'pending'; });
 
-    if (pendingOrder) {
-      pendingOrder.status = 'completed';
-      pendingOrder.completedAt = new Date().toISOString();
-      pendingOrder.completedBy = (window.currentStaff && window.currentStaff.name) || 'Laboratory Staff (Technician)';
-      pendingOrder.results = results;
-      pendingOrder.result = 'Verified: ' + results.map(function(r){ return r.test + ': ' + r.value; }).join(', ');
+    // Identify the EXACT active order being completed!
+    var activeOrder = null;
+    if (activeTargetOrderId) {
+      activeOrder = allOrders.find(function(o){ return String(o.id) === String(activeTargetOrderId); });
+    }
+    if (!activeOrder && activeLabResultsPatientId && activeLabResultsPatientId !== 'all') {
+      activeOrder = allOrders.find(function(o){
+        var ptId = String(o.patientId || '').replace(/^MOD-/i, '');
+        var targetId = String(activeLabResultsPatientId).replace(/^MOD-/i, '');
+        return ptId === targetId && (o.dept === 'lab' || o.type === 'lab') && String(o.status || '').toLowerCase() === 'pending';
+      });
+      if (!activeOrder) {
+        activeOrder = allOrders.find(function(o){
+          var ptId = String(o.patientId || '').replace(/^MOD-/i, '');
+          var targetId = String(activeLabResultsPatientId).replace(/^MOD-/i, '');
+          return ptId === targetId && (o.dept === 'lab' || o.type === 'lab');
+        });
+      }
+    }
+    if (!activeOrder) {
+      activeOrder = allOrders.find(function(o){
+        return (o.dept === 'lab' || o.type === 'lab') && String(o.status || '').toLowerCase() === 'pending';
+      });
+    }
+    if (!activeOrder && allOrders.length) {
+      activeOrder = allOrders[0];
     }
 
-    var targetPt = allPatients[0];
+    if (!activeOrder) {
+      notify('❌ No laboratory request found to save results to.', 'error');
+      return;
+    }
+
+    var nowIso = new Date().toISOString();
+    var staffName = (window.currentStaff && window.currentStaff.name) || 'Laboratory Staff (Technician)';
+    var staffId = (window.currentStaff && window.currentStaff.staffId) || 'LAB-STAFF-01';
+
+    activeOrder.status = 'completed';
+    activeOrder.labState = 'final';
+    activeOrder.completedAt = nowIso;
+    activeOrder.completedBy = staffName;
+    activeOrder.completedById = staffId;
+    activeOrder.results = results;
+    activeOrder.result = 'Verified: ' + results.map(function(r){ return r.test + ': ' + r.value; }).join(', ');
+
+    if (Array.isArray(activeOrder.items)) {
+      activeOrder.items.forEach(function(item) {
+        var match = results.find(function(r){ return r.code === item.code || r.test.toLowerCase() === String(item.name || '').toLowerCase(); });
+        if (match) {
+          item.result = match.value;
+          item.flag = match.flag;
+        }
+      });
+    }
+
+    var targetPt = allPatients.find(function(p){
+      return String(p.id).replace(/^MOD-/i, '') === String(activeOrder.patientId).replace(/^MOD-/i, '');
+    });
     if (targetPt) {
       targetPt.labResults = targetPt.labResults || [];
-      results.forEach(function(r){ targetPt.labResults.push(r); });
+      results.forEach(function(r) {
+        targetPt.labResults.push(Object.assign({}, r, {
+          orderId: activeOrder.id,
+          date: nowIso,
+          verifiedBy: staffName
+        }));
+      });
+      if (Array.isArray(targetPt.labRequests)) {
+        var req = targetPt.labRequests.find(function(lr){ return String(lr.id) === String(activeOrder.id) || lr.orderId === activeOrder.id; });
+        if (req) {
+          req.status = 'completed';
+          req.results = results;
+        }
+      }
     }
 
     saveAllRawOrders(allOrders);
     try { localStorage.setItem('pclinic_patients', JSON.stringify(allPatients)); } catch(e){}
 
-    // Sync to Firestore if online
-    if (window.pcOrders && typeof window.pcOrders.saveOrder === 'function' && pendingOrder) {
-      try { window.pcOrders.saveOrder(pendingOrder); } catch(e){}
+    if (window.pcOrders && typeof window.pcOrders.update === 'function') {
+      try {
+        window.pcOrders.update(activeOrder.id, {
+          status: 'completed',
+          labState: 'final',
+          results: results,
+          result: activeOrder.result,
+          completedAt: nowIso,
+          completedBy: staffName
+        }, true);
+      } catch(e){}
     }
 
-    // Reset draft store after successful release
+    if (window.firebaseDB && window.firebaseFunctions) {
+      try {
+        var f = window.firebaseFunctions;
+        f.setDoc(f.doc(window.firebaseDB, 'orders', String(activeOrder.id)), activeOrder, { merge: true })
+          .catch(function(err){ console.warn('Firestore orders sync:', err); });
+        if (targetPt) {
+          f.setDoc(f.doc(window.firebaseDB, 'patients', String(targetPt.id)), targetPt, { merge: true })
+            .catch(function(err){ console.warn('Firestore patients sync:', err); });
+        }
+        var msgId = ('lab-res-' + activeOrder.id + '-' + Date.now()).replace(/\//g, '_');
+        var docName = targetPt ? ((targetPt.firstName || '') + ' ' + (targetPt.lastName || '')).trim() : (activeOrder.patientName || 'Patient');
+        f.setDoc(f.doc(window.firebaseDB, 'messages', msgId), {
+          id: msgId,
+          text: '✅ Lab results completed for ' + docName + ' — ' + results.map(function(r){ return r.test + ': ' + r.value; }).join(', '),
+          toRoles: ['doctor'],
+          toStaffId: activeOrder.orderedById || null,
+          category: 'result',
+          priority: results.some(function(r){ return r.flag === 'High' || r.flag === 'Critical'; }) ? 'urgent' : 'normal',
+          patientId: String(activeOrder.patientId),
+          patientName: docName,
+          createdAt: nowIso,
+          readBy: []
+        }).catch(function(err){ console.warn('Firestore messages sync:', err); });
+      } catch(e){}
+    }
+
     matrixDraftValues = {};
 
-    // Live events
     try {
-      window.dispatchEvent(new CustomEvent('ordersUpdated'));
-      window.dispatchEvent(new CustomEvent('labResultsUpdated'));
+      window.dispatchEvent(new CustomEvent('ordersUpdated', { detail: { order: activeOrder, serverConfirmed: true } }));
+      window.dispatchEvent(new CustomEvent('labResultsUpdated', { detail: { orderId: activeOrder.id, patientId: activeOrder.patientId } }));
       window.dispatchEvent(new CustomEvent('patientsUpdated'));
       localStorage.setItem('pclinic_last_lab_broadcast', Date.now().toString());
     } catch(e){}
 
     notify('✅ Laboratory results successfully saved and sent to Doctor Dashboard!', 'success');
+
+    if (typeof renderPatientTable === 'function') {
+      renderPatientTable();
+    }
+    if (typeof labRefreshOverviewQueue === 'function') {
+      labRefreshOverviewQueue();
+    }
+    if (window.pcLabEngine && typeof window.pcLabEngine.repaint === 'function') {
+      try { window.pcLabEngine.repaint(); } catch(e){}
+    }
+
     activeTargetOrderId = null;
     switchLabResultsMode('results');
   }
 
   function renderLabResultsModule() {
-    seedSampleLabRequestsIfEmpty();
     populateLabResultsPatientSelect();
     switchLabResultsMode(activeLabResultsMode);
     if (byId('ocMatrixTableOverview')) {
@@ -1332,6 +1663,7 @@
 
   window.switchLabResultsMode = switchLabResultsMode;
   window.onLabResultsPatientChange = onLabResultsPatientChange;
+  window.setEntryCatalogMode = setEntryCatalogMode;
   window.renderLabResultsModule = renderLabResultsModule;
   window.renderMatrixFlowSheet = renderMatrixFlowSheet;
   window.openResultEntryForOrder = openResultEntryForOrder;
