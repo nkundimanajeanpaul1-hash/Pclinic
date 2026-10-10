@@ -75,12 +75,12 @@
 
     function setText(id, text) {
         var el = document.getElementById(id);
-        if (el) el.textContent = text;
+        if (el && el.textContent !== String(text)) el.textContent = text;
     }
 
     function setHtml(id, html) {
         var el = document.getElementById(id);
-        if (el) el.innerHTML = html;
+        if (el && el.__lastHtml !== html) { el.innerHTML = html; el.__lastHtml = html; }
     }
 
     function setValue(id, value) {

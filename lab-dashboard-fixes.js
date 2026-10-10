@@ -425,7 +425,36 @@
     }
   }
 
+  // ── Anti-blink helpers: signature of synced data + single debounced repaint ──
+  var __pullInFlight = false;
+  var __repaintTimer = null;
+  function dataSignature() {
+    try { return (localStorage.getItem('pclinic_orders') || '') + '|' + (localStorage.getItem('pclinic_patients') || ''); }
+    catch(e) { return String(Date.now()); }
+  }
+  function queueEngineRepaint() {
+    if (__repaintTimer) return;
+    __repaintTimer = setTimeout(function() {
+      __repaintTimer = null;
+      if (window.pcLabEngine && typeof window.pcLabEngine.repaint === 'function') {
+        try { window.pcLabEngine.repaint(); } catch(e){}
+      }
+    }, 250);
+  }
+
   async function pullLabRequestsFromCommonServer(isManual) {
+    // Re-entrancy guard: a pull must never start another pull (this was the blink loop).
+    if (__pullInFlight) return 0;
+    __pullInFlight = true;
+    try {
+      return await pullLabRequestsFromCommonServerInner(isManual);
+    } finally {
+      __pullInFlight = false;
+    }
+  }
+
+  async function pullLabRequestsFromCommonServerInner(isManual) {
+    var sigBefore = dataSignature();
     if (isManual) {
       notify('🔄 Contacting Common Server to pull requested labs…', 'info');
     }
@@ -494,8 +523,10 @@
       try { window.pcOrders.aggregate(allOrders); } catch(e){}
     }
 
-    // 4. Populate views only if user is NOT actively editing inputs
-    if (!isUserEditingMatrix()) {
+    var dataChanged = (dataSignature() !== sigBefore);
+
+    // 4. Populate views only if data changed (or manual) and user is NOT editing inputs
+    if ((dataChanged || isManual) && !isUserEditingMatrix()) {
       populateLabResultsPatientSelect();
       renderRequestedLabsTable();
       renderVerifiedLabResultsTable();
@@ -504,15 +535,15 @@
       }
     }
 
-    if (window.pcLabEngine && typeof window.pcLabEngine.repaint === 'function') {
-      try { window.pcLabEngine.repaint(); } catch(e){}
-    }
-    if (typeof window.loadPatients === 'function') {
-      try { window.loadPatients(); } catch(e){}
+    if (dataChanged || isManual) {
+      queueEngineRepaint();
+      if (typeof window.loadPatients === 'function') {
+        try { window.loadPatients(); } catch(e){}
+      }
     }
 
-    // 5. Broadcast to Doctor Dashboard & Reception ONLY when new orders arrived
-    if (cloudOrdersCount > 0 || cloudPatientsCount > 0) {
+    // 5. Broadcast ONLY when synced data actually changed
+    if (dataChanged && (cloudOrdersCount > 0 || cloudPatientsCount > 0)) {
       try {
         window.dispatchEvent(new CustomEvent('ordersUpdated'));
         window.dispatchEvent(new CustomEvent('labResultsUpdated'));
@@ -549,14 +580,14 @@
             if (idx >= 0) raw[idx] = Object.assign({}, raw[idx], co);
             else raw.unshift(co);
           });
+          var sigO = dataSignature();
           try { localStorage.setItem('pclinic_orders', JSON.stringify(raw)); } catch(e){}
+          if (dataSignature() === sigO) return;
           getAllRawOrders();
-          if (byId('panel-results') && byId('panel-results').style.display !== 'none') {
+          if (byId('panel-results') && byId('panel-results').style.display !== 'none' && !isUserEditingMatrix()) {
             renderLabResultsModule();
           }
-          if (window.pcLabEngine && typeof window.pcLabEngine.repaint === 'function') {
-            window.pcLabEngine.repaint();
-          }
+          queueEngineRepaint();
         }
       }, function(err) { console.warn('orders onSnapshot:', err); });
     } catch(e){}
@@ -578,14 +609,14 @@
             if (idx >= 0) localPts[idx] = Object.assign({}, localPts[idx], cp);
             else localPts.unshift(cp);
           });
+          var sigP = dataSignature();
           try { localStorage.setItem('pclinic_patients', JSON.stringify(localPts)); } catch(e){}
+          if (dataSignature() === sigP) return;
           getAllRawOrders();
-          if (byId('panel-results') && byId('panel-results').style.display !== 'none') {
+          if (byId('panel-results') && byId('panel-results').style.display !== 'none' && !isUserEditingMatrix()) {
             renderLabResultsModule();
           }
-          if (window.pcLabEngine && typeof window.pcLabEngine.repaint === 'function') {
-            window.pcLabEngine.repaint();
-          }
+          queueEngineRepaint();
         }
       }, function(err) { console.warn('patients onSnapshot:', err); });
     } catch(e){}
@@ -1734,11 +1765,7 @@
       }
     });
 
-    window.addEventListener('patientsUpdated', function() {
-      if (!isUserEditingMatrix()) {
-        pullLabRequestsFromCommonServer(false);
-      }
-    });
+    // (removed) patientsUpdated -> pull listener: it re-triggered itself endlessly.
 
     window.setTimeout(queueDoctorParityClasses, 60);
     window.setTimeout(queueDoctorParityClasses, 300);

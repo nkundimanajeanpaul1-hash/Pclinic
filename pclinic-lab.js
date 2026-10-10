@@ -2040,7 +2040,11 @@
             optionsHtml += '<option value="' + esc(g.key) + '">' + esc(dateSelectorLabel(g)) + '</option>';
         });
 
-        sel.innerHTML = optionsHtml;
+        // Only rebuild the dropdown when its options really changed (avoids flicker / closing an open list)
+        if (sel.getAttribute('data-opts-sig') !== optionsHtml) {
+            sel.innerHTML = optionsHtml;
+            sel.setAttribute('data-opts-sig', optionsHtml);
+        }
         if (currentVal && groups.some(function(g){ return g.key === currentVal; })) {
             sel.value = currentVal;
             selectSpecimenPatient(currentVal, true);
@@ -2068,11 +2072,18 @@
 
         var accNo = displayAccessionNo(g);
 
-        if (nameEl) nameEl.textContent = g.patientName;
-        if (mrnEl)  mrnEl.textContent  = 'MRN MOD-' + g.patientId + ' • ' + formatLabDate(g.dateStr) + ' • ' + String(g.priority).toUpperCase() + ' Order';
-        if (docEl)  docEl.textContent  = g.orders[0].orderedBy || 'PClinic Staff';
-        if (accEl)  accEl.textContent  = 'ACC: ' + accNo;
-        if (barBox) barBox.innerHTML   = generateSVGBarcode(accNo);
+        function setTxt(el, v) { if (el && el.textContent !== v) el.textContent = v; }
+        function setHtmlIfChanged(el, v) {
+            if (!el) return;
+            if (el.getAttribute('data-html-sig') === v) return;
+            el.innerHTML = v;
+            el.setAttribute('data-html-sig', v);
+        }
+        setTxt(nameEl, g.patientName);
+        setTxt(mrnEl, 'MRN MOD-' + g.patientId + ' • ' + formatLabDate(g.dateStr) + ' • ' + String(g.priority).toUpperCase() + ' Order');
+        setTxt(docEl, g.orders[0].orderedBy || 'PClinic Staff');
+        setTxt(accEl, 'ACC: ' + accNo);
+        setHtmlIfChanged(barBox, generateSVGBarcode(accNo));
 
         if (testsBox) {
             var orderedNames = [];
@@ -2081,13 +2092,13 @@
                     if (orderedNames.indexOf(it.name) === -1) orderedNames.push(it.name);
                 });
             });
-            testsBox.innerHTML = orderedNames.map(function(tName) {
+            setHtmlIfChanged(testsBox, orderedNames.map(function(tName) {
                 return '<div class="specimen-test-item">' +
                        '<span class="specimen-test-dot"></span>' +
                        '<span class="specimen-test-name">' + esc(tName) + '</span>' +
                        '<span class="specimen-test-badge">Requested</span>' +
                        '</div>';
-            }).join('');
+            }).join(''));
         }
 
         if (!quiet && window.showToast) {
