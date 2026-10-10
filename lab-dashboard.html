@@ -5638,11 +5638,6 @@ function renderPatientTable(patients) {
     var statusFilter = (document.getElementById('statusFilter') && document.getElementById('statusFilter').value) || 'all';
     
     var data = patients || (typeof getPatients === 'function' ? getPatients() : []) || [];
-    if (!data.length) {
-        try {
-            data = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
-        } catch(e){}
-    }
     
     if (filter) {
         data = data.filter(function(p){
@@ -5778,7 +5773,14 @@ function renderPatientTable(patients) {
 function selectPatient(id) {
     var patients = (typeof getPatients === 'function' ? getPatients() : []) || [];
     if (!patients || !patients.length) {
-        try { patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){ patients = []; }
+        if (window.pcLabEngine && typeof pcLabEngine.listVisibleLabOrders === 'function') {
+            try {
+                var orders = pcLabEngine.listVisibleLabOrders() || [];
+                patients = orders.map(function(o){
+                    return { id: String(o.patientId || '').replace(/^MOD-/i,''), firstName: (o.patientName || '').split(' ').slice(0,-1).join(' ') || 'Patient', lastName: (o.patientName || '').split(' ').slice(-1)[0] || '', mrn: String(o.patientId || '').replace(/^MOD-/i,''), name: o.patientName || 'Patient' };
+                });
+            } catch(e){ patients = []; }
+        }
     }
     var p = patients.find(function(pt){ return String(pt.id) === String(id); });
     if (!p) {
@@ -5815,16 +5817,22 @@ function loadPatients() {
     try {
         var allPatients = (typeof getPatients === 'function') ? getPatients() : [];
         if (!allPatients || !allPatients.length) {
-            try { allPatients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
-        }
-        if (!allPatients || !allPatients.length) {
-            allPatients = [
-                { id: '1002', firstName: 'DJUMA', lastName: 'NSHUTI', mrn: '1002', dob: '2019-01-23', gender: 'Male', phone: '+250780979195', status: 'active', department: 'Laboratory' },
-                { id: '1001', firstName: 'LIDIVINE', lastName: 'NTIVUGURUZWA', mrn: '1001', dob: '2016-01-23', gender: 'Female', phone: '+250785609675', status: 'active', department: 'Laboratory' },
-                { id: '1003', firstName: 'ERIC', lastName: 'HABIMANA', mrn: '1003', dob: '1975-11-03', gender: 'Male', phone: '+250788345678', status: 'active', department: 'Laboratory' },
-                { id: '1004', firstName: 'ALINE', lastName: 'MUKAMANA', mrn: '1004', dob: '2001-02-18', gender: 'Female', phone: '+250788456789', status: 'active', department: 'Laboratory' }
-            ];
-            try { localStorage.setItem('pclinic_patients', JSON.stringify(allPatients)); } catch(e){}
+            if (window.pcLabEngine && typeof pcLabEngine.listVisibleLabOrders === 'function') {
+                var orders = pcLabEngine.listVisibleLabOrders() || [];
+                var seen = {};
+                orders.forEach(function(o) {
+                    var pid = String(o.patientId || '').replace(/^MOD-/i, '');
+                    if (!pid || seen[pid]) return;
+                    seen[pid] = true;
+                    var parts = (o.patientName || 'Patient').trim().split(/\s+/);
+                    allPatients.push({
+                        id: pid, mrn: pid, name: o.patientName || 'Patient',
+                        firstName: parts.slice(0, -1).join(' ') || 'Patient',
+                        lastName: parts.slice(-1)[0] || '',
+                        status: 'active', department: 'Laboratory'
+                    });
+                });
+            }
         }
         renderPatientTable(allPatients);
         return allPatients;
