@@ -5803,9 +5803,9 @@ function selectPatient(id) {
     try { window.dispatchEvent(new CustomEvent('pcPatientChanged', { detail: p })); } catch(e){}
     try { window.dispatchEvent(new CustomEvent('labSelectionChanged', { detail: p })); } catch(e){}
     
-    if (typeof pcLabEngine !== 'undefined' && typeof pcLabEngine.selectLabPatient === 'function') {
-        try { pcLabEngine.selectLabPatient(p.id, true); } catch(e){}
-    }
+    // Do NOT call pcLabEngine.selectLabPatient here — it triggers repaintAll()
+    // which calls renderPatientTable() again, causing blink loop.
+    // Everything above (bar, localStorage, events) already handles selection.
     
     renderPatientTable();
     if (typeof showToast === 'function') {

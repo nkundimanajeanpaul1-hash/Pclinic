@@ -1022,13 +1022,11 @@
         });
     }
 
-    /* ── Render Overview Worklist (One Master Row per Patient) ── */
+    /* ── Render Overview Worklist (One Master Row per Patient) ─ */
     function paintOverviewWorklist() {
-        if (typeof window.renderPatientTable === 'function') {
-            window.renderPatientTable();
-            return;
-        }
-        var el = document.getElementById('pcLabWorklist') || document.getElementById('patientTableBody');
+        // lab-dashboard.html owns patientTableBody — skip to avoid double-render blink
+        if (typeof window.renderPatientTable === 'function') return;
+        var el = document.getElementById('pcLabWorklist');
         if (!el) return;
         var orders = getLabOrders();
         var patientGroups = groupOrdersByPatient(orders);
