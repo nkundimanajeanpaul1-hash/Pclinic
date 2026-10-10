@@ -1052,7 +1052,7 @@
             var dateSummary = g.dateCount + ' request date' + (g.dateCount === 1 ? '' : 's');
             var latestDate = formatLabDate(latestGroup.dateStr);
 
-            return '<tr data-lab-row="' + esc(g.patientId) + '" class="' + rowSelClass + '" style="cursor:pointer;transition:background .15s;" onclick="pcLabEngine.openPatientDateView(\'' + esc(g.patientId) + '\')">' +
+            return '<tr data-lab-row="' + esc(g.patientId) + '" class="' + rowSelClass + '" style="transition:background .15s;">' +
                    '<td style="font-weight:700;color:var(--ac,#007080)">' + esc(accNo) + '</td>' +
                    '<td><div style="font-weight:700;color:#1d1d1f;font-size:13px;">' + esc(g.patientName) + '</div>' +
                        '<div style="font-size:11px;color:#8e8e93;">MRN MOD-' + esc(g.patientId) + '</div></td>' +
@@ -1062,8 +1062,7 @@
                    '<td>' + prioBadge(g.priority) + '</td>' +
                    '<td>' + statusBadge(g.status) + '</td>' +
                    '<td style="text-align:right;white-space:nowrap;">' +
-                       '<button class="btn-select-lab" onclick="event.stopPropagation(); pcLabEngine.openPatientDateView(\'' + esc(g.patientId) + '\')">📅 Open dates</button>' +
-                       '<button class="btn-ov-view" title="Open this patient once, then choose date" onclick="event.stopPropagation(); pcLabEngine.openPatientDateView(\'' + esc(g.patientId) + '\')">›</button>' +
+                       '<button class="btn-select-lab" onclick="event.stopPropagation(); pcLabEngine.selectLabPatient(\'' + esc(g.patientId) + '\')">Select</button>' +
                    '</td>' +
                    '</tr>';
         }).join('');
