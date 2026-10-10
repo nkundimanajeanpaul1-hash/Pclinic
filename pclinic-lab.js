@@ -3032,17 +3032,25 @@
         printMicrobioReportModal: printMicrobioReportModal
     };
 
-    // Attach listeners
+    // Attach listeners (debounced — Firestore ticks and storage events fire
+    // repeatedly; without throttling, repaintAll() rebuilds every table on
+    // every tick, replaying CSS row animations and causing visible blink).
+    var _repaintTimer = null;
+    function debouncedRepaint() {
+        if (_repaintTimer) return;
+        _repaintTimer = setTimeout(function() { _repaintTimer = null; repaintAll(); }, 200);
+    }
+
     window.addEventListener('DOMContentLoaded', repaintAll);
     window.addEventListener('DOMContentLoaded', function() {
         setTimeout(applyInitialLabSelection, 150);
         setTimeout(applyInitialLabSelection, 600);
     });
-    window.addEventListener('ordersUpdated', repaintAll);
-    window.addEventListener('patientsUpdated', repaintAll);
-    window.addEventListener('labResultsUpdated', repaintAll);
-    window.addEventListener('storage', repaintAll);
-    window.addEventListener('focus', repaintAll);
+    window.addEventListener('ordersUpdated', debouncedRepaint);
+    window.addEventListener('patientsUpdated', debouncedRepaint);
+    window.addEventListener('labResultsUpdated', debouncedRepaint);
+    window.addEventListener('storage', debouncedRepaint);
+    window.addEventListener('focus', debouncedRepaint);
 
     // Identification bar search (Find button) → becomes the selected lab patient
     window.addEventListener('pcPatientChanged', function(e) {
