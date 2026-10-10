@@ -5777,6 +5777,9 @@ function renderPatientTable(patients) {
 
 function selectPatient(id) {
     var patients = (typeof getPatients === 'function' ? getPatients() : []) || [];
+    if (!patients || !patients.length) {
+        try { patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){ patients = []; }
+    }
     var p = patients.find(function(pt){ return String(pt.id) === String(id); });
     if (!p) {
         if (typeof showToast === 'function') showToast('❌ Patient not found', 'error');
