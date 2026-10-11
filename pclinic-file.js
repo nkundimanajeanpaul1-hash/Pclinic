@@ -1410,7 +1410,7 @@
         var list = [];
         try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
         if (!list.length) {
-            try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+            try { list = (typeof getPatients === 'function' ? getPatients() : []) || []; } catch(e){}
         }
         var scrim = document.createElement('div');
         scrim.className = 'pc-modal-scrim noprint';
@@ -1466,7 +1466,7 @@
         var list = [];
         try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
         if (!list.length) {
-            try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+            try { list = (typeof getPatients === 'function' ? getPatients() : []) || []; } catch(e){}
         }
 
         var scrim = document.createElement('div');
@@ -1620,7 +1620,7 @@
             var list = [];
             try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
             if (!list.length) {
-                try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+                try { list = (typeof getPatients === 'function' ? getPatients() : []) || []; } catch(e){}
             }
             for (var i = 0; i < list.length; i++) {
                 if (String(list[i].id) === String(patientId)) { p = list[i]; break; }
@@ -1637,7 +1637,7 @@
                 var list2 = [];
                 try { if (typeof getPatients === 'function') list2 = getPatients() || []; } catch(e){}
                 if (!list2.length) {
-                    try { list2 = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+                    try { list2 = (typeof getPatients === 'function' ? getPatients() : []) || []; } catch(e){}
                 }
                 for (var j = 0; j < list2.length; j++) {
                     if (String(list2[j].id) === String(savedId)) { p = list2[j]; break; }
@@ -1681,7 +1681,7 @@
             var list = [];
             try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
             if (!list.length) {
-                try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+                try { list = (typeof getPatients === 'function' ? getPatients() : []) || []; } catch(e){}
             }
             for (var i=0; i<list.length; i++) {
                 if (String(list[i].id) === String(patientId) || String(list[i].mrn) === String(patientId)) {
@@ -1831,7 +1831,7 @@
             var all = [];
             try { if (typeof getPatients === 'function') all = getPatients() || []; } catch(e){}
             if (!all.length) {
-                try { all = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+                try { all = (typeof getPatients === 'function' ? getPatients() : []) || []; } catch(e){}
             }
             var found = false;
             for (var i=0; i<all.length; i++) {
@@ -1840,7 +1840,7 @@
                 }
             }
             if (!found) all.push(p);
-            try { localStorage.setItem('pclinic_patients', JSON.stringify(all)); } catch(e){}
+            // SERVER-ONLY: removed. Realtime listener updates localStorage.
             if (typeof savePatients === 'function') { try { savePatients(all); } catch(e){} }
             try { localStorage.setItem('pclinic_active_patient', String(p.id)); } catch(e){}
 
@@ -2306,7 +2306,7 @@
                     var list = [];
                     try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
                     if (!list.length) {
-                        try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+                        try { list = (typeof getPatients === 'function' ? getPatients() : []) || []; } catch(e){}
                     }
                     for (var i = 0; i < list.length; i++) {
                         if (String(list[i].id) === String(id) || String(list[i].mrn) === String(id)) { p = list[i]; break; }
@@ -2375,7 +2375,7 @@
         try {
             var list = [];
             if (typeof getPatients === 'function') list = getPatients() || [];
-            if (!list.length) list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+            if (!list.length) list = (typeof getPatients === 'function' ? getPatients() : []);
             var found = list.find(function(x) { return String(x.id) === String(p.id) || String(x.mrn) === String(p.id); });
             if (found) p = found;
         } catch(e){}
@@ -2618,7 +2618,7 @@
         try {
             var list = [];
             if (typeof getPatients === 'function') list = getPatients() || [];
-            if (!list.length) list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+            if (!list.length) list = (typeof getPatients === 'function' ? getPatients() : []);
             var found = list.find(function(x) { return String(x.id) === String(p.id) || String(x.mrn) === String(p.id); });
             if (found) p = found;
         } catch(e){}
@@ -2936,7 +2936,7 @@
         try {
             var list = [];
             if (typeof getPatients === 'function') list = getPatients() || [];
-            if (!list.length) list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+            if (!list.length) list = (typeof getPatients === 'function' ? getPatients() : []);
             var found = list.find(function(x) { return String(x.id) === String(p.id) || String(x.mrn) === String(p.id); });
             if (found) p = found;
         } catch(e){}
@@ -3150,7 +3150,7 @@
             try { rawActive = window.localStorage ? window.localStorage.getItem('pclinic_active_patient') : null; } catch(e){}
             if (rawActive) {
                 try {
-                    var pts = JSON.parse((window.localStorage ? window.localStorage.getItem('pclinic_patients') : null) || '[]');
+                    var pts = (typeof getPatients === 'function' ? getPatients() : []);
                     p = pts.find(function(x){ return String(x.id) === String(rawActive) || String(x.mrn) === String(rawActive); });
                 } catch(e){}
             }
@@ -4112,7 +4112,7 @@
                 } else {
                     // lightweight inline fallback: template-named patients only
                     var names = ['TEKEREZA', 'GASPARD', 'NSANZINTWARI', 'SARATIEL', 'MUTUA', 'JOHN DOE', 'JANE DOE'];
-                    var pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                    var pts = (typeof getPatients === 'function' ? getPatients() : []);
                     var before = pts.length;
                     pts = pts.filter(function(p) {
                         var nm = (((p.firstName || '') + ' ' + (p.lastName || '') + ' ' + (p.id || '') + ' ' + (p.mrn || ''))).toUpperCase();
@@ -4486,7 +4486,7 @@
             });
             var all = [];
             try { if (typeof getPatients === 'function') all = getPatients() || []; } catch(e){}
-            if (!all.length) { try { all = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){} }
+            if (!all.length) { try { all = (typeof getPatients === 'function' ? getPatients() : []) || []; } catch(e){} }
             for (var i = 0; i < all.length; i++) {
                 if (String(all[i].id) === String(p.id) || String(all[i].mrn) === String(p.mrn || p.id)) {
                     all[i].administrativeDocuments = p.administrativeDocuments;
@@ -4670,7 +4670,7 @@
                     var labList = [];
                     try { if (typeof getPatients === 'function') labList = getPatients() || []; } catch(e){}
                     if (!labList.length) {
-                        try { labList = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+                        try { labList = (typeof getPatients === 'function' ? getPatients() : []); } catch(e){}
                     }
                     for (var lIdx = 0; lIdx < labList.length; lIdx++) {
                         if (String(labList[lIdx].id) === String(labSelId)) { labP = labList[lIdx]; break; }
@@ -4731,7 +4731,7 @@
                     else if (typeof getPatients === 'function') list = getPatients() || [];
                 } catch(e){}
                 if (!list.length) {
-                    try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+                    try { list = (typeof getPatients === 'function' ? getPatients() : []) || []; } catch(e){}
                 }
                 for (var i=0; i<list.length; i++) {
                     if (String(list[i].id) === String(savedId)) { p = list[i]; break; }

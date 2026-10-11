@@ -438,9 +438,9 @@ async function addPatient(patientData) {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
         });
-        const patients = getPatients();
-        patients.push(newPatient);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+        // SERVER-ONLY: removed localStorage write.
+        // The realtime listener (startRealtimeSync) updates localStorage
+        // when Firestore confirms — this is the single source of truth.
         window.dispatchEvent(new Event('storage'));
         await syncBillingPatientDirectory(newPatient);
         console.log('☁️ Patient created on server:', newPatient.mrn);
@@ -491,7 +491,8 @@ async function updatePatient(id, updates) {
         merged.name = (f + ' ' + l).trim();
     }
     patients[idx] = merged;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write.
+    // The realtime listener updates localStorage when Firestore confirms.
     clearPatientPending(id);
     window.dispatchEvent(new Event('storage'));
     // Reception edits to identity/insurance must immediately reach Cashier's
@@ -545,7 +546,7 @@ async function deletePatient(id) {
     const patient = patients.find(p => String(p.id) === String(id));
     if (!patient) return false;
     const remaining = patients.filter(p => String(p.id) !== String(id));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
 
     if (isFirebaseReady && window.firebaseDB) {
@@ -578,7 +579,7 @@ async function reindexPatients() {
         p.mrn = String(cur);
         cur++;
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     // Do NOT bulk overwrite Firestore — warn
     console.warn('reindex only updated localStorage. Use migration script to update Firestore if needed.');
     return patients;
@@ -623,7 +624,7 @@ async function addVitals(patientId, vitalsData) {
     if (!pat) return null;
     if (!pat.vitals) pat.vitals = [];
     pat.vitals.push(entry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
 
     await savePatientArrayField(patientId, 'vitals', entry);
@@ -652,7 +653,7 @@ async function addTriage(patientId, triageData) {
     if (!pat) return null;
     if (!pat.triage) pat.triage = [];
     pat.triage.push(entry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
     await savePatientArrayField(patientId, 'triage', entry);
     return entry;
@@ -677,7 +678,7 @@ async function addClinicalNote(patientId, noteData) {
     if (!pat) return null;
     if (!pat.clinicalNotes) pat.clinicalNotes = [];
     pat.clinicalNotes.push(entry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
     await savePatientArrayField(patientId, 'clinicalNotes', entry);
     return entry;
@@ -697,7 +698,7 @@ async function addAppointment(patientId, apptData) {
     if (!pat) return null;
     if (!pat.appointments) pat.appointments = [];
     pat.appointments.push(entry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
     await savePatientArrayField(patientId, 'appointments', entry);
     return entry;
@@ -720,7 +721,7 @@ async function addWardRound(patientId, roundData) {
     if (!pat) return null;
     if (!pat.wardRounds) pat.wardRounds = [];
     pat.wardRounds.push(entry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
     await savePatientArrayField(patientId, 'wardRounds', entry);
     return entry;
@@ -752,7 +753,7 @@ async function addPrescription(patientId, prescriptionData) {
     if (!pat) return false;
     if (!pat.prescriptions) pat.prescriptions = [];
     pat.prescriptions.push(entry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
     await savePatientArrayField(patientId, 'prescriptions', entry);
     console.log('✅ Prescription saved (arrayUnion):', patientId);
@@ -778,7 +779,7 @@ async function dispensePrescription(patientId, prescriptionId, dispensedBy) {
         dispensedBy: dispensedBy || getCurrentStaffName(),
         dispensedById: getCurrentStaffId()
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
     // Firebase: update only prescriptions field (still whole array but not whole patient)
     await savePatientToFirebase_FIELD_ONLY(patientId, { prescriptions: pat.prescriptions });
@@ -816,7 +817,7 @@ async function markBillAsPaid(patientId, billId, paymentMethod) {
     const idx = pat.billingHistory.findIndex(b => String(b.id) === String(billId));
     if (idx === -1) return false;
     pat.billingHistory[idx] = { ...pat.billingHistory[idx], status: 'Paid', paymentDate: new Date().toISOString(), paymentMethod: paymentMethod || 'Cash', paidBy: getCurrentStaffName() };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
     await savePatientToFirebase_FIELD_ONLY(patientId, { billingHistory: pat.billingHistory });
     return true;
@@ -850,7 +851,7 @@ async function addLabRequest(patientId, requestData) {
     if (!pat) return null;
     if (!pat.labRequests) pat.labRequests = [];
     pat.labRequests.push(entry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
     await savePatientArrayField(patientId, 'labRequests', entry);
     return entry;
@@ -874,7 +875,7 @@ async function addLabResult(patientId, resultData) {
     if (!pat) return null;
     if (!pat.labResults) pat.labResults = [];
     pat.labResults.push(entry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
     await savePatientArrayField(patientId, 'labResults', entry);
     return entry;
@@ -916,7 +917,7 @@ function getFirebaseStatus() {
 // Legacy bulk save — now safe no-op with warning
 async function savePatients(patients) {
     console.warn('⚠️ savePatients() bulk whole-doc overwrite is deprecated — use field-level updates');
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    // SERVER-ONLY: removed localStorage write. Realtime listener handles cache.
     window.dispatchEvent(new Event('storage'));
     return true;
 }

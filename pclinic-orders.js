@@ -482,7 +482,7 @@
             if (typeof getPatients === 'function') {
                 patients = getPatients();
             } else {
-                patients = read('pclinic_patients', []);
+                patients = (typeof getPatients === 'function' ? getPatients() : []) || [];
             }
             if (!Array.isArray(patients) || patients.length === 0) return orders;
 
@@ -548,7 +548,7 @@
                 write(ORDERS_KEY, orders);
                 try {
                     if (typeof savePatientsToStorage === 'function') savePatientsToStorage(patients);
-                    else write('pclinic_patients', patients);
+                    // SERVER-ONLY: removed localStorage write for patients
                 } catch (e) {}
             }
             return orders;
@@ -792,7 +792,7 @@
             if (typeof getPatients === 'function') {
                 patients = getPatients() || [];
             } else {
-                try { patients = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
+                try { patients = (typeof getPatients === 'function' ? getPatients() : []) || []; } catch(e){}
             }
 
             var orders = [];
@@ -1363,7 +1363,7 @@
             ];
 
             // 1) Patients: remove template-name patients + fabricated labRequests
-            var patients = read('pclinic_patients', []);
+            var patients = (typeof getPatients === 'function' ? getPatients() : []) || [];
             var patChanged = false;
             if (Array.isArray(patients)) {
                 patients = patients.filter(function (p) {
@@ -1384,7 +1384,7 @@
                     }
                 });
                 if (patChanged || patients.length !== read('pclinic_patients', []).length) {
-                    try { if (typeof savePatientsToStorage === 'function') savePatientsToStorage(patients); else write('pclinic_patients', patients); } catch(e){ write('pclinic_patients', patients); }
+                    try { if (typeof savePatientsToStorage === 'function') savePatientsToStorage(patients); // SERVER-ONLY: removed localStorage write for patients } catch(e){ write('pclinic_patients', patients); }
                 }
             }
 
