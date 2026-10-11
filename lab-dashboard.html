@@ -5693,41 +5693,62 @@ function renderPatientTable(patients) {
         strong.textContent = ((p.firstName || '') + ' ' + (p.lastName || '')).trim().toUpperCase();
         nameTd.appendChild(strong);
 
-        // Requested lab tests for this patient from Common Server & orders
+        // Requested lab tests for this patient — deduplicated from both sources
         var labReqs = Array.isArray(p.labRequests) ? p.labRequests : [];
+        var seenTests = {};
         var allReqTests = [];
         var hasPendingLab = false;
-        var pendingOrderId = null;
+        
+        // Source 1: patient.labRequests
         labReqs.forEach(function(r) {
             var t = Array.isArray(r.tests) ? r.tests.join(', ') : (r.testName || r.test || 'Lab Test');
-            if (t && allReqTests.indexOf(t) === -1) allReqTests.push(t);
+            if (t && !seenTests[t]) {
+                seenTests[t] = true;
+                allReqTests.push(t);
+            }
             if (String(r.status || 'pending').toLowerCase() !== 'completed') {
                 hasPendingLab = true;
-                if (!pendingOrderId) pendingOrderId = r.id || r.orderId;
             }
         });
+        
+        // Source 2: pclinic_orders (shared orders stream)
         try {
             var allO = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
             allO.forEach(function(o) {
                 if (String(o.patientId).replace(/^MOD-/i, '') === String(p.id).replace(/^MOD-/i, '') && (o.dept === 'lab' || o.type === 'lab')) {
-                    var items = (o.items || []).map(function(it){ return it.name; }).join(', ');
-                    if (items && allReqTests.indexOf(items) === -1) allReqTests.push(items);
+                    (o.items || []).forEach(function(it) {
+                        var t = it.name || it.code || 'Lab Test';
+                        if (t && !seenTests[t]) {
+                            seenTests[t] = true;
+                            allReqTests.push(t);
+                        }
+                    });
                     if (String(o.status || 'pending').toLowerCase() !== 'completed') {
                         hasPendingLab = true;
-                        if (!pendingOrderId) pendingOrderId = o.id;
                     }
                 }
             });
         } catch(e){}
 
+        // Show lab tests as a clean row under the name (admin dashboard style)
         if (allReqTests.length > 0) {
             var reqDiv = document.createElement('div');
-            reqDiv.style.cssText = 'margin-top:3px; font-size:11px; font-weight:700; color:#0071e3; display:flex; align-items:center; gap:5px; flex-wrap:wrap;';
+            reqDiv.style.cssText = 'margin-top:3px; font-size:11px; font-weight:600; color:#0071e3; display:flex; align-items:center; gap:5px; flex-wrap:wrap;';
             var pill = document.createElement('span');
-            pill.style.cssText = 'background:#eef6ff; border:0.5px solid rgba(0,113,227,0.3); border-radius:6px; padding:1px 6px; display:inline-flex; align-items:center; gap:4px;';
-            pill.innerHTML = '🧪 <span style="color:#0071e3;">' + allReqTests.join(', ') + '</span>' + 
-                (hasPendingLab ? ' <span style="background:#fff4e0;color:#7a4500;padding:0 5px;border-radius:8px;font-size:9.5px;font-weight:700;">Pending</span>' : ' <span style="background:#e9f9ee;color:#1a7a32;padding:0 5px;border-radius:8px;font-size:9.5px;font-weight:700;">Verified</span>');
+            pill.style.cssText = 'background:#eef6ff; border:0.5px solid rgba(0,113,227,0.3); border-radius:6px; padding:2px 8px; display:inline-flex; align-items:center; gap:4px; font-weight:700;';
+            pill.innerHTML = ' <span style="color:#0071e3;">' + allReqTests.join(', ') + '</span>';
             reqDiv.appendChild(pill);
+            if (hasPendingLab) {
+                var badge = document.createElement('span');
+                badge.style.cssText = 'background:#fff4e0; color:#7a4500; padding:2px 8px; border-radius:6px; font-size:9.5px; font-weight:700;';
+                badge.textContent = 'Pending';
+                reqDiv.appendChild(badge);
+            } else {
+                var badge = document.createElement('span');
+                badge.style.cssText = 'background:#e9f9ee; color:#1a7a32; padding:2px 8px; border-radius:6px; font-size:9.5px; font-weight:700;';
+                badge.textContent = 'Verified';
+                reqDiv.appendChild(badge);
+            }
             nameTd.appendChild(reqDiv);
         }
         row.appendChild(nameTd);
