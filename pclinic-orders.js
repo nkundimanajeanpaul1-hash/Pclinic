@@ -1384,7 +1384,7 @@
                     }
                 });
                 if (patChanged || patients.length !== read('pclinic_patients', []).length) {
-                    try { if (typeof savePatientsToStorage === 'function') savePatientsToStorage(patients); // SERVER-ONLY: removed localStorage write for patients } catch(e){ write('pclinic_patients', patients); }
+                    // SERVER-ONLY: removed localStorage write for patients — server is source of truth
                 }
             }
 
