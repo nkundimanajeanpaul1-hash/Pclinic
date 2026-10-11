@@ -1093,6 +1093,61 @@
 
     /* ── Render Full Worklist Table (One Master Row per Patient with Accordion Unfold)
            SCOPED: only the selected patient's orders are shown — like Doctor Dashboard ── */
+    /* ── Delete Lab Order (with optimistic update) ── */
+    function deleteLabOrder(groupKey) {
+        var orders = getLabOrders();
+        var groups = groupOrdersByPatientAndDate(orders);
+        var group = groups.find(function(g) { return g.key === groupKey; });
+        
+        if (!group) {
+            if (window.showToast) showToast('Order not found', 'error');
+            return;
+        }
+        
+        // Confirm deletion
+        if (!confirm('Delete ' + (group.orders || []).length + ' lab request(s) for ' + group.patientName + '?')) {
+            return;
+        }
+        
+        // Optimistic: remove from localStorage immediately
+        var allOrders = [];
+        try {
+            allOrders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
+        } catch(e) {}
+        
+        var orderIds = (group.orders || []).map(function(o) { return o.id; });
+        var filtered = allOrders.filter(function(o) { return orderIds.indexOf(o.id) === -1; });
+        
+        localStorage.setItem('pclinic_orders', JSON.stringify(filtered));
+        
+        // Sync deletion to Firestore (fire-and-forget, don't block UI)
+        orderIds.forEach(function(orderId) {
+            try {
+                if (window.firebaseDB && window.firebaseFunctions) {
+                    var f = window.firebaseFunctions;
+                    f.deleteDoc(f.doc(window.firebaseDB, 'orders', orderId))
+                        .catch(function(err) {
+                            console.error('[pclinic-lab] Failed to delete order from server:', err);
+                            if (window.showToast) {
+                                showToast('⚠️ Deletion failed on server - please refresh', 'error');
+                            }
+                        });
+                }
+            } catch(e) {
+                console.error('[pclinic-lab] Delete sync error:', e);
+            }
+        });
+        
+        // Refresh the UI immediately
+        repaintAll();
+        if (window.showToast) {
+            showToast('🗑️ Deleted ' + (group.orders || []).length + ' request(s)', 'success');
+        }
+    }
+
+    // Export delete function
+    window.deleteLabOrder = deleteLabOrder;
+
     function paintFullWorklist() {
         var tbody = document.getElementById('pcLabQueueTable');
         if (!tbody) return;
@@ -1177,7 +1232,7 @@
                 '<td>' + statusBadgeHtml + '</td>' +
                 '<td style="text-align:right;white-space:nowrap;">' +
                     '<button class="lab-btn lab-btn-blue" onclick="event.stopPropagation(); pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')"><i class="ti ti-edit"></i> Edit</button>' +
-                    '<button class="lab-btn lab-btn-red" onclick="event.stopPropagation();" style="margin-left:6px;"><i class="ti ti-trash"></i> Delete</button>' +
+                    '<button class="lab-btn lab-btn-red" onclick="event.stopPropagation(); window.deleteLabOrder(\'' + esc(group.key) + '\')" style="margin-left:6px;"><i class="ti ti-trash"></i> Delete</button>' +
                 '</td>' +
                 '</tr>';
         html += '<tr id="child_row_' + esc(group.key) + '" class="patient-lab-child-row" style="display:' + childDisplay + ';">' +
@@ -3032,6 +3087,7 @@
 
     // Export public API
     window.pcLabEngine = {
+        deleteLabOrder: deleteLabOrder,
         repaint: repaintAll,
         togglePatientGroup: togglePatientGroup,
         saveGroupResults: saveGroupResults,

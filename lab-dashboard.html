@@ -4865,7 +4865,7 @@
                             <select class="fi" id="labDateFilter" style="width:auto;min-width:230px;font-size:11px;" onchange="pcLabEngine.selectLabDate(this.value, true)">
                                 <option value="">Select patient first…</option>
                             </select>
-                            <button class="lab-btn lab-btn-outline" onclick="pcLabEngine.repaint(); showToast('🔄 Worklist refreshed', 'info')"><i class="ti ti-refresh"></i> Refresh</button>
+                            <button class="lab-btn lab-btn-outline" onclick="if(window.refreshLabOrders){refreshLabOrders().then(function(ok){showToast(ok?'🔄 Worklist refreshed from server':'⚠️ Refresh failed - check connection',ok?'success':'error');});}else{pcLabEngine.repaint();showToast('🔄 Worklist refreshed','info');}"><i class="ti ti-refresh"></i> Refresh</button>
                         </div>
                     </div>
                     <div class="lab-card-body">

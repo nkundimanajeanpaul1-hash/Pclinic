@@ -119,6 +119,41 @@
         }
     }
 
+    // Force refresh from Firestore (useful after deletions)
+    function forceRefreshFromServer(coll, key, eventName) {
+        if (!window.firebaseDB || !window.firebaseFunctions) {
+            return Promise.resolve(false);
+        }
+        var f = window.firebaseFunctions;
+        try {
+            var ref = f.collection(window.firebaseDB, coll);
+            return f.getDocs(ref).then(function(querySnapshot) {
+                var cloud = [];
+                querySnapshot.forEach(function(doc) {
+                    var d = firebaseValueToLocal(doc.data());
+                    if (!d.id) d.id = doc.id;
+                    cloud.push(d);
+                });
+                write(key, mergeDown(key, cloud));
+                emit(eventName, { count: cloud.length, refreshed: true });
+                window.dispatchEvent(new Event('storage'));
+                return true;
+            }).catch(function(err) {
+                console.error('[pclinic] Force refresh failed:', err);
+                return false;
+            });
+        } catch(e) {
+            return Promise.resolve(false);
+        }
+    }
+    
+    // Public refresh function for lab dashboard
+    function refreshLabOrders() {
+        return forceRefreshFromServer('orders', ORDERS_KEY, 'ordersUpdated');
+    }
+    
+    window.refreshLabOrders = refreshLabOrders;
+
     // Read back the server's stored reason for a failed write, if any.
     function syncFailureReason(coll, id) {
         var key = coll === 'orders' ? ORDERS_KEY : coll === 'bills' ? BILLS_KEY : null;
