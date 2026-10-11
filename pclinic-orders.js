@@ -225,34 +225,9 @@
     }
 
     function mergeDown(key, cloudList) {
-        var localList = read(key, []);
-        var cloudIds = {};
-        cloudList.forEach(function (d) { cloudIds[String(d.id)] = true; });
-
-        // A local-only record is only "unverified browser cache junk" if it
-        // is NOT currently being pushed to Firestore and hasn't already
-        // failed to push (in which case the UI is showing a retry banner
-        // for it — discarding it here would hide that failure entirely).
-        // Lab orders derived from Common Server patient.labRequests are preserved.
-        var localOnly = localList.filter(function (d) { return !cloudIds[String(d.id)]; });
-        var keep = localOnly.filter(function (d) {
-            return isPending(d.id) || d._syncFailed || d._commonServerPulled || d.fromLabRequest || (d.dept === 'lab' && d.items && d.items.length);
-        });
-        var discard = localOnly.filter(function (d) {
-            return !isPending(d.id) && !d._syncFailed && !d._commonServerPulled && !d.fromLabRequest && !(d.dept === 'lab' && d.items && d.items.length);
-        });
-
-        if (discard.length) {
-            console.warn('[pclinic] discarding ' + discard.length + ' unverified local-only ' + key + ' record(s)');
-        }
-        if (keep.length) {
-            console.log('[pclinic] keeping ' + keep.length + ' in-flight/failed local ' + key + ' record(s) pending confirmation');
-        }
-
-        // Firestore is authoritative for everything it has already
-        // confirmed. In-flight or failed local writes are appended so
-        // they stay visible until they resolve one way or the other.
-        return cloudList.concat(keep);
+        // SERVER-ONLY MODE: localStorage is a pure cache of Firestore state.
+        // No local-only records are preserved — the server is the only source of truth.
+        return cloudList;
     }
 
     function startLiveSync(coll, key, eventName) {
@@ -675,11 +650,10 @@
             }
         }
 
-        var all = read(ORDERS_KEY, []);
-        all.unshift(order);
-        write(ORDERS_KEY, all);
+        // SERVER-ONLY MODE: do NOT write to localStorage directly.
+        // The Firestore listener will update localStorage when the server confirms.
         trackedSync('orders', order.id, order);
-        emit('ordersUpdated', { order: order });
+        emit('ordersUpdated', { order: order, serverOnly: true });
         notifyDept(order.dept, order);
         return order;
     }
@@ -717,9 +691,10 @@
             });
         }
         Object.keys(patch).forEach(function (k) { all[i][k] = patch[k]; });
-        write(ORDERS_KEY, all);
+        // SERVER-ONLY MODE: do NOT write to localStorage directly.
+        // The Firestore listener will update localStorage when the server confirms.
         trackedSync('orders', id, all[i]);
-        if (!quiet) emit('ordersUpdated', { order: all[i] });
+        if (!quiet) emit('ordersUpdated', { order: all[i], serverOnly: true });
         return all[i];
     }
 

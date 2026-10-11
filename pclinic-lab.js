@@ -336,31 +336,18 @@
 
     /* ── Get All Lab Orders from Common Server ── */
     function getLabOrders() {
+        // SERVER-ONLY MODE: read only from Firestore-backed cache.
+        // No localStorage fallback.
         var list = [];
         try {
             if (window.pcOrders && typeof pcOrders.listServerConfirmed === 'function') {
                 list = pcOrders.listServerConfirmed({ dept: 'lab' }) || [];
-            } else if (window.pcOrders && typeof pcOrders.list === 'function') {
-                list = pcOrders.list({ dept: 'lab' }).filter(function(order) {
-                    return (!order._legacyLocalOnly || order._commonServerPulled) && !order._syncFailed;
-                });
             }
         } catch (e) {
             list = [];
         }
-        try {
-            var raw = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
-            var rawLab = raw.filter(function(o) {
-                return o && (o.dept === 'lab' || o.type === 'lab') && !o._syncFailed;
-            });
-            rawLab.forEach(function(ro) {
-                var exists = list.some(function(lo) { return String(lo.id) === String(ro.id); });
-                if (!exists) list.push(ro);
-            });
-        } catch(e){}
         
         // Smart deduplication: remove orders that are the same test for the same patient on the same date
-        // This handles cases where the same order exists in both p.labRequests and pclinic_orders with different IDs
         var deduped = [];
         var seen = {};
         list.forEach(function(order) {
@@ -370,16 +357,11 @@
                 return (it.code || it.name || '').toLowerCase(); 
             }).sort().join('|');
             
-            // Create a deduplication key: patient + date + tests
             var dedupKey = patientId + '|' + dateStr + '|' + testSignature;
             
-            // Check if we've already seen this exact combination
             if (!seen[dedupKey]) {
                 seen[dedupKey] = true;
                 deduped.push(order);
-            } else {
-                // Duplicate found - skip it
-                console.log('[pclinic-lab] Skipping duplicate order:', order.id, 'for patient', patientId, 'on', dateStr);
             }
         });
         
@@ -405,11 +387,9 @@
     }
 
     function allPatients() {
+        // SERVER-ONLY MODE: read only from getPatients() which is backed by Firestore listener.
         var list = [];
         try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
-        if (!list.length) {
-            try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
-        }
         return list || [];
     }
 
@@ -1109,40 +1089,32 @@
             return;
         }
         
-        // Optimistic: remove from localStorage immediately
-        var allOrders = [];
-        try {
-            allOrders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
-        } catch(e) {}
-        
+        // SERVER-ONLY MODE: Delete from Firestore directly.
+        // The Firestore listener will update localStorage automatically.
         var orderIds = (group.orders || []).map(function(o) { return o.id; });
-        var filtered = allOrders.filter(function(o) { return orderIds.indexOf(o.id) === -1; });
-        
-        localStorage.setItem('pclinic_orders', JSON.stringify(filtered));
-        
-        // Sync deletion to Firestore (fire-and-forget, don't block UI)
-        orderIds.forEach(function(orderId) {
-            try {
-                if (window.firebaseDB && window.firebaseFunctions) {
-                    var f = window.firebaseFunctions;
-                    f.deleteDoc(f.doc(window.firebaseDB, 'orders', orderId))
-                        .catch(function(err) {
-                            console.error('[pclinic-lab] Failed to delete order from server:', err);
-                            if (window.showToast) {
-                                showToast('⚠️ Deletion failed on server - please refresh', 'error');
-                            }
-                        });
-                }
-            } catch(e) {
-                console.error('[pclinic-lab] Delete sync error:', e);
+        var deletePromises = orderIds.map(function(orderId) {
+            if (window.firebaseDB && window.firebaseFunctions) {
+                var f = window.firebaseFunctions;
+                return f.deleteDoc(f.doc(window.firebaseDB, 'orders', orderId)).catch(function(err) {
+                    console.error('[pclinic-lab] Failed to delete order from server:', err);
+                    return false;
+                });
             }
+            return Promise.resolve(false);
         });
         
-        // Refresh the UI immediately
-        repaintAll();
-        if (window.showToast) {
-            showToast('🗑️ Deleted ' + (group.orders || []).length + ' request(s)', 'success');
-        }
+        // Wait for all deletions, then refresh
+        Promise.all(deletePromises).then(function(results) {
+            var successCount = results.filter(function(r) { return r; }).length;
+            repaintAll();
+            if (window.showToast) {
+                if (successCount === orderIds.length) {
+                    showToast('🗑️ Deleted ' + successCount + ' request(s)', 'success');
+                } else {
+                    showToast('⚠️ Partially deleted (' + successCount + '/' + orderIds.length + ')', 'error');
+                }
+            }
+        });
     }
 
     // Export delete function

@@ -5859,11 +5859,11 @@ function renderPatientTable(patients) {
             }
         });
         
-        // Source 2: pclinic_orders (shared orders stream)
+        // Source 2: pclinic_orders (shared orders stream from Firestore)
         try {
-            var allO = JSON.parse(localStorage.getItem('pclinic_orders') || '[]');
-            allO.forEach(function(o) {
-                if (String(o.patientId).replace(/^MOD-/i, '') === String(p.id).replace(/^MOD-/i, '') && (o.dept === 'lab' || o.type === 'lab')) {
+            if (window.pcOrders && typeof pcOrders.listServerConfirmed === 'function') {
+                var allO = pcOrders.listServerConfirmed({ dept: 'lab', patientId: p.id }) || [];
+                allO.forEach(function(o) {
                     (o.items || []).forEach(function(it) {
                         var t = it.name || it.code || 'Lab Test';
                         if (t && !seenTests[t]) {
@@ -5874,8 +5874,8 @@ function renderPatientTable(patients) {
                     if (String(o.status || 'pending').toLowerCase() !== 'completed') {
                         hasPendingLab = true;
                     }
-                }
-            });
+                });
+            }
         } catch(e){}
 
         // Show lab tests as a clean row under the name (admin dashboard style)
