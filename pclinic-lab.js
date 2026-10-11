@@ -1130,6 +1130,16 @@
         var requestedText = formatLabDate(group.dateStr) + ' • ' + ago(group.orderedAt);
         var tatText = group.status === 'completed' ? 'Completed' : (group.status === 'in-progress' ? 'In progress' : 'Awaiting action');
 
+        // Admin-style priority badge
+        var prioClass = String(group.priority || '').toLowerCase();
+        var prioBadgeHtml = '<span class="lab-badge ' + (prioClass === 'stat' ? 'red' : prioClass === 'urgent' ? 'yellow' : 'gray') + '">' + 
+            (prioClass === 'stat' ? 'STAT' : prioClass === 'urgent' ? 'Urgent' : 'Routine') + '</span>';
+        
+        // Admin-style status badge
+        var statusClass = String(group.status || '').toLowerCase();
+        var statusBadgeHtml = '<span class="lab-badge ' + (statusClass === 'completed' ? 'green' : statusClass === 'in-progress' ? 'blue' : 'yellow') + '">' + 
+            (statusClass === 'completed' ? 'Completed' : statusClass === 'in-progress' ? 'In progress' : 'Pending') + '</span>';
+        
         var html = '';
         html += '<tr data-lab-row="' + esc(group.patientId) + '" class="lab-master-row row-selected" style="cursor:pointer;transition:background .15s;" onclick="pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')">' +
                 '<td style="font-weight:700;color:var(--ac,#007080)">' + esc(accNo) + '</td>' +
@@ -1139,12 +1149,11 @@
                 '<td><span style="font-size:11.5px;color:#3a3a3c;font-weight:700;">Selected date</span><div style="font-size:10.5px;color:#8e8e93;margin-top:2px;">' + esc(formatLabDate(group.dateStr)) + '</div></td>' +
                 '<td style="color:#8e8e93;font-size:11.5px;">' + esc(requestedText) + '</td>' +
                 '<td style="font-weight:700;color:#3a3a3c;">' + esc(tatText) + '</td>' +
-                '<td>' + prioBadge(group.priority) + '</td>' +
-                '<td>' + statusBadge(group.status) + '</td>' +
+                '<td>' + prioBadgeHtml + '</td>' +
+                '<td>' + statusBadgeHtml + '</td>' +
                 '<td style="text-align:right;white-space:nowrap;">' +
-                    '<button class="btn-select-lab btn-lab-result-entry" onclick="event.stopPropagation(); pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')">🧪 Lab Result Entry • ' + (group.orders || []).length + ' request' + ((group.orders || []).length === 1 ? '' : 's') + '</button>' +
-                    '<button onclick="event.stopPropagation(); pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')" style="height:30px;padding:0 14px;border-radius:999px;border:1px solid rgba(0,0,0,0.12);background:#fff;color:#1c1c1e;font-weight:700;font-size:12px;cursor:pointer;margin-left:6px;">' +
-                        '<span id="chev_' + esc(group.key) + '" style="display:inline-block;transition:transform 0.28s;' + chevronStyle + '">▶</span></button>' +
+                    '<button class="lab-btn lab-btn-blue" onclick="event.stopPropagation(); pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')"><i class="ti ti-edit"></i> Edit</button>' +
+                    '<button class="lab-btn lab-btn-red" onclick="event.stopPropagation();" style="margin-left:6px;"><i class="ti ti-trash"></i> Delete</button>' +
                 '</td>' +
                 '</tr>';
         html += '<tr id="child_row_' + esc(group.key) + '" class="patient-lab-child-row" style="display:' + childDisplay + ';">' +

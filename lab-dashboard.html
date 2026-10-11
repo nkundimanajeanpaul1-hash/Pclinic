@@ -920,6 +920,154 @@
             box-shadow: var(--shadow);
             transition: all 0.2s ease;
         }
+        /* ── CARDS (admin-style) ─── */
+        .lab-card {
+            background: #fff;
+            border-radius: 12px;
+            border: 0.5px solid var(--bd);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            margin-bottom: 16px;
+        }
+        .lab-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 0.5px solid var(--bd);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .lab-card-header h3 {
+            font-size: 14px;
+            font-weight: 800;
+            color: #1c1c1e;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .lab-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .lab-card-body {
+            padding: 0;
+        }
+        
+        /* ─── ADMIN-STYLE TABLES ─── */
+        .lab-admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .lab-admin-table thead th {
+            text-align: left;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            color: #6e6e73;
+            font-size: 10.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 1.5px solid var(--bd);
+            white-space: nowrap;
+        }
+        .lab-admin-table tbody td {
+            padding: 11px 12px;
+            border-bottom: 0.5px solid var(--bd);
+            color: var(--ts);
+            vertical-align: middle;
+        }
+        .lab-admin-table tbody tr {
+            transition: background 0.15s;
+        }
+        .lab-admin-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        .lab-admin-table .empty-row td {
+            text-align: center;
+            color: var(--tm);
+            padding: 26px;
+        }
+        
+        /* ─── ADMIN-STYLE BADGES ─── */
+        .lab-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 10.5px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .lab-badge.green { background: #e9f9ee; color: #1a7a32; }
+        .lab-badge.yellow { background: #fff4e0; color: #7a4500; }
+        .lab-badge.red { background: #ffebe9; color: #8a1f1a; }
+        .lab-badge.blue { background: #eaf2ff; color: #0071e3; }
+        .lab-badge.gray { background: #f3f4f6; color: #6e6e73; }
+        .lab-badge.orange { background: #fff4e0; color: #d97706; }
+        .lab-badge.purple { background: #f3e8ff; color: #7c3aed; }
+        
+        /* ─── ADMIN-STYLE BUTTONS ─── */
+        .lab-btn {
+            height: 26px;
+            padding: 0 10px;
+            font-size: 10.5px;
+            border-radius: 7px;
+            border: 0.5px solid var(--bd);
+            background: #fff;
+            color: #1c1c1e;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .lab-btn:hover {
+            background: #f8f9fa;
+        }
+        .lab-btn i {
+            font-size: 13px;
+        }
+        .lab-btn-sm {
+            height: 26px;
+            padding: 0 10px;
+            font-size: 10.5px;
+            border-radius: 7px;
+        }
+        .lab-btn-blue {
+            background: #eaf2ff;
+            color: #0071e3;
+            border-color: rgba(0,113,227,0.3);
+        }
+        .lab-btn-blue:hover {
+            background: #dbe7ff;
+        }
+        .lab-btn-red {
+            background: #ffebe9;
+            color: #8a1f1a;
+            border-color: rgba(138,31,26,0.3);
+        }
+        .lab-btn-red:hover {
+            background: #ffd5d0;
+        }
+        .lab-btn-green {
+            background: #e9f9ee;
+            color: #1a7a32;
+            border-color: rgba(26,122,50,0.3);
+        }
+        .lab-btn-green:hover {
+            background: #d4f3dc;
+        }
+        .lab-btn-outline {
+            background: #fff;
+            color: #1c1c1e;
+            border-color: var(--bd);
+        }
+
         .panel-body {
             padding: 16px;
             display: none;
@@ -4707,27 +4855,27 @@
         <!-- ─── PANEL: WORKLIST ─── -->
         <div id="panel-worklist" class="main-panel" style="display:none;">
             <div class="panel-body show" id="sub-worklist-view">
-                <div class="panel-header">
-                    <span class="panel-title">Today's worklist</span>
-                    <div class="panel-actions">
-                        <select class="fi" style="width:auto;font-size:11px;">
-                            <option>All departments</option><option>Haematology</option><option>Chemistry</option>
-                            <option>Microbiology</option><option>Blood bank</option><option>Serology</option>
-                        </select>
-                        <select class="fi" id="labPrioFilter" style="width:auto;font-size:11px;" onchange="pcLabEngine.repaint()">
-                            <option>All priorities</option><option>STAT</option><option>Urgent</option><option>Routine</option>
-                        </select>
-                        <select class="fi" id="labDateFilter" style="width:auto;min-width:230px;font-size:11px;" onchange="pcLabEngine.selectLabDate(this.value, true)">
-                            <option value="">Select patient first…</option>
-                        </select>
-                        <button class="btn-s" style="font-size:11px;display:flex;align-items:center;gap:4px;" onclick="pcLabEngine.repaint(); showToast('🔄 Worklist refreshed', 'info')"><i class="ti ti-refresh" style="font-size:12px;"></i> Refresh</button>
+                <div class="lab-card">
+                    <div class="lab-card-header">
+                        <h3><i class="ti ti-list-check"></i> Today's worklist</h3>
+                        <div class="lab-card-actions">
+                            <select class="fi" id="labPrioFilter" style="width:auto;font-size:11px;" onchange="pcLabEngine.repaint()">
+                                <option>All priorities</option><option>STAT</option><option>Urgent</option><option>Routine</option>
+                            </select>
+                            <select class="fi" id="labDateFilter" style="width:auto;min-width:230px;font-size:11px;" onchange="pcLabEngine.selectLabDate(this.value, true)">
+                                <option value="">Select patient first…</option>
+                            </select>
+                            <button class="lab-btn lab-btn-outline" onclick="pcLabEngine.repaint(); showToast('🔄 Worklist refreshed', 'info')"><i class="ti ti-refresh"></i> Refresh</button>
+                        </div>
+                    </div>
+                    <div class="lab-card-body">
+                        <table class="lab-admin-table">
+                            <thead><tr><th style="width:13%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Test</th><th style="width:11%">Dept</th><th style="width:10%">Requested</th><th style="width:10%">TAT</th><th style="width:11%">Priority</th><th style="width:11%">Status</th><th style="width:14%">Actions</th></tr></thead>
+                            <tbody id="pcLabQueueTable">
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                                <table class="wtbl">
-                    <thead><tr><th style="width:13%">Acc. no.</th><th style="width:20%">Patient</th><th style="width:14%">Test</th><th style="width:11%">Dept</th><th style="width:10%">Requested</th><th style="width:10%">TAT</th><th style="width:11%">Priority</th><th style="width:11%">Status</th><th style="width:14%">Actions</th></tr></thead>
-                    <tbody id="pcLabQueueTable">
-                    </tbody>
-                </table>
             </div>
         </div>
 
