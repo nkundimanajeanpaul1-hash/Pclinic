@@ -1143,9 +1143,8 @@
         var html = '';
         html += '<tr data-lab-row="' + esc(group.patientId) + '" class="lab-master-row row-selected" style="cursor:pointer;transition:background .15s;" onclick="pcLabEngine.togglePatientGroup(\'' + esc(group.key) + '\')">' +
                 '<td style="font-weight:700;color:var(--ac,#007080)">' + esc(accNo) + '</td>' +
-                '<td><div style="font-weight:700;color:#1d1d1f;font-size:13.5px;">' + esc(group.patientName) + '</div>' +
-                    '<div style="font-size:11px;color:#8e8e93;">MRN MOD-' + esc(group.patientId) + '</div></td>' +
-                '<td style="font-weight:600;color:#1d1d1f;">' + esc(itemsStr || 'Laboratory Panel') + '</td>' +
+                '<td><div style="font-weight:700;color:#1d1d1f;font-size:13.5px;">' + esc(itemsStr || 'Laboratory Panel') + '</div>' +
+                    '<div style="font-size:11px;color:#8e8e93;">' + (group.orders || []).length + ' request' + ((group.orders || []).length === 1 ? '' : 's') + '</div></td>' +
                 '<td><span style="font-size:11.5px;color:#3a3a3c;font-weight:700;">Selected date</span><div style="font-size:10.5px;color:#8e8e93;margin-top:2px;">' + esc(formatLabDate(group.dateStr)) + '</div></td>' +
                 '<td style="color:#8e8e93;font-size:11.5px;">' + esc(requestedText) + '</td>' +
                 '<td style="font-weight:700;color:#3a3a3c;">' + esc(tatText) + '</td>' +
@@ -1330,7 +1329,6 @@
               '<div style="padding:12px 16px;background:#fbfcfe;border-bottom:1px solid #e7edf4;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">' +
                 '<div>' +
                     '<div style="font-size:15px;font-weight:800;color:#1b2434;">' + esc(dayDateStr) + ' — ' + ordersSorted.length + ' request(s)</div>' +
-                    '<div style="font-size:11.5px;color:#5b6677;margin-top:4px;">Patient: <strong>' + esc(pName) + '</strong> • MRN ' + esc(mrn) + '</div>' +
                 '</div>' + stateChip +
               '</div>' +
               '<div style="padding:12px 16px 14px;">' +
