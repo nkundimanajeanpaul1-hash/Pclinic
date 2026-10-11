@@ -2491,7 +2491,9 @@
             try {
                 const pid = urlParams.get('patient') || localStorage.getItem('pclinic_active_patient');
                 if (pid) {
-                    const pts = JSON.parse(localStorage.getItem('pclinic_patients') || '[]');
+                    // SERVER-ONLY: use getPatients() (backed by Firestore listener), not localStorage
+                    let pts = [];
+                    try { if (typeof getPatients === 'function') pts = getPatients() || []; } catch(e){}
                     const found = pts.find(p => String(p.id) === String(pid) || String(p.mrn) === String(pid));
                     if (found) {
                         opdLoadPatient(found);

@@ -192,13 +192,13 @@ function getPatients() {
 }
 
 // ============================================================
-// SAFE ID GENERATION — TRANSACTIONAL COUNTER
+// SAFE ID GENERATION — TRANSACTIONAL COUNTER + UNIQUENESS GUARD
 // ============================================================
 async function getNextPatientIdSafe() {
     // Try Firestore transaction first
     if (isFirebaseReady && window.firebaseDB && window.firebaseFunctions) {
         try {
-            const { doc, runTransaction, getDoc, setDoc } = window.firebaseFunctions;
+            const { doc, runTransaction, getDoc, setDoc, getDocs, collection, query, where } = window.firebaseFunctions;
             const { col, docId } = parseCounterDocPath();
             const counterRef = doc(window.firebaseDB, col, docId);
             const newId = await runTransaction(window.firebaseDB, async (tx) => {
@@ -216,6 +216,38 @@ async function getNextPatientIdSafe() {
                 }
                 return next;
             });
+            // UNIQUENESS GUARD: verify the ID doesn't already exist in Firestore
+            // If it does, something went wrong (counter reset, manual doc creation, etc.)
+            // and we need to skip past existing IDs to avoid collisions.
+            try {
+                const existingRef = doc(window.firebaseDB, COLLECTION_NAME, String(newId));
+                const existingSnap = await getDoc(existingRef);
+                if (existingSnap.exists()) {
+                    console.warn('⚠️ ID', newId, 'already exists in Firestore — scanning for next free ID');
+                    // Scan forward to find a free ID
+                    let candidate = newId + 1;
+                    let found = false;
+                    while (candidate < newId + 100) {
+                        const cRef = doc(window.firebaseDB, COLLECTION_NAME, String(candidate));
+                        const cSnap = await getDoc(cRef);
+                        if (!cSnap.exists()) {
+                            found = true;
+                            break;
+                        }
+                        candidate++;
+                    }
+                    if (found) {
+                        // Update counter to skip past the used IDs
+                        const cRef2 = doc(window.firebaseDB, col, docId);
+                        await setDoc(cRef2, { lastId: candidate, updatedAt: new Date().toISOString() }, { merge: true });
+                        console.log('✅ Assigned unique ID', candidate, '(skipped', candidate - newId, 'used IDs)');
+                        return candidate;
+                    }
+                    console.error('❌ Could not find free ID in range', newId, '-', newId + 100);
+                }
+            } catch (verifyErr) {
+                console.warn('⚠️ Uniqueness verification failed (non-critical):', verifyErr.message);
+            }
             return newId;
         } catch (e) {
             console.warn('⚠️ Counter transaction failed, fallback to local max:', e.message);
@@ -431,8 +463,35 @@ async function addPatient(patientData) {
         throw new Error('Secure server connection is required to register a patient.');
     }
     try {
-        const { doc, setDoc, serverTimestamp } = window.firebaseFunctions;
+        const { doc, setDoc, getDoc, serverTimestamp, collection, query, where, getDocs, writeBatch } = window.firebaseFunctions;
         const ref = doc(window.firebaseDB, COLLECTION_NAME, String(newId));
+        // UNIQUENESS CHECK: if a doc already exists at this ID, archive its old
+        // orders/bills so they don't appear under the new patient's name.
+        try {
+            const existingSnap = await getDoc(ref);
+            if (existingSnap.exists()) {
+                console.warn('⚠️ Patient doc already exists at ID', newId, '— archiving orphaned orders/bills');
+                const ordersSnap = await getDocs(query(collection(window.firebaseDB, 'orders'), where('patientId', '==', String(newId))));
+                const billsSnap = await getDocs(query(collection(window.firebaseDB, 'bills'), where('patientId', '==', String(newId))));
+                const batch = writeBatch(window.firebaseDB);
+                let archived = 0;
+                ordersSnap.forEach(function (d) {
+                    batch.update(d.ref, { _orphanedArchived: true, archivedAt: serverTimestamp(), archivedReason: 'patient-id-reused' });
+                    archived++;
+                });
+                billsSnap.forEach(function (d) {
+                    batch.update(d.ref, { _orphanedArchived: true, archivedAt: serverTimestamp(), archivedReason: 'patient-id-reused' });
+                    archived++;
+                });
+                if (archived > 0) {
+                    await batch.commit();
+                    console.log('🗄️ Archived', archived, 'orphaned order/bill records for reused ID', newId);
+                    if (window.pcToast) window.pcToast('⚠️ Detected reused patient ID — archived ' + archived + ' old records so they won\'t appear under the new patient.', 'warning', 8000);
+                }
+            }
+        } catch (archiveErr) {
+            console.error('Failed to archive orphaned records:', archiveErr);
+        }
         await setDoc(ref, {
             ...newPatient,
             createdAt: serverTimestamp(),
@@ -443,10 +502,13 @@ async function addPatient(patientData) {
         // when Firestore confirms — this is the single source of truth.
         window.dispatchEvent(new Event('storage'));
         await syncBillingPatientDirectory(newPatient);
+        // Clear any stale active-patient pointer so the UI doesn't accidentally
+        // load a different patient's data under the new patient's name.
+        try { localStorage.removeItem('pclinic_active_patient'); } catch(e){}
         console.log('☁️ Patient created on server:', newPatient.mrn);
         return newPatient;
     } catch (e) {
-        console.error('❌ Firebase create error:', e);
+        console.error(' Firebase create error:', e);
         if (window.pcToast) window.pcToast('Patient was NOT registered on the server.', 'error', 7000);
         throw e;
     }

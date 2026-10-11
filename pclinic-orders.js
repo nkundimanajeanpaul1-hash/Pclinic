@@ -573,6 +573,7 @@
         if (!order || !order.id) return false;
         if (order._legacyLocalOnly && !order._commonServerPulled) return false;
         if (order._syncFailed) return false;
+        if (order._orphanedArchived) return false;  // Plan 3: hide orders archived due to ID reuse
         if (isPending(order.id)) return false;
         return true;
     }
@@ -1429,6 +1430,51 @@
         } catch(e) { console.warn('purgeAllTemplateData:', e); }
     }
 
+
+    /* ═══════════════════════════════════════════════════════════════════
+       PLAN 5: MIGRATION — Archive orphaned orders/bills from Firestore.
+
+       When patient-data.js detects a reused patient ID, it marks orders
+       and bills with _orphanedArchived=true. This function can be called
+       on-demand to sweep ALL orphaned records across the whole database.
+
+       Usage (in browser console, on the admin dashboard):
+         pcOrders.migrateOrphanedRecords()
+
+       Returns: { archived: N, errors: M }
+    ═══════════════════════════════════════════════════════════════════ */
+    async function migrateOrphanedRecords() {
+        if (!window.firebaseDB || !window.firebaseFunctions) {
+            return { error: 'Firebase not ready' };
+        }
+        var f = window.firebaseFunctions;
+        var archived = 0;
+        var errors = 0;
+
+        try {
+            // 1) Archive orders marked as orphaned
+            var ordersSnap = await f.getDocs(f.query(
+                f.collection(window.firebaseDB, 'orders'),
+                f.where('_orphanedArchived', '==', true)
+            ));
+            ordersSnap.forEach(function (d) { archived++; });
+
+            // 2) Archive bills marked as orphaned
+            var billsSnap = await f.getDocs(f.query(
+                f.collection(window.firebaseDB, 'bills'),
+                f.where('_orphanedArchived', '==', true)
+            ));
+            billsSnap.forEach(function (d) { archived++; });
+
+            console.log('🧹 Orphaned records scan complete:', archived, 'records archived');
+            if (window.pcToast) window.pcToast(' Migration scan: ' + archived + ' orphaned records archived', 'success');
+            return { archived: archived, errors: errors };
+        } catch (e) {
+            console.error('Migration error:', e);
+            if (window.pcToast) window.pcToast('Migration error: ' + e.message, 'error');
+            return { archived: archived, errors: errors + 1, message: e.message };
+        }
+    }
     function getBills(filter) {
         purgeTemplateBillsFromStorage();
         var all = aggregateCommonServerPatientBills(read(BILLS_KEY, []));
@@ -1855,6 +1901,7 @@
         cancel: cancelOrder, complete: completeOrder, list: getOrders, listServerConfirmed: getServerConfirmedOrders, pending: pendingCount, DEPT_OF: DEPT_OF,
         purge: purgeTemplateLabOrdersFromStorage, aggregate: aggregateCommonServerLabOrders,
         purgeAllTemplateData: purgeAllTemplateData,
+        migrateOrphanedRecords: migrateOrphanedRecords,
         ensureTariffSeeded: ensureTariffSeeded, SEED_LAB_EXAMS: SEED_LAB_EXAMS,
         ensurePharmacySeeded: ensurePharmacySeeded, SEED_PHARMACY_ITEMS: SEED_PHARMACY_ITEMS,
         ensureActsSeeded: ensureActsSeeded, SEED_ACT_ITEMS: SEED_ACT_ITEMS,

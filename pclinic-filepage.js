@@ -849,11 +849,9 @@
                 try {
                     var q = new URLSearchParams(window.location.search).get('patient');
                     if (!q) return null;
+                    // SERVER-ONLY: use getPatients() (backed by Firestore listener), not localStorage
                     var list = [];
                     try { if (typeof getPatients === 'function') list = getPatients() || []; } catch(e){}
-                    if (!list.length) {
-                        try { list = JSON.parse(localStorage.getItem('pclinic_patients') || '[]'); } catch(e){}
-                    }
                     for (var i = 0; i < list.length; i++) {
                         if (String(list[i].id) === String(q) || String(list[i].mrn) === String(q)) return list[i];
                     }
