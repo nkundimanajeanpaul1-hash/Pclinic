@@ -358,7 +358,32 @@
                 if (!exists) list.push(ro);
             });
         } catch(e){}
-        return list.filter(function(o) {
+        
+        // Smart deduplication: remove orders that are the same test for the same patient on the same date
+        // This handles cases where the same order exists in both p.labRequests and pclinic_orders with different IDs
+        var deduped = [];
+        var seen = {};
+        list.forEach(function(order) {
+            var patientId = String(order.patientId || '').replace(/^MOD-/i, '').toLowerCase();
+            var dateStr = order.orderedAt ? new Date(order.orderedAt).toISOString().split('T')[0] : '';
+            var testSignature = (order.items || []).map(function(it) { 
+                return (it.code || it.name || '').toLowerCase(); 
+            }).sort().join('|');
+            
+            // Create a deduplication key: patient + date + tests
+            var dedupKey = patientId + '|' + dateStr + '|' + testSignature;
+            
+            // Check if we've already seen this exact combination
+            if (!seen[dedupKey]) {
+                seen[dedupKey] = true;
+                deduped.push(order);
+            } else {
+                // Duplicate found - skip it
+                console.log('[pclinic-lab] Skipping duplicate order:', order.id, 'for patient', patientId, 'on', dateStr);
+            }
+        });
+        
+        return deduped.filter(function(o) {
             return normaliseOrderStatus(o.status) !== 'cancelled';
         });
     }
