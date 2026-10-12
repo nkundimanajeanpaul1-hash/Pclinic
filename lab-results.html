@@ -1091,14 +1091,17 @@
 
             function testActivityScore(t, cat) {
                 var score = 0;
+                // groups was reversed before this runs: gi 0 = NEWEST day, last = oldest.
+                // recency stays inside 0..1 so it can only break ties within a tier,
+                // never lift a reported lab above a requested one on long histories.
+                var lastGi = groups.length - 1;
                 for (var gi = 0; gi < groups.length; gi++) {
                     var entries = entriesForMatrixTest(groups[gi], t, cat);
-                    // NEWEST group gets highest recency (gi goes 0=oldest → N-1=newest)
-                    var recency = gi + 1;
+                    var recency = lastGi >= 0 ? (lastGi - gi) / groups.length : 0;
                     // PENDING/REQUESTED labs at the top, then newest results, then older results, then reported
-                    if (entries.some(function (entry) { return entry.kind === 'pending'; })) score = Math.max(score, 1000 + recency * 10);
-                    else if (entries.some(function (entry) { return entry.kind === 'result'; })) score = Math.max(score, 700 + recency * 10);
-                    else if (entries.some(function (entry) { return entry.kind === 'reported'; })) score = Math.max(score, 500 + recency * 10);
+                    if (entries.some(function (entry) { return entry.kind === 'pending'; })) score = Math.max(score, 1000 + recency);
+                    else if (entries.some(function (entry) { return entry.kind === 'result'; })) score = Math.max(score, 700 + recency);
+                    else if (entries.some(function (entry) { return entry.kind === 'reported'; })) score = Math.max(score, 500 + recency);
                 }
                 return score;
             }
