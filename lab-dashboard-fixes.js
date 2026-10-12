@@ -754,6 +754,7 @@
       }
     }
     renderMatrixFlowSheet('ocMatrixTableEntry', 'entry', activeTargetOrderId);
+    renderMatrixFlowSheet('ocMatrixTableResults', 'results');
   }
 
   function switchLabResultsMode(mode) {
@@ -1049,6 +1050,86 @@
       .replace(/'/g, '&#39;');
   }
 
+  // The cumulative sheet used to list every catalog parameter, so a patient with one
+  // request still scrolled past hundreds of permanently empty rows. Keep only tests
+  // this patient actually had requested or resulted.
+  //
+  // Codes are the reliable key; names are used only for items that never resolved to a
+  // code, otherwise a result named "Culture" would drag in all nine Culture rows.
+  function collectPatientTestScope(orders) {
+    var wantedCodes = {};
+    var wantedNames = {};
+    var resolvedTests = [];
+    var seen = {};
+
+    (orders || []).forEach(function (o) {
+      (Array.isArray(o.items) ? o.items : []).forEach(function (item) {
+        resolveOrderItemToTests(item).forEach(function (t) {
+          if (!t) return;
+          var code = String(t.code || '').trim();
+          var name = String(t.name || '').trim();
+          var key = code.toLowerCase() + '|' + name.toLowerCase();
+          if (!seen[key]) { seen[key] = true; resolvedTests.push(t); }
+          if (code && code !== 'LAB') {
+            wantedCodes[code.toLowerCase()] = true;
+          } else if (name) {
+            wantedNames[name.toLowerCase()] = true;
+          }
+        });
+      });
+      (Array.isArray(o.results) ? o.results : []).forEach(function (r) {
+        if (!r) return;
+        var code = String(r.code || '').trim();
+        if (code) { wantedCodes[code.toLowerCase()] = true; return; }
+        var name = String(r.test || r.name || '').trim();
+        if (name) wantedNames[name.toLowerCase()] = true;
+      });
+    });
+
+    return { codes: wantedCodes, names: wantedNames, tests: resolvedTests };
+  }
+
+  function scopeCategoriesToPatient(categories, scope) {
+    var kept = [];
+    var keptCodes = {};
+    var keptNames = {};
+
+    (categories || []).forEach(function (cat) {
+      var tests = (cat.tests || []).filter(function (t) {
+        var code = String(t.code || '').toLowerCase();
+        var name = String(t.name || '').toLowerCase();
+        var hit = (code && scope.codes[code]) || (name && scope.names[name]);
+        if (hit) {
+          if (code) keptCodes[code] = true;
+          if (name) keptNames[name] = true;
+        }
+        return !!hit;
+      });
+      if (tests.length) {
+        kept.push({ id: cat.id, title: cat.title, className: cat.className, tests: tests });
+      }
+    });
+
+    // Requests that matched no catalog row still have to appear, or filtering would
+    // silently hide a real test order.
+    var bucket = {};
+    var bucketOrder = [];
+    scope.tests.forEach(function (t) {
+      var code = String(t.code || '').toLowerCase();
+      var name = String(t.name || '').toLowerCase();
+      if ((code && keptCodes[code]) || (name && keptNames[name])) return;
+      var cid = t.catId || 'other';
+      if (!bucket[cid]) {
+        bucket[cid] = { id: cid, title: t.catTitle || 'REQUESTED TESTS', className: t.catClass || 'oc-cat-mic', tests: [] };
+        bucketOrder.push(cid);
+      }
+      bucket[cid].tests.push(t);
+    });
+    bucketOrder.forEach(function (cid) { kept.push(bucket[cid]); });
+
+    return kept;
+  }
+
   function renderMatrixFlowSheet(tableId, mode, targetOrderId) {
     var table = byId(tableId);
     if (!table) return;
@@ -1151,8 +1232,12 @@
         catBucket[cId].tests.push(t);
       });
       categoriesToRender = Object.values(catBucket);
+    } else if (mode === 'results' && entryCatalogMode !== 'catalog') {
+      var scopeOrders = patientOrders.slice();
+      if (activeOrder && scopeOrders.indexOf(activeOrder) === -1) scopeOrders.push(activeOrder);
+      categoriesToRender = scopeCategoriesToPatient(MATRIX_CATEGORIES, collectPatientTestScope(scopeOrders));
     } else {
-      // In Cumulative View or Catalog Mode: Use the comprehensive matrix categories
+      // Catalog Mode: the comprehensive matrix categories
       categoriesToRender = MATRIX_CATEGORIES;
     }
 
