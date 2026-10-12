@@ -1089,16 +1089,16 @@
                 );
             }
 
-            function testActivityScore(t, cat) {
+            // Shared row ranking. `groups` was reversed earlier, so gi 0 = NEWEST day.
+            // recency stays inside 0..1 so it only breaks ties within a tier and can
+            // never lift a reported lab above a requested one on long histories.
+            function scoreByTier(entriesForGroup) {
                 var score = 0;
-                // groups was reversed before this runs: gi 0 = NEWEST day, last = oldest.
-                // recency stays inside 0..1 so it can only break ties within a tier,
-                // never lift a reported lab above a requested one on long histories.
                 var lastGi = groups.length - 1;
                 for (var gi = 0; gi < groups.length; gi++) {
-                    var entries = entriesForMatrixTest(groups[gi], t, cat);
-                    var recency = lastGi >= 0 ? (lastGi - gi) / groups.length : 0;
+                    var entries = entriesForGroup(groups[gi]);
                     // PENDING/REQUESTED labs at the top, then newest results, then older results, then reported
+                    var recency = lastGi >= 0 ? (lastGi - gi) / groups.length : 0;
                     if (entries.some(function (entry) { return entry.kind === 'pending'; })) score = Math.max(score, 1000 + recency);
                     else if (entries.some(function (entry) { return entry.kind === 'result'; })) score = Math.max(score, 700 + recency);
                     else if (entries.some(function (entry) { return entry.kind === 'reported'; })) score = Math.max(score, 500 + recency);
@@ -1106,41 +1106,9 @@
                 return score;
             }
 
-            var catsOrdered = OC_CATEGORIES.map(function (cat) {
-                var tests = cat.tests.slice().sort(function (a, b) {
-                    return testActivityScore(b, cat) - testActivityScore(a, cat);
-                });
-                var catScore = 0;
-                tests.forEach(function (t) { catScore = Math.max(catScore, testActivityScore(t, cat)); });
-                return { cat: cat, tests: tests, score: catScore };
-            }).sort(function (a, b) { return b.score - a.score; });
-
-            catsOrdered.forEach(function (pack) {
-                var cat = pack.cat;
-                var totalTests = pack.tests.length;
-                pack.tests.forEach(function (t, idx) {
-                    var rowClass = (rowCount % 2 === 0) ? 'row-even' : 'row-odd';
-                    rowCount++;
-                    bodyHtml += '<tr class="' + rowClass + '">';
-
-                    if (idx === 0) {
-                        bodyHtml += '<td class="oc-cat-cell ' + cat.className + '" rowspan="' + totalTests + '">' + cat.title + '</td>';
-                    }
-
-                    var unitStr = t.unit ? ' (' + t.unit + ')' : '';
-                    var rangeStr = t.range ? ' [' + t.range + ']' : '';
-                    bodyHtml += '<td class="oc-test-cell">' +
-                        '<span class="oc-test-code">' + t.code + '</span>' +
-                        '<span>' + t.name + unitStr + '</span>' +
-                        '<span class="oc-test-range">' + rangeStr + '</span></td>';
-
-                    groups.forEach(function (g) {
-                        bodyHtml += renderGroupCell(entriesForMatrixTest(g, t, cat));
-                    });
-
-                    bodyHtml += '</tr>';
-                });
-            });
+            function testActivityScore(t, cat) {
+                return scoreByTier(function (g) { return entriesForMatrixTest(g, t, cat); });
+            }
 
             function matchesKnownMatrix(label) {
                 for (var c = 0; c < OC_CATEGORIES.length; c++) {
@@ -1149,6 +1117,22 @@
                     }
                 }
                 return false;
+            }
+
+            function entriesForExtraLabel(g, label) {
+                var lowB = String(label || '').toLowerCase();
+                return buildGroupEntries(
+                    g,
+                    function (s) {
+                        return orderedSetLabels(s.testsOrdered).some(function (entry) {
+                            var lowA = String(entry || '').toLowerCase();
+                            return lowA === lowB || lowA.indexOf(lowB) !== -1 || lowB.indexOf(lowA) !== -1;
+                        });
+                    },
+                    function (s) {
+                        return isVerifiedSet(s) ? findResultForOrderedLabel(s.results, label) : null;
+                    }
+                );
             }
 
             var extraOrdered = [];
@@ -1161,38 +1145,67 @@
                 });
             });
 
+            var packsOrdered = OC_CATEGORIES.map(function (cat) {
+                var tests = cat.tests.slice().sort(function (a, b) {
+                    return testActivityScore(b, cat) - testActivityScore(a, cat);
+                });
+                var catScore = 0;
+                tests.forEach(function (t) { catScore = Math.max(catScore, testActivityScore(t, cat)); });
+                return { cat: cat, tests: tests, score: catScore };
+            });
+
+            // Free-text requests rank as a normal category rather than always
+            // parking at the bottom of the sheet.
             if (extraOrdered.length) {
-                extraOrdered.forEach(function (label, idx) {
+                var extraTests = extraOrdered.map(function (label) {
+                    return {
+                        code: 'EXTRA',
+                        name: label,
+                        unit: '',
+                        range: 'Requested test',
+                        extraLabel: label,
+                        score: scoreByTier(function (g) { return entriesForExtraLabel(g, label); })
+                    };
+                }).sort(function (a, b) { return b.score - a.score; });
+
+                var extraScore = 0;
+                extraTests.forEach(function (t) { extraScore = Math.max(extraScore, t.score); });
+                packsOrdered.push({
+                    cat: { title: 'ADDITIONAL REQUESTS', className: 'oc-cat-uri' },
+                    tests: extraTests,
+                    score: extraScore
+                });
+            }
+
+            packsOrdered.sort(function (a, b) { return b.score - a.score; });
+
+            packsOrdered.forEach(function (pack) {
+                var cat = pack.cat;
+                var totalTests = pack.tests.length;
+                pack.tests.forEach(function (t, idx) {
                     var rowClass = (rowCount % 2 === 0) ? 'row-even' : 'row-odd';
                     rowCount++;
                     bodyHtml += '<tr class="' + rowClass + '">';
+
                     if (idx === 0) {
-                        bodyHtml += '<td class="oc-cat-cell oc-cat-uri" rowspan="' + extraOrdered.length + '">ADDITIONAL REQUESTS</td>';
+                        bodyHtml += '<td class="oc-cat-cell ' + cat.className + '" rowspan="' + totalTests + '">' + escapeHtml(cat.title) + '</td>';
                     }
+
+                    var unitStr = t.unit ? ' (' + t.unit + ')' : '';
+                    var rangeStr = t.range ? ' [' + t.range + ']' : '';
                     bodyHtml += '<td class="oc-test-cell">' +
-                        '<span class="oc-test-code">EXTRA</span>' +
-                        '<span>' + escapeHtml(label) + '</span>' +
-                        '<span class="oc-test-range"> [Requested test]</span></td>';
+                        '<span class="oc-test-code">' + escapeHtml(t.code) + '</span>' +
+                        '<span>' + escapeHtml(t.name) + escapeHtml(unitStr) + '</span>' +
+                        '<span class="oc-test-range">' + escapeHtml(rangeStr) + '</span></td>';
 
                     groups.forEach(function (g) {
-                        var entries = buildGroupEntries(
-                            g,
-                            function (s) {
-                                return orderedSetLabels(s.testsOrdered).some(function (entry) {
-                                    var lowA = String(entry || '').toLowerCase();
-                                    var lowB = String(label || '').toLowerCase();
-                                    return lowA === lowB || lowA.indexOf(lowB) !== -1 || lowB.indexOf(lowA) !== -1;
-                                });
-                            },
-                            function (s) {
-                                return isVerifiedSet(s) ? findResultForOrderedLabel(s.results, label) : null;
-                            }
-                        );
+                        var entries = t.extraLabel ? entriesForExtraLabel(g, t.extraLabel) : entriesForMatrixTest(g, t, cat);
                         bodyHtml += renderGroupCell(entries);
                     });
+
                     bodyHtml += '</tr>';
                 });
-            }
+            });
 
             body.innerHTML = bodyHtml;
             padEmptyResultColumns();
