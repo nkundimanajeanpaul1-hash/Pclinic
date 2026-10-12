@@ -347,6 +347,31 @@
             list = [];
         }
         
+        // ORPHAN GUARD: filter out orders that predate the patient's registration
+        // This catches orphaned orders from ID reuse even before cleanupDateOrphans() runs
+        try {
+            var patients = (typeof getPatients === 'function') ? (getPatients() || []) : [];
+            var ptCreatedMap = {};
+            patients.forEach(function(pt) {
+                if (pt && pt.id) {
+                    ptCreatedMap[String(pt.id).replace(/^MOD-/i, '').trim()] =
+                        String(pt.createdAt || pt.registered || '').trim();
+                }
+            });
+            list = list.filter(function(order) {
+                if (!order) return false;
+                if (order._dateOrphaned || order._orphanedArchived) return false;
+                var pid = String(order.patientId || '').replace(/^MOD-/i, '').trim();
+                var created = ptCreatedMap[pid];
+                if (!created) return true; // no patient record or no date, allow
+                var orderDate = String(order.orderedAt || order.timestamp || order.date || order.createdAt || '').trim();
+                if (!orderDate) return true; // no order date, allow
+                return orderDate >= created;
+            });
+        } catch(e) {
+            // if patient lookup fails, return unfiltered
+        }
+        
         // Smart deduplication: remove orders that are the same test for the same patient on the same date
         var deduped = [];
         var seen = {};

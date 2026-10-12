@@ -574,6 +574,7 @@
         if (order._legacyLocalOnly && !order._commonServerPulled) return false;
         if (order._syncFailed) return false;
         if (order._orphanedArchived) return false;  // Plan 3: hide orders archived due to ID reuse
+        if (order._dateOrphaned) return false;      // Plan 6: hide orders predating patient registration
         if (isPending(order.id)) return false;
         return true;
     }
@@ -1475,6 +1476,140 @@
             return { archived: archived, errors: errors + 1, message: e.message };
         }
     }
+    /*  ═══════════════════════════════════════════════════════════════
+        PLAN 6: DATE-BASED ORPHAN CLEANUP
+
+        Scans ALL orders in Firestore and marks any order where
+        order.orderedAt < patient.createdAt as orphaned.
+        Also cleans patient.labRequests/labResults arrays that predate
+        the patient's registration.
+
+        This fixes the DESTIN/ID-1003 case: old patient's lab results
+        from Aug-Sep 2026 appearing under new patient registered Oct 11.
+
+        Usage (in browser console):
+          pcOrders.cleanupDateOrphans()
+
+        Returns: { ordersMarked: N, labRequestsCleaned: M, labResultsCleaned: K }
+     ═══════════════════════════════════════════════════════════════ */
+    async function cleanupDateOrphans() {
+        if (!window.firebaseDB || !window.firebaseFunctions) {
+            return { error: 'Firebase not ready. Wait for login to complete.' };
+        }
+        var f = window.firebaseFunctions;
+        var ordersMarked = 0;
+        var labRequestsCleaned = 0;
+        var labResultsCleaned = 0;
+
+        try {
+            // 1. Build patient id → createdAt map
+            var ptsSnap = await f.getDocs(f.collection(window.firebaseDB, 'patients'));
+            var patientCreated = {};
+            ptsSnap.forEach(function(doc) {
+                var d = doc.data() || {};
+                var pid = String(d.id || doc.id).replace(/^MOD-/i, '').trim();
+                var created = String(d.createdAt || d.registered || '').trim();
+                if (pid && created) patientCreated[pid] = created;
+            });
+            console.log('📋 Built patient map:', Object.keys(patientCreated).length, 'patients');
+
+            // 2. Scan orders and mark date-orphans
+            var ordersSnap = await f.getDocs(f.collection(window.firebaseDB, 'orders'));
+            var batch = null;
+            var batchCount = 0;
+            ordersSnap.forEach(function(doc) {
+                var d = doc.data() || {};
+                var pid = String(d.patientId || '').replace(/^MOD-/i, '').trim();
+                if (!pid || !patientCreated[pid]) return; // no patient or no date to compare
+                var orderDate = String(d.orderedAt || d.timestamp || d.date || d.createdAt || '').trim();
+                if (!orderDate) return; // no date on order, skip
+                if (orderDate < patientCreated[pid]) {
+                    // This order predates the patient — it's an orphan
+                    if (!batch) batch = f.writeBatch();
+                    batch.update(doc.ref, { _dateOrphaned: true, _dateOrphanedAt: new Date().toISOString() });
+                    batchCount++;
+                    ordersMarked++;
+                    if (batchCount >= 400) {
+                        batch.commit();
+                        batch = null;
+                        batchCount = 0;
+                    }
+                }
+            });
+            if (batch && batchCount > 0) {
+                await batch.commit();
+            }
+            console.log('🧹 Marked', ordersMarked, 'orphaned order(s) with _dateOrphaned=true');
+
+            // 3. Clean patient labRequests/labResults arrays
+            ptsSnap.forEach(function(doc) {
+                var d = doc.data() || {};
+                var pid = String(d.id || doc.id).replace(/^MOD-/i, '').trim();
+                var created = patientCreated[pid];
+                if (!created) return;
+                var needsUpdate = false;
+                var updateData = {};
+                // Clean labRequests
+                if (Array.isArray(d.labRequests) && d.labRequests.length > 0) {
+                    var cleanReqs = d.labRequests.filter(function(r) {
+                        var reqDate = String(r.orderedAt || r.timestamp || r.date || r.createdAt || '').trim();
+                        if (!reqDate) return true; // no date, keep
+                        return reqDate >= created;
+                    });
+                    if (cleanReqs.length < d.labRequests.length) {
+                        updateData.labRequests = cleanReqs;
+                        labRequestsCleaned += (d.labRequests.length - cleanReqs.length);
+                        needsUpdate = true;
+                    }
+                }
+                // Clean labResults
+                if (Array.isArray(d.labResults) && d.labResults.length > 0) {
+                    var cleanRes = d.labResults.filter(function(r) {
+                        var resDate = String(r.orderedAt || r.timestamp || r.date || r.createdAt || r.resultDate || '').trim();
+                        if (!resDate) return true;
+                        return resDate >= created;
+                    });
+                    if (cleanRes.length < d.labResults.length) {
+                        updateData.labResults = cleanRes;
+                        labResultsCleaned += (d.labResults.length - cleanRes.length);
+                        needsUpdate = true;
+                    }
+                }
+                // Clean labOrders
+                if (Array.isArray(d.labOrders) && d.labOrders.length > 0) {
+                    var cleanOrds = d.labOrders.filter(function(r) {
+                        var ordDate = String(r.orderedAt || r.timestamp || r.date || r.createdAt || '').trim();
+                        if (!ordDate) return true;
+                        return ordDate >= created;
+                    });
+                    if (cleanOrds.length < d.labOrders.length) {
+                        updateData.labOrders = cleanOrds;
+                        needsUpdate = true;
+                    }
+                }
+                if (needsUpdate) {
+                    f.setDoc(doc.ref, updateData, { merge: true });
+                }
+            });
+            console.log('🧹 Cleaned patient arrays:', labRequestsCleaned, 'labRequests,', labResultsCleaned, 'labResults');
+
+            var summary = {
+                ordersMarked: ordersMarked,
+                labRequestsCleaned: labRequestsCleaned,
+                labResultsCleaned: labResultsCleaned
+            };
+            var msg = '✅ Date-orphan cleanup: ' + ordersMarked + ' orders marked, ' +
+                      labRequestsCleaned + ' labRequests cleaned, ' + labResultsCleaned + ' labResults cleaned';
+            console.log(msg);
+            if (window.pcToast) window.pcToast(msg, 'success');
+            return summary;
+        } catch (e) {
+            console.error('Date-orphan cleanup error:', e);
+            if (window.pcToast) window.pcToast('Cleanup error: ' + e.message, 'error');
+            return { error: e.message, ordersMarked: ordersMarked };
+        }
+    }
+
     function getBills(filter) {
         purgeTemplateBillsFromStorage();
         var all = aggregateCommonServerPatientBills(read(BILLS_KEY, []));
@@ -1902,6 +2037,7 @@
         purge: purgeTemplateLabOrdersFromStorage, aggregate: aggregateCommonServerLabOrders,
         purgeAllTemplateData: purgeAllTemplateData,
         migrateOrphanedRecords: migrateOrphanedRecords,
+        cleanupDateOrphans: cleanupDateOrphans,
         ensureTariffSeeded: ensureTariffSeeded, SEED_LAB_EXAMS: SEED_LAB_EXAMS,
         ensurePharmacySeeded: ensurePharmacySeeded, SEED_PHARMACY_ITEMS: SEED_PHARMACY_ITEMS,
         ensureActsSeeded: ensureActsSeeded, SEED_ACT_ITEMS: SEED_ACT_ITEMS,

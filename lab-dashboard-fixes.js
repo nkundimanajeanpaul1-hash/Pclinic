@@ -24,6 +24,25 @@
     return [];
   }
 
+  /* ═══════════════════════════════════════════════════════════════
+     ORPHANED ORDER GUARD
+     An order belongs to a patient ONLY if it was created on/after the
+     patient's registration date. If the order predates registration,
+     it is an orphaned record from a previous patient who reused the
+     same ID — it must NOT be shown or processed for the new patient.
+     ═══════════════════════════════════════════════════════════════ */
+  function isValidOrderForPatient(order, patient) {
+    if (!order || !patient) return false;
+    // If already flagged as orphaned by cleanupDateOrphans(), hide it
+    if (order._dateOrphaned || order._orphanedArchived) return false;
+    var orderDate = String(order.orderedAt || order.timestamp || order.date || order.createdAt || '').trim();
+    if (!orderDate) return true; // no date to compare, allow it
+    var patientCreated = String(patient.createdAt || patient.registered || '').trim();
+    if (!patientCreated) return true; // no registration date, allow it
+    // ISO string comparison works because both are YYYY-MM-DD... format
+    return orderDate >= patientCreated;
+  }
+
   function currentLabPatient() {
     try {
       if (window.pcLabEngine && typeof window.pcLabEngine.getSelectedLabPatient === 'function') {
@@ -349,6 +368,8 @@
 
       reqList.forEach(function(req, idx) {
         if (!req) return;
+        // ORPHAN GUARD: skip lab requests that predate this patient's registration
+        if (!isValidOrderForPatient(req, p)) return;
         var reqId = String(req.orderId || req.id || ('ORD-REQ-' + pIdStr + '-' + idx));
         var tests = [];
         if (Array.isArray(req.tests)) {
@@ -475,14 +496,35 @@
             cloudOrders.push(data);
           });
           if (cloudOrders.length) {
+            // Build a patient-id → createdAt lookup for orphan detection
+            var patientCreatedMap = {};
+            var currentPatients = getPatientList();
+            currentPatients.forEach(function(pt) {
+              if (pt && pt.id) {
+                patientCreatedMap[String(pt.id).replace(/^MOD-/i, '').trim()] =
+                  String(pt.createdAt || pt.registered || '').trim();
+              }
+            });
             var rawOrders = [];
             try { rawOrders = JSON.parse(localStorage.getItem('pclinic_orders') || '[]'); } catch(e){}
+            var orphanedCount = 0;
             cloudOrders.forEach(function(co) {
+              // ORPHAN GUARD: if this order predates the patient's registration, skip it
+              var pidStr = String(co.patientId || '').replace(/^MOD-/i, '').trim();
+              if (pidStr && patientCreatedMap[pidStr]) {
+                if (!isValidOrderForPatient(co, { createdAt: patientCreatedMap[pidStr] })) {
+                  orphanedCount++;
+                  return; // skip this orphaned order
+                }
+              }
               var idx = rawOrders.findIndex(function(o){ return String(o.id) === String(co.id); });
               if (idx >= 0) rawOrders[idx] = Object.assign({}, rawOrders[idx], co);
               else rawOrders.unshift(co);
               cloudOrdersCount++;
             });
+            if (orphanedCount > 0) {
+              console.warn('️ Filtered out', orphanedCount, 'orphaned order(s) that predate patient registration');
+            }
             try { localStorage.setItem('pclinic_orders', JSON.stringify(rawOrders)); } catch(e){}
           }
         }
@@ -566,10 +608,21 @@
     try {
       f.onSnapshot(f.collection(window.firebaseDB, 'orders'), function(snap) {
         if (!snap) return;
+        // Build patient-id → createdAt map for orphan detection
+        var ptMap = {};
+        try {
+          getPatientList().forEach(function(pt) {
+            if (pt && pt.id) ptMap[String(pt.id).replace(/^MOD-/i, '').trim()] = String(pt.createdAt || pt.registered || '').trim();
+          });
+        } catch(e){}
         var cloudOrders = [];
         snap.forEach(function(doc) {
           var d = doc.data() || {};
           if (!d.id) d.id = doc.id;
+          // ORPHAN GUARD: skip orders that predate the patient or are already flagged
+          if (d._dateOrphaned || d._orphanedArchived) return;
+          var pidStr = String(d.patientId || '').replace(/^MOD-/i, '').trim();
+          if (pidStr && ptMap[pidStr] && !isValidOrderForPatient(d, { createdAt: ptMap[pidStr] })) return;
           cloudOrders.push(d);
         });
         if (cloudOrders.length) {
@@ -1150,7 +1203,8 @@
     // 2. Resolve Active Order
     var patientOrders = allOrders.filter(function(o){
       return (o.dept === 'lab' || o.type === 'lab') &&
-             String(o.patientId || '').replace(/^MOD-/i, '') === String(targetPatient ? targetPatient.id : '').replace(/^MOD-/i, '');
+             String(o.patientId || '').replace(/^MOD-/i, '') === String(targetPatient ? targetPatient.id : '').replace(/^MOD-/i, '') &&
+             isValidOrderForPatient(o, targetPatient);
     });
 
     var activeOrder = null;
