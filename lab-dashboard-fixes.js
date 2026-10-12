@@ -31,16 +31,31 @@
      it is an orphaned record from a previous patient who reused the
      same ID — it must NOT be shown or processed for the new patient.
      ═══════════════════════════════════════════════════════════════ */
+  function toTimestamp(v) {
+    if (v == null || v === '') return NaN;
+    if (typeof v === 'number') return v;
+    try { if (typeof v.toDate === 'function') return v.toDate().getTime(); } catch (e) {}
+    if (typeof v.seconds === 'number') return v.seconds * 1000;
+    var str = String(v).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) str += 'T00:00:00';
+    return new Date(str).getTime();
+  }
+
+  function orderDateOf(order) {
+    if (!order) return '';
+    return order.orderedAt || order.timestamp || order.date || order.createdAt || '';
+  }
+
   function isValidOrderForPatient(order, patient) {
     if (!order || !patient) return false;
     // If already flagged as orphaned by cleanupDateOrphans(), hide it
     if (order._dateOrphaned || order._orphanedArchived) return false;
-    var orderDate = String(order.orderedAt || order.timestamp || order.date || order.createdAt || '').trim();
-    if (!orderDate) return true; // no date to compare, allow it
-    var patientCreated = String(patient.createdAt || patient.registered || '').trim();
-    if (!patientCreated) return true; // no registration date, allow it
-    // ISO string comparison works because both are YYYY-MM-DD... format
-    return orderDate >= patientCreated;
+    // Reused short IDs (e.g. 1003): if both sides carry a person id and they differ, it is another person's order
+    if (order.personId && patient.personId && String(order.personId) !== String(patient.personId)) return false;
+    var orderTs = toTimestamp(orderDateOf(order));
+    var regTs = toTimestamp(patient.createdAt || patient.registered);
+    if (isNaN(orderTs) || isNaN(regTs)) return true; // cannot compare, allow
+    return orderTs >= regTs;
   }
 
   function currentLabPatient() {
@@ -675,143 +690,7 @@
     } catch(e){}
   }
 
-  function seedSampleLabRequestsIfEmpty() {
-    var orders = getAllRawOrders();
-    var labOrders = orders.filter(function(o) { return o && (o.dept === 'lab' || o.type === 'lab'); });
-    var hasPending = labOrders.some(function(o) { return o.status === 'pending'; });
-
-    if (hasPending && labOrders.length >= 2) return;
-
-    var patients = getPatientList();
-    if (!patients || !patients.length) return;
-
-    var p1 = patients.find(function(p){ return String(p.id) === '1002'; }) || patients[0];
-    var p2 = patients.find(function(p){ return String(p.id) === '1001'; }) || (patients[1] || patients[0]);
-    var p3 = patients.find(function(p){ return String(p.id) === '1003'; }) || (patients[2] || patients[0]);
-
-    var now = Date.now();
-    var sampleOrders = [
-      {
-        id: 'ORD-LAB-2026-101',
-        dept: 'lab',
-        type: 'lab',
-        patientId: String(p1.id),
-        patientName: (p1.firstName + ' ' + p1.lastName).trim(),
-        doctor: 'Dr. Jean Dupont',
-        priority: 'Routine',
-        sampleType: 'Whole Blood (EDTA)',
-        status: 'pending',
-        items: [
-          { code: 'LAB-CBC', name: 'CBC - Complete Blood Count', price: 6000 },
-          { code: 'LAB-RBS', name: 'Random Blood Sugar (RBS)', price: 2500 }
-        ],
-        createdAt: new Date(now - 35 * 60000).toISOString()
-      },
-      {
-        id: 'ORD-LAB-2026-102',
-        dept: 'lab',
-        type: 'lab',
-        patientId: String(p2.id),
-        patientName: (p2.firstName + ' ' + p2.lastName).trim(),
-        doctor: 'Dr. Alice Mukamana',
-        priority: 'Urgent',
-        sampleType: 'Serum / Smear',
-        status: 'pending',
-        items: [
-          { code: 'LAB-RFT', name: 'Renal Function Test (RFT)', price: 12000 },
-          { code: 'LAB-MALMP', name: 'Malaria Parasite (MP)', price: 3000 }
-        ],
-        createdAt: new Date(now - 75 * 60000).toISOString()
-      },
-      {
-        id: 'ORD-LAB-2026-103',
-        dept: 'lab',
-        type: 'lab',
-        patientId: String(p3.id),
-        patientName: (p3.firstName + ' ' + p3.lastName).trim(),
-        doctor: 'Dr. Robert Kagabo',
-        priority: 'Routine',
-        sampleType: 'Serum',
-        status: 'completed',
-        items: [
-          { code: 'LAB-LFT', name: 'Liver Function Test (LFT)', price: 12000 }
-        ],
-        results: [
-          { test: 'ALT / SGPT', value: '24', unit: 'U/L', range: '7 - 56', flag: 'Normal', verifiedBy: 'Laboratory Staff', date: new Date(now - 120 * 60000).toISOString() },
-          { test: 'AST / SGOT', value: '28', unit: 'U/L', range: '10 - 40', flag: 'Normal', verifiedBy: 'Laboratory Staff', date: new Date(now - 120 * 60000).toISOString() },
-          { test: 'Total Bilirubin', value: '0.8', unit: 'mg/dL', range: '0.2 - 1.2', flag: 'Normal', verifiedBy: 'Laboratory Staff', date: new Date(now - 120 * 60000).toISOString() }
-        ],
-        completedBy: 'Laboratory Staff (Technician)',
-        completedAt: new Date(now - 120 * 60000).toISOString(),
-        createdAt: new Date(now - 180 * 60000).toISOString()
-      }
-    ];
-
-    sampleOrders.forEach(function(seed) {
-      var exists = orders.some(function(o){ return String(o.id) === String(seed.id); });
-      if (!exists) orders.unshift(seed);
-    });
-
-    saveAllRawOrders(orders);
-
-    // Sync with patient.labRequests & labResults
-    try {
-      var pts = getPatientList();
-      pts.forEach(function(pt) {
-        if (String(pt.id) === String(p1.id)) {
-          pt.labRequests = pt.labRequests || [];
-          if (!pt.labRequests.some(function(r){ return r.id === 'ORD-LAB-2026-101'; })) {
-            pt.labRequests.push({
-              id: 'ORD-LAB-2026-101',
-              tests: ['CBC - Complete Blood Count', 'Random Blood Sugar (RBS)'],
-              priority: 'Routine',
-              sampleType: 'Whole Blood (EDTA)',
-              requestedBy: 'Dr. Jean Dupont',
-              timestamp: new Date(now - 35 * 60000).toISOString(),
-              status: 'pending'
-            });
-          }
-        }
-        if (String(pt.id) === String(p2.id)) {
-          pt.labRequests = pt.labRequests || [];
-          if (!pt.labRequests.some(function(r){ return r.id === 'ORD-LAB-2026-102'; })) {
-            pt.labRequests.push({
-              id: 'ORD-LAB-2026-102',
-              tests: ['Renal Function Test (RFT)', 'Malaria Parasite (MP)'],
-              priority: 'Urgent',
-              sampleType: 'Serum / Smear',
-              requestedBy: 'Dr. Alice Mukamana',
-              timestamp: new Date(now - 75 * 60000).toISOString(),
-              status: 'pending'
-            });
-          }
-        }
-        if (String(pt.id) === String(p3.id)) {
-          pt.labRequests = pt.labRequests || [];
-          if (!pt.labRequests.some(function(r){ return r.id === 'ORD-LAB-2026-103'; })) {
-            pt.labRequests.push({
-              id: 'ORD-LAB-2026-103',
-              tests: ['Liver Function Test (LFT)'],
-              priority: 'Routine',
-              sampleType: 'Serum',
-              requestedBy: 'Dr. Robert Kagabo',
-              timestamp: new Date(now - 180 * 60000).toISOString(),
-              status: 'completed'
-            });
-          }
-          pt.labResults = pt.labResults || [];
-          if (!pt.labResults.some(function(r){ return r.test === 'ALT / SGPT'; })) {
-            pt.labResults.push(
-              { test: 'ALT / SGPT', value: '24', unit: 'U/L', range: '7 - 56', flag: 'Normal', verifiedBy: 'Laboratory Staff', date: new Date(now - 120 * 60000).toISOString() },
-              { test: 'AST / SGOT', value: '28', unit: 'U/L', range: '10 - 40', flag: 'Normal', verifiedBy: 'Laboratory Staff', date: new Date(now - 120 * 60000).toISOString() },
-              { test: 'Total Bilirubin', value: '0.8', unit: 'mg/dL', range: '0.2 - 1.2', flag: 'Normal', verifiedBy: 'Laboratory Staff', date: new Date(now - 120 * 60000).toISOString() }
-            );
-          }
-        }
-      });
-      localStorage.setItem('pclinic_patients', JSON.stringify(pts));
-    } catch(e) {}
-  }
+  /* seedSampleLabRequestsIfEmpty() REMOVED: it injected demo orders/results into real patients (ids 1001-1003). */
 
   var entryCatalogMode = 'requested'; // 'requested' (default) | 'catalog'
 
@@ -1209,15 +1088,19 @@
 
     var activeOrder = null;
     if (targetOrderId) {
-      activeOrder = allOrders.find(function(o){ return String(o.id) === String(targetOrderId); });
+      var explicit = allOrders.find(function(o){ return String(o.id) === String(targetOrderId); });
+      if (explicit) {
+        var explicitPt = allPatients.find(function(p){
+          return String(p.id).replace(/^MOD-/i, '') === String(explicit.patientId || '').replace(/^MOD-/i, '');
+        });
+        if (!explicitPt || isValidOrderForPatient(explicit, explicitPt)) activeOrder = explicit;
+      }
     }
     if (!activeOrder && patientOrders.length) {
       activeOrder = patientOrders.find(function(o){ return String(o.status || '').toLowerCase() === 'pending'; });
-      if (!activeOrder) activeOrder = patientOrders[0];
+      if (!activeOrder && mode === 'entry') activeOrder = patientOrders[0];
     }
-    if (!activeOrder && allOrders.length) {
-      activeOrder = allOrders.find(function(o){ return String(o.status || '').toLowerCase() === 'pending'; }) || allOrders[0];
-    }
+    // NOTE: no fallback to another patient's order. No order for this patient => nothing to show.
 
     // 3. Update Result Entry Header Badge
     if (mode === 'entry') {
@@ -1273,27 +1156,66 @@
       categoriesToRender = MATRIX_CATEGORIES;
     }
 
-    // 5. Date Columns (Column 1 is active order date e.g. today / 04/10/2026)
-    var reqDateStr = activeOrder && (activeOrder.orderedAt || activeOrder.date) ? formatMatrixDate(activeOrder.orderedAt || activeOrder.date) : formatMatrixDate(new Date());
-    if (!reqDateStr) reqDateStr = '04/10/2026';
+    // 5. Date Columns - built ONLY from this patient's real, valid orders
+    function reqChip(orders) {
+      var n = orders.length;
+      var done = orders.every(function(o){ return /^(completed|verified)$/i.test(String(o.status || '')); });
+      var label = n + ' request' + (n === 1 ? '' : 's');
+      return done
+        ? '<span style="display:inline-block;background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">✓ ' + label + '</span>'
+        : '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">⏳ ' + label + '</span>';
+    }
 
-    var reqItemsCount = (activeOrder && activeOrder.items ? activeOrder.items.length : 2);
-    var dateColumns = [
-      {
-        dateStr: reqDateStr,
-        chipHtml: '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">⏳ ' + reqItemsCount + ' request' + (reqItemsCount === 1 ? '' : 's') + '</span>'
-      },
-      {
-        dateStr: '06/09/2026',
-        chipHtml: '<span style="display:inline-block;background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">✓ 2 requests</span>'
-      },
-      {
-        dateStr: '23/08/2026',
-        chipHtml: '<span style="display:inline-block;background:#e9f9ee;color:#1a7a32;font-weight:800;font-size:8px;padding:1px 6px;border-radius:20px;margin-top:2px;">✓ 1 request</span>'
+    var dateColumns = [];
+    if (activeOrder) {
+      dateColumns.push({
+        orders: [activeOrder],
+        active: true,
+        dateStr: formatMatrixDate(orderDateOf(activeOrder)) || '—',
+        chipHtml: reqChip([activeOrder])
+      });
+    }
+    var historyOrders = patientOrders
+      .filter(function(o){ return !activeOrder || o !== activeOrder; })
+      .sort(function(a, b){ return (toTimestamp(orderDateOf(b)) || 0) - (toTimestamp(orderDateOf(a)) || 0); });
+    var dayGroups = {};
+    var dayOrder = [];
+    historyOrders.forEach(function(o) {
+      var ds = formatMatrixDate(orderDateOf(o)) || '—';
+      if (!dayGroups[ds]) { dayGroups[ds] = []; dayOrder.push(ds); }
+      dayGroups[ds].push(o);
+    });
+    dayOrder.forEach(function(ds) {
+      dateColumns.push({ orders: dayGroups[ds], active: false, dateStr: ds, chipHtml: reqChip(dayGroups[ds]) });
+    });
+    dateColumns = dateColumns.slice(0, 7);
+    var hasActive = !!activeOrder;
+
+    function historyCell(col, test) {
+      var found = null;
+      col.orders.forEach(function(o) {
+        if (found || !Array.isArray(o.results)) return;
+        found = o.results.find(function(r) {
+          if (!r) return false;
+          if (r.code && String(r.code) === String(test.code)) return true;
+          var rn = String(r.test || r.name || '').toLowerCase();
+          return rn && rn === String(test.name || '').toLowerCase();
+        }) || null;
+      });
+      if (!found || found.value == null || String(found.value) === '' || String(found.value) === '--') {
+        return '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
       }
-    ];
+      var flag = String(found.flag || '');
+      var badge = '';
+      if (/^(high|h)$/i.test(flag)) badge = 'H';
+      else if (/^(low|l)$/i.test(flag)) badge = 'L';
+      else if (/^(critical|c)$/i.test(flag)) badge = 'C';
+      return '<td class="oc-res-cell"><span style="font-weight:800;">' + escapeHtml(found.value) + '</span>' +
+        (badge ? ' <span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:0 3px;border-radius:8px;margin-left:2px;">' + badge + '</span>' : '') +
+        '</td>';
+    }
 
-    var paddingEmptyCols = 4;
+    var paddingEmptyCols = Math.max(0, 7 - dateColumns.length);
 
     // Build Header HTML
     var headHtml = '<tr>' +
@@ -1301,7 +1223,7 @@
       '<th style="width:260px;min-width:260px;max-width:260px;text-align:left;">Parameter</th>';
 
     dateColumns.forEach(function(col, idx) {
-      var activeHighlight = (mode === 'entry' && idx === 0) ? 'background:#eaf2ff !important;border-bottom:2px solid #0071e3 !important;' : '';
+      var activeHighlight = (mode === 'entry' && col.active) ? 'background:#eaf2ff !important;border-bottom:2px solid #0071e3 !important;' : '';
       headHtml += '<th class="oc-col-order-hdr" style="width:150px;min-width:150px;max-width:150px;' + activeHighlight + '">' +
         '<div class="oc-col-order-date">' + col.dateStr + '</div>' +
         col.chipHtml +
@@ -1314,30 +1236,15 @@
     headHtml += '</tr>';
     thead.innerHTML = headHtml;
 
-    // 6. Historical Results on 06/09/2026
-    var results0609 = {
-      '50001': { value: 'tropho ++++', flag: 'High' },
-      '50004': { value: '--' },
-      '10700-1': { value: 'MTB +++' },
-      '10701-1': { value: 'MTB +++' },
-      '10702-1': { value: 'MTB +++' },
-      '10703-1': { value: 'MTB +++' },
-      '10704-1': { value: 'MTB +++' },
-      '21100-1': { value: 'MTB +++' },
-      '21110-1': { value: 'MTB +++' },
-      '21130-1': { value: 'MTB +++' },
-      '11110-1': { value: 'MTB +++' },
-      '10901-3': { value: 'MTB +++' },
-      '10902-3': { value: 'MTB +++' },
-      '10903-3': { value: 'MTB +++' },
-      '10904-3': { value: 'MTB +++' }
-    };
-
     // 7. Build Body HTML
     var bodyHtml = '';
     var totalRowCount = 0;
 
-    if (!categoriesToRender.length || (categoriesToRender.length === 1 && !categoriesToRender[0].tests.length)) {
+    if (!activeOrder && !patientOrders.length) {
+      bodyHtml = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#8e8e93;background:#fff;">' +
+        'ℹ️ No laboratory requests for this patient.' +
+        '</td></tr>';
+    } else if (!categoriesToRender.length || (categoriesToRender.length === 1 && !categoriesToRender[0].tests.length)) {
       bodyHtml = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#8e8e93;background:#fff;">' +
         'ℹ️ No pending laboratory tests requested for this patient.<br>' +
         '<button type="button" class="btn-s" onclick="setEntryCatalogMode(\'catalog\')" style="margin-top:8px;cursor:pointer;">📋 Show Full Catalog</button>' +
@@ -1364,7 +1271,8 @@
             '<span class="oc-test-range">' + escapeHtml(rangeLabel) + '</span>' +
           '</td>';
 
-          // Column 1: Active Request
+          // Column 1: Active Request (only when a real order exists)
+          if (hasActive) {
           var draftVal = matrixDraftValues[test.code] != null ? matrixDraftValues[test.code] : '';
           var existingVerified = null;
           if (activeOrder && Array.isArray(activeOrder.results)) {
@@ -1381,13 +1289,13 @@
             var lowerName = test.name.toLowerCase();
             if (test.code === '50001' || lowerName.indexOf('malaria') !== -1) {
               quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
-                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'tropho ++++\')">tropho ++++</span>' +
                 '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'Negative\')">Negative</span>' +
+                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'tropho ++++\')">tropho ++++</span>' +
               '</div>';
             } else if (test.code.indexOf('1070') !== -1 || lowerName.indexOf('culture') !== -1) {
               quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
-                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'MTB +++\')">MTB +++</span>' +
                 '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'No growth\')">No growth</span>' +
+                '<span class="matrix-quick-chip" onclick="fillMatrixQuick(this, \'MTB +++\')">MTB +++</span>' +
               '</div>';
             } else if (test.range) {
               quickChips = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;">' +
@@ -1417,27 +1325,14 @@
             }
           }
 
-          // Column 2: 06/09/2026
-          var res0609 = results0609[test.code];
-          if (res0609) {
-            if (res0609.value === '--') {
-              bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
-            } else if (res0609.flag === 'High') {
-              bodyHtml += '<td class="oc-res-cell">' +
-                '<span style="font-weight:800;">' + res0609.value + '</span> ' +
-                '<span style="display:inline-block;background:#fff4e0;color:#7a4500;font-weight:800;font-size:8px;padding:0 3px;border-radius:8px;margin-left:2px;">H</span>' +
-              '</td>';
-            } else {
-              bodyHtml += '<td class="oc-res-cell"><span style="font-weight:800;">' + res0609.value + '</span></td>';
-            }
-          } else {
-            bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
           }
 
-          // Column 3: 23/08/2026
-          bodyHtml += '<td class="oc-res-cell" style="color:#9ca3af;opacity:0.35;">--</td>';
+          // History columns: real orders only
+          dateColumns.slice(hasActive ? 1 : 0).forEach(function(col) {
+            bodyHtml += historyCell(col, test);
+          });
 
-          // Padding Columns 4 to 7
+          // Padding columns
           for (var ep = 0; ep < paddingEmptyCols; ep++) {
             bodyHtml += '<td class="oc-res-cell oc-empty-col" style="color:#9ca3af;opacity:0.28;">--</td>';
           }

@@ -119,3 +119,18 @@ test('lab dashboard mounts and keeps the shared patient identification bar in sy
   assert.match(FIX, /window\.applyDoctorParityClasses = applyDoctorParityClasses/);
   assert.match(FIX, /window\.ensureSharedLabHeader = ensureSharedLabHeader/);
 });
+
+test('lab results grid never renders hard-coded demo dates, results or cross-patient orders', () => {
+  const RES = readFileSync(resolve(ROOT, 'lab-results.html'), 'utf8');
+  for (const src of [FIX, RES]) {
+    assert.doesNotMatch(src, /results0609/);
+    assert.doesNotMatch(src, /dateStr:\s*'06\/09\/2026'/);
+    assert.doesNotMatch(src, /dateStr:\s*'23\/08\/2026'/);
+    assert.doesNotMatch(src, /ORD-LAB-2026-0906/);
+  }
+  assert.doesNotMatch(FIX, /function seedSampleLabRequestsIfEmpty/);
+  assert.match(FIX, /No laboratory requests for this patient/);
+  // orphan guard must compare real timestamps, not strings
+  assert.match(FIX, /function toTimestamp\(/);
+  assert.match(FIX, /orderTs >= regTs/);
+});
