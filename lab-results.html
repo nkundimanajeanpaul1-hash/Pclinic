@@ -1145,14 +1145,18 @@
                 });
             });
 
+            // Score each test once, then drop the ones this patient never ordered
+            // or reported. The catalog expansion adds hundreds of parameters, and
+            // every unmatched one used to render as a permanently empty row.
             var packsOrdered = OC_CATEGORIES.map(function (cat) {
-                var tests = cat.tests.slice().sort(function (a, b) {
-                    return testActivityScore(b, cat) - testActivityScore(a, cat);
-                });
+                var scored = cat.tests.map(function (t) {
+                    return { t: t, score: testActivityScore(t, cat) };
+                }).filter(function (row) { return row.score > 0; });
+                scored.sort(function (a, b) { return b.score - a.score; });
                 var catScore = 0;
-                tests.forEach(function (t) { catScore = Math.max(catScore, testActivityScore(t, cat)); });
-                return { cat: cat, tests: tests, score: catScore };
-            });
+                scored.forEach(function (row) { catScore = Math.max(catScore, row.score); });
+                return { cat: cat, tests: scored.map(function (row) { return row.t; }), score: catScore };
+            }).filter(function (pack) { return pack.tests.length > 0; });
 
             // Free-text requests rank as a normal category rather than always
             // parking at the bottom of the sheet.
@@ -1206,6 +1210,11 @@
                     bodyHtml += '</tr>';
                 });
             });
+
+            if (!rowCount) {
+                renderEmptyState('🔬 No laboratory tests requested for this patient yet.<br><span style="font-size:11.5px;">Only tests that were ordered or reported for this patient appear here.</span>');
+                return;
+            }
 
             body.innerHTML = bodyHtml;
             padEmptyResultColumns();
