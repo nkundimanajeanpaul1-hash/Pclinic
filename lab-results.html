@@ -1073,7 +1073,7 @@
             headHtml += '</tr>';
             head.innerHTML = headHtml;
 
-            // 5. Table body — recently requested / resulted tests first
+            // 5. Table body — pending/requested labs at top, then resulted, then reported
             var body = document.getElementById('matrixBody');
             var bodyHtml = '';
             var rowCount = 0;
@@ -1091,9 +1091,10 @@
                 for (var gi = 0; gi < groups.length; gi++) {
                     var entries = entriesForMatrixTest(groups[gi], t, cat);
                     var recency = groups.length - gi;
-                    if (entries.some(function (entry) { return entry.kind === 'result'; })) score = Math.max(score, 1000 + recency * 10);
-                    else if (entries.some(function (entry) { return entry.kind === 'reported'; })) score = Math.max(score, 700 + recency * 10);
-                    else if (entries.some(function (entry) { return entry.kind === 'pending'; })) score = Math.max(score, 500 + recency * 10);
+                    // PENDING/REQUESTED labs at the top, then results, then reported
+                    if (entries.some(function (entry) { return entry.kind === 'pending'; })) score = Math.max(score, 1000 + recency * 10);
+                    else if (entries.some(function (entry) { return entry.kind === 'result'; })) score = Math.max(score, 700 + recency * 10);
+                    else if (entries.some(function (entry) { return entry.kind === 'reported'; })) score = Math.max(score, 500 + recency * 10);
                 }
                 return score;
             }
