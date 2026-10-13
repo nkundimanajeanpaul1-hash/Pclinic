@@ -88,6 +88,77 @@ test('measurements are described in mm / mm² when calibrated, px otherwise, and
   assert.equal(describeMeasurement('Bidirectional', { longestDiameter: 12.34, shortestDiameter: 5.6 }, cal), 'L 12.3 × S 5.6 mm');
 });
 
+/* ── units: pixels vs millimetres vs centimetres ───────────────── */
+
+test('a typed length becomes millimetres, and anything that is not a length is rejected', () => {
+  const { parseLengthToMm } = loadViewer()._internal;
+  assert.equal(parseLengthToMm('5'), 5, 'a bare number means millimetres');
+  assert.equal(parseLengthToMm('5 cm'), 50);
+  assert.equal(parseLengthToMm(' 12.5MM '), 12.5);
+  assert.equal(parseLengthToMm('1,5 cm'), 15, 'a comma is read as a decimal point');
+  assert.equal(parseLengthToMm('2 in'), 50.8);
+  assert.ok(Math.abs(parseLengthToMm('2"') - 50.8) < 1e-9);
+  assert.equal(parseLengthToMm('1 m'), 1000);
+  for (const bad of ['', '   ', 'abc', '5 x', '-5 cm', '0', '0 mm', '.5', 'cm 5', '5cm6', null, undefined]) {
+    assert.equal(parseLengthToMm(bad), null, 'must not be accepted as a length: ' + JSON.stringify(bad));
+  }
+});
+
+test('unit selection converts lengths and areas, and never shows mm or cm for an unscaled file', () => {
+  const { measureUnits } = loadViewer()._internal;
+  const mm = measureUnits(0.143, 'mm');
+  assert.equal(mm.unit, 'mm'); assert.equal(mm.scaled, true);
+  assert.equal(mm.len(22.94), 22.94, 'the library already reports millimetres when a spacing is set');
+  assert.equal(mm.area(154.2), 154.2);
+
+  const cm = measureUnits(0.143, 'cm');
+  assert.equal(cm.unit, 'cm'); assert.equal(cm.suffix, 'cm'); assert.equal(cm.areaSuffix, 'cm²'); assert.equal(cm.prec, 2);
+  assert.ok(Math.abs(cm.len(22.94) - 2.294) < 1e-9);
+  assert.equal(cm.area(150), 1.5);
+
+  const px = measureUnits(0.143, 'px');
+  assert.equal(px.unit, 'px'); assert.equal(px.suffix, 'px'); assert.equal(px.areaSuffix, 'px²'); assert.equal(px.prec, 0);
+  assert.ok(Math.abs(px.len(14.3) - 100) < 1e-9, 'a scaled file can still be read in pixels');
+
+  assert.equal(measureUnits(0.143).unit, 'mm', 'auto means mm when a scale exists');
+  assert.equal(measureUnits(undefined).unit, 'px', 'auto falls back to pixels');
+  assert.equal(measureUnits(undefined, 'cm').unit, 'px', 'cm on an unscaled file must not be shown');
+  assert.equal(measureUnits(undefined, 'mm').unit, 'px');
+  assert.equal(measureUnits(0, 'cm').scaled, false, 'a zero spacing is not a scale');
+  assert.equal(measureUnits(NaN, 'cm').unit, 'px');
+  assert.equal(measureUnits(undefined, 'px').len(160), 160, 'unscaled pixels pass through untouched');
+});
+
+test('centimetres are honoured in the measurement text once a scale exists', () => {
+  const { describeMeasurement } = loadViewer()._internal;
+  const cal = { rowPixelSpacing: 0.143, intercept: 0 };
+  assert.equal(describeMeasurement('Length', { length: 22.94 }, cal, 'cm'), '2.29 cm');
+  assert.equal(describeMeasurement('Length', { length: 22.94 }, cal, 'px'), '160.4 px');
+  assert.equal(describeMeasurement('Length', { length: 22.94 }, cal), '22.9 mm', 'no unit asked → the scale still decides');
+  assert.equal(describeMeasurement('Bidirectional', { longestDiameter: 22.94, shortestDiameter: 12.34 }, cal, 'cm'), 'L 2.29 × S 1.23 cm');
+  assert.match(describeMeasurement('RectangleRoi', { cachedStats: { area: 154.2, mean: 40, stdDev: 1.2, min: 38, max: 42 } }, cal, 'cm'), /Area 1\.54 cm²/);
+  assert.match(describeMeasurement('FreehandRoi', { area: 154.2 }, cal, 'cm'), /Area 1\.54 cm²/);
+});
+
+test('a measuring tool on an unscaled image asks pixels-or-cm once per image, and the scale is never guessed', () => {
+  assert.match(SRC, /maybeAskUnits\(name\)/, 'picking a measuring tool must ask');
+  assert.match(SRC, /\['Length', 'Bidirectional', 'RectangleRoi', 'EllipticalRoi', 'FreehandRoi'\]\.indexOf\(name\)/, 'the asking tools');
+  assert.match(SRC, /if \(scaleOf\(v\)\) return;/, 'a file that carries its own scale is never asked');
+  assert.match(SRC, /if \(unitsAsked\[id\]\) return;/, 'one ask per image, not one per click');
+  assert.match(SRC, /if \(calibrating\) return;/, 'the calibration line must not re-trigger the ask');
+
+  assert.match(SRC, /That is the authoritative scale and cannot be overwritten/, "a DICOM file's own PixelSpacing always wins");
+  assert.match(SRC, /calibStore\[id\] = \{ mmPerPx/, 'a calibration is stored per image');
+  assert.match(SRC, /m\.data\.invalidated = true/, 'drawings recompute from their handles — a saved value is never rescaled by hand');
+  assert.match(SRC, /out\.mmPerPx = Number\(mmPerPx\)/, 'a shared measurement carries the scale its author read');
+  assert.match(SRC, /c\.invalidated|_pcFileSpacing/, 'a stamped calibration must not be mistaken for the file spacing');
+
+  assert.match(SRC, /centimetres are unavailable until it is calibrated/);
+  assert.match(SRC, /The small tag drawn on top of the image stays in mm/);
+  const tools = readFileSync(resolve(ROOT, 'vendor', 'cornerstoneTools.min.js'), 'utf8');
+  assert.match(tools, /="pixels"/, 'the on-canvas unit word is still the vendored library\'s own — it was not patched');
+});
+
 /* ── libraries are self-hosted (CSP on Hosting blocks CDNs) ─────── */
 
 test('every viewer library is self-hosted under vendor/ and no CDN is referenced', () => {
