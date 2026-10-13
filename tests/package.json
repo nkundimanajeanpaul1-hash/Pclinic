@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test:static": "node --test dashboard-role-contracts.test.mjs",
+    "test:admin": "node --test admin-dashboard-security.test.mjs",
     "test:rules": "firebase emulators:exec --config ../firebase.json --project demo-pclinic --only firestore \"node --test firestore.rules.test.mjs\"",
     "test:all": "npm run test:static && npm run test:files && npm run test:results && npm run test:media && npm run test:call-errors && npm run test:rules",
     "test:files": "node --test pclinic-file-sync.test.mjs",
@@ -13,7 +14,8 @@
     "test:media-button": "node --test --test-force-exit radiology-media-button.test.mjs",
     "test:selection": "node --test --test-force-exit radiology-selection.test.mjs",
     "test:annotations": "node --test --test-force-exit radiology-annotations.test.mjs",
-    "test:workstation": "node --test --test-force-exit dicom-workstation.test.mjs"
+    "test:workstation": "node --test --test-force-exit dicom-workstation.test.mjs",
+    "test:doctor": "node --test doctor-dashboard-security.test.mjs doctor-runtime.test.mjs"
   },
   "dependencies": {
     "@firebase/rules-unit-testing": "^5.0.2",
