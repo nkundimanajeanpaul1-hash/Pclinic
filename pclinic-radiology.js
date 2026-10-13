@@ -19,6 +19,18 @@
     var listeners = [];
     var unsubscribers = [];
     var loaded = { orders: false, reports: false, addenda: false, alerts: false };
+    var streamErrors = {};
+    function feedError(assign, error) {
+        var wrapped = new Error('radiology ' + assign + ' feed: ' + ((error && error.message) || error || 'unknown error'));
+        wrapped.code = (error && error.code) || '';
+        wrapped.feed = assign;
+        wrapped.cause = error;
+        return wrapped;
+    }
+    function firstStreamError() {
+        var keys = Object.keys(streamErrors);
+        return keys.length ? streamErrors[keys[0]] : null;
+    }
     var initPromise = null;
 
     function cloneState() {
@@ -82,10 +94,14 @@
             state[assign] = rows;
             loaded[assign] = true;
             state.ready = loaded.orders && loaded.reports && loaded.addenda && loaded.alerts;
-            state.error = null;
+            // Only this feed's own recovery clears its error: a healthy stream must not
+            // wipe the failure of another one, or a broken alerts feed reads as "all fine".
+            delete streamErrors[assign];
+            state.error = firstStreamError();
             emit();
         }, function (error) {
-            state.error = error;
+            streamErrors[assign] = feedError(assign, error);
+            state.error = streamErrors[assign];
             console.error('Radiology Firestore subscription failed:', assign, error);
             // Drop the memoised init so a later init() (the report page's
             // "Try again") really resubscribes; otherwise the error is permanent.

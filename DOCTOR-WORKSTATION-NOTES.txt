@@ -126,3 +126,43 @@ NEXT — Zip B (after you confirm A works on your site)
   measurements / key-image flags / viewer note saved per image per user to
   the common server (new radiologyAnnotations collection + rules), restored on
   reopen for everyone with the author's name; "Saved ✓" indicator.
+
+2026-10-13 — measurement units, calibration, imaging-results pass
+---------------------------------------------------------------
+  pclinic-dicom-viewer.js:
+    • px / mm / cm / Auto selector: a toolbar "Units" menu and chips in the
+      Draw & Measure panel, remembered in localStorage (pclinic_dv_units).
+    • A file with no physical scale (JPEG/PNG — the patient-1003 media) gets an
+      ask-menu the first time a measuring tool is picked: measure in pixels, or
+      set a scale and measure in cm. cm is refused until a scale exists.
+    • Scale sources, in order of authority: the DICOM PixelSpacing (can never be
+      overwritten), a calibration drawn on this computer over an object of known
+      size (pclinic_dv_scale, per media id, author and date recorded), or the
+      mmPerPx a shared measurement was drawn under. describeMeasurement() and the
+      scale bar convert through measureUnits(); applyScale() stamps the spacing and
+      marks every drawing invalidated so cornerstone recomputes from the handles.
+    • LIMITATION: the small tag drawn on top of the image says "mm"/"pixels" —
+      that text is produced by vendor/cornerstoneTools.min.js and the vendor bundle
+      was not patched. cm appears in the panel, the measurement list and the bar.
+    • Upload now reads each DICOM's (0010,0020) Patient ID first and asks before
+      attaching a file whose identity belongs to someone else.
+    • The print window escapes the patient name in <title>, not only in <h1>.
+  pclinic-file.js: escA() for attribute contexts (patient names in value="…" were
+    only escaped for text, so a stored double quote was markup under this CSP);
+    the staff name in the top bar is escaped; Logout uses the shared secure logout
+    (sign-out + cache wipe); the alerts dialog says its counts are this browser's
+    cache; the bar shows the record's insurance/district or "— not recorded —"
+    instead of always claiming RSSB / RAMA and NYARUGENGE.
+  pclinic-radiology.js: each feed keeps its own error (streamErrors) so a healthy
+    stream no longer clears a broken one — a permission-denied criticalAlerts feed
+    used to read as "all fine".
+  auth-guard.js: imaging-results.html is a known portal (cloaked pre-render).
+  imaging-results.html: a workstation that fails to follow the patient is announced.
+  Cache labels: 20261013_RADUNIT1 (pclinic-file.js site-wide, pclinic-radiology.js,
+    auth-guard.js), 20261013_DVUNIT1 (viewer js+css).
+  node --test (unverified in a browser: production is login-gated, no staff
+    credentials): workstation 15/15, imaging-results-security 12/12,
+    imaging-results-page 11/11, doctor-runtime 11/11, doctor-dashboard-security 22/22,
+    admin-dashboard-security 10/10, pclinic-file-sync 6/6;
+    pre-existing reds unchanged (role-contracts 1, media-client 2, nurse 3,
+    firestore.rules needs Java).

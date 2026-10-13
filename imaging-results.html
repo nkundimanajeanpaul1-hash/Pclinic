@@ -4,21 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>PClinic — Imaging Workstation</title>
-  <link rel="stylesheet" href="pclinic-ui.css">
+  <link rel="stylesheet" href="pclinic-ui.css?v=20261013_RADUNIT1">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
-  <script type="module" src="firebase-config.js"></script>
-  <script src="auth-guard.js"></script>
-  <script src="pclinic-state.js"></script>
-  <script src="patient-data.js" defer></script>
-  <script src="pclinic-radiology.js?v=20260828_MEDIA" defer></script>
+  <script type="module" src="firebase-config.js?v=20261013_RADUNIT1"></script>
+  <script src="auth-guard.js?v=20261013_RADUNIT1"></script>
+  <script src="pclinic-state.js?v=20261013_RADUNIT1"></script>
+  <script src="patient-data.js?v=20261013_RADUNIT1" defer></script>
+  <script src="pclinic-radiology.js?v=20261013_RADUNIT1" defer></script>
     <script src="pclinic-radiology-media.js?v=20260902_MEDIAURL2" defer></script>
   <script src="pclinic-radiology-annotations.js?v=20260902_ANNOT" defer></script>
   <!-- ═══ DICOM VIEWER (shared with radiology entry page) ═══ -->
-  <link rel="stylesheet" href="pclinic-file.css">
-  <link rel="stylesheet" href="pclinic-dicom-viewer.css?v=20260906_STATUSROW">
-  <script src="pclinic-dicom-viewer.js?v=20260906_STATUSROW" defer></script>
-  <script src="pclinic-file.js?v=20260929_TECH_EXAMS" defer></script>
-  <script src="shared.js" defer></script>
+  <link rel="stylesheet" href="pclinic-file.css?v=20261013_RADUNIT1">
+  <link rel="stylesheet" href="pclinic-dicom-viewer.css?v=20261013_DVUNIT1">
+  <script src="pclinic-dicom-viewer.js?v=20261013_DVUNIT1" defer></script>
+  <script src="pclinic-file.js?v=20261013_RADUNIT1" defer></script>
+  <script src="shared.js?v=20261013_RADUNIT1" defer></script>
   <style>
     :root{--bg:#1e1f22;--card:#2b2d31;--text:#e6e6e8;--muted:#9a9ca3;--line:#3d3f46;--blue:#4a9eff;--red:#ff6b6b}
     *{box-sizing:border-box}
@@ -103,7 +103,7 @@
   let wsMounted=false, applyingPatient=false;
   function mountWorkstation(){if(wsMounted)return;const host=document.getElementById('workstation');if(!host||!window.PcDicomViewer||typeof window.PcDicomViewer.mount!=='function')return;try{window.PcDicomViewer.mount(host,{canManage:staff&&(staff.role==='radio'||staff.role==='admin'),patient:patient,orderId:new URLSearchParams(location.search).get('order')||'',onPrintReport:printReport,onPatientChange:function(p){if(applyingPatient)return;applyingPatient=true;try{setPatient(p);}finally{applyingPatient=false;}}});wsMounted=true;}catch(e){console.warn('[imaging-results] workstation mount failed:',e);}}
   function writeIdentificationBar(){}
-  function syncWorkstationPatient(p){writeIdentificationBar(p);if(!wsMounted||!window.PcDicomViewer)return;try{window.PcDicomViewer.setPatient(p);}catch(e){}try{if(p&&p.id)localStorage.setItem('pclinic_active_patient',String(p.id));else localStorage.removeItem('pclinic_active_patient');}catch(e){}if(!applyingPatient){applyingPatient=true;try{window.dispatchEvent(new CustomEvent('pcPatientChanged',{detail:p}));}finally{applyingPatient=false;}}}
+  function syncWorkstationPatient(p){writeIdentificationBar(p);if(!wsMounted||!window.PcDicomViewer)return;try{window.PcDicomViewer.setPatient(p);}catch(e){console.error('[imaging-results] workstation patient sync failed:',e);notify('The workstation could not switch to this patient ('+errorText(e)+'). Its images may still belong to the previous patient — reload before drawing any conclusion.','error');}try{if(p&&p.id)localStorage.setItem('pclinic_active_patient',String(p.id));else localStorage.removeItem('pclinic_active_patient');}catch(e){}if(!applyingPatient){applyingPatient=true;try{window.dispatchEvent(new CustomEvent('pcPatientChanged',{detail:p}));}finally{applyingPatient=false;}}}
   window.addEventListener('pcPatientChanged',function(e){if(applyingPatient)return;const d=e&&e.detail;applyingPatient=true;try{if(d&&d.id){if(!patient||String(patient.id)!==String(d.id))setPatient(findPatient(d.id)||d);}else if(patient){setPatient(null);}}finally{applyingPatient=false;}});
   document.addEventListener('DOMContentLoaded',function(){enforceMinimalChrome();window.requireAuth(['doctor','radio','nurse','admin']).then(async function(s){staff=s;requestedPatientId=new URLSearchParams(location.search).get('patient')||sessionStorage.getItem('pclinic_active_patient')||localStorage.getItem('pclinic_active_patient')||'';mountWorkstation();
     // Subscribe first: pcRadiology.subscribe() replays the current state immediately, and

@@ -19,6 +19,9 @@
     var DX_KEY   = 'pclinic_diagnoses';
 
     function esc(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+    // esc() leaves quotes alone, which is wrong inside value="…" — a stored name containing
+    // a double quote would close the attribute and run injected markup ('unsafe-inline' is on).
+    function escA(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
     function $(s, r) { return (r || document).querySelector(s); }
     function read(k, fb) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch (e) { return fb; } }
     function write(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
@@ -139,7 +142,7 @@
                 return !q || d.name.toLowerCase().indexOf(q) !== -1 || d.code.toLowerCase().indexOf(q) !== -1;
             }).slice(0, 40);
             var html = list.map(function (d) {
-                return '<div class="pcf-dx-item" data-n="' + esc(d.name) + '" data-c="' + esc(d.code) + '">' +
+                return '<div class="pcf-dx-item" data-n="' + escA(d.name) + '" data-c="' + escA(d.code) + '">' +
                        (d.code ? '<span class="code">' + esc(d.code) + '</span>' : '') + esc(d.name) +
                        (d.custom ? ' <span style="font-size:9.5px;color:#34c759">·added</span>' : '') + '</div>';
             }).join('');
@@ -1270,7 +1273,7 @@
         var scrim = document.createElement('div');
         scrim.className = 'pcf-scrim noprint';
         scrim.innerHTML =
-            '<div class="pcf-sheet" role="dialog" aria-modal="true" aria-label="' + esc(opts.title) + '">' +
+            '<div class="pcf-sheet" role="dialog" aria-modal="true" aria-label="' + escA(opts.title) + '">' +
               '<div class="sh-h"><i class="ti ' + (opts.icon || 'ti-file') + '"></i>' +
                 '<span>' + esc(opts.title) + '</span>' +
                 '<button type="button" aria-label="Close">&times;</button></div>' +
@@ -1421,7 +1424,7 @@
             rows = list.map(function(p) {
                 var name = (p.name || ((p.firstName || '') + ' ' + (p.lastName || ''))).trim() || ('Patient ' + (p.mrn || p.id));
                 var care = p.caretakerPhone || (p.emergencyContact && p.emergencyContact.phone) || '';
-                return '<button type="button" class="pc-pick-row" data-id="' + esc(p.id) + '" style="display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;border:0.5px solid rgba(0,0,0,0.08);border-radius:10px;background:#fff;margin-bottom:6px;cursor:pointer;text-align:left;font-family:inherit;">' +
+                return '<button type="button" class="pc-pick-row" data-id="' + escA(p.id) + '" style="display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;border:0.5px solid rgba(0,0,0,0.08);border-radius:10px;background:#fff;margin-bottom:6px;cursor:pointer;text-align:left;font-family:inherit;">' +
                     '<span style="width:36px;height:36px;border-radius:10px;background:#eaf2ff;color:#0071e3;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;">' + esc((p.firstName||p.name||'?').charAt(0).toUpperCase()) + '</span>' +
                     '<span style="flex:1;"><span style="display:block;font-weight:800;color:#1d1d1f;font-size:13px;">' + esc(name) + '</span>' +
                     '<span style="display:block;font-size:11px;color:#6e6e73;">MRN ' + esc(p.mrn || p.id) + (p.dob ? ' • ' + new Date(p.dob).toLocaleDateString('en-GB') : '') + (care ? ' • ☎ ' + esc(care) : '') + '</span></span>' +
@@ -1554,7 +1557,7 @@
                 }
                 var care = p.phone || p.caretakerPhone || '';
 
-                return '<div class="pc-sum-pick-row" data-id="' + esc(p.id) + '" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:0.5px solid rgba(0,0,0,0.08);border-radius:12px;background:#fff;margin-bottom:8px;cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+                return '<div class="pc-sum-pick-row" data-id="' + escA(p.id) + '" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:0.5px solid rgba(0,0,0,0.08);border-radius:12px;background:#fff;margin-bottom:8px;cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
                     '<div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#0071e3,#58a6ff);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;">' + esc(initial) + '</div>' +
                     '<div style="flex:1;min-width:0;">' +
                         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">' +
@@ -1714,51 +1717,51 @@
                 '<div class="pc-modal-body">' +
                     '<div class="pc-sec-title">1. Primary Demographics & Identification</div>' +
                     '<div class="pc-form-grid">' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Family Name</span><input type="text" class="pc-form-input" id="profLast" value="' + esc(p.lastName || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">First Name</span><input type="text" class="pc-form-input" id="profFirst" value="' + esc(p.firstName || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">National ID / Passport</span><input type="text" class="pc-form-input" id="profNat" placeholder="e.g. 1 1986 8 0064652 0 14" value="' + esc(p.nationalId || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Person ID</span><input type="text" class="pc-form-input" id="profPersonId" placeholder="e.g. 1198680064652014" value="' + esc(p.personId || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Record Number (MRN)</span><input type="text" class="pc-form-input readonly" id="profMrn" readonly value="' + esc(p.mrn || p.id || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Date of Birth</span><input type="date" class="pc-form-input" id="profDob" value="' + esc((p.dob || '').substring(0,10)) + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Family Name</span><input type="text" class="pc-form-input" id="profLast" value="' + escA(p.lastName || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">First Name</span><input type="text" class="pc-form-input" id="profFirst" value="' + escA(p.firstName || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">National ID / Passport</span><input type="text" class="pc-form-input" id="profNat" placeholder="e.g. 1 1986 8 0064652 0 14" value="' + escA(p.nationalId || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Person ID</span><input type="text" class="pc-form-input" id="profPersonId" placeholder="e.g. 1198680064652014" value="' + escA(p.personId || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Record Number (MRN)</span><input type="text" class="pc-form-input readonly" id="profMrn" readonly value="' + escA(p.mrn || p.id || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Date of Birth</span><input type="date" class="pc-form-input" id="profDob" value="' + escA((p.dob || '').substring(0,10)) + '" /></div>' +
                         '<div class="pc-form-row"><span class="pc-form-lbl">Gender</span><select class="pc-form-select" id="profGender"><option value="Male"' + (p.gender === 'Male' ? ' selected' : '') + '>Male</option><option value="Female"' + (p.gender === 'Female' ? ' selected' : '') + '>Female</option></select></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Registered on</span><input type="text" class="pc-form-input readonly" id="profRegistered" readonly value="' + esc(p.registered ? new Date(p.registered).toLocaleString('en-GB') : '—') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Registered by (Reception)</span><input type="text" class="pc-form-input readonly" id="profRegisteredBy" readonly value="' + esc(p.createdBy || p.registeredBy || '—') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Registered on</span><input type="text" class="pc-form-input readonly" id="profRegistered" readonly value="' + escA(p.registered ? new Date(p.registered).toLocaleString('en-GB') : '—') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Registered by (Reception)</span><input type="text" class="pc-form-input readonly" id="profRegisteredBy" readonly value="' + escA(p.createdBy || p.registeredBy || '—') + '" /></div>' +
                     '</div>' +
 
                     '<div class="pc-sec-title" style="margin-top:6px;">2. Contact Information & Residential Address</div>' +
                     '<div class="pc-form-grid">' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Patient Email</span><input type="email" class="pc-form-input" id="profEmail" placeholder="e.g. name@example.com" value="' + esc(p.email || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Patient Phone</span><input type="text" class="pc-form-input" id="profPhone" placeholder="e.g. +250 788 123 456" value="' + esc(p.phone || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">District</span><input type="text" class="pc-form-input" id="profDist" placeholder="e.g. NYARUGENGE" value="' + esc(p.district || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Sector</span><input type="text" class="pc-form-input" id="profSector" placeholder="e.g. Kimisagara" value="' + esc(p.sector || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Cell</span><input type="text" class="pc-form-input" id="profCell" placeholder="e.g. Gitega" value="' + esc(p.cell || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Village</span><input type="text" class="pc-form-input" id="profVillage" placeholder="e.g. Runda" value="' + esc(p.village || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Country</span><input type="text" class="pc-form-input" id="profCountry" placeholder="e.g. Rwanda" value="' + esc(p.country || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Residential Address</span><input type="text" class="pc-form-input" id="profAddr" placeholder="e.g. Runda, Gihara" value="' + esc(p.address || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Patient Email</span><input type="email" class="pc-form-input" id="profEmail" placeholder="e.g. name@example.com" value="' + escA(p.email || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Patient Phone</span><input type="text" class="pc-form-input" id="profPhone" placeholder="e.g. +250 788 123 456" value="' + escA(p.phone || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">District</span><input type="text" class="pc-form-input" id="profDist" placeholder="e.g. NYARUGENGE" value="' + escA(p.district || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Sector</span><input type="text" class="pc-form-input" id="profSector" placeholder="e.g. Kimisagara" value="' + escA(p.sector || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Cell</span><input type="text" class="pc-form-input" id="profCell" placeholder="e.g. Gitega" value="' + escA(p.cell || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Village</span><input type="text" class="pc-form-input" id="profVillage" placeholder="e.g. Runda" value="' + escA(p.village || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Country</span><input type="text" class="pc-form-input" id="profCountry" placeholder="e.g. Rwanda" value="' + escA(p.country || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Residential Address</span><input type="text" class="pc-form-input" id="profAddr" placeholder="e.g. Runda, Gihara" value="' + escA(p.address || '') + '" /></div>' +
                     '</div>' +
 
                     '<div class="pc-sec-title" style="margin-top:6px;">3. Caretaker / Next of Kin & Emergency Contact</div>' +
                     '<div class="pc-form-grid">' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Caretaker / Next of Kin Name</span><input type="text" class="pc-form-input" id="profCareName" placeholder="e.g. UWASE CLAUDINE" value="' + esc(p.caretakerName || (p.emergencyContact && p.emergencyContact.name) || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Caretaker / Next of Kin Name</span><input type="text" class="pc-form-input" id="profCareName" placeholder="e.g. UWASE CLAUDINE" value="' + escA(p.caretakerName || (p.emergencyContact && p.emergencyContact.name) || '') + '" /></div>' +
                         '<div class="pc-form-row"><span class="pc-form-lbl">Relationship to Patient</span><select class="pc-form-select" id="profCareRel"><option value="Spouse"' + (p.caretakerRel === 'Spouse' || (p.emergencyContact && p.emergencyContact.relationship === 'Spouse') ? ' selected' : '') + '>Spouse</option><option value="Mother"' + (p.caretakerRel === 'Mother' || (p.emergencyContact && p.emergencyContact.relationship === 'Mother') ? ' selected' : '') + '>Mother</option><option value="Father"' + (p.caretakerRel === 'Father' || (p.emergencyContact && p.emergencyContact.relationship === 'Father') ? ' selected' : '') + '>Father</option><option value="Sibling"' + (p.caretakerRel === 'Sibling' || (p.emergencyContact && p.emergencyContact.relationship === 'Sibling') ? ' selected' : '') + '>Sibling</option><option value="Guardian"' + (p.caretakerRel === 'Guardian' || (p.emergencyContact && p.emergencyContact.relationship === 'Guardian') ? ' selected' : '') + '>Guardian</option></select></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Caretaker Phone</span><input type="text" class="pc-form-input" id="profCarePhone" placeholder="e.g. +250 788 987 654" value="' + esc(p.caretakerPhone || (p.emergencyContact && p.emergencyContact.phone) || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Caretaker Email / Notes</span><input type="text" class="pc-form-input" id="profCareNotes" placeholder="Emergency contact notes…" value="' + esc(p.caretakerEmail || p.caretakerNotes || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Caretaker Phone</span><input type="text" class="pc-form-input" id="profCarePhone" placeholder="e.g. +250 788 987 654" value="' + escA(p.caretakerPhone || (p.emergencyContact && p.emergencyContact.phone) || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Caretaker Email / Notes</span><input type="text" class="pc-form-input" id="profCareNotes" placeholder="Emergency contact notes…" value="' + escA(p.caretakerEmail || p.caretakerNotes || '') + '" /></div>' +
                     '</div>' +
 
                     '<div class="pc-sec-title" style="margin-top:6px;">4. Insurance & Clinical Assignment</div>' +
                     '<div class="pc-form-grid">' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Insurance Provider / RSSB</span><input type="text" class="pc-form-input" id="profIns" placeholder="e.g. RSSB / RAMA" value="' + esc(insProvider) + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Insurance Policy Number</span><input type="text" class="pc-form-input" id="profPolicy" placeholder="e.g. RSSB-…" value="' + esc(insPolicy) + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Insurance Scheme</span><input type="text" class="pc-form-input" id="profInsScheme" placeholder="e.g. Community Based / RAMA" value="' + esc(insScheme) + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Insurance Validity</span><input type="text" class="pc-form-input" id="profInsValidity" placeholder="e.g. 31/12/2026" value="' + esc(insValidity) + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Assigned Department / Ward</span><input type="text" class="pc-form-input" id="profDept" placeholder="e.g. SURGERY WARD 7" value="' + esc(p.department || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Patient Type</span><input type="text" class="pc-form-input" id="profPatType" placeholder="e.g. Inpatient / Outpatient" value="' + esc(p.patientType || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Visit Type</span><input type="text" class="pc-form-input" id="profVisitType" placeholder="e.g. New visit / Follow-up" value="' + esc(p.visitType || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Referral Source</span><input type="text" class="pc-form-input" id="profReferral" placeholder="e.g. Health Centre / Self" value="' + esc(p.referralSource || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Arrival Mode</span><input type="text" class="pc-form-input" id="profArrival" placeholder="e.g. Walking / Ambulance" value="' + esc(p.arrivalMode || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Blood Group</span><input type="text" class="pc-form-input" id="profBlood" placeholder="e.g. O+" value="' + esc(p.bloodGroup || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Allergies</span><input type="text" class="pc-form-input" id="profAllergies" placeholder="e.g. Penicillin" value="' + esc(p.allergies || '') + '" /></div>' +
-                        '<div class="pc-form-row"><span class="pc-form-lbl">Consent</span><input type="text" class="pc-form-input" id="profConsent" placeholder="e.g. Granted / Withdrawn" value="' + esc(p.consent || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Insurance Provider / RSSB</span><input type="text" class="pc-form-input" id="profIns" placeholder="e.g. RSSB / RAMA" value="' + escA(insProvider) + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Insurance Policy Number</span><input type="text" class="pc-form-input" id="profPolicy" placeholder="e.g. RSSB-…" value="' + escA(insPolicy) + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Insurance Scheme</span><input type="text" class="pc-form-input" id="profInsScheme" placeholder="e.g. Community Based / RAMA" value="' + escA(insScheme) + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Insurance Validity</span><input type="text" class="pc-form-input" id="profInsValidity" placeholder="e.g. 31/12/2026" value="' + escA(insValidity) + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Assigned Department / Ward</span><input type="text" class="pc-form-input" id="profDept" placeholder="e.g. SURGERY WARD 7" value="' + escA(p.department || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Patient Type</span><input type="text" class="pc-form-input" id="profPatType" placeholder="e.g. Inpatient / Outpatient" value="' + escA(p.patientType || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Visit Type</span><input type="text" class="pc-form-input" id="profVisitType" placeholder="e.g. New visit / Follow-up" value="' + escA(p.visitType || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Referral Source</span><input type="text" class="pc-form-input" id="profReferral" placeholder="e.g. Health Centre / Self" value="' + escA(p.referralSource || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Arrival Mode</span><input type="text" class="pc-form-input" id="profArrival" placeholder="e.g. Walking / Ambulance" value="' + escA(p.arrivalMode || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Blood Group</span><input type="text" class="pc-form-input" id="profBlood" placeholder="e.g. O+" value="' + escA(p.bloodGroup || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Allergies</span><input type="text" class="pc-form-input" id="profAllergies" placeholder="e.g. Penicillin" value="' + escA(p.allergies || '') + '" /></div>' +
+                        '<div class="pc-form-row"><span class="pc-form-lbl">Consent</span><input type="text" class="pc-form-input" id="profConsent" placeholder="e.g. Granted / Withdrawn" value="' + escA(p.consent || '') + '" /></div>' +
                     '</div>' +
                 '</div>' +
                 '<div class="pc-modal-foot">' +
@@ -2072,7 +2075,7 @@
             '<div class="chuk-menu-right">' +
                 '<a class="chk-btn btn-theme" onclick="if(window.pcFile&&pcFile.toggleThemeFromMenu)pcFile.toggleThemeFromMenu();">☀️ Theme</a>' +
                 '<a class="chk-btn btn-alerts" onclick="if(window.pcFile&&pcFile.showNotificationsModal)pcFile.showNotificationsModal();">🔔</a>' +
-                '<a class="chk-btn btn-user" onclick="if(window.pcFile&&pcFile.openStaffProfileModal)pcFile.openStaffProfileModal();">👨‍⚕️ ' + ((window.currentStaff && window.currentStaff.name) ? window.currentStaff.name : 'Staff') + '</a>' +
+                '<a class="chk-btn btn-user" onclick="if(window.pcFile&&pcFile.openStaffProfileModal)pcFile.openStaffProfileModal();">👨‍⚕️ ' + esc(((window.currentStaff && window.currentStaff.name) ? window.currentStaff.name : 'Staff')) + '</a>' +
                 '<a class="chk-btn btn-logout" onclick="if(window.pcFile&&pcFile.confirmLogout)pcFile.confirmLogout();">🚪 Logout</a>' +
                 '<a class="chk-btn btn-info" onclick="if(window.pcFile&&pcFile.openSystemInfoModal)pcFile.openSystemInfoModal();">❓ Info</a>' +
             '</div>';
@@ -2150,28 +2153,29 @@
         var dept = isCleared ? '' : ((p.department || '').toUpperCase());
         var arch = isCleared ? '' : (p.archiveCode || '');
         var pid = isCleared ? '' : (p.id || '');
-        var ins = isCleared ? 'RSSB / RAMA' : (p.insurance || 'RSSB / RAMA');
-        var dist = isCleared ? '' : (p.district || 'NYARUGENGE');
+        var insRaw = (!isCleared && p.insurance && typeof p.insurance === 'object') ? (p.insurance.provider || '') : p.insurance;
+        var ins = isCleared ? '' : String(insRaw || '');
+        var dist = isCleared ? '' : String(p.district || '');
 
         var div = document.createElement('div');
         div.id = barId;
         div.className = 'oc-demo-bar noprint';
         div.innerHTML =
             '<div class="oc-row-grid">' +
-                '<div class="oc-cell"><label class="oc-lbl">Family name</label><input type="text" class="oc-input" id="ocSearchFamily" placeholder="Family name..." value="' + esc(name) + '" /></div>' +
-                '<div class="oc-cell"><label class="oc-lbl">Firstname</label><input type="text" class="oc-input" id="ocSearchFirst" placeholder="Firstname..." value="' + esc(first) + '" /></div>' +
-                '<div class="oc-cell" style="grid-column: span 2;"><label class="oc-lbl">Date of birth</label><div style="display:flex; gap:6px;"><input type="text" class="oc-input readonly" id="ocDob" readonly value="' + esc(dobStr) + '" style="width:110px;" /><span class="oc-age-txt">' + (sex ? '⚪ (' + esc(sex) + ' - ' + esc(ageStr) + ')' : '') + '</span></div></div>' +
+                '<div class="oc-cell"><label class="oc-lbl">Family name</label><input type="text" class="oc-input" id="ocSearchFamily" placeholder="Family name..." value="' + escA(name) + '" /></div>' +
+                '<div class="oc-cell"><label class="oc-lbl">Firstname</label><input type="text" class="oc-input" id="ocSearchFirst" placeholder="Firstname..." value="' + escA(first) + '" /></div>' +
+                '<div class="oc-cell" style="grid-column: span 2;"><label class="oc-lbl">Date of birth</label><div style="display:flex; gap:6px;"><input type="text" class="oc-input readonly" id="ocDob" readonly value="' + escA(dobStr) + '" style="width:110px;" /><span class="oc-age-txt">' + (sex ? '⚪ (' + esc(sex) + ' - ' + esc(ageStr) + ')' : '') + '</span></div></div>' +
             '</div>' +
             '<div class="oc-row-grid">' +
-                '<div class="oc-cell"><label class="oc-lbl">Nat ID/PP</label><input type="text" class="oc-input" id="ocSearchNatId" placeholder="National ID..." value="' + esc(natId) + '" /></div>' +
-                '<div class="oc-cell"><label class="oc-lbl">Record number</label><input type="text" class="oc-input" id="ocSearchMrn" placeholder="MRN..." value="' + esc(mrn) + '" /></div>' +
-                '<div class="oc-cell"><label class="oc-lbl">Archive code</label><input type="text" class="oc-input oc-archive-box" id="ocArchiveCode" readonly value="' + esc(arch) + '" /></div>' +
-                '<div class="oc-cell"><label class="oc-lbl">Person ID</label><input type="text" class="oc-input" id="ocSearchId" placeholder="Person ID..." value="' + esc(pid) + '" /></div>' +
+                '<div class="oc-cell"><label class="oc-lbl">Nat ID/PP</label><input type="text" class="oc-input" id="ocSearchNatId" placeholder="National ID..." value="' + escA(natId) + '" /></div>' +
+                '<div class="oc-cell"><label class="oc-lbl">Record number</label><input type="text" class="oc-input" id="ocSearchMrn" placeholder="MRN..." value="' + escA(mrn) + '" /></div>' +
+                '<div class="oc-cell"><label class="oc-lbl">Archive code</label><input type="text" class="oc-input oc-archive-box" id="ocArchiveCode" readonly value="' + escA(arch) + '" /></div>' +
+                '<div class="oc-cell"><label class="oc-lbl">Person ID</label><input type="text" class="oc-input" id="ocSearchId" placeholder="Person ID..." value="' + escA(pid) + '" /></div>' +
             '</div>' +
             '<div class="oc-row-grid">' +
-                '<div class="oc-cell"><label class="oc-lbl">Department</label><div style="display:flex; gap:6px;"><button type="button" class="oc-ward-btn" onclick="pcFile.openWardPicker()">🏥 Ward</button><input type="text" class="oc-input readonly" id="ocDepartment" readonly value="' + esc(dept) + '" style="width:100%;" /></div></div>' +
-                '<div class="oc-cell"><label class="oc-lbl">Insurance/RSSB</label><select class="oc-input" id="ocInsurance"><option>RSSB / RAMA</option></select></div>' +
-                '<div class="oc-cell"><label class="oc-lbl">District</label><select class="oc-input" id="ocDistrict"><option>NYARUGENGE</option></select></div>' +
+                '<div class="oc-cell"><label class="oc-lbl">Department</label><div style="display:flex; gap:6px;"><button type="button" class="oc-ward-btn" onclick="pcFile.openWardPicker()">🏥 Ward</button><input type="text" class="oc-input readonly" id="ocDepartment" readonly value="' + escA(dept) + '" style="width:100%;" /></div></div>' +
+                '<div class="oc-cell"><label class="oc-lbl">Insurance/RSSB</label><select class="oc-input" id="ocInsurance"><option value="">' + (ins ? esc(ins) : '— not recorded —') + '</option></select></div>' +
+                '<div class="oc-cell"><label class="oc-lbl">District</label><select class="oc-input" id="ocDistrict"><option value="">' + (dist ? esc(dist) : '— not recorded —') + '</option></select></div>' +
                 '<div class="oc-cell oc-btn-cell"><button type="button" class="oc-action-btn" onclick="pcFile.searchPatientRegistry()">Find</button><button type="button" class="oc-action-btn" onclick="pcFile.clearPatientBar()">Clear</button></div>' +
             '</div>';
 
@@ -4430,7 +4434,7 @@
         scrim.innerHTML =
             '<div style="background:#fff;border-radius:16px;padding:16px;max-width:420px;width:100%;text-align:center;">' +
                 '<div style="font-weight:800;font-size:14px;margin-bottom:10px;">📷 ' + esc((p.name || ((p.firstName || '') + ' ' + (p.lastName || ''))).trim() || 'Patient') + '</div>' +
-                '<img src="' + esc(p.photo) + '" style="max-width:100%;max-height:420px;border-radius:10px;" alt="Patient picture"/>' +
+                '<img src="' + escA(p.photo) + '" style="max-width:100%;max-height:420px;border-radius:10px;" alt="Patient picture"/>' +
                 '<div style="margin-top:10px;"><button type="button" style="height:34px;padding:0 18px;border-radius:9px;border:0;background:#007080;color:#fff;font-weight:700;cursor:pointer;" onclick="this.closest(\'.pc-modal-scrim\').remove();">Close</button></div>' +
             '</div>';
         document.body.appendChild(scrim);
@@ -4567,7 +4571,7 @@
     }
 
     function showNotificationsModal() {
-        // ⛔ NO TEMPLATE DATA: counts are computed live from the Common Server
+        // This mirror is what this browser happened to cache; it is not the server's ledger.
         var unpaid = 0, lowStock = 0;
         try {
             var bills = JSON.parse(localStorage.getItem('pclinic_bills') || '[]');
@@ -4575,7 +4579,7 @@
             var pharm = JSON.parse(localStorage.getItem('pclinic_pharmacy_inventory') || '[]');
             lowStock = pharm.filter(function(it){ return (Number(it.qty) || 0) <= 20; }).length;
         } catch(e){}
-        alert('🔔 Live Common Server Alerts\n\n1. Unpaid invoices in the cashier ledger: ' + unpaid + '\n2. Pharmacy items at critical stock level: ' + lowStock);
+        alert('🔔 Alerts cached on this computer (this is not the live server list)\n\n1. Unpaid invoices in this browser\'s cashier cache: ' + unpaid + '\n2. Pharmacy items at critical stock level in this browser\'s cache: ' + lowStock + '\n\nOpen the Cashier and Pharmacy dashboards for the figures on the common server.');
     }
 
     function openStaffProfileModal() {
@@ -4595,7 +4599,15 @@
     function confirmLogout() {
         var st = (window.currentStaff && window.currentStaff.name) ? window.currentStaff.name : 'Staff';
         if (confirm('Sign out of PClinic as ' + st + '?')) {
+            // Navigating away does not sign the browser out: the Firebase session and the
+            // cached patient mirror would still be there for the next person at this terminal.
+            if (typeof window.pcLogout === 'function') { window.pcLogout({ confirm: false }); return; }
             localStorage.removeItem('pclinic_active_patient');
+            try {
+                if (window.firebaseAuth && window.firebaseAuthFunctions && window.firebaseAuthFunctions.signOut) {
+                    window.firebaseAuthFunctions.signOut(window.firebaseAuth);
+                }
+            } catch (e) {}
             if (window.pcToast) pcToast('🚪 Signing out...', 'info');
             window.location.href = 'login.html';
         }

@@ -97,6 +97,46 @@
     function firstFloat(s) { var m = /-?\d+(\.\d+)?/.exec(String(s || '')); return m ? parseFloat(m[0]) : null; }
     function niceStep(maxLen, unitsPerPx) { var cands = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000]; var best = cands[0]; for (var i = 0; i < cands.length; i++) { if (cands[i] / unitsPerPx <= maxLen) best = cands[i]; } return best; }
 
+    /* ── measurement units ────────────────────────────────────────
+       Cornerstone derives every length from image.rowPixelSpacing, so a value
+       reaching our UI is in MILLIMETRES when the image has a physical scale and
+       in PIXELS when it has none. mmPerPx is that scale (null = none): the file's
+       own PixelSpacing, a calibration measured on this computer, or the scale an
+       author saved a shared measurement with. There is no fourth option, and a
+       scale is never guessed — asking a plain JPEG to be shown in cm would print
+       a number nothing supports. */
+    var UNITS_KEY = 'pclinic_dv_units', SCALE_KEY = 'pclinic_dv_scale';
+    function readPref(k, dflt) { try { var v = localStorage.getItem(k); return v == null ? dflt : String(v); } catch (e) { return dflt; } }
+    function writePref(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    function readScaleStore() { try { var o = JSON.parse(localStorage.getItem(SCALE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+    function writeScaleStore(o) { try { localStorage.setItem(SCALE_KEY, JSON.stringify(o)); } catch (e) {} }
+
+    /** "5", "5 cm", "12.5mm", "2 in" → millimetres, or null when it is not a length. */
+    function parseLengthToMm(s) {
+        var t = String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, ' ').replace(',', '.');
+        var m = /^(\d+(?:\.\d+)?)\s*(cm|mm|m|in|inch|"|µm|um)?$/.exec(t);
+        if (!m) return null;
+        var v = parseFloat(m[1]); if (!(v > 0) || !isFinite(v)) return null;
+        var u = m[2] || 'mm';
+        return v * (u === 'm' ? 1000 : u === 'cm' ? 10 : u === 'in' || u === 'inch' || u === '"' ? 25.4 : u === 'um' || u === 'µm' ? 0.001 : 1);
+    }
+
+    /** The unit a measurement is reported in, plus the conversions into it. */
+    function measureUnits(mmPerPx, want) {
+        var mm = Number(mmPerPx); mm = mm > 0 && isFinite(mm) ? mm : null;
+        var w = want || 'auto';
+        if (w === 'auto') w = mm ? 'mm' : 'px';
+        if ((w === 'mm' || w === 'cm') && !mm) w = 'px';   // no scale → only pixels are honest
+        return {
+            unit: w, mmPerPx: mm, scaled: !!mm,
+            len: function (v) { if (v == null || isNaN(v)) return null; v = Number(v); return w === 'px' ? (mm ? v / mm : v) : (w === 'cm' ? v / 10 : v); },
+            area: function (v) { if (v == null || isNaN(v)) return null; v = Number(v); return w === 'px' ? (mm ? v / (mm * mm) : v) : (w === 'cm' ? v / 100 : v); },
+            suffix: w === 'px' ? 'px' : w,
+            areaSuffix: w === 'px' ? 'px²' : w + '²',
+            prec: w === 'px' ? 0 : w === 'cm' ? 2 : 1
+        };
+    }
+
     /* ── library loading (vendor/, no CDN) ─────────────────────── */
     var libsPromise = null;
     function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.async = false; s.onload = function () { res(); }; s.onerror = function () { rej(new Error('Could not load ' + src.split('/').pop())); }; document.head.appendChild(s); }); }
@@ -222,17 +262,68 @@
         return r;
     }
 
+    /* ── the physical scale in force on the displayed image ──────
+       Returns { mmPerPx, src } or null. src is 'file' (the DICOM PixelSpacing),
+       'calibrated' (a line of known length drawn on this computer), or 'saved'
+       (the scale that was in force when a shared measurement was drawn, so a
+       colleague reads the number its author read). Never a guess. */
+    function fileMmPerPx(image) {
+        if (!image) return null;
+        if (image._pcFileSpacing === undefined) {
+            var r = Number(image.rowPixelSpacing);
+            image._pcFileSpacing = (r > 0 && isFinite(r)) ? r : null;
+        }
+        return image._pcFileSpacing;
+    }
+    function scaleOf(v) {
+        v = v || vp(); if (!v || !v.enabled) return null;
+        var image = currentImage(v); if (!image) return null;
+        var f = fileMmPerPx(image); if (f) return { mmPerPx: f, src: 'file' };
+        var id = v.item ? String(v.item.id) : '';
+        var c = id ? calibStore[id] : null;
+        if (c && Number(c.mmPerPx) > 0) return { mmPerPx: Number(c.mmPerPx), src: 'calibrated', knownMm: c.knownMm, by: c.by, at: c.at };
+        var saved = null;
+        measurementsOf(v).forEach(function (m) { var s = Number(m.data.mmPerPx); if (s > 0 && !saved) saved = s; });
+        return saved ? { mmPerPx: saved, src: 'saved' } : null;
+    }
+    /** Stamp the scale onto the image so the imaging library derives mm, and make
+        every drawing recompute: cornerstone re-derives a length from its handles ×
+        spacing, so a value drawn before the scale existed must not be rescaled by hand. */
+    function applyScale(v) {
+        v = v || vp(); if (!v || !v.enabled) return;
+        var image = currentImage(v); if (!image) return;
+        var s = scaleOf(v);
+        var want = s ? s.mmPerPx : undefined;
+        if (image.rowPixelSpacing === want) return;
+        image.rowPixelSpacing = want; image.columnPixelSpacing = want;
+        measurementsOf(v).forEach(function (m) { m.data.invalidated = true; });
+        try { cs().updateImage(v.host); } catch (e) {}
+        // The library recomputes invalidated drawings while rendering (some of them
+        // throttled), so read the panel back a moment later rather than right now.
+        setTimeout(function () { if (sidePanel === 'draw') renderPanel(); drawTextOverlaysAll(); }, 260);
+    }
+    function fmtMmPerPx(mm) { mm = Number(mm) || 0; return mm >= 1 ? mm.toFixed(3) : mm.toFixed(4); }
+    function scaleSourceText(s) {
+        if (!s) return 'No physical scale on this image';
+        if (s.src === 'file') return 'Scale from the DICOM file: ' + fmtMmPerPx(s.mmPerPx) + ' mm per pixel';
+        if (s.src === 'calibrated') return 'Calibrated scale: ' + fmtMmPerPx(s.mmPerPx) + ' mm per pixel' + (s.knownMm ? ' (set from a ' + s.knownMm + ' mm object)' : '') + (s.by ? ' — by ' + s.by : '');
+        return 'Scale taken from a saved measurement: ' + fmtMmPerPx(s.mmPerPx) + ' mm per pixel';
+    }
+
     /* ── measurement description ──────────────────────────────── */
-    function describeMeasurement(tool, d, image) {
-        var mm = image && image.rowPixelSpacing; var u = mm ? 'mm' : 'px', u2 = mm ? 'mm²' : 'px²';
+    function describeMeasurement(tool, d, image, want) {
+        var U = measureUnits(image && image.rowPixelSpacing, want);
+        var mm = U.scaled;
         function n(v, p) { return (v == null || isNaN(v)) ? '—' : Number(v).toFixed(p == null ? 1 : p); }
+        function L(v) { return n(U.len(v), U.unit === 'px' ? 1 : U.prec); }
+        function A(v) { return n(U.area(v), U.unit === 'px' ? 0 : U.prec); }
         var st = d.cachedStats || {};
         switch (tool) {
-            case 'Length': return n(d.length) + ' ' + u;
-            case 'Bidirectional': return 'L ' + n(d.longestDiameter) + ' × S ' + n(d.shortestDiameter) + ' ' + u;
+            case 'Length': return L(d.length) + ' ' + U.suffix;
+            case 'Bidirectional': return 'L ' + L(d.longestDiameter) + ' × S ' + L(d.shortestDiameter) + ' ' + U.suffix;
             case 'Angle': case 'CobbAngle': return n(d.rAngle) + '°';
-            case 'RectangleRoi': case 'EllipticalRoi': return 'Area ' + n(st.area, mm ? 1 : 0) + ' ' + u2 + ' · mean ' + n(st.mean) + (image && image.intercept === -1024 ? ' HU' : '') + ' ± ' + n(st.stdDev) + ' · min ' + n(st.min, 0) + ' · max ' + n(st.max, 0);
-            case 'FreehandRoi': return 'Area ' + n(d.area, mm ? 1 : 0) + ' ' + u2 + (d.meanStdDev ? ' · mean ' + n(d.meanStdDev.mean) + ' ± ' + n(d.meanStdDev.stdDev) : '');
+            case 'RectangleRoi': case 'EllipticalRoi': return 'Area ' + A(st.area) + ' ' + U.areaSuffix + ' · mean ' + n(st.mean) + (image && image.intercept === -1024 ? ' HU' : '') + ' ± ' + n(st.stdDev) + ' · min ' + n(st.min, 0) + ' · max ' + n(st.max, 0);
+            case 'FreehandRoi': return 'Area ' + A(d.area) + ' ' + U.areaSuffix + (d.meanStdDev ? ' · mean ' + n(d.meanStdDev.mean) + ' ± ' + n(d.meanStdDev.stdDev) : '');
             case 'Probe': return (st.x != null ? ('x' + st.x + ' y' + st.y + ' · ') : '') + 'value ' + (st.mo != null ? n(st.mo, 0) : (st.storedPixels ? String(st.storedPixels[0]) : '—')) + (image && image.intercept === -1024 ? ' HU' : '');
             case 'ArrowAnnotate': return d.text ? '“' + d.text + '”' : '(no text)';
             default: return '';
@@ -247,6 +338,10 @@
     var localStudySeq = 0;
     var viewports = [], activeVp = 0, layoutSpec = [1, 1], syncOn = false, synchronizers = null;
     var leftTool = 'Wwwc', wheelMode = 'scroll', overlaysOn = true, scaleOn = true, orientOn = true, interpOff = false;
+    var displayUnits = readPref(UNITS_KEY, 'auto');          // auto · px · mm · cm
+    var calibStore = readScaleStore();                       // mediaId → { mmPerPx, knownMm, by, at }
+    var calibrating = null;                                  // the viewport being calibrated right now
+    var unitsAsked = {};                                     // item.id → the pixel/cm question has been asked
     var explorerTab = 'studies', explorerOpen = true, sidePanel = null, cine = { on: false, fps: 15 };
     var onKeyBound = null, onResizeBound = null, dragItem = null, pointerVp = null, toastTimer = null, menuEl = null, docClickBound = null, onFsBound = null;
     /* ── annotations on the common server (pclinic-radiology-annotations.js) ──
@@ -311,6 +406,7 @@
         main.appendChild(tb('roi', 'ROI', 'Region of interest: rectangle, ellipse, freehand, bidirectional, Cobb', function (e, b) { openMenu(b, roiMenu()); }, { menu: true, id: 'roi' }));
         main.appendChild(tb('probe', 'Probe', 'Pixel value probe', function () { setLeftTool('Probe'); }, { tool: 'Probe', iconOnly: true }));
         main.appendChild(tb('arrow', 'Arrow', 'Arrow with text annotation', function () { setLeftTool('ArrowAnnotate'); }, { tool: 'ArrowAnnotate', mid: true }));
+        main.appendChild(tb('bidir', 'Units', 'Show measurements in pixels, millimetres or centimetres. A file with no physical scale must be calibrated from a known object first.', function (e, b) { openMenu(b, unitsMenu()); }, { menu: true, id: 'units' }));
         main.appendChild(tb('trash', 'Delete', 'Delete measurements', function (e, b) { openMenu(b, deleteMenu()); }, { menu: true, mid: true }));
         main.appendChild(tb('star', 'Key image', 'Mark / unmark this image as a key image (saved to the common server, K)', function () { toggleKeyImage(); }, { id: 'key', mid: true }));
         main.appendChild(sep());
@@ -450,7 +546,7 @@
                 if (v.item !== item) return; item.image = image; item.frames = ids.length;
                 cs().displayImage(v.host, image); var vpState = cs().getDefaultViewportForImage(v.host, image); if (interpOff) vpState.pixelReplication = true; cs().setViewport(v.host, vpState);
                 applyBindings(); loading.remove(); v.host.style.width = v.host.style.height = '100%';
-                cs().resize(v.host, true); restoreAnnotations(v, item); drawTextOverlays(v); updateCineBar(v); ensureThumb(item, image); refreshPanels(); updateKeyButton();
+                cs().resize(v.host, true); restoreAnnotations(v, item); applyScale(v); drawTextOverlays(v); updateCineBar(v); ensureThumb(item, image); refreshPanels(); updateKeyButton();
                 if (item.local) toast('Showing the copy you just uploaded. Others will see it once the server link service is updated.', 'ok');
             });
         }).catch(function (e) {
@@ -479,7 +575,9 @@
     }
     function wireViewportEvents(v) {
         v.host.addEventListener('cornerstoneimagerendered', function (e) { v.lastViewport = e.detail.viewport; syncFrameFromStack(v); drawTextOverlays(v); });
-        v.host.addEventListener('cornerstonenewimage', function (e) { syncFrameFromStack(v); if (v.item) v.item.image = e.detail.image; updateCineBar(v); });
+        v.host.addEventListener('cornerstonenewimage', function (e) { syncFrameFromStack(v); if (v.item) v.item.image = e.detail.image; applyScale(v); updateCineBar(v); });
+        // The calibration line arrives through the same Length tool the ruler uses.
+        v.host.addEventListener('cornerstonetoolsmeasurementcompleted', function (e) { if (!calibrating || calibrating.v !== v) return; finishCalibration(e.detail && e.detail.measurementData); });
         // Refresh the Draw & Measure list when a measurement is added/finished/removed —
         // NOT on every 'modified' during the drag: rebuilding the panel mid-drag steals
         // the pointer from the tool and the half-drawn ROI is discarded.
@@ -523,24 +621,119 @@
             if (vs && vs.rotation) lines.push('Rotation: ' + vs.rotation + '°' + (vs.hflip ? ' H' : '') + (vs.vflip ? ' V' : ''));
         } else if (item.kind === 'video') { lines.push('Video'); }
         o.bl.textContent = lines.join('\n');
-        var br = []; if (image) { br.push(image.columns + ' × ' + image.rows + (image.color ? ' RGB' : (ds && ds.uint16('x00280100') ? ' · ' + ds.uint16('x00280101') + ' bit' : ''))); if (image.rowPixelSpacing) br.push('Pixel ' + Number(image.rowPixelSpacing).toFixed(3) + ' mm'); }
+        var br = []; var scl = scaleOf(v); if (image) { br.push(image.columns + ' × ' + image.rows + (image.color ? ' RGB' : (ds && ds.uint16('x00280100') ? ' · ' + ds.uint16('x00280101') + ' bit' : ''))); if (scl) br.push('Pixel ' + fmtMmPerPx(scl.mmPerPx) + ' mm' + (scl.src === 'file' ? '' : scl.src === 'calibrated' ? ' (calibrated)' : ' (saved scale)')); }
         if (keyImageOf(item)) br.push('★ KEY IMAGE'); br.push(String(item.meta.fileName || '')); if (item.meta.byName) br.push('by ' + item.meta.byName + (item.meta.at ? ' · ' + fmtDateTime(item.meta.at) : '')); o.br.textContent = br.join('\n');
         // orientation letters
         var ori = (orientOn && vs && ds) ? rotateOrientation(baseOrientation(ds), vs) : null;
         v.el.querySelector('.dv-orient.n').textContent = ori ? ori.top : ''; v.el.querySelector('.dv-orient.s').textContent = ori ? ori.bottom : ''; v.el.querySelector('.dv-orient.w').textContent = ori ? ori.left : ''; v.el.querySelector('.dv-orient.e').textContent = ori ? ori.right : '';
-        // scale bar
+        // scale bar — in the unit the user chose, when the image can support it
         var sc = v.el.querySelector('.dv-scale');
         if (scaleOn && image && vs && vs.scale > 0) {
-            var maxLen = Math.max(60, Math.min(160, v.el.clientHeight * 0.3)); var mm = image.rowPixelSpacing; var lenUnits, unitsPerPx, unit;
-            if (mm) { unitsPerPx = mm / vs.scale; lenUnits = niceStep(maxLen, unitsPerPx); unit = lenUnits >= 10 ? (lenUnits / 10) + ' cm' : lenUnits + ' mm'; }
-            else { unitsPerPx = 1 / vs.scale; lenUnits = niceStep(maxLen, unitsPerPx); unit = lenUnits + ' pix'; }
-            var px = lenUnits / unitsPerPx; sc.style.display = ''; sc.querySelector('.dv-scale-lbl').textContent = unit; sc.querySelector('.dv-scale-bar').style.height = Math.round(px) + 'px';
+            var U = measureUnits(image.rowPixelSpacing, displayUnits);
+            var maxLen = Math.max(60, Math.min(160, v.el.clientHeight * 0.3));
+            var perPx = U.unit === 'px' ? 1 / vs.scale : (U.unit === 'cm' ? (U.mmPerPx / 10) / vs.scale : U.mmPerPx / vs.scale);
+            var lenUnits = niceStep(maxLen, perPx);
+            var auto = displayUnits === 'auto';
+            var unit = U.unit === 'px' ? lenUnits + ' pix' : U.unit === 'cm' ? lenUnits + ' cm'
+                : (auto && lenUnits >= 10 ? (lenUnits / 10) + ' cm' : lenUnits + ' mm');
+            var px = lenUnits / perPx; sc.style.display = ''; sc.querySelector('.dv-scale-lbl').textContent = unit; sc.querySelector('.dv-scale-bar').style.height = Math.round(px) + 'px';
         } else sc.style.display = 'none';
         // preliminary banner
         var pre = v.el.querySelector('.dv-prelim'); var rep = reportFor(item.study || currentStudy); var wantBanner = !!item && item.kind !== 'video' && !(rep && rep.status === 'final');
         if (wantBanner && !pre) { pre = el('div', 'dv-prelim', 'Preliminary — no signed report yet'); v.el.appendChild(pre); } else if (!wantBanner && pre) pre.remove();
         v.el.querySelectorAll('.dv-ov').forEach(function (n) { n.classList.toggle('dv-hidden', !overlaysOn); });
     }
+    function drawTextOverlaysAll() { viewports.forEach(function (v) { try { drawTextOverlays(v); } catch (e) {} }); }
+
+    /* ── units + calibration ───────────────────────────────────── */
+    function setDisplayUnits(u) {
+        displayUnits = ['auto', 'px', 'mm', 'cm'].indexOf(u) !== -1 ? u : 'auto';
+        writePref(UNITS_KEY, displayUnits);
+        updateUnitsButton(); drawTextOverlaysAll(); refreshPanels();
+    }
+    function updateUnitsButton() {
+        var b = root ? $('.dv-tb[data-id="units"]') : null; if (!b) return;
+        var l = b.querySelector('.dv-tb-label'); if (l) l.textContent = displayUnits === 'auto' ? 'Units' : 'Units: ' + displayUnits;
+        b.classList.toggle('active', displayUnits !== 'auto');
+    }
+    function unitNotice(u) {
+        if (u === 'px') return 'Measurements are reported in pixels.';
+        if (u === 'cm') return 'Measurements are reported in centimetres in the panel and the scale bar. The small tag drawn on top of the image stays in mm — that text is produced by the imaging library and this app does not own it.';
+        return 'Measurements are reported in millimetres.';
+    }
+    function pickPhysicalUnit(u) {
+        setDisplayUnits(u);
+        var v = vp(); var s = v ? scaleOf(v) : null;
+        if (s) { toast(unitNotice(u), 'ok'); return; }
+        if (!v || !v.enabled || !v.item) { toast(unitNotice(u) + ' It applies as soon as an image is loaded.', 'ok'); return; }
+        toast(unitNotice(u) + ' This image has no scale yet — draw a line over an object of known size.', 'err');
+        startCalibration();
+    }
+    /** Draw a line over an object of known size, then type that size: the file gets a mm-per-pixel scale. */
+    function startCalibration() {
+        var v = vp();
+        if (!v || !v.enabled || !currentImage(v)) { toast('Load an image into the active viewport first.', 'err'); return; }
+        var s = scaleOf(v);
+        if (s && s.src === 'file') { toast('This DICOM file carries its own pixel spacing (' + fmtMmPerPx(s.mmPerPx) + ' mm/px). That is the authoritative scale and cannot be overwritten — pick mm or cm in the Units menu.', 'ok'); return; }
+        calibrating = { v: v };
+        setLeftTool('Length');
+        toast('Calibration: drag a line over something of KNOWN size in the picture (a ruler marker, an implant, the collimation bar), then type its real length.', 'ok');
+    }
+    function finishCalibration(d) {
+        var v = calibrating && calibrating.v; calibrating = null;
+        if (!v || !d) { refreshPanels(); return; }
+        var image = currentImage(v);
+        var inForce = image && Number(image.rowPixelSpacing) > 0 ? Number(image.rowPixelSpacing) : 1;
+        var px = (Number(d.length) || 0) / inForce;   // the drawn line, in pixels
+        try { cst().removeToolState(v.host, 'Length', d); } catch (e) {}   // it is a ruler, not a measurement
+        if (!(px > 0.5)) { toast('That line is too short to set a reliable scale — draw it longer.', 'err'); applyScale(v); refreshPanels(); return; }
+        var ans = window.prompt('How long is that line in real life?\n\nType the number with its unit, e.g. "5 cm", "50 mm" or "2 in".\nA plain number means millimetres.', '');
+        if (ans == null) { toast('Calibration cancelled — this image still has no physical scale.', 'err'); refreshPanels(); return; }
+        var knownMm = parseLengthToMm(ans);
+        if (knownMm == null) { toast('"' + String(ans).slice(0, 40) + '" is not a length. Try 5 cm, 50 mm or 2 in.', 'err'); refreshPanels(); return; }
+        var mmPerPx = knownMm / px;
+        var id = String(v.item.id);
+        calibStore[id] = { mmPerPx: mmPerPx, knownMm: knownMm, by: (annoApi() && annoApi().me().name) || '', at: new Date().toISOString() };
+        writeScaleStore(calibStore);
+        applyScale(v);
+        toast('Scale set: ' + knownMm + ' mm over ' + px.toFixed(1) + ' px = ' + fmtMmPerPx(mmPerPx) + ' mm per pixel. Saved drawings now carry this scale. Choose px / mm / cm in the Units menu.', 'ok');
+        refreshPanels();
+    }
+    function clearCalibration() {
+        var v = vp(); if (!v || !v.item) return;
+        delete calibStore[String(v.item.id)]; writeScaleStore(calibStore);
+        applyScale(v); refreshPanels();
+        toast('Calibration removed. Nothing states a physical size for this file, so measurements are in pixels again.');
+    }
+    function unitsMenu() {
+        var v = vp(); var s = v ? scaleOf(v) : null;
+        var items = [{ header: 'Show measurements in' },
+            { label: 'Pixels', icon: 'ruler', active: displayUnits === 'px', run: function () { setDisplayUnits('px'); toast(unitNotice('px')); } },
+            { label: 'Millimetres', icon: 'ruler', active: displayUnits === 'mm', run: function () { pickPhysicalUnit('mm'); } },
+            { label: 'Centimetres', icon: 'ruler', active: displayUnits === 'cm', run: function () { pickPhysicalUnit('cm'); } },
+            { label: 'Automatic (mm when a scale exists)', icon: 'reset', active: displayUnits === 'auto', run: function () { setDisplayUnits('auto'); } },
+            '-', { header: scaleSourceText(s) }];
+        if (!s || s.src === 'calibrated' || s.src === 'saved') items.push({ label: s ? 'Re-calibrate this image…' : 'Set the scale from a known object…', icon: 'bidir', run: startCalibration });
+        if (s && s.src === 'calibrated') items.push({ label: 'Remove this calibration', icon: 'eraser', run: clearCalibration });
+        return items;
+    }
+    /* A file with no scale can only be measured in pixels until someone
+       calibrates it, so the first time a measuring tool is picked on such an
+       image the choice is put to the user instead of silently printing pixels. */
+    function maybeAskUnits(name) {
+        if (calibrating) return;
+        var v = vp(); if (!v || !v.enabled || !v.item) return;
+        var id = String(v.item.id); if (unitsAsked[id]) return;
+        if (scaleOf(v)) return;
+        unitsAsked[id] = true;
+        var anchor = root.querySelector('.dv-tb[data-tool="' + name + '"]') || root.querySelector('.dv-tb[data-id="units"]');
+        if (!anchor) return;
+        openMenu(anchor, [{ header: 'This image has no physical scale' },
+            { label: 'Measure in pixels', icon: 'ruler', run: function () { setDisplayUnits('px'); toast(unitNotice('px')); } },
+            { label: 'Set a scale, then measure in cm', icon: 'bidir', run: function () { pickPhysicalUnit('cm'); } },
+            '-', { header: 'JPEG and PNG exports never carry pixel spacing; a scale has to be measured from something of known size in the picture.' }]);
+    }
+
     function updatePixelReadout(v, e) {
         var image = currentImage(v); if (!image || !v.enabled) return;
         try { var p = cs().pageToPixel(v.host, e.pageX, e.pageY); var x = Math.floor(p.x), y = Math.floor(p.y); if (x < 0 || y < 0 || x >= image.columns || y >= image.rows) { setStatus('pix', '—'); return; }
@@ -556,6 +749,10 @@
         root.querySelectorAll('.dv-tb[data-tool]').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-tool') === name); });
         var roiBtn = $('.dv-tb[data-id="roi"]'); if (roiBtn) roiBtn.classList.toggle('active', ['RectangleRoi', 'EllipticalRoi', 'FreehandRoi', 'Bidirectional', 'CobbAngle'].indexOf(name) !== -1);
         setStatus('tool', TOOL_LABEL[name] || name); if (sidePanel === 'tools' || sidePanel === 'draw') renderPanel();
+        // A length tool on a file with no physical scale would only be able to print
+        // pixels, so the choice is offered once per image instead — centimetres
+        // there leads straight into calibration.
+        if (['Length', 'Bidirectional', 'RectangleRoi', 'EllipticalRoi', 'FreehandRoi'].indexOf(name) !== -1) maybeAskUnits(name);
     }
     function applyBindings() {
         var T = cst(); if (!T) return;
@@ -621,16 +818,22 @@
     function setSaveState(kind, text) { var sv = root ? $('.dv-status-bar .dv-save') : null; if (!sv) return; sv.className = 'dv-save' + (kind ? ' ' + kind : ''); sv.querySelector('b').textContent = text || ''; sv.title = kind === 'err' ? (anno.error || '') : ''; }
     function frameOf(imageId) { var m = /[?&]frame=(\d+)/.exec(String(imageId || '')); return m ? parseInt(m[1], 10) : 0; }
     /** Strip render-only fields so a measurement round-trips through JSON (cornerstone stores handles + cached stats). */
-    function serialiseMeasurement(d) {
+    function serialiseMeasurement(d, mmPerPx) {
         var out = {}; Object.keys(d).forEach(function (k) { if (k === 'active' || k === '_pcSeq' || k === '_pcOwner' || k === '_pcRemote' || k === 'invalidated' || k === 'uuid') return; var v = d[k]; if (typeof v === 'function' || v === undefined) return; out[k] = v; });
+        // Stamp the scale this was drawn under, so a colleague whose copy of the
+        // file carries no scale reads the number the author read.
+        if (Number(mmPerPx) > 0) out.mmPerPx = Number(mmPerPx);
         out.visible = true; out.active = false; return JSON.parse(JSON.stringify(out));
     }
     /** All my measurements on every frame of this item, as {tool, uuid, frame, json}. */
     function collectMeasurements(item) {
         var T = cst(), M = T && T.globalImageIdSpecificToolStateManager; var list = []; if (!M || !item || !item.imageIds) return list;
+        var holder = viewports.filter(function (x) { return x.item === item; })[0] || vp();
+        var s = holder && holder.item === item ? scaleOf(holder) : null;
+        var mmPerPx = s ? s.mmPerPx : 0;
         item.imageIds.forEach(function (id) {
             var st = M.saveImageIdToolState(id); if (!st) return;
-            MEASURE_TOOLS.forEach(function (tool) { var s = st[tool]; if (!s || !s.data) return; s.data.forEach(function (d) { if (d._pcRemote) return; if (d.complete === false || d.handles && d.handles.end && d.handles.end.active && !d.complete && tool === 'FreehandRoi') return; if (!d.uuid) d.uuid = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); list.push({ tool: tool, uuid: d.uuid, frame: frameOf(id), json: JSON.stringify(serialiseMeasurement(d)), _ref: d }); }); });
+            MEASURE_TOOLS.forEach(function (tool) { var s2 = st[tool]; if (!s2 || !s2.data) return; s2.data.forEach(function (d) { if (d._pcRemote) return; if (d.complete === false || d.handles && d.handles.end && d.handles.end.active && !d.complete && tool === 'FreehandRoi') return; if (!d.uuid) d.uuid = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); list.push({ tool: tool, uuid: d.uuid, frame: frameOf(id), json: JSON.stringify(serialiseMeasurement(d, mmPerPx)), _ref: d }); }); });
         });
         return list;
     }
@@ -751,7 +954,7 @@
     }
     function exportScreenshot() { var v = vp(); if (!v || !v.enabled) { toast('Load an image first.'); return; } try { var c = compositeCanvas(v); c.toBlob(function (b) { var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = (nameOf(patient) || 'study').replace(/\s+/g, '_') + '_' + (v.item.meta.fileName || 'image').replace(/\.[^.]+$/, '') + '.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000); toast('Screenshot saved.', 'ok'); }, 'image/png'); } catch (e) { toast('Screenshot failed: ' + e.message, 'err'); } }
     function downloadOriginal() { var v = vp(); if (!v || !v.item || !v.item.url) { toast('Load an image first.'); return; } var it = v.item; fetch(it.url).then(function (r) { return r.blob(); }).then(function (b) { var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = it.meta.fileName || (it.id + '.' + (it.meta.ext || 'bin')); document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000); }).catch(function () { window.open(it.url, '_blank', 'noopener'); }); }
-    function printImage() { var v = vp(); if (!v || !v.enabled) { toast('Load an image first.'); return; } var c = compositeCanvas(v); var w = window.open('', '_blank', 'width=900,height=1000'); if (!w) { toast('Allow pop-ups to print.', 'err'); return; } w.document.write('<!DOCTYPE html><html><head><title>PClinic — ' + (nameOf(patient) || 'Study image') + '</title><style>body{margin:0;background:#fff;font:12px sans-serif;color:#111}img{max-width:100%;display:block;margin:0 auto}h1{font-size:14px;margin:10px 12px}</style></head><body><h1>' + esc(nameOf(patient)) + ' · ' + esc(studyLabel(currentStudy)) + ' · ' + esc(v.item.meta.fileName || '') + '</h1><img src="' + c.toDataURL('image/png') + '"></body></html>'); w.document.close(); setTimeout(function () { w.focus(); w.print(); }, 300); }
+    function printImage() { var v = vp(); if (!v || !v.enabled) { toast('Load an image first.'); return; } var c = compositeCanvas(v); var w = window.open('', '_blank', 'width=900,height=1000'); if (!w) { toast('Allow pop-ups to print.', 'err'); return; } w.document.write('<!DOCTYPE html><html><head><title>PClinic — ' + esc(nameOf(patient) || 'Study image') + '</title><style>body{margin:0;background:#fff;font:12px sans-serif;color:#111}img{max-width:100%;display:block;margin:0 auto}h1{font-size:14px;margin:10px 12px}</style></head><body><h1>' + esc(nameOf(patient)) + ' · ' + esc(studyLabel(currentStudy)) + ' · ' + esc(v.item.meta.fileName || '') + '</h1><img src="' + c.toDataURL('image/png') + '"></body></html>'); w.document.close(); setTimeout(function () { w.focus(); w.print(); }, 300); }
     function copySummary() { var rep = reportFor(currentStudy); var txt = [nameOf(patient) + (patient && patient.mrn ? ' · MRN ' + patient.mrn : ''), studyLabel(currentStudy) + (currentStudy && currentStudy.orderedAt ? ' · ' + fmtDate(currentStudy.orderedAt) : ''), rep ? ('Report (' + rep.status + '): ' + (rep.impression || rep.findings || '')) : 'No signed report yet.', 'Files: ' + studyMedia(currentStudy).map(function (m) { return m.meta.fileName; }).join(', ')].join('\n'); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () { toast('Summary copied.', 'ok'); }, function () { window.prompt('Copy:', txt); }); }
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
     function readArrayBuffer(blob) {
@@ -871,8 +1074,20 @@
             var d1 = sec('Tools'); var rd = el('div', 'dv-btnrow'); d1.appendChild(rd); ['Length', 'Angle', 'CobbAngle', 'RectangleRoi', 'EllipticalRoi', 'FreehandRoi', 'Bidirectional', 'Probe', 'ArrowAnnotate', 'Eraser'].forEach(function (n) { chip(rd, TOOL_LABEL[n], leftTool === n, function () { setLeftTool(n); }); });
             var d2 = sec('Measurements on this image'); var ms = measurementsOf(v);
             if (!item) d2.appendChild(el('div', 'dv-note', 'Load an image first.')); else if (!ms.length) d2.appendChild(el('div', 'dv-note', 'None yet. Pick a tool above and draw on the image. Click a drawing to select it; drag its handles to adjust.'));
-            else { var lst = el('div', 'dv-mlist'); ms.forEach(function (m, i) { var r = el('div', 'dv-mi-row' + (m.data.active ? ' active' : '') + (m.data._pcRemote ? ' remote' : '')); var ic = el('span', 'dv-mi-ico'); ic.appendChild(icon({ Length: 'ruler', Angle: 'angle', CobbAngle: 'angle', RectangleRoi: 'roi', EllipticalRoi: 'ellipse', FreehandRoi: 'freehand', Bidirectional: 'bidir', Probe: 'probe', ArrowAnnotate: 'arrow' }[m.tool] || 'draw')); r.appendChild(ic); var tx = el('span', 'dv-mi-txt'); tx.appendChild(el('b', null, (i + 1) + '. ' + TOOL_LABEL[m.tool])); tx.appendChild(el('span', null, describeMeasurement(m.tool, m.data, img) + (m.data._pcRemote ? ' · by ' + (m.data._pcBy || 'colleague') : ''))); r.appendChild(tx); var del = el('button', 'dv-mi-del', m.data._pcRemote ? '🔒' : '✕'); del.title = m.data._pcRemote ? 'Saved by ' + (m.data._pcBy || 'a colleague') + ' — only they can delete it' : 'Delete'; if (m.data._pcRemote) del.disabled = true; del.onclick = function () { if (m.data._pcRemote) return; cst().removeToolState(v.host, m.tool, m.data); cs().updateImage(v.host); markDirty(v.item); renderPanel(); }; r.appendChild(del); r.onclick = function (e) { if (e.target === del) return; ms.forEach(function (o) { o.data.active = o === m; }); cs().updateImage(v.host); renderPanel(); }; lst.appendChild(r); }); d2.appendChild(lst); var rr = el('div', 'dv-btnrow'); rr.style.marginTop = '8px'; d2.appendChild(rr); chip(rr, 'Delete all', false, function () { deleteMeasurements('all'); }, 'danger'); }
-            var d3 = sec('Units'); d3.appendChild(el('div', 'dv-note', img && img.rowPixelSpacing ? 'Pixel spacing ' + Number(img.rowPixelSpacing).toFixed(3) + ' mm — lengths in mm, areas in mm².' + (img.intercept === -1024 ? ' CT values in HU.' : '') : 'No pixel spacing in this file — lengths are in pixels, areas in px². (Plain JPEG/PNG exports never carry calibration.)'));
+            else { var lst = el('div', 'dv-mlist'); ms.forEach(function (m, i) { var r = el('div', 'dv-mi-row' + (m.data.active ? ' active' : '') + (m.data._pcRemote ? ' remote' : '')); var ic = el('span', 'dv-mi-ico'); ic.appendChild(icon({ Length: 'ruler', Angle: 'angle', CobbAngle: 'angle', RectangleRoi: 'roi', EllipticalRoi: 'ellipse', FreehandRoi: 'freehand', Bidirectional: 'bidir', Probe: 'probe', ArrowAnnotate: 'arrow' }[m.tool] || 'draw')); r.appendChild(ic); var tx = el('span', 'dv-mi-txt'); tx.appendChild(el('b', null, (i + 1) + '. ' + TOOL_LABEL[m.tool])); tx.appendChild(el('span', null, describeMeasurement(m.tool, m.data, img, displayUnits) + (m.data._pcRemote ? ' · by ' + (m.data._pcBy || 'colleague') : ''))); r.appendChild(tx); var del = el('button', 'dv-mi-del', m.data._pcRemote ? '🔒' : '✕'); del.title = m.data._pcRemote ? 'Saved by ' + (m.data._pcBy || 'a colleague') + ' — only they can delete it' : 'Delete'; if (m.data._pcRemote) del.disabled = true; del.onclick = function () { if (m.data._pcRemote) return; cst().removeToolState(v.host, m.tool, m.data); cs().updateImage(v.host); markDirty(v.item); renderPanel(); }; r.appendChild(del); r.onclick = function (e) { if (e.target === del) return; ms.forEach(function (o) { o.data.active = o === m; }); cs().updateImage(v.host); renderPanel(); }; lst.appendChild(r); }); d2.appendChild(lst); var rr = el('div', 'dv-btnrow'); rr.style.marginTop = '8px'; d2.appendChild(rr); chip(rr, 'Delete all', false, function () { deleteMeasurements('all'); }, 'danger'); }
+            var d3 = sec('Units');
+            var sNow = scaleOf(v); var U = measureUnits(img && img.rowPixelSpacing, displayUnits);
+            var ur = el('div', 'dv-btnrow'); d3.appendChild(ur);
+            [['px', 'Pixels'], ['mm', 'mm'], ['cm', 'cm'], ['auto', 'Auto']].forEach(function (o) {
+                chip(ur, o[1], displayUnits === o[0], function () { if (o[0] === 'auto') setDisplayUnits('auto'); else pickPhysicalUnit(o[0]); });
+            });
+            d3.appendChild(el('div', 'dv-note', scaleSourceText(sNow) + '. '
+                + (U.scaled ? 'Lengths are in ' + U.unit + ', areas in ' + U.areaSuffix + '.' : 'Nothing states a physical size for this file, so lengths stay pixels and areas px² — centimetres are unavailable until it is calibrated.')
+                + (U.scaled && U.unit !== 'mm' ? ' The small tag drawn on the image itself remains in mm (it comes from the imaging library).' : '')
+                + (img && img.intercept === -1024 ? ' CT values in HU.' : '')));
+            var uacts = el('div', 'dv-btnrow'); d3.appendChild(uacts);
+            chip(uacts, calibrating ? 'Draw the known object now…' : 'Set the scale from a known object…', !!calibrating, startCalibration);
+            if (sNow && sNow.src === 'calibrated') chip(uacts, 'Remove calibration', false, clearCalibration, 'danger');
             var d4 = sec('Common server'); renderSavingSection(d4, v, item);
         } else if (sidePanel === 'info') {
             title.textContent = 'Study Info'; var kv = el('div', 'dv-kv'); body.appendChild(kv);
@@ -1054,17 +1269,78 @@
     }
 
     /* ── upload / remove (radiology) ───────────────────────────── */
+    /* Attaching a file that belongs to another patient welds it into this patient's
+       record for good, so a DICOM's own identity tags are checked before upload. */
+    function identityOfPatient(p) {
+        var ids = [], names = [];
+        if (!p) return { ids: ids, names: names };
+        ['id', 'mrn', 'patientId', 'nationalId'].forEach(function (k) { var s = String(p[k] == null ? '' : p[k]).trim(); if (s) ids.push(s); });
+        var digits = String(p.id == null ? '' : p.id).replace(/\D/g, '');
+        if (digits.length >= 3) ids.push(digits);
+        var n = dcmName(p.name) || [p.firstName, p.lastName].filter(Boolean).join(' ');
+        if (n) names.push(n.toLowerCase());
+        return { ids: ids, names: names };
+    }
+    function isDicomFile(f) {
+        return /\.dcm$/i.test(f.name || '') || /dicom/i.test(f.type || '');
+    }
+    function checkUploadIdentity(files) {
+        if (!window.dicomParser || !files.some(isDicomFile)) return Promise.resolve(true);
+        var want = identityOfPatient(patient);
+        var chain = Promise.resolve([]);
+        files.forEach(function (f) {
+            if (!isDicomFile(f)) return;
+            chain = chain.then(function (bad) {
+                var slice = (typeof f.size === 'number' && f.size > 2097152) ? f.slice(0, 2097152) : f;
+                return readArrayBuffer(slice).then(function (buf) {
+                    var ds = null;
+                    try { ds = window.dicomParser.parseDicom(new Uint8Array(buf), { untilTag: 'x7fe00010' }); } catch (e) { try { ds = window.dicomParser.parseDicom(new Uint8Array(buf)); } catch (e2) {} }
+                    if (!ds) return bad;                       // unreadable header: the uploader will still refuse a non-image
+                    var fileIds = [String(ds.string('x00100020') || '').trim()];
+                    var fileNames = [dcmName(ds.string('x00100010')).toLowerCase()];
+                    var hasIdentity = (fileIds[0] || fileNames[0]) ? true : false;
+                    if (!hasIdentity) return bad;
+                    var okId = fileIds.some(function (i) {
+                        var di = i.replace(/\D/g, '');
+                        return i && want.ids.some(function (w) {
+                            if (i === w) return true;
+                            var dw = String(w).replace(/\D/g, '');
+                            return di.length >= 3 && dw.length >= 3 && di === dw;
+                        });
+                    });
+                    var okName = fileNames.some(function (n) { return n && want.names.some(function (w) { return w.indexOf(n) !== -1 || n.indexOf(w) !== -1; }); });
+                    if (okId || okName) return bad;
+                    var copy = bad.slice();
+                    copy.push((f.name || 'file') + ' → Patient ID "' + (fileIds[0] || '—') + '"' + (fileNames[0] ? ', name "' + fileNames[0] + '"' : ''));
+                    return copy;
+                }).catch(function () { return bad; });
+            });
+        });
+        return chain.then(function (bad) {
+            if (!bad.length) return true;
+            var shown = bad.slice(0, 6).map(function (line) { return '  • ' + line; }).join('\n') + (bad.length > 6 ? '\n  • … ' + (bad.length - 6) + ' more' : '');
+            var mine = want.ids[0] || 'this patient';
+            return window.confirm('⚠️ ' + bad.length + ' DICOM file' + (bad.length === 1 ? '' : 's') + ' do not carry the identity of the patient on screen (' + mine + '):\n\n' + shown +
+                '\n\nAttach them to "' + studyLabel(currentStudy) + '" anyway? A misfiled study is very hard to undo, and the images would be read as this patient\'s.');
+        });
+    }
     function doUpload() {
         if (!openOpts.canManage) return; if (!currentStudy || !currentStudy.id) { toast('No imaging study to attach images to — a clinician must place an imaging request for this patient first.', 'err'); return; }
         if (!window.pcRadioMedia) { toast('The media module did not load.', 'err'); return; }
         var input = el('input'); input.type = 'file'; input.multiple = true; input.accept = (window.pcRadioMedia.ACCEPT || '') + ',.dcm,application/dicom'; input.style.display = 'none'; root.appendChild(input);
         input.onchange = function () {
             var files = Array.prototype.slice.call(input.files || []); input.remove(); if (!files.length) return;
-            var study = currentStudy; var ok = 0, problems = []; var sv = $('.dv-status-bar .dv-save'); sv.classList.add('busy'); sv.querySelector('b').textContent = 'Uploading ' + files.length + ' file' + (files.length === 1 ? '' : 's') + '…'; toast('Uploading ' + files.length + ' file' + (files.length === 1 ? '' : 's') + ' to ' + studyLabel(study) + '…');
-            var run = Promise.resolve(); files.forEach(function (f) { run = run.then(function () { return window.pcRadioMedia.upload({ id: study.id, patientId: study.patientId || (patient && patient.id) }, f).then(function () { ok++; }).catch(function (e) { problems.push((f.name || 'file') + ': ' + (e && e.message)); }); }); });
-            run.then(function () { sv.classList.remove('busy'); sv.querySelector('b').textContent = ok ? ok + ' file' + (ok === 1 ? '' : 's') + ' attached' : ''; if (ok) toast(ok + ' file' + (ok === 1 ? '' : 's') + ' attached.', 'ok'); if (problems.length) toast('⚠️ ' + problems.join(' · '), 'err'); reloadStudy(study, true, function (set) { var newest = set[set.length - 1]; if (ok && newest) displayItem(newest); }); });
+            checkUploadIdentity(files).then(function (proceed) {
+                if (!proceed) { toast('Upload cancelled — nothing was attached to this study.', 'err'); return; }
+                startUpload(files);
+            });
         };
         input.click();
+    }
+    function startUpload(files) {
+        var study = currentStudy; var ok = 0, problems = []; var sv = $('.dv-status-bar .dv-save'); sv.classList.add('busy'); sv.querySelector('b').textContent = 'Uploading ' + files.length + ' file' + (files.length === 1 ? '' : 's') + '…'; toast('Uploading ' + files.length + ' file' + (files.length === 1 ? '' : 's') + ' to ' + studyLabel(study) + '…');
+        var run = Promise.resolve(); files.forEach(function (f) { run = run.then(function () { return window.pcRadioMedia.upload({ id: study.id, patientId: study.patientId || (patient && patient.id) }, f).then(function () { ok++; }).catch(function (e) { problems.push((f.name || 'file') + ': ' + (e && e.message)); }); }); });
+        run.then(function () { sv.classList.remove('busy'); sv.querySelector('b').textContent = ok ? ok + ' file' + (ok === 1 ? '' : 's') + ' attached' : ''; if (ok) toast(ok + ' file' + (ok === 1 ? '' : 's') + ' attached.', 'ok'); if (problems.length) toast('⚠️ ' + problems.join(' · '), 'err'); reloadStudy(study, true, function (set) { var newest = set[set.length - 1]; if (ok && newest) displayItem(newest); }); });
     }
     function removeItem(item) { if (!openOpts.canManage || !window.pcRadioMedia || !window.pcRadioMedia.remove) return; if (!window.confirm('Remove "' + (item.meta.fileName || item.id) + '" from this study?\nOnly the person who uploaded it can remove it.')) return; window.pcRadioMedia.remove(item.meta).then(function () { toast('File removed.', 'ok'); viewports.forEach(function (v) { if (v.item === item) clearViewport(v); }); reloadStudy(item.study || currentStudy, true); }).catch(function (e) { toast('Could not remove: ' + (e && e.message), 'err'); }); }
 
@@ -1135,7 +1411,7 @@
         if (headerObserver) { try { headerObserver.disconnect(); } catch (e) {} headerObserver = null; }
         if (mode === 'modal') document.body.style.overflow = ''; document.body.classList.remove('pcdv-fullpage');
     }
-    var api = { open: open, mount: mount, close: close, isOpen: function () { return !!root; }, setPatient: setPatient, refreshStudies: refreshStudies, openLocal: openLocalFiles, openLocalSelection: openLocalSelection, selectStudy: function (id) { var s = studies.filter(function (x) { return String(x.id) === String(id); })[0]; if (s) selectStudy(s); }, switchStudy: switchStudy, preload: function () { return ensureLibs(); }, saveNow: flushNow, toggleKeyImage: toggleKeyImage, annotations: function () { return { rows: anno.rows.slice(), dirty: Object.keys(anno.dirty), orderId: anno.orderId }; }, current: function () { return { patient: patient, study: currentStudy, item: vp() && vp().item, tool: leftTool, layout: layoutSpec.slice() }; }, _internal: { describeMeasurement: describeMeasurement, baseOrientation: baseOrientation, rotateOrientation: rotateOrientation, niceStep: niceStep, dirLabel: dirLabel } };
+    var api = { open: open, mount: mount, close: close, isOpen: function () { return !!root; }, setPatient: setPatient, refreshStudies: refreshStudies, openLocal: openLocalFiles, openLocalSelection: openLocalSelection, selectStudy: function (id) { var s = studies.filter(function (x) { return String(x.id) === String(id); })[0]; if (s) selectStudy(s); }, switchStudy: switchStudy, preload: function () { return ensureLibs(); }, saveNow: flushNow, toggleKeyImage: toggleKeyImage, annotations: function () { return { rows: anno.rows.slice(), dirty: Object.keys(anno.dirty), orderId: anno.orderId }; }, current: function () { return { patient: patient, study: currentStudy, item: vp() && vp().item, tool: leftTool, layout: layoutSpec.slice() }; }, _internal: { describeMeasurement: describeMeasurement, baseOrientation: baseOrientation, rotateOrientation: rotateOrientation, niceStep: niceStep, dirLabel: dirLabel, measureUnits: measureUnits, parseLengthToMm: parseLengthToMm } };
     window.PcDicomViewer = api;
     // Warm the libraries while the user is still on the dashboard, so the first click opens instantly.
     if (!window.__pcdvNoPreload) { var warm = function () { try { if ('requestIdleCallback' in window) requestIdleCallback(function () { ensureLibs().catch(function () {}); }); else setTimeout(function () { ensureLibs().catch(function () {}); }, 1500); } catch (e) {} }; if (document.readyState === 'complete') warm(); else window.addEventListener('load', warm); }

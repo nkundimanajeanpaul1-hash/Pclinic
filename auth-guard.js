@@ -52,7 +52,13 @@
         'beds-dashboard.html': ['beds', 'nurse', 'reception', 'doctor'],
         'beds-dashboard': ['beds', 'nurse', 'reception', 'doctor'],
         'theater-dashboard.html': ['theater', 'doctor', 'nurse', 'reception'],
-        'theater-dashboard': ['theater', 'doctor', 'nurse', 'reception']
+        'theater-dashboard': ['theater', 'doctor', 'nurse', 'reception'],
+        // The imaging workstation is opened by a doctor, radiology, nurse or admin (the
+        // same list imaging-results.html passes to requireAuth). Without this entry the
+        // page is never cloaked pre-render, so a cached patient mirror can flash on a
+        // shared terminal before Firebase answers.
+        'imaging-results.html': ['doctor', 'radio', 'nurse', 'admin'],
+        'imaging-results': ['doctor', 'radio', 'nurse', 'admin']
     };
     window.PORTAL_PERMISSIONS = PORTAL_PERMISSIONS;
 
