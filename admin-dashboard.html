@@ -5,8 +5,8 @@
     <script type="module" src="firebase-config.js"></script>
     <script src="auth-guard.js"></script>
     <script src="pclinic-state.js"></script>
-    <script src="pclinic-orders.js" defer></script>
-    <script src="doctor-patient.js" defer></script>
+    <script src="pclinic-orders.js?v=20261012_ADMINSETTINGS" defer></script>
+    <script src="doctor-patient.js?v=20261013_DOCXSS1" defer</script>
     <script src="shared.js" defer></script>
     <script src="patient-data.js" defer></script>
 
@@ -691,6 +691,7 @@
                             <div class="toggle-wrap"><div class="toggle" id="set-2fa" onclick="this.classList.toggle('active')"><div class="thumb"></div></div><span class="toggle-label">Require 2FA for Admin</span></div>
                             <div class="toggle-wrap"><div class="toggle" id="set-selfreg" onclick="this.classList.toggle('active')"><div class="thumb"></div></div><span class="toggle-label">Enable Staff Self-Registration</span></div>
                             <div class="toggle-wrap"><div class="toggle active" id="set-backup" onclick="this.classList.toggle('active')"><div class="thumb"></div></div><span class="toggle-label">Auto-Backup Every 24h</span></div>
+                            <p style="font-size:10.5px;color:var(--tm);margin:8px 0 0;line-height:1.45;">Recorded as clinic policy and saved to the server — sign-in does not enforce these switches yet.</p>
                         </div>
                     </div>
                     <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
@@ -903,6 +904,14 @@
         var SETTINGS_KEY = 'pclinic_admin_settings';
 
         function esc(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+        // esc() is HTML *text* escaping — it never touches quotes, so it is not
+        // safe for a value placed inside a quoted attribute (value="…", title="…")
+        // or inside a JS string literal in an inline handler.
+        function attr(v) {
+            return String(v == null ? '' : v)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
         function money(n) { return 'RWF ' + (Number(n) || 0).toLocaleString('en-US'); }
         function readJSON(k, fb) { try { return JSON.parse(localStorage.getItem(k) || (fb != null ? fb : 'null')); } catch(e){ return fb != null ? fb : null; } }
         function writeJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
@@ -1081,6 +1090,7 @@
 
         /* ══════════════ PATIENTS (real Common Server) ══════════════ */
         function loadPatients() {
+            if (!adminAuthorized) return;
             var tbody = document.getElementById('adminPatientsBody');
             if (!tbody) return;
             var patients = allPatients();
@@ -1109,12 +1119,17 @@
                     '<td>' + department + '</td>' +
                     '<td><span class="badge ' + cls + '">' + lbl + '</span></td>' +
                     '<td><div class="actions">' +
-                        '<button class="btn btn-sm btn-blue" onclick="openPatientData(\'' + esc(String(p.id)) + '\')"><i class="ti ti-folder-open"></i> Patient Data</button>' +
-                        '<button class="btn btn-sm btn-red" onclick="if(confirm(\'Delete patient ' + esc(fullName).replace(/'/g, "\\'") + '?\')) deletePatientFromAdmin(\'' + esc(String(p.id)) + '\')"><i class="ti ti-trash"></i> Delete</button>' +
+                        '<button class="btn btn-sm btn-blue" data-action="openPatientData" data-arg0="' + attr(String(p.id)) + '"><i class="ti ti-folder-open"></i> Patient Data</button>' +
+                        '<button class="btn btn-sm btn-red" data-action="confirmDeletePatient" data-arg0="' + attr(String(p.id)) + '" data-arg1="' + attr(fullName) + '"><i class="ti ti-trash"></i> Delete</button>' +
                     '</div></td>';
                 tbody.appendChild(tr);
             });
             updateKPIs();
+        }
+
+        function adminConfirmDeletePatient(id, name) {
+            if (!confirm('Delete patient ' + (name || id) + '?')) return;
+            deletePatientFromAdmin(id);
         }
 
         async function deletePatientFromAdmin(id) {
@@ -1182,6 +1197,7 @@
             return '<span class="badge red">Critical</span>';
         }
         function loadPharmacy() {
+            if (!adminAuthorized) return;
             var tbody = document.getElementById('adminPharmacyBody');
             if (!tbody) return;
             var items = pharmacyItems();
@@ -1200,8 +1216,8 @@
                     '<td>' + money(it.price) + '</td>' +
                     '<td>' + pharmStatus(it.qty) + '</td>' +
                     '<td><div class="actions">' +
-                        '<button class="btn btn-sm btn-blue" onclick="pcAdmin.editPharmacyItem(\'' + esc(String(it.id)) + '\')"><i class="ti ti-edit"></i> Edit</button>' +
-                        '<button class="btn btn-sm btn-red" onclick="pcAdmin.deletePharmacyItem(\'' + esc(String(it.id)) + '\')"><i class="ti ti-trash"></i> Delete</button>' +
+                        '<button class="btn btn-sm btn-blue" data-action="editPharmacyItem" data-arg0="' + attr(String(it.id)) + '"><i class="ti ti-edit"></i> Edit</button>' +
+                        '<button class="btn btn-sm btn-red" data-action="deletePharmacyItem" data-arg0="' + attr(String(it.id)) + '"><i class="ti ti-trash"></i> Delete</button>' +
                     '</div></td>';
                 tbody.appendChild(tr);
             });
@@ -1288,6 +1304,7 @@
             return '<span class="badge blue">Pending</span>';
         }
         function loadBills() {
+            if (!adminAuthorized) return;
             var tbody = document.getElementById('adminBillsBody');
             if (!tbody) return;
             var bills = allBills().filter(function(b){ return b.status !== 'cancelled'; }).sort(function(a,b){ return new Date(b.createdAt || 0) - new Date(a.createdAt || 0); });
@@ -1308,11 +1325,11 @@
                     '<td>' + money(paid) + '</td>' +
                     '<td>' + statusPill(b) + '</td>' +
                     '<td><div class="actions">' +
-                        '<button class="btn btn-sm btn-blue" onclick="viewBill(\'' + esc(String(b.id)) + '\')"><i class="ti ti-eye"></i> View</button>' +
+                        '<button class="btn btn-sm btn-blue" data-action="viewBill" data-arg0="' + attr(String(b.id)) + '"><i class="ti ti-eye"></i> View</button>' +
                         (b.status === 'paid' ? '' :
-                            '<button class="btn btn-sm btn-green" onclick="markPaidBill(\'' + esc(String(b.id)) + '\')"><i class="ti ti-check"></i> Take Payment</button>') +
+                            '<button class="btn btn-sm btn-green" data-action="markPaidBill" data-arg0="' + attr(String(b.id)) + '"><i class="ti ti-check"></i> Take Payment</button>') +
                         (b.status === 'paid' ? '' :
-                            '<button class="btn btn-sm btn-red" onclick="voidBill(\'' + esc(String(b.id)) + '\')"><i class="ti ti-x"></i> Void</button>') +
+                            '<button class="btn btn-sm btn-red" data-action="voidBill" data-arg0="' + attr(String(b.id)) + '"><i class="ti ti-x"></i> Void</button>') +
                     '</div></td>';
                 tbody.appendChild(tr);
             });
@@ -1424,6 +1441,7 @@
             writeJSON('pclinic_tariff', list);
         }
         function loadLabExams() {
+            if (!adminAuthorized) return;
             var tbody = document.getElementById('adminLabBody');
             if (!tbody) return;
             var labs = tariffAll().filter(function(t){ return t.dept === 'lab'; });
@@ -1444,8 +1462,8 @@
                     '<td style="max-width:220px;font-size:11px;color:#6e6e73;">' + esc(t.description || '—') + '</td>' +
                     '<td><span class="badge green">Active</span></td>' +
                     '<td><div class="actions">' +
-                        '<button class="btn btn-sm btn-blue" onclick="pcAdmin.editLabExam(\'' + esc(String(t.code)) + '\')"><i class="ti ti-edit"></i> Edit</button>' +
-                        '<button class="btn btn-sm btn-red" onclick="pcAdmin.deleteLabExam(\'' + esc(String(t.code)) + '\')"><i class="ti ti-trash"></i> Delete</button>' +
+                        '<button class="btn btn-sm btn-blue" data-action="editLabExam" data-arg0="' + attr(String(t.code)) + '"><i class="ti ti-edit"></i> Edit</button>' +
+                        '<button class="btn btn-sm btn-red" data-action="deleteLabExam" data-arg0="' + attr(String(t.code)) + '"><i class="ti ti-trash"></i> Delete</button>' +
                     '</div></td>';
                 tbody.appendChild(tr);
             });
@@ -1513,6 +1531,7 @@
             return tariffAll().filter(function(t){ return t.dept === 'procedure' || t.dept === 'theatre'; });
         }
         function loadActs() {
+            if (!adminAuthorized) return;
             var tbody = document.getElementById('adminActsBody');
             if (!tbody) return;
             var acts = actsItems();
@@ -1531,8 +1550,8 @@
                     '<td style="max-width:240px;font-size:11px;color:#6e6e73;">' + esc(t.description || '—') + '</td>' +
                     '<td><span class="badge green">Active</span></td>' +
                     '<td><div class="actions">' +
-                        '<button class="btn btn-sm btn-blue" onclick="pcAdmin.editActsItem(\'' + esc(String(t.code)) + '\')"><i class="ti ti-edit"></i> Edit</button>' +
-                        '<button class="btn btn-sm btn-red" onclick="pcAdmin.deleteActsItem(\'' + esc(String(t.code)) + '\')"><i class="ti ti-trash"></i> Delete</button>' +
+                        '<button class="btn btn-sm btn-blue" data-action="editActsItem" data-arg0="' + attr(String(t.code)) + '"><i class="ti ti-edit"></i> Edit</button>' +
+                        '<button class="btn btn-sm btn-red" data-action="deleteActsItem" data-arg0="' + attr(String(t.code)) + '"><i class="ti ti-trash"></i> Delete</button>' +
                     '</div></td>';
                 tbody.appendChild(tr);
             });
@@ -1589,15 +1608,25 @@
             loadActs();
         }
 
-        /* ══════════════ SETTINGS (persistent) ══════════════ */
-        function loadSettings() {
-            var s = readJSON(SETTINGS_KEY, null);
-            if (!s) s = { hospitalName: 'PClinic', currency: 'RWF', twoFA: false, selfReg: false, autoBackup: true };
-            document.getElementById('set-hospital-name').value = s.hospitalName || 'PClinic';
-            document.getElementById('set-currency').value = s.currency || 'RWF';
+        /* ══════════════ SETTINGS (server-backed) ══════════════ */
+        function currentSettings() {
+            var s = null;
+            try { if (window.pcSettings && typeof pcSettings.get === 'function') s = pcSettings.get(); } catch(e){}
+            return (s && Object.keys(s).length) ? s : readJSON(SETTINGS_KEY, null);
+        }
+        function applySettings(s) {
+            var name = document.getElementById('set-hospital-name');
+            var currency = document.getElementById('set-currency');
+            if (name) name.value = s.hospitalName || 'PClinic';
+            if (currency) currency.value = s.currency || 'RWF';
             setToggle('set-2fa', !!s.twoFA);
             setToggle('set-selfreg', !!s.selfReg);
             setToggle('set-backup', s.autoBackup !== false);
+        }
+        function loadSettings() {
+            var s = currentSettings();
+            if (!s) s = { hospitalName: 'PClinic', currency: 'RWF', twoFA: false, selfReg: false, autoBackup: true };
+            applySettings(s);
         }
         function setToggle(id, on) {
             var el = document.getElementById(id);
@@ -1614,38 +1643,89 @@
                 savedAt: new Date().toISOString()
             };
             writeJSON(SETTINGS_KEY, s);
-            showToast('💾 Settings saved on the Common Server', 'success');
+            var push = null;
+            try { if (window.pcSettings && typeof pcSettings.save === 'function') push = pcSettings.save(s); } catch(e){}
+            if (!push) { showToast('⚠️ Saved on this computer only — no server connection', 'warning'); return; }
+            Promise.resolve(push).then(function (ok) {
+                if (ok === false) showToast('⚠️ Saved on this computer only — the server rejected the write', 'warning');
+                else showToast('💾 Settings saved on the Common Server', 'success');
+            });
         }
         function resetSettings() {
             if (!confirm('Reset all settings to default?')) return;
-            localStorage.removeItem(SETTINGS_KEY);
+            var defaults = { hospitalName: 'PClinic', currency: 'RWF', twoFA: false, selfReg: false, autoBackup: true };
+            // Push the defaults too: clearing only this browser would be
+            // undone by the next server pull. The legacy local key is written
+            // as well so a later offline read cannot resurrect the old values.
+            writeJSON(SETTINGS_KEY, defaults);
+            try { if (window.pcSettings && typeof pcSettings.save === 'function') { pcSettings.save(defaults); } }
+            catch(e){ console.warn('Settings reset could not reach the server:', e && e.message); }
             loadSettings();
             showToast('↻ Settings reset to defaults', 'warning');
         }
 
-        /* ══════════════ BACKUP (real JSON export) ══════════════ */
-        function backupNow() {
+        /* ══════════════ BACKUP (server snapshot) ══════════════ */
+        async function backupNow() {
+            var d = new Date();
+            var stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            var payload = {
+                system: 'PClinic',
+                exportedAt: d.toISOString(),
+                source: 'server',
+                patients: [], orders: [], bills: [], staff: [],
+                tariff: [], pharmacyInventory: [], adminSettings: null,
+                warnings: []
+            };
+            showToast('⏳ Reading the live records from the Common Server…', 'info');
             try {
-                var payload = {
-                    system: 'PClinic',
-                    exportedAt: new Date().toISOString(),
-                    patients: readJSON('pclinic_patients', []) || [],
-                    orders: readJSON('pclinic_orders', []) || [],
-                    bills: readJSON('pclinic_bills', []) || [],
-                    tariff: readJSON('pclinic_tariff', []) || [],
-                    pharmacyInventory: readJSON(PHARM_KEY, []) || [],
-                    adminSettings: readJSON(SETTINGS_KEY, null)
-                };
+                if (!window.firebaseDB || !window.firebaseFunctions || !window.firebaseFunctions.getDocs) {
+                    throw new Error('no server connection');
+                }
+                var f = window.firebaseFunctions;
+                async function grab(coll) {
+                    var snap = await f.getDocs(f.collection(window.firebaseDB, coll));
+                    return snap.docs.map(function (docSnap) {
+                        var row = docSnap.data() || {};
+                        if (!row.id) row.id = docSnap.id;
+                        return row;
+                    });
+                }
+                payload.patients = await grab('patients');
+                payload.orders = await grab('orders');
+                payload.bills = await grab('bills');
+                // Only the profile fields a restore needs — a backup file must
+                // not carry credential remnants out of the database.
+                payload.staff = (await grab('users')).map(function (u) {
+                    return { staffId: u.staffId || '', name: u.name || '', role: u.role || '', active: u.active !== false };
+                });
+                (await grab('config')).forEach(function (c) {
+                    if (c.id === 'tariff') payload.tariff = c.items || [];
+                    else if (c.id === 'pharmacyInventory') payload.pharmacyInventory = c.items || [];
+                    else if (c.id === 'adminSettings') payload.adminSettings = c.items || null;
+                });
+            } catch (e) {
+                console.warn('Server backup failed:', e && e.message);
+                payload.source = 'browser cache';
+                payload.warnings.push('The server snapshot could not be read (' + (((e && e.message) || e) + '') + '). This file was built from this computer\'s cache, so records that never reached this browser are missing.');
+                payload.patients = readJSON('pclinic_patients', []) || [];
+                payload.orders = readJSON('pclinic_orders', []) || [];
+                payload.bills = readJSON('pclinic_bills', []) || [];
+                payload.tariff = readJSON('pclinic_tariff', []) || [];
+                payload.pharmacyInventory = readJSON(PHARM_KEY, []) || [];
+                payload.adminSettings = readJSON(SETTINGS_KEY, null);
+            }
+            try {
                 var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
                 var a = document.createElement('a');
-                var d = new Date();
-                var stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
                 a.href = URL.createObjectURL(blob);
                 a.download = 'pclinic-backup-' + stamp + '.json';
                 document.body.appendChild(a);
                 a.click();
                 setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
-                showToast('📦 Backup exported: pclinic-backup-' + stamp + '.json', 'success');
+                showToast(payload.source === 'server'
+                    ? '📦 Server backup exported — ' + payload.patients.length + ' patient(s), ' + payload.orders.length + ' order(s), ' + payload.bills.length + ' bill(s)'
+                    : '⚠️ Backup exported from this browser\'s cache only — it is NOT a complete record of the server',
+                    payload.source === 'server' ? 'success' : 'warning');
             } catch(e) {
                 console.error(e);
                 showToast('❌ Backup failed', 'error');
@@ -1723,16 +1803,14 @@
             };
         }
 
-        function staffMirror() {
-            var raw = readJSON(STAFF_KEY, []) || [];
-            var clean = Array.isArray(raw) ? raw.map(function (p) { return safeProfile(p.uid, p); }) : [];
-            // This overwrites legacy mirrors and removes any initialPassword field.
-            saveStaffMirror(clean);
-            return clean;
-        }
-        function saveStaffMirror() {
-            // Staff lists are not persisted in browser storage. Calling this
-            // also removes any legacy mirror that may contain passwords.
+        // Staff profiles are never persisted to browser storage — an earlier
+        // release mirrored them into localStorage, including passwords. The only
+        // fallback available is this page-load copy, which is what the
+        // "Firebase unavailable" branch below renders from.
+        var lastGoodStaffList = [];
+        function staffMirror() { return lastGoodStaffList.slice(); }
+        function saveStaffMirror(list) {
+            lastGoodStaffList = Array.isArray(list) ? list.map(function (p) { return safeProfile(p.uid, p); }) : [];
             try { localStorage.removeItem(STAFF_KEY); } catch (e) {}
         }
 
@@ -1781,6 +1859,7 @@
         }
 
         async function loadStaffList() {
+            if (!adminAuthorized) return;
             const tbody = document.getElementById('staff-body');
             if (!tbody) return;
             staffCache = {};
@@ -2098,7 +2177,7 @@
                     '<div style="font-size:11px;color:var(--ts);margin-bottom:6px;">In Firebase Console → Authentication → Users, copy the User UID for this account and paste it here:</div>' +
                     '<div style="display:flex;gap:6px;">' +
                         '<input type="text" id="pastedStaffUid" class="fi" placeholder="Paste User UID from Firebase Console" style="flex:1;height:30px;font-size:11px;">' +
-                        '<button type="button" class="btn btn-sm btn-blue" onclick="linkExistingStaffByUid(\'" + esc(staffId) + "\')"><i class="ti ti-link"></i> Link Profile</button>' +
+                        '<button type="button" class="btn btn-sm btn-blue" data-action="linkExistingStaffByUid" data-arg0="' + attr(staffId) + '"><i class="ti ti-link"></i> Link Profile</button>' +
                     '</div>' +
                 '</div>' +
                 '<div style="font-size:11px;color:var(--ts);line-height:1.4;">' +
@@ -2266,6 +2345,12 @@
            is written back to the Common Server immediately.
            ══════════════════════════════════════════════════════════════ */
         var pdPatientId = null;
+        // The rows the cards on screen were actually built from. Handlers must
+        // resolve an index against this snapshot, never against a freshly read
+        // list: the lab union is rebuilt from live-synced orders, so a snapshot
+        // arriving between render and click would otherwise shift every index
+        // and send a HARD DELETE to the wrong request.
+        var pdLabRows = { patientId: null, requests: [], results: [] };
 
         function pidRaw(p) { return String(p && p.id != null ? p.id : '').replace(/^MOD-/i, '').trim(); }
         function freshPatient(id) {
@@ -2357,7 +2442,7 @@
         function pdField(label, id, val, type, span2) {
             var t = type || 'text';
             return '<div' + (span2 ? ' style="grid-column:1/-1;"' : '') + '><label class="lbl">' + esc(label) + '</label>' +
-                '<input type="' + t + '" id="' + id + '" class="fi" value="' + esc(val == null ? '' : val) + '" style="width:100%;"></div>';
+                '<input type="' + t + '" id="' + id + '" class="fi" value="' + attr(val) + '" style="width:100%;"></div>';
         }
         function pdEmpty(msg) { return '<div style="text-align:center;padding:18px;color:var(--tm);font-size:12px;">' + msg + '</div>'; }
         function pdCard(title, sub, actionsHtml, bodyHtml) {
@@ -2379,7 +2464,7 @@
             pdCat('identification', document.querySelector('[data-pd="identification"]'));
             document.getElementById('patientDataModal').classList.add('show');
         }
-        function closePatientData() { document.getElementById('patientDataModal').classList.remove('show'); pdImagingStop(); pdImaging.pid = null; }
+        function closePatientData() { document.getElementById('patientDataModal').classList.remove('show'); pdImagingStop(); pdImaging.pid = null; pdLabRows = { patientId: null, requests: [], results: [] }; }
 
         function pdCat(cat, btn) {
             document.querySelectorAll('#pd_cat_tabs .btn').forEach(function(b){ b.classList.remove('active'); });
@@ -2450,6 +2535,57 @@
             loadPatients();
         }
 
+        function pdLabRequestAt(idx) {
+            if (pdLabRows.patientId !== String(pdPatientId)) return null;
+            return pdLabRows.requests[Number(idx)] || null;
+        }
+        function pdLabResultAt(ri) {
+            if (pdLabRows.patientId !== String(pdPatientId)) return null;
+            return pdLabRows.results[Number(ri)] || null;
+        }
+        function pdRequestKey(r) {
+            if (!r) return '';
+            return (r.tests || []).map(function(t){ return String(t).trim().toLowerCase(); }).sort().join('|')
+                + '::' + String(r.timestamp || '');
+        }
+        function pdResultKey(r) {
+            if (!r) return '';
+            var oid = String(r.orderId || r._orderId || '');
+            if (oid) return 'order::' + oid;
+            return 'set::' + String(r.testName || '') + '::' +
+                (r.tests || []).map(function(t){ return String(t.test || t.name || '').toLowerCase(); }).join('|');
+        }
+        // Buttons carry an index into the snapshot the cards were built from.
+        // Writing back must resolve that record against the freshly-read patient
+        // by identity, not by position: live sync can reorder the stored list
+        // between the render and the click, and a positional write would then
+        // edit a different patient's request.
+        function pdLiveRequestIndex(req) {
+            var p = freshPatient(pdPatientId);
+            var list = (p && p.labRequests) || [];
+            var key = pdRequestKey(req);
+            for (var i = 0; i < list.length; i++) { if (pdRequestKey(list[i]) === key) return i; }
+            return -1;
+        }
+        function pdLiveResultIndex(r) {
+            var p = freshPatient(pdPatientId);
+            var list = (p && p.labResults) || [];
+            var key = pdResultKey(r);
+            for (var i = 0; i < list.length; i++) { if (pdResultKey(list[i]) === key) return i; }
+            return -1;
+        }
+        function pdLiveTestIndex(result, snapTest) {
+            var list = (result && result.tests) || [];
+            var name = String((snapTest && (snapTest.test || snapTest.name)) || '').trim().toLowerCase();
+            for (var i = 0; i < list.length; i++) {
+                if (String(list[i].test || list[i].name || '').trim().toLowerCase() === name) return i;
+            }
+            return -1;
+        }
+        function pdStaleNotice() {
+            showToast('❌ That entry changed on the Common Server — reopen the list before editing it', 'error');
+        }
+
         /* ── CATEGORY 2: LAB (requests + results — edit/delete any) ── */
         function renderPatientLab(p) {
             var pid = pidRaw(p);
@@ -2486,6 +2622,7 @@
             });
             var allRequests = requests.concat(orderRequests);
             var results = Array.isArray(p.labResults) ? p.labResults : [];
+            pdLabRows = { patientId: String(p.id), requests: allRequests, results: results };
             var html = '';
 
             // — requests —
@@ -2559,14 +2696,16 @@
         }
 
         function adminEditLabRequest(idx) {
-            var p = freshPatient(pdPatientId); if (!p) return;
-            var req = (p.labRequests || [])[idx]; if (!req) return;
+            var req = pdLabRequestAt(idx);
+            if (!req) { showToast('❌ That request is no longer on screen — reopen the list first', 'error'); return; }
+            var ri = pdLiveRequestIndex(req);
+            if (ri === -1) { showToast('❌ That request is no longer in the Common Server record — reopen the list', 'error'); return; }
             var newTests = prompt('Edit requested tests (comma separated):', (req.tests || []).join(', '));
             if (newTests === null) return;
             var newPrio = prompt('Priority (routine / urgent / stat):', req.priority || 'routine');
             if (newPrio === null) return;
             persistPatientChange(pdPatientId, function(pat){
-                var r = (pat.labRequests || [])[idx];
+                var r = (pat.labRequests || [])[ri];
                 if (r) { r.tests = newTests.split(',').map(function(s){ return s.trim(); }).filter(Boolean); r.priority = newPrio.toLowerCase(); }
             });
             showToast('✏️ Lab request updated', 'success');
@@ -2574,24 +2713,8 @@
         }
         async function adminDeleteLabRequest(idx) {
             var p = freshPatient(pdPatientId); if (!p) return;
-            var req = null;
-            try {
-                var pidD = pidRaw(p);
-                var odsD = readJSON('pclinic_orders', []).filter(function(o){
-                    return String(o.patientId).replace(/^MOD-/i, '') === pidD && (o.type === 'lab' || o.dept === 'lab');
-                });
-                var reqsD = (p.labRequests || []).slice();
-                odsD.forEach(function(o){
-                    var items = (o.items || []).map(function(it){ return it.name; });
-                    var dup = reqsD.some(function(r){
-                        var rt = (r.tests || []).map(function(t){ return String(t).toLowerCase(); });
-                        return items.some(function(it){ return rt.some(function(t){ return String(it).toLowerCase().indexOf(t) !== -1 || t.indexOf(String(it).toLowerCase()) !== -1; }); });
-                    });
-                    if (!dup) reqsD.push({ tests: items, _orderId: o.id, priority: o.priority, timestamp: o.orderedAt });
-                });
-                req = reqsD[idx];
-            } catch(e){}
-            if (!req) { showToast('❌ Request not found', 'error'); return; }
+            var req = pdLabRequestAt(idx);
+            if (!req) { showToast('❌ That request is no longer on screen — reopen the list before deleting', 'error'); return; }
             var label = (req.tests || []).join(', ') || 'this lab request';
             var orderId = String(req._orderId || req.orderId || '');
             if (!confirm('DELETE this lab request (' + label + ')?\n\nThis is a HARD DELETE everywhere: the request, linked lab result(s), bill(s), messages/alerts and patient embedded records will all be removed from the Common Server.')) return;
@@ -2612,34 +2735,25 @@
         }
         function adminCancelLabOrders(idx) {
             var p = freshPatient(pdPatientId); if (!p) return;
-            var req = null;
-            try {
-                // resolve the same union used by renderPatientLab (requests + order-derived)
-                var pid = pidRaw(p);
-                var ods = readJSON('pclinic_orders', []).filter(function(o){
-                    return String(o.patientId).replace(/^MOD-/i, '') === pid && (o.type === 'lab' || o.dept === 'lab');
-                });
-                var reqs = (p.labRequests || []).slice();
-                ods.forEach(function(o){
-                    var items = (o.items || []).map(function(it){ return it.name; });
-                    var dup = reqs.some(function(r){
-                        var rt = (r.tests || []).map(function(t){ return String(t).toLowerCase(); });
-                        return items.some(function(it){ return rt.some(function(t){ return String(it).toLowerCase().indexOf(t) !== -1 || t.indexOf(String(it).toLowerCase()) !== -1; }); });
-                    });
-                    if (!dup) reqs.push({ tests: items, _orderId: o.id, priority: o.priority, timestamp: o.orderedAt });
-                });
-                req = reqs[idx];
-            } catch(e){}
-            if (!req) { showToast('❌ Request not found', 'error'); return; }
+            var req = pdLabRequestAt(idx);
+            if (!req) { showToast('❌ That request is no longer on screen — reopen the list first', 'error'); return; }
             if (!confirm('Cancel the matching laboratory order(s) for: ' + (req.tests || []).join(', ') + ' ?')) return;
+            var directOrderId = String(req._orderId || req.orderId || '');
             var tests = (req.tests || []).map(function(t){ return String(t).toLowerCase(); });
             var orders = readJSON('pclinic_orders', []) || [];
             var changed = 0;
             orders.forEach(function(o){
                 if (String(o.patientId).replace(/^MOD-/i, '') !== pidRaw(p) || (o.type !== 'lab' && o.dept !== 'lab')) return;
                 if (o.status === 'completed' || o.status === 'cancelled') return;
-                var items = (o.items || []).map(function(it){ return String(it.name || '').toLowerCase(); });
-                var hit = tests.some(function(t){ return items.some(function(it){ return it.indexOf(t) !== -1 || t.indexOf(it) !== -1; }); });
+                // Cancel the exact order when the card came from one; the
+                // name matching is only a fallback for legacy embedded requests.
+                var hit = directOrderId ? String(o.id) === directOrderId
+                    : tests.some(function(t){
+                        return (o.items || []).some(function(it){
+                            var name = String(it.name || '').toLowerCase();
+                            return name.indexOf(t) !== -1 || t.indexOf(name) !== -1;
+                        });
+                    });
                 if (hit) {
                     try {
                         if (window.pcOrders && typeof pcOrders.cancel === 'function') {
@@ -2657,43 +2771,56 @@
             pdCat('lab', document.querySelector('[data-pd="lab"]'));
         }
         function adminEditLabResultTest(ri, ti) {
+            var r = pdLabResultAt(ri);
+            if (!r) { pdStaleNotice(); return; }
+            var liveIdx = pdLiveResultIndex(r);
+            if (liveIdx === -1) { pdStaleNotice(); return; }
             var p = freshPatient(pdPatientId); if (!p) return;
-            var r = (p.labResults || [])[ri]; if (!r || !Array.isArray(r.tests)) return;
-            var t = r.tests[ti]; if (!t) return;
+            var live = (p.labResults || [])[liveIdx];
+            if (!live || !Array.isArray(live.tests)) return;
+            var t = (r.tests || [])[Number(ti)];
+            var testIdx = pdLiveTestIndex(live, t);
+            if (testIdx === -1) { pdStaleNotice(); return; }
             var newVal = prompt('New value for ' + (t.test || t.name) + ' (' + (t.unit || '') + '):', t.value || '');
             if (newVal === null) return;
             var newFlag = prompt('Flag: Normal / ↑ High / ↓ Low / ⚠️ Critical', t.flag || 'Normal');
             if (newFlag === null) return;
             persistPatientChange(pdPatientId, function(pat){
-                var rr = (pat.labResults || [])[ri];
-                if (rr && Array.isArray(rr.tests) && rr.tests[ti]) {
-                    rr.tests[ti].value = newVal;
-                    rr.tests[ti].flag = newFlag || 'Normal';
+                var rr = (pat.labResults || [])[liveIdx];
+                if (rr && Array.isArray(rr.tests) && rr.tests[testIdx]) {
+                    rr.tests[testIdx].value = newVal;
+                    rr.tests[testIdx].flag = newFlag || 'Normal';
                 }
             });
             showToast('✏️ Lab result value updated', 'success');
             pdCat('lab', document.querySelector('[data-pd="lab"]'));
         }
         function adminDeleteLabResultTest(ri, ti) {
-            var p = freshPatient(pdPatientId); if (!p) return;
-            var r = (p.labResults || [])[ri];
-            if (!r) return;
+            var r = pdLabResultAt(ri);
+            if (!r) { pdStaleNotice(); return; }
+            var liveIdx = pdLiveResultIndex(r);
+            if (liveIdx === -1) { pdStaleNotice(); return; }
             if (r.orderId || r._orderId) {
                 showToast('⚠️ This is a server-confirmed result. Use “Delete Set” so the whole linked request/result is hard-deleted everywhere.', 'warning');
                 return;
             }
-            if (!confirm('Delete this test value from the verified result set?')) return;
+            var p = freshPatient(pdPatientId); if (!p) return;
+            var live = (p.labResults || [])[liveIdx];
+            var t = (r.tests || [])[Number(ti)];
+            var testIdx = pdLiveTestIndex(live, t);
+            if (testIdx === -1) { pdStaleNotice(); return; }
+            if (!confirm('Delete this test value (' + ((t && (t.test || t.name)) || '') + ') from the verified result set?')) return;
             persistPatientChange(pdPatientId, function(pat){
-                var rr = (pat.labResults || [])[ri];
-                if (rr && Array.isArray(rr.tests)) rr.tests.splice(ti, 1);
+                var rr = (pat.labResults || [])[liveIdx];
+                if (rr && Array.isArray(rr.tests)) rr.tests.splice(testIdx, 1);
             });
             showToast('🗑️ Test value deleted', 'info');
             pdCat('lab', document.querySelector('[data-pd="lab"]'));
         }
         async function adminDeleteLabResultEntry(ri) {
             var p = freshPatient(pdPatientId); if (!p) return;
-            var r = (p.labResults || [])[ri];
-            if (!r) { showToast('❌ Lab result not found', 'error'); return; }
+            var r = pdLabResultAt(ri);
+            if (!r) { showToast('❌ That result set is no longer on screen — reopen the list before deleting', 'error'); return; }
             var label = r.testName || ((r.tests || []).map(function(t){ return t.test || t.name || ''; }).filter(Boolean).join(', ')) || 'this result set';
             var orderId = String(r.orderId || r._orderId || '');
             if (!confirm('DELETE this lab result entry (' + label + ')?\n\nThis is a HARD DELETE everywhere: the linked request/order, bill(s), messages/alerts and patient embedded records will all be removed from the Common Server.')) return;
@@ -2713,14 +2840,16 @@
             }
         }
         function adminEditMicrobio(ri) {
-            var p = freshPatient(pdPatientId); if (!p) return;
-            var r = (p.labResults || [])[ri]; if (!r) return;
+            var r = pdLabResultAt(ri);
+            if (!r) { pdStaleNotice(); return; }
+            var liveIdx = pdLiveResultIndex(r);
+            if (liveIdx === -1) { pdStaleNotice(); return; }
             var org = prompt('Organism isolated:', r.organism || '');
             if (org === null) return;
             var count = prompt('Colony count:', r.colonyCount || '');
             if (count === null) return;
             persistPatientChange(pdPatientId, function(pat){
-                var rr = (pat.labResults || [])[ri];
+                var rr = (pat.labResults || [])[liveIdx];
                 if (rr) { rr.organism = org; rr.colonyCount = count; }
             });
             showToast('✏️ Microbiology report updated', 'success');
@@ -2739,11 +2868,11 @@
                 html += pdCard(
                     '<i class="ti ti-receipt" style="color:#9a3412;"></i> ' + esc(b.number || b.id),
                     esc(money(b.total) + ' total • ' + money(b.paid) + ' paid • balance ' + money(b.balance != null ? b.balance : (Number(b.total) - Number(b.paid))) + ' • created ' + (b.createdAt ? new Date(b.createdAt).toLocaleDateString('en-GB') : '—')),
-                    '<button class="btn btn-sm btn-blue" onclick="viewBill(\'' + esc(String(b.id)) + '\')"><i class="ti ti-eye"></i> View</button>' +
-                    (b.status === 'paid' ? '' : '<button class="btn btn-sm btn-green" onclick="markPaidBill(\'' + esc(String(b.id)) + '\')"><i class="ti ti-check"></i> Payment</button>') +
-                    '<button class="btn btn-sm btn-orange" onclick="adminEditBillTotal(\'' + esc(String(b.id)) + '\')"><i class="ti ti-edit"></i> Edit Total</button>' +
-                    (b.status === 'paid' ? '' : '<button class="btn btn-sm btn-red" onclick="voidBill(\'' + esc(String(b.id)) + '\')"><i class="ti ti-x"></i> Void</button>') +
-                    '<button class="btn btn-sm btn-red" onclick="adminDeleteBill(\'' + esc(String(b.id)) + '\')"><i class="ti ti-trash"></i> Delete</button>'
+                    '<button class="btn btn-sm btn-blue" data-action="viewBill" data-arg0="' + attr(String(b.id)) + '"><i class="ti ti-eye"></i> View</button>' +
+                    (b.status === 'paid' ? '' : '<button class="btn btn-sm btn-green" data-action="markPaidBill" data-arg0="' + attr(String(b.id)) + '"><i class="ti ti-check"></i> Payment</button>') +
+                    '<button class="btn btn-sm btn-orange" data-action="adminEditBillTotal" data-arg0="' + attr(String(b.id)) + '"><i class="ti ti-edit"></i> Edit Total</button>' +
+                    (b.status === 'paid' ? '' : '<button class="btn btn-sm btn-red" data-action="voidBill" data-arg0="' + attr(String(b.id)) + '"><i class="ti ti-x"></i> Void</button>') +
+                    '<button class="btn btn-sm btn-red" data-action="adminDeleteBill" data-arg0="' + attr(String(b.id)) + '"><i class="ti ti-trash"></i> Delete</button>'
                 );
             });
             document.getElementById('pd_body').innerHTML = html;
@@ -2876,16 +3005,16 @@
                 var state = radStateOf(o); var media = I.media[o.id] || []; var rep = (I.reports[o.id] || [])[0] || null; var adds = I.addenda[o.id] || []; var alert = (I.alerts[o.id] || [])[0] || null; var annos = I.annotations[o.id] || [];
                 var bills = I.bills.filter(function (b) { return String(b.orderId || '') === String(o.id) || (o.billId && String(b.id) === String(o.billId)); });
                 var exam = (o.items || []).map(function (it) { return it.name; }).filter(Boolean).join(', ') || o.study || o.modalityLabel || 'Imaging study';
-                var idAttr = esc(String(o.id));
+                var idAttr = attr(String(o.id));
                 var bodyHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">';
                 // images
                 bodyHtml += '<div style="background:#f5f5f7;border-radius:10px;padding:8px 10px;"><div style="font-weight:700;margin-bottom:4px;"><i class="ti ti-photo"></i> Images (' + media.length + ')' + (annos.length ? ' · ' + annos.length + ' annotation set' + (annos.length === 1 ? '' : 's') : '') + '</div>';
                 if (!media.length) bodyHtml += '<div style="color:#6e6e73;">No image uploaded by radiology yet.</div>';
                 media.slice().sort(function (a, b) { return String(a.at || '').localeCompare(String(b.at || '')); }).forEach(function (m) {
-                    bodyHtml += '<div style="display:flex;justify-content:space-between;gap:6px;align-items:center;padding:2px 0;"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(m.fileName || m.id) + '">' + esc(m.fileName || m.id) + ' <span style="color:#6e6e73;">' + esc(((Number(m.bytes) || 0) / 1024).toFixed(0)) + ' KB · ' + esc(m.byName || '') + ' · ' + esc(whenStr(m.at)) + '</span></span>' +
-                        '<button class="btn btn-sm btn-red" title="Delete this image from the Common Server" onclick="adminDeleteImagingMedia(\'' + esc(String(m.id)) + '\',\'' + idAttr + '\')"><i class="ti ti-trash"></i></button></div>';
+                    bodyHtml += '<div style="display:flex;justify-content:space-between;gap:6px;align-items:center;padding:2px 0;"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + attr(m.fileName || m.id) + '">' + esc(m.fileName || m.id) + ' <span style="color:#6e6e73;">' + esc(((Number(m.bytes) || 0) / 1024).toFixed(0)) + ' KB · ' + esc(m.byName || '') + ' · ' + esc(whenStr(m.at)) + '</span></span>' +
+                        '<button class="btn btn-sm btn-red" title="Delete this image from the Common Server" data-action="adminDeleteImagingMedia" data-arg0="' + attr(String(m.id)) + '" data-arg1="' + idAttr + '"><i class="ti ti-trash"></i></button></div>';
                 });
-                if (media.length > 1) bodyHtml += '<div style="margin-top:6px;"><button class="btn btn-sm btn-red" onclick="adminDeleteImaging(\'' + idAttr + '\',\'images\')"><i class="ti ti-trash"></i> Delete all images</button></div>';
+                if (media.length > 1) bodyHtml += '<div style="margin-top:6px;"><button class="btn btn-sm btn-red" data-action="adminDeleteImaging" data-arg0="' + idAttr + '" data-arg1="images"><i class="ti ti-trash"></i> Delete all images</button></div>';
                 bodyHtml += '</div>';
                 // result
                 bodyHtml += '<div style="background:#f5f5f7;border-radius:10px;padding:8px 10px;"><div style="font-weight:700;margin-bottom:4px;"><i class="ti ti-report-medical"></i> Result</div>';
@@ -2895,20 +3024,20 @@
                         (rep.impression ? '<div style="margin-top:4px;"><b>Impression:</b> ' + esc(String(rep.impression).slice(0, 220)) + (String(rep.impression).length > 220 ? '…' : '') + '</div>' : '') +
                         (rep.findings && !rep.impression ? '<div style="margin-top:4px;"><b>Findings:</b> ' + esc(String(rep.findings).slice(0, 220)) + '</div>' : '') +
                         '<div style="color:#6e6e73;margin-top:2px;">' + esc(rep.status === 'final' ? 'Signed by ' + (rep.signedByName || rep.byName || 'Radiology') + ' · ' + whenStr(rep.signedAt || rep.finalizedAt || rep.updatedAt) : 'Last saved ' + whenStr(rep.updatedAt || rep.savedAt)) + (adds.length ? ' · ' + adds.length + ' addend' + (adds.length === 1 ? 'um' : 'a') : '') + '</div>' +
-                        '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;"><button class="btn btn-sm btn-blue" onclick="pdOpenWorkstation(\'' + idAttr + '\')"><i class="ti ti-eye"></i> View</button><button class="btn btn-sm btn-red" onclick="adminDeleteImaging(\'' + idAttr + '\',\'report\')"><i class="ti ti-trash"></i> Delete result</button></div>';
+                        '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;"><button class="btn btn-sm btn-blue" data-action="pdOpenWorkstation" data-arg0="' + idAttr + '"><i class="ti ti-eye"></i> View</button><button class="btn btn-sm btn-red" data-action="adminDeleteImaging" data-arg0="' + idAttr + '" data-arg1="report"><i class="ti ti-trash"></i> Delete result</button></div>';
                 }
                 bodyHtml += '</div>';
                 // bill
                 bodyHtml += '<div style="background:#f5f5f7;border-radius:10px;padding:8px 10px;grid-column:1/-1;"><div style="font-weight:700;margin-bottom:4px;"><i class="ti ti-receipt"></i> Bill' + (bills.length > 1 ? 's' : '') + (bills.length ? '' : ' — none linked to this request') + '</div>';
                 bills.forEach(function (b) {
                     bodyHtml += '<div style="display:flex;justify-content:space-between;gap:6px;align-items:center;flex-wrap:wrap;"><span>' + esc(b.number || b.id) + ' · ' + statusPill(b) + ' · ' + money(b.total) + ' total · ' + money(b.paid) + ' paid</span>' +
-                        '<span style="display:flex;gap:6px;"><button class="btn btn-sm btn-blue" onclick="viewBill(\'' + esc(String(b.id)) + '\')"><i class="ti ti-eye"></i> View</button><button class="btn btn-sm btn-red" onclick="adminDeleteImaging(\'' + idAttr + '\',\'bill\')"><i class="ti ti-trash"></i> Delete bill</button></span></div>';
+                        '<span style="display:flex;gap:6px;"><button class="btn btn-sm btn-blue" data-action="viewBill" data-arg0="' + attr(String(b.id)) + '"><i class="ti ti-eye"></i> View</button><button class="btn btn-sm btn-red" data-action="adminDeleteImaging" data-arg0="' + idAttr + '" data-arg1="bill"><i class="ti ti-trash"></i> Delete bill</button></span></div>';
                 });
                 bodyHtml += '</div></div>';
                 html += pdCard(
                     '<i class="ti ti-radio" style="color:#5c2475;"></i> ' + esc(exam) + ' ' + radPill(state) + (o.priority && o.priority !== 'routine' ? ' <span class="badge red">' + esc(o.priority) + '</span>' : ''),
                     esc('Requested ' + whenStr(o.orderedAt) + (o.orderedBy ? ' by ' + o.orderedBy : '') + (o.notes ? ' • ' + o.notes : '') + ' • order ' + o.id),
-                    '<button class="btn btn-sm btn-red" onclick="adminDeleteImaging(\'' + idAttr + '\',\'all\')"><i class="ti ti-trash"></i> Delete request + images + result + bill</button>',
+                    '<button class="btn btn-sm btn-red" data-action="adminDeleteImaging" data-arg0="' + idAttr + '" data-arg1="all"><i class="ti ti-trash"></i> Delete request + images + result + bill</button>',
                     bodyHtml
                 );
             });
@@ -2993,6 +3122,45 @@
         function adminDeleteImagingRequest(orderId) { adminDeleteImaging(orderId, 'all'); }
         function adminDeleteImagingResult(orderId) { adminDeleteImaging(orderId, 'report'); }
         window.addEventListener('beforeunload', pdImagingStop);
+
+        /* ══════════════ SAFE ACTION DISPATCH ══════════════
+           Rows used to be rendered as onclick="fn('<value>')", which pastes
+            untrusted text (patient names and MRNs, uploaded file names, order
+            and bill ids) into JavaScript source. HTML text escaping does not
+            escape quotes, so any role that can write one of those fields could
+            run code in the admin's session — and the admin session can write
+            the users collection. Handlers live here instead and the values are
+            read back as plain attributes, never re-parsed as code. */
+        var ADMIN_ACTIONS = {
+            openPatientData: openPatientData,
+            confirmDeletePatient: adminConfirmDeletePatient,
+            editPharmacyItem: editPharmacyItem,
+            deletePharmacyItem: deletePharmacyItem,
+            viewBill: viewBill,
+            markPaidBill: markPaidBill,
+            voidBill: voidBill,
+            editLabExam: editLabExam,
+            deleteLabExam: deleteLabExam,
+            editActsItem: editActsItem,
+            deleteActsItem: deleteActsItem,
+            adminEditBillTotal: adminEditBillTotal,
+            adminDeleteBill: adminDeleteBill,
+            adminDeleteImaging: adminDeleteImaging,
+            adminDeleteImagingMedia: adminDeleteImagingMedia,
+            pdOpenWorkstation: pdOpenWorkstation,
+            linkExistingStaffByUid: linkExistingStaffByUid
+        };
+        document.addEventListener('click', function (e) {
+            var btn = e.target && e.target.closest ? e.target.closest('[data-action]') : null;
+            if (!btn) return;
+            var fn = ADMIN_ACTIONS[btn.getAttribute('data-action')];
+            if (!fn) return;
+            var args = [];
+            Array.prototype.forEach.call(btn.attributes, function (a) {
+                if (a.name.indexOf('data-arg') === 0) args[Number(a.name.slice('data-arg'.length))] = a.value;
+            });
+            fn.apply(null, args);
+        });
 
         /* ══════════════ EXPOSE TO ACTION BAR + GLOBAL ══════════════ */
         window.pcAdmin = {
@@ -3081,6 +3249,11 @@
         window.deleteRow = window.deleteRow || function(btn){ var r = btn && btn.closest('tr'); if (r) r.remove(); };
 
         /* ══════════════ BOOT ══════════════ */
+        // Only true once auth-guard has confirmed an active admin. Every loader
+        // checks it: the cloak is a CSS rule, and the Common Server dispatches
+        // synthetic `storage` events of its own, so without this the tables
+        // could still be filled for a user the guard was about to redirect.
+        var adminAuthorized = false;
         function boot() {
             applyDark();
             updateDateBadge();
@@ -3101,29 +3274,57 @@
             setTimeout(function(){ var lo = document.getElementById('loadingOverlay'); if (lo) lo.classList.remove('show'); }, 400);
         }
 
-        document.addEventListener('DOMContentLoaded', function(){
+        // Returning to this tab used to re-read and re-render three full tables
+        // on every focus event, on top of the storage listener doing the same.
+        var _commonServerRefresh = null;
+        function refreshFromCommonServer() {
+            if (!adminAuthorized || _commonServerRefresh) return;
+            _commonServerRefresh = setTimeout(function () {
+                _commonServerRefresh = null;
+                loadPatients(); loadPharmacy(); loadBills(); loadLabExams();
+            }, 400);
+        }
+
+        var domReady = new Promise(function (resolve) {
+            if (document.readyState !== 'loading') resolve();
+            else document.addEventListener('DOMContentLoaded', resolve, { once: true });
+        });
+
+        Promise.all([domReady, requireAuth(['admin'])]).then(function (res) {
+            var staff = res[1];
+            adminAuthorized = true;
+            window.currentStaff = staff || window.currentStaff;
             boot();
-            document.getElementById('adminSearch').addEventListener('keydown', function(e){
+            var search = document.getElementById('adminSearch');
+            if (search) search.addEventListener('keydown', function (e) {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); this.focus(); }
             });
-        });
-        if (document.readyState !== 'loading') boot();
 
-        // Live refresh when other dashboards change the Common Server
-        window.addEventListener('storage', function(){ loadPatients(); loadPharmacy(); loadBills(); loadLabExams(); });
-        window.addEventListener('pharmacyInventoryUpdated', function(){ loadPharmacy(); updateKPIs(); });
-        window.addEventListener('tariffUpdated', function(){ loadPharmacy(); loadLabExams(); updateKPIs(); });
-        window.addEventListener('focus', function(){ loadPatients(); loadBills(); loadLabExams(); });
-        window.addEventListener('billsUpdated', function(){ loadBills(); });
-        window.addEventListener('tariffUpdated', function(){ loadLabExams(); });
+            // Live refresh when other dashboards change the Common Server
+            window.addEventListener('storage', refreshFromCommonServer);
+            window.addEventListener('focus', refreshFromCommonServer);
+            window.addEventListener('pharmacyInventoryUpdated', function(){ if (adminAuthorized) { loadPharmacy(); updateKPIs(); } });
+            window.addEventListener('billsUpdated', function(){ if (adminAuthorized) loadBills(); });
+            window.addEventListener('tariffUpdated', function(){ if (adminAuthorized) { loadPharmacy(); loadLabExams(); updateKPIs(); } });
+
+            console.log('✅ Authenticated as', (staff && staff.name) || 'Administrator', '(' + ((staff && staff.role) || 'admin') + ')');
+        }).catch(function (err) {
+            console.warn('Admin access denied:', err && err.message);
+        });
 
         // Deep-link: admin-dashboard.html?tab=staff (used by the ⚙️ System menu "Staff & users")
+        // The tab is matched against the rendered buttons instead of being
+        // interpolated into a CSS selector, where any quote or bracket in the
+        // query string threw inside a bare catch.
         try {
             var _deepTab = new URLSearchParams(window.location.search).get('tab');
             if (_deepTab && typeof switchTab === 'function') {
                 setTimeout(function(){
-                    var _btn = document.querySelector('.nav-tab[data-tab="' + _deepTab + '"]');
-                    try { switchTab(_deepTab, _btn); } catch(e){}
+                    var _btn = null;
+                    document.querySelectorAll('.nav-tab').forEach(function (t) {
+                        if (!_btn && t.getAttribute('data-tab') === _deepTab) _btn = t;
+                    });
+                    if (_btn) switchTab(_deepTab, _btn);
                 }, 150);
             }
         } catch(e){}
@@ -3147,17 +3348,6 @@
     })();
     </script>
 
-    <script>
-        requireAuth(['admin']).then(function(staff) {
-            window.currentStaff = staff;
-            console.log('✅ Authenticated as', staff.name, '(' + staff.role + ')');
-        }).catch(function(err) {
-            console.warn('Auth guard redirect:', err && err.message);
-        });
-    </script>
-<style>
-
-</style>
 <style>
 /* ═══ GG-PCLINIC-CANON · PClinic top-bar hierarchy — identical to doctor-dashboard ═══
    Bar 1 (PClinic menu), Bar 2 (patient ID) and Bar 3 (action bar) stack in a

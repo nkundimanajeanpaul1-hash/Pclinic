@@ -16,10 +16,57 @@ function pcEsc(value) {
     div.textContent = value == null ? '' : String(value);
     return div.innerHTML;
 }
+// pcEsc is HTML *text* escaping — it never touches quotes, so it is not safe for
+// a value placed inside a quoted attribute (value="…", title="…") or inside a
+// JavaScript string in an inline handler. Patient names, notes and test names are
+// free text written by other roles, so both contexts must be escaped separately.
+function pcAttr(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+// Buttons rendered from records carry their action and arguments as data
+// attributes instead of an inline onclick built from stored values, so nothing
+// a patient, note or order contains is ever parsed as code or as an attribute.
+var DOCTOR_ACTIONS = ['voidPrescription', 'printPrescription', 'printWardRound',
+    'deleteWardRound', 'printNote', 'deleteNote', 'cancelLabRequest', 'deleteLabRequest',
+    'editVital', 'deleteVital', 'selectPatient', 'removeTheaterEntry', 'removeDiagnosis',
+    'acknowledgeCriticalLabResult'];
+document.addEventListener('click', function (e) {
+    var btn = e.target && e.target.closest ? e.target.closest('[data-action]') : null;
+    if (!btn) return;
+    var name = btn.getAttribute('data-action');
+    if (DOCTOR_ACTIONS.indexOf(name) === -1) return;
+    var fn = window[name];
+    if (typeof fn !== 'function') return;
+    var args = [];
+    Array.prototype.forEach.call(btn.attributes, function (a) {
+        if (a.name.indexOf('data-arg') === 0) args[Number(a.name.slice('data-arg'.length))] = a.value;
+    });
+    // Some actions restyle the control that was pressed (critical-result ack).
+    args.push(btn);
+    fn.apply(null, args);
+});
+// The patient table renders this through textContent, so the value needs no
+// escaping — only a readable label. Earlier it replaced anything outside a short
+// whitelist with 'inactive', which mislabelled the very patients the KPI cards
+// count (pending_review and ready_discharge both became "Inactive").
 function pcSafeStatus(value) {
-    var allowed = ['active','inactive','critical','stable','pending','completed','cancelled'];
-    value = String(value || '').toLowerCase();
-    return allowed.indexOf(value) !== -1 ? value : 'inactive';
+    var labels = {
+        active: 'Active',
+        inactive: 'Inactive',
+        critical: 'Critical',
+        stable: 'Stable',
+        pending: 'Pending',
+        pending_review: 'Awaiting review',
+        ready_discharge: 'Ready for discharge',
+        completed: 'Completed',
+        cancelled: 'Cancelled',
+        discharged: 'Discharged',
+        admitted: 'Admitted'
+    };
+    var key = String(value || '').toLowerCase();
+    return labels[key] || key.slice(0, 32) || 'active';
 }
 
 // ─── UPDATE EXAM OPTIONS ───
@@ -47,18 +94,20 @@ function updateExamOptions() {
         return;
     }
     
-    let html = `<option value="">-- Select ${examData.label} Exam --</option>`;
+    let html = '<option value="">-- Select ' + pcEsc(examData.label) + ' Exam --</option>';
     examData.exams.forEach(exam => {
-        html += `<option value="${exam}">${exam}</option>`;
+        html += '<option value="' + pcAttr(exam) + '">' + pcEsc(exam) + '</option>';
     });
     
     // Add custom exams that were previously added
-    const customExams = JSON.parse(localStorage.getItem('customImagingExams') || '[]');
-    const categoryCustom = customExams.filter(e => e.category === category);
+    let customExams = [];
+    try { customExams = JSON.parse(localStorage.getItem('customImagingExams') || '[]'); } catch (e) { customExams = []; }
+    if (!Array.isArray(customExams)) customExams = [];
+    const categoryCustom = customExams.filter(e => e && e.category === category);
     if (categoryCustom.length > 0) {
-        html += `<option value="" disabled style="background:var(--s3);color:var(--tm);">── Custom ──</option>`;
+        html += '<option value="" disabled style="background:var(--s3);color:var(--tm);">── Custom ──</option>';
         categoryCustom.forEach(e => {
-            html += `<option value="${e.name}">📌 ${e.name}</option>`;
+            html += '<option value="' + pcAttr(e.name) + '">📌 ' + pcEsc(e.name) + '</option>';
         });
     }
     
@@ -83,7 +132,9 @@ function addCustomExam() {
     }
     
     // Save to localStorage
-    let customExams = JSON.parse(localStorage.getItem('customImagingExams') || '[]');
+    let customExams = [];
+    try { customExams = JSON.parse(localStorage.getItem('customImagingExams') || '[]'); } catch (e) { customExams = []; }
+    if (!Array.isArray(customExams)) customExams = [];
     
     // Check for duplicates
     const exists = customExams.some(e => e.category === category && e.name === customName);
@@ -785,7 +836,18 @@ var categoryColors = {
 
 
 
+// Custom ICD codes typed by a doctor are kept out of the session-only array:
+// they are mirrored to localStorage so the picker still offers them after a reload.
+var CUSTOM_DIAGNOSES_KEY = 'pclinic_custom_diagnoses';
 var customDiagnoses = [];
+try {
+    var savedCustomDiagnoses = JSON.parse(localStorage.getItem(CUSTOM_DIAGNOSES_KEY) || '[]');
+    if (Array.isArray(savedCustomDiagnoses)) customDiagnoses = savedCustomDiagnoses;
+} catch (e) { customDiagnoses = []; }
+
+function saveCustomDiagnoses() {
+    try { localStorage.setItem(CUSTOM_DIAGNOSES_KEY, JSON.stringify(customDiagnoses)); } catch (e) {}
+}
 
 
 
@@ -840,14 +902,14 @@ function getDiagnosisOptions(existingDiagnoses) {
         var textColor = color ? color.text : '#424242';
         var icon = color ? color.icon : '📋';
         
-        html += `<optgroup label="${icon} ${cat}" style="background:${bgColor}; color:${textColor};">`;
+        html += '<optgroup label="' + pcAttr(icon + ' ' + cat) + '" style="background:' + pcAttr(bgColor) + '; color:' + pcAttr(textColor) + ';">';
         
         // Sort diagnoses by code within category
         grouped[cat].sort(function(a, b) { return a.code.localeCompare(b.code); });
         
         grouped[cat].forEach(function(d) {
-            var colorStyle = d.color ? `style="color:${d.color}; font-weight:500;"` : '';
-            html += `<option value="${d.code}|${d.name}" ${colorStyle}>${d.code} - ${d.name}</option>`;
+            var colorStyle = d.color ? 'style="color:' + pcAttr(d.color) + '; font-weight:500;"' : '';
+            html += '<option value="' + pcAttr(d.code + '|' + d.name) + '" ' + colorStyle + '>' + pcEsc(d.code + ' - ' + d.name) + '</option>';
         });
         html += '</optgroup>';
     });
@@ -860,9 +922,23 @@ function getDiagnosisOptions(existingDiagnoses) {
 
 
 // ─── ENHANCED ADD DIAGNOSIS ───
+function persistDiagnoses() {
+    if (!currentPatient || typeof updatePatient !== 'function') return;
+    try {
+        updatePatient(currentPatient.id, {
+            diagnoses: currentPatient.diagnoses || [],
+            diagnosisUpdated: currentPatient.diagnosisUpdated
+        });
+    } catch (e) { console.warn('[doctor] diagnosis save failed:', e && e.message); }
+}
+
 function addDiagnosis() {
+    if (!currentPatient) {
+        showToast('⚠️ Please select a patient first', 'warning');
+        return;
+    }
     var select = document.getElementById('diagnosisSelect');
-    var value = select.value;
+    var value = select ? select.value : '';
     if (!value) {
         showToast('⚠️ Please select a diagnosis', 'warning');
         return;
@@ -892,6 +968,7 @@ function addDiagnosis() {
         department: diagnosisData ? diagnosisData.department : 'General'
     });
     currentPatient.diagnosisUpdated = new Date().toISOString();
+    persistDiagnoses();
     
     // Update UI
     displayPatientFile(currentPatient);
@@ -916,10 +993,10 @@ function displayDiagnoses(patient) {
     diagnoses.forEach(function(d) {
         var color = d.color || '#6c757d';
         var bgColor = color + '20'; // 20% opacity
-        html += `<span style="background: ${bgColor}; color: ${color}; padding: 6px 14px; border-radius: 20px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; border: 0.5px solid ${color};">
-            <strong>${d.code}</strong> ${d.name}
-            <span onclick="removeDiagnosis('${d.code}')" style="cursor:pointer;font-size:14px;color:${color};">&times;</span>
-        </span>`;
+        html += '<span style="background: ' + pcAttr(bgColor) + '; color: ' + pcAttr(color) + '; padding: 6px 14px; border-radius: 20px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; border: 0.5px solid ' + pcAttr(color) + ';">' +
+            '<strong>' + pcEsc(d.code) + '</strong> ' + pcEsc(d.name) +
+            ' <span data-action="removeDiagnosis" data-arg0="' + pcAttr(d.code) + '" style="cursor:pointer;font-size:14px;color:' + pcAttr(color) + ';">&times;</span>' +
+        '</span>';
     });
     
     container.innerHTML = html;
@@ -930,6 +1007,10 @@ function displayDiagnoses(patient) {
 
 
 function addCustomDiagnosis() {
+    if (!currentPatient) {
+        showToast('⚠️ Please select a patient first', 'warning');
+        return;
+    }
     var code = document.getElementById('customDiagnosisCode').value.trim();
     var name = document.getElementById('customDiagnosisName').value.trim();
     if (!code) {
@@ -952,9 +1033,11 @@ function addCustomDiagnosis() {
         return;
     }
     customDiagnoses.push({ code: code, name: name });
+    saveCustomDiagnoses();
     if (!currentPatient.diagnoses) currentPatient.diagnoses = [];
     currentPatient.diagnoses.push({ code: code, name: name });
     currentPatient.diagnosisUpdated = new Date().toISOString();
+    persistDiagnoses();
     document.getElementById('customDiagnosisCode').value = '';
     document.getElementById('customDiagnosisName').value = '';
     document.getElementById('customDiagnosisInput').style.display = 'none';
@@ -963,7 +1046,7 @@ function addCustomDiagnosis() {
 }
 
 function removeDiagnosis(code) {
-    if (!currentPatient.diagnoses) return;
+    if (!currentPatient || !currentPatient.diagnoses) return;
     currentPatient.diagnoses = currentPatient.diagnoses.filter(function(d) { return d.code !== code; });
     currentPatient.diagnosisUpdated = new Date().toISOString();
     if (typeof updatePatient === 'function') {
@@ -1099,7 +1182,17 @@ var medicationList = [
     { name: 'Sertraline', category: 'Psychiatric', defaultDosage: '50mg' }
 ];
 
+// Doctor-typed medications survive a reload instead of vanishing with the session.
+var CUSTOM_MEDICATIONS_KEY = 'pclinic_custom_medications';
 var customMedications = [];
+try {
+    var savedCustomMeds = JSON.parse(localStorage.getItem(CUSTOM_MEDICATIONS_KEY) || '[]');
+    if (Array.isArray(savedCustomMeds)) customMedications = savedCustomMeds;
+} catch (e) { customMedications = []; }
+
+function saveCustomMedications() {
+    try { localStorage.setItem(CUSTOM_MEDICATIONS_KEY, JSON.stringify(customMedications)); } catch (e) {}
+}
 
 // ─── MEDICATION COLOR GROUPS ───
 function getMedicationColor(category) {
@@ -1149,9 +1242,10 @@ function getMedicationOptions(existingPrescriptions) {
     var html = '';
     for (var cat in grouped) {
         var color = getMedicationColor(cat);
-        html += `<optgroup label="${cat}" style="background:${color.bg};">`;
+        html += '<optgroup label="' + pcAttr(cat) + '" style="background:' + pcAttr(color.bg) + ';">';
         grouped[cat].forEach(function(m) {
-            html += `<option value="${m.name}|${m.category}|${m.defaultDosage || ''}">${m.name} (${m.defaultDosage || ''})</option>`;
+            html += '<option value="' + pcAttr(m.name + '|' + m.category + '|' + (m.defaultDosage || '')) + '">' +
+                    pcEsc(m.name + ' (' + (m.defaultDosage || '') + ')') + '</option>';
         });
         html += '</optgroup>';
     }
@@ -1198,6 +1292,7 @@ function addCustomMedication() {
     
     var newMed = { name: name, category: category, defaultDosage: dosage };
     customMedications.push(newMed);
+    saveCustomMedications();
     
     document.getElementById('customMedicationName').value = '';
     document.getElementById('customMedicationDosage').value = '';
@@ -1620,17 +1715,17 @@ document.addEventListener('click', function(event) {
 function loadPatients() {
     try {
         if (typeof getPatients !== 'function') {
-            console.warn('⚠️ getPatients not available. Using sample data.');
-            return loadSamplePatients();
+            console.warn('⚠️ shared patient data not available');
+            return showPatientsUnavailable();
         }
         const allPatients = getPatients();
         console.log('📊 Loaded', allPatients.length, 'patients from shared data');
-        debouncedRenderPatientTable(allPatients);  // <-- CHANGE THIS
+        debouncedRenderPatientTable(allPatients);
         updateKPIs(allPatients);
         return allPatients;
     } catch (e) {
         console.error('Error loading patients:', e);
-        return loadSamplePatients();
+        return showPatientsUnavailable();
     }
 }
 
@@ -1684,19 +1779,22 @@ function toggleInsurancePanel() {
 }
 
 
-        // ─── SAMPLE PATIENTS (fallback) ───
-        function loadSamplePatients() {
-            const sample = [
-                { id: 1001, firstName: 'John', lastName: 'Kamau', mrn: 'MRN 1001', dob: '1968-03-14', gender: 'Male',
-                    phone: '+254 712 345 678', status: 'active', department: 'Cardiology' },
-                { id: 1002, firstName: 'Grace', lastName: 'Wanjiru', mrn: 'MRN 1002', dob: '1972-08-03', gender: 'Female',
-                    phone: '+254 722 987 654', status: 'active', department: 'Cardiology' },
-                { id: 1003, firstName: 'Samuel', lastName: 'Otieno', mrn: 'MRN 1003', dob: '1965-02-22', gender: 'Male',
-                    phone: '+254 710 654 321', status: 'active', department: 'Cardiology' }
-            ];
-            renderPatientTable(sample);
-            updateKPIs(sample);
-            return sample;
+        // ─── PATIENT LIST UNAVAILABLE ───
+        // Demo patients must never appear in a live clinician's list — a doctor
+        // can select one and prescribe against a person who does not exist.
+        function showPatientsUnavailable() {
+            const tbody = document.getElementById('patientTableBody') ||
+                          document.getElementById('patientsTbody') ||
+                          document.querySelector('#tab-patients tbody');
+            if (tbody) {
+                const cols = tbody.closest('table') ? tbody.closest('table').querySelectorAll('th').length : 7;
+                tbody.innerHTML = '<tr><td colspan="' + cols + '" style="text-align:center;padding:24px;color:var(--tm);">' +
+                    '⚠️ The patient directory could not be read from the server. Reload this page; if it keeps happening tell the administrator.</td></tr>';
+            }
+            const count = document.getElementById('patientCount');
+            if (count) count.textContent = '0';
+            showToast('⚠️ Patient directory unavailable', 'warning');
+            return [];
         }
 
         
@@ -1771,25 +1869,27 @@ function renderPatientTable(patients) {
                 var date = rx.timestamp ? new Date(rx.timestamp).toLocaleString() : 'No date';
                 
                 var actions = '';
+                var pidAttr = pcAttr(patient.id);
+                var rxAttr = pcAttr(rx.id);
                 if (rx.status === 'Pending') {
-                    actions = '<button class="btn-void" onclick="voidPrescription(' + patient.id + ', ' + rx.id + ')"><i class="ti ti-x"></i> Void</button>';
+                    actions = '<button class="btn-void" data-action="voidPrescription" data-arg0="' + pidAttr + '" data-arg1="' + rxAttr + '"><i class="ti ti-x"></i> Void</button>';
                 }
-                actions += '<button class="btn-print-rx" onclick="printPrescription(' + patient.id + ', ' + rx.id + ')"><i class="ti ti-printer"></i> Print</button>';
+                actions += '<button class="btn-print-rx" data-action="printPrescription" data-arg0="' + pidAttr + '" data-arg1="' + rxAttr + '"><i class="ti ti-printer"></i> Print</button>';
                 
                 return '<div class="rx-history-item">' +
                     '<div class="rx-header">' +
-                        '<span class="rx-time">🕐 ' + date + '</span>' +
-                        '<span class="rx-doctor">👨‍⚕️ ' + (rx.prescribedBy || 'Unknown') + '</span>' +
-                        '<span class="rx-status-badge ' + statusClass + '">' + statusLabel + '</span>' +
+                        '<span class="rx-time">🕐 ' + pcEsc(date) + '</span>' +
+                        '<span class="rx-doctor">👨‍⚕️ ' + pcEsc(rx.prescribedBy || 'Unknown') + '</span>' +
+                        '<span class="rx-status-badge ' + statusClass + '">' + pcEsc(statusLabel) + '</span>' +
                     '</div>' +
                     '<div class="rx-content">' +
-                        '<strong>Medication:</strong> ' + rx.medication + '<br>' +
-                        '<strong>Dosage:</strong> ' + rx.dosage + '<br>' +
-                        '<strong>Frequency:</strong> ' + rx.frequency + '<br>' +
-                        (rx.duration ? '<strong>Duration:</strong> ' + rx.duration + '<br>' : '') +
-                        (rx.instructions ? '<strong>Instructions:</strong> ' + rx.instructions + '<br>' : '') +
-                        (rx.department ? '<strong>Department:</strong> ' + rx.department : '') +
-                        (rx.dispensedBy ? '<br><strong>Dispensed By:</strong> ' + rx.dispensedBy : '') +
+                        '<strong>Medication:</strong> ' + pcEsc(rx.medication) + '<br>' +
+                        '<strong>Dosage:</strong> ' + pcEsc(rx.dosage) + '<br>' +
+                        '<strong>Frequency:</strong> ' + pcEsc(rx.frequency) + '<br>' +
+                        (rx.duration ? '<strong>Duration:</strong> ' + pcEsc(rx.duration) + '<br>' : '') +
+                        (rx.instructions ? '<strong>Instructions:</strong> ' + pcEsc(rx.instructions) + '<br>' : '') +
+                        (rx.department ? '<strong>Department:</strong> ' + pcEsc(rx.department) : '') +
+                        (rx.dispensedBy ? '<br><strong>Dispensed By:</strong> ' + pcEsc(rx.dispensedBy) : '') +
                         (rx.dispensedDate ? '<br><strong>Dispensed On:</strong> ' + new Date(rx.dispensedDate).toLocaleString() : '') +
                     '</div>' +
                     '<div class="rx-actions">' +
@@ -1807,7 +1907,9 @@ function renderPatientTable(patients) {
 // ─── SELECT PATIENT ───
 function selectPatient(id) {
     const patients = getPatients() || [];
-    const p = patients.find(pt => pt.id === id);
+    // Ids arrive from data attributes as strings and from Firestore as either a
+    // string or a number depending on how the record was written.
+    const p = patients.find(pt => String(pt.id) === String(id));
     if (!p) {
         showToast('❌ Patient not found', 'error');
         return;
@@ -1820,10 +1922,10 @@ function selectPatient(id) {
     renderVitalsHistory(p);
     displayLabRequests(p);
 
-    
+
     // ─── SHOW PATIENT FILE ───
     displayPatientFile(p);
-    
+
     showToast('👤 Loaded patient: ' + p.firstName + ' ' + p.lastName, 'success');
     document.getElementById('suggestions').classList.remove('show');
 }
@@ -1838,9 +1940,9 @@ function selectPatient(id) {
             
             try {
                 var patients = getPatients();
-                var patient = patients.find(function(p) { return p.id === patientId; });
+                var patient = patients.find(function(p) { return String(p.id) === String(patientId); });
                 if (patient && patient.prescriptions) {
-                    var rx = patient.prescriptions.find(function(p) { return p.id === rxId; });
+                    var rx = patient.prescriptions.find(function(p) { return String(p.id) === String(rxId); });
                     if (rx) {
                         rx.status = 'Cancelled';
                         rx.voidedBy = 'Doctor';
@@ -1864,32 +1966,33 @@ function selectPatient(id) {
         function printPrescription(patientId, rxId) {
             try {
                 var patients = getPatients();
-                var patient = patients.find(function(p) { return p.id === patientId; });
+                var patient = patients.find(function(p) { return String(p.id) === String(patientId); });
                 if (patient && patient.prescriptions) {
-                    var rx = patient.prescriptions.find(function(p) { return p.id === rxId; });
+                    var rx = patient.prescriptions.find(function(p) { return String(p.id) === String(rxId); });
                     if (rx) {
-                        var printContent = 
+                        var printContent =
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
                             '              PCLINIC PRESCRIPTION\n' +
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-                            'Patient: ' + (patient.firstName || '') + ' ' + (patient.lastName || '') + '\n' +
-                            'MRN: ' + (patient.mrn || 'N/A') + '\n' +
+                            'Patient: ' + pcEsc((patient.firstName || '') + ' ' + (patient.lastName || '')) + '\n' +
+                            'MRN: ' + pcEsc(patient.mrn || 'N/A') + '\n' +
                             'Date: ' + new Date(rx.timestamp).toLocaleDateString() + '\n\n' +
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-                            'Medication: ' + rx.medication + '\n' +
-                            'Dosage: ' + rx.dosage + '\n' +
-                            'Frequency: ' + rx.frequency + '\n' +
-                            (rx.duration ? 'Duration: ' + rx.duration + '\n' : '') +
-                            (rx.instructions ? 'Instructions: ' + rx.instructions + '\n' : '') +
+                            'Medication: ' + pcEsc(rx.medication) + '\n' +
+                            'Dosage: ' + pcEsc(rx.dosage) + '\n' +
+                            'Frequency: ' + pcEsc(rx.frequency) + '\n' +
+                            (rx.duration ? 'Duration: ' + pcEsc(rx.duration) + '\n' : '') +
+                            (rx.instructions ? 'Instructions: ' + pcEsc(rx.instructions) + '\n' : '') +
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-                            'Prescribed By: ' + (rx.prescribedBy || 'Unknown') + '\n' +
-                            'Department: ' + (rx.department || 'General') + '\n' +
-                            'Status: ' + rx.status + '\n' +
+                            'Prescribed By: ' + pcEsc(rx.prescribedBy || 'Unknown') + '\n' +
+                            'Department: ' + pcEsc(rx.department || 'General') + '\n' +
+                            'Status: ' + pcEsc(rx.status) + '\n' +
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
                             '            PClinic - Quality Healthcare\n' +
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-                        
+
                         var printWindow = window.open('', '_blank', 'width=600,height=400');
+                        if (!printWindow) { showToast('❌ Please allow pop-ups to print', 'error'); return; }
                         printWindow.document.write('<pre style="font-family:monospace;padding:20px;font-size:14px;">' + printContent + '</pre>');
                         printWindow.document.close();
                         printWindow.print();
@@ -1906,18 +2009,28 @@ function selectPatient(id) {
             }
         }
 
+        // ─── PATIENT COHORTS ───
+        // The overview KPI cards and the list each card opens must describe the
+        // same patients. They used to disagree: the cards counted a patient with
+        // no status as admitted while the list required status === 'active', so
+        // "Admitted: 7" could open a list of 6.
+        function getPatientCohorts(patients) {
+            const data = patients || getPatients() || [];
+            return {
+                admitted: data.filter(p => (p.status || 'active') === 'active'),
+                review: data.filter(p => p.status === 'pending_review'),
+                critical: data.filter(p => p.priority === 'critical' || (p.vitals && p.vitals.some(v => v.painScore && parseInt(v.painScore) > 7))),
+                discharge: data.filter(p => p.status === 'ready_discharge')
+            };
+        }
+
         // ─── UPDATE KPIs ───
         function updateKPIs(patients) {
-            const data = patients || getPatients() || [];
-            const active = data.filter(p => (p.status || 'active') === 'active');
-            const critical = data.filter(p => p.priority === 'critical' || (p.vitals && p.vitals.some(v => v.painScore && parseInt(v.painScore) > 7)));
-            const review = data.filter(p => p.status === 'pending_review');
-            const discharge = data.filter(p => p.status === 'ready_discharge');
-
-            document.getElementById('kpiAdmitted').textContent = active.length;
-            document.getElementById('kpiReview').textContent = review.length || 0;
-            document.getElementById('kpiCritical').textContent = critical.length || 0;
-            document.getElementById('kpiDischarge').textContent = discharge.length || 0;
+            const cohorts = getPatientCohorts(patients);
+            document.getElementById('kpiAdmitted').textContent = cohorts.admitted.length;
+            document.getElementById('kpiReview').textContent = cohorts.review.length;
+            document.getElementById('kpiCritical').textContent = cohorts.critical.length;
+            document.getElementById('kpiDischarge').textContent = cohorts.discharge.length;
         }
 
         // ─── GET AGE ───
@@ -1931,6 +2044,22 @@ function selectPatient(id) {
             return age + ' yrs';
         }
 // ─── UPDATE DOCTOR VITALS DISPLAY (Strip) ───
+// The vitals strip markup only exists on some dashboards, so every element is
+// looked up through these helpers. An unguarded getElementById here used to
+// throw and abort whichever action called it (e.g. deleting a lab request
+// would report "Error deleting lab request" after the delete had succeeded).
+function docVitalEl(id) { return document.getElementById(id); }
+function docVitalSet(id, html) {
+    const el = docVitalEl(id);
+    if (el) el.innerHTML = html;
+    return el;
+}
+function docVitalStatus(id, text, className) {
+    const el = docVitalEl(id);
+    if (!el) return;
+    el.textContent = text;
+    if (className !== undefined) el.className = className;
+}
 function updateDoctorVitals(patient) {
     // Update vitals count first
     const countEl = document.getElementById('vitalsCount');
@@ -1938,62 +2067,56 @@ function updateDoctorVitals(patient) {
         const count = patient?.vitals?.length || 0;
         countEl.textContent = count + ' records';
     }
-    
+
     if (!patient || !patient.vitals || patient.vitals.length === 0) {
-        document.getElementById('docVitalHR').innerHTML = '--<span class="vital-unit"> bpm</span>';
-        document.getElementById('docVitalHRStatus').textContent = '--';
-        document.getElementById('docVitalBP').innerHTML = '--<span class="vital-unit">/--</span>';
-        document.getElementById('docVitalBPStatus').textContent = '--';
-        document.getElementById('docVitalSpO2').innerHTML = '--<span class="vital-unit">%</span>';
-        document.getElementById('docVitalSpO2Status').textContent = '--';
-        document.getElementById('docVitalTemp').innerHTML = '--<span class="vital-unit">°C</span>';
-        document.getElementById('docVitalTempStatus').textContent = '--';
+        docVitalSet('docVitalHR', '--<span class="vital-unit"> bpm</span>');
+        docVitalStatus('docVitalHRStatus', '--');
+        docVitalSet('docVitalBP', '--<span class="vital-unit">/--</span>');
+        docVitalStatus('docVitalBPStatus', '--');
+        docVitalSet('docVitalSpO2', '--<span class="vital-unit">%</span>');
+        docVitalStatus('docVitalSpO2Status', '--');
+        docVitalSet('docVitalTemp', '--<span class="vital-unit">°C</span>');
+        docVitalStatus('docVitalTempStatus', '--');
         return;
     }
 
     const lastVital = patient.vitals[patient.vitals.length - 1];
-    
+
     // HR
     const hr = lastVital.pulse || lastVital.hr || '--';
-    document.getElementById('docVitalHR').innerHTML = hr + '<span class="vital-unit"> bpm</span>';
-    const hrStatus = document.getElementById('docVitalHRStatus');
+    docVitalSet('docVitalHR', pcEsc(hr) + '<span class="vital-unit"> bpm</span>');
     if (hr !== '--') {
-        if (hr > 100) { hrStatus.textContent = 'Elevated'; hrStatus.className = 'vital-status vs-hi'; }
-        else if (hr < 60) { hrStatus.textContent = 'Low'; hrStatus.className = 'vital-status vs-hi'; }
-        else { hrStatus.textContent = 'Normal'; hrStatus.className = 'vital-status vs-ok'; }
-    } else { hrStatus.textContent = '--'; hrStatus.className = 'vital-status'; }
+        if (hr > 100) docVitalStatus('docVitalHRStatus', 'Elevated', 'vital-status vs-hi');
+        else if (hr < 60) docVitalStatus('docVitalHRStatus', 'Low', 'vital-status vs-hi');
+        else docVitalStatus('docVitalHRStatus', 'Normal', 'vital-status vs-ok');
+    } else { docVitalStatus('docVitalHRStatus', '--', 'vital-status'); }
 
     // BP
     const sys = lastVital.bpSystolic || lastVital.systolic || '--';
     const dia = lastVital.bpDiastolic || lastVital.diastolic || '--';
-    document.getElementById('docVitalBP').innerHTML = sys + '<span class="vital-unit">/' + dia + '</span>';
-    const bpStatus = document.getElementById('docVitalBPStatus');
+    docVitalSet('docVitalBP', pcEsc(sys) + '<span class="vital-unit">/' + pcEsc(dia) + '</span>');
     if (sys !== '--' && dia !== '--') {
-        if (sys > 140 || dia > 90) { bpStatus.textContent = 'High'; bpStatus.className = 'vital-status vs-hi'; }
-        else if (sys < 90 || dia < 60) { bpStatus.textContent = 'Low'; bpStatus.className = 'vital-status vs-hi'; }
-        else { bpStatus.textContent = 'Normal'; bpStatus.className = 'vital-status vs-ok'; }
-    } else { bpStatus.textContent = '--'; bpStatus.className = 'vital-status'; }
+        if (sys > 140 || dia > 90) docVitalStatus('docVitalBPStatus', 'High', 'vital-status vs-hi');
+        else if (sys < 90 || dia < 60) docVitalStatus('docVitalBPStatus', 'Low', 'vital-status vs-hi');
+        else docVitalStatus('docVitalBPStatus', 'Normal', 'vital-status vs-ok');
+    } else { docVitalStatus('docVitalBPStatus', '--', 'vital-status'); }
 
     // SpO2
     const spo2 = lastVital.spo2 || lastVital.spO2 || '--';
-    document.getElementById('docVitalSpO2').innerHTML = spo2 + '<span class="vital-unit">%</span>';
-    const spo2Status = document.getElementById('docVitalSpO2Status');
+    docVitalSet('docVitalSpO2', pcEsc(spo2) + '<span class="vital-unit">%</span>');
     if (spo2 !== '--') {
-        if (spo2 < 95) { spo2Status.textContent = 'Low'; spo2Status.className = 'vital-status vs-hi'; }
-        else { spo2Status.textContent = 'Normal'; spo2Status.className = 'vital-status vs-ok'; }
-    } else { spo2Status.textContent = '--'; spo2Status.className = 'vital-status'; }
+        if (spo2 < 95) docVitalStatus('docVitalSpO2Status', 'Low', 'vital-status vs-hi');
+        else docVitalStatus('docVitalSpO2Status', 'Normal', 'vital-status vs-ok');
+    } else { docVitalStatus('docVitalSpO2Status', '--', 'vital-status'); }
 
     // Temperature
     const temp = lastVital.temperature || lastVital.temp || '--';
-    document.getElementById('docVitalTemp').innerHTML = temp + '<span class="vital-unit">°C</span>';
-    const tempStatus = document.getElementById('docVitalTempStatus');
+    docVitalSet('docVitalTemp', pcEsc(temp) + '<span class="vital-unit">°C</span>');
     if (temp !== '--') {
-        if (temp > 37.5) { tempStatus.textContent = 'Elevated'; tempStatus.className = 'vital-status vs-hi'; }
-        else if (temp < 36.0) { tempStatus.textContent = 'Low'; tempStatus.className = 'vital-status vs-hi'; }
-        else { tempStatus.textContent = 'Normal'; tempStatus.className = 'vital-status vs-ok'; }
-    } else { tempStatus.textContent = '--'; tempStatus.className = 'vital-status'; }
-
-
+        if (temp > 37.5) docVitalStatus('docVitalTempStatus', 'Elevated', 'vital-status vs-hi');
+        else if (temp < 36.0) docVitalStatus('docVitalTempStatus', 'Low', 'vital-status vs-hi');
+        else docVitalStatus('docVitalTempStatus', 'Normal', 'vital-status vs-ok');
+    } else { docVitalStatus('docVitalTempStatus', '--', 'vital-status'); }
 }
             
         // ─── ENHANCED VITALS DISPLAY (Grid) ───
@@ -2032,9 +2155,9 @@ function updateDoctorVitals(patient) {
                 const status = getVitalStatus(vital.key, vital.value, vital.normalRange);
                 vitalsHTML += `
                     <div class="vital-item">
-                        <span class="vital-label">${vital.icon} ${vital.label}</span>
-                        <span class="vital-value">${vital.value} <span class="vital-unit">${vital.unit}</span></span>
-                        <span class="vital-status-badge ${status.class}">${status.label}</span>
+                        <span class="vital-label">${vital.icon} ${pcEsc(vital.label)}</span>
+                        <span class="vital-value">${pcEsc(vital.value)} <span class="vital-unit">${pcEsc(vital.unit)}</span></span>
+                        <span class="vital-status-badge ${pcAttr(status.class)}">${pcEsc(status.label)}</span>
                     </div>
                 `;
             });
@@ -2104,8 +2227,8 @@ function updateDoctorVitals(patient) {
     let historyHTML = `
         <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div>
-                <strong style="font-size: 16px;">${currentPatient.firstName || ''} ${currentPatient.lastName || ''}</strong>
-                <span style="color: var(--tm); font-size: 12px; margin-left: 8px;">${currentPatient.mrn || ''}</span>
+                <strong style="font-size: 16px;">${pcEsc((currentPatient.firstName || '') + ' ' + (currentPatient.lastName || ''))}</strong>
+                <span style="color: var(--tm); font-size: 12px; margin-left: 8px;">${pcEsc(currentPatient.mrn || '')}</span>
             </div>
             <span style="font-size: 12px; color: var(--tm); background: var(--acb); padding: 4px 12px; border-radius: 20px;">${vitals.length} records</span>
         </div>
@@ -2126,12 +2249,12 @@ function updateDoctorVitals(patient) {
 
             historyHTML += `
                 <div class="vitals-history-item" style="display: grid; grid-template-columns: 140px repeat(5, 1fr); gap: 8px; padding: 10px 12px; border-bottom: 0.5px solid var(--bd); align-items: center;">
-                    <span class="vh-time" style="font-weight: 500; color: var(--ts); font-size: 11px;">${date}</span>
-                    <span class="vh-value" style="font-weight: 600;">${pulse} <span class="vh-unit" style="font-weight: 400; color: var(--tm); font-size: 10px;">bpm</span></span>
-                    <span class="vh-value" style="font-weight: 600;">${bp} <span class="vh-unit" style="font-weight: 400; color: var(--tm); font-size: 10px;">mmHg</span></span>
-                    <span class="vh-value" style="font-weight: 600;">${spo2} <span class="vh-unit" style="font-weight: 400; color: var(--tm); font-size: 10px;">%</span></span>
-                    <span class="vh-value" style="font-weight: 600;">${temp} <span class="vh-unit" style="font-weight: 400; color: var(--tm); font-size: 10px;">°C</span></span>
-                    <span class="vh-value" style="font-weight: 600;">${pain} <span class="vh-unit" style="font-weight: 400; color: var(--tm); font-size: 10px;">/10</span></span>
+                    <span class="vh-time" style="font-weight: 500; color: var(--ts); font-size: 11px;">${pcEsc(date)}</span>
+                    <span class="vh-value" style="font-weight: 600;">${pcEsc(pulse)} <span class="vh-unit" style="font-weight: 400; color: var(--tm); font-size: 10px;">bpm</span></span>
+                    <span class="vh-value" style="font-weight: 600;">${pcEsc(bp)} <span class="vh-unit" style="font-weight: 400; color: var(--tm); font-size: 10px;">mmHg</span></span>
+                    <span class="vh-value" style="font-weight: 600;">${pcEsc(spo2)} <span class="vh-unit" style="font-weight: 400; color: var(--tm); font-size: 10px;">%</span></span>
+                    <span class="vh-value" style="font-weight: 600;">${pcEsc(temp)} <span class="vh-unit" style="font-weight: 400; color: var(--tm); font-size: 10px;">°C</span></span>
+                    <span class="vh-value" style="font-weight: 600;">${pcEsc(pain)} <span class="vh-unit" style="font-weight: 400; color: var(--tm); font-size: 10px;">/10</span></span>
                 </div>
             `;
         });
@@ -2441,9 +2564,9 @@ function displayPatientCard(p) {
             if (matches.length === 0) { container.classList.remove('show'); return; }
 
             container.innerHTML = matches.slice(0, 8).map(p =>
-                `<div class="suggestion-item" onclick="selectPatient(${p.id})">
+                `<div class="suggestion-item" data-action="selectPatient" data-arg0="${pcAttr(p.id)}">
                     <span>👤</span>
-                    <span><span class="highlight">${p.firstName || ''} ${p.lastName || ''}</span> — ${p.mrn || 'N/A'}</span>
+                    <span><span class="highlight">${pcEsc((p.firstName || '') + ' ' + (p.lastName || ''))}</span> — ${pcEsc(p.mrn || 'N/A')}</span>
                 </div>`
             ).join('');
             container.classList.add('show');
@@ -2723,28 +2846,28 @@ function updateSchedule() {
     schedule.forEach(function(s, i) {
         var statusClass = s.status === 'In progress' ? 'b-info' : 'b-warn';
         var c = colors[s.patientId % colors.length] || colors[0];
-        var avatar = '<div class="patient-avatar" style="width:36px;height:36px;font-size:12px;background:'+c.bg+';color:'+c.txt+';border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;box-shadow:0 2px 8px '+c.bg+'40;">' + getInitials(s.patient) + '</div>';
+        var avatar = '<div class="patient-avatar" style="width:36px;height:36px;font-size:12px;background:'+c.bg+';color:'+c.txt+';border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;box-shadow:0 2px 8px '+c.bg+'40;">' + pcEsc(getInitials(s.patient)) + '</div>';
         
         html += '<tr style="background:'+cardBg+';border-left:4px solid '+cardBorder+';border-radius:16px;display:table-row;box-shadow:0 1px 4px '+cardShadow+';backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);cursor:pointer;">'
-            + '<td style="font-weight:600;color:'+cardBorder+';padding:14px 18px;border-radius:16px 0 0 16px;font-size:14px;letter-spacing:-0.3px;">'+s.time+'</td>'
+            + '<td style="font-weight:600;color:'+cardBorder+';padding:14px 18px;border-radius:16px 0 0 16px;font-size:14px;letter-spacing:-0.3px;">'+pcEsc(s.time)+'</td>'
             + '<td style="padding:12px 18px;font-weight:500;color:var(--tp);">'
                 + '<div style="display:flex;align-items:center;gap:12px;">'
                     + avatar
                     + '<div>'
-                        + '<div style="font-weight:600;font-size:14px;letter-spacing:-0.2px;">'+s.patient+'</div>'
+                        + '<div style="font-weight:600;font-size:14px;letter-spacing:-0.2px;">'+pcEsc(s.patient)+'</div>'
                         + '<div class="patient-meta" style="font-size:11px;color:var(--tm);margin-top:2px;display:flex;gap:8px;">'
-                            + '<span><strong>MRN:</strong> '+s.patientMrn+'</span>'
+                            + '<span><strong>MRN:</strong> '+pcEsc(s.patientMrn)+'</span>'
                             + '<span style="opacity:0.4;">|</span>'
-                            + '<span><strong>ID:</strong> '+s.patientId+'</span>'
+                            + '<span><strong>ID:</strong> '+pcEsc(s.patientId)+'</span>'
                         + '</div>'
                     + '</div>'
                 + '</div>'
             + '</td>'
-            + '<td style="padding:14px 18px;color:var(--ts);font-weight:400;"><span style="background:var(--s3);padding:4px 12px;border-radius:20px;font-weight:500;font-size:11px;">'+s.type+'</span></td>'
-            + '<td style="padding:14px 18px;color:var(--ts);"><span style="background:var(--s3);padding:4px 12px;border-radius:20px;font-weight:500;font-size:11px;">'+s.location+'</span></td>'
-            + '<td style="padding:14px 18px;"><span class="badge '+statusClass+'" style="padding:4px 14px;border-radius:20px;font-size:10px;font-weight:600;">'+s.status+'</span></td>'
+            + '<td style="padding:14px 18px;color:var(--ts);font-weight:400;"><span style="background:var(--s3);padding:4px 12px;border-radius:20px;font-weight:500;font-size:11px;">'+pcEsc(s.type)+'</span></td>'
+            + '<td style="padding:14px 18px;color:var(--ts);"><span style="background:var(--s3);padding:4px 12px;border-radius:20px;font-weight:500;font-size:11px;">'+pcEsc(s.location)+'</span></td>'
+            + '<td style="padding:14px 18px;"><span class="badge '+statusClass+'" style="padding:4px 14px;border-radius:20px;font-size:10px;font-weight:600;">'+pcEsc(s.status)+'</span></td>'
             + '<td style="padding:10px 18px;border-radius:0 16px 16px 0;">'
-                + '<button class="btn-s" onclick="event.stopPropagation();selectPatient('+s.patientId+')" style="padding:6px 14px;font-size:11px;background:var(--acb);color:var(--ac);border:0.5px solid var(--ac);border-radius:8px;cursor:pointer;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;font-weight:600;">'
+                + '<button class="btn-s" data-action="selectPatient" data-arg0="'+pcAttr(s.patientId)+'" style="padding:6px 14px;font-size:11px;background:var(--acb);color:var(--ac);border:0.5px solid var(--ac);border-radius:8px;cursor:pointer;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;font-weight:600;">'
                     + '<i class="ti ti-eye"></i> Open Patient File'
                 + '</button>'
             + '</td>'
@@ -2776,30 +2899,96 @@ function updateSchedule() {
 
 
         // ─── THEATER FUNCTIONS ───
+        // A doctor's booking is a real surgery record: it goes to the same Common
+        // Server collection the Operating Theater dashboard reads
+        // (theaterSurgeries). firestore.rules only lets a doctor CREATE a surgery
+        // with status 'scheduled' and their own staffId as author, so progress
+        // states are recorded by the theater, not from this screen.
+        const THEATER_SURGERIES_KEY = 'pclinic_theater_surgeries';
+        let theaterUnsub = null;
+
+        function theaterStaffId() {
+            return (window.currentStaff && (window.currentStaff.staffId || window.currentStaff.uid)) || '';
+        }
+        function theaterStaffName() {
+            return (window.currentStaff && window.currentStaff.name) || 'PClinic Staff';
+        }
+        function theaterUid() {
+            return 'srg-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+        }
+        function theaterFbReady() {
+            return !!(window.firebaseDB && window.firebaseFunctions && window.firebaseReady);
+        }
+        function theaterWaitFb(ms) {
+            return new Promise(function (done) {
+                var waited = 0;
+                (function tick() {
+                    if (theaterFbReady() || waited >= ms) return done();
+                    waited += 200;
+                    setTimeout(tick, 200);
+                })();
+            });
+        }
+
+        function writeTheaterMirror() {
+            try { localStorage.setItem(THEATER_SURGERIES_KEY, JSON.stringify(theaterList)); } catch (e) {}
+        }
+
+        function loadTheaterList() {
+            try {
+                var local = JSON.parse(localStorage.getItem(THEATER_SURGERIES_KEY) || '[]');
+                if (Array.isArray(local)) theaterList = local;
+            } catch (e) {}
+            renderTheaterList();
+            if (theaterUnsub || !window.firebaseFunctions || !window.firebaseDB) return;
+            try {
+                var f = window.firebaseFunctions;
+                theaterUnsub = f.onSnapshot(f.collection(window.firebaseDB, 'theaterSurgeries'), function (snap) {
+                    var map = [];
+                    snap.forEach(function (d) { var r = d.data() || {}; r.id = r.id || d.id; map.push(r); });
+                    map.sort(function (a, b) {
+                        return String(b.date || '').localeCompare(String(a.date || '')) ||
+                               String(b.time || '').localeCompare(String(a.time || ''));
+                    });
+                    theaterList = map;
+                    writeTheaterMirror();
+                    renderTheaterList();
+                }, function (err) { console.warn('[doctor] theater listener failed:', err && err.message); });
+            } catch (e) { console.warn('[doctor] theater listener unavailable:', e && e.message); }
+        }
+
+        function theaterBadge(value, kind) {
+            return '<span class="badge ' + kind + '">' + pcEsc(value) + '</span>';
+        }
+
         function renderTheaterList() {
-            const filterDate = document.getElementById('theaterDateFilter').value || new Date().toISOString().slice(0, 10);
-            const filtered = theaterList.filter(t => t.date === filterDate);
+            const filterEl = document.getElementById('theaterDateFilter');
             const tbody = document.getElementById('theaterTbody');
+            if (!tbody) return;
+            const filterDate = (filterEl && filterEl.value) || new Date().toISOString().slice(0, 10);
+            // Bookings are addressed by id so the date filter can never shift a
+            // cancel onto a different procedure.
+            const filtered = theaterList.filter(t => t.date === filterDate);
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--tm);">No procedures on this date.</td></tr>`;
-                document.getElementById('theaterCountToday').textContent = `📅 0 procedures on ${filterDate}`;
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--tm);">No procedures on this date.</td></tr>';
+                const c = document.getElementById('theaterCountToday');
+                if (c) c.textContent = '📅 0 procedures on ' + filterDate;
                 return;
             }
 
-            tbody.innerHTML = filtered.map((t, i) => `
-                <tr>
-                    <td><strong>${t.patient}</strong><br><span style="font-size:10px;color:var(--tm)">${t.mrn}</span></td>
-                    <td>${t.procedure}</td>
-                    <td>${t.date}</td>
-                    <td>${t.time || '--:--'}</td>
-                    <td>${t.surgeon}</td>
-                    <td><span class="badge ${t.priority === 'Emergency' ? 'b-critical' : t.priority === 'Urgent' ? 'b-warn' : 'b-info'}">${t.priority}</span></td>
-                    <td><span class="badge b-info">${t.status}</span></td>
-                    <td><button class="btn-s" style="padding:2px 8px;font-size:11px;" onclick="removeTheaterEntry(${i})"><i class="ti ti-x"></i></button></td>
-                </tr>
-            `).join('');
-            document.getElementById('theaterCountToday').textContent = `📅 ${filtered.length} procedure${filtered.length > 1 ? 's' : ''} on ${filterDate}`;
+            tbody.innerHTML = filtered.map((t) => '<tr>' +
+                '<td><strong>' + pcEsc(t.patient) + '</strong><br><span style="font-size:10px;color:var(--tm)">' + pcEsc(t.mrn) + '</span></td>' +
+                '<td>' + pcEsc(t.procedure) + '</td>' +
+                '<td>' + pcEsc(t.date) + '</td>' +
+                '<td>' + pcEsc(t.time || '--:--') + '</td>' +
+                '<td>' + pcEsc(t.surgeon) + '</td>' +
+                '<td>' + theaterBadge(t.priority, t.priority === 'Emergency' ? 'b-critical' : t.priority === 'Urgent' ? 'b-warn' : 'b-info') + '</td>' +
+                '<td>' + theaterBadge(t.status, 'b-info') + '</td>' +
+                '<td><button class="btn-s" style="padding:2px 8px;font-size:11px;" data-action="removeTheaterEntry" data-arg0="' + pcAttr(t.id) + '"><i class="ti ti-x"></i></button></td>' +
+            '</tr>').join('');
+            const c = document.getElementById('theaterCountToday');
+            if (c) c.textContent = '📅 ' + filtered.length + ' procedure' + (filtered.length > 1 ? 's' : '') + ' on ' + filterDate;
         }
 
         function showTheaterForm() {
@@ -2815,7 +3004,7 @@ function updateSchedule() {
             document.getElementById('theater-modal').classList.remove('show');
         }
 
-        function addTheaterEntry() {
+        async function addTheaterEntry() {
             const patient = document.getElementById('theaterPatient').value.trim();
             const mrn = document.getElementById('theaterMRN').value.trim();
             const procedure = document.getElementById('theaterProcedure').value.trim();
@@ -2831,23 +3020,78 @@ function updateSchedule() {
                 return;
             }
 
-            theaterList.push({ patient, mrn, procedure, date, time, surgeon, priority, status, notes });
+            const booking = {
+                id: theaterUid(),
+                patient: patient,
+                mrn: mrn,
+                patientId: currentPatient ? String(currentPatient.id) : '',
+                procedure: procedure,
+                type: 'Elective',
+                surgeon: surgeon,
+                theater: 'OT 1',
+                date: date,
+                time: time || '--:--',
+                duration: '',
+                priority: priority,
+                status: 'scheduled',
+                notes: notes || 'Pre-op workup in progress.',
+                createdAt: new Date().toISOString(),
+                createdBy: theaterStaffName(),
+                createdById: theaterStaffId()
+            };
+
+            theaterList.push(booking);
+            writeTheaterMirror();
             renderTheaterList();
             closeTheaterModal();
-            showToast(`✅ ${patient} added to theater list`, 'success');
+            showToast('✅ ' + patient + ' booked for theatre on ' + date + ' at ' + booking.time, 'success');
+            if (String(status).toLowerCase() !== 'scheduled') {
+                showToast('ℹ️ Bookings start as Scheduled — the theater team records progress', 'info');
+            }
 
             document.getElementById('theaterPatient').value = '';
             document.getElementById('theaterMRN').value = '';
             document.getElementById('theaterProcedure').value = '';
             document.getElementById('theaterNotes').value = '';
+
+            await theaterWaitFb(4000);
+            if (!theaterFbReady()) {
+                showToast('⚠️ Not sent to the Operating Theater — saved on this computer only', 'warning');
+                return;
+            }
+            try {
+                const f = window.firebaseFunctions;
+                await f.setDoc(f.doc(window.firebaseDB, 'theaterSurgeries', booking.id), booking);
+            } catch (err) {
+                console.error('[doctor] theater booking save rejected:', err && (err.code || err.message));
+                showToast('⚠️ Not saved to the common server (' + ((err && (err.code || err.message)) || 'unknown') + ')', 'error');
+            }
         }
 
-        function removeTheaterEntry(index) {
-            const entry = theaterList[index];
-            if (confirm(`Remove ${entry.patient} - ${entry.procedure} from the list?`)) {
-                theaterList.splice(index, 1);
+        async function removeTheaterEntry(surgeryId) {
+            const entry = theaterList.find(t => String(t.id) === String(surgeryId));
+            if (!entry) {
+                showToast('❌ That booking is no longer on screen — reopen the theater list first', 'error');
+                return;
+            }
+            if (!confirm('Cancel this theater booking for ' + (entry.patient || 'the patient') + ' — ' + (entry.procedure || '') + '?')) return;
+
+            entry.status = 'cancelled';
+            writeTheaterMirror();
+            renderTheaterList();
+            showToast('🗑️ Booking cancelled', 'info');
+
+            await theaterWaitFb(4000);
+            if (!theaterFbReady()) return;
+            try {
+                const f = window.firebaseFunctions;
+                await f.updateDoc(f.doc(window.firebaseDB, 'theaterSurgeries', entry.id), { status: 'cancelled' });
+            } catch (err) {
+                entry.status = 'scheduled';
+                writeTheaterMirror();
                 renderTheaterList();
-                showToast(`🗑️ Removed ${entry.patient}`, 'info');
+                console.error('[doctor] theater cancel rejected:', err && (err.code || err.message));
+                showToast('⚠️ Could not cancel on the server: ' + ((err && (err.code || err.message)) || 'unknown'), 'error');
             }
         }
 
@@ -2969,11 +3213,11 @@ function updateSchedule() {
             const time = v.timestamp ? new Date(v.timestamp).toLocaleString() : '';
 
             grid.innerHTML =
-                '<div><span style="color:var(--tm);">HR</span><br><strong>' + hr + ' bpm</strong></div>' +
-                '<div><span style="color:var(--tm);">BP</span><br><strong>' + sys + '/' + dia + '</strong></div>' +
-                '<div><span style="color:var(--tm);">SpO₂</span><br><strong>' + spo2 + '%</strong></div>' +
-                '<div><span style="color:var(--tm);">Temp</span><br><strong>' + temp + '°C</strong></div>' +
-                (time ? '<div style="grid-column:1/-1;font-size:10px;color:var(--tm);margin-top:4px;">Recorded: ' + time + '</div>' : '');
+                '<div><span style="color:var(--tm);">HR</span><br><strong>' + pcEsc(hr) + ' bpm</strong></div>' +
+                '<div><span style="color:var(--tm);">BP</span><br><strong>' + pcEsc(sys) + '/' + pcEsc(dia) + '</strong></div>' +
+                '<div><span style="color:var(--tm);">SpO₂</span><br><strong>' + pcEsc(spo2) + '%</strong></div>' +
+                '<div><span style="color:var(--tm);">Temp</span><br><strong>' + pcEsc(temp) + '°C</strong></div>' +
+                (time ? '<div style="grid-column:1/-1;font-size:10px;color:var(--tm);margin-top:4px;">Recorded: ' + pcEsc(time) + '</div>' : '');
         }
 
         function displayWardRoundHistory(patient) {
@@ -3006,21 +3250,21 @@ function updateSchedule() {
 
                 return '<div class="notes-history-item">' +
                     '<div class="note-header">' +
-                        '<span class="note-type" style="background:' + color + '22;color:' + color + ';">' + condition + '</span>' +
-                        '<span class="note-time">🕐 ' + date + '</span>' +
+                        '<span class="note-type" style="background:' + color + '22;color:' + color + ';">' + pcEsc(condition) + '</span>' +
+                        '<span class="note-time">🕐 ' + pcEsc(date) + '</span>' +
                     '</div>' +
                     '<div class="note-content">' +
-                        (round.location ? '<strong>Ward:</strong> ' + round.location + (round.bed ? ' · Bed ' + round.bed : '') + '<br>' : '') +
-                        (round.overnight ? '<strong>Overnight:</strong> ' + round.overnight + '<br>' : '') +
-                        (round.examination ? '<strong>Examination:</strong> ' + round.examination + '<br>' : '') +
-                        (round.assessment ? '<strong>Assessment:</strong> ' + round.assessment + '<br>' : '') +
-                        (round.plan ? '<strong>Plan:</strong> ' + round.plan + '<br>' : '') +
-                        (round.discharge ? '<strong>Discharge:</strong> ' + round.discharge : '') +
+                        (round.location ? '<strong>Ward:</strong> ' + pcEsc(round.location) + (round.bed ? ' · Bed ' + pcEsc(round.bed) : '') + '<br>' : '') +
+                        (round.overnight ? '<strong>Overnight:</strong> ' + pcEsc(round.overnight) + '<br>' : '') +
+                        (round.examination ? '<strong>Examination:</strong> ' + pcEsc(round.examination) + '<br>' : '') +
+                        (round.assessment ? '<strong>Assessment:</strong> ' + pcEsc(round.assessment) + '<br>' : '') +
+                        (round.plan ? '<strong>Plan:</strong> ' + pcEsc(round.plan) + '<br>' : '') +
+                        (round.discharge ? '<strong>Discharge:</strong> ' + pcEsc(round.discharge) : '') +
                     '</div>' +
-                    '<div class="note-doctor"><i class="ti ti-user"></i> ' + doctor + '</div>' +
+                    '<div class="note-doctor"><i class="ti ti-user"></i> ' + pcEsc(doctor) + '</div>' +
                     '<div class="note-actions">' +
-                        '<button class="btn-print-note" onclick="printWardRound(' + patient.id + ', ' + round.id + ')"><i class="ti ti-printer"></i> Print</button>' +
-                        '<button class="btn-delete-note" onclick="deleteWardRound(' + patient.id + ', ' + round.id + ')"><i class="ti ti-trash"></i> Delete</button>' +
+                        '<button class="btn-print-note" data-action="printWardRound" data-arg0="' + pcAttr(patient.id) + '" data-arg1="' + pcAttr(round.id) + '"><i class="ti ti-printer"></i> Print</button>' +
+                        '<button class="btn-delete-note" data-action="deleteWardRound" data-arg0="' + pcAttr(patient.id) + '" data-arg1="' + pcAttr(round.id) + '"><i class="ti ti-trash"></i> Delete</button>' +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -3029,14 +3273,16 @@ function updateSchedule() {
         function deleteWardRound(patientId, roundId) {
             if (!confirm('Delete this ward round record?')) return;
             const patients = getPatients();
-            const patient = patients.find(function(p) { return p.id === patientId; });
+            // ids arrive as strings from data-attributes, and Firestore returns
+            // them as strings too — never compare them with ===.
+            const patient = patients.find(function(p) { return String(p.id) === String(patientId); });
             if (!patient || !patient.wardRounds) return;
 
-            patient.wardRounds = patient.wardRounds.filter(function(r) { return r.id !== roundId; });
+            patient.wardRounds = patient.wardRounds.filter(function(r) { return String(r.id) !== String(roundId); });
             if (typeof updatePatient === 'function') {
                 updatePatient(patientId, { wardRounds: patient.wardRounds });
             }
-            if (currentPatient && currentPatient.id === patientId) {
+            if (currentPatient && String(currentPatient.id) === String(patientId)) {
                 currentPatient = getPatient(patientId) || patient;
                 displayWardRoundHistory(currentPatient);
             }
@@ -3045,32 +3291,42 @@ function updateSchedule() {
 
         function printWardRound(patientId, roundId) {
             const patients = getPatients();
-            const patient = patients.find(function(p) { return p.id === patientId; });
-            if (!patient) return;
-            const round = (patient.wardRounds || []).find(function(r) { return r.id === roundId; });
-            if (!round) return;
+            const patient = patients.find(function(p) { return String(p.id) === String(patientId); });
+            if (!patient) {
+                showToast('❌ Patient not found', 'error');
+                return;
+            }
+            const round = (patient.wardRounds || []).find(function(r) { return String(r.id) === String(roundId); });
+            if (!round) {
+                showToast('❌ Ward round not found', 'error');
+                return;
+            }
 
             const printContent =
                 '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
                 '           PCLINIC WARD ROUND NOTE\n' +
                 '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-                'Patient: ' + (patient.firstName || '') + ' ' + (patient.lastName || '') + '\n' +
-                'MRN: ' + (patient.mrn || 'N/A') + '\n' +
-                'Ward: ' + (round.location || 'N/A') + (round.bed ? ' · Bed ' + round.bed : '') + '\n' +
-                'Date: ' + (round.timestamp ? new Date(round.timestamp).toLocaleString() : round.date) + '\n' +
-                'Doctor: ' + (round.doctor || 'Unknown') + '\n' +
-                'Condition: ' + (round.condition || 'Stable') + '\n\n' +
+                'Patient: ' + pcEsc((patient.firstName || '') + ' ' + (patient.lastName || '')) + '\n' +
+                'MRN: ' + pcEsc(patient.mrn || 'N/A') + '\n' +
+                'Ward: ' + pcEsc(round.location || 'N/A') + (round.bed ? ' · Bed ' + pcEsc(round.bed) : '') + '\n' +
+                'Date: ' + pcEsc(round.timestamp ? new Date(round.timestamp).toLocaleString() : (round.date || '')) + '\n' +
+                'Doctor: ' + pcEsc(round.doctor || 'Unknown') + '\n' +
+                'Condition: ' + pcEsc(round.condition || 'Stable') + '\n\n' +
                 '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-                (round.overnight ? 'OVERNIGHT EVENTS:\n' + round.overnight + '\n\n' : '') +
-                (round.examination ? 'EXAMINATION:\n' + round.examination + '\n\n' : '') +
-                (round.assessment ? 'ASSESSMENT:\n' + round.assessment + '\n\n' : '') +
-                (round.plan ? 'PLAN:\n' + round.plan + '\n\n' : '') +
-                (round.discharge ? 'DISCHARGE PLANNING:\n' + round.discharge + '\n\n' : '') +
+                (round.overnight ? 'OVERNIGHT EVENTS:\n' + pcEsc(round.overnight) + '\n\n' : '') +
+                (round.examination ? 'EXAMINATION:\n' + pcEsc(round.examination) + '\n\n' : '') +
+                (round.assessment ? 'ASSESSMENT:\n' + pcEsc(round.assessment) + '\n\n' : '') +
+                (round.plan ? 'PLAN:\n' + pcEsc(round.plan) + '\n\n' : '') +
+                (round.discharge ? 'DISCHARGE PLANNING:\n' + pcEsc(round.discharge) + '\n\n' : '') +
                 '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
                 '            PClinic - Quality Healthcare\n' +
                 '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
 
             const win = window.open('', '_blank', 'width=600,height=500');
+            if (!win) {
+                showToast('❌ Please allow pop-ups to print', 'error');
+                return;
+            }
             win.document.write('<pre style="font-family:monospace;padding:20px;font-size:14px;">' + printContent + '</pre>');
             win.document.close();
         }
@@ -3223,6 +3479,16 @@ function updateSchedule() {
 
 
 // ─── DISPLAY CLINICAL NOTES HISTORY ───
+// Notes are rendered newest-first, so the visible index does not match the
+// stored index. Print/delete actions are anchored to this snapshot instead:
+// an old click must never delete whatever happens to sit at that position now.
+var notesRows = { patientId: '', list: [] };
+
+function noteRowAt(patientId, idx) {
+    if (String(patientId) !== String(notesRows.patientId)) return null;
+    return notesRows.list[Number(idx)] || null;
+}
+
 function displayClinicalNotes(patient) {
     var container = document.getElementById('notesHistoryList');
     var count = document.getElementById('notesHistoryCount');
@@ -3232,72 +3498,98 @@ function displayClinicalNotes(patient) {
     if (count) count.textContent = notes.length + ' note' + (notes.length !== 1 ? 's' : '');
     
     if (notes.length === 0) {
+        notesRows = { patientId: String(patient.id), list: [] };
         container.innerHTML = '<p style="text-align:center;padding:20px;color:var(--tm);font-size:12px;">No notes recorded yet.</p>';
         return;
     }
     
     var sorted = [...notes].reverse();
-    container.innerHTML = sorted.map(function(note) {
+    notesRows = { patientId: String(patient.id), list: sorted };
+    container.innerHTML = sorted.map(function(note, i) {
         var date = note.timestamp ? new Date(note.timestamp).toLocaleString() : 'No date';
         var type = note.type || 'Consultation';
         var content = (note.note || '').substring(0, 200) + ((note.note || '').length > 200 ? '...' : '');
         var doctor = note.doctor || 'Dr. Unknown';
         
-        return `<div class="notes-history-item">
-            <div class="note-header">
-                <span class="note-type">${type}</span>
-                <span class="note-time">🕐 ${date}</span>
-            </div>
-            <div class="note-content">${content}</div>
-            <div class="note-doctor"><i class="ti ti-user"></i> ${doctor}</div>
-            <div class="note-actions">
-                <button class="btn-print-note" onclick="printNote(${patient.id}, '${note.id || Date.now()}')"><i class="ti ti-printer"></i> Print</button>
-                <button class="btn-delete-note" onclick="deleteNote(${patient.id}, '${note.id || Date.now()}')"><i class="ti ti-trash"></i> Delete</button>
-            </div>
-        </div>`;
+        return '<div class="notes-history-item">' +
+            '<div class="note-header">' +
+                '<span class="note-type">' + pcEsc(type) + '</span>' +
+                '<span class="note-time">🕐 ' + pcEsc(date) + '</span>' +
+            '</div>' +
+            '<div class="note-content">' + pcEsc(content) + '</div>' +
+            '<div class="note-doctor"><i class="ti ti-user"></i> ' + pcEsc(doctor) + '</div>' +
+            '<div class="note-actions">' +
+                '<button class="btn-print-note" data-action="printNote" data-arg0="' + pcAttr(patient.id) + '" data-arg1="' + pcAttr(i) + '"><i class="ti ti-printer"></i> Print</button>' +
+                '<button class="btn-delete-note" data-action="deleteNote" data-arg0="' + pcAttr(patient.id) + '" data-arg1="' + pcAttr(i) + '"><i class="ti ti-trash"></i> Delete</button>' +
+            '</div>' +
+        '</div>';
     }).join('');
 }
 
 // ─── PRINT NOTE ───
-function printNote(patientId, noteId) {
+function printNote(patientId, noteIndex) {
     var patients = getPatients();
-    var patient = patients.find(p => p.id === patientId);
-    if (!patient) return;
-    var note = (patient.clinicalNotes || []).find(n => String(n.id) === String(noteId));
-    if (!note) return;
+    var patient = patients.find(p => String(p.id) === String(patientId));
+    if (!patient) {
+        showToast('❌ Patient not found', 'error');
+        return;
+    }
+    var note = noteRowAt(patientId, noteIndex);
+    if (!note || (patient.clinicalNotes || []).indexOf(note) === -1) {
+        showToast('❌ That note is no longer on screen — reopen the patient before printing', 'error');
+        return;
+    }
     var printContent = 
         '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
         '           PCLINIC CLINICAL NOTE\n' +
         '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-        'Patient: ' + (patient.firstName || '') + ' ' + (patient.lastName || '') + '\n' +
-        'MRN: ' + (patient.mrn || 'N/A') + '\n' +
-        'Date: ' + new Date(note.timestamp).toLocaleString() + '\n' +
-        'Type: ' + (note.type || 'Consultation') + '\n' +
-        'Doctor: ' + (note.doctor || 'Unknown') + '\n\n' +
+        'Patient: ' + pcEsc((patient.firstName || '') + ' ' + (patient.lastName || '')) + '\n' +
+        'MRN: ' + pcEsc(patient.mrn || 'N/A') + '\n' +
+        'Date: ' + pcEsc(note.timestamp ? new Date(note.timestamp).toLocaleString() : '') + '\n' +
+        'Type: ' + pcEsc(note.type || 'Consultation') + '\n' +
+        'Doctor: ' + pcEsc(note.doctor || 'Unknown') + '\n\n' +
         '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
         'NOTE:\n' +
         '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-        note.note + '\n\n' +
+        pcEsc(note.note || '') + '\n\n' +
         '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
         '            PClinic - Quality Healthcare\n' +
         '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
     var win = window.open('', '_blank', 'width=600,height=400');
+    if (!win) {
+        showToast('❌ Please allow pop-ups to print', 'error');
+        return;
+    }
     win.document.write('<pre style="font-family:monospace;padding:20px;font-size:14px;">' + printContent + '</pre>');
     win.document.close();
     win.print();
 }
 
 // ─── DELETE NOTE ───
-function deleteNote(patientId, noteId) {
-    if (!confirm('Are you sure you want to delete this note?')) return;
+function deleteNote(patientId, noteIndex) {
     var patients = getPatients();
-    var patient = patients.find(p => p.id === patientId);
-    if (!patient) return;
-    patient.clinicalNotes = (patient.clinicalNotes || []).filter(n => String(n.id) !== String(noteId));
+    var patient = patients.find(p => String(p.id) === String(patientId));
+    if (!patient) {
+        showToast('❌ Patient not found', 'error');
+        return;
+    }
+    var note = noteRowAt(patientId, noteIndex);
+    if (!note || (patient.clinicalNotes || []).indexOf(note) === -1) {
+        showToast('❌ That note is no longer on screen — reopen the patient before deleting', 'error');
+        return;
+    }
+    if (!confirm('Are you sure you want to delete this note?')) return;
+    // Match on identity, not on position: legacy notes carry no id, so those
+    // are removed by the exact object reference that is on screen.
+    patient.clinicalNotes = (patient.clinicalNotes || []).filter(function(n) {
+        if (note.id != null && n.id != null) return String(n.id) !== String(note.id);
+        return n !== note;
+    });
     if (typeof updatePatient === 'function') {
         updatePatient(patientId, { clinicalNotes: patient.clinicalNotes });
     }
-    displayClinicalNotes(patient);
+    currentPatient = getPatient(patientId) || patient;
+    displayClinicalNotes(currentPatient);
     showToast('🗑️ Note deleted', 'info');
 }
 
@@ -3435,18 +3727,18 @@ function openLabHistoryModal() {
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
                     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                         <span style="font-weight:600;font-size:13px;color:var(--tp);">#${index + 1}</span>
-                        <span style="font-size:12px;color:var(--tm);">${date}</span>
-                        <span style="background:${statusBg};color:${statusColor};padding:2px 12px;border-radius:12px;font-size:10px;font-weight:600;">${req.status || 'Pending'}</span>
+                        <span style="font-size:12px;color:var(--tm);">${pcEsc(date)}</span>
+                        <span style="background:${statusBg};color:${statusColor};padding:2px 12px;border-radius:12px;font-size:10px;font-weight:600;">${pcEsc(req.status || 'Pending')}</span>
                     </div>
-                    <span style="font-size:11px;color:var(--tm);">👨‍⚕️ ${req.requestedBy || 'Unknown'}</span>
+                    <span style="font-size:11px;color:var(--tm);">👨‍⚕️ ${pcEsc(req.requestedBy || 'Unknown')}</span>
                 </div>
                 <div style="margin-top:6px;font-size:12px;color:var(--tp);">
-                    <strong>Tests:</strong> ${tests}
+                    <strong>Tests:</strong> ${pcEsc(tests)}
                 </div>
                 <div style="display:flex;gap:12px;margin-top:4px;font-size:11px;color:var(--tm);flex-wrap:wrap;">
-                    <span>📌 ${req.priority || 'Routine'}</span>
-                    <span>🧪 ${req.sampleType || 'N/A'}</span>
-                    ${req.clinicalDetails ? `<span>📝 ${req.clinicalDetails}</span>` : ''}
+                    <span>📌 ${pcEsc(req.priority || 'Routine')}</span>
+                    <span>🧪 ${pcEsc(req.sampleType || 'N/A')}</span>
+                    ${req.clinicalDetails ? '<span>📝 ' + pcEsc(req.clinicalDetails) + '</span>' : ''}
                 </div>
             </div>
         `;
@@ -4116,7 +4408,7 @@ function openLabRequestModal() {
             <div style="margin-bottom:12px;padding:10px;background:var(--acb);border-radius:8px;">
                 <div style="font-size:13px;font-weight:600;color:var(--tp);">
                     👤 ${currentPatient.firstName || ''} ${currentPatient.lastName || ''}
-                    <span style="font-size:12px;color:var(--tm);font-weight:400;margin-left:8px;">${currentPatient.mrn || 'N/A'}</span>
+                    <span style="font-size:12px;color:var(--tm);font-weight:400;margin-left:8px;">${pcEsc(currentPatient.mrn || 'N/A')}</span>
                 </div>
             </div>
 
@@ -4261,14 +4553,35 @@ function addModalCustomTest() {
         }
     }
     
+    // Built with DOM APIs, never innerHTML: a test name is free text and a
+    // quote in it would break out of value="…" otherwise.
     var div = document.createElement('div');
     div.className = 'modal-custom-test';
     div.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:var(--acb);padding:2px 8px;border-radius:12px;margin:2px;';
-    div.innerHTML = `
-        <input type="checkbox" checked value="${testName}" style="accent-color:var(--ac);">
-        <span style="font-size:10px;">${testName}</span>
-        <span onclick="this.parentElement.remove();updateModalSelectedCount();" style="cursor:pointer;color:var(--red);font-size:12px;">×</span>
-    `;
+
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.value = testName;
+    cb.style.accentColor = 'var(--ac)';
+
+    var label = document.createElement('span');
+    label.style.fontSize = '10px';
+    label.textContent = testName;
+
+    var remove = document.createElement('span');
+    remove.style.cursor = 'pointer';
+    remove.style.color = 'var(--red)';
+    remove.style.fontSize = '12px';
+    remove.textContent = '×';
+    remove.addEventListener('click', function () {
+        div.remove();
+        updateModalSelectedCount();
+    });
+
+    div.appendChild(cb);
+    div.appendChild(label);
+    div.appendChild(remove);
     list.appendChild(div);
     input.value = '';
     updateModalSelectedCount();
@@ -4362,8 +4675,7 @@ function submitModalLabRequest() {
         };
 
         function getAdmittedPatients() {
-            const patients = getPatients() || [];
-            return patients.filter(p => p.status === 'active').map(p => [
+            return getPatientCohorts().admitted.map(p => [
                 (p.firstName || '') + ' ' + (p.lastName || ''),
                 p.department || 'General',
                 p.diagnosis || 'Under observation',
@@ -4372,8 +4684,7 @@ function submitModalLabRequest() {
         }
 
         function getReviewPatients() {
-            const patients = getPatients() || [];
-            return patients.filter(p => p.status === 'pending_review').map(p => [
+            return getPatientCohorts().review.map(p => [
                 (p.firstName || '') + ' ' + (p.lastName || ''),
                 p.department || 'General',
                 'Needs review',
@@ -4382,8 +4693,7 @@ function submitModalLabRequest() {
         }
 
         function getCriticalPatients() {
-            const patients = getPatients() || [];
-            return patients.filter(p => p.priority === 'critical' || (p.vitals && p.vitals.some(v => v.painScore && parseInt(v.painScore) > 7))).map(p => [
+            return getPatientCohorts().critical.map(p => [
                 (p.firstName || '') + ' ' + (p.lastName || ''),
                 p.department || 'General',
                 p.diagnosis || 'Critical condition',
@@ -4392,8 +4702,7 @@ function submitModalLabRequest() {
         }
 
         function getDischargePatients() {
-            const patients = getPatients() || [];
-            return patients.filter(p => p.status === 'ready_discharge').map(p => [
+            return getPatientCohorts().discharge.map(p => [
                 (p.firstName || '') + ' ' + (p.lastName || ''),
                 p.department || 'General',
                 p.diagnosis || 'Ready for discharge',
@@ -4412,7 +4721,7 @@ function submitModalLabRequest() {
             } else {
                 let html = '<table class="wtbl"><thead><tr><th>Patient</th><th>Location</th><th>Details</th><th>Status</th></tr></thead><tbody>';
                 rows.forEach(r => {
-                    html += '<tr>' + r.map(c => '<td style="font-size:12px;">' + c + '</td>').join('') + '</tr>';
+                    html += '<tr>' + r.map(c => '<td style="font-size:12px;">' + pcEsc(c) + '</td>').join('') + '</tr>';
                 });
                 html += '</tbody></table>';
                 document.getElementById('modal-body').innerHTML = html;
@@ -4429,21 +4738,37 @@ function submitModalLabRequest() {
 
 
         // ─── VITAL OPERATIONS ───
+        // The history is rendered newest-first, so the number in a button is a
+        // *display* index. Resolve it against this snapshot and then to the
+        // live position by object identity — never splice a drifting index.
+        var vitalsRows = { patientId: '', list: [] };
+
+        function vitalRowAt(patientId, displayIndex) {
+            if (String(patientId) !== String(vitalsRows.patientId)) return null;
+            return vitalsRows.list[Number(displayIndex)] || null;
+        }
+
         function deleteVital(patientId, vitalIndex) {
             if (!confirm('⚠️ Are you sure you want to delete this vital record?')) return;
             try {
                 const patients = getPatients();
-                const patient = patients.find(p => p.id === patientId);
-                if (!patient || !patient.vitals || vitalIndex < 0 || vitalIndex >= patient.vitals.length) {
+                const patient = patients.find(p => String(p.id) === String(patientId));
+                if (!patient || !patient.vitals) {
                     showToast('❌ Vital record not found', 'error');
                     return;
                 }
-                patient.vitals.splice(vitalIndex, 1);
+                const row = vitalRowAt(patientId, vitalIndex);
+                const liveIndex = row ? patient.vitals.indexOf(row) : -1;
+                if (liveIndex === -1) {
+                    showToast('❌ That vital is no longer on screen — reopen the patient first', 'error');
+                    return;
+                }
+                patient.vitals.splice(liveIndex, 1);
                 if (typeof updatePatient === 'function') {
                     updatePatient(patientId, { vitals: patient.vitals });
                 }
-                if (currentPatient && currentPatient.id === patientId) {
-                    currentPatient.vitals = patient.vitals;
+                if (currentPatient && String(currentPatient.id) === String(patientId)) {
+                    currentPatient = getPatient(patientId) || patient;
                     updateAllVitalsDisplays();
                 }
                 showToast('🗑️ Vital deleted', 'info');
@@ -4456,13 +4781,19 @@ function submitModalLabRequest() {
         function editVital(patientId, vitalIndex) {
             try {
                 const patients = getPatients();
-                const patient = patients.find(p => p.id === patientId);
-                if (!patient || !patient.vitals || vitalIndex < 0 || vitalIndex >= patient.vitals.length) {
+                const patient = patients.find(p => String(p.id) === String(patientId));
+                if (!patient || !patient.vitals) {
                     showToast('❌ Vital not found', 'error');
                     return;
                 }
-                const v = patient.vitals[vitalIndex];
-                document.getElementById('editVitalIndex').value = vitalIndex;
+                const row = vitalRowAt(patientId, vitalIndex);
+                const liveIndex = row ? patient.vitals.indexOf(row) : -1;
+                if (liveIndex === -1) {
+                    showToast('❌ That vital is no longer on screen — reopen the patient first', 'error');
+                    return;
+                }
+                const v = patient.vitals[liveIndex];
+                document.getElementById('editVitalIndex').value = String(liveIndex);
                 document.getElementById('editHR').value = v.pulse || v.hr || '';
                 document.getElementById('editBP').value = (v.bpSystolic || v.systolic || '') + '/' + (v.bpDiastolic || v.diastolic || '');
                 document.getElementById('editSpO2').value = v.spo2 || v.spO2 || '';
@@ -4510,11 +4841,12 @@ function toggleVitalsHistory() {
             event.preventDefault();
             const patientId = currentPatient ? currentPatient.id : null;
             if (!patientId) { showToast('❌ No patient selected', 'error'); return; }
-            const vitalIndex = parseInt(document.getElementById('editVitalIndex').value);
+            const vitalIndex = parseInt(document.getElementById('editVitalIndex').value, 10);
             try {
                 const patients = getPatients();
-                const patient = patients.find(p => p.id === patientId);
-                if (!patient || !patient.vitals || vitalIndex >= patient.vitals.length) {
+                const patient = patients.find(p => String(p.id) === String(patientId));
+                if (!patient || !patient.vitals ||
+                    !Number.isInteger(vitalIndex) || vitalIndex < 0 || vitalIndex >= patient.vitals.length) {
                     showToast('❌ Vital not found', 'error');
                     return;
                 }
@@ -4567,6 +4899,7 @@ function toggleVitalsHistory() {
             const count = document.getElementById('vitalsHistoryCount');
             if (!container) return;
             if (!patient || !patient.vitals || patient.vitals.length === 0) {
+                vitalsRows = { patientId: String(patient ? patient.id : ''), list: [] };
                 container.innerHTML = '<div class="no-vitals-history">No vitals recorded yet</div>';
                 if (count) count.textContent = '0 records';
                 return;
@@ -4574,25 +4907,25 @@ function toggleVitalsHistory() {
             const vitals = patient.vitals;
             if (count) count.textContent = vitals.length + ' record' + (vitals.length !== 1 ? 's' : '');
             const sorted = [...vitals].reverse();
+            vitalsRows = { patientId: String(patient.id), list: sorted };
             container.innerHTML = sorted.map((v, index) => {
-                const originalIndex = vitals.length - 1 - index;
                 const date = v.timestamp ? new Date(v.timestamp).toLocaleString() : 
                              v.updatedAt ? new Date(v.updatedAt).toLocaleString() : 'No date';
                 const hr = v.pulse || v.hr || '--';
                 const bp = (v.bpSystolic || v.systolic || '--') + '/' + (v.bpDiastolic || v.diastolic || '--');
                 const spo2 = v.spo2 || v.spO2 || '--';
                 const temp = v.temperature || v.temp || '--';
-                return `<div class="vitals-history-item">
-                    <span class="vh-time">${date}</span>
-                    <span class="vh-value">${hr} <span class="vh-unit">bpm</span></span>
-                    <span class="vh-value">${bp} <span class="vh-unit">mmHg</span></span>
-                    <span class="vh-value">${spo2} <span class="vh-unit">%</span></span>
-                    <span class="vh-value">${temp} <span class="vh-unit">°C</span></span>
-                    <span class="vh-actions">
-                        <button class="vh-btn vh-btn-edit" onclick="editVital(${patient.id}, ${originalIndex})">✏️</button>
-                        <button class="vh-btn vh-btn-delete" onclick="deleteVital(${patient.id}, ${originalIndex})">🗑️</button>
-                    </span>
-                </div>`;
+                return '<div class="vitals-history-item">' +
+                    '<span class="vh-time">' + pcEsc(date) + '</span>' +
+                    '<span class="vh-value">' + pcEsc(hr) + ' <span class="vh-unit">bpm</span></span>' +
+                    '<span class="vh-value">' + pcEsc(bp) + ' <span class="vh-unit">mmHg</span></span>' +
+                    '<span class="vh-value">' + pcEsc(spo2) + ' <span class="vh-unit">%</span></span>' +
+                    '<span class="vh-value">' + pcEsc(temp) + ' <span class="vh-unit">°C</span></span>' +
+                    '<span class="vh-actions">' +
+                        '<button class="vh-btn vh-btn-edit" data-action="editVital" data-arg0="' + pcAttr(patient.id) + '" data-arg1="' + pcAttr(index) + '">✏️</button>' +
+                        '<button class="vh-btn vh-btn-delete" data-action="deleteVital" data-arg0="' + pcAttr(patient.id) + '" data-arg1="' + pcAttr(index) + '">🗑️</button>' +
+                    '</span>' +
+                '</div>';
             }).join('');
         }
 
@@ -4802,18 +5135,18 @@ function toggleVitalsHistory() {
                 let actions = '';
                 if (live === 'pending') {
                     actions =
-                        '<button onclick="cancelLabRequest(\'' + req.id + '\')" title="Cancel request" style="background:#fff;border:0.5px solid rgba(0,0,0,0.14);color:#3a3a3c;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">✕ Cancel</button>' +
-                        '<button onclick="deleteLabRequest(\'' + req.id + '\')" title="Delete request" style="background:#ffebe9;color:#8a1f1a;border:0.5px solid rgba(138,31,26,0.25);padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:6px;">🗑 Delete</button>';
+                        '<button data-action="cancelLabRequest" data-arg0="' + pcAttr(req.id) + '" title="Cancel request" style="background:#fff;border:0.5px solid rgba(0,0,0,0.14);color:#3a3a3c;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">✕ Cancel</button>' +
+                        '<button data-action="deleteLabRequest" data-arg0="' + pcAttr(req.id) + '" title="Delete request" style="background:#ffebe9;color:#8a1f1a;border:0.5px solid rgba(138,31,26,0.25);padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:6px;">🗑 Delete</button>';
                 } else if (live === 'completed') {
                     actions = '<button onclick="openLabResultsPage(currentPatient)" style="background:#eaf2ff;color:#0071e3;border:0.5px solid rgba(0,113,227,0.3);padding:4px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">📊 View Results</button>';
                 }
 
                 return '<div style="display:flex;align-items:center;gap:12px;background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:12px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);flex-wrap:wrap;">' +
                     '<div style="flex:1;min-width:180px;">' +
-                        '<div style="font-weight:800;color:#1d1d1f;font-size:12.5px;">' + tests + '</div>' +
-                        '<div style="font-size:11px;color:#6e6e73;margin-top:2px;">' + (req.priority || 'Routine') + ' • ' + (req.sampleType || 'N/A') + ' • ' + (req.requestedBy || 'Unknown') + '</div>' +
+                        '<div style="font-weight:800;color:#1d1d1f;font-size:12.5px;">' + pcEsc(tests) + '</div>' +
+                        '<div style="font-size:11px;color:#6e6e73;margin-top:2px;">' + pcEsc(req.priority || 'Routine') + ' • ' + pcEsc(req.sampleType || 'N/A') + ' • ' + pcEsc(req.requestedBy || 'Unknown') + '</div>' +
                     '</div>' +
-                    '<div style="font-size:11px;color:#6e6e73;white-space:nowrap;">' + date + '</div>' +
+                    '<div style="font-size:11px;color:#6e6e73;white-space:nowrap;">' + pcEsc(date) + '</div>' +
                     badge +
                     '<div style="white-space:nowrap;">' + actions + '</div>' +
                 '</div>';
@@ -4999,7 +5332,7 @@ function deleteLabRequest(requestId) {
                     '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + chips + '</div>' +
                     '<div style="font-size:10.5px;color:#6e6e73;margin-top:6px;">Verified by: ' + escDisp(o.completedBy || 'PClinic MOD Laboratory') + '</div>' +
                     '<div style="margin-top:8px;display:flex;gap:7px;flex-wrap:wrap;"><button onclick="openLabResultsPage(currentPatient)" style="background:#eaf2ff;color:#0071e3;border:0.5px solid rgba(0,113,227,0.3);padding:4px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">📊 Open Cumulative Flow Sheet</button>' +
-                    (isCriticalOrder ? '<button onclick="acknowledgeCriticalLabResult(\'' + String(o.id).replace(/'/g, "\\'") + '\',this)" style="background:#ffebe9;color:#8a1f1a;border:0.5px solid rgba(138,31,26,.3);padding:4px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">✓ Acknowledge critical result</button>' : '') + '</div>' +
+                    (isCriticalOrder ? '<button data-action="acknowledgeCriticalLabResult" data-arg0="' + pcAttr(o.id) + '" style="background:#ffebe9;color:#8a1f1a;border:0.5px solid rgba(138,31,26,.3);padding:4px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">✓ Acknowledge critical result</button>' : '') + '</div>' +
                 '</div>';
             });
 
@@ -5062,31 +5395,35 @@ function deleteLabRequest(requestId) {
                     if (req) {
                         let resultStr = 'Pending';
                         if (req.status === 'Completed' && req.result) {
-                            resultStr = `${req.result.value} ${req.result.unit} (${req.result.status})`;
+                            resultStr = pcEsc((req.result.value || '') + ' ' + (req.result.unit || '') + ' (' + (req.result.status || '') + ')');
                         }
                         
                         const printContent = 
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
                             '           PCLINIC LAB REQUEST\n' +
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-                            'Patient: ' + req.patientName + '\n' +
-                            'MRN: ' + req.mrn + '\n' +
-                            'Date: ' + new Date(req.timestamp).toLocaleString() + '\n' +
-                            'Priority: ' + req.priority + '\n' +
-                            'Sample Type: ' + req.sampleType + '\n' +
-                            'Requested By: ' + req.requestedBy + '\n\n' +
+                            'Patient: ' + pcEsc(req.patientName || '') + '\n' +
+                            'MRN: ' + pcEsc(req.mrn || '') + '\n' +
+                            'Date: ' + pcEsc(req.timestamp ? new Date(req.timestamp).toLocaleString() : '') + '\n' +
+                            'Priority: ' + pcEsc(req.priority || '') + '\n' +
+                            'Sample Type: ' + pcEsc(req.sampleType || '') + '\n' +
+                            'Requested By: ' + pcEsc(req.requestedBy || '') + '\n\n' +
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
                             'TESTS REQUESTED:\n' +
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-                            req.tests.map((t, i) => `  ${i+1}. ${t}`).join('\n') + '\n\n' +
-                            'Clinical Details:\n' + req.clinicalDetails + '\n\n' +
+                            (Array.isArray(req.tests) ? req.tests.map((t, i) => '  ' + (i+1) + '. ' + pcEsc(t)).join('\n') : '') + '\n\n' +
+                            'Clinical Details:\n' + pcEsc(req.clinicalDetails || '') + '\n\n' +
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-                            'Status: ' + req.status + '\n' +
+                            'Status: ' + pcEsc(req.status || '') + '\n' +
                             (req.status === 'Completed' ? 'Result: ' + resultStr + '\n' : '') +
                             '            PClinic - Quality Healthcare\n' +
                             '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
                         
                         const printWindow = window.open('', '_blank', 'width=600,height=500');
+                        if (!printWindow) {
+                            showToast('❌ Please allow pop-ups to print', 'error');
+                            return;
+                        }
                         printWindow.document.write('<pre style="font-family:monospace;padding:20px;font-size:14px;">' + printContent + '</pre>');
                         printWindow.document.close();
                         printWindow.print();
@@ -5120,18 +5457,37 @@ function addCustomLabTest() {
         }
     }
     
+    // Built with DOM APIs, never innerHTML: a test name is free text, and
+    // value="${testName}" / removeCustomTest('${testName}') both break on a
+    // quote — which would run as script in the page.
     const div = document.createElement('div');
     div.className = 'lab-test-item custom-test-item selected';
-    div.innerHTML = `
-        <input type="checkbox" checked value="${testName}">
-        <span class="test-name">${testName}</span>
-        <span class="test-code" style="cursor:pointer;color:var(--red);font-size:10px;" onclick="removeCustomTest('${testName}')">✕</span>
-    `;
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.value = testName;
+
+    const name = document.createElement('span');
+    name.className = 'test-name';
+    name.textContent = testName;
+
+    const remove = document.createElement('span');
+    remove.className = 'test-code';
+    remove.style.cursor = 'pointer';
+    remove.style.color = 'var(--red)';
+    remove.style.fontSize = '10px';
+    remove.textContent = '✕';
+    remove.addEventListener('click', function () { removeCustomTest(testName); });
+
+    div.appendChild(cb);
+    div.appendChild(name);
+    div.appendChild(remove);
     div.onclick = function(e) {
         if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'SPAN') {
-            const cb = this.querySelector('input[type="checkbox"]');
-            cb.checked = !cb.checked;
-            this.classList.toggle('selected', cb.checked);
+            const box = this.querySelector('input[type="checkbox"]');
+            box.checked = !box.checked;
+            this.classList.toggle('selected', box.checked);
             updateSelectedTests();
         }
     };
@@ -5206,7 +5562,7 @@ function openPatientHistory(filterType) {
     const surgeryNotes = currentPatient.clinicalNotes ? currentPatient.clinicalNotes.filter(n => n.type === 'Surgical Note' || n.type === 'Surgical') : [];
 
     // ─── SET TITLE BASED ON FILTER ───
-    let title = `📜 Patient History - ${currentPatient.firstName || ''} ${currentPatient.lastName || ''}`;
+    let title = `📜 Patient History - ${(currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '')}`;
     let showVitals = true;
     let showPrescriptions = true;
     let showLabRequests = true;
@@ -5215,42 +5571,42 @@ function openPatientHistory(filterType) {
     let showSurgeryNotes = true;
 
     if (filterType === 'vitals') {
-        title = `❤️ Vitals History - ${currentPatient.firstName || ''} ${currentPatient.lastName || ''}`;
+        title = `❤️ Vitals History - ${(currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '')}`;
         showPrescriptions = false;
         showLabRequests = false;
         showLabResults = false;
         showClinicalNotes = false;
         showSurgeryNotes = false;
     } else if (filterType === 'prescriptions') {
-        title = `💊 Prescriptions History - ${currentPatient.firstName || ''} ${currentPatient.lastName || ''}`;
+        title = `💊 Prescriptions History - ${(currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '')}`;
         showVitals = false;
         showLabRequests = false;
         showLabResults = false;
         showClinicalNotes = false;
         showSurgeryNotes = false;
     } else if (filterType === 'labrequests') {
-        title = `🧪 Lab Requests History - ${currentPatient.firstName || ''} ${currentPatient.lastName || ''}`;
+        title = `🧪 Lab Requests History - ${(currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '')}`;
         showVitals = false;
         showPrescriptions = false;
         showLabResults = false;
         showClinicalNotes = false;
         showSurgeryNotes = false;
     } else if (filterType === 'labresults') {
-        title = `📊 Lab Results History - ${currentPatient.firstName || ''} ${currentPatient.lastName || ''}`;
+        title = `📊 Lab Results History - ${(currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '')}`;
         showVitals = false;
         showPrescriptions = false;
         showLabRequests = false;
         showClinicalNotes = false;
         showSurgeryNotes = false;
     } else if (filterType === 'clinicalnotes') {
-        title = `📝 Clinical Notes History - ${currentPatient.firstName || ''} ${currentPatient.lastName || ''}`;
+        title = `📝 Clinical Notes History - ${(currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '')}`;
         showVitals = false;
         showPrescriptions = false;
         showLabRequests = false;
         showLabResults = false;
         showSurgeryNotes = false;
     } else if (filterType === 'surgerynotes') {
-        title = `🔪 Surgery Notes History - ${currentPatient.firstName || ''} ${currentPatient.lastName || ''}`;
+        title = `🔪 Surgery Notes History - ${(currentPatient.firstName || '') + ' ' + (currentPatient.lastName || '')}`;
         showVitals = false;
         showPrescriptions = false;
         showLabRequests = false;
@@ -5329,12 +5685,12 @@ function openPatientHistory(filterType) {
             const date = v.timestamp ? new Date(v.timestamp).toLocaleString() : 'No date';
             html += `
                 <tr style="border-bottom: 0.5px solid var(--bd);">
-                    <td style="padding: 6px 10px; font-size: 11px;">${date}</td>
-                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${v.pulse || v.hr || '--'}</td>
-                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${(v.bpSystolic || v.systolic || '--')}/${(v.bpDiastolic || v.diastolic || '--')}</td>
-                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${v.spo2 || v.spO2 || '--'}</td>
-                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${v.temperature || v.temp || '--'}</td>
-                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${v.painScore || v.pain || '--'}</td>
+                    <td style="padding: 6px 10px; font-size: 11px;">${pcEsc(date)}</td>
+                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${pcEsc(v.pulse || v.hr || '--')}</td>
+                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${pcEsc((v.bpSystolic || v.systolic || '--') + '/' + (v.bpDiastolic || v.diastolic || '--'))}</td>
+                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${pcEsc(v.spo2 || v.spO2 || '--')}</td>
+                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${pcEsc(v.temperature || v.temp || '--')}</td>
+                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${pcEsc(v.painScore || v.pain || '--')}</td>
                 </tr>
             `;
         });
@@ -5367,11 +5723,11 @@ function openPatientHistory(filterType) {
             const statusColor = rx.status === 'Pending' ? 'var(--oranged)' : rx.status === 'Dispensed' ? 'var(--greend)' : 'var(--redd)';
             html += `
                 <tr style="border-bottom: 0.5px solid var(--bd);">
-                    <td style="padding: 6px 10px; font-size: 11px;">${date}</td>
-                    <td style="padding: 6px 10px; font-weight: 500;">${rx.medication}</td>
-                    <td style="padding: 6px 10px; text-align: center;">${rx.dosage}</td>
-                    <td style="padding: 6px 10px; text-align: center;">${rx.frequency}</td>
-                    <td style="padding: 6px 10px; text-align: center; color: ${statusColor}; font-weight: 600;">${rx.status || 'Pending'}</td>
+                    <td style="padding: 6px 10px; font-size: 11px;">${pcEsc(date)}</td>
+                    <td style="padding: 6px 10px; font-weight: 500;">${pcEsc(rx.medication)}</td>
+                    <td style="padding: 6px 10px; text-align: center;">${pcEsc(rx.dosage)}</td>
+                    <td style="padding: 6px 10px; text-align: center;">${pcEsc(rx.frequency)}</td>
+                    <td style="padding: 6px 10px; text-align: center; color: ${statusColor}; font-weight: 600;">${pcEsc(rx.status || 'Pending')}</td>
                 </tr>
             `;
         });
@@ -5404,10 +5760,10 @@ function openPatientHistory(filterType) {
             const statusColor = req.status === 'Pending' ? 'var(--oranged)' : req.status === 'Completed' ? 'var(--greend)' : 'var(--redd)';
             html += `
                 <tr style="border-bottom: 0.5px solid var(--bd);">
-                    <td style="padding: 6px 10px; font-size: 11px;">${date}</td>
-                    <td style="padding: 6px 10px; font-weight: 500;">${tests}</td>
-                    <td style="padding: 6px 10px; text-align: center;">${req.priority || 'Routine'}</td>
-                    <td style="padding: 6px 10px; text-align: center; color: ${statusColor}; font-weight: 600;">${req.status || 'Pending'}</td>
+                    <td style="padding: 6px 10px; font-size: 11px;">${pcEsc(date)}</td>
+                    <td style="padding: 6px 10px; font-weight: 500;">${pcEsc(tests)}</td>
+                    <td style="padding: 6px 10px; text-align: center;">${pcEsc(req.priority || 'Routine')}</td>
+                    <td style="padding: 6px 10px; text-align: center; color: ${statusColor}; font-weight: 600;">${pcEsc(req.status || 'Pending')}</td>
                 </tr>
             `;
         });
@@ -5439,10 +5795,10 @@ function openPatientHistory(filterType) {
             const statusColor = r.status === 'normal' ? 'var(--greend)' : r.status === 'high' ? 'var(--redd)' : 'var(--ach)';
             html += `
                 <tr style="border-bottom: 0.5px solid var(--bd);">
-                    <td style="padding: 6px 10px; font-size: 11px;">${date}</td>
-                    <td style="padding: 6px 10px; font-weight: 500;">${r.test || 'N/A'}</td>
-                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${r.value || '--'} ${r.unit || ''}</td>
-                    <td style="padding: 6px 10px; text-align: center; color: ${statusColor}; font-weight: 600;">${r.status || 'normal'}</td>
+                    <td style="padding: 6px 10px; font-size: 11px;">${pcEsc(date)}</td>
+                    <td style="padding: 6px 10px; font-weight: 500;">${pcEsc(r.test || 'N/A')}</td>
+                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${pcEsc((r.value || '--') + ' ' + (r.unit || ''))}</td>
+                    <td style="padding: 6px 10px; text-align: center; color: ${statusColor}; font-weight: 600;">${pcEsc(r.status || 'normal')}</td>
                 </tr>
             `;
         });
@@ -5465,11 +5821,11 @@ function openPatientHistory(filterType) {
             html += `
                 <div style="padding: 8px 12px; border-bottom: 0.5px solid var(--bd);">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
-                        <span style="font-weight: 600; font-size: 12px;">${note.type || 'Consultation'}</span>
-                        <span style="font-size: 11px; color: var(--tm);">🕐 ${date}</span>
+                        <span style="font-weight: 600; font-size: 12px;">${pcEsc(note.type || 'Consultation')}</span>
+                        <span style="font-size: 11px; color: var(--tm);">🕐 ${pcEsc(date)}</span>
                     </div>
-                    <div style="font-size: 12px; color: var(--ts); margin-top: 4px;">${content}</div>
-                    <div style="font-size: 10px; color: var(--tm); margin-top: 2px;">👨‍⚕️ ${note.doctor || 'Dr. Unknown'}</div>
+                    <div style="font-size: 12px; color: var(--ts); margin-top: 4px;">${pcEsc(content)}</div>
+                    <div style="font-size: 10px; color: var(--tm); margin-top: 2px;">👨‍⚕️ ${pcEsc(note.doctor || 'Dr. Unknown')}</div>
                 </div>
             `;
         });
@@ -5494,11 +5850,11 @@ function openPatientHistory(filterType) {
             html += `
                 <div style="padding: 8px 12px; border-bottom: 0.5px solid var(--bd);">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
-                        <span style="font-weight: 600; font-size: 12px;">🔪 ${procedure}</span>
-                        <span style="font-size: 11px; color: var(--tm);">🕐 ${date}</span>
+                        <span style="font-weight: 600; font-size: 12px;">🔪 ${pcEsc(procedure)}</span>
+                        <span style="font-size: 11px; color: var(--tm);">🕐 ${pcEsc(date)}</span>
                     </div>
-                    <div style="font-size: 12px; color: var(--ts); margin-top: 4px;">👨‍⚕️ Surgeon: ${surgeon}</div>
-                    <div style="font-size: 11px; color: var(--tm); margin-top: 2px;">Findings: ${findings}</div>
+                    <div style="font-size: 12px; color: var(--ts); margin-top: 4px;">👨‍⚕️ Surgeon: ${pcEsc(surgeon)}</div>
+                    <div style="font-size: 11px; color: var(--tm); margin-top: 2px;">Findings: ${pcEsc(findings)}</div>
                 </div>
             `;
         });
@@ -5715,35 +6071,40 @@ document.addEventListener('click', function(e) {
 
 
 // ─── AUTO-REFRESH VITALS EVERY 30 SECONDS ───
-setInterval(function() {
-    if (currentPatient) {
+// Started only once the page knows who is logged in (see bootDoctorDashboard),
+// so an unauthenticated browser never polls patient records.
+let vitalsAutoRefresh = null;
+function startVitalsAutoRefresh() {
+    if (vitalsAutoRefresh) return;
+    vitalsAutoRefresh = setInterval(function() {
+        if (!currentPatient) return;
         try {
             const patients = getPatients();
-            const updated = patients.find(p => p.id === currentPatient.id);
-            if (updated) {
-                const oldVitals = currentPatient.vitals || [];
-                const newVitals = updated.vitals || [];
-                if (oldVitals.length !== newVitals.length ||
-                    JSON.stringify(oldVitals[oldVitals.length - 1]) !== JSON.stringify(newVitals[newVitals.length - 1])) {
-                    currentPatient = updated;
-                    updateAllVitalsDisplays();
-                    const ts = document.getElementById('vitalsTimestamp');
-                    if (ts) {
-                        ts.textContent = '🔄 Vitals updated ' + new Date().toLocaleTimeString();
-                        ts.style.color = 'var(--ac)';
-                        setTimeout(() => ts.style.color = '', 3000);
-                    }
+            const updated = patients.find(p => String(p.id) === String(currentPatient.id));
+            if (!updated) return;
+            const oldVitals = currentPatient.vitals || [];
+            const newVitals = updated.vitals || [];
+            if (oldVitals.length !== newVitals.length ||
+                JSON.stringify(oldVitals[oldVitals.length - 1]) !== JSON.stringify(newVitals[newVitals.length - 1])) {
+                currentPatient = updated;
+                updateAllVitalsDisplays();
+                const ts = document.getElementById('vitalsTimestamp');
+                if (ts) {
+                    ts.textContent = '🔄 Vitals updated ' + new Date().toLocaleTimeString();
+                    ts.style.color = 'var(--ac)';
+                    setTimeout(() => ts.style.color = '', 3000);
                 }
             }
         } catch(e) {}
-    }
-}, 30000);
+    }, 30000);
+}
 
 
         // ─── LOAD DARK MODE PREFERENCE ───
         if ((localStorage.getItem('pclinic-theme') === 'dark' || localStorage.getItem('darkMode') === 'enabled')) {
             document.body.classList.add('dark-mode');
-            document.querySelector('.theme-toggle i').className = 'ti ti-sun';
+            const themeIcon = document.querySelector('.theme-toggle i');
+            if (themeIcon) themeIcon.className = 'ti ti-sun';
             const breadcrumbIcon = document.getElementById('breadcrumbThemeIcon');
             if (breadcrumbIcon) breadcrumbIcon.className = 'ti ti-sun';
             document.documentElement.style.setProperty('--bg', '#0a0a0f');
@@ -5767,41 +6128,62 @@ setInterval(function() {
 
 
         // ─── INIT ───
+        // The page-level requireAuth(['doctor']) in doctor-dashboard.html
+        // dispatches pclinicStaffReady once a real staff record is confirmed.
+        // Patient data is only rendered after that signal, never from an
+        // unauthenticated browser.
+        var doctorAuthorized = false;
+        var DOCTOR_TABS = ['overview', 'patients', 'rx', 'lab-results', 'imaging',
+            'image-result', 'notes', 'theater', 'admission', 'physio', 'surgery'];
+
+        function bootDoctorDashboard() {
+            const today = new Date().toISOString().slice(0, 10);
+            document.querySelectorAll('input[type="date"]').forEach(el => {
+                if (!el.value) el.value = today;
+            });
+            const theaterFilterEl = document.getElementById('theaterDateFilter');
+            if (theaterFilterEl) theaterFilterEl.value = today;
+
+            loadPatients();
+            loadTheaterList();
+            debouncedUpdateSchedule();
+
+            // ✅ RESTORE LAST SELECTED TAB
+            const savedTab = localStorage.getItem('pclinic_active_tab');
+            if (savedTab && DOCTOR_TABS.indexOf(savedTab) !== -1) {
+                const tabBtn = document.querySelector('[data-tab="' + savedTab + '"]');
+                if (tabBtn) switchTab(savedTab, tabBtn);
+            } else {
+                const defaultTab = document.querySelector('[data-tab="overview"]');
+                if (defaultTab) switchTab('overview', defaultTab);
+            }
+
+            startVitalsAutoRefresh();
+
+            console.log('🏥 PClinic Doctor Dashboard — Fully Integrated');
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-    const today = new Date().toISOString().slice(0, 10);
-    document.querySelectorAll('input[type="date"]').forEach(el => {
-        if (!el.value) el.value = today;
-    });
-    document.getElementById('theaterDateFilter').value = today;
+            // UI chrome only — no patient data before authorization.
+            updateBreadcrumbButtons();
+        });
 
-    loadPatients();
-    renderTheaterList();
-    debouncedUpdateSchedule(); 
+        document.addEventListener('pclinicStaffReady', function (e) {
+            if (doctorAuthorized) return;
+            doctorAuthorized = true;
+            bootDoctorDashboard();
+        });
 
-    // ✅ RESTORE LAST SELECTED TAB
-    const savedTab = localStorage.getItem('pclinic_active_tab');
-    if (savedTab) {
-        const tabBtn = document.querySelector('[data-tab="' + savedTab + '"]');
-        if (tabBtn) {
-            switchTab(savedTab, tabBtn);
+        // The auth promise can already have resolved by the time this deferred
+        // script runs, in which case the event has been missed.
+        if (window.currentStaff && String(window.currentStaff.role) === 'doctor' && !doctorAuthorized) {
+            doctorAuthorized = true;
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bootDoctorDashboard);
+            } else {
+                bootDoctorDashboard();
+            }
         }
-    } else {
-        // Default to 'overview' if no saved tab
-        const defaultTab = document.querySelector('[data-tab="overview"]');
-        if (defaultTab) {
-            switchTab('overview', defaultTab);
-        }
-    }
-
-    console.log('🏥 PClinic Doctor Dashboard — Fully Integrated');
-    console.log('📌 Patients load from shared patient-data.js');
-    console.log('📌 Enhanced Prescription System with Medication Selection');
-    console.log('📌 Vitals: Edit/Delete with History');
-    console.log('📌 Clinical Notes & Surgical Notes with Save/Print/Delete');
-    console.log('📌 Enhanced Lab: All Categories + Custom Tests');
-    console.log('📌 Smart Lab Results Table with Filtering & Pagination');
-    console.log('📌 Shortcuts: Ctrl+D (Dark), Ctrl+F (Search), Ctrl+1-9 (Tabs), Ctrl+Enter (Save Note)');
-});
 
 
 
@@ -6056,17 +6438,17 @@ setInterval(function() {
                     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
                     '            PCLINIC TRANSFER FORM\n' +
                     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-                    'Patient: ' + patientName + '\n' +
-                    'MRN: ' + mrn + '\n' +
-                    'Current Ward/Dept: ' + fromWard + '\n' +
-                    'Date: ' + now.toLocaleString() + '\n\n' +
+                    'Patient: ' + pcEsc(patientName) + '\n' +
+                    'MRN: ' + pcEsc(mrn) + '\n' +
+                    'Current Ward/Dept: ' + pcEsc(fromWard) + '\n' +
+                    'Date: ' + pcEsc(now.toLocaleString()) + '\n\n' +
                     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-                    'Transferring Doctor: ' + fromDoctor + '\n' +
-                    'Transfer To: ' + toDoctor + '\n' +
-                    'Transfer Type: ' + transferType + '\n' +
-                    'Reason: ' + reason + '\n' +
-                    'Status: ' + status + '\n' +
-                    (notes ? 'Notes: ' + notes + '\n' : 'Notes: N/A\n') +
+                    'Transferring Doctor: ' + pcEsc(fromDoctor) + '\n' +
+                    'Transfer To: ' + pcEsc(toDoctor) + '\n' +
+                    'Transfer Type: ' + pcEsc(transferType) + '\n' +
+                    'Reason: ' + pcEsc(reason) + '\n' +
+                    'Status: ' + pcEsc(status) + '\n' +
+                    (notes ? 'Notes: ' + pcEsc(notes) + '\n' : 'Notes: N/A\n') +
                     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
                     'Doctor Signature: _____________________\n\n' +
                     'Patient/Guardian Signature: _____________________\n\n' +
@@ -6137,29 +6519,29 @@ setInterval(function() {
                                 #${transfers.length - index}
                             </span>
                             <span class="transfer-badge ${typeClass}">
-                                ${t.transferType || 'Transfer'}
+                                ${pcEsc(t.transferType || 'Transfer')}
                             </span>
-                            <span style="font-size: 11px; color: var(--tm);">${date}</span>
+                            <span style="font-size: 11px; color: var(--tm);">${pcEsc(date)}</span>
                         </div>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px;">
                             <div style="font-size: 12px;">
                                 <span style="color: var(--tm);">From:</span> 
-                                <strong>${t.fromDoctor || 'Unknown'}</strong>
+                                <strong>${pcEsc(t.fromDoctor || 'Unknown')}</strong>
                             </div>
                             <div style="font-size: 12px;">
                                 <span style="color: var(--tm);">To:</span> 
-                                <strong style="color: var(--ac);">${t.toDoctor || 'N/A'}</strong>
+                                <strong style="color: var(--ac);">${pcEsc(t.toDoctor || 'N/A')}</strong>
                             </div>
                             <div style="font-size: 12px; grid-column: 1 / -1;">
                                 <span style="color: var(--tm);">Reason:</span> 
-                                ${t.reason || 'Not specified'}
+                                ${pcEsc(t.reason || 'Not specified')}
                             </div>
                             <div style="font-size: 12px; grid-column: 1 / -1;">
                                 <span style="color: var(--tm);">Status:</span> 
-                                <span style="color: ${statusColor}; font-weight: 600;">${t.status || 'Pending'}</span>
+                                <span style="color: ${statusColor}; font-weight: 600;">${pcEsc(t.status || 'Pending')}</span>
                             </div>
-                            ${t.notes ? `<div style="font-size: 11px; color: var(--tm); grid-column: 1 / -1;">📝 ${t.notes}</div>` : ''}
+                            ${t.notes ? `<div style="font-size: 11px; color: var(--tm); grid-column: 1 / -1;">📝 ${pcEsc(t.notes)}</div>` : ''}
                         </div>
                     </div>
                 `;
@@ -6232,55 +6614,43 @@ function openAdmissionFormFromDashboard(patient) {
             // Insert HTML into modal
             modal.innerHTML = html;
             
-            // Extract and execute the script from the loaded HTML
-            const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
-            if (scriptMatch && scriptMatch[1]) {
-                try {
-                    // Execute the script in the current context
-                    const scriptEl = document.createElement('script');
-                    scriptEl.textContent = scriptMatch[1];
-                    document.body.appendChild(scriptEl);
-                    
-                    // Now call the open function from the loaded script
-                    setTimeout(() => {
-                        if (typeof openAdmissionForm === 'function') {
-                            openAdmissionForm(selectedPatient);
-                        } else {
-                            // Try to find it in the modal's scope
-                            const iframe = modal.querySelector('iframe');
-                            if (iframe && iframe.contentWindow) {
-                                iframe.contentWindow.postMessage({
-                                    type: 'OPEN_ADMISSION',
-                                    patient: selectedPatient
-                                }, window.location.origin);
-                            } else {
-                                // Fallback: try to evaluate the script content
-                                try {
-                                    eval(scriptMatch[1]);
-                                    setTimeout(() => {
-                                        if (typeof openAdmissionForm === 'function') {
-                                            openAdmissionForm(selectedPatient);
-                                        } else {
-                                            showToast('⚠️ Error: Admission form loaded but function not found', 'error');
-                                            modal.style.display = 'none';
-                                        }
-                                    }, 100);
-                                } catch (e) {
-                                    showToast('⚠️ Error initializing admission form', 'error');
-                                    modal.style.display = 'none';
-                                }
-                            }
-                        }
-                    }, 300);
-                } catch (e) {
-                    console.error('Error executing admission form script:', e);
-                    showToast('❌ Error loading admission form', 'error');
-                    modal.style.display = 'none';
+            // Execute the script from the loaded page. A fetched page can carry
+            // more than one script block, and eval() of the same source twice is
+            // how a function could silently be defined in the wrong scope.
+            const scripts = html.match(/<script>([\s\S]*?)<\/script>/g) || [];
+            scripts.forEach(function (block) {
+                const body = block.replace(/^<script>/, '').replace(/<\/script>$/, '');
+                const scriptEl = document.createElement('script');
+                scriptEl.textContent = body;
+                document.body.appendChild(scriptEl);
+            });
+
+            // Poll for readiness instead of a blind fixed delay.
+            let attempts = 0;
+            const maxAttempts = 50; // 50 x 20ms = 1s ceiling
+            const tryOpen = () => {
+                if (typeof openAdmissionForm === 'function') {
+                    openAdmissionForm(selectedPatient);
+                    return;
                 }
-            } else {
-                showToast('⚠️ No script found in admission form', 'warning');
+                attempts++;
+                if (attempts < maxAttempts) {
+                    setTimeout(tryOpen, 20);
+                    return;
+                }
+                // The page may deliver the form through an iframe instead.
+                const iframe = modal.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({
+                        type: 'OPEN_ADMISSION',
+                        patient: selectedPatient
+                    }, window.location.origin);
+                    return;
+                }
+                showToast('⚠️ Error: Admission form loaded but function not found', 'error');
                 modal.style.display = 'none';
-            }
+            };
+            setTimeout(tryOpen, 20);
         })
         .catch(error => {
             console.error('Error loading admission form:', error);
@@ -6680,11 +7050,13 @@ function openImagingPageModal(patient) {
         .then(html => {
             modal.innerHTML = html;
             
-            const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
-            if (scriptMatch && scriptMatch[1]) {
-                const scriptEl = document.createElement('script');
-                scriptEl.textContent = scriptMatch[1];
-                document.body.appendChild(scriptEl);
+            const inlineScripts = html.match(/<script>([\s\S]*?)<\/script>/g) || [];
+            if (inlineScripts.length) {
+                inlineScripts.forEach(function (block) {
+                    const scriptEl = document.createElement('script');
+                    scriptEl.textContent = block.replace(/^<script>/, '').replace(/<\/script>$/, '');
+                    document.body.appendChild(scriptEl);
+                });
 
                 // Poll for readiness instead of a blind fixed delay —
                 // opens as soon as the script has actually executed,

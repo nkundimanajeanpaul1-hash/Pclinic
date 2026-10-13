@@ -11,7 +11,7 @@
     <!-- ═══ FIREBASE + AUTH GUARD ═══ -->
     <script type="module" src="firebase-config.js"></script>
     <script src="auth-guard.js"></script>
-    <script src="pclinic-notifications.js" defer></script>
+    <script src="pclinic-notifications.js?v=20261013_DOCXSS1" defer></script>
 <script src="pclinic-state.js"></script>
 <script src="shared.js" defer></script>
 
@@ -20,11 +20,11 @@
     <script src="pclinic-orders.js" defer></script>
     <script src="pclinic-radiology.js?v=20260828_MEDIA" defer></script>
     <script src="pclinic-radiology-media.js?v=20260902_MEDIAURL2" defer></script>
-    <script src="doctor.js" defer></script>
+    <script src="doctor.js?v=20261013_DOCXSS1" defer</script>
     <script src="doctor-command.js" defer></script>
     <script src="pclinic-file.js?v=20260929_TECH_EXAMS" defer></script>
-    <script src="doctor-patient.js?v=20260929_TECH_EXAMS" defer></script>
-    <script src="doctor-actionbar.js?v=20260929_TECH_EXAMS" defer></script>
+    <script src="doctor-patient.js?v=20261013_DOCXSS1" defer></script>
+    <script src="doctor-actionbar.js?v=20261013_DOCXSS1" defer></script>
     <script src="doctor-move.js" defer></script>
     <script src="doctor-fixes.js" defer></script> 
 
@@ -3793,7 +3793,7 @@ input.fi:focus,
                 </button>
                 <div class="tb-btn" style="position:relative;" id="notifBtn" title="Notifications">
                     <i class="ti ti-bell"></i>
-                    <div class="notif-count" id="notifCount">3</div>
+                    <div class="notif-count" id="notifCount" style="display:none;">0</div>
                 </div>
                 <div class="tb-btn" id="settingsBtn" onclick="openSettingsModal()" title="Settings">
                     <i class="ti ti-settings"></i>
@@ -3812,41 +3812,11 @@ input.fi:focus,
                 <button class="notif-mark-read" onclick="markAllNotifsRead()">Mark all read</button>
             </div>
             <div class="notif-panel-list" id="notifList">
-                <div class="notif-item unread" data-id="1">
-                    <div class="notif-icon notif-lab"><i class="ti ti-test-pipe"></i></div>
-                    <div class="notif-body">
-                        <div class="notif-text">Lab results ready for <strong>Patient #1042</strong></div>
-                        <div class="notif-time">2 min ago</div>
-                    </div>
-                </div>
-                <div class="notif-item unread" data-id="2">
-                    <div class="notif-icon notif-rx"><i class="ti ti-prescription"></i></div>
-                    <div class="notif-body">
-                        <div class="notif-text">Prescription dispensed for <strong>Patient #1038</strong></div>
-                        <div class="notif-time">15 min ago</div>
-                    </div>
-                </div>
-                <div class="notif-item unread" data-id="3">
-                    <div class="notif-icon notif-warn"><i class="ti ti-alert-triangle"></i></div>
-                    <div class="notif-body">
-                        <div class="notif-text">Critical vitals alert for <strong>Patient #1051</strong></div>
-                        <div class="notif-time">32 min ago</div>
-                    </div>
-                </div>
-                <div class="notif-item" data-id="4">
-                    <div class="notif-icon notif-info"><i class="ti ti-info-circle"></i></div>
-                    <div class="notif-body">
-                        <div class="notif-text">Ward bed 12 assigned to <strong>Patient #1045</strong></div>
-                        <div class="notif-time">1 hr ago</div>
-                    </div>
-                </div>
-                <div class="notif-item" data-id="5">
-                    <div class="notif-icon notif-transfer"><i class="ti ti-arrows-transfer-up"></i></div>
-                    <div class="notif-body">
-                        <div class="notif-text">Transfer request from <strong>Dr. Ochieng</strong> — Patient #1033</div>
-                        <div class="notif-time">2 hrs ago</div>
-                    </div>
-                </div>
+                <!-- pclinic-notifications.js replaces this once the Firestore
+                     listener resolves. No invented alerts may sit here while it
+                     waits: a clinician cannot tell a demo notification from a
+                     real one, and the panel stays put if the query is refused. -->
+                <div style="padding:24px;text-align:center;color:#8e8e93;">Loading notifications…</div>
             </div>
         </div>
 
@@ -4147,6 +4117,9 @@ input.fi:focus,
                         <select class="fi" style="width:auto;" id="statusFilter" onchange="renderPatientTable()">
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
+                            <option value="critical">Critical</option>
+                            <option value="pending_review">Awaiting review</option>
+                            <option value="ready_discharge">Ready for discharge</option>
                             <option value="inactive">Inactive</option>
                         </select>
                         <button class="btn-p" onclick="loadPatients()"><i class="ti ti-refresh"></i> Refresh</button>
@@ -4441,7 +4414,7 @@ input.fi:focus,
                             <label style="font-size: 11px; font-weight: 600; color: var(--tm); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 4px;">
                                 <i class="ti ti-user"></i> Transferring Doctor *
                             </label>
-                            <input type="text" id="transferFromDoctor" class="fi" value="" id="transferFromDoctor" readonly style="background: var(--s3); cursor: default; font-weight: 500; color: var(--ac);"/>
+                            <input type="text" id="transferFromDoctor" class="fi" value="" readonly style="background: var(--s3); cursor: default; font-weight: 500; color: var(--ac);"/>
                         </div>
 
                         <!-- To Whom (Doctor/Hospital) -->

@@ -18,6 +18,11 @@
 
     var $ = function (s, r) { return (r || document).querySelector(s); };
     function esc(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+    function attr(v) {
+        return String(v == null ? '' : v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
     function P() { return (window.pcPatient && window.pcPatient.get()) || window.currentPatient || null; }
     function need(w) {
         var p = P();
@@ -160,7 +165,7 @@
             '<div class="ab-srow">' +
               '<div><label>File no. / phone</label><input id="abM" placeholder="MRN 1001" autocomplete="off"></div>' +
               '<div><label>Location</label><select id="abLoc"><option value="all">All locations</option>' +
-                LOCATIONS.map(function (l) { return '<option value="' + esc(l.id) + '">' + esc(l.label) + '</option>'; }).join('') +
+                LOCATIONS.map(function (l) { return '<option value="' + attr(l.id) + '">' + esc(l.label) + '</option>'; }).join('') +
               '</select></div>' +
             '</div>' +
             '<div class="ab-chips" id="abChips"></div>' +
@@ -181,7 +186,7 @@
         var chips = $('#abChips', ov);
         chips.innerHTML = '<button class="ab-chip on" data-l="all">All</button>' +
             LOCATIONS.slice(0, 6).map(function (l) {
-                return '<button class="ab-chip" data-l="' + esc(l.id) + '">' +
+                return '<button class="ab-chip" data-l="' + attr(l.id) + '">' +
                        '<i class="ti ' + l.icon + '"></i> ' + esc(l.label) + '</button>';
             }).join('');
         chips.addEventListener('click', function (e) {
@@ -231,7 +236,7 @@
                 if (typeof al === 'string') al = al.split(/[,;]/).filter(Boolean);
                 var since = p.locationSince || p.registered;
                 var d = since ? new Date(since) : null;
-                return '<button class="ab-row" data-id="' + esc(p.id) + '">' +
+                return '<button class="ab-row" data-id="' + attr(p.id) + '">' +
                   '<span class="ab-av">' + esc((p.firstName || p.name || '?').substring(0, 2).toUpperCase()) + '</span>' +
                   '<span class="ab-nm"><b>' + esc(p.lastName || '') + '</b>' +
                   '<span>' + esc(p.firstName || '') + ' · ' + esc(p.mrn || ('ID ' + p.id)) + '</span></span>' +

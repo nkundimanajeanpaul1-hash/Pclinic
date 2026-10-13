@@ -24,6 +24,13 @@
     var KEY = 'pclinic_active_patient';
     var $ = function (s, r) { return (r || document).querySelector(s); };
     function esc(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+    // esc() comes from the textContent→innerHTML round trip, which leaves " and '
+    // alone. Anything dropped inside a quoted attribute must use attr() instead.
+    function attr(v) {
+        return String(v == null ? '' : v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
 
     /* ══════════════ 1. PATIENT SESSION ══════════════ */
 
@@ -176,7 +183,7 @@
             '<div class="chuk-menu-right">' +
                 '<a class="chk-btn btn-theme" onclick="if(window.pcFile)pcFile.toggleThemeFromMenu();" title="Toggle Theme">☀️ Theme</a>' +
                 '<a class="chk-btn btn-alerts" onclick="if(window.pcFile)pcFile.showNotificationsModal();" title="Alerts & Notifications">🔔</a>' +
-                '<a class="chk-btn btn-user" onclick="if(window.pcFile)pcFile.openStaffProfileModal();" title="Active Staff Profile">👨‍⚕️ ' + ((window.currentStaff && window.currentStaff.name) ? window.currentStaff.name : 'Staff') + '</a>' +
+                '<a class="chk-btn btn-user" onclick="if(window.pcFile)pcFile.openStaffProfileModal();" title="Active Staff Profile">👨‍⚕️ ' + esc((window.currentStaff && window.currentStaff.name) ? window.currentStaff.name : 'Staff') + '</a>' +
                 '<a class="chk-btn btn-logout" onclick="if(window.pcFile)pcFile.confirmLogout();" title="Sign out">🚪 Logout</a>' +
                 '<a class="chk-btn btn-info" onclick="if(window.pcFile)pcFile.openSystemInfoModal();" title="System Info">❓ Info</a>' +
             '</div>';
@@ -192,16 +199,16 @@
             '<div class="oc-row-grid">' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Family name</label>' +
-                    '<input type="text" class="oc-input" id="ocSearchFamily" placeholder="Family name..." value="' + esc(name) + '" />' +
+                    '<input type="text" class="oc-input" id="ocSearchFamily" placeholder="Family name..." value="' + attr(name) + '" />' +
                 '</div>' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Firstname</label>' +
-                    '<input type="text" class="oc-input" id="ocSearchFirst" placeholder="Firstname..." value="' + esc(first) + '" />' +
+                    '<input type="text" class="oc-input" id="ocSearchFirst" placeholder="Firstname..." value="' + attr(first) + '" />' +
                 '</div>' +
                 '<div class="oc-cell" style="grid-column: span 2;">' +
                     '<label class="oc-lbl">Date of birth</label>' +
                     '<div style="display:flex; align-items:center; gap:6px; width:100%;">' +
-                        '<input type="text" class="oc-input readonly" id="ocDob" readonly value="' + esc(dobStr) + '" style="width:110px;" />' +
+                        '<input type="text" class="oc-input readonly" id="ocDob" readonly value="' + attr(dobStr) + '" style="width:110px;" />' +
                         '<span id="ocAgeTxt" class="oc-age-txt">' + (sex ? '⚪ (' + esc(sex) + ' - ' + esc(ageStr) + ')' : '') + '</span>' +
                     '</div>' +
                 '</div>' +
@@ -211,19 +218,19 @@
             '<div class="oc-row-grid">' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Nat ID/PP</label>' +
-                    '<input type="text" class="oc-input" id="ocSearchNatId" placeholder="National ID..." value="' + esc(natId) + '" />' +
+                    '<input type="text" class="oc-input" id="ocSearchNatId" placeholder="National ID..." value="' + attr(natId) + '" />' +
                 '</div>' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Record number</label>' +
-                    '<input type="text" class="oc-input" id="ocSearchMrn" placeholder="MRN..." value="' + esc(mrn) + '" />' +
+                    '<input type="text" class="oc-input" id="ocSearchMrn" placeholder="MRN..." value="' + attr(mrn) + '" />' +
                 '</div>' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Archive code</label>' +
-                    '<input type="text" class="oc-input oc-archive-box" id="ocArchiveCode" readonly value="' + esc(arch) + '" />' +
+                    '<input type="text" class="oc-input oc-archive-box" id="ocArchiveCode" readonly value="' + attr(arch) + '" />' +
                 '</div>' +
                 '<div class="oc-cell">' +
                     '<label class="oc-lbl">Person ID</label>' +
-                    '<input type="text" class="oc-input" id="ocSearchId" placeholder="Person ID..." value="' + esc(pid) + '" />' +
+                    '<input type="text" class="oc-input" id="ocSearchId" placeholder="Person ID..." value="' + attr(pid) + '" />' +
                 '</div>' +
             '</div>' +
 
@@ -233,7 +240,7 @@
                     '<label class="oc-lbl">Department</label>' +
                     '<div style="display:flex; align-items:center; gap:6px; width:100%;">' +
                         '<button type="button" class="oc-ward-btn" onclick="if(window.pcFile)pcFile.openWardPicker();" title="Browse Wards">🏥 Ward</button>' +
-                        '<input type="text" class="oc-input readonly" id="ocDepartment" readonly value="' + esc(dept) + '" style="width:100%;" />' +
+                        '<input type="text" class="oc-input readonly" id="ocDepartment" readonly value="' + attr(dept) + '" style="width:100%;" />' +
                         '<span class="oc-mini-icons">' +
                             '<span title="Info" onclick="if(window.pcFile)pcFile.openPatientProfileModal();">ℹ️</span>' +
                             '<span title="View">🔭</span>' +
@@ -321,7 +328,7 @@
                 var a = age(p.dob);
                 var al = p.allergies || [];
                 if (typeof al === 'string') al = al.split(/[,;]/).filter(Boolean);
-                return '<button class="dp-row" data-id="' + esc(p.id) + '">' +
+                return '<button class="dp-row" data-id="' + attr(p.id) + '">' +
                     '<span class="dp-ava">' + esc(fullName(p).substring(0, 2).toUpperCase()) + '</span>' +
                     '<span class="dp-info"><b>' + esc(fullName(p)) + '</b>' +
                     '<span>' + esc(p.mrn || ('ID ' + p.id)) +
